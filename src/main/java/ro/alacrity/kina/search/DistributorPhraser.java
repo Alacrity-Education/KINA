@@ -14,8 +14,9 @@ import java.util.regex.Pattern;
 
 /**
  * Rewrites a parsed query into the wording each distributor's search understands (DESIGN.md 3.2 "Distributor
- * phrasing"). Only connector queries are rewritten; for every other query {@link #phrase} returns null and the user's
- * text is sent verbatim. Pure functions of the parsed query, so a cached search can report what was sent.
+ * phrasing"). Connector queries are rewritten; a passive request naming a technology gets the technology words in the
+ * distributor's spelling ({@link #technologyPhrase}); for every other query {@link #phrase} returns null and the
+ * user's text is sent verbatim. Pure functions of the parsed query, so a cached search can report what was sent.
  *
  * <ul>
  *   <li>LCSC (JLCPCB FTS5 database): category phrase, {@code RxNP}/{@code NP}, {@code "Right Angle"}, pitch, mounting,
@@ -47,6 +48,9 @@ public class DistributorPhraser {
      * (every non-connector query, and connector queries without any recognised attribute).
      */
     public static String phrase(Distributor distributor, ParsedQuery query) {
+        if (query != null && !query.isConnector() && query.technology() != null) {
+            return technologyPhrase(distributor, query);
+        }
         if (query == null || !query.isConnector() || query.connector().isEmpty()) {
             return null;
         }
@@ -93,6 +97,26 @@ public class DistributorPhraser {
         }
         String sentKey = QueryParser.normalizeKey(sent == null ? query.originalText() : sent);
         return QueryParser.normalizeKey(candidate).equals(sentKey) ? null : candidate;
+    }
+
+    // ---------------------------------------------------------------- technology (passives)
+
+    /**
+     * The user's text with the technology words in the distributor's spelling ({@link TechnologyVocabulary#spelling}):
+     * LCSC a quoted JLCPCB phrase ({@code "Thin Film"}, {@code "Aluminum Electrolytic"}), TME {@code wirewound} and
+     * {@code electrolytic}, Mouser {@code wirewound}, {@code thin film}, {@code thick film}. Null (text sent verbatim)
+     * when the distributor has no spelling of its own or the text already uses it.
+     */
+    static String technologyPhrase(Distributor distributor, ParsedQuery q) {
+        String spelling = TechnologyVocabulary.spelling(distributor, q.technology());
+        String text = q.originalText();
+        TechnologyVocabulary.Match m = spelling == null ? null : TechnologyVocabulary.find(text, q.family());
+        if (m == null || !q.technology().equals(m.technology())) {
+            return null;
+        }
+        String phrase = (text.substring(0, m.start()).stripTrailing() + " " + spelling + " "
+                + text.substring(m.end()).stripLeading()).strip().replaceAll("\\s+", " ");
+        return QueryParser.normalizeKey(phrase).equals(q.normalizedKey()) ? null : phrase;
     }
 
     // ---------------------------------------------------------------- LCSC

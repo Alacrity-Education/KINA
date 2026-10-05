@@ -9,16 +9,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A part as returned to clients (DESIGN.md section 4). {@code rank} and {@code score} are null for
- * {@code get_part}. Prices are trimmed to the {@value #MAX_PRICE_BREAKS} smallest quantity brackets.
+ * A part as returned to clients (DESIGN.md section 4). {@code rank}, {@code score} and {@code match} are null for
+ * {@code get_part}. {@code score} orders the list (rank-normalised, relative to the other candidates); {@code match}
+ * is the absolute deterministic match grade in [0,1] (1.0 = every stated parameter is known and matches), rounded to
+ * 2 decimals. Prices are trimmed to the {@value #MAX_PRICE_BREAKS} smallest quantity brackets.
  */
-@JsonPropertyOrder({"rank", "score", "distributor", "part_number", "manufacturer", "mpn", "description",
+@JsonPropertyOrder({"rank", "score", "match", "distributor", "part_number", "manufacturer", "mpn", "description",
         "category", "package", "stock", "min_order_qty", "order_multiple", "prices", "datasheet_url",
         "photo_url", "product_url", "attributes", "extra"})
 @Builder
 public record PartResponse(
         @JsonProperty("rank") Integer rank,
         @JsonProperty("score") Double score,
+        @JsonProperty("match") Double match,
         @JsonProperty("distributor") Distributor distributor,
         @JsonProperty("part_number") String partNumber,
         @JsonProperty("manufacturer") String manufacturer,
@@ -39,11 +42,17 @@ public record PartResponse(
 
     public static final int MAX_PRICE_BREAKS = 3;
 
-    /** Ranked search result entry. */
+    /** Ranked search result entry without a match grade. */
     public static PartResponse from(Part part, Integer rank, Double score) {
+        return from(part, rank, score, null);
+    }
+
+    /** Ranked search result entry; {@code match} is rounded to 2 decimals. */
+    public static PartResponse from(Part part, Integer rank, Double score, Double match) {
         return builder()
                 .rank(rank)
                 .score(score)
+                .match(match == null ? null : Math.round(match * 100) / 100.0)
                 .distributor(part.distributor())
                 .partNumber(part.distributorPartNumber())
                 .manufacturer(part.manufacturer())

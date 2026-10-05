@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  *
  * <p>Comparable keys: {@value #CAPACITANCE}, {@value #RESISTANCE}, {@value #INDUCTANCE}, {@value #FREQUENCY},
  * {@value #VOLTAGE}, {@value #CURRENT}, {@value #POWER}, {@value #TOLERANCE}, {@value #DIELECTRIC},
- * {@value #PACKAGE}, {@value #MOUNTING}, {@value #FAMILY}; for connectors also {@value #CONNECTOR_TYPE},
+ * {@value #PACKAGE}, {@value #MOUNTING}, {@value #FAMILY}, {@value #TECHNOLOGY}; for connectors also {@value #CONNECTOR_TYPE},
  * {@value #GENDER}, {@value #POSITIONS}, {@value #ROWS}, {@value #PITCH}, {@value #ORIENTATION} and {@value #SERIES}.
  * Values are compact human-readable strings ("10uF", "25V", "10%", "X7R", "0805", "SMD", "capacitor",
  * "female header", "female", "6", "1", "2.54mm", "right angle").
@@ -38,6 +38,8 @@ public class ParametricExtractor {
     public static final String PACKAGE = "Package";
     public static final String MOUNTING = "Mounting";
     public static final String FAMILY = "Family";
+    /** Construction technology of a passive ("thin film", "tantalum", "multilayer"...; {@link TechnologyVocabulary}). */
+    public static final String TECHNOLOGY = "Technology";
     public static final String CONNECTOR_TYPE = "ConnectorType";
     public static final String GENDER = "Gender";
     public static final String POSITIONS = "Positions";
@@ -106,6 +108,16 @@ public class ParametricExtractor {
             "supplier device package", "package type", "case / package", "case/package", "housing");
     private static final List<String> MOUNTING_NAMES = List.of("mounting", "mounting style", "mounting type",
             "mounting method", "termination style", "montage", "electrical mounting");
+    /**
+     * Technology parameters: TME {@code Type of resistor} / {@code Type of capacitor} / {@code Type of inductor}
+     * (verified live 2026-10-05: thin film, thick film, metal film, carbon film, metal oxide, wire-wound, metal strip;
+     * ceramic, tantalum, tantalum-polymer, polymer, electrolytic, polypropylene, polyester, supercapacitor; wire,
+     * multilayer, thin film), {@code Kind of capacitor} (MLCC), {@code Kind of resistor} (current shunt, sensing);
+     * generic names other sources use.
+     */
+    private static final List<String> TECHNOLOGY_NAMES = List.of("type of resistor", "type of capacitor",
+            "type of inductor", "kind of capacitor", "kind of resistor", "technology", "composition", "construction",
+            "resistor type", "capacitor type", "inductor type");
 
     // connector attributes (TME parameters verified live 2026-10-05: "Type of connector" = pin strips, "Connector" =
     // socket, "Kind of connector" = female, "Number of pins" = 6, "Spatial orientation" = angled 90°,
@@ -149,11 +161,16 @@ public class ParametricExtractor {
 
     /** Parsed, comparable features of a part. Values are in SI base units (tolerance: percent). */
     record Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
-                    String mounting, String text, ParsedQuery.Connector connector) {
+                    String mounting, String text, ParsedQuery.Connector connector, String technology) {
+
+        Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
+                 String mounting, String text, ParsedQuery.Connector connector) {
+            this(family, values, dielectric, packageName, mounting, text, connector, null);
+        }
 
         Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
                  String mounting, String text) {
-            this(family, values, dielectric, packageName, mounting, text, null);
+            this(family, values, dielectric, packageName, mounting, text, null, null);
         }
 
         Double value(String kind) {
@@ -179,6 +196,7 @@ public class ParametricExtractor {
         putIfNotNull(out, PACKAGE, f.packageName());
         putIfNotNull(out, MOUNTING, f.mounting());
         putIfNotNull(out, FAMILY, f.family());
+        putIfNotNull(out, TECHNOLOGY, f.technology());
         ParsedQuery.Connector c = f.connector();
         if (c != null) {
             putIfNotNull(out, CONNECTOR_TYPE, c.type());
@@ -323,7 +341,36 @@ public class ParametricExtractor {
         }
         part.attributes().values().forEach(v -> text.append(v).append(' '));
         return new Features(family, values, dielectric, packageName, mounting,
-                Recognizers.normalizeKey(text.toString()), connector);
+                Recognizers.normalizeKey(text.toString()), connector, technology(part, attrs, family));
+    }
+
+    /**
+     * The part's technology (resistors, capacitors, inductors only): distributor parameters ({@link #TECHNOLOGY_NAMES}),
+     * then the description, then the category. A construction ({@code metal strip}, {@code thick film}) from any source
+     * wins over the application word {@code current sense} (Mouser "Current Sense Resistors - SMD", TME "Kind of
+     * resistor: current shunt, sensing").
+     */
+    static String technology(Part part, Map<String, String> attrs, String family) {
+        if (!TechnologyVocabulary.applies(family)) {
+            return null;
+        }
+        List<String> found = new java.util.ArrayList<>();
+        for (String name : TECHNOLOGY_NAMES) {
+            String t = TechnologyVocabulary.ofAttribute(attrs.get(name), family);
+            if (t != null) {
+                found.add(t);
+            }
+        }
+        String fromDescription = TechnologyVocabulary.of(part.description(), family);
+        if (fromDescription != null) {
+            found.add(fromDescription);
+        }
+        String fromCategory = TechnologyVocabulary.of(part.category(), family);
+        if (fromCategory != null) {
+            found.add(fromCategory);
+        }
+        return found.stream().filter(t -> !TechnologyVocabulary.CURRENT_SENSE.equals(t)).findFirst()
+                .orElse(found.isEmpty() ? null : found.getFirst());
     }
 
     // ---------------------------------------------------------------- connectors
@@ -748,7 +795,70 @@ public class ParametricExtractor {
         if (description.packageName() != null) {
             return description.packageName();
         }
-        return part.packageName() == null || part.packageName().isBlank() ? null : part.packageName().trim();
+        if (part.packageName() != null && !part.packageName().isBlank() && !part.packageName().strip().equals("-")) {
+            return part.packageName().trim();   // stated by the distributor, even if not recognised: never overridden
+        }
+        return family != null && CHIP_FAMILIES.contains(family)
+                ? packageFromPartNumber(part.manufacturerPartNumber(), part.manufacturer()) : null;
+    }
+
+    // ---------------------------------------------------------------- package from the part number
+
+    private static final Set<String> CHIP_FAMILIES = Set.of("resistor", "capacitor", "inductor", "ferrite");
+    /**
+     * Series whose part number is {@code <series><imperial chip code>...} ({@code TNPW0805...}, {@code RC0805FR-07...},
+     * {@code CRGCQ0805...}). Mined from the JLCPCB database (2026-10-05): every row of these prefixes with a chip
+     * package (over 450 000 rows) states the same code as its {@code Package} column. Vishay {@code CRCW}, {@code TNPW},
+     * {@code TNPU}, {@code RCP}, {@code RCS}, {@code RCG}, {@code RCWE}, {@code MCT}, {@code MCS}, {@code MCU},
+     * {@code MCA}, {@code PAT}, {@code PLT}, {@code PLTT}, {@code PTN}, {@code WSL}, {@code VJ}; Yageo {@code RC},
+     * {@code RT}, {@code AC}, {@code AT}, {@code AA}, {@code AF}, {@code AR}, {@code PE}, {@code PT}, {@code SR},
+     * {@code RE}, {@code RL}, {@code RV}, {@code CC}, {@code CQ}; Stackpole {@code RNCF}, {@code RMCF}, {@code RMCS},
+     * {@code RMCP}, {@code RMEF}, {@code RGC}, {@code RNCS}, {@code CSR}; TE {@code CPF}, {@code CRG}, {@code CRGH},
+     * {@code CRGV}, {@code CRGCQ}. KEMET's {@code C0805C106K...} only for KEMET: TDK, iCM and Darfon write metric
+     * codes after the same {@code C} ({@code C0603...} is a 0201 part).
+     */
+    private static final Set<String> CHIP_CODE_SERIES = Set.of("CRCW", "TNPW", "TNPU", "RCP", "RCS", "RCG", "RCWE",
+            "MCT", "MCS", "MCU", "MCA", "PAT", "PLT", "PLTT", "PTN", "WSL", "VJ", "RC", "RT", "AC", "AT", "AA", "AF",
+            "AR", "PE", "PT", "SR", "RE", "RL", "RV", "CC", "CQ", "RNCF", "RMCF", "RMCS", "RMCP", "RMEF", "RGC", "RNCS",
+            "CSR", "CPF", "CRG", "CRGH", "CRGV", "CRGCQ");
+    private static final Pattern MPN_CHIP_CODE = Pattern.compile(
+            "^([A-Z]{1,5})(0201|0402|0603|0805|1206|1210|1812|2010|2512)");
+    /**
+     * Manufacturers that put metric size codes after a letter prefix (Samsung {@code RC0402...} = 01005, Susumu
+     * {@code RT0603...} = 0201, TDK {@code C0603...}/{@code MLG0603...}, Taiyo Yuden {@code HK0603...}, Sunlord
+     * {@code SDCL0603...}, Murata): never read a chip code from their part numbers.
+     */
+    private static final Pattern METRIC_CODE_MAKERS = Pattern.compile("(?i)samsung|tdk|susumu|taiyo|sunlord|murata");
+    /**
+     * TE RN73 thin film resistors: size letters after {@code RN73} and the TCR letter, e.g. {@code RN73C2A5K36BTDF}
+     * (TE datasheet 1773270 "How To Order": 1E 0402, 1J 0603, 2A 0805, 2B 1206, 2E 1210, 2H 2010, 3A 2512; the JLCPCB
+     * database agrees for all 172 000 rows of 1E/1J/2A/2B/2E).
+     */
+    private static final Pattern RN73 = Pattern.compile("^RN73[A-Z]?(1E|1J|2A|2B|2E|2H|3A)");
+    private static final Map<String, String> RN73_SIZES = Map.of("1E", "0402", "1J", "0603", "2A", "0805",
+            "2B", "1206", "2E", "1210", "2H", "2010", "3A", "2512");
+
+    /**
+     * The imperial chip code a chip resistor/capacitor part number states (conservative, see {@link #CHIP_CODE_SERIES}),
+     * or null. Used only when neither the package field, the attributes nor the description name a package.
+     */
+    static String packageFromPartNumber(String mpn, String manufacturer) {
+        if (mpn == null || mpn.isBlank() || manufacturer != null && METRIC_CODE_MAKERS.matcher(manufacturer).find()) {
+            return null;
+        }
+        String number = mpn.strip().toUpperCase(Locale.ROOT);
+        java.util.regex.Matcher rn73 = RN73.matcher(number);
+        if (rn73.find()) {
+            return RN73_SIZES.get(rn73.group(1));
+        }
+        java.util.regex.Matcher m = MPN_CHIP_CODE.matcher(number);
+        if (!m.find()) {
+            return null;
+        }
+        String series = m.group(1);
+        boolean kemet = "C".equals(series) && manufacturer != null
+                && manufacturer.toLowerCase(Locale.ROOT).contains("kemet");
+        return CHIP_CODE_SERIES.contains(series) || kemet ? m.group(2) : null;
     }
 
     private static String mountingFromPackage(String packageName) {

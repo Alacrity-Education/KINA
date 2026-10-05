@@ -40,21 +40,21 @@ class ParametricExtractorTest {
     void mouserMlcc() {
         assertThat(extractor.extract(MOUSER_MLCC)).containsExactlyEntriesOf(RankingFixtures.attrs(
                 "Capacitance", "10uF", "Voltage", "25V", "Tolerance", "10%", "Dielectric", "X7R", "Package", "0805",
-                "Mounting", "SMD", "Family", "capacitor"));
+                "Mounting", "SMD", "Family", "capacitor", "Technology", "ceramic"));
     }
 
     @Test
     void tmeMlcc() {
         assertThat(extractor.extract(TME_MLCC)).containsExactlyEntriesOf(RankingFixtures.attrs(
                 "Capacitance", "10uF", "Voltage", "25V", "Tolerance", "10%", "Dielectric", "X7R", "Package", "0805",
-                "Mounting", "SMD", "Family", "capacitor"));
+                "Mounting", "SMD", "Family", "capacitor", "Technology", "ceramic"));
     }
 
     @Test
     void lcscMlcc() {
         assertThat(extractor.extract(LCSC_MLCC)).containsExactlyEntriesOf(RankingFixtures.attrs(
                 "Capacitance", "10uF", "Voltage", "25V", "Tolerance", "10%", "Dielectric", "X5R", "Package", "0805",
-                "Mounting", "SMD", "Family", "capacitor"));
+                "Mounting", "SMD", "Family", "capacitor", "Technology", "ceramic"));
     }
 
     @Test
@@ -72,7 +72,7 @@ class ParametricExtractorTest {
                 "Resistors/Chip Resistor - Surface Mount", "0805", Map.of());
 
         Map<String, String> expected = RankingFixtures.attrs("Resistance", "10kohm", "Power", "125mW",
-                "Tolerance", "1%", "Package", "0805", "Mounting", "SMD", "Family", "resistor");
+                "Tolerance", "1%", "Package", "0805", "Mounting", "SMD", "Family", "resistor", "Technology", "thick film");
         assertThat(extractor.extract(mouser)).containsExactlyEntriesOf(expected);
         assertThat(extractor.extract(tme)).containsExactlyEntriesOf(expected);
         // LCSC description also carries the 150V working voltage

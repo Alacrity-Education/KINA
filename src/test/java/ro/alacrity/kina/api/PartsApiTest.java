@@ -17,6 +17,7 @@ import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
 import ro.alacrity.kina.domain.DistributorStatusResponse;
 import ro.alacrity.kina.domain.Part;
+import ro.alacrity.kina.domain.PartLookupResponse;
 import ro.alacrity.kina.domain.PartResponse;
 import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.domain.RankingMode;
@@ -32,7 +33,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -220,9 +220,11 @@ class PartsApiTest {
 
     @Test
     void getPartFoundNotFoundAndSlashesInPartNumbers() {
-        when(lookupService.getPart(Distributor.TME, "CL21B106KPQNNNE", false))
-                .thenReturn(Optional.of(PartResponse.from(part())));
-        when(lookupService.getPart(eq(Distributor.TME), eq("ABC/1"), anyBoolean())).thenReturn(Optional.empty());
+        when(lookupService.lookup(Distributor.TME, "CL21B106KPQNNNE", false))
+                .thenReturn(PartLookupResponse.found(Distributor.TME, "CL21B106KPQNNNE", CacheStatus.MISS,
+                        PartResponse.from(part())));
+        when(lookupService.lookup(eq(Distributor.TME), eq("ABC/1"), anyBoolean()))
+                .thenReturn(PartLookupResponse.notFound(Distributor.TME, "ABC/1", CacheStatus.BYPASSED, null));
 
         client.get().uri("/api/v1/parts/tme/CL21B106KPQNNNE")
                 .exchange()
@@ -240,8 +242,10 @@ class PartsApiTest {
                 .jsonPath("$.status").isEqualTo(404)
                 .jsonPath("$.type").isEqualTo("urn:kina:problem:not-found")
                 .jsonPath("$.distributor").isEqualTo("TME")
-                .jsonPath("$.part_number").isEqualTo("ABC/1");
-        verify(lookupService).getPart(Distributor.TME, "ABC/1", true);
+                .jsonPath("$.part_number").isEqualTo("ABC/1")
+                .jsonPath("$.reason").isEqualTo("not_found")
+                .jsonPath("$.identity").doesNotExist();
+        verify(lookupService).lookup(Distributor.TME, "ABC/1", true);
 
         client.get().uri("/api/v1/parts/arrow/X1")
                 .exchange()
@@ -250,10 +254,30 @@ class PartsApiTest {
     }
 
     @Test
+    void getPartOutOfStockIs404WithReasonAndIdentity() {
+        when(lookupService.lookup(Distributor.MOUSER, "ERA6AEB5361V", false))
+                .thenReturn(PartLookupResponse.outOfStock(Distributor.MOUSER, "ERA6AEB5361V", CacheStatus.MISS,
+                        new PartLookupResponse.Identity("667-ERA-6AEB5361V", "Panasonic", "ERA-6AEB5361V",
+                                "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm")));
+
+        client.get().uri("/api/v1/parts/MOUSER/ERA6AEB5361V")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectHeader().contentTypeCompatibleWith(PROBLEM)
+                .expectBody()
+                .jsonPath("$.reason").isEqualTo("out_of_stock")
+                .jsonPath("$.identity.part_number").isEqualTo("667-ERA-6AEB5361V")
+                .jsonPath("$.identity.mpn").isEqualTo("ERA-6AEB5361V")
+                .jsonPath("$.identity.manufacturer").isEqualTo("Panasonic")
+                .jsonPath("$.detail").isEqualTo(
+                        "Part ERA6AEB5361V is listed at MOUSER but has no stock that ships now");
+    }
+
+    @Test
     void distributorFailuresAndUnexpectedErrorsHideInternals() {
-        when(lookupService.getPart(Distributor.MOUSER, "M1", false)).thenThrow(
+        when(lookupService.lookup(Distributor.MOUSER, "M1", false)).thenThrow(
                 new DistributorException(Distributor.MOUSER, DistributorException.Kind.RATE_LIMITED, "secret-ish"));
-        when(lookupService.getPart(Distributor.MOUSER, "M2", false)).thenThrow(
+        when(lookupService.lookup(Distributor.MOUSER, "M2", false)).thenThrow(
                 DistributorException.notConfigured(Distributor.MOUSER));
         when(searchService.search(any())).thenThrow(new IllegalStateException("internal detail /etc/passwd"));
 

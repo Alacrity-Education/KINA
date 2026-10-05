@@ -10,6 +10,7 @@ import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
+import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartLookupResponse;
@@ -27,8 +28,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Looks up one part by distributor part number ({@code get_part}). Mouser/TME: a fresh {@code cached_parts} row
- * unless {@code bypassCache}, else the distributor, caching the result. LCSC: the JLCPCB database.
+ * Looks up one part by distributor part number ({@code get_part}; the clients also accept a manufacturer part number
+ * where a retry is cheap, see {@link DistributorClient#lookup}). A part the distributor lists without ships-now stock is
+ * reported as {@code out_of_stock} with its identity, never returned as a part and never cached. Mouser/TME: a fresh
+ * {@code cached_parts} row unless {@code bypassCache}, else the distributor, caching the result. LCSC: the JLCPCB
+ * database.
  */
 @Service
 @Slf4j
@@ -94,7 +98,13 @@ public class PartLookupService {
         }
         CacheStatus status = !cached ? CacheStatus.NOT_APPLICABLE
                 : bypassCache ? CacheStatus.BYPASSED : CacheStatus.MISS;
-        Optional<Part> part = fetch(client, number).map(this::prepare);
+        PartLookupResult result = fetch(client, number);
+        if (result.status() == PartLookupResult.Status.OUT_OF_STOCK && result.identity() != null) {
+            PartLookupResult.Identity id = result.identity();
+            return PartLookupResponse.outOfStock(distributor, number, status, new PartLookupResponse.Identity(
+                    id.partNumber(), id.manufacturer(), id.mpn(), id.description()));
+        }
+        Optional<Part> part = result.asOptional().filter(p -> p.stock() > 0).map(this::prepare);
         if (part.isEmpty()) {
             return PartLookupResponse.notFound(distributor, number, status, null);
         }
@@ -124,17 +134,17 @@ public class PartLookupService {
     }
 
     /**
-     * {@link DistributorClient#getPart} bounded by {@code kina.search.distributor-timeout} of active work, extended by
-     * rate-limit waits up to {@code kina.search.max-request-duration} (DESIGN.md 3.6); drops parts without stock.
+     * {@link DistributorClient#lookup} bounded by {@code kina.search.distributor-timeout} of active work, extended by
+     * rate-limit waits up to {@code kina.search.max-request-duration} (DESIGN.md 3.6).
      */
-    private Optional<Part> fetch(DistributorClient client, String partNumber) {
+    private PartLookupResult fetch(DistributorClient client, String partNumber) {
         Duration timeout = properties.search().distributorTimeout();
         DistributorBudget budget = new DistributorBudget(
                 Deadline.after(properties.search().maxRequestDuration()), timeout);
-        Future<Optional<Part>> future = executor.submit(() -> client.getPart(partNumber, budget.deadline()));
+        Future<PartLookupResult> future = executor.submit(() -> client.lookup(partNumber, budget.deadline()));
         try {
-            Optional<Part> part = budget.await(future, Duration.ZERO);
-            return part == null ? Optional.empty() : part.filter(p -> p.stock() > 0);
+            PartLookupResult result = budget.await(future, Duration.ZERO);
+            return result == null ? PartLookupResult.notFound() : result;
         } catch (TimeoutException e) {
             future.cancel(true);
             throw new DistributorException(client.distributor(), DistributorException.Kind.TIMEOUT,

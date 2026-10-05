@@ -10,6 +10,7 @@ import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 
@@ -112,32 +113,51 @@ public class MouserClient implements DistributorClient {
 
     @Override
     public Optional<Part> getPart(String distributorPartNumber, Deadline deadline) throws DistributorException {
-        return guarded(() -> doGetPart(distributorPartNumber, deadline));
+        return lookup(distributorPartNumber, deadline).asOptional();
     }
 
-    private Optional<Part> doGetPart(String distributorPartNumber, Deadline deadline) {
+    /**
+     * One {@code /search/partnumber} call ({@code Exact}). Mouser normalises the spelling itself (verified live
+     * 2026-10-05: {@code ERA6AEB5361V} returns {@code 667-ERA-6AEB5361V} with MPN {@code ERA-6AEB5361V}), so the
+     * answer is matched by Mouser part number, then by MPN, both compared with {@link PartLookupResult#normalize}.
+     * Several Mouser part numbers may share one MPN: the first one in stock wins; a matching part without ships-now
+     * stock ({@code AvailabilityInStock} 0 or missing) is {@code OUT_OF_STOCK}, also a catalogue part Mouser does not sell
+     * (part number {@code N/A}; its identity then has no part number).
+     */
+    @Override
+    public PartLookupResult lookup(String partNumber, Deadline deadline) throws DistributorException {
+        return guarded(() -> doLookup(partNumber, deadline));
+    }
+
+    private PartLookupResult doLookup(String distributorPartNumber, Deadline deadline) {
         MouserApi mouser = requireConfigured();
         if (distributorPartNumber == null || distributorPartNumber.isBlank()) {
-            return Optional.empty();
+            return PartLookupResult.notFound();
         }
         String partNumber = distributorPartNumber.strip();
         if (partNumber.contains("|")) {
-            return Optional.empty(); // '|' separates several part numbers in a Mouser part-number search
+            return PartLookupResult.notFound(); // '|' separates several part numbers in a Mouser part-number search
         }
         List<MouserPart> found = requireResults(mouser.searchByPartNumber(partNumber, deadline)).parts();
+        List<MouserPart> matches = new ArrayList<>();
+        found.stream().filter(p -> PartLookupResult.samePartNumber(partNumber, p.mouserPartNumber()))
+                .forEach(matches::add);
+        found.stream().filter(p -> !matches.contains(p)
+                        && PartLookupResult.samePartNumber(partNumber, p.manufacturerPartNumber()))
+                .forEach(matches::add);
         Instant now = clock.instant();
-        Optional<MouserPart> match = found.stream()
-                .filter(p -> partNumber.equalsIgnoreCase(trim(p.mouserPartNumber())))
-                .findFirst();
-        if (match.isPresent()) {
-            return mapper.map(match.get(), now);
+        for (MouserPart p : matches) {
+            Optional<Part> part = mapper.map(p, now);
+            if (part.isPresent()) {
+                return PartLookupResult.found(part.get());
+            }
         }
-        // Several Mouser part numbers may share one MPN: return the first one that is in stock.
-        return found.stream()
-                .filter(p -> partNumber.equalsIgnoreCase(trim(p.manufacturerPartNumber())))
-                .map(p -> mapper.map(p, now))
-                .flatMap(Optional::stream)
-                .findFirst();
+        // Mouser lists catalogue parts it does not sell with MouserPartNumber "N/A" (live: ERA-6ARB5361V)
+        return matches.stream().findFirst()
+                .map(p -> PartLookupResult.outOfStock(new PartLookupResult.Identity(mouserNumber(p.mouserPartNumber()),
+                        blankToNull(p.manufacturer()), blankToNull(p.manufacturerPartNumber()),
+                        blankToNull(p.description()))))
+                .orElseGet(PartLookupResult::notFound);
     }
 
     /**
@@ -181,5 +201,15 @@ public class MouserClient implements DistributorClient {
 
     private static String trim(String s) {
         return s == null ? null : s.strip();
+    }
+
+    /** The Mouser part number, null when blank or {@code N/A}. */
+    private static String mouserNumber(String s) {
+        String v = blankToNull(s);
+        return v == null || v.equalsIgnoreCase("N/A") ? null : v;
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s.strip();
     }
 }

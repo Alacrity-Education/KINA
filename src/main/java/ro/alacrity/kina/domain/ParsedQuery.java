@@ -22,6 +22,8 @@ import java.util.Map;
  * @param mounting     "SMD" or "THT", null when absent
  * @param keywords     remaining free-text tokens (lower-case)
  * @param connector    connector attributes when the query asks for a connector (family {@code "connector"}), else null
+ * @param technology   construction technology of a passive ("thin film", "tantalum", "multilayer"...; see
+ *                     {@code search.TechnologyVocabulary}), null when the query names none
  */
 @Builder
 public record ParsedQuery(
@@ -33,7 +35,8 @@ public record ParsedQuery(
         String packageName,
         String mounting,
         List<String> keywords,
-        Connector connector
+        Connector connector,
+        String technology
 ) {
 
     public static final String CAPACITANCE = "capacitance";
@@ -88,7 +91,7 @@ public record ParsedQuery(
     /** A query without connector attributes. */
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
-        this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null);
+        this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null);
     }
 
     /** True when the query asks for a connector (connector words were recognised). */

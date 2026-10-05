@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ro.alacrity.kina.domain.BatchSearchRequest;
 import ro.alacrity.kina.domain.BatchSearchResponse;
 import ro.alacrity.kina.domain.Distributor;
+import ro.alacrity.kina.domain.PartLookupResponse;
 import ro.alacrity.kina.domain.PartResponse;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
@@ -75,8 +76,11 @@ public class PartsController {
             throw new IllegalArgumentException("part number must not be blank");
         }
         log.debug("get {} {} by {}", d, number, user(authentication));
-        return lookupService.getPart(d, number, bypassCache)
-                .orElseThrow(() -> new PartNotFoundException(d, number.strip()));
+        PartLookupResponse result = lookupService.lookup(d, number, bypassCache);
+        if (!result.found() || result.part() == null) {
+            throw new PartNotFoundException(d, number.strip(), result.reason(), result.identity());
+        }
+        return result.part();
     }
 
     static Set<Distributor> parseDistributors(List<String> names) {

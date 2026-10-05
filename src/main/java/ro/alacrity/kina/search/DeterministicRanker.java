@@ -19,6 +19,8 @@ import java.util.Map;
  *       <td>within 1 % -&gt; +, different -&gt; -, unknown -&gt; 0</td></tr>
  *   <tr><td>package</td><td>{@value #W_PACKAGE}</td><td>equivalent (0805 == 2012 metric, SOT-23-3 == SOT-23...)</td></tr>
  *   <tr><td>dielectric</td><td>{@value #W_DIELECTRIC}</td><td>exact, C0G == NP0</td></tr>
+ *   <tr><td>technology</td><td>{@value #W_TECHNOLOGY}</td><td>same (or compatible) technology +, a different known
+ *       one -, unknown 0 ({@link TechnologyVocabulary#compare})</td></tr>
  *   <tr><td>voltage / current / power rating</td><td>{@value #W_RATING}</td><td>part &gt;= requested (shared
  *       between the requested ratings); regulators and Zeners: equal within 2 %</td></tr>
  *   <tr><td>tolerance</td><td>{@value #W_TOLERANCE}</td><td>part &lt;= requested</td></tr>
@@ -42,6 +44,11 @@ import java.util.Map;
  * earns half, a lower one or a power-only part is a mismatch), gender {@value #W_USB_GENDER}, mounting style
  * {@value #W_USB_MOUNTING} (mid-mount / hybrid / SMD / THT), orientation {@value #W_USB_ORIENTATION} and
  * +{@value #W_USB_FEATURE} per requested feature present (waterproof, board lock, power only).
+ *
+ * <p>{@link #assess} also reports the <b>match grade</b>: the signals the part earned (tie-break excluded) divided by
+ * what a part matching every stated parameter would earn, clamped to [0,1]. An attribute the part does not state
+ * earns nothing, so 1.0 means every stated parameter is known and matches. It is absolute (not rank-normalised) and
+ * does not influence the order.
  */
 @Component
 @RequiredArgsConstructor
@@ -50,6 +57,7 @@ public class DeterministicRanker {
     static final double W_PRIMARY_VALUE = 0.30;
     static final double W_PACKAGE = 0.20;
     static final double W_DIELECTRIC = 0.15;
+    static final double W_TECHNOLOGY = 0.15;
     static final double W_RATING = 0.10;
     static final double W_TOLERANCE = 0.10;
     static final double W_FAMILY = 0.05;
@@ -94,20 +102,41 @@ public class DeterministicRanker {
 
     private final ParametricExtractor extractor;
 
+    /**
+     * Deterministic score and match grade of one part.
+     *
+     * @param score relevance in [0,1] (the ranking signal)
+     * @param match share of the stated parameters the part satisfies, in [0,1] (class comment)
+     */
+    public record Assessment(double score, double match) {
+    }
+
     /** Relevance of {@code part} for {@code query}, clamped to [0,1]. */
     public double score(ParsedQuery query, Part part) {
         return score(query, part, extractor.features(part));
     }
 
+    /** Score and match grade of {@code part} for {@code query}. */
+    public Assessment assess(ParsedQuery query, Part part) {
+        return assess(query, part, extractor.features(part));
+    }
+
     double score(ParsedQuery query, Part part, ParametricExtractor.Features f) {
+        return assess(query, part, f).score();
+    }
+
+    Assessment assess(ParsedQuery query, Part part, ParametricExtractor.Features f) {
         double score = 0;
+        double possible = 0;
 
         // primary value; connector queries use the connector signals instead
         String primary = query.isConnector() ? null : primaryKind(query);
         if (query.isConnector()) {
             score += connectorScore(query, f);
+            possible += connectorPossible(query);
         }
         if (primary != null) {
+            possible += W_PRIMARY_VALUE;
             Double partValue = f.value(primary);
             if (partValue != null) {
                 score += sameValue(query.constraint(primary).value(), partValue, VALUE_MATCH_TOLERANCE)
@@ -118,17 +147,32 @@ public class DeterministicRanker {
         // package
         String wantedPackage = Recognizers.packageKey(query.packageName());
         String partPackage = Recognizers.packageKey(f.packageName());
+        if (wantedPackage != null) {
+            possible += W_PACKAGE;
+        }
         if (wantedPackage != null && partPackage != null) {
             score += wantedPackage.equals(partPackage) ? W_PACKAGE : -W_PACKAGE;
         }
 
         // dielectric
+        if (query.dielectric() != null) {
+            possible += W_DIELECTRIC;
+        }
         if (query.dielectric() != null && f.dielectric() != null) {
             score += query.dielectric().equalsIgnoreCase(f.dielectric()) ? W_DIELECTRIC : -W_DIELECTRIC;
         }
 
+        // technology (thin film vs thick film, tantalum vs ceramic...)
+        if (query.technology() != null) {
+            possible += W_TECHNOLOGY;
+            score += W_TECHNOLOGY * TechnologyVocabulary.compare(query.technology(), f.technology());
+        }
+
         // ratings
         List<String> requested = RATING_KINDS.stream().filter(k -> query.constraint(k) != null).toList();
+        if (!requested.isEmpty()) {
+            possible += W_RATING;
+        }
         for (String kind : requested) {
             Double partValue = f.value(kind);
             if (partValue == null) {
@@ -144,21 +188,84 @@ public class DeterministicRanker {
         // tolerance
         ParsedQuery.Constraint tolerance = query.constraint(ParsedQuery.TOLERANCE);
         Double partTolerance = f.value(ParsedQuery.TOLERANCE);
+        if (tolerance != null) {
+            possible += W_TOLERANCE;
+        }
         if (tolerance != null && partTolerance != null) {
             score += partTolerance <= tolerance.value() + 1e-9 ? W_TOLERANCE : -W_TOLERANCE;
         }
 
         // family
+        if (query.family() != null) {
+            possible += W_FAMILY;
+        }
         score += familyScore(query.family(), f);
 
         // lexical overlap
         if (!query.keywords().isEmpty()) {
+            possible += W_LEXICAL;
             long found = query.keywords().stream().filter(k -> f.text().contains(k)).count();
             score += W_LEXICAL * found / query.keywords().size();
         }
 
-        score += tieBreak(part);
-        return Math.clamp(score, 0.0, 1.0);
+        double match = possible <= 0 ? 1.0 : Math.clamp(score / possible, 0.0, 1.0);
+        return new Assessment(Math.clamp(score + tieBreak(part), 0.0, 1.0), match);
+    }
+
+    /** What a connector part matching every stated connector attribute earns ({@link #connectorScore}). */
+    static double connectorPossible(ParsedQuery query) {
+        ParsedQuery.Connector wanted = query.connector();
+        if (wanted == null) {
+            return 0;
+        }
+        double possible = 0;
+        if (wanted.isUsb()) {
+            String wantedType = wanted.usbType() != null ? wanted.usbType() : UsbVocabulary.usbTypeOf(wanted.type());
+            if (wantedType != null) {
+                possible += W_USB_TYPE;
+            }
+            if (wanted.pinConfiguration() != null || wanted.positions() != null) {
+                possible += wanted.pinConfigurationImplied() ? W_USB_PINS / 2 : W_USB_PINS;
+            }
+            if (UsbVocabulary.standard(wanted.usbStandard()) != null) {
+                possible += W_USB_STANDARD;
+            }
+            if (wanted.gender() != null) {
+                possible += W_USB_GENDER;
+            }
+            if (wanted.mountingStyle() != null || query.mounting() != null) {
+                possible += W_USB_MOUNTING;
+            }
+            if (wanted.orientation() != null) {
+                possible += W_USB_ORIENTATION;
+            }
+            for (String feature : USB_BONUS_FEATURES) {
+                if (wanted.hasFeature(feature)) {
+                    possible += W_USB_FEATURE;
+                }
+            }
+            return possible;
+        }
+        if (wanted.positions() != null) {
+            possible += W_POSITIONS;
+        }
+        if (wanted.gender() != null) {
+            possible += W_GENDER;
+        }
+        if (wanted.orientation() != null) {
+            possible += W_ORIENTATION;
+        }
+        if (wanted.pitchMm() != null) {
+            possible += W_PITCH;
+        }
+        if (wanted.type() != null && !ParsedQuery.CONNECTOR.equals(wanted.type())
+                && !ParsedQuery.HEADER.equals(wanted.type()) && !ParsedQuery.USB.equals(wanted.type())) {
+            possible += W_CONNECTOR_TYPE;
+        }
+        if (query.mounting() != null) {
+            possible += W_CONNECTOR_MOUNTING;
+        }
+        return possible;
     }
 
     /** Connector signals (class comment); 0 for every attribute unknown on either side. */

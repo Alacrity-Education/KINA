@@ -30,7 +30,8 @@ import java.util.function.Supplier;
 /**
  * Ranks fetched parts for one query (DESIGN.md section 3.3): deterministic scores for every part; for a bounded
  * candidate set (the deterministic top {@code max-candidates}, shared proportionally between distributors) raw
- * cross-encoder scores; both rank-normalised within the candidate set and blended,
+ * cross-encoder scores; both rank-normalised within the candidate set and blended (so {@code score} orders the list but
+ * is relative: the last of several exact matches can be 0; {@link RankedPart#match()} is the absolute grade),
  * {@code final = (1 - w) * ranknorm(det) + w * ranknorm(ce)} with {@code w = kina.ranking.cross-encoder.weight}.
  * Never throws; whenever the cross-encoder cannot score (disabled, not loaded, busy, timeout, failure) the
  * deterministic order is returned with {@link RankingMode#FALLBACK} and a note.
@@ -44,8 +45,15 @@ public class RankingService {
     /** Below this remaining budget the cross-encoder is not called. */
     static final Duration MIN_CALL_BUDGET = Duration.ofMillis(20);
 
-    /** A part with its final score in [0,1]. */
-    public record RankedPart(Part part, double score) {
+    /**
+     * A part with its final score in [0,1] and its deterministic match grade ({@link DeterministicRanker.Assessment},
+     * null when unknown).
+     */
+    public record RankedPart(Part part, double score, Double match) {
+
+        public RankedPart(Part part, double score) {
+            this(part, score, null);
+        }
     }
 
     /**
@@ -121,11 +129,16 @@ public class RankingService {
         long deadline = System.nanoTime() + effective.toNanos();
         Map<Distributor, List<Part>> input = fetched == null ? Map.of() : fetched;
         Map<String, Double> det = new HashMap<>();
+        Map<String, Double> match = new HashMap<>();
         Map<Distributor, List<Part>> sorted = new EnumMap<>(Distributor.class);
         try {
             input.forEach((distributor, parts) -> {
                 List<Part> unique = dedupe(parts);
-                unique.forEach(p -> det.put(PartKey.of(p), safeScore(query, p)));
+                unique.forEach(p -> {
+                    DeterministicRanker.Assessment a = safeAssess(query, p);
+                    det.put(PartKey.of(p), a.score());
+                    match.put(PartKey.of(p), a.match());
+                });
                 List<Part> ordered = new ArrayList<>(unique);
                 ordered.sort(byScore(det, det));
                 sorted.put(distributor, ordered);
@@ -134,28 +147,29 @@ public class RankingService {
             log.warn("deterministic ranking failed", e);
             sorted.clear();
             input.forEach((distributor, parts) -> sorted.put(distributor, dedupe(parts)));
-            return fallback(sorted, det, "ranking failed: " + e.getClass().getSimpleName());
+            return fallback(sorted, det, match, "ranking failed: " + e.getClass().getSimpleName());
         }
 
         if (!config.crossEncoder().enabled()) {
-            return fallback(sorted, det, "cross-encoder disabled");
+            return fallback(sorted, det, match, "cross-encoder disabled");
         }
         if (sorted.values().stream().allMatch(List::isEmpty)) {
             return new RankedResults(emptyLists(sorted), RankingMode.BLENDED, null);
         }
         try {
-            return blendedRanking(query, sorted, det, deadline, effective);
+            return blendedRanking(query, sorted, det, match, deadline, effective);
         } catch (RankingException e) {
             log.info("ranking fallback for '{}': {}", query.normalizedKey(), e.getMessage());
-            return fallback(sorted, det, e.getMessage());
+            return fallback(sorted, det, match, e.getMessage());
         } catch (RuntimeException e) {
             log.warn("ranking fallback after unexpected error", e);
-            return fallback(sorted, det, "cross-encoder failed: " + e.getClass().getSimpleName());
+            return fallback(sorted, det, match, "cross-encoder failed: " + e.getClass().getSimpleName());
         }
     }
 
     private RankedResults blendedRanking(ParsedQuery query, Map<Distributor, List<Part>> sorted,
-                                         Map<String, Double> det, long deadline, Duration budget)
+                                         Map<String, Double> det, Map<String, Double> match, long deadline,
+                                         Duration budget)
             throws RankingException {
         Map<Distributor, Integer> quotas = quotas(sorted, config.crossEncoder().maxCandidates());
         List<Part> candidates = new ArrayList<>();
@@ -202,7 +216,7 @@ public class RankingService {
         }
         Map<String, Double> detCandidates = new HashMap<>();
         raw.keySet().forEach(k -> detCandidates.put(k, det.getOrDefault(k, 0.0)));
-        return blended(sorted, det, normalise(detCandidates), normalise(raw));
+        return blended(sorted, det, match, normalise(detCandidates), normalise(raw));
     }
 
     /**
@@ -293,7 +307,8 @@ public class RankingService {
      * in [0,1] and descending.
      */
     private RankedResults blended(Map<Distributor, List<Part>> sorted, Map<String, Double> det,
-                                  Map<String, Double> detNorm, Map<String, Double> modelNorm) {
+                                  Map<String, Double> match, Map<String, Double> detNorm,
+                                  Map<String, Double> modelNorm) {
         double w = Math.clamp(config.crossEncoder().weight(), 0.0, 1.0);
         Map<String, Double> finalScores = new HashMap<>();
         modelNorm.forEach((key, m) -> finalScores.put(key, (1 - w) * detNorm.getOrDefault(key, 0.0) + w * m));
@@ -305,9 +320,11 @@ public class RankingService {
             candidates.sort(byScore(finalScores, det));
             others.sort(byScore(det, det));
             List<RankedPart> ranked = new ArrayList<>(parts.size());
-            candidates.forEach(p -> ranked.add(new RankedPart(p, finalScores.get(PartKey.of(p)))));
+            candidates.forEach(p -> ranked.add(new RankedPart(p, finalScores.get(PartKey.of(p)),
+                    match.get(PartKey.of(p)))));
             double floor = candidates.isEmpty() ? 1.0 : ranked.getLast().score();
-            others.forEach(p -> ranked.add(new RankedPart(p, floor * det.getOrDefault(PartKey.of(p), 0.0))));
+            others.forEach(p -> ranked.add(new RankedPart(p, floor * det.getOrDefault(PartKey.of(p), 0.0),
+                    match.get(PartKey.of(p)))));
             out.put(distributor, List.copyOf(ranked));
         });
         return new RankedResults(out, RankingMode.BLENDED, null);
@@ -319,10 +336,12 @@ public class RankingService {
         return out;
     }
 
-    private static RankedResults fallback(Map<Distributor, List<Part>> sorted, Map<String, Double> det, String note) {
+    private static RankedResults fallback(Map<Distributor, List<Part>> sorted, Map<String, Double> det,
+                                          Map<String, Double> match, String note) {
         Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
-        sorted.forEach((distributor, parts) -> out.put(distributor,
-                parts.stream().map(p -> new RankedPart(p, det.getOrDefault(PartKey.of(p), 0.0))).toList()));
+        sorted.forEach((distributor, parts) -> out.put(distributor, parts.stream()
+                .map(p -> new RankedPart(p, det.getOrDefault(PartKey.of(p), 0.0), match.get(PartKey.of(p))))
+                .toList()));
         return new RankedResults(out, RankingMode.FALLBACK, note);
     }
 
@@ -341,12 +360,12 @@ public class RankingService {
                 .orElse(null);
     }
 
-    private double safeScore(ParsedQuery query, Part part) {
+    private DeterministicRanker.Assessment safeAssess(ParsedQuery query, Part part) {
         try {
-            return deterministic.score(query, part);
+            return deterministic.assess(query, part);
         } catch (RuntimeException e) {
             log.warn("deterministic scoring failed for {}", PartKey.of(part), e);
-            return 0.0;
+            return new DeterministicRanker.Assessment(0.0, 0.0);
         }
     }
 

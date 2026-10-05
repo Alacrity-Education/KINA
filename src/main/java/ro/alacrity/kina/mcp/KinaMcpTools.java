@@ -35,9 +35,11 @@ public class KinaMcpTools {
             Search electronic components across distributors (LCSC via the JLCPCB parts database, TME, Mouser) and \
             return ranked, in-stock offers with full details.
             Write the query like a part request: component type plus the parameters that matter, e.g. \
-            "10uF X7R 0805 MLCC 25V", "4k7 1% 0603 resistor", "SOT-23 N-channel MOSFET 30V", "LDO 3.3V SOT-23-5", \
-            or a manufacturer part number. Values, tolerance, voltage, dielectric and package are parsed and used \
-            for ranking (see "parsed" in the result).
+            "10uF X7R 0805 MLCC 25V", "4k7 1% 0603 resistor", "thin film resistor 5.36k 0805 0.1%", \
+            "SOT-23 N-channel MOSFET 30V", "LDO 3.3V SOT-23-5", or a manufacturer part number. Values, tolerance, \
+            voltage, dielectric, package and the technology of a passive (thin film, thick film, metal film, \
+            wirewound, current sense; ceramic, tantalum, polymer, electrolytic, film; multilayer...) are parsed and \
+            used for ranking (see "parsed" in the result).
             Only stock that ships now is returned: parts with only factory stock, on-order or lead-time quantities \
             are never returned.
             Results are grouped per distributor. Each distributor entry has: total_results = how many matches the \
@@ -56,10 +58,15 @@ public class KinaMcpTools {
             so a call may take up to 2 minutes; rate_limit_waited_ms on the distributor entry reports how long it \
             waited (0 normally). error rate_limited means the limit outlasted that budget; parts fetched before \
             are still returned.
-            Parts carry rank (1 = best within the distributor), score (0..1), distributor part_number, \
-            manufacturer, mpn, description, package, stock, min_order_qty, order_multiple, prices (only the 3 \
-            smallest quantity brackets: qty, unit_price, currency), datasheet_url, photo_url (when the distributor \
-            has one), product_url, parametric attributes and distributor-specific extra fields.
+            Parts carry rank (1 = best within the distributor), score (0..1), match (0..1), distributor \
+            part_number, manufacturer, mpn, description, package, stock, min_order_qty, order_multiple, prices \
+            (only the 3 smallest quantity brackets: qty, unit_price, currency), datasheet_url, photo_url (when the \
+            distributor has one), product_url, parametric attributes (Resistance, Tolerance, Package, Technology \
+            such as thin film / thick film / tantalum / ceramic...) and distributor-specific extra fields. \
+            score orders the list; it is relative to the other candidates, so the last of several good parts can \
+            score 0.00. match says how well the part satisfies the stated parameters, 1.0 = every stated parameter \
+            matches (a parameter the distributor does not state counts as not matched); judge a part by match, not \
+            by score.
             ranking = "blended" (deterministic parametric score blended with a cross-encoder relevance model) \
             or "fallback" (deterministic only; ranking_note says why).
             Results are cached for 5 days: calling again with the same query and a larger max_results is served \
@@ -147,14 +154,19 @@ public class KinaMcpTools {
     @McpTool(name = "get_part", description = """
             Get the current details of one part by its distributor part number (the part_number field of a \
             search_parts result: LCSC "C15850", TME symbol, Mouser part number such as "603-CC0805KRX7R9BB104"). \
-            Returns {found, distributor, part_number, cache, error, part}; found is false when the distributor \
-            does not know the part, has no stock that ships now, or failed (error then says why). Prices are the \
-            3 smallest quantity brackets. Mouser/TME data comes from the 5-day cache unless bypass_cache is true.""",
+            A manufacturer part number also works (compared ignoring case, spaces and hyphens, so ERA6AEB5361V \
+            finds Mouser's ERA-6AEB5361V); part.part_number is then the distributor's own number. \
+            Returns {found, distributor, part_number, cache, error, reason, part}. found is false when the lookup \
+            failed (error says why, reason is null) or the part is not available: reason "not_found" = the \
+            distributor does not know the part; reason "out_of_stock" = the distributor lists it but has no stock \
+            that ships now, and identity {part_number, manufacturer, mpn, description} tells which part it is (no \
+            stock or prices). Prices are the 3 smallest quantity brackets. Mouser/TME data comes from the 5-day \
+            cache unless bypass_cache is true.""",
             annotations = @McpTool.McpAnnotations(title = "Get one part", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = true))
     public PartLookupResponse getPart(
             @McpToolParam(description = "\"LCSC\", \"TME\" or \"MOUSER\" (case-insensitive).") String distributor,
-            @McpToolParam(description = "Distributor part number (not the manufacturer part number).")
+            @McpToolParam(description = "Distributor part number, or the manufacturer part number.")
             String part_number,
             @McpToolParam(description = BYPASS_CACHE_PARAM, required = false) Boolean bypass_cache) {
         Distributor d = Distributor.parse(distributor);

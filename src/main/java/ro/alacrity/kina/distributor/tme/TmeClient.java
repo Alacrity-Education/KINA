@@ -11,6 +11,7 @@ import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.distributor.RateLimitRetry;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
@@ -147,19 +148,50 @@ public class TmeClient implements DistributorClient {
 
     @Override
     public Optional<Part> getPart(String distributorPartNumber, Deadline deadline) throws DistributorException {
+        return lookup(distributorPartNumber, deadline).asOptional();
+    }
+
+    /**
+     * {@code /products} by symbol; on a miss, once more by manufacturer part number ({@code mpns[]} with the input as
+     * written and with letters and digits only, so {@code ERA-6AEB5361V} finds TME's {@code ERA6AEB5361V}), accepting a
+     * product whose symbol or manufacturer symbol equals the input after {@link PartLookupResult#normalize}. A listed
+     * product without ships-now stock ({@code stock_quantity} 0, or an excluded {@code product_status}) is
+     * {@code OUT_OF_STOCK}.
+     */
+    @Override
+    public PartLookupResult lookup(String partNumber, Deadline deadline) throws DistributorException {
         requireConfigured();
-        if (distributorPartNumber == null || distributorPartNumber.isBlank()) {
-            return Optional.empty();
+        if (partNumber == null || partNumber.isBlank()) {
+            return PartLookupResult.notFound();
         }
-        String symbol = distributorPartNumber.strip();
+        String symbol = partNumber.strip();
         List<TmeResponses.Product> products = api.products(List.of(symbol), properties.country(), deadline).stream()
                 .filter(p -> p.symbol() != null && p.symbol().equalsIgnoreCase(symbol))
                 .limit(1)
                 .toList();
         if (products.isEmpty()) {
-            return Optional.empty();
+            List<String> mpns = new ArrayList<>(new LinkedHashSet<>(List.of(symbol,
+                    PartLookupResult.normalize(symbol))));
+            mpns.removeIf(String::isBlank);
+            products = api.productsByMpn(mpns, properties.country(), deadline).stream()
+                    .filter(p -> PartLookupResult.samePartNumber(symbol, p.symbol())
+                            || p.manufacturerSymbols() != null && p.manufacturerSymbols().stream()
+                            .anyMatch(m -> PartLookupResult.samePartNumber(symbol, m)))
+                    .toList();
         }
-        return enrich(products, deadline).stream().findFirst();
+        if (products.isEmpty()) {
+            return PartLookupResult.notFound();
+        }
+        List<Part> parts = enrich(products, deadline);
+        if (!parts.isEmpty()) {
+            return PartLookupResult.found(parts.getFirst());
+        }
+        TmeResponses.Product p = products.getFirst();
+        return PartLookupResult.outOfStock(new PartLookupResult.Identity(p.symbol(),
+                p.manufacturer() == null ? null : p.manufacturer().name(),
+                p.manufacturerSymbols() == null ? null : p.manufacturerSymbols().stream()
+                        .filter(m -> m != null && !m.isBlank()).findFirst().orElse(null),
+                p.description()));
     }
 
     /** Fetches stock/prices, parameters and datasheets for the products and maps the in-stock ones, keeping order. */

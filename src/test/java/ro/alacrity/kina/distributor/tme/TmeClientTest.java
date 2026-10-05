@@ -13,6 +13,7 @@ import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.distributor.FakeTime;
+import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import tools.jackson.databind.JsonNode;
@@ -350,6 +351,9 @@ class TmeClientTest {
         TmeClient client = client(TmeTestSupport.properties(60));
         expectToken(server, "t");
         server.expect(get("/products")).andRespond(withSuccess(fixture("products-unknown.json"), jsonType()));
+        // the miss is retried once by manufacturer part number, as written and with letters and digits only
+        server.expect(get("/products")).andExpect(query("mpns[]", "NO-SUCH-SYMBOL", "NOSUCHSYMBOL"))
+                .andRespond(withSuccess(fixture("products-unknown.json"), jsonType()));
 
         assertThat(client.getPart("NO-SUCH-SYMBOL")).isEmpty();
         assertThat(client.getPart("  ")).isEmpty();
@@ -363,6 +367,56 @@ class TmeClientTest {
 
         assertThat(client.getPart("CL21B106KPQNNNE")).isEmpty();
         server.verify();
+    }
+
+    @Test
+    void lookupTellsOutOfStockFromNotFound() {
+        TmeClient client = client(TmeTestSupport.properties(60));
+        expectToken(server, "t");
+        server.expect(get("/products")).andRespond(withSuccess(fixture("products-unknown.json"), jsonType()));
+        server.expect(get("/products")).andRespond(withSuccess(fixture("products-unknown.json"), jsonType()));
+        assertThat(client.lookup("NO-SUCH-SYMBOL", Deadline.immediate()).status())
+                .isEqualTo(PartLookupResult.Status.NOT_FOUND);
+        server.verify();
+
+        server.reset();
+        server.expect(get("/products")).andRespond(withSuccess(fixture("products.json"), jsonType()));
+        server.expect(get("/products/data"))
+                .andRespond(withSuccess(dataJson(List.of("CL21B106KPQNNNE"), 0), jsonType()));
+        server.expect(get("/products/parameters")).andRespond(withSuccess(fixture("parameters.json"), jsonType()));
+        server.expect(get("/products/files")).andRespond(withSuccess(fixture("files.json"), jsonType()));
+
+        PartLookupResult result = client.lookup("CL21B106KPQNNNE", Deadline.immediate());
+
+        server.verify();
+        assertThat(result.status()).isEqualTo(PartLookupResult.Status.OUT_OF_STOCK);
+        assertThat(result.part()).isNull();
+        assertThat(result.identity()).isEqualTo(new PartLookupResult.Identity("CL21B106KPQNNNE", "SAMSUNG",
+                "CL21B106KPQNNNE", "Capacitor: ceramic; MLCC; 10uF; 10V; X7R; \u00b110%; SMD; 0805"));
+    }
+
+    @Test
+    void lookupByHyphenatedMpnFindsTheUnhyphenatedSymbol() {
+        // live 2026-10-05: TME lists Panasonic ERA-6AEB5361V as symbol ERA6AEB5361V with both manufacturer symbols
+        String product = fixture("products.json").replace("\"symbol\":\"CL21B106KPQNNNE\"", "\"symbol\":\"ERA6AEB5361V\"")
+                .replace("\"manufacturer_symbols\":[\"CL21B106KPQNNNE\"]",
+                        "\"manufacturer_symbols\":[\"ERA6AEB5361V\",\"ERA-6AEB5361V\"]");
+        TmeClient client = client(TmeTestSupport.properties(60));
+        expectToken(server, "t");
+        server.expect(get("/products")).andRespond(withSuccess(fixture("products-unknown.json"), jsonType()));
+        server.expect(get("/products")).andExpect(query("mpns[]", "ERA-6AEB5361V", "ERA6AEB5361V"))
+                .andRespond(withSuccess(product, jsonType()));
+        server.expect(get("/products/data"))
+                .andRespond(withSuccess(dataJson(List.of("ERA6AEB5361V"), 120), jsonType()));
+        server.expect(get("/products/parameters")).andRespond(withSuccess(fixture("parameters.json"), jsonType()));
+        server.expect(get("/products/files")).andRespond(withSuccess(fixture("files.json"), jsonType()));
+
+        PartLookupResult result = client.lookup("ERA-6AEB5361V", Deadline.immediate());
+
+        server.verify();
+        assertThat(result.status()).isEqualTo(PartLookupResult.Status.FOUND);
+        assertThat(result.part().distributorPartNumber()).isEqualTo("ERA6AEB5361V");
+        assertThat(result.part().stock()).isEqualTo(120);
     }
 
     @Test

@@ -79,6 +79,23 @@ final class TmeApi {
         });
     }
 
+    /**
+     * {@code GET /products?mpns[]=...&country=}: products by manufacturer part number. TME matches each value exactly
+     * against the product's {@code manufacturer_symbols} (verified live 2026-10-05: {@code ERA6AEB5361V} finds
+     * {@code ERA6AEB5361V} whose manufacturer symbols are {@code ERA6AEB5361V} and {@code ERA-6AEB5361V};
+     * {@code ERA-6AEB5361V} finds nothing).
+     */
+    List<TmeResponses.Product> productsByMpn(List<String> mpns, String country, Deadline deadline) {
+        return batched(mpns, batch -> {
+            List<Map.Entry<String, String>> params = new ArrayList<>(batch.size() + 1);
+            batch.forEach(mpn -> params.add(Map.entry("mpns[]", mpn)));
+            params.add(Map.entry("country", country));
+            TmeResponses.ProductsResponse response =
+                    get("/products", params, TmeResponses.ProductsResponse.class, deadline);
+            return response.data() == null ? null : response.data().elements();
+        });
+    }
+
     /** {@code GET /products/data?symbols[]=...&scope[]=prices&scope[]=stock&country=&currency=}. */
     List<TmeResponses.ProductData> data(List<String> symbols, String country, String currency, Deadline deadline) {
         return batched(symbols, batch -> {

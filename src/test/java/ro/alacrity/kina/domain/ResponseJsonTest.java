@@ -47,6 +47,48 @@ class ResponseJsonTest {
     }
 
     @Test
+    void partCarriesTheMatchGradeNextToTheScore() {
+        Part part = new Part(Distributor.MOUSER, "71-TNPW08055K36BEEA", "Vishay", "TNPW08055K36BEEA",
+                "Thin Film Resistors - SMD 5.36Kohms .1% 25ppm", "Thin Film Resistors - SMD", null, 500, 1, 1,
+                List.of(), null, null, null, Map.of("Technology", "thin film"), Map.of(),
+                Instant.parse("2026-10-05T00:00:00Z"));
+
+        String json = mapper.writeValueAsString(PartResponse.from(part, 4, 0.0, 0.987));
+
+        assertThat(json).startsWith("{\"rank\":4,\"score\":0.0,\"match\":0.99,\"distributor\":\"MOUSER\"")
+                .contains("\"Technology\":\"thin film\"");
+        assertThat(mapper.writeValueAsString(PartResponse.from(part))).contains("\"match\":null");
+    }
+
+    @Test
+    void parsedTechnologyIsSnakeCaseAndOmittedWhenAbsent() {
+        ParsedQuery thin = ParsedQuery.builder().originalText("thin film resistor").normalizedKey("thin film resistor")
+                .family("resistor").technology("thin film").build();
+        assertThat(mapper.writeValueAsString(ParsedQueryResponse.from(thin)))
+                .contains("\"family\":\"resistor\"", "\"technology\":\"thin film\"");
+        ParsedQuery plain = ParsedQuery.builder().originalText("10k").normalizedKey("10k").family("resistor").build();
+        assertThat(mapper.writeValueAsString(ParsedQueryResponse.from(plain))).doesNotContain("technology");
+    }
+
+    @Test
+    void lookupResponseCarriesTheReasonAndTheIdentityOfAnOutOfStockPart() {
+        String outOfStock = mapper.writeValueAsString(PartLookupResponse.outOfStock(Distributor.MOUSER,
+                "ERA6AEB5361V", CacheStatus.MISS, new PartLookupResponse.Identity("667-ERA-6AEB5361V", "Panasonic",
+                        "ERA-6AEB5361V", "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm")));
+        assertThat(outOfStock).contains("\"found\":false", "\"reason\":\"out_of_stock\"", "\"error\":null",
+                "\"identity\":{\"part_number\":\"667-ERA-6AEB5361V\",\"manufacturer\":\"Panasonic\","
+                        + "\"mpn\":\"ERA-6AEB5361V\",\"description\":", "\"part\":null");
+        assertThat(outOfStock).doesNotContain("stock\":", "prices");
+
+        String unknown = mapper.writeValueAsString(PartLookupResponse.notFound(Distributor.TME, "X", CacheStatus.MISS,
+                null));
+        assertThat(unknown).contains("\"reason\":\"not_found\"").doesNotContain("identity");
+        String failed = mapper.writeValueAsString(PartLookupResponse.notFound(Distributor.TME, "X", null,
+                "rate_limited"));
+        assertThat(failed).contains("\"error\":\"rate_limited\"", "\"reason\":null");
+    }
+
+    @Test
     void distributorResultCarriesTheFallbackQuery() {
         DistributorResult result = DistributorResult.builder().distributor(Distributor.TME).totalResults(12).fetched(12)
                 .returned(5).cache(CacheStatus.MISS).fallbackQuery("MOSFET 30V SOT-23").build();

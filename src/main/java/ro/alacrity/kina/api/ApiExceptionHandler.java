@@ -51,6 +51,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problem = problem(HttpStatus.NOT_FOUND, NOT_FOUND, "Part not found", e.getMessage());
         problem.setProperty("distributor", e.distributor());
         problem.setProperty("part_number", e.partNumber());
+        problem.setProperty("reason", e.reason());
+        if (e.identity() != null) {
+            problem.setProperty("identity", e.identity());
+        }
         return handleExceptionInternal(e, problem, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
 

@@ -81,6 +81,31 @@ class RankingServiceTest {
     }
 
     @Test
+    void everyRankedPartCarriesItsAbsoluteMatchGrade() {
+        Part exact1 = mlcc(Distributor.MOUSER, "A", "Capacitor: ceramic; 10uF; 25V; X7R; SMD; 0805", 5000, "0.10");
+        Part exact2 = mlcc(Distributor.MOUSER, "B", "Capacitor: ceramic; 10uF; 25V; X7R; SMD; 0805", 10, "0.20");
+        Part wrong = mlcc(Distributor.MOUSER, "C", "Capacitor: ceramic; 1uF; 25V; X7R; SMD; 0805", 100, "0.10");
+        ParsedQuery q = parser.parse("10uF 25V X7R 0805");
+        FakeRanker ranker = new FakeRanker();
+        ranker.scores.put(exact1.key(), 3.0);
+        ranker.scores.put(exact2.key(), 1.0);
+        ranker.scores.put(wrong.key(), 2.0);
+
+        for (RankingService.RankedResults results : List.of(
+                service(ranker).rank(q, fetched(Distributor.MOUSER, exact1, exact2, wrong), null),
+                service(ranker, "kina.ranking.cross-encoder.enabled", "false")
+                        .rank(q, fetched(Distributor.MOUSER, exact1, exact2, wrong), null))) {
+            Map<String, RankingService.RankedPart> byNumber = new LinkedHashMap<>();
+            results.byDistributor().get(Distributor.MOUSER)
+                    .forEach(r -> byNumber.put(r.part().distributorPartNumber(), r));
+            // the scores are relative (the worse exact match may be far below 1); the match grade is not
+            assertThat(byNumber.get("A").match()).isEqualTo(1.0);
+            assertThat(byNumber.get("B").match()).isEqualTo(1.0);
+            assertThat(byNumber.get("C").match()).isLessThan(0.5);
+        }
+    }
+
+    @Test
     void blendsRankNormalisedDeterministicAndCrossEncoderScoresFiftyFifty() {
         ParsedQuery q = parser.parse("10uF X7R 0805");
         Part exact = mlcc(Distributor.MOUSER, "EXACT", "10uF 25V X7R 0805", 1000, "0.10");

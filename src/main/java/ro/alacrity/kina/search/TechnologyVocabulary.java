@@ -1,0 +1,251 @@
+package ro.alacrity.kina.search;
+
+import lombok.experimental.UtilityClass;
+import ro.alacrity.kina.domain.Distributor;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Construction technology of passives (DESIGN.md 3.4 "Technology"), shared by {@link QueryParser},
+ * {@link ParametricExtractor}, {@link DeterministicRanker} and {@link DistributorPhraser}. Only applies to the families
+ * resistor, capacitor and inductor, where the words are unambiguous. Stateless and thread-safe.
+ *
+ * <p>Wording mined on 2026-10-05: JLCPCB descriptions ({@code Thin Film Resistor}, {@code Thick Film Resistor},
+ * {@code Metal Film Resistor}, {@code Carbon Film Resistor}, {@code Metal foil resistor}, {@code Current Sense Resistor},
+ * {@code Metallized Polyester}, {@code Polyethylene Terephthalate (PET)}, {@code Metallized PPS},
+ * {@code Polarized Polymer}, {@code Multilayer inductor}, {@code Wire-wound inductor}) and second categories
+ * ({@code Tantalum Capacitors}, {@code Film Capacitors}, {@code Polypropylene Film Capacitors (CBB)},
+ * {@code Multilayer Ceramic Capacitors MLCC - SMD/SMT}, {@code Aluminum Electrolytic Capacitors - SMD},
+ * {@code Polymer Aluminum Capacitors}, {@code Supercapacitors}); TME parameters {@code Type of resistor} ({@code thin
+ * film}, {@code thick film}, {@code metal film}, {@code carbon film}, {@code metal oxide}, {@code wire-wound},
+ * {@code metal strip}), {@code Kind of resistor} ({@code current shunt, sensing}), {@code Type of capacitor}
+ * ({@code ceramic}, {@code tantalum}, {@code tantalum-polymer}, {@code polymer}, {@code electrolytic},
+ * {@code polypropylene}, {@code polyester}, {@code supercapacitor}), {@code Kind of capacitor} ({@code MLCC}),
+ * {@code Type of inductor} ({@code wire}, {@code multilayer}, {@code thin film}); Mouser categories
+ * ({@code Thin Film Resistors - SMD}, {@code Wirewound Resistors - Through Hole}, {@code Tantalum Capacitors - Solid SMD},
+ * {@code Tantalum Capacitors - Polymer}, {@code Aluminium Organic Polymer Capacitors}, {@code Film Capacitors}).
+ *
+ * <p>"Ferrite" is not a technology here: the word names the ferrite-bead family in KINA.
+ */
+@UtilityClass
+public class TechnologyVocabulary {
+
+    // resistors
+    public static final String THIN_FILM = "thin film";
+    public static final String THICK_FILM = "thick film";
+    public static final String METAL_FILM = "metal film";
+    public static final String CARBON_FILM = "carbon film";
+    public static final String CARBON_COMPOSITION = "carbon composition";
+    public static final String METAL_OXIDE = "metal oxide";
+    public static final String WIREWOUND = "wirewound";
+    public static final String METAL_FOIL = "metal foil";
+    public static final String METAL_STRIP = "metal strip";
+    public static final String CURRENT_SENSE = "current sense";
+    // capacitors
+    public static final String CERAMIC = "ceramic";
+    public static final String TANTALUM = "tantalum";
+    public static final String TANTALUM_POLYMER = "tantalum polymer";
+    public static final String POLYMER = "polymer";
+    public static final String ALUMINIUM_ELECTROLYTIC = "aluminium electrolytic";
+    public static final String FILM = "film";
+    public static final String POLYPROPYLENE = "polypropylene";
+    public static final String POLYESTER = "polyester";
+    public static final String PPS = "PPS";
+    public static final String SUPERCAPACITOR = "supercapacitor";
+    // inductors
+    public static final String MULTILAYER = "multilayer";
+
+    /** A recognised technology mention: canonical value and the span in the searched text. */
+    public record Match(String technology, int start, int end) {
+    }
+
+    private record Rule(Pattern pattern, String technology) {
+    }
+
+    private static Rule rule(String regex, String technology) {
+        return new Rule(Pattern.compile("(?iu)(?<![\\p{L}\\d])(?:" + regex + ")(?![\\p{L}\\d])"), technology);
+    }
+
+    /** Resistor rules, most specific first. */
+    private static final List<Rule> RESISTOR = List.of(
+            rule("thin[- ]?films?", THIN_FILM),
+            rule("thick[- ]?films?", THICK_FILM),
+            rule("metal[- ]?films?", METAL_FILM),
+            rule("carbon[- ]?films?", CARBON_FILM),
+            rule("carbon[- ]composition", CARBON_COMPOSITION),
+            rule("metal[- ]?oxide", METAL_OXIDE),
+            rule("metal[- ]?foil|bulk metal foil", METAL_FOIL),
+            rule("metal[- ]?strip", METAL_STRIP),
+            rule("wire[- ]?wound", WIREWOUND),
+            rule("current[- ]?sens(?:e|ing)|current shunt|shunt", CURRENT_SENSE));
+
+    /** Capacitor rules, most specific first ("tantalum polymer" before "polymer" and "tantalum"). */
+    private static final List<Rule> CAPACITOR = List.of(
+            rule("tantalum[- ]polymer|polymer[- ]tantalum|tantalum capacitors?\\s*-\\s*polymer", TANTALUM_POLYMER),
+            rule("polymer", POLYMER),
+            rule("tantalum", TANTALUM),
+            rule("super[- ]?capacitors?|ultra[- ]?capacitors?|supercaps?|edlc", SUPERCAPACITOR),
+            rule("alumin(?:i)?um electrolytic|electrolytic", ALUMINIUM_ELECTROLYTIC),
+            rule("polypropylene|mkp|cbb", POLYPROPYLENE),
+            rule("polyester|polyethylene terephthalate|pet|mylar|mkt", POLYESTER),
+            rule("pps|polyphenylene sulfide", PPS),
+            rule("film", FILM),
+            rule("multi[- ]?layer ceramic|ceramic|mlcc", CERAMIC));
+
+    /** Inductor rules. */
+    private static final List<Rule> INDUCTOR = List.of(
+            rule("thin[- ]?film", THIN_FILM),
+            rule("wire[- ]?wound", WIREWOUND),
+            rule("multi[- ]?layer", MULTILAYER));
+
+    private static final Set<String> FILM_KINDS = Set.of(POLYPROPYLENE, POLYESTER, PPS);
+    private static final Set<String> SENSE_CONSTRUCTIONS = Set.of(METAL_STRIP, METAL_FOIL);
+
+    /** The rules of a family, empty for families without technologies. */
+    private static List<Rule> rules(String family) {
+        if (family == null) {
+            return List.of();
+        }
+        return switch (family) {
+            case "resistor" -> RESISTOR;
+            case "capacitor" -> CAPACITOR;
+            case "inductor" -> INDUCTOR;
+            default -> List.of();
+        };
+    }
+
+    /** True when {@code family} has a technology vocabulary (resistor, capacitor, inductor). */
+    public static boolean applies(String family) {
+        return !rules(family).isEmpty();
+    }
+
+    /**
+     * The technology a text names for {@code family}, or null. When the text names several, a construction
+     * ({@code metal strip}, {@code thick film}...) wins over the application word {@code current sense}; otherwise the
+     * earliest mention wins.
+     */
+    public static Match find(String text, String family) {
+        List<Rule> rules = rules(family);
+        if (text == null || text.isBlank() || rules.isEmpty()) {
+            return null;
+        }
+        Match best = null;
+        Match sense = null;
+        int[] taken = new int[text.length() + 1];
+        for (Rule r : rules) {
+            Matcher m = r.pattern().matcher(text);
+            while (m.find()) {
+                if (overlaps(taken, m.start(), m.end())) {
+                    continue;   // "thin film" already consumed "film"
+                }
+                mark(taken, m.start(), m.end());
+                Match match = new Match(r.technology(), m.start(), m.end());
+                if (CURRENT_SENSE.equals(r.technology())) {
+                    if (sense == null || match.start() < sense.start()) {
+                        sense = match;
+                    }
+                } else if (best == null || match.start() < best.start()) {
+                    best = match;
+                }
+            }
+        }
+        return best != null ? best : sense;
+    }
+
+    /** The technology of a text, or null (see {@link #find}). */
+    public static String of(String text, String family) {
+        Match m = find(text, family);
+        return m == null ? null : m.technology();
+    }
+
+    /**
+     * The technology of a distributor parameter value (TME {@code Type of resistor}, {@code Type of inductor},
+     * {@code Kind of capacitor}...). Also accepts TME's bare {@code wire} ({@code Type of inductor: wire}).
+     */
+    public static String ofAttribute(String value, String family) {
+        if (value == null) {
+            return null;
+        }
+        if (("inductor".equals(family) || "resistor".equals(family))
+                && value.strip().toLowerCase(Locale.ROOT).equals("wire")) {
+            return WIREWOUND;
+        }
+        return of(value, family);
+    }
+
+    private static boolean overlaps(int[] taken, int start, int end) {
+        for (int i = start; i < end; i++) {
+            if (taken[i] != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void mark(int[] taken, int start, int end) {
+        for (int i = start; i < end; i++) {
+            taken[i] = 1;
+        }
+    }
+
+    /**
+     * Compares a requested technology with a part's: 1 = same (or compatible: a {@code film} request accepts
+     * polypropylene/polyester/PPS, a {@code tantalum} or {@code polymer} request accepts tantalum polymer, a
+     * {@code current sense} request accepts metal strip and metal foil), -1 = a different known technology, 0 = unknown
+     * on either side or not comparable (a polypropylene request against a part that only says "film"; a current-sense
+     * request against a thick-film part, which may well be a sense resistor).
+     */
+    public static int compare(String wanted, String actual) {
+        if (wanted == null || actual == null) {
+            return 0;
+        }
+        if (wanted.equals(actual)) {
+            return 1;
+        }
+        if (FILM.equals(wanted) && FILM_KINDS.contains(actual)) {
+            return 1;
+        }
+        if (FILM.equals(actual) && FILM_KINDS.contains(wanted)) {
+            return 0;
+        }
+        if (TANTALUM_POLYMER.equals(actual) && (TANTALUM.equals(wanted) || POLYMER.equals(wanted))) {
+            return 1;
+        }
+        if (TANTALUM_POLYMER.equals(wanted) && (TANTALUM.equals(actual) || POLYMER.equals(actual))) {
+            return 0;
+        }
+        if (CURRENT_SENSE.equals(wanted)) {
+            return SENSE_CONSTRUCTIONS.contains(actual) ? 1 : 0;
+        }
+        if (CURRENT_SENSE.equals(actual)) {
+            return 0;
+        }
+        return -1;
+    }
+
+    /** Distributor spellings that differ from the canonical name and help that distributor's search. */
+    private static final Map<Distributor, Map<String, String>> SPELLINGS = Map.of(
+            // JLCPCB: quoted phrases keep the words adjacent (FTS5 phrase); categories carry the capacitor kinds
+            Distributor.LCSC, Map.ofEntries(
+                    Map.entry(THIN_FILM, "\"Thin Film\""), Map.entry(THICK_FILM, "\"Thick Film\""),
+                    Map.entry(METAL_FILM, "\"Metal Film\""), Map.entry(CARBON_FILM, "\"Carbon Film\""),
+                    Map.entry(METAL_OXIDE, "\"Metal Oxide\""), Map.entry(METAL_FOIL, "\"Metal Foil\""),
+                    Map.entry(CURRENT_SENSE, "\"Current Sense\""), Map.entry(ALUMINIUM_ELECTROLYTIC,
+                            "\"Aluminum Electrolytic\"")),
+            // TME (verified live 2026-10-05): "wirewound resistor 5W" finds the "wire-wound" resistors, "wire-wound
+            // resistor 5W" needs the fallback; "aluminium electrolytic 100uF" finds nothing, TME says "electrolytic"
+            Distributor.TME, Map.of(WIREWOUND, "wirewound", ALUMINIUM_ELECTROLYTIC, "electrolytic"),
+            // Mouser categories: "Wirewound Resistors", "Thin Film Resistors", "Thick Film Resistors"
+            Distributor.MOUSER, Map.of(WIREWOUND, "wirewound", THIN_FILM, "thin film", THICK_FILM, "thick film"));
+
+    /** The distributor's spelling of a technology, or null when it has none of its own. */
+    public static String spelling(Distributor distributor, String technology) {
+        Map<String, String> spellings = SPELLINGS.get(distributor);
+        return spellings == null || technology == null ? null : spellings.get(technology);
+    }
+}

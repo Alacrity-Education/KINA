@@ -1,9 +1,11 @@
 package ro.alacrity.kina.distributor.lcsc;
 
 import org.springframework.stereotype.Component;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 
@@ -65,12 +67,39 @@ public class LcscClient implements DistributorClient {
 
     @Override
     public Optional<Part> getPart(String distributorPartNumber) {
+        return lookup(distributorPartNumber, Deadline.immediate()).asOptional();
+    }
+
+    /**
+     * By LCSC number ({@code "LCSC Part"}); on a miss by manufacturer part number ({@link JlcpcbSqliteSearch#findByMpn},
+     * compared with letters and digits only), preferring the row with the most stock. A row with {@code Stock} 0 is
+     * {@code OUT_OF_STOCK}.
+     */
+    @Override
+    public PartLookupResult lookup(String partNumber, Deadline deadline) {
         requireDatabase();
+        if (partNumber == null || partNumber.isBlank()) {
+            return PartLookupResult.notFound();
+        }
         try {
-            return search.findByLcsc(distributorPartNumber).flatMap(row -> LcscPartMapper.map(row, clock.instant()));
+            Optional<JlcpcbRow> row = search.findByLcsc(partNumber);
+            if (row.isEmpty()) {
+                row = search.findByMpn(partNumber).stream().findFirst();
+            }
+            if (row.isEmpty()) {
+                return PartLookupResult.notFound();
+            }
+            JlcpcbRow r = row.get();
+            return LcscPartMapper.map(r, clock.instant()).map(PartLookupResult::found)
+                    .orElseGet(() -> PartLookupResult.outOfStock(new PartLookupResult.Identity(r.lcscPart(),
+                            blankToNull(r.manufacturer()), blankToNull(r.mfrPart()), blankToNull(r.description()))));
         } catch (SQLException | IllegalStateException e) {
             throw failure(e);
         }
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s.strip();
     }
 
     private void requireDatabase() {

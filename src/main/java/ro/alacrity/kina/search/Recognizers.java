@@ -18,14 +18,15 @@ import java.util.regex.Pattern;
 
 /**
  * Text recognisers shared by {@link QueryParser} and {@link ParametricExtractor} (DESIGN.md section 3.4): component
- * families, SI values (incl. RKM notation), tolerance, dielectric, packages and mounting. Stateless and thread-safe.
+ * families, SI values (incl. RKM notation), tolerance, dielectric, packages, mounting and the passive technology
+ * ({@link TechnologyVocabulary}). Stateless and thread-safe.
  */
 @UtilityClass
 class Recognizers {
 
     /** Analysis result of one free text. Values are keyed by the {@link ParsedQuery} kind constants. */
     record Analysis(String family, boolean familyExplicit, Map<String, Value> values, String dielectric,
-                    String packageName, String mounting, List<String> keywords) {
+                    String packageName, String mounting, List<String> keywords, String technology) {
     }
 
     /** A numeric value in SI base units (tolerance: percent) with its compact display form. */
@@ -377,11 +378,12 @@ class Recognizers {
     private static final Pattern P_RKM = Pattern.compile("^(\\d{1,3})([pnuPNUkKMRr])(\\d{1,3})(f|h|ohms?)?$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern P_R_LEADING = Pattern.compile("^[rR](\\d{1,3})$");
-    private static final Pattern P_BARE_PREFIX = Pattern.compile("^(\\d+(?:\\.\\d+)?)(meg|[kKMnpu])$");
+    private static final Pattern P_BARE_PREFIX = Pattern.compile("^(\\d+(?:\\.\\d+)?|\\.\\d+)(meg|[kKMnpu])$");
     private static final Pattern P_FRACTION_POWER = Pattern.compile("^(\\d{1,2})/(\\d{1,3})[wW]$");
-    private static final Pattern P_TOLERANCE = Pattern.compile("^±?(\\d+(?:\\.\\d+)?)%$");
+    /** {@code 5%}, {@code ±0.1%}, and the leading-dot form Mouser writes ({@code .1%}, {@code ±.5%}). */
+    private static final Pattern P_TOLERANCE = Pattern.compile("^±?(\\d+(?:\\.\\d+)?|\\.\\d+)%$");
 
-    /** Parses a tolerance token ("±5%", "1%") to percent, or null. */
+    /** Parses a tolerance token ("±5%", "1%", ".1%") to percent, or null. */
     static Double tolerance(String token) {
         Matcher m = P_TOLERANCE.matcher(token);
         return m.matches() ? Double.parseDouble(m.group(1)) : null;
@@ -686,6 +688,23 @@ class Recognizers {
             }
         }
 
+        String technology = null;
+        TechnologyVocabulary.Match tech = text == null ? null : TechnologyVocabulary.find(prepare(text), family);
+        if (tech != null && FAMILY_WORDS.containsKey(prepare(text).substring(tech.start(), tech.end())
+                .toLowerCase(Locale.ROOT))) {
+            tech = null;   // "MLCC" alone is the family word (scored lexically), not a technology request
+        }
+        if (tech != null) {
+            technology = tech.technology();
+            // the technology words are a typed attribute now, not free text ("mlcc" stays: it is a family word)
+            for (String word : tokenize(prepare(text).substring(tech.start(), tech.end()))) {
+                String w = word.toLowerCase(Locale.ROOT);
+                if (!FAMILY_WORDS.containsKey(w)) {
+                    keywords.remove(w);
+                }
+            }
+        }
+
         Map<String, Value> ordered = new LinkedHashMap<>();
         for (String kind : VALUE_ORDER) {
             Value v = values.get(kind);
@@ -694,7 +713,8 @@ class Recognizers {
             }
         }
         List<String> normalizedKeywords = keywords.stream().map(Recognizers::normalizeKey).distinct().toList();
-        return new Analysis(family, explicit, ordered, dielectric, packageName, mounting, normalizedKeywords);
+        return new Analysis(family, explicit, ordered, dielectric, packageName, mounting, normalizedKeywords,
+                technology);
     }
 
     /** First value of the given kind found in a short text (e.g. an attribute value), or null. */

@@ -43,4 +43,14 @@ public interface DistributorClient {
     default Optional<Part> getPart(String distributorPartNumber, Deadline deadline) throws DistributorException {
         return getPart(distributorPartNumber);
     }
+
+    /**
+     * Looks up one part by distributor part number (or, where the distributor allows a cheap retry, by manufacturer part
+     * number compared with {@link PartLookupResult#normalize}), telling "listed but no ships-now stock"
+     * ({@link PartLookupResult.Status#OUT_OF_STOCK}) apart from "unknown" ({@link PartLookupResult.Status#NOT_FOUND}).
+     * The default only knows {@link #getPart(String, Deadline)} and reports every miss as not found.
+     */
+    default PartLookupResult lookup(String partNumber, Deadline deadline) throws DistributorException {
+        return PartLookupResult.of(getPart(partNumber, deadline));
+    }
 }

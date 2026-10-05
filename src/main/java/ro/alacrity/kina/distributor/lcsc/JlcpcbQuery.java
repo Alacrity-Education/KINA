@@ -16,7 +16,8 @@ import java.util.regex.Pattern;
  * <p>Normalisation (kept deliberately simple; the JLCPCB descriptions consistently write {@code 10kΩ}, {@code 4.7uF},
  * {@code ±5%} and never "ohm" or "µ"):
  * <ul>
- *   <li>Unicode NFKC, {@code µ}/{@code μ} -&gt; {@code u}, {@code +/-} and {@code ±} prefixes dropped ({@code 5%}).</li>
+ *   <li>Unicode NFKC, {@code µ}/{@code μ} -&gt; {@code u}, {@code +/-} and {@code ±} prefixes dropped ({@code 5%}); a
+ *       leading-dot decimal gets its zero ({@code .1%} -&gt; {@code 0.1%}).</li>
  *   <li>Ohm spellings become {@code Ω}: {@code 10kohm}, {@code 10k ohm}, {@code 10kΩ}, {@code 10kR} -&gt; {@code 10kΩ};
  *       RKM {@code 10R} -&gt; {@code 10Ω}, {@code 2R2} -&gt; {@code 2.2Ω}. A bare {@code 10k} stays {@code 10k}
  *       (matches {@code 10kΩ} as a substring) because it may also mean 10 kHz etc.</li>
@@ -356,6 +357,9 @@ public record JlcpcbQuery(List<Term> terms) {
         String t = token;
         if (t.startsWith("±")) {
             t = t.substring(1);
+        }
+        if (t.length() > 1 && t.charAt(0) == '.' && Character.isDigit(t.charAt(1))) {
+            t = "0" + t;   // Mouser-style ".1%" is JLCPCB's "0.1%"
         }
         if (t.isEmpty()) {
             return null;

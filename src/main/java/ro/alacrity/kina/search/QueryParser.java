@@ -10,8 +10,9 @@ import java.util.Map;
  * Parses a free-text component query into a {@link ParsedQuery} (DESIGN.md section 3.4): family keywords, SI values
  * (incl. RKM notation such as {@code 4k7}, {@code 4u7}, {@code 10R}, {@code 2R2}), tolerance, dielectric, package
  * (imperial chip codes; metric chip codes only when the family is a passive; IC/discrete packages by pattern),
- * mounting, connector attributes ({@link ConnectorRecognizer}: type, gender, positions, rows, pitch, orientation) and
- * the remaining free-text keywords. Stateless and thread-safe.
+ * mounting, connector attributes ({@link ConnectorRecognizer}: type, gender, positions, rows, pitch, orientation), the
+ * technology of a passive ({@link TechnologyVocabulary}: thin film, tantalum, multilayer...) and the remaining free-text
+ * keywords. Stateless and thread-safe.
  *
  * <p>When no family keyword is present the family is inferred from the value kind (capacitance or dielectric -&gt;
  * capacitor, resistance -&gt; resistor, inductance -&gt; inductor).
@@ -44,6 +45,7 @@ public class QueryParser {
                 .mounting(analysis.mounting())
                 .keywords(analysis.keywords())
                 .connector(connector)
+                .technology(connector != null ? null : analysis.technology())
                 .build();
     }
 

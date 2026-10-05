@@ -101,6 +101,14 @@ public interface DistributorClient {
      *  and their deadline-less methods use Deadline.immediate() (rate limits fail fast). */
     default DistributorSearchPage search(String query, int offset, int limit, Deadline deadline) { ... }
     default Optional<Part> getPart(String distributorPartNumber, Deadline deadline) { ... }
+    /** get_part: FOUND (in-stock Part), OUT_OF_STOCK (listed without ships-now stock: identity only, never a Part)
+     *  or NOT_FOUND. The default wraps getPart (every miss is NOT_FOUND); Mouser, TME and LCSC override it. */
+    default PartLookupResult lookup(String partNumber, Deadline deadline) { ... }
+}
+
+public record PartLookupResult(Status status, Part part, Identity identity) {
+    public enum Status { FOUND, OUT_OF_STOCK, NOT_FOUND }
+    public record Identity(String partNumber, String manufacturer, String mpn, String description) {}
 }
 
 public record DistributorSearchPage(List<Part> parts, int totalResults, boolean hasMore) {}
@@ -193,9 +201,16 @@ budget, but never beyond the request deadline `kina.search.max-request-duration`
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
 
-**Distributor phrasing** (`search.DistributorPhraser`, connector queries only). A query that `QueryParser` recognises as
-a connector request (section 3.4) is not sent verbatim: each distributor gets the wording its search understands, as
-the primary query of step 2 (and of a `PARTIAL` extension). Every other query is sent as written. The cache key stays
+**Distributor phrasing** (`search.DistributorPhraser`). A query that `QueryParser` recognises as a connector request
+(section 3.4) is not sent verbatim: each distributor gets the wording its search understands, as the primary query of
+step 2 (and of a `PARTIAL` extension). A passive request that names a technology (section 3.4) keeps the user's text
+but gets the technology words in the distributor's spelling where it has its own: LCSC a quoted JLCPCB phrase
+(`"Thin Film"`, `"Thick Film"`, `"Metal Film"`, `"Carbon Film"`, `"Metal Oxide"`, `"Metal Foil"`, `"Current Sense"`,
+`"Aluminum Electrolytic"`; FTS5 phrase, a free-text term for the relaxation), TME `wirewound` and `electrolytic`
+(verified live: `wirewound resistor 5W` finds TME's "wire-wound" resistors, `wire-wound resistor 5W` needed the
+fallback, `aluminium electrolytic 100uF` found nothing), Mouser `wirewound`, `thin film`, `thick film` (its category
+words). E.g. `Thin film resistor, 5.36k 0805 0.1%` -> LCSC `"Thin Film" resistor, 5.36k 0805 0.1%`, TME and Mouser
+verbatim. Every other query is sent as written. The cache key stays
 the user's normalised query; the phrase is a pure function of the parsed query, so a cache hit reports it again.
 
 | Distributor | Rules | Example for `90 degree dupont style female pin header 90 degree THT pins 6 position` |
@@ -290,7 +305,32 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
   metric case codes (`2012` etc. only when a family keyword says MLCC/resistor), mounting (`SMD SMT THT through-hole`,
   JLCPCB `插件` = THT, `卧贴` = SMD)
 - connector attributes (`search.ConnectorRecognizer`, `ParsedQuery.Connector`, see below)
+- the technology of a passive (`search.TechnologyVocabulary`, `ParsedQuery.technology`, see below)
 - remaining tokens are free text keywords.
+
+Tolerances and values also accept a leading-dot decimal (`.1%`, `±.5%`, `.1W`, `.5k`): Mouser writes
+`Thin Film Resistors - SMD 5.36Kohms .1% 25ppm`. `JlcpcbQuery` adds the zero (`.1%` -> `0.1%`, JLCPCB's wording).
+
+**Technology** (`search.TechnologyVocabulary`, resistors, capacitors and inductors only; the family must be known, from
+a family word or a value). Canonical values and the wording recognised in queries and parts (mined 2026-10-05 from the
+JLCPCB database, live TME parameters and Mouser categories):
+
+| Family | Technology | Wording |
+|---|---|---|
+| resistor | `thin film`, `thick film`, `metal film`, `carbon film`, `carbon composition`, `metal oxide` | the words with a space, a hyphen or none (`thin-film`); JLCPCB `Thin Film Resistor`, TME `Type of resistor: thin film`, Mouser `Thin Film Resistors - SMD` |
+| resistor | `wirewound` | `wirewound`, `wire-wound`, `wire wound` (TME `wire-wound`, Mouser `Wirewound Resistors`) |
+| resistor | `metal foil`, `metal strip` | `metal foil`, `foil`; `metal strip` (TME) |
+| resistor | `current sense` | `current sense`, `current sensing`, `current shunt`, `shunt` (JLCPCB `Current Sense Resistor`, TME `Kind of resistor: current shunt, sensing`, Mouser `Current Sense Resistors`). An application rather than a construction: a construction named anywhere in the same part wins |
+| capacitor | `ceramic` | `ceramic`, `multilayer ceramic`, `MLCC` (parts only: in a query `MLCC` is the family word, scored lexically); JLCPCB category `Multilayer Ceramic Capacitors MLCC`, TME `Type of capacitor: ceramic` |
+| capacitor | `tantalum`, `tantalum polymer` | `tantalum`; `tantalum-polymer`, `polymer tantalum`, Mouser `Tantalum Capacitors - Polymer` |
+| capacitor | `polymer` | `polymer` (JLCPCB `Polarized Polymer`, `Polymer Aluminum Capacitors`, Mouser `Aluminium Organic Polymer Capacitors`) |
+| capacitor | `aluminium electrolytic` | `aluminium electrolytic`, `aluminum electrolytic`, `electrolytic` (TME `Capacitor: electrolytic`) |
+| capacitor | `film`, `polypropylene`, `polyester`, `PPS` | `film`; `polypropylene`, `MKP`, `CBB`; `polyester`, `PET`, `polyethylene terephthalate`, `mylar`, `MKT`; `PPS` |
+| capacitor | `supercapacitor` | `supercapacitor`, `super capacitor`, `ultracapacitor`, `supercap`, `EDLC` |
+| inductor | `wirewound`, `multilayer`, `thin film` | `wire-wound`, TME `Type of inductor: wire`; `multilayer`, `multi-layer`; `thin film` |
+
+"Ferrite" is not a technology: the word names the ferrite-bead family. The recognised words leave the free-text
+keywords. TCR is deliberately not parsed.
 
 **Connectors.** A query is a connector request (`ParsedQuery.isConnector()`, family `connector`) when it contains
 connector words (a type below, `connector`, `header`, `socket`, `plug`, `jack`, `receptacle`, `dupont`, `JST`...) and
@@ -339,8 +379,26 @@ values normalised to base units as `double`), and the free-text tokens.
 `ParametricExtractor.extract(Part) -> Map<String,String>` applies the same recognisers to the
 part's description and attribute values, so parts from all three distributors expose comparable
 `Capacitance`, `Resistance`, `Inductance`, `Voltage`, `Current`, `Power`, `Tolerance`, `Dielectric`,
-`Package`, `Mounting` keys. Distributor attributes (TME parameters, Mouser ProductAttributes) take
-precedence over description parsing.
+`Package`, `Mounting` keys, and `Technology` for resistors, capacitors and inductors. Distributor attributes (TME
+parameters, Mouser ProductAttributes) take precedence over description parsing. `Technology` comes from the TME
+parameters `Type of resistor`/`Type of capacitor`/`Type of inductor`/`Kind of capacitor`/`Kind of resistor` (or a
+`Technology`/`Composition`/`Construction` attribute), then the description, then the category (JLCPCB capacitors say
+it only in the category: `Capacitors / Tantalum Capacitors`).
+
+**Package from the part number.** A resistor, capacitor, inductor or ferrite part whose package field, attributes and
+description name no package (Mouser keyword results often carry none: `Thin Film Resistors - SMD 5.36Kohms .1% 25ppm`)
+gets `Package` from its MPN when the MPN starts with a known series followed by an imperial chip code
+(`0201 0402 0603 0805 1206 1210 1812 2010 2512`): Vishay `CRCW`, `TNPW`, `TNPU`, `RCP`, `RCS`, `RCG`, `RCWE`, `MCT`,
+`MCS`, `MCU`, `MCA`, `PAT`, `PLT`, `PLTT`, `PTN`, `WSL`, `VJ`; Yageo `RC`, `RT`, `AC`, `AT`, `AA`, `AF`, `AR`, `PE`,
+`PT`, `SR`, `RE`, `RL`, `RV`, `CC`, `CQ`; Stackpole `RNCF`, `RMCF`, `RMCS`, `RMCP`, `RMEF`, `RGC`, `RNCS`, `CSR`; TE
+`CPF`, `CRG`, `CRGH`, `CRGV`, `CRGCQ`; KEMET `C` (`C0805C106K...`, only when the manufacturer is KEMET). TE `RN73`
+size letters after the TCR letter: `1E` 0402, `1J` 0603, `2A` 0805, `2B` 1206, `2E` 1210, `2H` 2010, `3A` 2512 (TE
+datasheet 1773270, "How To Order"). Guard rails: every listed prefix agreed with the JLCPCB `Package` column on all of
+its chip rows (over 450 000 rows, 2026-10-05), while a generic "letters + code" rule was wrong on 1.4 % of rows;
+manufacturers that put **metric** codes after a letter prefix are excluded (Samsung `RC0402...` = 01005, Susumu
+`RT0603...` = 0201, TDK `C0603...`/`MLG0603...`, Taiyo Yuden, Sunlord, Murata); Panasonic `ERJ6`/`ERA-6`, Samsung `CL21`
+and AVX `08055C...` are not read. A package the distributor states is never overridden, even when it is not recognised
+(`-` counts as not stated).
 
 Connector parts additionally get `Family=connector`, `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`
 (`2.54mm`) and `Orientation` (`right angle`/`vertical`). A part is a connector when its category names one
@@ -381,7 +439,8 @@ with the product kind (`Adapter;`, `Cable;`, `Hub USB;`, `Power supply`).
 |---|---|---|
 | primary value (C/R/L) | 0.30 | exact match within 1% -> full; different -> -0.30 penalty; unknown -> 0 |
 | package | 0.20 | exact match (treat `0805` == `2012` metric); mismatch -> -0.20 |
-| dielectric / technology | 0.15 | exact; `C0G` == `NP0`; mismatch -> -0.15 |
+| dielectric | 0.15 | exact; `C0G` == `NP0`; mismatch -> -0.15 |
+| technology (`W_TECHNOLOGY`) | 0.15 | the query names a technology: same -> +0.15; a different known technology -> -0.15; unknown -> 0. Compatible (+): a `film` request and a polypropylene/polyester/PPS part, a `tantalum` or `polymer` request and a tantalum polymer part, a `current sense` request and a metal strip/metal foil part. Neutral (0): a polypropylene request and a part that only says `film`, a tantalum polymer request and a `tantalum` part, a `current sense` request and any other construction |
 | voltage / current / power rating | 0.10 | part rating >= requested -> full; lower -> -0.10 |
 | tolerance | 0.10 | part tolerance <= requested -> full; looser -> -0.10 |
 | family keyword present in description/category | 0.05 | |
@@ -389,6 +448,15 @@ with the product kind (`Adapter;`, `Cable;`, `Hub USB;`, `Power supply`).
 | tie-break bonuses | up to 0.05 | log10(stock) scaled, has price, JLCPCB "Basic"/"Preferred" library |
 
 Clamp to [0,1].
+
+**Match grade** (`DeterministicRanker.assess`, the `match` field of every search result part): the signals the part
+earned (tie-break excluded) divided by what a part matching every stated parameter earns: the weights of the stated
+signals (primary value, package, dielectric, technology, ratings, tolerance, family, lexical; for connector and USB
+requests the stated connector attributes), clamped to [0,1] and rounded to 2 decimals in responses. An attribute the
+part does not state earns nothing, so `1.0` means every stated parameter is known and matches. It is computed before
+the blend, is absolute (not rank-normalised) and does not influence the order. For `Thin film resistor, 5.36k 0805
+0.1%` the Mouser parts `TNPW08055K36BEEA` and `RN73C2A5K36BTDF` grade 1.0 (tolerance `.1%`, package from the MPN,
+technology from the category).
 
 For connector queries (`ParsedQuery.isConnector()`) the primary value signal is replaced by connector signals
 (`DeterministicRanker.connectorScore`; constants next to the others). Each applies only when both the query and the
@@ -583,7 +651,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 |---|---|---|
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache) | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results}`, 1..20), `distributors`, `bypass_cache` | `{ "results": [SearchResponse...] }` |
-| `get_part` | `distributor` (case-insensitive), `part_number`, `bypass_cache` | `PartLookupResponse` `{found, distributor, part_number, cache, error, part}`; unknown/out-of-stock parts and distributor failures return `found: false` (with `error` for failures) instead of a tool error |
+| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN), `bypass_cache` | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown) or `out_of_stock` (listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, no stock or prices), or with `error` (and `reason` null) when the lookup failed. Out-of-stock parts are never returned as a part and never cached. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
 | `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`. Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
@@ -607,7 +675,7 @@ parameters; descriptions are read by the LLM, keep them precise):
       "rate_limit_waited_ms": 0,
       "distributor_query": null,
       "parts": [
-        {"rank": 1, "score": 0.93, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
+        {"rank": 1, "score": 0.93, "match": 1.0, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
          "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106", "description": "...", "category": "...",
          "package": "0805", "stock": 76689, "min_order_qty": 1, "order_multiple": 1,
          "prices": [{"qty": 1, "unit_price": 1.40, "currency": "EUR"}, {"qty": 10, "unit_price": 0.853, "currency": "EUR"}, {"qty": 50, "unit_price": 0.631, "currency": "EUR"}],
@@ -619,6 +687,11 @@ parameters; descriptions are read by the LLM, keep them precise):
 }
 ```
 
+`score` orders the list: it is the blend of rank-normalised scores (section 3.3), relative to the other candidates, so
+the last of four exact matches can show `0.00`. `match` (0 to 1) says how well the part satisfies the stated parameters
+(section 3.4 "Match grade"; 1.0 = every stated parameter matches); both are on every search result part and null for
+`get_part`. `parsed.technology` is the recognised technology of a passive (omitted when absent); parts carry it as the
+`Technology` attribute.
 `total_results` is what the distributor reported for the query (in-stock where the API can filter),
 `fetched` is how many in-stock parts KINA holds for the query, `returned` is `min(max_results, fetched)`.
 `distributor_query` is the distributor-specific phrase KINA sent instead of the user's text (connector queries,
@@ -637,7 +710,7 @@ Tool parameter names are the Java parameter names (`-parameters`), so the tool m
 |---|---|
 | `GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=` | `SearchResponse` |
 | `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case), returns `{results: [...]}` |
-| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; 404 problem when unknown or not in stock |
+| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; an MPN works as for `get_part`; 404 problem with `reason` `not_found` or `out_of_stock` (then also `identity`) |
 | `GET /api/v1/distributors` | same as `list_distributors` |
 | `GET /actuator/health`, `GET /actuator/info` | public |
 
@@ -927,8 +1000,20 @@ CREATE TABLE jlcpcb_database (
   `{"SearchByKeywordRequest":{"keyword":q,"records":n (<=50),"startingRecord":offset + 1,"searchOptions":"InStock","searchWithYourSignUpLanguage":"false"}}`
   (`startingRecord` is **1-based**, verified live: 1 returns results #1.., 3 returns #3..).
   Response `{"Errors":[...],"SearchResults":{"NumberOfResult":113,"Parts":[...]}}`.
-- Part lookup: `POST {base}/search/partnumber` with `{"SearchByPartRequest":{"mouserPartNumber":pn,"partSearchOptions":"Exact"}}`
-  (verify the option value against the API; fall back to filtering the result by `MouserPartNumber`).
+- Part lookup: `POST {base}/search/partnumber` with `{"SearchByPartRequest":{"mouserPartNumber":pn,"partSearchOptions":"Exact"}}`;
+  the answer is matched by `MouserPartNumber`, then `ManufacturerPartNumber`, both normalised (upper case, letters and
+  digits only). Verified live 2026-10-05: `Exact` and `None` both answer `ERA6AEB5361V` (TME's spelling) with
+  `667-ERA-6AEB5361V` / `ERA-6AEB5361V`, so no keyword retry is needed. A matching part with `AvailabilityInStock` 0 or
+  missing is `OUT_OF_STOCK`; so is a catalogue part Mouser does not sell, answered with `MouserPartNumber` `N/A`
+  (live: `ERA-6ARB5361V`), whose identity then has no part number.
+- Keyword recall for parametric passive requests (tested live 2026-10-05, `searchOptions=InStock`): Mouser's keyword
+  index drops parts whose record does not carry the package token as an indexed attribute. `5.36k 0805`,
+  `5.36Kohm 0805`, `Thin film resistor, 5.36k 0805 0.1%`, `5.36 kOhm 0805 thin film`, `5.36K 0805 thin film resistor`
+  and `resistor 5.36k 0805 0.1% thin film` (4 to 18 results) never returned the in-stock Panasonic `ERA-6AEB5361V`
+  (description `Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm`); only phrases without `0805` did (`5.36Kohm 0.1%`:
+  41 results, every case size), and `5.36k ohm 0805 thin film 0.1%` matched 11 413 loosely related parts. Dropping the
+  package would flood the 50-record window with other sizes for common queries (`4.7k 1% 0603 resistor`), so the phrase
+  is unchanged; such a part is still reachable by `get_part` with its MPN.
 - Part fields observed: `Availability` ("76689 In Stock"), `AvailabilityInStock` ("76689"), `AvailabilityOnOrder` (ignored),
   `FactoryStock` (ignored), `DataSheetUrl`, `Description`, `ImagePath`, `Category`, `LeadTime`, `LifecycleStatus`,
   `Manufacturer`, `ManufacturerPartNumber`, `Min`, `Mult`, `MouserPartNumber`, `ProductAttributes[{AttributeName,AttributeValue}]`,

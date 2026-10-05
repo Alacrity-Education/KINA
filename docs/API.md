@@ -40,7 +40,7 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | Field | Type | Meaning |
 |---|---|---|
 | `query` | string | The query as sent. |
-| `parsed` | object | What KINA understood: `family`, value fields such as `capacitance` or `resistance` (display form, for example `"10uF"`), `dielectric`, `package`, `mounting`, `keywords`, and for connectors `connector` (see [`parsed.connector`](#parsedconnector)). Absent values are omitted. |
+| `parsed` | object | What KINA understood: `family`, value fields such as `capacitance` or `resistance` (display form, for example `"10uF"`), `tolerance` (`.1%` and `0.1%` both work), `dielectric`, `package`, `mounting`, `technology` (resistors, capacitors, inductors: `thin film`, `thick film`, `metal film`, `carbon film`, `metal oxide`, `wirewound`, `metal foil`, `metal strip`, `current sense`; `ceramic`, `tantalum`, `tantalum polymer`, `polymer`, `aluminium electrolytic`, `film`, `polypropylene`, `polyester`, `PPS`, `supercapacitor`; `multilayer`), `keywords`, and for connectors `connector` (see [`parsed.connector`](#parsedconnector)). Absent values are omitted. |
 | `ranking` | string | `blended` (deterministic score blended 50/50 by rank with the in-process cross-encoder) or `fallback` (deterministic order only). |
 | `ranking_note` | string or null | Why the ranking fell back. Always present, null when `ranking` is `blended`. See [Ranking notes](#ranking-notes). |
 | `distributors` | array | One `DistributorResult` per searched distributor. |
@@ -103,7 +103,8 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | Field | Type | Meaning |
 |---|---|---|
 | `rank` | integer or null | 1 is best within the distributor. Null for single-part lookups. |
-| `score` | number or null | 0 to 1. Null for single-part lookups. |
+| `score` | number or null | 0 to 1. Orders the list. It is relative to the other candidates, so the last of several good parts can show 0. Null for single-part lookups. |
+| `match` | number or null | 0 to 1, two decimals. How well the part satisfies the stated parameters: 1.0 means every stated parameter is known and matches; a parameter the distributor does not state counts as not matched. Does not change the order. Null for single-part lookups. |
 | `distributor` | string | `LCSC`, `TME`, `MOUSER`. |
 | `part_number` | string | Distributor part number (LCSC `Cxxxxx`, TME symbol, Mouser number). |
 | `manufacturer` | string | |
@@ -118,7 +119,7 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | `datasheet_url` | string or null | |
 | `photo_url` | string or null | Null when the distributor gives none (LCSC). |
 | `product_url` | string or null | |
-| `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. Connector parts also carry `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`, `Orientation` and `Mounting` when the distributor data allows it. USB connector parts add `UsbType`, `UsbStandard`, `UsbSpeedGbps`, `PinConfiguration`, `ShieldPinsCounted`, `MountingStyle`, `Waterproof` (the IP rating, or `yes`) and `Features` (comma separated). `Positions` stays as the distributor reported it; `PinConfiguration` is the canonical count. |
+| `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. Resistors, capacitors and inductors carry `Technology` (same values as `parsed.technology`) when the distributor data names it. A chip resistor or capacitor without a stated package gets `Package` from a known MPN series (`TNPW0805...`, `RC0805...`, TE `RN73C2A...`). Connector parts also carry `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`, `Orientation` and `Mounting` when the distributor data allows it. USB connector parts add `UsbType`, `UsbStandard`, `UsbSpeedGbps`, `PinConfiguration`, `ShieldPinsCounted`, `MountingStyle`, `Waterproof` (the IP rating, or `yes`) and `Features` (comma separated). `Positions` stays as the distributor reported it; `PinConfiguration` is the canonical count. |
 | `extra` | object | Distributor-specific details (lifecycle, RoHS, library type, lead time, and so on). |
 
 ### Connector queries
@@ -239,7 +240,7 @@ Get one part by distributor part number. The part number is the rest of the path
 curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/parts/lcsc/C15850
 ```
 
-Returns one `PartResponse` (without `rank` and `score`, prices trimmed to 3 brackets). It returns 404 when the distributor does not know the part or has no ships-now stock for it. Lookup failures return 503, 429, 504 or 502 (see below). On a rate limit the call waits and retries for up to 2 minutes; 429 means the limit outlasted that. The response has no `rate_limit_waited_ms`.
+Returns one `PartResponse` (without `rank`, `score` and `match`, prices trimmed to 3 brackets). The part number can also be the manufacturer part number; spelling differences in hyphens and spaces are ignored (`ERA6AEB5361V` finds Mouser `667-ERA-6AEB5361V`). It returns 404 when the part is not available: the problem has `reason` `not_found` (the distributor does not know it) or `out_of_stock` (listed, but no ships-now stock; `identity` then gives `part_number`, `manufacturer`, `mpn` and `description`). Lookup failures return 503, 429, 504 or 502 (see below). On a rate limit the call waits and retries for up to 2 minutes; 429 means the limit outlasted that. The response has no `rate_limit_waited_ms`.
 
 ### `GET /api/v1/distributors`
 
@@ -296,7 +297,7 @@ REST errors are RFC 9457 `application/problem+json`. They never contain stack tr
 | 400 | `urn:kina:problem:validation` | Blank `q`, `max_results` out of range, bad batch body, malformed JSON. Body and parameter validation add `errors: [{"field": "...", "message": "..."}]`. |
 | 400 | `urn:kina:problem:unknown-distributor` | A distributor name other than LCSC, TME, MOUSER. |
 | 401 | `about:blank` | Missing or invalid token (see Authentication). |
-| 404 | `urn:kina:problem:not-found` | Unknown or out-of-stock part. Adds `distributor` and `part_number`. |
+| 404 | `urn:kina:problem:not-found` | Unknown or out-of-stock part. Adds `distributor`, `part_number`, `reason` (`not_found` or `out_of_stock`) and, for `out_of_stock`, `identity`. |
 | 429, 502, 503, 504 | `urn:kina:problem:distributor-error` | Single-part lookup failed: 503 for `not_configured` and `unavailable`, 429 for `rate_limited` (only after the 2-minute retry budget), 504 for `timeout`, 502 for `bad_response`. Adds `distributor` and `error`. |
 | 500 | `urn:kina:problem:internal` | Anything else. |
 
@@ -380,14 +381,14 @@ Returns `{"results": [SearchResponse, ...]}` in request order. An empty or missi
 
 ### `get_part`
 
-Current details of one part by distributor part number (the `part_number` of a search result).
+Current details of one part by distributor part number (the `part_number` of a search result) or by manufacturer part number.
 
 ```json
 {
   "type": "object",
   "properties": {
     "distributor": {"type": "string", "description": "\"LCSC\", \"TME\" or \"MOUSER\" (case-insensitive)."},
-    "part_number": {"type": "string", "description": "Distributor part number (not the manufacturer part number)."},
+    "part_number": {"type": "string", "description": "Distributor part number, or the manufacturer part number."},
     "bypass_cache": {"type": "boolean"}
   },
   "required": ["distributor", "part_number"]
@@ -397,10 +398,17 @@ Current details of one part by distributor part number (the `part_number` of a s
 Returns:
 
 ```json
-{"found": true, "distributor": "LCSC", "part_number": "C15850", "cache": "not_applicable", "error": null, "part": {"...": "PartResponse"}}
+{"found": true, "distributor": "LCSC", "part_number": "C15850", "cache": "not_applicable", "error": null, "reason": null, "part": {"...": "PartResponse"}}
 ```
 
-`found` is false (and `part` null) when the distributor does not know the part, has no ships-now stock, or failed; `error` then carries the failure code. On a rate limit the call waits and retries for up to 2 minutes before it reports `rate_limited`. The response has no waited-time field. `cache` is `hit`, `miss`, `bypassed` or `not_applicable`. An unknown distributor name is a tool error.
+`found` is false (and `part` null) in three cases. `reason: "not_found"`: the distributor does not know the part. `reason: "out_of_stock"`: it lists the part but has no ships-now stock; `identity` names it:
+
+```json
+{"found": false, "distributor": "MOUSER", "part_number": "ERA6AEB5361V", "cache": "miss", "error": null, "reason": "out_of_stock",
+ "identity": {"part_number": "667-ERA-6AEB5361V", "manufacturer": "Panasonic", "mpn": "ERA-6AEB5361V", "description": "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"}, "part": null}
+```
+
+The lookup failed: `error` carries the failure code and `reason` is null. On a rate limit the call waits and retries for up to 2 minutes before it reports `rate_limited`. The response has no waited-time field. `cache` is `hit`, `miss`, `bypassed` or `not_applicable`. An unknown distributor name is a tool error.
 
 ### `list_distributors`
 

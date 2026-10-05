@@ -657,7 +657,7 @@ public class PartSearchService {
             List<PartResponse> parts = new ArrayList<>(returned);
             for (int i = 0; i < returned; i++) {
                 RankedPart rp = rankedParts.get(i);
-                parts.add(PartResponse.from(rp.part(), i + 1, roundScore(rp.score())));
+                parts.add(PartResponse.from(rp.part(), i + 1, roundScore(rp.score()), rp.match()));
             }
             results.add(DistributorResult.builder()
                     .distributor(distributor)

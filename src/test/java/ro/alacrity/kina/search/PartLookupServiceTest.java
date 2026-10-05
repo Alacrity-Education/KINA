@@ -8,6 +8,7 @@ import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
+import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartLookupResponse;
@@ -127,7 +128,33 @@ class PartLookupServiceTest {
         assertThat(response.found()).isFalse();
         assertThat(response.part()).isNull();
         assertThat(response.error()).isNull();
+        assertThat(response.reason()).isEqualTo(PartLookupResponse.NOT_FOUND);
+        assertThat(response.identity()).isNull();
         assertThat(service.getPart(Distributor.TME, "NOPE", false)).isEmpty();
+        verify(cache, never()).upsertAll(anyCollection());
+    }
+
+    @Test
+    void listedWithoutStockIsOutOfStockWithItsIdentityAndNeverCached() {
+        FakeClient mouser = new FakeClient(Distributor.MOUSER) {
+            @Override
+            public PartLookupResult lookup(String partNumber, Deadline deadline) {
+                return PartLookupResult.outOfStock(new PartLookupResult.Identity("667-ERA-6AEB5361V", "Panasonic",
+                        "ERA-6AEB5361V", "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"));
+            }
+        };
+        when(cache.find(any(), any(), any())).thenReturn(Optional.empty());
+        service(mouser);
+
+        PartLookupResponse response = service.lookup(Distributor.MOUSER, "ERA6AEB5361V", false);
+
+        assertThat(response.found()).isFalse();
+        assertThat(response.reason()).isEqualTo(PartLookupResponse.OUT_OF_STOCK);
+        assertThat(response.error()).isNull();
+        assertThat(response.part()).isNull();
+        assertThat(response.identity()).isEqualTo(new PartLookupResponse.Identity("667-ERA-6AEB5361V", "Panasonic",
+                "ERA-6AEB5361V", "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"));
+        assertThat(service.getPart(Distributor.MOUSER, "ERA6AEB5361V", false)).isEmpty();
         verify(cache, never()).upsertAll(anyCollection());
     }
 

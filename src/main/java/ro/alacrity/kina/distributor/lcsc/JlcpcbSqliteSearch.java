@@ -315,6 +315,75 @@ public class JlcpcbSqliteSearch {
         }
     }
 
+    /** Most rows {@link #findByMpn} reads before comparing part numbers. */
+    static final int MPN_CANDIDATES = 50;
+
+    /**
+     * Rows whose {@code "MFR.Part"} equals {@code mpn} after removing everything but letters and digits (case
+     * ignored), regardless of stock, most stock first. The trigram index needs substrings of the stored spelling, which
+     * may contain separators the input lacks ({@code ERA6AEB5361V} vs {@code ERA-6AEB5361V}): the normalised input is
+     * cut into 3-character chunks at the three possible phases and the phases are OR-ed, so a single separator can
+     * never split every chunk set ({@link #mpnMatchExpression}). Empty for inputs shorter than 6 letters and digits.
+     */
+    public List<JlcpcbRow> findByMpn(String mpn) throws SQLException {
+        String expression = mpnMatchExpression(mpn);
+        if (expression == null) {
+            return List.of();
+        }
+        String wanted = normalizePartNumber(mpn);
+        String sql = "SELECT " + COLUMNS + " FROM parts WHERE parts MATCH ? LIMIT " + MPN_CANDIDATES;
+        isAvailable();   // lazily opens an existing file
+        lock.readLock().lock();
+        try (PreparedStatement ps = requireConnection().prepareStatement(sql)) {
+            ps.setString(1, expression);
+            List<JlcpcbRow> rows = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    JlcpcbRow row = row(rs);
+                    if (wanted.equals(normalizePartNumber(row.mfrPart()))) {
+                        rows.add(row);
+                    }
+                }
+            }
+            rows.sort(java.util.Comparator.comparingInt(JlcpcbRow::stockQuantity).reversed());
+            return rows;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * {@code "MFR.Part" : (("ERA" AND "6AE" AND ...) OR ("RA6" AND ...) OR (...))}: 3-character chunks of the
+     * normalised part number at phase 0, 1 and 2 (chunks shorter than 3 characters at either end are left out); null
+     * when the normalised number has fewer than 6 characters.
+     */
+    static String mpnMatchExpression(String mpn) {
+        String n = normalizePartNumber(mpn);
+        if (n == null || n.length() < 6) {
+            return null;
+        }
+        List<String> phases = new ArrayList<>();
+        for (int phase = 0; phase < 3; phase++) {
+            List<String> chunks = new ArrayList<>();
+            for (int i = phase; i + 3 <= n.length(); i += 3) {
+                chunks.add(quote(n.substring(i, i + 3)));
+            }
+            phases.add("(" + String.join(" AND ", chunks) + ")");
+        }
+        return quote("MFR.Part") + " : (" + String.join(" OR ", phases) + ")";
+    }
+
+    /** Upper case, letters and digits only; null for null. */
+    static String normalizePartNumber(String partNumber) {
+        if (partNumber == null) {
+            return null;
+        }
+        StringBuilder out = new StringBuilder();
+        partNumber.codePoints().filter(Character::isLetterOrDigit)
+                .forEach(cp -> out.appendCodePoint(Character.toUpperCase(cp)));
+        return out.toString();
+    }
+
     // ---------------------------------------------------------------- query building
 
     /** Builds the predicate for one relaxation mode; null when the mode does not apply or adds nothing new. */

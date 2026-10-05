@@ -14,6 +14,7 @@ import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.distributor.FakeTime;
+import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 
@@ -371,6 +372,64 @@ class MouserClientTest {
         server.expect(requestTo(PART_URL)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
 
         assertThat(client.getPart("603-CC0805MKX77BB106")).isEmpty();
+    }
+
+    @Test
+    void lookupTellsOutOfStockFromNotFound() {
+        String body = MouserFixtures.text(MouserFixtures.PART_NUMBER)
+                .replace("\"AvailabilityInStock\": \"76689\"", "\"AvailabilityInStock\": \"0\"");
+        server.expect(requestTo(PART_URL)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(PART_URL))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.PART_NUMBER), MediaType.APPLICATION_JSON));
+
+        PartLookupResult outOfStock = client.lookup("603-CC0805MKX77BB106", Deadline.immediate());
+        PartLookupResult unknown = client.lookup("603-OTHER", Deadline.immediate());
+
+        server.verify();
+        assertThat(outOfStock.status()).isEqualTo(PartLookupResult.Status.OUT_OF_STOCK);
+        assertThat(outOfStock.part()).isNull();
+        assertThat(outOfStock.identity().partNumber()).isEqualTo("603-CC0805MKX77BB106");
+        assertThat(outOfStock.identity().mpn()).isEqualTo("CC0805MKX7R7BB106");
+        assertThat(outOfStock.identity().manufacturer()).isEqualTo("YAGEO");
+        assertThat(outOfStock.identity().description()).isNotBlank();
+        assertThat(unknown.status()).isEqualTo(PartLookupResult.Status.NOT_FOUND);
+        assertThat(unknown.identity()).isNull();
+    }
+
+    @Test
+    void catalogPartMouserDoesNotSellIsOutOfStockWithoutAPartNumber() {
+        // live 2026-10-05: ERA-6ARB5361V comes back with MouserPartNumber "N/A" and no stock
+        String body = MouserFixtures.text(MouserFixtures.PART_NUMBER)
+                .replace("\"AvailabilityInStock\": \"76689\"", "\"AvailabilityInStock\": null")
+                .replace("\"MouserPartNumber\": \"603-CC0805MKX77BB106\"", "\"MouserPartNumber\": \"N/A\"");
+        server.expect(requestTo(PART_URL)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+
+        PartLookupResult result = client.lookup("CC0805MKX7R7BB106", Deadline.immediate());
+
+        assertThat(result.status()).isEqualTo(PartLookupResult.Status.OUT_OF_STOCK);
+        assertThat(result.identity().partNumber()).isNull();
+        assertThat(result.identity().mpn()).isEqualTo("CC0805MKX7R7BB106");
+    }
+
+    @Test
+    void lookupMatchesTheMpnIgnoringHyphens() {
+        // live 2026-10-05: the Exact search for ERA6AEB5361V (TME's spelling) answers 667-ERA-6AEB5361V
+        String body = MouserFixtures.text(MouserFixtures.PART_NUMBER)
+                .replace("603-CC0805MKX77BB106", "667-ERA-6AEB5361V")
+                .replace("CC0805MKX7R7BB106", "ERA-6AEB5361V");
+        server.expect(requestTo(PART_URL))
+                .andExpect(content().json("""
+                        {"SearchByPartRequest":{"mouserPartNumber":"ERA6AEB5361V","partSearchOptions":"Exact"}}
+                        """, JsonCompareMode.STRICT))
+                .andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+
+        PartLookupResult result = client.lookup("ERA6AEB5361V", Deadline.immediate());
+
+        server.verify();
+        assertThat(result.status()).isEqualTo(PartLookupResult.Status.FOUND);
+        assertThat(result.part().distributorPartNumber()).isEqualTo("667-ERA-6AEB5361V");
+        assertThat(result.part().manufacturerPartNumber()).isEqualTo("ERA-6AEB5361V");
+        assertThat(result.part().stock()).isPositive();
     }
 
     @Test
