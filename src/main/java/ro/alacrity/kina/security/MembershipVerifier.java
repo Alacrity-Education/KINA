@@ -1,5 +1,6 @@
 package ro.alacrity.kina.security;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,7 @@ public class MembershipVerifier {
     private static final int LOCK_STRIPES = 64;
     private static final String REGISTRATION_ID = LazyOidcClientRegistrationRepository.REGISTRATION_ID;
 
+    @Getter
     private final boolean enforced;
     private final KinaProperties.Oidc oidc;
     private final OidcAccessPolicy policy;
@@ -135,10 +137,6 @@ public class MembershipVerifier {
     }
 
     enum RecheckOutcome { MEMBER, NOT_MEMBER, GRANT_INVALID, UNAVAILABLE, NO_UPSTREAM_TOKEN, REVOKED }
-
-    public boolean isEnforced() {
-        return enforced;
-    }
 
     /** True when upstream refresh tokens are requested (offline_access) and stored. */
     public boolean storesUpstreamTokens() {

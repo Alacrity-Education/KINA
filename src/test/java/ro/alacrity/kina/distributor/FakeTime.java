@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor;
 
+import lombok.RequiredArgsConstructor;
 import ro.alacrity.kina.domain.Distributor;
 
 import java.time.Clock;
@@ -16,16 +17,13 @@ import java.util.function.LongSupplier;
  * Fake time for rate-limit tests: one source for the nanosecond ticker, the wall clock and a sleeper that advances
  * both instead of sleeping. Records every sleep.
  */
+@RequiredArgsConstructor
 public final class FakeTime implements LongSupplier, RateLimitRetry.Sleeper {
 
     private final AtomicLong nanos = new AtomicLong(1_000_000_000L);
     private final Instant start;
     private final List<Duration> sleeps = new CopyOnWriteArrayList<>();
     private volatile boolean interruptNextSleep;
-
-    public FakeTime(Instant start) {
-        this.start = start;
-    }
 
     @Override
     public long getAsLong() {

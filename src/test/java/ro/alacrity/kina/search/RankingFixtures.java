@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
@@ -15,12 +16,10 @@ import java.util.List;
 import java.util.Map;
 
 /** Test data builders for the search package. */
-final class RankingFixtures {
+@UtilityClass
+class RankingFixtures {
 
     static final Instant FETCHED = Instant.parse("2026-10-05T00:00:00Z");
-
-    private RankingFixtures() {
-    }
 
     /** Insertion-ordered map from alternating keys and values. */
     static Map<String, String> attrs(String... kv) {
