@@ -46,7 +46,7 @@ KINA speaks plain HTTP. Claude's remote connector and OAuth need HTTPS, so termi
 1. The proxy must send `X-Forwarded-Proto` and `X-Forwarded-Host` (and `X-Forwarded-Port` for a non-standard port). KINA honours them (`server.forward-headers-strategy=framework`) and uses them in the OAuth metadata, redirects and the `WWW-Authenticate` header. Or set `KINA_PUBLIC_BASE_URL`, which wins over the headers.
 2. The proxy should overwrite, not append to, any `X-Forwarded-*` headers a client sent, and must be the only way to reach KINA.
 
-Do not buffer the MCP endpoint, and allow long requests: a batch search with ranking can run for about a minute.
+Do not buffer the MCP endpoint, and allow long requests. A search can wait up to 2 minutes for a rate-limited distributor (`kina.search.max-request-duration`) and then rank (18 s per query, 60 s per batch), so set the read timeout above about 2.5 minutes. `spring.ai.mcp.server.request-timeout` is `3m`.
 
 ### Caddy
 
@@ -57,7 +57,7 @@ kina.example.com {
     reverse_proxy 127.0.0.1:8080 {
         flush_interval -1
         transport http {
-            response_header_timeout 120s
+            response_header_timeout 180s
         }
     }
 }
@@ -83,7 +83,8 @@ server {
         proxy_set_header X-Forwarded-Port  $server_port;
         proxy_set_header X-Forwarded-For   $remote_addr;
         proxy_buffering off;
-        proxy_read_timeout 120s;
+        proxy_read_timeout 180s;
+        proxy_send_timeout 180s;
     }
 }
 ```
@@ -222,4 +223,28 @@ Changing the validity (`KINA_TOKENS_VALIDITY`, `KINA_OAUTH_REFRESH_TOKEN_VALIDIT
 - `ranking: "fallback"` in search results means Laya was unavailable, slow or disabled; `ranking_note` gives the reason.
 - Logs: `docker compose logs -f kina`. Each search logs how long fetching and ranking took. Cache purges (every 6 hours, rows older than twice the cache TTL; a cached search with no parts is already stale after 1 hour) and JLCPCB downloads are logged too.
 - `docker compose ps` shows the health of `postgres` and `laya-serve`. `laya-serve` has a 10 minute start period for the first checkpoint download.
-- Mouser quota: 1 000 calls a day and 30 a minute. KINA does not count calls. Frequent `error: "rate_limited"` means that quota is exhausted; avoid `bypass_cache` for bulk work.
+- Mouser quota: 1 000 calls a day and 30 a minute. KINA does not count calls. Avoid `bypass_cache` for bulk work.
+- Rate limits: KINA waits and retries when a distributor rate limits a call. One WARN line is logged per episode, for example `Mouser rate limited (/search/keyword returned HTTP 429, Retry-After 30 s); cooling down for 30 s`. Retries inside the episode log at DEBUG. A WARN now and then is normal. Frequent WARNs, or `error: "rate_limited"` in results, mean the quota is too small for the load.
+- `rate_limit_waited_ms` in each distributor entry shows how long a request waited. Values near 120000 with `error: "rate_limited"` mean the limit outlasted the deadline.
+
+## Rate-limit tuning
+
+| Key | Default | Notes |
+|---|---|---|
+| `kina.search.max-request-duration` | `2m` | Hard cap for one request, including rate-limit waits. Raise it only if you also raise the proxy and client timeouts (keep them above this value plus about 30 s). Lower it to fail sooner. |
+| `kina.search.distributor-timeout` | `12s` | Budget for active work of one distributor fetch. Rate-limit waits do not count against it. |
+
+Set them in `.env` as `KINA_SEARCH_MAX_REQUEST_DURATION=2m`. Keep `spring.ai.mcp.server.request-timeout` (`3m`) above the request duration.
+
+The retry helps with the per-minute limit (Mouser: 30 calls a minute). It does not help when the daily quota (1 000 calls) is used up: the request waits out its budget and then reports `rate_limited`. Use the cache and avoid `bypass_cache` in that case.
+
+A 503 without a `Retry-After` header is treated as an outage and fails at once. Only 429, and 502, 503 or 504 with `Retry-After`, are waited for. When laya-serve answers 503 with `Retry-After`, KINA retries within the remaining ranking budget; otherwise it falls back to the deterministic ranking.
+
+## Troubleshooting rate limits
+
+| Symptom | Cause and fix |
+|---|---|
+| A search takes up to 2 minutes | A distributor rate limited it and KINA is waiting. Check `rate_limit_waited_ms` and the `cooling down` WARN in `docker compose logs kina`. Reduce parallel use or wait. |
+| `error: "rate_limited"` after about 2 minutes | The limit outlasted the request deadline. For Mouser this is usually the exhausted daily quota. Wait for the quota to reset and rely on the cache. |
+| `error: "rate_limited"` at once, `rate_limit_waited_ms` 0 | Another request put the distributor into a cool-down that does not fit this request's deadline. Retry later. |
+| Gateway timeout (502 or 504) from the proxy, or the client gives up | The proxy or client read timeout is below the request duration. Raise it above about 2.5 minutes. |
