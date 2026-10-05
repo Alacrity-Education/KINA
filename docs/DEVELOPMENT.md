@@ -7,6 +7,9 @@
   work without `-Dnet.bytebuddy.experimental`. The Docker build uses Temurin 21.
 - **Maven**: always use the wrapper, `./mvnw` (Maven 3.9.16). No system Maven needed.
 - **Docker**: needed for Testcontainers (tests start `postgres:17-alpine`) and for compose.
+- **Lombok**: 1.18.48 (`lombok.version` overrides the 1.18.46 managed by Boot 4.1.1, which cannot run inside the
+  JDK 27 compiler). In the IDE, enable annotation processing and use the Lombok plugin (bundled with IntelliJ IDEA;
+  Eclipse and VS Code need the Lombok agent or extension).
 
 ## Build and test
 
@@ -16,7 +19,14 @@
 ```
 
 Surefire runs with `-XX:+EnableDynamicAgentLoading --enable-native-access=ALL-UNNAMED` to silence JDK agent warnings.
-The compiler runs with `-Xlint:all` (minus `processing`, `serial`); keep the build warning-free.
+The compiler runs with `-Xlint:all` (minus `processing`, `serial`); keep the build warning-free. `./mvnw -q` hides
+compiler warnings, so check with `./mvnw clean test-compile | grep WARNING` (it must print nothing).
+
+Annotation processors run from an explicit `annotationProcessorPaths` list in the POM: Lombok first, then
+`spring-boot-configuration-processor`. JDK 23 and later no longer run processors found on the class path, so a new
+processor must be added to that list. On JDK 24 and later the `jdk24-plus` profile forks `javac` with
+`-J--sun-misc-unsafe-memory-access=allow`, because Lombok still calls `sun.misc.Unsafe` and the JDK would print a
+deprecation warning on every compile. JDK 21 (the Docker build) does not know that option and does not use the profile.
 
 Spring tests that need a database: `@SpringBootTest` + `@Import(TestcontainersConfiguration.class)`
 (`src/test/java/ro/alacrity/kina/TestcontainersConfiguration.java`, `@ServiceConnection` PostgreSQL 17).
@@ -74,6 +84,29 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 | `oauth` | OAuth 2.1 authorization server for MCP clients: metadata, `/oauth/register` (+ `RegistrationRateLimiter`), `/oauth/authorize` (consent page, auto-approval of trusted metadata-document clients), `/oauth/token`, `/oauth/revoke`, PKCE; Client ID Metadata Documents (`ClientMetadataDocument` rules, `ClientMetadataDocumentResolver` fetch/trust/cache, `OAuthClientLookup`); `OAuthClientMaintenance` (daily cleanup of unused registered clients) |
 | `mcp` | `KinaMcpTools`: `search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping` |
 | `api` / `web` | `/api/v1` controllers + `ApiExceptionHandler` (RFC 9457 problems); Thymeleaf token UI (`TokenPageController`), `PublicUrlResolver` |
+
+Lombok (configured in `lombok.config` at the repository root: `config.stopBubbling`, `@lombok.Generated` on
+generated code for coverage tools, logger field `log`, and `@Qualifier` / `@Value` copied from fields to generated
+constructor parameters):
+
+- Allowed: `@Slf4j` (field `log`, never a hand-written `LoggerFactory.getLogger`); `@RequiredArgsConstructor` when a
+  constructor only assigns final fields (keep explicit constructors that validate, derive values, start executors
+  or delegate to another constructor; `access = AccessLevel.PACKAGE` or `PRIVATE` only for a sole constructor);
+  `@Builder` / `@Builder(toBuilder = true)` on wide records (`Part`, `ParsedQuery`, `ParsedQuery.Connector`,
+  `DistributorResult`, `PartResponse`, `ParsedQueryResponse.ConnectorResponse`, `RankingSummary`); use `toBuilder()`
+  or `@With` to copy a record with one field changed; `@UtilityClass` for static-only helpers (declare members
+  `static` anyway, so static imports keep working); `@Getter` / `@Setter` / `@AllArgsConstructor` for trivial members
+  of mutable helpers; `@Value`, `@EqualsAndHashCode` and `@ToString` only where they equal the hand-written code.
+- Forbidden: `@Data` on anything with identity or security semantics, `@SneakyThrows`, `val` / `var` (Java `var` is
+  fine), `@Synchronized`, `@Delegate`, `@Cleanup`, `@NonNull` on parameters (keep `Objects.requireNonNull`), and other
+  `lombok.experimental` features (`@UtilityClass` is the one exception; `@Accessors(fluent = true)` is not allowed, so
+  record-style accessors such as `kind()` stay hand-written).
+- Never change a record's component order and never replace a canonical record constructor: Jackson deserialises
+  records through it and the SQL mappers depend on the order. `@Builder` on a record only adds `builder()` (and
+  `toBuilder()`); keep `@JsonCreator` factories such as `SearchRequest.of`.
+- Keep hand-written `toString()` methods that mask secrets (`KinaProperties`, token responses, `IssuedToken`,
+  `UpstreamTokenCipher`). `KinaProperties` stays Lombok-free: Spring binds its records through their constructors.
+- Lombok annotations go directly above the class declaration, after the Spring annotations.
 
 Gotchas:
 
