@@ -368,11 +368,16 @@ public class JlcpcbSqliteSearch {
                 clauses.add(VALUE_FUNCTION + "(\"Description\", ?)");
                 params.add(term.text());
             } else if (term.boundaryChecked()) {
-                // positions and pitches also appear in the part number / package ("PM2.54-1x6P", "P=2.54mm")
+                // positions and pitches also appear in the part number / package ("PM2.54-1x6P", "P=2.54mm");
+                // a positions group (16P/17P/18P) accepts any of its alternatives
                 String column = term.kind() == JlcpcbQuery.Kind.PITCH ? "\"Package\"" : "\"MFR.Part\"";
-                clauses.add("(" + VALUE_FUNCTION + "(\"Description\", ?) OR " + VALUE_FUNCTION + "(" + column + ", ?))");
-                params.add(term.text());
-                params.add(term.text());
+                List<String> checks = new ArrayList<>();
+                for (String phrase : term.phrases()) {
+                    checks.add(VALUE_FUNCTION + "(\"Description\", ?) OR " + VALUE_FUNCTION + "(" + column + ", ?)");
+                    params.add(phrase);
+                    params.add(phrase);
+                }
+                clauses.add("(" + String.join(" OR ", checks) + ")");
             }
         }
         clauses.add(IN_STOCK);

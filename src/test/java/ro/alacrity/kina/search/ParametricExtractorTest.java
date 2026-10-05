@@ -505,6 +505,12 @@ class ParametricExtractorTest {
         Part cable = RankingFixtures.tme("80034", "BASEUS", "Cable; USB C plug,USB C plug 90° up/down; 1m; black; 10Gbps; 60W",
                 "USB cables and adapters", null, Map.of());
         assertThat(extractor.extract(cable)).doesNotContainKey("ConnectorType").doesNotContainKey("UsbType");
+        Part adapter = RankingFixtures.tme("USB-18", "ESPERANZA", "Adapter; USB A socket,USB C plug; Thread: M22; 1÷10mm",
+                "USB & IEEE1394 connectors", null, Map.of());
+        assertThat(extractor.extract(adapter)).doesNotContainKey("ConnectorType");
+        Part supply = RankingFixtures.tme("51710", "GOOBAY", "Power supply: switching; 5VDC; 4.7A; 108W; Out: USB A socket,USB C",
+                "Plug-in Power Supplies", null, Map.of());
+        assertThat(extractor.extract(supply)).doesNotContainKey("ConnectorType");
     }
 
     @Test
@@ -533,7 +539,8 @@ class ParametricExtractorTest {
                 .containsEntry("Waterproof", "IP67").containsEntry("Gender", "female");
         assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("CX90MW9-24P", "Hirose",
                 "USB Connectors Receptacle, USB4, 24pos., 5A, right angle", "USB Connectors", null, Map.of()))))
-                .containsEntry("UsbStandard", "USB4").containsEntry("Positions", "24");
+                .containsEntry("UsbStandard", "USB4").containsEntry("Positions", "24")
+                .containsEntry("UsbType", "Type-C");   // USB4 exists only on Type-C
         assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("217184-0001", "Molex",
                 "USB Connectors Mid-Mnt DR SMT 24Ckt Type C Rec.", "USB Connectors", null, Map.of()))))
                 .containsEntry("Positions", "24").containsEntry("MountingStyle", "mid-mount")

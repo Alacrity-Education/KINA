@@ -29,8 +29,8 @@ import java.util.regex.Pattern;
  * with their shell pins (17P/18P for a 16-pin part, {@code PIN: 17}, {@code 17 Positions}), so a count in the phrase
  * would exclude them; the ranker sorts by the canonical configuration instead. Type, gender, mounting, standard and
  * features stay, e.g. for {@code USB-C receptacle 16 pin SMD USB 2.0}: LCSC
- * {@code "USB Connectors" Type-C "USB 2.0" "Surface Mount"}, TME {@code USB C socket SMT 2.0}, Mouser
- * {@code USB type C receptacle SMD 2.0}.
+ * {@code "USB Connectors" Type-C 16P/17P/18P "USB 2.0" "Surface Mount"} (an OR group of the configuration and its
+ * shell-counted variants), TME {@code USB C socket SMT 2.0}, Mouser {@code USB type C receptacle SMD 2.0}.
  */
 public final class DistributorPhraser {
 
@@ -321,7 +321,8 @@ public final class DistributorPhraser {
      * USB connector phrase (DESIGN.md 3.2): type, gender, mounting, standard and features in each distributor's
      * wording; never the pin count (see the class comment). LCSC: {@code "USB Connectors"} + the dominant JLCPCB
      * spelling of the type ({@code Type-C}, {@code Micro-B}, {@code Type-A}...; {@code JlcpcbQuery} adds
-     * {@code TypeC}/{@code MicroB}/... as alternatives), {@code Male} for plugs, the standard ({@code "USB 2.0"},
+     * {@code TypeC}/{@code MicroB}/... as alternatives), {@code Male} for plugs, the stated pin count as an OR group
+     * ({@link #lcscUsbPositions}), the standard ({@code "USB 2.0"},
      * {@code "USB 3"} for any 3.x, {@code USB4}), mounting, orientation and {@code mid-mount}/{@code waterproof}/
      * {@code "board lock"} (mapped to the database words by {@code JlcpcbQuery}). TME (40 characters, TME ANDs the
      * words): {@code USB C socket}, {@code SMT}/{@code THT}, {@code horizontal}/{@code vertical}, {@code 2.0} (3.x is
@@ -347,6 +348,10 @@ public final class DistributorPhraser {
                 }
                 if (plug) {
                     tokens.add("Male");
+                }
+                String positions = lcscUsbPositions(usbType, c);
+                if (positions != null) {
+                    tokens.add(positions);
                 }
                 if (standard != null) {
                     tokens.add(standard.rank() <= 1 ? "\"" + standard.name() + "\"" : standard.rank() >= 5 ? "USB4"
@@ -429,6 +434,29 @@ public final class DistributorPhraser {
                 return String.join(" ", tokens);
             }
         }
+    }
+
+    /**
+     * LCSC positions of a USB request whose pin count the user gave, as an OR group of the configuration and its
+     * shell-counted variants ({@code 16P/17P/18P}, {@code 24P/25P/26P}, {@code 6P/7P/8P}; JlcpcbQuery matches any of
+     * them at a number boundary). JLCPCB descriptions list the signal contacts (no 17P/18P Type-C row exists), so the
+     * group costs nothing and keeps the fixed LCSC window on the requested configuration: without it a 50-part window
+     * of the 2 991 in-stock Type-C rows held only two 6-pin parts for "USB-C 6 pin power only". An implied
+     * configuration (from the standard) is not used.
+     */
+    private static String lcscUsbPositions(String usbType, ParsedQuery.Connector c) {
+        if (c.pinConfigurationImplied() || c.pinConfiguration() == null && c.positions() == null) {
+            return null;
+        }
+        int configuration = c.pinConfiguration() != null ? c.pinConfiguration() : c.positions();
+        List<String> group = new ArrayList<>(List.of(configuration + "P"));
+        for (int extra = 1; extra <= 2 && usbType != null; extra++) {
+            Integer mapped = UsbVocabulary.configuration(usbType, configuration + extra);
+            if (mapped != null && mapped == configuration) {
+                group.add((configuration + extra) + "P");
+            }
+        }
+        return String.join("/", group);
     }
 
     /** The shorter USB phrase tried when the first one found nothing: the type and gender words only. */

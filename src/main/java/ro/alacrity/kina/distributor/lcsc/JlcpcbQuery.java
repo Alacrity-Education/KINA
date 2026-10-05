@@ -45,7 +45,8 @@ import java.util.regex.Pattern;
  * -&gt; {@code ("USB 3" OR "USB3")} (any 3.x), {@code USB4} -&gt; {@code ("USB4" OR "USB 4")}, {@code mid-mount} -&gt;
  * {@code ("Recessed" OR "Sink board" OR "Sinking" OR "Laminated board" OR "Mid-mount")} (JLCPCB's words for 沉板),
  * {@code waterproof} -&gt; {@code ("IPX" OR "IP67" OR "IP68" OR "Waterproof" OR "O-ring")} (the sealing is mostly only in
- * the part number), {@code "board lock"} -&gt; {@code ("Locating" OR "with Post" OR "Board Lock")}.
+ * the part number), {@code "board lock"} -&gt; {@code ("Locating" OR "with Post" OR "Board Lock")}; a positions group
+ * {@code 16P/17P/18P} is one {@link Kind#POSITIONS} term whose alternatives are each checked at a number boundary.
  *
  * <p>Each remaining token is classified ({@link Kind}); everything but {@link Kind#KEYWORD} counts as "parametric" for
  * the query relaxation in {@link JlcpcbSqliteSearch}.
@@ -158,6 +159,8 @@ public record JlcpcbQuery(List<Term> terms) {
     private static final Pattern GRID = Pattern.compile("(?i)(\\d{1,2})[x×*](\\d{1,3})p?");
     /** {@code 6P} (upper-case: a lower-case {@code 22p} stays a capacitance), {@code 6pin}, {@code 6-pos}, {@code 6way}. */
     private static final Pattern POSITIONS = Pattern.compile("(\\d{1,3})-?(?:P|(?i:pins?|pos|positions?|ways?))");
+    /** {@code 16P/17P/18P}: positions alternatives (a USB configuration with its shell-counted variants). */
+    private static final Pattern POSITIONS_GROUP = Pattern.compile("(?i)\\d{1,3}P(?:/\\d{1,3}P)+");
     private static final Pattern PITCH = Pattern.compile("(?i)\\d{1,2}(?:\\.\\d{1,2})?mm");
     private static final Pattern POSITION_WORD = Pattern.compile("(?i)pins?|pos|positions?|ways?|circuits?|contacts?");
     private static final Pattern QUOTED = Pattern.compile("(?<=^|\\s)\"([^\"]+)\"(?=\\s|$)");
@@ -372,6 +375,11 @@ public record JlcpcbQuery(List<Term> terms) {
         Matcher grid = GRID.matcher(t);
         if (grid.matches()) {
             return new Term(grid.group(1) + "x" + grid.group(2) + "P", Kind.POSITIONS);
+        }
+        Matcher group = POSITIONS_GROUP.matcher(t);
+        if (group.matches()) {
+            List<String> alternatives = List.of(t.toUpperCase(Locale.ROOT).split("/"));
+            return new Term(alternatives.getFirst(), Kind.POSITIONS, alternatives, null);
         }
         Matcher positions = POSITIONS.matcher(t);
         if (positions.matches()) {

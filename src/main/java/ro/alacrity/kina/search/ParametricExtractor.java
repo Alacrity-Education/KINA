@@ -361,10 +361,14 @@ public class ParametricExtractor {
         if (!(category.connectorWords() || hasAttributes || specificDescription || connectorFamily)) {
             return null;
         }
-        // TME "USB cables and adapters" ("Cable; USB C plug,USB C plug"), power supplies, hubs: no board connector
-        if (categoryText != null && !category.connectorWords()
+        // TME "USB cables and adapters" ("Cable; USB C plug,USB C plug"), "Plug-in Power Supplies", Mouser "Sensor
+        // Cables / Actuator Cables": no board connector
+        if (categoryText != null && !categoryText.toLowerCase(Locale.ROOT).contains("connector")
                 && ConnectorRecognizer.NOT_A_CONNECTOR.matcher(categoryText).find()) {
             return null;
+        }
+        if (part.description() != null && PRODUCT_NOT_CONNECTOR.matcher(part.description()).find()) {
+            return null;   // TME "Adapter; USB A socket,USB C plug" filed under "USB & IEEE1394 connectors"
         }
         if (!category.connectorWords() && !hasAttributes && part.description() != null
                 && ConnectorRecognizer.NOT_A_CONNECTOR.matcher(part.description()).find()
@@ -545,6 +549,17 @@ public class ParametricExtractor {
         }
         UsbVocabulary.Standard standard = rate != null ? rate : attr.standard() != null ? attr.standard()
                 : UsbVocabulary.standard(description.usbStandard());
+        if (usbType == null && standard != null && standard.rank() >= 5) {
+            usbType = ParsedQuery.USB_TYPE_C;   // USB4 and Thunderbolt 3/4 exist only on Type-C (Mouser "Receptacle, USB4")
+            connectorType = UsbVocabulary.isUsbType(connectorType) || ParsedQuery.CONNECTOR.equals(connectorType)
+                    ? ParsedQuery.USB_C : connectorType;
+            if (configuration == null) {
+                configuration = UsbVocabulary.configuration(usbType, positions);
+                if (configuration != null && positions != null && positions > configuration) {
+                    shield = positions - configuration;
+                }
+            }
+        }
         if (ParsedQuery.USB_TYPE_C.equals(usbType) && configuration != null
                 && UsbVocabulary.TYPE_C_POWER_ONLY.contains(configuration)) {
             features.add(UsbVocabulary.POWER_ONLY);
@@ -559,6 +574,10 @@ public class ParametricExtractor {
                 usbType, standard == null ? null : standard.name(), standard == null ? null : standard.gbps(),
                 configuration, false, shield, ConnectorRecognizer.mountingStyle(featureList), featureList);
     }
+
+    /** TME descriptions that start with the product kind: "Adapter; ...", "Cable; ...", "Hub USB; ...". */
+    private static final Pattern PRODUCT_NOT_CONNECTOR = Pattern.compile(
+            "(?i)^\\s*(?:adapter|cable|hub|power supply|usb power supply|charger|card reader|docking station)\\b");
 
     private static final Pattern IP_IN_MPN = Pattern.compile("(?i)IP(X[4-8]|6[5-8])(?![0-9])");
 

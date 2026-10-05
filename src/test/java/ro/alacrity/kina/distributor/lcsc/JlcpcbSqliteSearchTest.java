@@ -251,8 +251,8 @@ class JlcpcbSqliteSearchTest {
     @Test
     void usbPhraseFiltersTheCategoryTypeStandardAndMounting() throws SQLException {
         useUsbDatabase();
-        // the DistributorPhraser phrase for "USB-C receptacle 16 pin SMD USB 2.0": no pin count (17P/18P parts)
-        Result result = search.search("\"USB Connectors\" Type-C \"USB 2.0\" \"Surface Mount\"", 0, 50);
+        // the DistributorPhraser phrase for "USB-C receptacle 16 pin SMD USB 2.0": 16P or a shell-counted 17P/18P
+        Result result = search.search("\"USB Connectors\" Type-C 16P/17P/18P \"USB 2.0\" \"Surface Mount\"", 0, 50);
         assertThat(result.mode()).isEqualTo(MatchMode.ALL);
         assertThat(lcsc(result)).containsExactly("C52209111");
         // without the standard: every SMD Type-C (package "SMD" counts), also the "TypeC" spelling; not Micro-B, Type-A
@@ -272,8 +272,13 @@ class JlcpcbSqliteSearchTest {
                 .containsExactly(JlcpcbQuery.Kind.FAMILY, JlcpcbQuery.Kind.POSITIONS);
         assertThat(query.terms().getFirst().phrases()).containsExactly("Type-C", "TypeC");
         assertThat(lcsc(search.search("USB-C 24P", 0, 50))).containsExactly("C5454922");
-        // 6P must not match 16P/24P (number boundary)
+        // 6P must not match 16P/24P (number boundary), also inside a positions group
         assertThat(lcsc(search.search("Type-C 6P", 0, 50))).containsExactly("C5260493");
+        JlcpcbQuery.Term group = JlcpcbQuery.parse("6P/7P/8P").terms().getFirst();
+        assertThat(group.kind()).isEqualTo(JlcpcbQuery.Kind.POSITIONS);
+        assertThat(group.phrases()).containsExactly("6P", "7P", "8P");
+        assertThat(lcsc(search.search("\"USB Connectors\" Type-C 6P/7P/8P", 0, 50))).containsExactly("C5260493");
+        assertThat(lcsc(search.search("\"USB Connectors\" Type-C 24P/25P/26P", 0, 50))).containsExactly("C5454922");
         assertThat(lcsc(search.search("\"USB Connectors\" Micro-B", 0, 50))).containsExactly("C10418");
         assertThat(lcsc(search.search("\"USB Connectors\" Type-A \"Through Hole\"", 0, 50))).containsExactly("C2345");
         // JLCPCB's mid-mount words (沉板 = "Laminated board") and the sealing in the part number
