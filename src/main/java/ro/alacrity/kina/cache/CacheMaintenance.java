@@ -1,7 +1,6 @@
 package ro.alacrity.kina.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
@@ -12,9 +11,8 @@ import java.time.Instant;
 
 /** Periodically purges rows older than {@code 2 x kina.cache.ttl} from both cache tables. */
 @Component
+@Slf4j
 public class CacheMaintenance {
-
-    private static final Logger log = LoggerFactory.getLogger(CacheMaintenance.class);
 
     private final PartCacheRepository parts;
     private final SearchCacheRepository searches;

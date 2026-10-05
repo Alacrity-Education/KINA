@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.tme;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.ResourceAccessException;
@@ -22,16 +23,14 @@ import java.util.List;
 import java.util.Locale;
 
 /** Shared plumbing for TME calls: raw exchange, JSON decoding and the error mapping of DESIGN.md 9.2. */
-final class TmeHttp {
+@UtilityClass
+class TmeHttp {
 
     /** Lenient mapper for TME payloads. */
     static final JsonMapper MAPPER = JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
             .build();
-
-    private TmeHttp() {
-    }
 
     /** Status code, body bytes and {@code Retry-After} header (null when absent) of a completed exchange. */
     record Response(int status, byte[] body, String retryAfter) {

@@ -1,8 +1,7 @@
 package ro.alacrity.kina.distributor.lcsc;
 
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.sqlite.Function;
 import org.sqlite.SQLiteConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,9 +48,8 @@ import java.util.stream.Collectors;
  * both the count and the page, so pagination is stable.
  */
 @Component
+@Slf4j
 public class JlcpcbSqliteSearch {
-
-    private static final Logger log = LoggerFactory.getLogger(JlcpcbSqliteSearch.class);
 
     static final String VALUE_FUNCTION = "kina_value";
 

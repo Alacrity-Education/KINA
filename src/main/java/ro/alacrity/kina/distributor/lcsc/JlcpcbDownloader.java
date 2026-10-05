@@ -1,7 +1,6 @@
 package ro.alacrity.kina.distributor.lcsc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -34,9 +33,8 @@ import java.util.zip.ZipFile;
  * validated. {@link #install} then atomically renames it to {@code <data-dir>/<library>}.
  */
 @Component
+@Slf4j
 public class JlcpcbDownloader {
-
-    private static final Logger log = LoggerFactory.getLogger(JlcpcbDownloader.class);
 
     static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
     static final Duration SENTINEL_TIMEOUT = Duration.ofSeconds(30);

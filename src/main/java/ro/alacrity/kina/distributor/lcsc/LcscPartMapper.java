@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.lcsc;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 
@@ -12,13 +13,11 @@ import java.util.Optional;
  * Maps a {@link JlcpcbRow} to a {@link Part} (DESIGN.md 9.3). {@code attributes} stay empty: the search layer
  * enriches them from the description with the shared parametric extractor.
  */
-public final class LcscPartMapper {
+@UtilityClass
+public class LcscPartMapper {
 
     static final String PRODUCT_URL = "https://www.lcsc.com/product-detail/%s.html";
     static final String JLCPCB_URL = "https://jlcpcb.com/partdetail/%s";
-
-    private LcscPartMapper() {
-    }
 
     /** Empty when the row has no LCSC number or no ships-now stock. */
     public static Optional<Part> map(JlcpcbRow row, Instant fetchedAt) {

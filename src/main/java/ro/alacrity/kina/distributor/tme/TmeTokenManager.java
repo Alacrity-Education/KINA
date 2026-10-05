@@ -1,7 +1,6 @@
 package ro.alacrity.kina.distributor.tme;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
@@ -27,9 +26,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * Thread-safe; never logs token values. A rate-limited token request is retried through {@link RateLimitRetry} within
  * the caller's {@link Deadline}; waiting for the lock is bounded by the same deadline.
  */
+@Slf4j
 final class TmeTokenManager {
-
-    private static final Logger log = LoggerFactory.getLogger(TmeTokenManager.class);
 
     static final Duration REFRESH_MARGIN = Duration.ofSeconds(30);
     /** Minimum wait for the token lock (covers an ordinary token request of another thread). */

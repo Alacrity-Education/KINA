@@ -2,6 +2,7 @@ package ro.alacrity.kina.distributor.tme;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.experimental.UtilityClass;
 import tools.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
@@ -13,10 +14,8 @@ import java.util.List;
  * null. Observed deviations from the OpenAPI document: {@code prices.tax.rate} is a number (documented as string),
  * an invalid bearer token answers HTTP 400 with {@code code=E_AUTH_TOKEN_IS_INVALID} (not 401).
  */
-final class TmeResponses {
-
-    private TmeResponses() {
-    }
+@UtilityClass
+class TmeResponses {
 
     /** {@code POST /auth/token}. */
     @JsonIgnoreProperties(ignoreUnknown = true)

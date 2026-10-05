@@ -1,5 +1,6 @@
 package ro.alacrity.kina.web;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,13 +13,10 @@ import ro.alacrity.kina.config.KinaProperties;
  * failing provider cannot cause a redirect loop.
  */
 @Controller
+@RequiredArgsConstructor
 public class LoginErrorController {
 
     private final KinaProperties properties;
-
-    public LoginErrorController(KinaProperties properties) {
-        this.properties = properties;
-    }
 
     /**
      * The identity provider authenticated the user but KINA refused them (DESIGN.md 7.1): not in a required group, or

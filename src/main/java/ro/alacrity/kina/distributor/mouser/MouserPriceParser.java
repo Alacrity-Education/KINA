@@ -1,5 +1,7 @@
 package ro.alacrity.kina.distributor.mouser;
 
+import lombok.experimental.UtilityClass;
+
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -14,13 +16,11 @@ import java.util.regex.Pattern;
  *   <li>a single {@code .} is the decimal separator; repeated {@code .} are grouping.</li>
  * </ul>
  */
-public final class MouserPriceParser {
+@UtilityClass
+public class MouserPriceParser {
 
     private static final Pattern NOT_NUMERIC = Pattern.compile("[^0-9.,]");
     private static final Pattern LONE_COMMA_DECIMAL = Pattern.compile("^\\d*,\\d{1,3}$");
-
-    private MouserPriceParser() {
-    }
 
     public static Optional<BigDecimal> parse(String raw) {
         if (raw == null) {

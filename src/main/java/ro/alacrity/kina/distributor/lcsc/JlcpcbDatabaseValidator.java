@@ -1,7 +1,7 @@
 package ro.alacrity.kina.distributor.lcsc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,9 +12,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /** Checks that a file is a usable JLCPCB parts database and reads its {@code meta} row. */
-public final class JlcpcbDatabaseValidator {
-
-    private static final Logger log = LoggerFactory.getLogger(JlcpcbDatabaseValidator.class);
+@Slf4j
+@UtilityClass
+public class JlcpcbDatabaseValidator {
 
     /**
      * @param sizeBytes  file size on disk
@@ -23,9 +23,6 @@ public final class JlcpcbDatabaseValidator {
      * @param lastUpdate {@code meta.last_update}, null when missing
      */
     public record Metadata(long sizeBytes, long partCount, String sourceDate, String lastUpdate) {
-    }
-
-    private JlcpcbDatabaseValidator() {
     }
 
     /** @throws IOException when the file does not open read-only as SQLite or has no {@code parts} rows */

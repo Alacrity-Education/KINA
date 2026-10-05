@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.tme;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.web.util.UriUtils;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
@@ -19,16 +20,14 @@ import java.util.Map;
 import java.util.Optional;
 
 /** Maps TME API v2 product, data, parameter and file records to {@link Part} (DESIGN.md section 9.2). */
-final class TmePartMapper {
+@UtilityClass
+class TmePartMapper {
 
     /** Parameter names that carry the package, in order of preference. */
     static final List<String> PACKAGE_PARAMETERS = List.of("Case - inch", "Case", "Package", "Case - mm");
 
     /** Document type of datasheets ("DTE - Documentation" in the OpenAPI document). */
     static final String DATASHEET_TYPE = "DTE";
-
-    private TmePartMapper() {
-    }
 
     /**
      * Builds the part; empty when there is no stock record or {@code stock_quantity <= 0} (stock rule).

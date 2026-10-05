@@ -1,5 +1,8 @@
 package ro.alacrity.kina.distributor;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+
 import java.time.Duration;
 import java.util.function.LongSupplier;
 
@@ -15,6 +18,7 @@ import java.util.function.LongSupplier;
  *
  * <p>Times are {@link System#nanoTime()} values (or the injected ticker's). Thread-safe.
  */
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Deadline {
 
     private final long deadlineNanos;
@@ -24,10 +28,6 @@ public final class Deadline {
     private long coveredUntilNanos;
     private boolean anyWait;
 
-    private Deadline(long deadlineNanos, LongSupplier ticker) {
-        this.deadlineNanos = deadlineNanos;
-        this.ticker = ticker;
-    }
 
     /** A deadline {@code budget} from now (negative budgets count as zero). */
     public static Deadline after(Duration budget) {

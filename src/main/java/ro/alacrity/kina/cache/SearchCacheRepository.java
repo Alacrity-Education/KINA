@@ -1,7 +1,7 @@
 package ro.alacrity.kina.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import ro.alacrity.kina.domain.Distributor;
@@ -20,17 +20,12 @@ import static ro.alacrity.kina.cache.PartCacheRepository.utc;
  * missing.
  */
 @Repository
+@Slf4j
+@RequiredArgsConstructor
 public class SearchCacheRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(SearchCacheRepository.class);
 
     private final JdbcClient jdbc;
     private final JsonMapper jsonMapper;
-
-    public SearchCacheRepository(JdbcClient jdbc, JsonMapper jsonMapper) {
-        this.jdbc = jdbc;
-        this.jsonMapper = jsonMapper;
-    }
 
     public Optional<CachedSearch> find(Distributor distributor, String queryKey) {
         List<Optional<CachedSearch>> rows = jdbc.sql("""

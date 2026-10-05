@@ -1,8 +1,7 @@
 package ro.alacrity.kina.distributor.mouser;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -35,12 +34,12 @@ import java.util.regex.Pattern;
  * out. Every failure surfaces as a {@link DistributorException}: other entries in {@code Errors}, other 4xx or an unreadable body -> {@code BAD_RESPONSE};
  * connect/read timeouts -> {@code TIMEOUT}; 5xx and I/O errors -> {@code UNAVAILABLE}.
  */
+@Slf4j
 public class MouserApi {
 
     static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
 
-    private static final Logger log = LoggerFactory.getLogger(MouserApi.class);
     private static final Pattern API_KEY_PARAM = Pattern.compile("(?i)(apiKey=)[^&\\s\"']*");
     private static final JsonMapper JSON = JsonMapper.builder().build();
     private static final int MAX_ERROR_BODY = 300;

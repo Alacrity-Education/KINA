@@ -4,8 +4,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,17 +31,12 @@ import java.util.Set;
 /** Part search and lookup (DESIGN.md section 5). Errors are RFC 9457 problem details ({@link ApiExceptionHandler}). */
 @RestController
 @RequestMapping("/api/v1/parts")
+@Slf4j
+@RequiredArgsConstructor
 public class PartsController {
-
-    private static final Logger log = LoggerFactory.getLogger(PartsController.class);
 
     private final PartSearchService searchService;
     private final PartLookupService lookupService;
-
-    public PartsController(PartSearchService searchService, PartLookupService lookupService) {
-        this.searchService = searchService;
-        this.lookupService = lookupService;
-    }
 
     /** {@code GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=}. */
     @GetMapping("/search")

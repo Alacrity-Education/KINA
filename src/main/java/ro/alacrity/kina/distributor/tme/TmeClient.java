@@ -1,7 +1,6 @@
 package ro.alacrity.kina.distributor.tme;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -47,9 +46,8 @@ import java.util.function.Supplier;
  * one request also holds back the others (DESIGN.md 3.6).
  */
 @Component
+@Slf4j
 public class TmeClient implements DistributorClient {
-
-    private static final Logger log = LoggerFactory.getLogger(TmeClient.class);
 
     static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     static final Duration READ_TIMEOUT = Duration.ofSeconds(10);

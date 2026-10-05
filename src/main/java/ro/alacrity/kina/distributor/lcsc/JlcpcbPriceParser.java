@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.lcsc;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.PriceBreak;
 
 import java.math.BigDecimal;
@@ -14,12 +15,10 @@ import java.util.TreeMap;
  * {@link PriceBreak}s in USD. The lower bound of each range is the break quantity. Malformed brackets are skipped;
  * empty or garbage input yields an empty list. Never throws.
  */
-public final class JlcpcbPriceParser {
+@UtilityClass
+public class JlcpcbPriceParser {
 
     public static final String CURRENCY = "USD";
-
-    private JlcpcbPriceParser() {
-    }
 
     public static List<PriceBreak> parse(String raw) {
         if (raw == null || raw.isBlank()) {

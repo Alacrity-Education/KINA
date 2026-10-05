@@ -1,8 +1,7 @@
 package ro.alacrity.kina.api;
 
 import jakarta.validation.ConstraintViolationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -31,9 +30,8 @@ import java.util.Map;
  * traces or exception internals.
  */
 @RestControllerAdvice(basePackages = "ro.alacrity.kina.api")
+@Slf4j
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     static final URI VALIDATION = URI.create("urn:kina:problem:validation");
     static final URI UNKNOWN_DISTRIBUTOR = URI.create("urn:kina:problem:unknown-distributor");
