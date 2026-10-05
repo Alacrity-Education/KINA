@@ -1,6 +1,7 @@
 package ro.alacrity.kina.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.ConstructorBinding;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.nio.file.Path;
@@ -30,7 +31,30 @@ public record KinaProperties(
 
     public enum Mode { DEV, PROD }
 
-    public record Security(@DefaultValue("dev") Mode mode) {
+    public record Security(@DefaultValue("dev") Mode mode, @DefaultValue Oidc oidc) {
+
+        @ConstructorBinding
+        public Security {
+        }
+
+        /** Convenience for tests and code that only cares about the mode. */
+        public Security(Mode mode) {
+            this(mode, new Oidc(null, null, null));
+        }
+    }
+
+    /** {@code kina.security.oidc.*}: generic OIDC provider used for web login in production mode. */
+    public record Oidc(String issuerUri, String clientId, String clientSecret) {
+
+        public boolean isConfigured() {
+            return issuerUri != null && !issuerUri.isBlank() && clientId != null && !clientId.isBlank();
+        }
+
+        @Override
+        public String toString() {
+            return "Oidc[issuerUri=" + issuerUri + ", clientId=" + clientId + ", clientSecret="
+                    + (clientSecret == null || clientSecret.isBlank() ? "" : "***") + "]";
+        }
     }
 
     public record Tokens(@DefaultValue("30d") Duration validity) {

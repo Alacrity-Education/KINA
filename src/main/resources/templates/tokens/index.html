@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <th:block th:replace="~{fragments :: pageHead('Access tokens')}"></th:block>
+</head>
+<body>
+<header th:replace="~{fragments :: pageHeader(${user})}"></header>
+<main>
+    <div class="card">
+        <h1>Access tokens</h1>
+        <p class="muted">
+            Access tokens authenticate the KINA HTTP API and MCP clients that accept a static
+            <code>Authorization: Bearer</code> header. New tokens are valid for
+            <span th:text="${validityDays}">30</span> days. Clients connected through OAuth (for example
+            Claude's remote MCP connector) appear here as <code>MCP: &lt;client&gt;</code>.
+        </p>
+        <p class="notice" th:if="${message}" th:text="${message}">Token revoked.</p>
+        <form method="post" th:action="@{/tokens}">
+            <label for="name"><strong>New token</strong></label>
+            <div class="row" style="margin-top:6px">
+                <input type="text" id="name" name="name" maxlength="100" placeholder="e.g. Claude Code on laptop"
+                       required th:value="${name}">
+                <button type="submit">Create token</button>
+            </div>
+            <p class="error" th:if="${error}" th:text="${error}">Please enter a name.</p>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Your tokens</h2>
+        <p class="muted" th:if="${#lists.isEmpty(tokens)}">You have no tokens yet.</p>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(tokens)}">
+            <table>
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Token</th>
+                    <th>Created</th>
+                    <th>Expires</th>
+                    <th>Last used</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${tokens}">
+                    <td th:text="${t.name}">name</td>
+                    <td class="mono" th:text="${t.prefix}">kina_abcdefg…</td>
+                    <td th:text="${t.created}">2026-01-01 10:00 UTC</td>
+                    <td th:text="${t.expires}">2026-01-31 10:00 UTC</td>
+                    <td th:text="${t.lastUsed}">never</td>
+                    <td th:class="'status-' + ${t.status}" th:text="${t.status}">active</td>
+                    <td>
+                        <form class="inline" method="post" th:if="${t.active()}"
+                              th:action="@{/tokens/{id}/revoke(id=${t.id})}">
+                            <button type="submit" class="danger">Revoke</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Connecting MCP clients</h2>
+        <p>MCP endpoint: <code th:text="${mcpUrl}">https://kina.example.com/mcp</code></p>
+        <p class="muted">Claude (remote connector): add the MCP endpoint URL; Claude registers itself and signs you in
+            through OAuth. Clients that support static headers can use a token from this page instead.</p>
+    </div>
+</main>
+</body>
+</html>

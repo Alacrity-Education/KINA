@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <th:block th:replace="~{fragments :: pageHead('Authorize application')}"></th:block>
+</head>
+<body>
+<header th:replace="~{fragments :: pageHeader(${userName})}"></header>
+<main>
+    <div class="card" style="max-width:560px;margin:0 auto">
+        <h1>Authorize <span th:text="${clientName}">client</span>?</h1>
+        <p><strong th:text="${clientName}">client</strong> wants to access KINA on behalf of
+            <strong th:text="${userName}">user</strong>.</p>
+        <p class="muted">It will be able to search electronic components through KINA's MCP server and HTTP API
+            (scope <code th:text="${scope}">kina</code>). It receives an access token valid for 30 days that you can
+            revoke at any time on the token page.</p>
+        <p class="muted">After your decision you will be sent to <code th:text="${redirectTarget}">https://client</code>.
+            Client ID: <code th:text="${clientId}">id</code></p>
+        <form method="post" th:action="@{/oauth/authorize}">
+            <input type="hidden" th:each="p : ${params}" th:name="${p.key}" th:value="${p.value}">
+            <div class="row">
+                <button type="submit" name="decision" value="approve">Approve</button>
+                <button type="submit" name="decision" value="deny" class="secondary">Deny</button>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

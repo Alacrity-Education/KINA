@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <th:block th:replace="~{fragments :: pageHead('Token created')}"></th:block>
+</head>
+<body>
+<header th:replace="~{fragments :: pageHeader(${user})}"></header>
+<main>
+    <div class="card">
+        <h1>Token created</h1>
+        <p>Token <strong th:text="${name}">name</strong>, valid until <span th:text="${expires}">date</span>.</p>
+        <p class="warn"><strong>Copy the token now.</strong> It is shown only once and cannot be retrieved again;
+            if you lose it, revoke it and create a new one. Select the field below and copy it
+            (Ctrl+C / Cmd+C).</p>
+        <label for="token" class="muted">Access token</label>
+        <input id="token" class="secret" type="text" readonly autocomplete="off" spellcheck="false"
+               th:value="${token}">
+
+        <h2 style="margin-top:20px">Use it</h2>
+        <p class="muted">Claude Code:</p>
+        <pre th:text="'claude mcp add --transport http kina ' + ${mcpUrl} + ' --header &quot;Authorization: Bearer ' + ${token} + '&quot;'">claude mcp add ...</pre>
+        <p class="muted">HTTP API:</p>
+        <pre th:text="'curl -H &quot;Authorization: Bearer ' + ${token} + '&quot; ' + ${baseUrl} + '/api/v1/distributors'">curl ...</pre>
+        <p><a th:href="@{/}">Back to your tokens</a></p>
+    </div>
+</main>
+</body>
+</html>
