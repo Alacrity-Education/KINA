@@ -49,6 +49,7 @@ SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V3). Templates:
 - Jackson 3: databind is `tools.jackson.*`; annotations stay `com.fasterxml.jackson.annotation.*`. Exceptions are unchecked. DTOs use explicit `@JsonProperty` snake_case names; do not rely on naming strategies.
 - Domain and DTO types are Java records. No Lombok.
 - Persistence is `JdbcClient` and plain SQL. No JPA. Cached parts are JSONB (`Part` as camelCase JSON).
+- Rate limits are retried, not failed: `RateLimitRetry` waits (`Retry-After`, else 2, 4, 8, 16, 30 s with jitter) on 429, on 502/503/504 only with `Retry-After`, and on Mouser's `TooManyRequests`, with a shared per-distributor cool-down. Every wait must stay inside the per-request `Deadline` (`kina.search.max-request-duration`, 2 minutes); never sleep past it. See DESIGN.md 3.6.
 - Every external call has an explicit connect and read timeout. A distributor error is isolated to that distributor and becomes the `error` code in its result entry.
 - Stock rule: only ships-now stock. Never construct, cache, rank or return a `Part` with stock of 0 or less.
 - Prices are stored complete and trimmed to the 3 smallest brackets only when building responses.

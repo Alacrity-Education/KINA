@@ -53,7 +53,8 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | `returned` | integer | `min(max_results, fetched)`; the length of `parts`. |
 | `cache` | string | `hit`, `partial`, `miss`, `bypassed` or `not_applicable` (LCSC, and distributors that were never looked up). |
 | `fallback_query` | string or null | Set when the full query found nothing at this distributor and KINA retried with a shorter parametric core phrase, for example `"MOSFET 30V SOT-23"` for `"SOT-23 N-channel MOSFET 30V"`. Only Mouser and TME; null otherwise (always present in the JSON). The parts in the entry come from that phrase. |
-| `error` | string or null | `rate_limited`, `unavailable`, `not_configured`, `timeout` or `bad_response`. A failing distributor has an empty `parts` list, except that parts already in hand are kept. |
+| `error` | string or null | `rate_limited`, `unavailable`, `not_configured`, `timeout` or `bad_response`. A failing distributor has an empty `parts` list, except that parts already in hand are kept. `rate_limited` means the rate limit outlasted the request deadline (see [Rate limits and timing](#rate-limits-and-timing)). |
+| `rate_limit_waited_ms` | integer | Milliseconds this distributor's fetch spent waiting on rate limits, including waiting for a shared cool-down. Always present, 0 when KINA did not wait. |
 | `parts` | array | `PartResponse` entries, best first. |
 
 `PartResponse`:
@@ -79,6 +80,20 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. |
 | `extra` | object | Distributor-specific details (lifecycle, RoHS, library type, lead time, and so on). |
 
+### Rate limits and timing
+
+When Mouser or TME rate limit a call, KINA waits and retries instead of failing at once.
+
+- Triggers: HTTP 429; HTTP 502, 503 or 504 only when a `Retry-After` header is present; Mouser's in-body error code `TooManyRequests` on HTTP 200. A 503 without `Retry-After` is an outage and fails fast with `unavailable`. TME has no throttling error code, so only the statuses count.
+- Wait: the `Retry-After` value (seconds or HTTP date, at least 1 s). Without it, 2, 4, 8, 16, 30, 30... seconds with 20 percent jitter, never below 1 s. KINA retries while the next wait fits inside the request deadline.
+- Request deadline: `kina.search.max-request-duration`, default `2m`, for each incoming request. A batch shares one deadline for all its queries. The waits extend a distributor's 12 s work budget but never the deadline.
+- Shared cool-down: after a rate limit, other calls to the same distributor wait for the cool-down to end if that fits their deadline. Otherwise they fail at once with `rate_limited`, without calling the distributor.
+- Result: `rate_limit_waited_ms` in each distributor entry tells how long KINA waited. `error: "rate_limited"` means the limit outlasted the deadline. Parts fetched before that (earlier pages, a cached list) are still returned.
+- Ranking runs after fetching (18 s per query, 60 s per batch). The worst case is therefore about 2 minutes plus ranking.
+- Mouser quotas stay at 1 000 calls a day and 30 a minute. The retry helps with the per-minute limit, not with an exhausted daily quota.
+
+Set the read timeout of your HTTP client or proxy above about 2.5 minutes for the search endpoints.
+
 ### `GET /api/v1/parts/search`
 
 Search one query.
@@ -95,7 +110,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
   "https://kina.example.com/api/v1/parts/search?q=10uF%20X7R%200805&max_results=5&distributors=LCSC,TME"
 ```
 
-Returns a `SearchResponse` (see the example in the [README](../README.md#example)).
+Returns a `SearchResponse` (see the example in the [README](../README.md#example)). With a rate-limited distributor the call can take up to 2 minutes plus ranking.
 
 ### `POST /api/v1/parts/search/batch`
 
@@ -113,7 +128,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/
   }'
 ```
 
-Response: `{"results": [SearchResponse, ...]}` in request order. Queries are fetched in parallel (4 at a time) and ranked one after another within a 60 s budget; queries reached after the budget is spent return `"ranking": "fallback"` with `"ranking_note": "batch ranking budget of 60s exhausted"`.
+Response: `{"results": [SearchResponse, ...]}` in request order. Queries are fetched in parallel (4 at a time) and ranked one after another within a 60 s budget; queries reached after the budget is spent return `"ranking": "fallback"` with `"ranking_note": "batch ranking budget of 60s exhausted"`. All queries share one 2-minute deadline for rate-limit waits, so the whole call can take about 2 minutes plus ranking.
 
 ### `GET /api/v1/parts/{distributor}/{partNumber}`
 
@@ -127,7 +142,7 @@ Get one part by distributor part number. The part number is the rest of the path
 curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/parts/lcsc/C15850
 ```
 
-Returns one `PartResponse` (without `rank` and `score`, prices trimmed to 3 brackets). It returns 404 when the distributor does not know the part or has no ships-now stock for it. Lookup failures return 503, 429, 504 or 502 (see below).
+Returns one `PartResponse` (without `rank` and `score`, prices trimmed to 3 brackets). It returns 404 when the distributor does not know the part or has no ships-now stock for it. Lookup failures return 503, 429, 504 or 502 (see below). On a rate limit the call waits and retries for up to 2 minutes; 429 means the limit outlasted that. The response has no `rate_limit_waited_ms`.
 
 ### `GET /api/v1/distributors`
 
@@ -169,10 +184,10 @@ REST errors are RFC 9457 `application/problem+json`. They never contain stack tr
 | 400 | `urn:kina:problem:unknown-distributor` | A distributor name other than LCSC, TME, MOUSER. |
 | 401 | `about:blank` | Missing or invalid token (see Authentication). |
 | 404 | `urn:kina:problem:not-found` | Unknown or out-of-stock part. Adds `distributor` and `part_number`. |
-| 429, 502, 503, 504 | `urn:kina:problem:distributor-error` | Single-part lookup failed: 503 for `not_configured` and `unavailable`, 429 for `rate_limited`, 504 for `timeout`, 502 for `bad_response`. Adds `distributor` and `error`. |
+| 429, 502, 503, 504 | `urn:kina:problem:distributor-error` | Single-part lookup failed: 503 for `not_configured` and `unavailable`, 429 for `rate_limited` (only after the 2-minute retry budget), 504 for `timeout`, 502 for `bad_response`. Adds `distributor` and `error`. |
 | 500 | `urn:kina:problem:internal` | Anything else. |
 
-Search endpoints do not return distributor errors as HTTP errors; they put the code in the `error` field of the distributor entry.
+Search endpoints do not return distributor errors as HTTP errors; they put the code in the `error` field of the distributor entry. A rate limit is retried first; `error: "rate_limited"` appears only after the retry budget is spent.
 
 Example:
 
@@ -220,7 +235,7 @@ Search electronic components across distributors and return ranked, in-stock off
 }
 ```
 
-Returns a `SearchResponse`.
+Returns a `SearchResponse`. If a distributor is rate limited the call can take up to 2 minutes plus ranking; see [Rate limits and timing](#rate-limits-and-timing). The MCP server request timeout is `3m`; set client timeouts above 2.5 minutes.
 
 ### `search_parts_batch`
 
@@ -248,7 +263,7 @@ Run 1 to 20 searches at once, for example every line of a BOM. Same semantics an
 }
 ```
 
-Returns `{"results": [SearchResponse, ...]}` in request order. An empty or missing `queries` is an error.
+Returns `{"results": [SearchResponse, ...]}` in request order. An empty or missing `queries` is an error. The whole batch shares one 2-minute deadline for rate-limit waits.
 
 ### `get_part`
 
@@ -272,7 +287,7 @@ Returns:
 {"found": true, "distributor": "LCSC", "part_number": "C15850", "cache": "not_applicable", "error": null, "part": {"...": "PartResponse"}}
 ```
 
-`found` is false (and `part` null) when the distributor does not know the part, has no ships-now stock, or failed; `error` then carries the failure code. `cache` is `hit`, `miss`, `bypassed` or `not_applicable`. An unknown distributor name is a tool error.
+`found` is false (and `part` null) when the distributor does not know the part, has no ships-now stock, or failed; `error` then carries the failure code. On a rate limit the call waits and retries for up to 2 minutes before it reports `rate_limited`. The response has no waited-time field. `cache` is `hit`, `miss`, `bypassed` or `not_applicable`. An unknown distributor name is a tool error.
 
 ### `list_distributors`
 

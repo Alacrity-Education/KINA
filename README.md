@@ -15,6 +15,7 @@ The distributors are LCSC (served from the JLCPCB parts database, downloaded and
 - `bypass_cache` skips the cache lookup and still refreshes the cache.
 - Phrase fallback: when Mouser or TME find nothing for the full query, KINA retries once with the parametric core of the query (for example `MOSFET 30V SOT-23` for `SOT-23 N-channel MOSFET 30V`) and reports it in `fallback_query`.
 - Batch search of up to 20 queries in one call.
+- Graceful rate limits: when Mouser or TME answer with a rate limit, KINA waits and retries instead of failing at once, for up to 2 minutes per request (`kina.search.max-request-duration`). `rate_limit_waited_ms` in each distributor entry says how long it waited.
 - Ranking: deterministic parametric ranker blended with Laya, with an 18 s budget per query and an automatic fallback (`ranking: "fallback"`).
 - OAuth 2.1 authorization server for Claude's remote connector (dynamic client registration, PKCE, consent page).
 - 30-day static access tokens for Claude Code and the HTTP API, created in the web UI.
@@ -189,7 +190,8 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `kina.search.candidate-window` | `40` | Minimum parts fetched per distributor per query. |
 | `kina.search.default-max-results` | `10` | Used when `max_results` is missing. |
 | `kina.search.max-max-results` | `50` | Upper limit for `max_results`. |
-| `kina.search.distributor-timeout` | `12s` | Deadline for one distributor fetch. |
+| `kina.search.distributor-timeout` | `12s` | Budget for the active work of one distributor fetch. Time spent waiting on a rate limit does not count against it. |
+| `kina.search.max-request-duration` | `2m` | Hard cap for one incoming request (`search_parts`, a whole `search_parts_batch`, `get_part` and the REST equivalents), including rate-limit waits. Clients and proxies need a read timeout above this plus ranking, about 2.5 minutes. |
 | `kina.ranking.timeout` | `18s` | Ranking budget per query. |
 | `kina.ranking.batch-timeout` | `60s` | Ranking budget for a whole batch. |
 | `kina.ranking.score-cache-ttl` | `1h` | In-memory cache of Laya scores. |
@@ -208,9 +210,9 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 
 | Tool | Parameters | Purpose |
 |---|---|---|
-| `search_parts` | `query` (required), `max_results` (1 to 50, default 10, per distributor), `distributors` (`LCSC`, `TME`, `MOUSER`; default all configured), `bypass_cache` (default false) | Search and rank in-stock parts. |
-| `search_parts_batch` | `queries` (1 to 20 of `{query, max_results}`), `distributors`, `bypass_cache` | Several searches in one call. Returns `{"results": [...]}` in request order. |
-| `get_part` | `distributor`, `part_number`, `bypass_cache` | One part by distributor part number (LCSC `C15850`, TME symbol, Mouser number). Returns `found: false` for unknown or out-of-stock parts. |
+| `search_parts` | `query` (required), `max_results` (1 to 50, default 10, per distributor), `distributors` (`LCSC`, `TME`, `MOUSER`; default all configured), `bypass_cache` (default false) | Search and rank in-stock parts. Can take up to 2 minutes when a distributor is rate limited. |
+| `search_parts_batch` | `queries` (1 to 20 of `{query, max_results}`), `distributors`, `bypass_cache` | Several searches in one call. Returns `{"results": [...]}` in request order. The whole batch shares one 2-minute limit for rate-limit waits. |
+| `get_part` | `distributor`, `part_number`, `bypass_cache` | One part by distributor part number (LCSC `C15850`, TME symbol, Mouser number). Returns `found: false` for unknown or out-of-stock parts. Can take up to 2 minutes when the distributor is rate limited. |
 | `list_distributors` | none | State of each distributor, cache statistics and Laya health. Never calls the Mouser or TME APIs. |
 | `ping` | none | `{"status":"ok","version":"..."}`. |
 
@@ -240,6 +242,7 @@ Response (abridged):
       "returned": 10,
       "cache": "hit",
       "error": null,
+      "rate_limit_waited_ms": 0,
       "parts": [
         {
           "rank": 1, "score": 0.93, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
@@ -293,7 +296,8 @@ Set `KINA_LAYA_TEST_MODEL` to evaluate another checkpoint (default `multilingual
 - Volumes: `kina-data` (JLCPCB SQLite file), `pgdata` (PostgreSQL), `laya-models` (Hugging Face cache).
 - JLCPCB database: checked every hour, downloaded again when older than 5 days. The old file keeps serving while the new one downloads.
 - TME and Mouser cache: 5 days. A cached search with zero parts goes stale after 1 hour (`kina.cache.empty-result-ttl`). Rows older than 10 days (2 x TTL) are purged every 6 hours.
-- Rate limits: Mouser allows 1 000 calls per day and 30 per minute. KINA makes one Mouser call per uncached query and does not throttle itself; a refused call shows as `error: "rate_limited"`. Use `bypass_cache` sparingly.
+- Rate limits: Mouser allows 1 000 calls per day and 30 per minute. KINA makes one Mouser call per uncached query and does not throttle itself. When a distributor answers with a rate limit, KINA waits and retries (see the next item). Use `bypass_cache` sparingly.
+- Rate-limit handling: HTTP 429, HTTP 502, 503 or 504 with a `Retry-After` header, and Mouser's in-body `TooManyRequests` error trigger a wait. KINA waits for `Retry-After` (at least 1 s) or, without it, 2, 4, 8, 16, 30, 30... seconds with 20 percent jitter, and retries while the next wait fits inside the request deadline (`kina.search.max-request-duration`, 2 minutes). A 503 without `Retry-After` is an outage and fails at once. After a rate limit, all calls to that distributor share a cool-down: they wait for it if that fits their deadline, otherwise they fail at once with `rate_limited`. If the limit outlasts the deadline, the entry reports `error: "rate_limited"` and keeps the parts already fetched. The retry helps with the per-minute limit, not with an exhausted daily quota. Worst case for one request is about 2 minutes plus ranking.
 - Phrase fallback: when the full query returns 0 parts at Mouser or TME, KINA retries once with the parsed core phrase. The distributor entry then has `fallback_query` set. The phrase is stored with the cached search, so a cache hit reports it too.
 - Logs: `docker compose logs -f kina`. Each search logs fetch and rank timings. Tokens and API keys are never logged.
 
@@ -312,7 +316,9 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 | LCSC `error: "unavailable"`, detail "JLCPCB parts database not downloaded yet" | The first download is still running (about 1 GB). Watch `docker compose logs kina`. If it failed, `jlcpcb.last_error` in `list_distributors` says why; check disk space and internet access. |
 | `ranking: "fallback"` with a Laya note | Laya is not healthy yet (the first start loads the checkpoint), is overloaded or timed out. Check `docker compose ps` and `docker compose logs laya-serve`. Search still works. |
 | TME or Mouser `error: "not_configured"` | The credentials are missing in `.env`. Restart with `docker compose up -d`. |
-| Mouser `error: "rate_limited"` | Daily or per-minute quota hit. Wait, and rely on the cache. |
+| Slow search (up to 2 minutes), `rate_limit_waited_ms` above 0 | The distributor rate limited the request and KINA waited. This is normal for Mouser's 30 calls per minute. The log has a `rate limited ... cooling down` line. |
+| Mouser `error: "rate_limited"` | The limit outlasted the 2-minute budget, usually an exhausted daily quota (1 000 calls). Wait, and rely on the cache. |
+| Client or proxy times out on a search | Their read timeout is below about 2.5 minutes. Raise it (see [docs/OPERATIONS.md](docs/OPERATIONS.md)). |
 | 401 on `/api` or `/mcp` in `prod` | Missing, expired or revoked token. The `WWW-Authenticate` header points to the OAuth metadata. |
 | Claude connector cannot sign in | Check HTTPS, the `X-Forwarded-*` headers or `KINA_PUBLIC_BASE_URL`, and that `https://<host>/.well-known/oauth-protected-resource` shows your public origin. |
 
