@@ -1,0 +1,68 @@
+# Disposable Authentik for the group-authorisation end-to-end test (docs/DEVELOPMENT.md, "Group authorisation against a real Authentik").
+# Authentik 2026.8 needs no Redis any more (removed in 2025.10); server + worker + PostgreSQL as in the official
+# compose file. A separate PostgreSQL serves the KINA instance under test (run from target/kina.jar on port 18080).
+# Secrets come from ./.env, which kina_authentik_e2e.py generates (git-ignored; never commit it).
+name: kina-authentik-e2e
+
+services:
+  postgresql:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: ${PG_PASS:?run kina_authentik_e2e.py, it writes .env}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d authentik -U authentik"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - database:/var/lib/postgresql/data
+
+  server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2026.8.3}
+    command: server
+    environment: &authentik-env
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?run kina_authentik_e2e.py, it writes .env}
+      AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_BOOTSTRAP_PASSWORD}
+      AUTHENTIK_BOOTSTRAP_TOKEN: ${AUTHENTIK_BOOTSTRAP_TOKEN}
+      AUTHENTIK_BOOTSTRAP_EMAIL: admin@example.test
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_DISABLE_UPDATE_CHECK: "true"
+      AUTHENTIK_DISABLE_STARTUP_ANALYTICS: "true"
+    ports:
+      - "127.0.0.1:${AUTHENTIK_PORT:-19000}:9000"
+    shm_size: 512mb
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2026.8.3}
+    command: worker
+    environment: *authentik-env
+    shm_size: 512mb
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  kina-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: kina
+      POSTGRES_USER: kina
+      POSTGRES_PASSWORD: kina
+    ports:
+      - "127.0.0.1:${KINA_DB_PORT:-15432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kina -d kina"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  database:
