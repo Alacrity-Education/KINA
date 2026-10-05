@@ -1,0 +1,45 @@
+spring:
+  application.name: kina
+  threads.virtual.enabled: true
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/kina}
+    username: ${SPRING_DATASOURCE_USERNAME:kina}
+    password: ${SPRING_DATASOURCE_PASSWORD:kina}
+  flyway.enabled: true
+  ai.mcp.server:
+    name: kina
+    version: "@project.version@"
+    type: SYNC
+    protocol: STATELESS
+    streamable-http.mcp-endpoint: /mcp
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+management.endpoints.web.exposure.include: health,info
+kina:
+  public-base-url: ${KINA_PUBLIC_BASE_URL:}
+  security.mode: ${KINA_MODE:dev}
+  tokens.validity: 30d
+  oauth.refresh-token-validity: 90d
+  cache.ttl: 5d
+  search:
+    candidate-window: 40
+    default-max-results: 10
+    max-max-results: 50
+    distributor-timeout: 12s
+  ranking:
+    timeout: 18s
+    batch-timeout: 60s
+    score-cache-ttl: 1h
+    laya:
+      enabled: ${KINA_LAYA_ENABLED:true}
+      url: ${LAYA_URL:http://localhost:8000}
+      api-key: ${LAYA_API_KEY:}
+      model: ${KINA_LAYA_MODEL:multilingual}
+      max-candidates: 40
+      max-concurrent-requests: ${KINA_LAYA_MAX_CONCURRENT:1}
+      weight: 0.6
+  distributors:
+    mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
+    tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3 }
+  jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200 }

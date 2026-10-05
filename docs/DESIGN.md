@@ -11,13 +11,13 @@ requirements; where this document is more specific, follow this document.
 |---|---|
 | Language / build | Java 21 (`maven.compiler.release=21`), Maven with wrapper (`./mvnw`), single module |
 | Framework | Spring Boot **4.1.1** (parent POM), Spring Framework 7, Jackson **3** (`tools.jackson.*`; annotations stay `com.fasterxml.jackson.annotation.*`) |
-| MCP | Spring AI **2.0.1** BOM, `spring-ai-starter-mcp-server-webmvc`, Streamable HTTP transport, **stateless** protocol, endpoint `/mcp` |
-| Web | Spring MVC, Thymeleaf for the small token UI, Spring Security, `spring-boot-starter-oauth2-client` for OIDC login |
+| MCP | Spring AI **2.0.1** BOM, `spring-ai-starter-mcp-server-webmvc` (MCP Java SDK 2.0.0, Jackson 3), Streamable HTTP transport, **stateless** protocol, endpoint `/mcp`; tool annotations `org.springframework.ai.mcp.annotation.McpTool`/`McpToolParam` |
+| Web | Spring MVC, Thymeleaf for the small token UI, Spring Security, `spring-boot-starter-security-oauth2-client` for OIDC login (Boot 4 deprecates the old `spring-boot-starter-oauth2-client` name) |
 | Persistence | PostgreSQL 17, Flyway migrations, `JdbcClient` (no JPA), JSONB for cached payloads |
 | JLCPCB data | `org.xerial:sqlite-jdbc` reading the downloaded FTS5 database read-only |
 | HTTP clients | Spring `RestClient` on the JDK `HttpClient`, explicit connect/read timeouts everywhere |
 | Concurrency | `spring.threads.virtual.enabled=true`; distributor fetches run in parallel on virtual threads |
-| Tests | JUnit 5, Mockito, `MockRestServiceServer` / recorded JSON fixtures, Testcontainers PostgreSQL for repository and context tests |
+| Tests | JUnit 5, Mockito, `MockRestServiceServer` / recorded JSON fixtures, Testcontainers 2.x PostgreSQL (`org.testcontainers:testcontainers-postgresql`, class `org.testcontainers.postgresql.PostgreSQLContainer`) for repository and context tests |
 | Packaging | Multi-stage `Dockerfile`, `compose.yaml` with services `kina`, `postgres`, `laya-serve`; `compose.cuda.yaml` GPU overlay |
 
 Verify every starter artifact name against the Spring Boot 4.1.1 `spring-boot-dependencies` BOM
@@ -140,7 +140,7 @@ Algorithm (`PartSearchService.fetchDistributor`):
    ordered part-number list + `total_results` + `exhausted` into `cached_searches`.
    `bypassCache == true` skips step 1 but still performs step 3 (status `BYPASSED`).
 4. Distributor failures never fail the whole search: the distributor entry carries
-   `error` (`"rate_limited"`, `"unavailable"`, `"not_configured"`, `"timeout"`) and an empty list.
+   `error` (`"rate_limited"`, `"unavailable"`, `"not_configured"`, `"timeout"`, `"bad_response"` = `DistributorException.Kind.code()`) and an empty list.
 
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
@@ -263,6 +263,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `search_parts_batch` | `queries` (array of `{query, max_results}`, 1..20), `distributors`, `bypass_cache` | `{ "results": [SearchResponse...] }` |
 | `get_part` | `distributor`, `part_number`, `bypass_cache` | `PartResponse` or a not-found error |
 | `list_distributors` | none | per distributor: configured, healthy, cache statistics, JLCPCB database date |
+| `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 `SearchResponse` JSON (snake_case):
 
@@ -320,7 +321,7 @@ Presented bearer tokens are still validated. No login page.
 **Production mode**: web pages require OIDC login through `spring-boot-starter-oauth2-client`,
 registration id `oidc`, provider configured only by `OIDC_ISSUER_URI`, `OIDC_CLIENT_ID`,
 `OIDC_CLIENT_SECRET` (discovery via `/.well-known/openid-configuration`, scopes `openid profile email`).
-No provider-specific code. On login `OidcUserSynchronizer` upserts `users(issuer, subject, email, display_name, last_login_at)`.
+No provider-specific code (`spring-boot-starter-security-oauth2-client`). On login `OidcUserSynchronizer` upserts `users(issuer, subject, email, display_name, last_login_at)`.
 `/api/**` and `/mcp/**` accept bearer tokens only.
 
 **Access tokens** (`AccessTokenService`): plaintext `kina_` + 43 base64url chars from 32 random
@@ -545,9 +546,11 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:kina}
     password: ${SPRING_DATASOURCE_PASSWORD:kina}
   flyway.enabled: true
-  ai.mcp.server:
+  ai.mcp.server:                 # property names verified against spring-ai-autoconfigure-mcp-server-common 2.0.1
     name: kina
-    protocol: STATELESS           # verify property names against the Spring AI 2.0.1 starter
+    version: "@project.version@"  # Maven resource filtering
+    type: SYNC
+    protocol: STATELESS           # SSE | STREAMABLE | STATELESS
     streamable-http.mcp-endpoint: /mcp
 server:
   port: ${PORT:8080}

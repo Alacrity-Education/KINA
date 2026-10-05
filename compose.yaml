@@ -1,0 +1,75 @@
+# KINA: app + PostgreSQL + Laya ranking sidecar.
+#   cp .env.example .env   # fill in API keys
+#   docker compose up --build
+# GPU ranking: docker compose -f compose.yaml -f compose.cuda.yaml up --build
+services:
+  kina:
+    build: .
+    image: kina:latest
+    ports:
+      - "${KINA_PORT:-8080}:8080"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kina
+      SPRING_DATASOURCE_USERNAME: kina
+      SPRING_DATASOURCE_PASSWORD: kina
+      LAYA_URL: http://laya-serve:8000
+      KINA_JLCPCB_DATA_DIR: /data/jlcpcb
+    volumes:
+      - kina-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # Laya is deliberately not a hard dependency: KINA falls back to deterministic ranking.
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: kina
+      POSTGRES_USER: kina
+      POSTGRES_PASSWORD: kina
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kina -d kina"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  laya-serve:
+    build:
+      context: https://github.com/NandhaKishorM/laya.git#v0.3.27
+      args:
+        TORCH_INDEX: cpu
+    image: laya-serve:0.3.27-cpu
+    command: ["laya-serve"]
+    environment:
+      LAYA_HOST: 0.0.0.0
+      LAYA_PORT: "8000"
+      LAYA_DEVICE: cpu
+      LAYA_MODELS: multilingual
+      LAYA_DEFAULT_MODEL: multilingual
+      LAYA_PRELOAD: "1"
+      LAYA_THREADS: "${LAYA_THREADS:-4}"
+      OMP_NUM_THREADS: "${LAYA_THREADS:-4}"
+      LAYA_MAX_CONCURRENT: "${KINA_LAYA_MAX_CONCURRENT:-1}"
+      LAYA_API_KEY: "${LAYA_API_KEY:-}"
+    volumes:
+      - laya-models:/home/laya/.cache/huggingface
+    # No host port: reachable only from the compose network as http://laya-serve:8000.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10m
+    restart: unless-stopped
+
+volumes:
+  kina-data:
+  pgdata:
+  laya-models:
