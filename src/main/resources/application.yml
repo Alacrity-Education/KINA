@@ -38,7 +38,7 @@ kina:
       model: ${KINA_LAYA_MODEL:multilingual}
       max-candidates: 40
       max-concurrent-requests: ${KINA_LAYA_MAX_CONCURRENT:1}
-      weight: 0.6
+      weight: 0.2
   distributors:
     mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3 }

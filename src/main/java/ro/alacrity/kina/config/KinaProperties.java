@@ -63,7 +63,7 @@ public record KinaProperties(
             @DefaultValue("multilingual") String model,
             @DefaultValue("40") int maxCandidates,
             @DefaultValue("1") int maxConcurrentRequests,
-            @DefaultValue("0.6") double weight) {
+            @DefaultValue("0.2") double weight) {
 
         public boolean hasApiKey() {
             return apiKey != null && !apiKey.isBlank();
