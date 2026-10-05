@@ -2,7 +2,7 @@
 
 ## What KINA is
 
-An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search electronic components at LCSC (via the JLCPCB parts database), TME (API v2) and Mouser. Only ships-now stock is returned. TME and Mouser results are cached in PostgreSQL for 5 days. Parts are ranked by a deterministic parametric ranker blended (weight 0.2) with a local Laya sidecar, with a deterministic fallback. KINA is also an OAuth 2.1 authorization server for Claude's remote MCP connector.
+An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search electronic components at LCSC (via the JLCPCB parts database), TME (API v2) and Mouser. Only ships-now stock is returned. TME and Mouser results are cached in PostgreSQL for 5 days (1 hour for searches with no parts), and a search that finds nothing is retried once with a shorter core phrase (`fallback_query`). Parts are ranked by a deterministic parametric ranker blended (weight 0.2) with a local Laya sidecar, with a deterministic fallback. KINA is also an OAuth 2.1 authorization server for Claude's remote MCP connector.
 
 ## Where things are documented
 
@@ -23,6 +23,8 @@ docker compose up -d --build     # kina + postgres + laya-serve
 
 Always use `./mvnw`. The build must stay free of compiler warnings (`-Xlint:all`).
 
+End-to-end checks against a running compose stack: `python3 scripts/e2e/kina_e2e.py` and `scripts/e2e/prod_smoke.sh` (see `docs/DEVELOPMENT.md`).
+
 Optional live tests: `KINA_LAYA_TEST_URL=http://127.0.0.1:8001 ./mvnw test -Dtest=LayaRankerEvaluationTest`; the Mouser live test needs `KINA_MOUSER_LIVE_TEST=true` and `MOUSER_API_KEY`.
 
 ## Module map (`src/main/java/ro/alacrity/kina/`)
@@ -40,7 +42,7 @@ Optional live tests: `KINA_LAYA_TEST_URL=http://127.0.0.1:8001 ./mvnw test -Dtes
 | `oauth` | Metadata, dynamic registration, authorize, token, revoke endpoints, PKCE. |
 | `web` | `TokenPageController` (Thymeleaf token UI), `PublicUrlResolver` (public origin; all emitted URLs go through it). |
 
-SQL migrations: `src/main/resources/db/migration` (Flyway). Templates: `src/main/resources/templates`.
+SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V3). Templates: `src/main/resources/templates`.
 
 ## Conventions
 
@@ -57,6 +59,7 @@ SQL migrations: `src/main/resources/db/migration` (Flyway). Templates: `src/main
 
 ## Rules
 
+- Revoking an access token must also revoke its linked OAuth refresh tokens (done in `AccessTokenRepository`); keep it that way.
 - Never commit `.env`, API keys, tokens or secrets. Use placeholders in docs and fixtures. Never log bearer tokens or API keys.
 - Do not edit the vendored `docs/vendor/tme-api-v2-openapi.json`.
 - Change the shared contracts only together with `docs/DESIGN.md`.

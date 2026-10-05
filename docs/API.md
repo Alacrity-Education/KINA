@@ -52,6 +52,7 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | `fetched` | integer | In-stock parts KINA holds for the query and ranked. |
 | `returned` | integer | `min(max_results, fetched)`; the length of `parts`. |
 | `cache` | string | `hit`, `partial`, `miss`, `bypassed` or `not_applicable` (LCSC, and distributors that were never looked up). |
+| `fallback_query` | string or null | Set when the full query found nothing at this distributor and KINA retried with a shorter parametric core phrase, for example `"MOSFET 30V SOT-23"` for `"SOT-23 N-channel MOSFET 30V"`. Only Mouser and TME; null otherwise (always present in the JSON). The parts in the entry come from that phrase. |
 | `error` | string or null | `rate_limited`, `unavailable`, `not_configured`, `timeout` or `bad_response`. A failing distributor has an empty `parts` list, except that parts already in hand are kept. |
 | `parts` | array | `PartResponse` entries, best first. |
 
@@ -204,7 +205,7 @@ List the tools with `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`. The author
 
 ### `search_parts`
 
-Search electronic components across distributors and return ranked, in-stock offers. Only stock that ships now is returned. Results are cached for 5 days; calling again with a larger `max_results` is served from the cache.
+Search electronic components across distributors and return ranked, in-stock offers. Only stock that ships now is returned. Results are cached for 5 days (a search that found nothing, for only 1 hour); calling again with a larger `max_results` is served from the cache.
 
 ```json
 {
@@ -383,11 +384,11 @@ Response:
 {"access_token": "kina_...", "token_type": "Bearer", "expires_in": 2592000, "refresh_token": "kina_rt_...", "scope": "kina"}
 ```
 
-The code is single use: the first attempt consumes it, even if PKCE verification then fails. Errors are `{"error": "...", "error_description": "..."}`: `invalid_request`, `invalid_client` (401), `invalid_grant`, `unauthorized_client`, `unsupported_grant_type`, `invalid_scope`. Refresh tokens last 90 days (`kina.oauth.refresh-token-validity`).
+The code is single use: the first attempt consumes it, even if PKCE verification then fails. Errors are `{"error": "...", "error_description": "..."}`: `invalid_request`, `invalid_client` (401), `invalid_grant`, `unauthorized_client`, `unsupported_grant_type`, `invalid_scope`. Refresh tokens last 90 days (`kina.oauth.refresh-token-validity`). Revoking an access token, in the web UI or at `/oauth/revoke`, also revokes the refresh tokens issued with it.
 
 ### `POST /oauth/revoke`
 
-RFC 7009. Form-encoded `token=<access or refresh token>`, with the same client authentication as the token endpoint. A refresh token is revoked together with its access token. Unknown tokens and tokens of other clients are ignored. The answer is always 200 once the client is authenticated.
+RFC 7009. Form-encoded `token=<access or refresh token>`, with the same client authentication as the token endpoint. A refresh token is revoked together with its access token, and an access token together with its refresh tokens. Unknown tokens and tokens of other clients are ignored. The answer is always 200 once the client is authenticated.
 
 ## Web UI endpoints
 
@@ -397,5 +398,5 @@ These need a signed-in user (`prod`: OIDC session, `dev`: automatic) and use CSR
 |---|---|
 | `GET /` | List your tokens. |
 | `POST /tokens` | Create a token (`name`, up to 100 characters). The plaintext is shown once. |
-| `POST /tokens/{id}/revoke` | Revoke one of your tokens. |
+| `POST /tokens/{id}/revoke` | Revoke one of your tokens. For an OAuth token this also revokes its refresh tokens. |
 | `GET`/`POST /oauth/authorize` | Consent page and decision. |
