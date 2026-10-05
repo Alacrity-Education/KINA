@@ -63,13 +63,21 @@ Present when KINA reads the query as a connector request (`parsed.family` is the
 
 | Field | Type | Meaning |
 |---|---|---|
-| `type` | string | For example `pin header`, `female header`, `box header`, `terminal block`, `usb-c`, `fpc`, `rj45`, `d-sub`, `barrel jack`, or a generic `connector`. |
+| `type` | string | For example `pin header`, `female header`, `box header`, `terminal block`, `usb-c`, `micro usb`, `usb`, `fpc`, `rj45`, `d-sub`, `barrel jack`, or a generic `connector`. |
 | `series` | string | A series such as JST `XH`, `PH`, `GH`, `SH`, `ZH`. |
 | `gender` | string | `male` or `female`. |
 | `positions` | integer | Number of positions. Read from `6-position`, `6 pos`, `6 pin`, `6P`, `6 way`, `PIN: 6` or from `rows x pins`. IC packages such as `SOIC-8` are not read as positions. |
 | `rows` | integer | From `1x6`, `2x3`, "single row", "dual row". |
 | `pitch` | string | Display form, for example `"2.54mm"`. `0.1"` becomes `2.54mm`. `dupont` implies `2.54mm`. |
 | `orientation` | string | `right angle` or `vertical`. |
+| `usb_type` | string | USB requests only. `Type-C`, `Micro-B`, `Micro-AB`, `Mini-B`, `Mini-AB`, `Type-A` or `Type-B`. |
+| `usb_standard` | string | USB requests only. Canonical name: `USB 2.0`, `USB 3.2 Gen 1`, `USB 3.2 Gen 2`, `USB 3.2 Gen 2x2`, `USB4`, `Thunderbolt 3`, `Thunderbolt 4`, `USB 1.1`, or `USB 3.x` when a 3.x version is written without a generation (for example `USB 3.1`). |
+| `usb_speed_gbps` | number | USB requests only. Speed class: 0.48 (USB 2.0), 5 (USB 3.0, 3.1 Gen 1, 3.2 Gen 1, and `USB 3.x`), 10 (3.1 Gen 2, 3.2 Gen 2), 20 (Gen 2x2), 40 (USB4). |
+| `pin_configuration` | integer | USB requests only. The canonical pin configuration: your `positions` normalised (17 or 18 to 16, 25 or 26 to 24, 7 or 8 to 6; 14 stays 14), or the implied one. |
+| `pin_configuration_implied` | boolean | Only present, as `true`, when you gave no pin count and KINA inferred it from the standard (see below). |
+| `shield_pins_counted` | integer | USB requests only. 1 or 2 when your `positions` count shell or mounting pins on top of the configuration (17 gives 1, 18 gives 2). |
+| `mounting_style` | string | USB requests only. `mid-mount`, `hybrid` or `top-mount`. Plain `SMD` or `THT` stays in `parsed.mounting`. |
+| `features` | array of strings | USB requests only. For example `power only`, `PD`, `waterproof`, `board lock`. |
 
 Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whether a pitch was implied rather than written, but it does not put that in the response.
 
@@ -108,7 +116,7 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | `datasheet_url` | string or null | |
 | `photo_url` | string or null | Null when the distributor gives none (LCSC). |
 | `product_url` | string or null | |
-| `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. Connector parts also carry `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`, `Orientation` and `Mounting` when the distributor data allows it. |
+| `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. Connector parts also carry `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`, `Orientation` and `Mounting` when the distributor data allows it. USB connector parts add `UsbType`, `UsbStandard`, `UsbSpeedGbps`, `PinConfiguration`, `ShieldPinsCounted`, `MountingStyle`, `Waterproof` (the IP rating, or `yes`) and `Features` (comma separated). `Positions` stays as the distributor reported it; `PinConfiguration` is the canonical count. |
 | `extra` | object | Distributor-specific details (lifecycle, RoHS, library type, lead time, and so on). |
 
 ### Connector queries
@@ -128,6 +136,44 @@ Ranking for connectors uses positions (0.30), gender (0.20), orientation (0.15),
 Known limit: rows are not sent to Mouser and Mouser keyword search is loose, so a `2x3` request returns single-row parts there. TME and LCSC handle rows.
 
 The cache key is your own query text, not the distributor phrase.
+
+### USB connector queries
+
+KINA reads USB wording in detail: type (Type-C or USB-C, Micro-B, Micro-AB, Mini-B, Type-A, Type-B, "USB 3.0 Micro-B"), gender (receptacle, socket, female versus plug, male), standard, Type-C pin configuration, mounting style (SMD, THT, hybrid, mid-mount, top-mount), orientation and features (power only, PD, waterproof or IPX7, board lock). Fields are in [`parsed.connector`](#parsedconnector).
+
+Standards map to speed classes: USB 2.0 is 480 Mbps. USB 3.0, USB 3.1 Gen 1 and USB 3.2 Gen 1 are the same class (5 Gbps). USB 3.1 Gen 2 and USB 3.2 Gen 2 are 10 Gbps. USB 3.2 Gen 2x2 is 20 Gbps. USB4 is 40 Gbps.
+
+**Pin-count normalisation.** Distributors sometimes count 1 or 2 shell or mounting pins, so a 16-pin Type-C can be listed as 17P or 18P. KINA keeps `Positions` as reported and derives `PinConfiguration` and `ShieldPinsCounted`. Mapping: 17 or 18 to 16, 25 or 26 to 24, 7 or 8 to 6; 14 stays 14. Ranking compares configurations on both sides. A 17P listing fully matches a 16-pin request, and a "17 pin" request matches 16-pin parts. No distributor lists a 17P or 18P Type-C part in the data seen on 2026-10-05, so this rule is covered by tests and by the "17 pin" request direction.
+
+**Inference.** Without a stated pin count, USB 2.0 Type-C implies 16 pins and USB 3.x Type-C implies 24. The response then has `pin_configuration_implied: true`. On the part side, a Type-C with 12 to 16 pins is treated as USB 2.0 and one with 2 to 6 pins as power only, whatever the distributor label says. JLCPCB labels many 16P and 6P parts "USB 3.1".
+
+Ranking for USB requests replaces the generic connector weights. Unknown attributes never lower a score.
+
+| Signal | Weight |
+|---|---|
+| USB type | +0.30 match, -0.30 mismatch |
+| Pin configuration | +0.20 match, -0.20 mismatch (half of that when only implied) |
+| Standard | +0.20 same speed class, +0.10 higher class, -0.20 lower class or power-only part |
+| Gender | +0.15 / -0.15 |
+| Mounting style | +0.10 / -0.10 |
+| Orientation | +0.05 / -0.05 |
+| Features | +0.03 for each requested feature the part has (waterproof, board lock, power only) |
+
+Scores cap at 1.0, so complete matches can tie. Tied parts keep the distributor's order.
+
+Example phrases for `USB-C receptacle 16 pin SMD USB 2.0`:
+
+| Distributor | `distributor_query` |
+|---|---|
+| LCSC | `"USB Connectors" Type-C 16P/17P/18P "USB 2.0" "Surface Mount"` |
+| TME | `USB C socket SMT 2.0` |
+| MOUSER | `USB type C receptacle SMD 2.0` |
+
+LCSC groups the pin alternatives, so 17P and 18P listings are not excluded. TME and Mouser phrases leave out the pin count. The one exception is a power-only request, where the Mouser phrase adds `6 pos power only`.
+
+Data quality differs by distributor. LCSC has description text only (mid-mount appears as "Recessed" or "Sink board", waterproofing only in part numbers). TME parameters are the richest: type, gender, pins, version, data rate, mounting variant, charging only, IP rating and hybrid. Mouser's search API returns no USB attributes, so everything comes from descriptions, and many Mouser descriptions give no pin count.
+
+Checked live on 2026-10-05: `USB-C receptacle 17 pin` returns 16-pin Type-C parts at all three distributors (TME `USB4145-03-0170-C`, Mouser `217182-0001` and `DX07S016JA3R1500`).
 
 ### Rate limits and timing
 
