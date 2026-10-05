@@ -175,11 +175,7 @@ class PartLookupServiceTest {
     void cachedPartKeepsItsOwnTimestamp() {
         Instant old = NOW.minus(Duration.ofDays(2));
         Part cached = part(Distributor.MOUSER, "M9");
-        Part aged = new Part(cached.distributor(), cached.distributorPartNumber(), cached.manufacturer(),
-                cached.manufacturerPartNumber(), cached.description(), cached.category(), cached.packageName(),
-                cached.stock(), cached.minimumOrderQuantity(), cached.orderMultiple(), cached.prices(),
-                cached.datasheetUrl(), cached.photoUrl(), cached.productUrl(), cached.attributes(), cached.extra(),
-                old);
+        Part aged = cached.toBuilder().fetchedAt(old).build();
         when(cache.find(any(), any(), any())).thenReturn(Optional.of(aged));
         service(new FakeClient(Distributor.MOUSER));
 

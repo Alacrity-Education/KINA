@@ -215,10 +215,7 @@ public class ParametricExtractor {
     public Part enrich(Part part) {
         Map<String, String> attributes = new LinkedHashMap<>(part.attributes());
         extract(part).forEach(attributes::putIfAbsent);
-        return new Part(part.distributor(), part.distributorPartNumber(), part.manufacturer(),
-                part.manufacturerPartNumber(), part.description(), part.category(), part.packageName(), part.stock(),
-                part.minimumOrderQuantity(), part.orderMultiple(), part.prices(), part.datasheetUrl(), part.photoUrl(),
-                part.productUrl(), attributes, part.extra(), part.fetchedAt());
+        return part.toBuilder().attributes(attributes).build();
     }
 
     /** Typed features used by {@link DeterministicRanker}. */
@@ -570,9 +567,19 @@ public class ParametricExtractor {
             standard = UsbVocabulary.physicalStandard(usbType, configuration, standard);
         }
         List<String> featureList = List.copyOf(features);
-        return new ParsedQuery.Connector(connectorType, null, gender, positions, null, null, false, orientation,
-                usbType, standard == null ? null : standard.name(), standard == null ? null : standard.gbps(),
-                configuration, false, shield, ConnectorRecognizer.mountingStyle(featureList), featureList);
+        return ParsedQuery.Connector.builder()
+                .type(connectorType)
+                .gender(gender)
+                .positions(positions)
+                .orientation(orientation)
+                .usbType(usbType)
+                .usbStandard(standard == null ? null : standard.name())
+                .usbSpeedGbps(standard == null ? null : standard.gbps())
+                .pinConfiguration(configuration)
+                .shieldPinsCounted(shield)
+                .mountingStyle(ConnectorRecognizer.mountingStyle(featureList))
+                .features(featureList)
+                .build();
     }
 
     /** TME descriptions that start with the product kind: "Adapter; ...", "Cable; ...", "Hub USB; ...". */

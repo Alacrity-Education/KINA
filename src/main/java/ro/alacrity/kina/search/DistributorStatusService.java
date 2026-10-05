@@ -60,10 +60,21 @@ public class DistributorStatusService {
         CacheSummary cache = stats == null ? null : new CacheSummary(properties.cache().ttl().toString(),
                 stats.parts(), stats.freshParts(), stats.searches(), stats.oldestFetch());
         RankingService.RankingStatus r = ranking.status();
-        RankingSummary rankingSummary = new RankingSummary(r.ready() ? "blended" : "fallback",
-                r.crossEncoderEnabled(), r.ready(), modelName(properties.ranking().crossEncoder().modelUrl()),
-                r.modelVariant(), r.modelRevision(), r.modelDir(), r.threads(), r.avgLatencyMs(), r.lastError(),
-                r.maxCandidates(), r.weight(), properties.ranking().timeout().toString());
+        RankingSummary rankingSummary = RankingSummary.builder()
+                .mode(r.ready() ? "blended" : "fallback")
+                .crossEncoderEnabled(r.crossEncoderEnabled())
+                .ready(r.ready())
+                .model(modelName(properties.ranking().crossEncoder().modelUrl()))
+                .modelVariant(r.modelVariant())
+                .modelRevision(r.modelRevision())
+                .modelDir(r.modelDir())
+                .threads(r.threads())
+                .avgLatencyMs(r.avgLatencyMs())
+                .lastError(r.lastError())
+                .maxCandidates(r.maxCandidates())
+                .weight(r.weight())
+                .timeout(properties.ranking().timeout().toString())
+                .build();
         return new DistributorStatusResponse(distributors, cache, rankingSummary);
     }
 

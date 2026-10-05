@@ -1,5 +1,7 @@
 package ro.alacrity.kina.domain;
 
+import lombok.Builder;
+
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +23,7 @@ import java.util.Map;
  * @param keywords     remaining free-text tokens (lower-case)
  * @param connector    connector attributes when the query asks for a connector (family {@code "connector"}), else null
  */
+@Builder
 public record ParsedQuery(
         String originalText,
         String normalizedKey,
@@ -118,6 +121,7 @@ public record ParsedQuery(
      * @param features      USB features ("power only", "PD", "mid-mount", "hybrid", "waterproof", "IP67",
      *                      "board lock", "through-hole shell", "4 legs", "multi-port"...), never null
      */
+    @Builder(toBuilder = true)
     public record Connector(String type, String series, String gender, Integer positions, Integer rows, Double pitchMm,
                             boolean pitchImplied, String orientation, String usbType, String usbStandard,
                             Double usbSpeedGbps, Integer pinConfiguration, boolean pinConfigurationImplied,

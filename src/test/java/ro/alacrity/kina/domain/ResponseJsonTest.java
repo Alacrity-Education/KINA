@@ -31,8 +31,8 @@ class ResponseJsonTest {
         ParsedQuery parsed = new ParsedQuery("10uF X7R 0805", "10uf x7r 0805", "capacitor", constraints, "X7R", "0805",
                 null, List.of());
         SearchResponse response = new SearchResponse("10uF X7R 0805", ParsedQueryResponse.from(parsed), RankingMode.BLENDED,
-                null, List.of(new DistributorResult(Distributor.MOUSER, 113, 50, 1, CacheStatus.HIT, null,
-                List.of(PartResponse.from(part, 1, 0.93)))));
+                null, List.of(DistributorResult.builder().distributor(Distributor.MOUSER).totalResults(113).fetched(50)
+                        .returned(1).cache(CacheStatus.HIT).parts(List.of(PartResponse.from(part, 1, 0.93))).build()));
 
         String json = mapper.writeValueAsString(response);
 
@@ -48,23 +48,24 @@ class ResponseJsonTest {
 
     @Test
     void distributorResultCarriesTheFallbackQuery() {
-        DistributorResult result = new DistributorResult(Distributor.TME, 12, 12, 5, CacheStatus.MISS, null, List.of(),
-                "MOSFET 30V SOT-23");
+        DistributorResult result = DistributorResult.builder().distributor(Distributor.TME).totalResults(12).fetched(12)
+                .returned(5).cache(CacheStatus.MISS).fallbackQuery("MOSFET 30V SOT-23").build();
         assertThat(mapper.writeValueAsString(result)).contains("\"fallback_query\":\"MOSFET 30V SOT-23\"");
     }
 
     @Test
     void distributorResultCarriesTheDistributorQuery() {
-        DistributorResult result = new DistributorResult(Distributor.TME, 166, 40, 5, CacheStatus.MISS, null,
-                List.of(), null, 0, "pin strips female 6 angled");
+        DistributorResult result = DistributorResult.builder().distributor(Distributor.TME).totalResults(166).fetched(40)
+                .returned(5).cache(CacheStatus.MISS).distributorQuery("pin strips female 6 angled").build();
         assertThat(mapper.writeValueAsString(result)).contains("\"distributor_query\":\"pin strips female 6 angled\"",
                 "\"fallback_query\":null");
     }
 
     @Test
     void parsedConnectorOmitsUnknownAttributes() {
-        ParsedQuery parsed = new ParsedQuery("USB-C receptacle", "usb-c receptacle", "connector", Map.of(), null, null,
-                null, List.of(), new ParsedQuery.Connector("usb-c", null, "female", null, null, null, false, null));
+        ParsedQuery parsed = ParsedQuery.builder().originalText("USB-C receptacle").normalizedKey("usb-c receptacle")
+                .family("connector").connector(ParsedQuery.Connector.builder().type("usb-c").gender("female").build())
+                .build();
         assertThat(mapper.writeValueAsString(ParsedQueryResponse.from(parsed)))
                 .isEqualTo("{\"family\":\"connector\",\"keywords\":[],\"connector\":{\"type\":\"usb-c\","
                         + "\"gender\":\"female\"}}");
@@ -72,8 +73,8 @@ class ResponseJsonTest {
 
     @Test
     void distributorResultCarriesTheRateLimitWait() {
-        DistributorResult result = new DistributorResult(Distributor.MOUSER, null, 0, 0, CacheStatus.MISS,
-                "rate_limited", List.of(), null, 84_000);
+        DistributorResult result = DistributorResult.builder().distributor(Distributor.MOUSER).cache(CacheStatus.MISS)
+                .error("rate_limited").rateLimitWaitedMs(84_000).build();
         assertThat(mapper.writeValueAsString(result)).contains("\"error\":\"rate_limited\"",
                 "\"rate_limit_waited_ms\":84000");
     }

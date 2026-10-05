@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import lombok.Builder;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ public record ParsedQueryResponse(
      * other queries.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Builder
     public record ConnectorResponse(
             @JsonProperty("type") String type,
             @JsonProperty("series") String series,
@@ -66,21 +68,27 @@ public record ParsedQueryResponse(
             @JsonProperty("features") List<String> features
     ) {
 
-        /** A connector without USB details. */
-        public ConnectorResponse(String type, String series, String gender, Integer positions, Integer rows,
-                                 String pitch, String orientation) {
-            this(type, series, gender, positions, rows, pitch, orientation, null, null, null, null, null, null, null,
-                    null);
-        }
-
         static ConnectorResponse from(ParsedQuery.Connector c) {
             if (c == null) {
                 return null;
             }
-            return new ConnectorResponse(c.type(), c.series(), c.gender(), c.positions(), c.rows(), c.pitchDisplay(),
-                    c.orientation(), c.usbType(), c.usbStandard(), c.usbSpeedGbps(), c.pinConfiguration(),
-                    c.pinConfigurationImplied() ? Boolean.TRUE : null, c.shieldPinsCounted(), c.mountingStyle(),
-                    c.features().isEmpty() ? null : c.features());
+            return builder()
+                    .type(c.type())
+                    .series(c.series())
+                    .gender(c.gender())
+                    .positions(c.positions())
+                    .rows(c.rows())
+                    .pitch(c.pitchDisplay())
+                    .orientation(c.orientation())
+                    .usbType(c.usbType())
+                    .usbStandard(c.usbStandard())
+                    .usbSpeedGbps(c.usbSpeedGbps())
+                    .pinConfiguration(c.pinConfiguration())
+                    .pinConfigurationImplied(c.pinConfigurationImplied() ? Boolean.TRUE : null)
+                    .shieldPinsCounted(c.shieldPinsCounted())
+                    .mountingStyle(c.mountingStyle())
+                    .features(c.features().isEmpty() ? null : c.features())
+                    .build();
         }
     }
 }

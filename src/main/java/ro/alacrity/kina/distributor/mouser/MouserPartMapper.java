@@ -29,24 +29,25 @@ public final class MouserPartMapper {
             return Optional.empty();
         }
         Map<String, String> attributes = attributes(source);
-        return Optional.of(new Part(
-                Distributor.MOUSER,
-                source.mouserPartNumber().trim(),
-                blankToNull(source.manufacturer()),
-                blankToNull(source.manufacturerPartNumber()),
-                blankToNull(source.description()),
-                blankToNull(source.category()),
-                packageName(attributes),
-                stock,
-                parseCount(source.min()),
-                parseCount(source.mult()),
-                prices(source),
-                blankToNull(source.dataSheetUrl()),
-                blankToNull(source.imagePath()),
-                blankToNull(source.productDetailUrl()),
-                attributes,
-                extra(source),
-                fetchedAt));
+        return Optional.of(Part.builder()
+                .distributor(Distributor.MOUSER)
+                .distributorPartNumber(source.mouserPartNumber().trim())
+                .manufacturer(blankToNull(source.manufacturer()))
+                .manufacturerPartNumber(blankToNull(source.manufacturerPartNumber()))
+                .description(blankToNull(source.description()))
+                .category(blankToNull(source.category()))
+                .packageName(packageName(attributes))
+                .stock(stock)
+                .minimumOrderQuantity(parseCount(source.min()))
+                .orderMultiple(parseCount(source.mult()))
+                .prices(prices(source))
+                .datasheetUrl(blankToNull(source.dataSheetUrl()))
+                .photoUrl(blankToNull(source.imagePath()))
+                .productUrl(blankToNull(source.productDetailUrl()))
+                .attributes(attributes)
+                .extra(extra(source))
+                .fetchedAt(fetchedAt)
+                .build());
     }
 
     /** {@code ProductAttributes} by name, insertion-ordered; repeated names are joined with {@code ", "}. */

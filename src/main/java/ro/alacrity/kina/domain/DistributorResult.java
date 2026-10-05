@@ -1,6 +1,7 @@
 package ro.alacrity.kina.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import ro.alacrity.kina.cache.CacheStatus;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.List;
  *                      instead (connector queries, e.g. {@code pin strips female 6 angled} for TME); a
  *                      {@code fallbackQuery} is what was sent after this phrase found nothing
  */
+@Builder
 public record DistributorResult(
         @JsonProperty("distributor") Distributor distributor,
         @JsonProperty("total_results") Integer totalResults,
@@ -36,27 +38,8 @@ public record DistributorResult(
         parts = parts == null ? List.of() : List.copyOf(parts);
     }
 
-    /** An entry for which the user's text was sent verbatim. */
-    public DistributorResult(Distributor distributor, Integer totalResults, int fetched, int returned,
-                             CacheStatus cache, String error, List<PartResponse> parts, String fallbackQuery,
-                             long rateLimitWaitedMs) {
-        this(distributor, totalResults, fetched, returned, cache, error, parts, fallbackQuery, rateLimitWaitedMs, null);
-    }
-
-    /** An entry without rate-limit waits. */
-    public DistributorResult(Distributor distributor, Integer totalResults, int fetched, int returned,
-                             CacheStatus cache, String error, List<PartResponse> parts, String fallbackQuery) {
-        this(distributor, totalResults, fetched, returned, cache, error, parts, fallbackQuery, 0);
-    }
-
-    /** An entry for a search of the query itself (no phrase fallback). */
-    public DistributorResult(Distributor distributor, Integer totalResults, int fetched, int returned,
-                             CacheStatus cache, String error, List<PartResponse> parts) {
-        this(distributor, totalResults, fetched, returned, cache, error, parts, null);
-    }
-
     /** An entry for a distributor that failed; carries an empty part list. */
     public static DistributorResult failed(Distributor distributor, String error, CacheStatus cache) {
-        return new DistributorResult(distributor, null, 0, 0, cache, error, List.of());
+        return builder().distributor(distributor).cache(cache).error(error).build();
     }
 }

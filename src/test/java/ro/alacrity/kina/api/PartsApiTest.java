@@ -76,8 +76,8 @@ class PartsApiTest {
 
     static SearchResponse response(String query) {
         return new SearchResponse(query, ParsedQueryResponse.from(new QueryParser().parse(query)), RankingMode.BLENDED,
-                null, List.of(new DistributorResult(Distributor.TME, 77, 40, 1, CacheStatus.HIT, null,
-                List.of(PartResponse.from(part(), 1, 0.93)))));
+                null, List.of(DistributorResult.builder().distributor(Distributor.TME).totalResults(77).fetched(40)
+                        .returned(1).cache(CacheStatus.HIT).parts(List.of(PartResponse.from(part(), 1, 0.93))).build()));
     }
 
     @Test
@@ -104,9 +104,9 @@ class PartsApiTest {
         String query = "90 degree dupont style female pin header 90 degree THT pins 6 position";
         when(searchService.search(any())).thenReturn(new SearchResponse(query,
                 ParsedQueryResponse.from(new QueryParser().parse(query)), RankingMode.FALLBACK, "cross-encoder disabled",
-                List.of(new DistributorResult(Distributor.TME, 166, 40, 1, CacheStatus.MISS, null,
-                        List.of(PartResponse.from(part(), 1, 0.93)), "pin strips female 6", 0,
-                        "pin strips female 6 angled"))));
+                List.of(DistributorResult.builder().distributor(Distributor.TME).totalResults(166).fetched(40)
+                        .returned(1).cache(CacheStatus.MISS).parts(List.of(PartResponse.from(part(), 1, 0.93)))
+                        .fallbackQuery("pin strips female 6").distributorQuery("pin strips female 6 angled").build())));
 
         String body = client.get().uri("/api/v1/parts/search?q=" + query)
                 .exchange()

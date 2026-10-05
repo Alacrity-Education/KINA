@@ -121,11 +121,7 @@ public class PartLookupService {
     }
 
     private Part prepare(Part part) {
-        Part withTime = part.fetchedAt() != null ? part : new Part(part.distributor(), part.distributorPartNumber(),
-                part.manufacturer(), part.manufacturerPartNumber(), part.description(), part.category(),
-                part.packageName(), part.stock(), part.minimumOrderQuantity(), part.orderMultiple(), part.prices(),
-                part.datasheetUrl(), part.photoUrl(), part.productUrl(), part.attributes(), part.extra(),
-                clock.instant());
+        Part withTime = part.fetchedAt() != null ? part : part.toBuilder().fetchedAt(clock.instant()).build();
         return extractor.enrich(withTime);
     }
 

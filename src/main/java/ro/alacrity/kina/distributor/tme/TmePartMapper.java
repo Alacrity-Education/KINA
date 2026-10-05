@@ -66,25 +66,26 @@ final class TmePartMapper {
                 || parameters.parameters().elements() == null ? List.of() : parameters.parameters().elements();
 
         TmeResponses.Prices prices = data.prices();
-        return Optional.of(new Part(
-                Distributor.TME,
-                symbol,
-                product.manufacturer() == null ? null : product.manufacturer().name(),
-                first(product.manufacturerSymbols()),
-                product.description(),
-                product.category() == null ? null : product.category().name(),
-                packageName(params),
-                stock,
-                toIntCeil(product.minimalAmount()),
-                toIntCeil(product.multiples()),
-                priceBreaks(prices),
-                datasheetUrl,
-                absoluteUrl(product.assets() == null || product.assets().primaryPhoto() == null
-                        ? null : product.assets().primaryPhoto().prime()),
-                productUrl(symbol),
-                attributes(params),
-                extra(product, data),
-                fetchedAt));
+        return Optional.of(Part.builder()
+                .distributor(Distributor.TME)
+                .distributorPartNumber(symbol)
+                .manufacturer(product.manufacturer() == null ? null : product.manufacturer().name())
+                .manufacturerPartNumber(first(product.manufacturerSymbols()))
+                .description(product.description())
+                .category(product.category() == null ? null : product.category().name())
+                .packageName(packageName(params))
+                .stock(stock)
+                .minimumOrderQuantity(toIntCeil(product.minimalAmount()))
+                .orderMultiple(toIntCeil(product.multiples()))
+                .prices(priceBreaks(prices))
+                .datasheetUrl(datasheetUrl)
+                .photoUrl(absoluteUrl(product.assets() == null || product.assets().primaryPhoto() == null
+                        ? null : product.assets().primaryPhoto().prime()))
+                .productUrl(productUrl(symbol))
+                .attributes(attributes(params))
+                .extra(extra(product, data))
+                .fetchedAt(fetchedAt)
+                .build());
     }
 
     /** True when one of the product's {@code product_status} values is in {@code excludedStatuses} (ignoring case). */
