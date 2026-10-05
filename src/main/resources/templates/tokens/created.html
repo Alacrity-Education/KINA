@@ -17,10 +17,10 @@
                th:value="${token}">
 
         <h2 style="margin-top:20px">Use it</h2>
-        <p class="muted">Claude Code:</p>
-        <pre th:text="'claude mcp add --transport http kina ' + ${mcpUrl} + ' --header &quot;Authorization: Bearer ' + ${token} + '&quot;'">claude mcp add ...</pre>
-        <p class="muted">HTTP API:</p>
+        <p class="muted">HTTP API from a script:</p>
         <pre th:text="'curl -H &quot;Authorization: Bearer ' + ${token} + '&quot; ' + ${baseUrl} + '/api/v1/distributors'">curl ...</pre>
+        <p class="muted">Claude Code on a machine without a browser (otherwise use the connector and sign in):</p>
+        <pre th:text="'claude mcp add --transport http kina ' + ${mcpUrl} + ' --header &quot;Authorization: Bearer ' + ${token} + '&quot;'">claude mcp add ...</pre>
         <p><a th:href="@{/}">Back to your tokens</a></p>
     </div>
 </main>

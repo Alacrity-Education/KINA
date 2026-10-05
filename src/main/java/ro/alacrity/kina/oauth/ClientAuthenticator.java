@@ -14,16 +14,17 @@ import java.util.Base64;
 /**
  * Client authentication at the token and revocation endpoints (RFC 6749 section 2.3): {@code client_secret_basic}
  * (HTTP Basic with URL-encoded id and secret), {@code client_secret_post} (form parameters) or {@code none} (public
- * clients identify themselves with {@code client_id}). A client registered with a secret must present it.
+ * clients identify themselves with {@code client_id}). A client registered with a secret must present it. A
+ * {@code client_id} that is an {@code https} URL is a Client ID Metadata Document client (public, trusted hosts only).
  */
 @Component
 public class ClientAuthenticator {
 
     private static final String BASIC = "Basic ";
 
-    private final OAuthClientRepository clients;
+    private final OAuthClientLookup clients;
 
-    public ClientAuthenticator(OAuthClientRepository clients) {
+    public ClientAuthenticator(OAuthClientLookup clients) {
         this.clients = clients;
     }
 
@@ -51,7 +52,7 @@ public class ClientAuthenticator {
         if (clientId == null || clientId.isBlank()) {
             throw new OAuthException(OAuthException.INVALID_CLIENT, "Client authentication failed");
         }
-        OAuthClient client = clients.findById(clientId)
+        OAuthClient client = clients.findOptional(clientId)
                 .orElseThrow(() -> new OAuthException(OAuthException.INVALID_CLIENT, "Client authentication failed"));
         if (!client.isPublic()) {
             if (secret == null || secret.isEmpty() || !SecureTokens.constantTimeEquals(

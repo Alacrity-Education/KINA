@@ -74,6 +74,11 @@ public class AccessTokenService {
      * Creates a token for {@code userId}. {@code oauthClientId} is null for tokens created in the web UI.
      */
     public IssuedToken create(UUID userId, String name, String scope, String oauthClientId) {
+        return create(userId, name, scope, oauthClientId, validity);
+    }
+
+    /** Like {@link #create(UUID, String, String, String)} with an explicit lifetime (OAuth access tokens). */
+    public IssuedToken create(UUID userId, String name, String scope, String oauthClientId, Duration lifetime) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Token name is required");
         }
@@ -84,7 +89,7 @@ public class AccessTokenService {
         String plaintext = generatePlaintext();
         Instant now = now();
         AccessToken token = new AccessToken(UUID.randomUUID(), userId, trimmed,
-                plaintext.substring(0, DISPLAY_PREFIX_LENGTH), scope, oauthClientId, now, now.plus(validity), null,
+                plaintext.substring(0, DISPLAY_PREFIX_LENGTH), scope, oauthClientId, now, now.plus(lifetime), null,
                 null);
         repository.insert(token, hash(plaintext));
         return new IssuedToken(plaintext, token);
@@ -129,6 +134,11 @@ public class AccessTokenService {
     /** Revokes a token regardless of owner (OAuth refresh rotation and RFC 7009 revocation). */
     public boolean revoke(UUID tokenId) {
         return repository.revoke(tokenId, now());
+    }
+
+    /** Revokes every access and OAuth refresh token of the user. Returns the number of access tokens revoked. */
+    public int revokeAllForUser(UUID userId) {
+        return repository.revokeAllForUser(userId, now());
     }
 
     private Instant now() {

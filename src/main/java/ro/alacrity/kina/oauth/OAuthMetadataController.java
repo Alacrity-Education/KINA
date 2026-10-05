@@ -3,6 +3,7 @@ package ro.alacrity.kina.oauth;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.web.PublicUrlResolver;
 
 import java.util.LinkedHashMap;
@@ -19,9 +20,11 @@ public class OAuthMetadataController {
     public static final String SCOPE = "kina";
 
     private final PublicUrlResolver urls;
+    private final boolean clientMetadataDocuments;
 
-    public OAuthMetadataController(PublicUrlResolver urls) {
+    public OAuthMetadataController(PublicUrlResolver urls, KinaProperties properties) {
         this.urls = urls;
+        this.clientMetadataDocuments = !properties.oauth().trustedClientMetadataHosts().isEmpty();
     }
 
     @GetMapping(path = {"/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp"},
@@ -55,6 +58,8 @@ public class OAuthMetadataController {
         metadata.put("token_endpoint_auth_methods_supported", authMethods);
         metadata.put("revocation_endpoint_auth_methods_supported", authMethods);
         metadata.put("scopes_supported", List.of(SCOPE));
+        // Client ID Metadata Documents (MCP authorization 2025-11-25): https client_id URLs on trusted hosts.
+        metadata.put("client_id_metadata_document_supported", clientMetadataDocuments);
         return metadata;
     }
 }

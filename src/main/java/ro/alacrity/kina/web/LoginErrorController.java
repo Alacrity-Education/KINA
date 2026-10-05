@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import ro.alacrity.kina.config.KinaProperties;
 
 /**
  * Landing page after a failed OIDC login or a logout (production mode). Kept separate from the login entry point so a
@@ -12,6 +13,26 @@ import org.springframework.web.servlet.ModelAndView;
  */
 @Controller
 public class LoginErrorController {
+
+    private final KinaProperties properties;
+
+    public LoginErrorController(KinaProperties properties) {
+        this.properties = properties;
+    }
+
+    /**
+     * The identity provider authenticated the user but KINA refused them (DESIGN.md 7.6): not in a required group, or
+     * an e-mail domain that is not allowed. No session is established.
+     */
+    @GetMapping("/login-denied")
+    public ModelAndView loginDenied(@RequestParam(name = "reason", required = false) String reason) {
+        ModelAndView view = new ModelAndView("login-denied");
+        view.addObject("emailDomain", "email".equals(reason));
+        view.addObject("groups", properties.security().oidc().requiredGroups());
+        view.addObject("domains", properties.security().oidc().allowedEmailDomains());
+        view.setStatus(HttpStatus.FORBIDDEN);
+        return view;
+    }
 
     @GetMapping("/login-error")
     public ModelAndView loginError(@RequestParam(name = "logout", required = false) String logout) {

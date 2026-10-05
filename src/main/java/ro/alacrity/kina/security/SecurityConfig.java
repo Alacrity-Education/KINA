@@ -1,5 +1,8 @@
 package ro.alacrity.kina.security;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +13,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -21,6 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.web.PublicUrlResolver;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -51,18 +57,18 @@ public class SecurityConfig {
             "/mcp/**"};
 
     static final String[] PUBLIC_WEB_PATHS = {"/actuator/health", "/actuator/health/**", "/actuator/info", "/error",
-            "/login-error", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/webjars/**"};
+            "/login-error", "/login-denied", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/webjars/**"};
 
     @Bean
     @Order(1)
     SecurityFilterChain machineSecurityFilterChain(HttpSecurity http, KinaProperties properties,
                                                    AccessTokenService tokens, UserRepository users,
-                                                   PublicUrlResolver urls,
+                                                   MembershipVerifier membership, PublicUrlResolver urls,
                                                    ObjectProvider<DevAdminProvider> devAdmin) {
         RequestMatcher protectedPaths = matcher(PROTECTED_MACHINE_PATHS);
         BearerAuthenticationEntryPoint entryPoint = new BearerAuthenticationEntryPoint(urls);
         BearerTokenAuthenticationFilter bearerFilter =
-                new BearerTokenAuthenticationFilter(protectedPaths, tokens, users, entryPoint);
+                new BearerTokenAuthenticationFilter(protectedPaths, tokens, users, membership, entryPoint);
 
         http.securityMatcher(Stream.concat(Arrays.stream(PROTECTED_MACHINE_PATHS), Arrays.stream(PUBLIC_OAUTH_PATHS))
                         .toArray(String[]::new))
@@ -89,7 +95,8 @@ public class SecurityConfig {
     @Order(2)
     SecurityFilterChain webSecurityFilterChain(HttpSecurity http, KinaProperties properties,
                                                ObjectProvider<DevAdminProvider> devAdmin,
-                                               ObjectProvider<OidcUserSynchronizer> oidcUserSynchronizer) {
+                                               ObjectProvider<OidcUserSynchronizer> oidcUserSynchronizer,
+                                               UserRepository users, MembershipVerifier membership) {
         http.csrf(Customizer.withDefaults())
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable);
@@ -106,11 +113,36 @@ public class SecurityConfig {
                     // the saved request (e.g. /oauth/authorize?...) is resumed after login.
                     .oauth2Login(login -> login
                             .loginPage("/oauth2/authorization/" + LazyOidcClientRegistrationRepository.REGISTRATION_ID)
-                            .failureUrl("/login-error")
+                            .failureHandler(SecurityConfig::loginFailure)
+                            .authorizedClientRepository(new UpstreamTokenCapturingClientRepository(membership))
+                            .tokenEndpoint(token -> token.accessTokenResponseClient(
+                                    OidcHttp.authorizationCodeTokenClient()))
                             .userInfoEndpoint(userInfo -> userInfo.oidcUserService(synchronizer)))
+                    .addFilterAfter(new RevokedUserSessionFilter(users), AnonymousAuthenticationFilter.class)
                     .logout(logout -> logout.logoutSuccessUrl("/login-error?logout"));
         }
         return http.build();
+    }
+
+    /**
+     * Failed OIDC login: a group or e-mail-domain refusal goes to {@code /login-denied} (which names the required
+     * group), anything else to {@code /login-error}. No session is established in either case.
+     */
+    static void loginFailure(HttpServletRequest request, HttpServletResponse response,
+                             AuthenticationException exception) throws IOException {
+        String target = "/login-error";
+        if (exception instanceof OAuth2AuthenticationException oauth2) {
+            String code = oauth2.getError().getErrorCode();
+            if (OidcAccessPolicy.ERROR_GROUP.equals(code)) {
+                target = "/login-denied?reason=group";
+            } else if (OidcAccessPolicy.ERROR_EMAIL_DOMAIN.equals(code)) {
+                target = "/login-denied?reason=email";
+            }
+        }
+        if ("/login-error".equals(target)) {
+            LoggerFactory.getLogger(SecurityConfig.class).warn("OIDC login failed: {}", exception.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + target);
     }
 
     static UrlBasedCorsConfigurationSource corsConfigurationSource() {

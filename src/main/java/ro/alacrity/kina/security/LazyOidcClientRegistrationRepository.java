@@ -10,6 +10,10 @@ import ro.alacrity.kina.config.KinaProperties;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -23,6 +27,7 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
 
     public static final String REGISTRATION_ID = "oidc";
     static final Duration RETRY_AFTER = Duration.ofSeconds(10);
+    static final String OFFLINE_ACCESS = "offline_access";
 
     private static final Logger log = LoggerFactory.getLogger(LazyOidcClientRegistrationRepository.class);
 
@@ -32,13 +37,20 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
     private volatile ClientRegistration registration;
     private Instant nextAttempt = Instant.MIN;
     private volatile boolean discoveryAttempted;
+    private final boolean requestOfflineAccess;
 
     public LazyOidcClientRegistrationRepository(KinaProperties.Oidc oidc) {
-        this(oidc, ClientRegistrations::fromIssuerLocation, Clock.systemUTC());
+        this(oidc, false);
+    }
+
+    /** {@code requestOfflineAccess}: ask for {@code offline_access} when the provider supports it. */
+    public LazyOidcClientRegistrationRepository(KinaProperties.Oidc oidc, boolean requestOfflineAccess) {
+        this(oidc, ClientRegistrations::fromIssuerLocation, Clock.systemUTC(), requestOfflineAccess);
     }
 
     LazyOidcClientRegistrationRepository(KinaProperties.Oidc oidc,
-                                         Function<String, ClientRegistration.Builder> discovery, Clock clock) {
+                                         Function<String, ClientRegistration.Builder> discovery, Clock clock,
+                                         boolean requestOfflineAccess) {
         if (oidc == null || !oidc.isConfigured()) {
             throw new IllegalStateException("kina.security.mode=prod requires OIDC_ISSUER_URI and OIDC_CLIENT_ID "
                     + "(kina.security.oidc.issuer-uri / client-id)");
@@ -46,6 +58,29 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
         this.oidc = oidc;
         this.discovery = discovery;
         this.clock = clock;
+        this.requestOfflineAccess = requestOfflineAccess;
+    }
+
+    /**
+     * {@code openid profile email}, the configured extra scopes and, when membership re-checks are enabled (required
+     * groups and an encryption key) and the provider lists it in {@code scopes_supported}, {@code offline_access}
+     * (needed for a refresh token at most providers).
+     */
+    Set<String> scopes(ClientRegistration discovered) {
+        Set<String> scopes = new LinkedHashSet<>(List.of("openid", "profile", "email"));
+        scopes.addAll(oidc.extraScopes());
+        if (requestOfflineAccess && !scopes.contains(OFFLINE_ACCESS)) {
+            Object supported = discovered.getProviderDetails().getConfigurationMetadata().get("scopes_supported");
+            if (supported instanceof Collection<?> values && values.contains(OFFLINE_ACCESS)) {
+                scopes.add(OFFLINE_ACCESS);
+            } else {
+                log.warn("Group re-checks need a refresh token from the OIDC provider, but its discovery document does "
+                        + "not list offline_access in scopes_supported; if no refresh token is issued, users must sign "
+                        + "in again every {} (kina.security.oidc.relogin-interval-without-recheck)",
+                        oidc.reloginIntervalWithoutRecheck());
+            }
+        }
+        return scopes;
     }
 
     /** True once discovery has been tried (the issuer was contacted). */
@@ -72,7 +107,7 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
             }
             discoveryAttempted = true;
             try {
-                registration = discovery.apply(oidc.issuerUri())
+                ClientRegistration discovered = discovery.apply(oidc.issuerUri())
                         .registrationId(REGISTRATION_ID)
                         .clientId(oidc.clientId())
                         .clientSecret(oidc.clientSecret() == null ? "" : oidc.clientSecret())
@@ -80,7 +115,9 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
                         .redirectUri("{baseUrl}/login/oauth2/code/" + REGISTRATION_ID)
                         .clientName("OIDC")
                         .build();
-                log.info("OIDC discovery succeeded for issuer {}", oidc.issuerUri());
+                Set<String> scopes = scopes(discovered);
+                registration = ClientRegistration.withClientRegistration(discovered).scope(scopes).build();
+                log.info("OIDC discovery succeeded for issuer {}; requesting scopes {}", oidc.issuerUri(), scopes);
                 return registration;
             } catch (RuntimeException e) {
                 nextAttempt = now.plus(RETRY_AFTER);

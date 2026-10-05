@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <th:block th:replace="~{fragments :: pageHead('KINA')}"></th:block>
+</head>
+<body>
+<header th:replace="~{fragments :: pageHeader(${user})}"></header>
+<main>
+    <div class="card" style="max-width:640px;margin:0 auto">
+        <h1>Connect KINA through Claude</h1>
+        <p>KINA is used through Claude's connector. In Claude, add a custom connector with this URL and sign in when
+            asked:</p>
+        <pre th:text="${mcpUrl}">https://kina.example.com/mcp</pre>
+        <p class="muted">Claude Code: <code th:text="'claude mcp add --transport http kina ' + ${mcpUrl}">claude mcp add</code>,
+            then run <code>/mcp</code> and sign in.</p>
+        <p class="muted">Personal access tokens (static tokens for scripts) are disabled on this server.</p>
+    </div>
+</main>
+</body>
+</html>

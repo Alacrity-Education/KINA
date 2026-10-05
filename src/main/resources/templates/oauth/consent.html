@@ -11,8 +11,14 @@
         <p><strong th:text="${clientName}">client</strong> wants to access KINA on behalf of
             <strong th:text="${userName}">user</strong>.</p>
         <p class="muted">It will be able to search electronic components through KINA's MCP server and HTTP API
-            (scope <code th:text="${scope}">kina</code>). It receives an access token valid for 30 days that you can
-            revoke at any time on the token page.</p>
+            (scope <code th:text="${scope}">kina</code>). Its access tokens last
+            <span th:text="${accessTokenValidity}">1 hour</span> and are renewed automatically for up to
+            <span th:text="${refreshTokenValidity}">30 days</span> of inactivity while your access to KINA remains
+            valid; you can revoke the connection at any time on the token page.</p>
+        <p th:if="${metadataHost}" class="muted">Client identity published by <strong th:text="${metadataHost}">claude.ai</strong>.</p>
+        <p th:if="${loopbackRedirect}" class="warn">The code is sent to a program on this computer
+            (<code th:text="${redirectTarget}">http://localhost</code>). Approve only if you just started the
+            connection yourself.</p>
         <p class="muted">After your decision you will be sent to <code th:text="${redirectTarget}">https://client</code>.
             Client ID: <code th:text="${clientId}">id</code></p>
         <form method="post" th:action="@{/oauth/authorize}">

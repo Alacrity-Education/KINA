@@ -7,18 +7,27 @@
 <header th:replace="~{fragments :: pageHeader(${user})}"></header>
 <main>
     <div class="card">
+        <h1>Connect KINA</h1>
+        <p><strong>Claude</strong> (claude.ai, Desktop, mobile, and Claude Code signed in with your Claude account):
+            add a custom connector with the URL <code th:text="${mcpUrl}">https://kina.example.com/mcp</code> and sign
+            in when asked. Nothing to copy from this page.</p>
+        <p class="muted">Claude Code on its own: <code th:text="'claude mcp add --transport http kina ' + ${mcpUrl}">claude
+            mcp add</code>, then <code>/mcp</code> to sign in.</p>
+    </div>
+
+    <div class="card">
         <h1>Access tokens</h1>
         <p class="muted">
-            Access tokens authenticate the KINA HTTP API and MCP clients that accept a static
-            <code>Authorization: Bearer</code> header. New tokens are valid for
-            <span th:text="${validityDays}">30</span> days. Clients connected through OAuth (for example
-            Claude's remote MCP connector) appear here as <code>MCP: &lt;client&gt;</code>.
+            Static tokens are for scripts calling the KINA HTTP API and for Claude Code on machines without a browser
+            (<code>Authorization: Bearer</code> header). New tokens are valid for
+            <span th:text="${validityDays}">30</span> days. Clients connected through Claude's connector appear here
+            as <code>MCP: &lt;client&gt;</code>; revoking one disconnects that client.
         </p>
         <p class="notice" th:if="${message}" th:text="${message}">Token revoked.</p>
         <form method="post" th:action="@{/tokens}">
             <label for="name"><strong>New token</strong></label>
             <div class="row" style="margin-top:6px">
-                <input type="text" id="name" name="name" maxlength="100" placeholder="e.g. Claude Code on laptop"
+                <input type="text" id="name" name="name" maxlength="100" placeholder="e.g. BOM script"
                        required th:value="${name}">
                 <button type="submit">Create token</button>
             </div>
@@ -62,12 +71,6 @@
         </div>
     </div>
 
-    <div class="card">
-        <h2>Connecting MCP clients</h2>
-        <p>MCP endpoint: <code th:text="${mcpUrl}">https://kina.example.com/mcp</code></p>
-        <p class="muted">Claude (remote connector): add the MCP endpoint URL; Claude registers itself and signs you in
-            through OAuth. Clients that support static headers can use a token from this page instead.</p>
-    </div>
 </main>
 </body>
 </html>

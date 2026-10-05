@@ -2,9 +2,13 @@ package ro.alacrity.kina.oauth;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,7 +28,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Dynamic client registration (RFC 7591), anonymous. Validation rules: DESIGN.md section 7.
+ * Dynamic client registration (RFC 7591), anonymous, rate-limited per client IP ({@link RegistrationRateLimiter}).
+ * Validation rules: DESIGN.md section 7.
  */
 @RestController
 public class ClientRegistrationController extends OAuthEndpointSupport {
@@ -49,9 +54,44 @@ public class ClientRegistrationController extends OAuthEndpointSupport {
     private static final Logger log = LoggerFactory.getLogger(ClientRegistrationController.class);
 
     private final OAuthClientRepository clients;
+    private final RegistrationRateLimiter rateLimiter;
 
-    public ClientRegistrationController(OAuthClientRepository clients) {
+    public ClientRegistrationController(OAuthClientRepository clients, RegistrationRateLimiter rateLimiter) {
         this.clients = clients;
+        this.rateLimiter = rateLimiter;
+    }
+
+    /** Too many registrations from one client IP: 429 with {@code Retry-After}. */
+    static final class RateLimitedException extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
+
+        private final long retryAfterSeconds;
+
+        RateLimitedException(long retryAfterSeconds) {
+            super("Too many client registrations; retry later");
+            this.retryAfterSeconds = retryAfterSeconds;
+        }
+    }
+
+    @ExceptionHandler(RateLimitedException.class)
+    ResponseEntity<OAuthError> handleRateLimited(RateLimitedException e) {
+        HttpHeaders headers = noStore();
+        headers.set(HttpHeaders.RETRY_AFTER, Long.toString(e.retryAfterSeconds));
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).headers(headers)
+                .body(new OAuthError("too_many_requests", e.getMessage()));
+    }
+
+    /**
+     * Rate limit before the body is read (an over-limit request costs no parsing). Runs as a model attribute so the
+     * limit applies even to malformed bodies.
+     */
+    @ModelAttribute
+    void rateLimit(HttpServletRequest httpRequest) {
+        rateLimiter.tryAcquire(httpRequest.getRemoteAddr()).ifPresent(retryAfter -> {
+            log.info("Rate-limited client registration from {}", httpRequest.getRemoteAddr());
+            throw new RateLimitedException(retryAfter);
+        });
     }
 
     @PostMapping(path = "/oauth/register", consumes = MediaType.APPLICATION_JSON_VALUE,

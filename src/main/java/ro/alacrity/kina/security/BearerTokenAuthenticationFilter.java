@@ -22,7 +22,8 @@ import java.util.Optional;
  * Authenticates {@code Authorization: Bearer kina_...} on the protected machine endpoints ({@code /api/**},
  * {@code /mcp/**}). A presented but invalid token is rejected immediately with 401 (also in development mode);
  * a missing token leaves the request unauthenticated (production: 401 by the entry point; development: the
- * {@link DevModeAuthenticationFilter} falls back to the admin). Not a Spring bean on purpose (it must not be
+ * {@link DevModeAuthenticationFilter} falls back to the admin). Tokens of blocked users are invalid
+ * ({@link MembershipVerifier}). Not a Spring bean on purpose (it must not be
  * registered as a servlet filter).
  */
 public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
@@ -32,15 +33,17 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
     private final RequestMatcher matcher;
     private final AccessTokenService tokens;
     private final UserRepository users;
+    private final MembershipVerifier membership;
     private final AuthenticationEntryPoint entryPoint;
     private final SecurityContextHolderStrategy holder = SecurityContextHolder.getContextHolderStrategy();
     private final SecurityContextRepository contextRepository = new RequestAttributeSecurityContextRepository();
 
     public BearerTokenAuthenticationFilter(RequestMatcher matcher, AccessTokenService tokens, UserRepository users,
-                                           AuthenticationEntryPoint entryPoint) {
+                                           MembershipVerifier membership, AuthenticationEntryPoint entryPoint) {
         this.matcher = matcher;
         this.tokens = tokens;
         this.users = users;
+        this.membership = membership;
         this.entryPoint = entryPoint;
     }
 
@@ -92,8 +95,14 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
+    /**
+     * The principal of a valid token, unless its user is blocked ({@code access_revoked_at}) or, for a static web-UI
+     * token under group authorisation, the user's membership can no longer be vouched for (DESIGN.md 7.6; the
+     * re-check itself runs in the background). OAuth access tokens live one hour and are re-checked at refresh.
+     */
     private Optional<KinaPrincipal> toPrincipal(AccessToken token) {
         return users.findById(token.userId())
+                .filter(user -> token.oauthClientId() != null ? !user.isRevoked() : membership.allowsStaticToken(user))
                 .map(user -> new KinaPrincipal(user.id(), user.displayName(), token.id()));
     }
 }

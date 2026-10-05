@@ -42,26 +42,132 @@ public record KinaProperties(
         public Security(Mode mode) {
             this(mode, new Oidc(null, null, null));
         }
+
+        /**
+         * True when group authorisation is enforced: production mode and at least one required group. Development
+         * mode never enforces it (the development admin has no groups).
+         */
+        public boolean enforcesGroups() {
+            return mode == Mode.PROD && oidc != null && !oidc.requiredGroups().isEmpty();
+        }
     }
 
-    /** {@code kina.security.oidc.*}: generic OIDC provider used for web login in production mode. */
-    public record Oidc(String issuerUri, String clientId, String clientSecret) {
+    /**
+     * {@code kina.security.oidc.*}: generic OIDC provider used for web login in production mode, plus the group
+     * authorisation settings (DESIGN.md 7.6).
+     *
+     * @param groupsClaim                    claim holding the user's groups; read from the ID token first, then from
+     *                                       userinfo; a dotted path ({@code realm_access.roles}) reaches nested claims
+     * @param requiredGroups                 a user must be in at least one of these groups (case-insensitive); empty
+     *                                       disables the group check
+     * @param allowedEmailDomains            optional: the {@code email} claim must end in one of these domains
+     * @param extraScopes                    scopes requested in addition to {@code openid profile email}
+     * @param tokenEncryptionKey             base64 of 32 bytes; AES-GCM key for stored upstream refresh tokens; unset:
+     *                                       upstream refresh tokens are not stored (fallback: periodic re-login)
+     * @param membershipRecheckInterval      maximum age of a membership check before it is repeated
+     * @param membershipGrace                how long after the last successful check access continues while the
+     *                                       provider is unreachable
+     * @param reloginIntervalWithoutRecheck  without a stored upstream refresh token: how long after the last
+     *                                       interactive login refresh grants (and static tokens) keep working
+     */
+    public record Oidc(String issuerUri, String clientId, String clientSecret,
+                       @DefaultValue("groups") String groupsClaim,
+                       @DefaultValue List<String> requiredGroups,
+                       @DefaultValue List<String> allowedEmailDomains,
+                       @DefaultValue List<String> extraScopes,
+                       String tokenEncryptionKey,
+                       @DefaultValue("1h") Duration membershipRecheckInterval,
+                       @DefaultValue("4h") Duration membershipGrace,
+                       @DefaultValue("24h") Duration reloginIntervalWithoutRecheck) {
+
+        @ConstructorBinding
+        public Oidc {
+            groupsClaim = groupsClaim == null || groupsClaim.isBlank() ? "groups" : groupsClaim.strip();
+            requiredGroups = cleaned(requiredGroups);
+            allowedEmailDomains = cleaned(allowedEmailDomains);
+            extraScopes = cleaned(extraScopes);
+            membershipRecheckInterval = membershipRecheckInterval == null ? Duration.ofHours(1)
+                    : membershipRecheckInterval;
+            membershipGrace = membershipGrace == null ? Duration.ofHours(4) : membershipGrace;
+            reloginIntervalWithoutRecheck = reloginIntervalWithoutRecheck == null ? Duration.ofHours(24)
+                    : reloginIntervalWithoutRecheck;
+        }
+
+        /** Issuer and client only; every group-authorisation setting at its default (no group check). */
+        public Oidc(String issuerUri, String clientId, String clientSecret) {
+            this(issuerUri, clientId, clientSecret, null, null, null, null, null, null, null, null);
+        }
 
         public boolean isConfigured() {
             return issuerUri != null && !issuerUri.isBlank() && clientId != null && !clientId.isBlank();
         }
 
+        public boolean hasTokenEncryptionKey() {
+            return tokenEncryptionKey != null && !tokenEncryptionKey.isBlank();
+        }
+
+        private static List<String> cleaned(List<String> values) {
+            return values == null ? List.of()
+                    : values.stream().filter(v -> v != null && !v.isBlank()).map(String::strip).toList();
+        }
+
         @Override
         public String toString() {
             return "Oidc[issuerUri=" + issuerUri + ", clientId=" + clientId + ", clientSecret="
-                    + (clientSecret == null || clientSecret.isBlank() ? "" : "***") + "]";
+                    + (clientSecret == null || clientSecret.isBlank() ? "" : "***") + ", groupsClaim=" + groupsClaim
+                    + ", requiredGroups=" + requiredGroups + ", allowedEmailDomains=" + allowedEmailDomains
+                    + ", extraScopes=" + extraScopes + ", tokenEncryptionKey=" + (hasTokenEncryptionKey() ? "***" : "")
+                    + ", membershipRecheckInterval=" + membershipRecheckInterval + ", membershipGrace="
+                    + membershipGrace + ", reloginIntervalWithoutRecheck=" + reloginIntervalWithoutRecheck + "]";
         }
     }
 
-    public record Tokens(@DefaultValue("30d") Duration validity) {
+    /**
+     * {@code kina.tokens.*}: personal (static) access tokens created in the web UI.
+     *
+     * @param validity  lifetime of a token created in the web UI
+     * @param uiEnabled false: {@code /} only explains that access goes through Claude's connector and
+     *                  {@code POST /tokens} is 404
+     */
+    public record Tokens(@DefaultValue("30d") Duration validity, @DefaultValue("true") boolean uiEnabled) {
     }
 
-    public record OAuth(@DefaultValue("90d") Duration refreshTokenValidity) {
+    /**
+     * {@code kina.oauth.*}: the OAuth authorization server for MCP clients (DESIGN.md 7).
+     *
+     * @param refreshTokenValidity           lifetime of a refresh token (rotated on every use)
+     * @param accessTokenValidity            lifetime of an access token issued by {@code /oauth/token}
+     * @param trustedClientMetadataHosts     hosts whose {@code https://} client IDs are accepted as Client ID
+     *                                       Metadata Documents; {@code *.example.com} matches every subdomain
+     * @param clientMetadataCache            how long a fetched metadata document is reused
+     * @param autoApproveTrustedClients      skip the consent page for metadata-document clients (non-loopback
+     *                                       redirect URIs only)
+     * @param unusedClientRetention          dynamically registered clients unused for this long and without live
+     *                                       tokens are deleted
+     * @param registerRateLimitPerMinute     {@code POST /oauth/register} requests per client IP and minute; 0 or
+     *                                       less disables the limit
+     */
+    public record OAuth(@DefaultValue("30d") Duration refreshTokenValidity,
+                        @DefaultValue("1h") Duration accessTokenValidity,
+                        @DefaultValue({"claude.ai", "claude.com", "*.anthropic.com"})
+                        List<String> trustedClientMetadataHosts,
+                        @DefaultValue("1h") Duration clientMetadataCache,
+                        @DefaultValue("true") boolean autoApproveTrustedClients,
+                        @DefaultValue("90d") Duration unusedClientRetention,
+                        @DefaultValue("30") int registerRateLimitPerMinute) {
+
+        public static final List<String> DEFAULT_TRUSTED_HOSTS = List.of("claude.ai", "claude.com", "*.anthropic.com");
+
+        @ConstructorBinding
+        public OAuth {
+            refreshTokenValidity = refreshTokenValidity == null ? Duration.ofDays(30) : refreshTokenValidity;
+            accessTokenValidity = accessTokenValidity == null ? Duration.ofHours(1) : accessTokenValidity;
+            trustedClientMetadataHosts = trustedClientMetadataHosts == null ? DEFAULT_TRUSTED_HOSTS
+                    : trustedClientMetadataHosts.stream().filter(h -> h != null && !h.isBlank()).map(String::strip)
+                    .toList();
+            clientMetadataCache = clientMetadataCache == null ? Duration.ofHours(1) : clientMetadataCache;
+            unusedClientRetention = unusedClientRetention == null ? Duration.ofDays(90) : unusedClientRetention;
+        }
     }
 
     /**

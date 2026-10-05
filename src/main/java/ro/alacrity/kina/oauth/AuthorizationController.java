@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
+import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.oauth.AuthorizationCodeRepository.AuthorizationCode;
 import ro.alacrity.kina.oauth.OAuthClientRepository.OAuthClient;
 import ro.alacrity.kina.security.KinaPrincipal;
+import ro.alacrity.kina.security.MembershipVerifier;
 import ro.alacrity.kina.security.SecureTokens;
 import ro.alacrity.kina.web.PublicUrlResolver;
 
@@ -32,7 +34,8 @@ import java.util.Map;
 /**
  * Authorization endpoint (OAuth 2.1, PKCE {@code S256} mandatory). Runs in the web security chain, so the user is
  * authenticated first (production: OIDC login, then the original request resumes; development: the admin). Shows a
- * consent page; Approve issues a 10-minute single-use code bound to client, redirect URI, user, PKCE challenge, scope
+ * consent page (skipped for trusted Client ID Metadata Document clients, see {@link #autoApproves}); Approve issues a
+ * 10-minute single-use code bound to client, redirect URI, user, PKCE challenge, scope
  * and resource. Errors are redirected to the client only after client and redirect URI have been validated; otherwise
  * an error page is shown (never an open redirect).
  */
@@ -48,15 +51,23 @@ public class AuthorizationController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthorizationController.class);
 
-    private final OAuthClientRepository clients;
+    private final OAuthClientLookup clients;
     private final AuthorizationCodeRepository codes;
     private final PublicUrlResolver urls;
+    private final MembershipVerifier membership;
+    private final boolean autoApproveTrustedClients;
+    private final Duration accessTokenValidity;
+    private final Duration refreshTokenValidity;
 
-    public AuthorizationController(OAuthClientRepository clients, AuthorizationCodeRepository codes,
-                                   PublicUrlResolver urls) {
+    public AuthorizationController(OAuthClientLookup clients, AuthorizationCodeRepository codes,
+                                   PublicUrlResolver urls, MembershipVerifier membership, KinaProperties properties) {
         this.clients = clients;
         this.codes = codes;
         this.urls = urls;
+        this.membership = membership;
+        this.autoApproveTrustedClients = properties.oauth().autoApproveTrustedClients();
+        this.accessTokenValidity = properties.oauth().accessTokenValidity();
+        this.refreshTokenValidity = properties.oauth().refreshTokenValidity();
     }
 
     /** A validated authorization request. */
@@ -98,6 +109,13 @@ public class AuthorizationController {
             AuthorizationRequest request = validate(params);
             KinaPrincipal user = currentUser(authentication);
             response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+            if (autoApproves(request)) {
+                // Trusted Client ID Metadata Document client (e.g. Claude's published identity): the redirect URI
+                // comes from a document on an allowlisted host, so the consent page is skipped.
+                log.info("Auto-approved metadata-document client {} for user {}", request.client().clientId(),
+                        user.userId());
+                return issueCode(request, user);
+            }
             Map<String, String> hidden = new LinkedHashMap<>();
             for (String name : FORWARDED_PARAMETERS) {
                 String value = params.getFirst(name);
@@ -112,6 +130,11 @@ public class AuthorizationController {
             view.addObject("userName", user.displayName());
             view.addObject("scope", request.scope());
             view.addObject("params", hidden);
+            view.addObject("metadataHost", request.client().isMetadataDocumentClient()
+                    ? URI.create(request.client().clientId()).getHost() : null);
+            view.addObject("loopbackRedirect", ClientMetadataDocument.isLoopbackRedirect(request.redirectUri()));
+            view.addObject("accessTokenValidity", human(accessTokenValidity));
+            view.addObject("refreshTokenValidity", human(refreshTokenValidity));
             return view;
         } catch (ErrorPageException e) {
             return errorPage(e.getMessage());
@@ -131,18 +154,8 @@ public class AuthorizationController {
                 throw new RedirectErrorException(request.redirectUri(), "access_denied",
                         "The user denied the request", request.state());
             }
-            String code = SecureTokens.randomBase64Url(32);
-            Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
-            codes.insert(new AuthorizationCode(SecureTokens.sha256Hex(code), request.client().clientId(),
-                    user.userId(), request.redirectUri(), request.scope(), request.resource(), request.codeChallenge(),
-                    request.codeChallengeMethod(), now, now.plus(CODE_VALIDITY), null));
             log.info("User {} authorized OAuth client {}", user.userId(), request.client().clientId());
-            Map<String, String> query = new LinkedHashMap<>();
-            query.put("code", code);
-            if (request.state() != null) {
-                query.put("state", request.state());
-            }
-            return redirect(request.redirectUri(), query);
+            return issueCode(request, user);
         } catch (ErrorPageException e) {
             return errorPage(e.getMessage());
         } catch (RedirectErrorException e) {
@@ -150,20 +163,52 @@ public class AuthorizationController {
         }
     }
 
+    /** Issues a single-use code for an approved request and redirects to the client. */
+    private ModelAndView issueCode(AuthorizationRequest request, KinaPrincipal user) {
+        String code = SecureTokens.randomBase64Url(32);
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
+        codes.insert(new AuthorizationCode(SecureTokens.sha256Hex(code), request.client().clientId(),
+                user.userId(), request.redirectUri(), request.scope(), request.resource(), request.codeChallenge(),
+                request.codeChallengeMethod(), now, now.plus(CODE_VALIDITY), null));
+        Map<String, String> query = new LinkedHashMap<>();
+        query.put("code", code);
+        if (request.state() != null) {
+            query.put("state", request.state());
+        }
+        return redirect(request.redirectUri(), query);
+    }
+
+    /**
+     * Consent is skipped only for Client ID Metadata Document clients (their host is allowlisted) when
+     * {@code kina.oauth.auto-approve-trusted-clients} is on and the redirect URI is not a loopback address: any local
+     * program can listen on a loopback port and claim a trusted client's identity (MCP spec, CIMD security
+     * considerations), so loopback redirects keep the consent page.
+     */
+    private boolean autoApproves(AuthorizationRequest request) {
+        return autoApproveTrustedClients && request.client().isMetadataDocumentClient()
+                && !ClientMetadataDocument.isLoopbackRedirect(request.redirectUri());
+    }
+
     AuthorizationRequest validate(MultiValueMap<String, String> params) {
         String clientId = singleForPage(params, "client_id");
         if (clientId == null) {
             throw new ErrorPageException("The request has no client_id.");
         }
-        OAuthClient client = clients.findById(clientId)
-                .orElseThrow(() -> new ErrorPageException("Unknown client. Register the client first."));
+        OAuthClient client;
+        try {
+            client = clients.find(clientId);
+        } catch (OAuthClientLookup.UnknownClientException e) {
+            throw new ErrorPageException(e.getMessage());
+        }
         String redirectUri = singleForPage(params, "redirect_uri");
         if (redirectUri == null) {
             if (client.redirectUris().size() != 1) {
                 throw new ErrorPageException("The request has no redirect_uri.");
             }
             redirectUri = client.redirectUris().getFirst();
-        } else if (!client.redirectUris().contains(redirectUri)) {
+        } else if (client.isMetadataDocumentClient()
+                ? !ClientMetadataDocument.redirectUriAllowed(client.redirectUris(), redirectUri)
+                : !client.redirectUris().contains(redirectUri)) {
             throw new ErrorPageException("The redirect_uri is not registered for this client.");
         }
         String state = singleForPage(params, "state");
@@ -216,9 +261,25 @@ public class AuthorizationController {
                 state, resource);
     }
 
-    private static KinaPrincipal currentUser(Authentication authentication) {
-        return KinaPrincipal.from(authentication)
+    private KinaPrincipal currentUser(Authentication authentication) {
+        KinaPrincipal user = KinaPrincipal.from(authentication)
                 .orElseThrow(() -> new ErrorPageException("You are not signed in."));
+        if (membership.isBlocked(user.userId())) {
+            throw new ErrorPageException("Your access to KINA has been revoked. Sign in again; access requires "
+                    + "membership in the required group.");
+        }
+        return user;
+    }
+
+    /** {@code 1 hour}, {@code 30 days}, {@code 90 minutes}. */
+    static String human(Duration duration) {
+        if (duration.toDays() > 0 && duration.equals(Duration.ofDays(duration.toDays()))) {
+            return duration.toDays() + (duration.toDays() == 1 ? " day" : " days");
+        }
+        if (duration.toHours() > 0 && duration.equals(Duration.ofHours(duration.toHours()))) {
+            return duration.toHours() + (duration.toHours() == 1 ? " hour" : " hours");
+        }
+        return duration.toMinutes() + " minutes";
     }
 
     private static String singleForPage(MultiValueMap<String, String> params, String name) {

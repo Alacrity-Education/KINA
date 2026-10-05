@@ -17,6 +17,7 @@ import ro.alacrity.kina.oauth.OAuthClientRepository.OAuthClient;
 import ro.alacrity.kina.oauth.RefreshTokenRepository.RefreshToken;
 import ro.alacrity.kina.security.AccessTokenService;
 import ro.alacrity.kina.security.AccessTokenService.IssuedToken;
+import ro.alacrity.kina.security.MembershipVerifier;
 import ro.alacrity.kina.security.SecureTokens;
 
 import java.time.Clock;
@@ -28,8 +29,10 @@ import java.util.UUID;
 
 /**
  * Token endpoint (RFC 6749 / OAuth 2.1): {@code authorization_code} with mandatory PKCE and {@code refresh_token} with
- * rotation. Access tokens are regular KINA access tokens ({@link AccessTokenService}, 30 days, named
- * {@code MCP: <client_name>}); refresh tokens live in {@code oauth_refresh_tokens}.
+ * rotation. Access tokens are regular KINA access tokens ({@link AccessTokenService}, {@code
+ * kina.oauth.access-token-validity} (1 hour), named {@code MCP: <client_name>}); refresh tokens live in
+ * {@code oauth_refresh_tokens} ({@code kina.oauth.refresh-token-validity}, 30 days). Refresh grants re-check the user's
+ * group membership ({@link MembershipVerifier}).
  */
 @RestController
 public class TokenController extends OAuthEndpointSupport {
@@ -42,26 +45,36 @@ public class TokenController extends OAuthEndpointSupport {
     private final AuthorizationCodeRepository codes;
     private final RefreshTokenRepository refreshTokens;
     private final AccessTokenService accessTokens;
+    private final OAuthClientRepository clients;
+    private final MembershipVerifier membership;
     private final TransactionTemplate transactions;
+    private final Duration accessTokenValidity;
     private final Duration refreshTokenValidity;
     private final Clock clock;
 
     @Autowired
     public TokenController(ClientAuthenticator clientAuthenticator, AuthorizationCodeRepository codes,
                            RefreshTokenRepository refreshTokens, AccessTokenService accessTokens,
+                           OAuthClientRepository clients, MembershipVerifier membership,
                            TransactionTemplate transactions, KinaProperties properties) {
-        this(clientAuthenticator, codes, refreshTokens, accessTokens, transactions,
-                properties.oauth().refreshTokenValidity(), Clock.systemUTC());
+        this(clientAuthenticator, codes, refreshTokens, accessTokens, clients, membership, transactions,
+                properties.oauth().accessTokenValidity(), properties.oauth().refreshTokenValidity(),
+                Clock.systemUTC());
     }
 
     TokenController(ClientAuthenticator clientAuthenticator, AuthorizationCodeRepository codes,
                     RefreshTokenRepository refreshTokens, AccessTokenService accessTokens,
-                    TransactionTemplate transactions, Duration refreshTokenValidity, Clock clock) {
+                    OAuthClientRepository clients, MembershipVerifier membership,
+                    TransactionTemplate transactions, Duration accessTokenValidity, Duration refreshTokenValidity,
+                    Clock clock) {
         this.clientAuthenticator = clientAuthenticator;
         this.codes = codes;
         this.refreshTokens = refreshTokens;
         this.accessTokens = accessTokens;
+        this.clients = clients;
+        this.membership = membership;
         this.transactions = transactions;
+        this.accessTokenValidity = accessTokenValidity;
         this.refreshTokenValidity = refreshTokenValidity;
         this.clock = clock;
     }
@@ -132,6 +145,9 @@ public class TokenController extends OAuthEndpointSupport {
         if (!Pkce.verify(codeVerifier, stored.codeChallenge(), stored.codeChallengeMethod())) {
             throw invalidGrant("PKCE verification failed");
         }
+        if (membership.isBlocked(stored.userId())) {
+            throw invalidGrant("Access to KINA was revoked; sign in again");
+        }
         return issue(client, stored.userId(), stored.scope(), now);
     }
 
@@ -153,6 +169,12 @@ public class TokenController extends OAuthEndpointSupport {
         if (requestedScope != null && !scopeSubset(requestedScope, stored.scope())) {
             throw new OAuthException("invalid_scope", "Requested scope exceeds the original grant");
         }
+        // Group authorisation (DESIGN.md 7.6): re-verify membership with the identity provider when due. Checked
+        // before rotation; a refusal is invalid_grant, which makes Claude ask the user to reconnect.
+        MembershipVerifier.Verdict verdict = membership.checkRefreshGrant(stored.userId());
+        if (!verdict.allowed()) {
+            throw invalidGrant(verdict.description());
+        }
         // Rotation: atomically revoke the presented token (a concurrent second use loses) and its access token.
         if (!refreshTokens.revoke(hash, now)) {
             throw invalidGrant("Refresh token expired or revoked");
@@ -172,7 +194,9 @@ public class TokenController extends OAuthEndpointSupport {
     }
 
     private TokenResponse issueInTransaction(OAuthClient client, UUID userId, String scope, Instant now) {
-        IssuedToken access = accessTokens.create(userId, "MCP: " + client.displayName(), scope, client.clientId());
+        IssuedToken access = accessTokens.create(userId, "MCP: " + client.displayName(), scope, client.clientId(),
+                accessTokenValidity);
+        clients.touchLastUsed(client.clientId(), now);
         String refreshPlaintext = null;
         if (client.grantTypes().contains(GRANT_REFRESH_TOKEN)) {
             refreshPlaintext = REFRESH_TOKEN_PREFIX + SecureTokens.randomBase64Url(32);

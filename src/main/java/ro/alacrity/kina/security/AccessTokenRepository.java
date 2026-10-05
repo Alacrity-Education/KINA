@@ -120,6 +120,23 @@ public class AccessTokenRepository {
         return changed;
     }
 
+    /**
+     * Revokes every active access token and every active OAuth refresh token of the user (group membership lost or
+     * the identity provider rejected the user's grant). Returns the number of access tokens revoked.
+     */
+    @Transactional
+    public int revokeAllForUser(UUID userId, Instant now) {
+        int revoked = jdbc.sql("UPDATE access_tokens SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL")
+                .param(Timestamp.from(now))
+                .param(userId)
+                .update();
+        jdbc.sql("UPDATE oauth_refresh_tokens SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL")
+                .param(Timestamp.from(now))
+                .param(userId)
+                .update();
+        return revoked;
+    }
+
     private void revokeLinkedRefreshTokens(UUID accessTokenId, Instant now) {
         jdbc.sql("UPDATE oauth_refresh_tokens SET revoked_at = ? WHERE access_token_id = ? AND revoked_at IS NULL")
                 .param(Timestamp.from(now))

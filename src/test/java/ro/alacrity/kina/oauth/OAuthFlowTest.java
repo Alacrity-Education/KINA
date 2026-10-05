@@ -190,7 +190,7 @@ class OAuthFlowTest {
         String accessToken = tokens.get("access_token").asString();
         assertThat(accessToken).matches("^kina_[A-Za-z0-9_-]{43}$");
         assertThat(tokens.get("token_type").asString()).isEqualTo("Bearer");
-        assertThat(tokens.get("expires_in").asLong()).isBetween(30L * 86400 - 60, 30L * 86400);
+        assertThat(tokens.get("expires_in").asLong()).isEqualTo(3600L);
         assertThat(tokens.get("refresh_token").asString()).startsWith("kina_rt_");
         assertThat(tokens.get("scope").asString()).isEqualTo("kina");
 

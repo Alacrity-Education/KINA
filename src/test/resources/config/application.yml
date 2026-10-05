@@ -9,3 +9,6 @@ kina:
       # Spring tests must never download the cross-encoder model either; without files the ranking falls back.
       auto-download: false
       model-dir: target/test-data/cross-encoder
+  oauth:
+    # Every test of a shared context registers clients from 127.0.0.1; the limit itself is tested in its own context.
+    register-rate-limit-per-minute: 100000

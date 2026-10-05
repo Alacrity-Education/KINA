@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.security.AccessTokenRepository.AccessToken;
 import ro.alacrity.kina.security.AccessTokenService;
 import ro.alacrity.kina.security.AccessTokenService.IssuedToken;
@@ -25,7 +26,9 @@ import java.util.UUID;
 
 /**
  * Token web UI (DESIGN.md section 6): list the current user's access tokens, create one (plaintext shown exactly once),
- * revoke. Server-rendered Thymeleaf, CSRF-protected forms, no JavaScript.
+ * revoke. Server-rendered Thymeleaf, CSRF-protected forms, no JavaScript. Static tokens are for scripts and for Claude
+ * Code on machines without a browser; Claude itself connects through OAuth. {@code kina.tokens.ui-enabled=false}
+ * replaces the page with an explanation and makes {@code POST /tokens} a 404.
  */
 @Controller
 public class TokenPageController {
@@ -34,10 +37,12 @@ public class TokenPageController {
 
     private final AccessTokenService tokens;
     private final PublicUrlResolver urls;
+    private final boolean uiEnabled;
 
-    public TokenPageController(AccessTokenService tokens, PublicUrlResolver urls) {
+    public TokenPageController(AccessTokenService tokens, PublicUrlResolver urls, KinaProperties properties) {
         this.tokens = tokens;
         this.urls = urls;
+        this.uiEnabled = properties.tokens().uiEnabled();
     }
 
     /** One row of the token table, pre-formatted for display. */
@@ -51,12 +56,22 @@ public class TokenPageController {
 
     @GetMapping("/")
     public ModelAndView index(Authentication authentication) {
-        return indexView(user(authentication), null, null, HttpStatus.OK);
+        KinaPrincipal user = user(authentication);
+        if (!uiEnabled) {
+            ModelAndView view = new ModelAndView("tokens/disabled");
+            view.addObject("user", user.displayName());
+            view.addObject("mcpUrl", urls.mcpUrl());
+            return view;
+        }
+        return indexView(user, null, null, HttpStatus.OK);
     }
 
     @PostMapping("/tokens")
     public ModelAndView create(@RequestParam(name = "name", required = false) String name,
                                Authentication authentication, HttpServletResponse response) {
+        if (!uiEnabled) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         KinaPrincipal user = user(authentication);
         String trimmed = name == null ? "" : name.strip();
         if (trimmed.isEmpty()) {

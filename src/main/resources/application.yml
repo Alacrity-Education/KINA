@@ -20,9 +20,29 @@ management.endpoints.web.exposure.include: health,info
 kina:
   public-base-url: ${KINA_PUBLIC_BASE_URL:}
   security.mode: ${KINA_MODE:dev}
-  security.oidc: { issuer-uri: "${OIDC_ISSUER_URI:}", client-id: "${OIDC_CLIENT_ID:}", client-secret: "${OIDC_CLIENT_SECRET:}" }
-  tokens.validity: 30d
-  oauth.refresh-token-validity: 90d
+  security.oidc:
+    issuer-uri: "${OIDC_ISSUER_URI:}"
+    client-id: "${OIDC_CLIENT_ID:}"
+    client-secret: "${OIDC_CLIENT_SECRET:}"
+    groups-claim: "${OIDC_GROUPS_CLAIM:groups}"                 # ID token first, then userinfo; dotted path for nested claims
+    required-groups: "${OIDC_REQUIRED_GROUPS:}"                 # comma separated; empty = no group check
+    allowed-email-domains: "${OIDC_ALLOWED_EMAIL_DOMAINS:}"     # comma separated; empty = any domain
+    extra-scopes: "${OIDC_EXTRA_SCOPES:}"                       # offline_access is added automatically (DESIGN.md 7.6)
+    token-encryption-key: "${KINA_TOKEN_ENCRYPTION_KEY:}"       # base64 of 32 bytes; unset = upstream refresh tokens not stored
+    membership-recheck-interval: ${KINA_MEMBERSHIP_RECHECK_INTERVAL:1h}
+    membership-grace: ${KINA_MEMBERSHIP_GRACE:4h}
+    relogin-interval-without-recheck: ${KINA_RELOGIN_INTERVAL_WITHOUT_RECHECK:24h}
+  tokens:
+    validity: 30d                                               # static tokens created in the web UI
+    ui-enabled: ${KINA_TOKENS_UI_ENABLED:true}
+  oauth:
+    access-token-validity: ${KINA_OAUTH_ACCESS_TOKEN_VALIDITY:1h}
+    refresh-token-validity: ${KINA_OAUTH_REFRESH_TOKEN_VALIDITY:30d}
+    trusted-client-metadata-hosts: "${KINA_OAUTH_TRUSTED_CLIENT_HOSTS:claude.ai,claude.com,*.anthropic.com}"
+    client-metadata-cache: 1h
+    auto-approve-trusted-clients: ${KINA_OAUTH_AUTO_APPROVE_TRUSTED_CLIENTS:true}
+    unused-client-retention: 90d
+    register-rate-limit-per-minute: ${KINA_OAUTH_REGISTER_RATE_LIMIT_PER_MINUTE:30}
   cache:
     ttl: 5d
     empty-result-ttl: 1h
