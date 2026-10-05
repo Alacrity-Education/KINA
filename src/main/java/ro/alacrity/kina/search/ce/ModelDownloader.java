@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search.ce;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
@@ -61,8 +62,9 @@ public class ModelDownloader {
         }
     }
 
-    /** {@code model.json}. */
+    /** {@code model.json} (unknown fields, e.g. written by the fine-tuning script, are ignored). */
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Manifest(
             @JsonProperty("source") String source,
             @JsonProperty("repo") String repo,
@@ -79,6 +81,7 @@ public class ModelDownloader {
 
     /** One downloaded file. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record FileInfo(@JsonProperty("size") long size, @JsonProperty("sha256") String sha256) {
     }
 

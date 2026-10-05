@@ -426,6 +426,12 @@ directory; `KINA_CROSS_ENCODER_TEST_VARIANT` = int8|fp32; `KINA_CROSS_ENCODER_TE
 for `scripts/research/evaluate.py`) ranks every query of `docs/research/data/ranking-eval.jsonl` through the
 production `RankingService` and asserts blended NDCG@10 >= the deterministic ranker's and >= 0.90.
 
+**Fine-tuned model (optional).** `scripts/ranking/finetune_cross_encoder.sh` (see its README) fine-tunes the model on
+the study's rubric labels in a CPU container (about 4 minutes on 16 cores), exports fp32 and both int8 files and
+writes `model.json`; point `KINA_CROSS_ENCODER_MODEL_URL` at the resulting directory. Trained on synthetic labels only
+(evaluation set unseen): cross-encoder alone 0.890 (int8) / 0.893 (fp32), blend 0.918 / 0.914, against 0.878 / 0.874
+and 0.913 zero-shot.
+
 ### 3.6 Rate limiting
 
 Distributor APIs that answer with a rate limit are waited for and retried instead of failing the request at once,

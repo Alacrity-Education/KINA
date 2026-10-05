@@ -146,6 +146,9 @@ public class CrossEncoderModel {
         Path dir = local != null ? local.toAbsolutePath().normalize() : config.resolvedModelDir();
         boolean download = local == null && config.autoDownload();
         List<String> failures = new ArrayList<>();
+        if (download) {
+            replaceFilesOfAnotherSource(dir);
+        }
         for (String file : ModelLayout.COMMON_FILES) {
             if (!Files.isRegularFile(dir.resolve(file))) {
                 if (!download) {
@@ -197,6 +200,32 @@ public class CrossEncoderModel {
             return new Loaded(tokenizer, backend, variant, onnx, dir, revision);
         }
         throw new IOException("no usable ONNX file in " + dir + ": " + String.join("; ", failures));
+    }
+
+    /**
+     * When {@code model.json} says the files came from another {@code model-url}, deletes the model files so the
+     * configured source is downloaded instead of mixing two models. Directories without a manifest
+     * (pre-provisioned by hand) are left alone.
+     */
+    private void replaceFilesOfAnotherSource(Path dir) throws IOException {
+        ModelDownloader.Manifest manifest = ModelDownloader.readManifest(dir).orElse(null);
+        if (manifest == null || manifest.source() == null
+                || stripSlash(manifest.source()).equals(stripSlash(config.modelUrl()))) {
+            return;
+        }
+        log.info("Cross-encoder source changed from {} to {}, replacing the model files in {}", manifest.source(),
+                config.modelUrl(), dir);
+        List<String> files = new ArrayList<>(ModelLayout.COMMON_FILES);
+        files.addAll(List.of(ModelLayout.FP32, ModelLayout.QINT8_AVX512_VNNI, ModelLayout.QUINT8_AVX2,
+                ModelLayout.MANIFEST));
+        for (String f : files) {
+            Files.deleteIfExists(dir.resolve(f));
+        }
+    }
+
+    private static String stripSlash(String url) {
+        String u = url.trim();
+        return u.endsWith("/") ? u.substring(0, u.length() - 1) : u;
     }
 
     /** A local directory named by {@code model-url} (absolute path or {@code file:} URI), else null. */

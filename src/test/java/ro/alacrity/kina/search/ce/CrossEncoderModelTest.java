@@ -217,6 +217,26 @@ class CrossEncoderModelTest {
     }
 
     @Test
+    void filesFromAnotherSourceAreReplaced() throws Exception {
+        Path dir = tmp.resolve("data/cross-encoder");
+        assertThat(model(config(), Set.of("avx_vnni")).check()).isTrue();
+        String otherUrl = baseUrl.replace("/repo/resolve/main/", "/other/resolve/main/");
+        server.createContext("/other/resolve/main/", exchange -> {
+            String file = exchange.getRequestURI().getPath().substring("/other/resolve/main/".length());
+            byte[] body = file.endsWith(".onnx") ? "other-graph".getBytes(StandardCharsets.UTF_8) : files.get(file);
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream out = exchange.getResponseBody()) {
+                out.write(body);
+            }
+        });
+        CrossEncoderModel other = model(config("model-url", otherUrl), Set.of("avx_vnni"));
+        assertThat(other.check()).isTrue();
+        assertThat(dir.resolve(ModelLayout.QINT8_AVX512_VNNI)).hasContent("other-graph");
+        assertThat(ModelDownloader.readManifest(dir).orElseThrow().source()).isEqualTo(otherUrl);
+        assertThat(other.loaded().revision()).isNull();   // no X-Repo-Commit from that source
+    }
+
+    @Test
     void autoDownloadDisabledWithoutFilesStaysNotReady() {
         CrossEncoderModel model = model(config("auto-download", "false"), Set.of("avx2"));
         assertThat(model.check()).isFalse();

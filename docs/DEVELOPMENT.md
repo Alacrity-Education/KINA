@@ -126,37 +126,38 @@ Claude Code (verified with Claude Code 2.1.286): `claude mcp add --transport htt
 
 ## Measured on 2026-10-05
 
-Host: 24 cores, 30 GB RAM, Docker 29 / Compose 5; stack from `compose.yaml` (CPU Laya, `LAYA_THREADS=4`,
-`multilingual` checkpoint), full JLCPCB database (7,146,764 parts, source date 2026-09-26).
+Host: Intel Core Ultra 9 285K (8 P-cores + 16 E-cores, AVX2 + AVX-VNNI, no AVX-512), 30 GB RAM, Docker 29 / Compose 5;
+full JLCPCB database (7,146,764 parts, source date 2026-09-26).
 
-Memory (`docker stats` after the e2e run):
+Compose stack (`docker stats` after the e2e run, before the cross-encoder replaced the previous ranking sidecar):
 
 | Service | RAM | Notes |
 |---|---|---|
-| `kina` | ~485 MiB of the 2 GiB `mem_limit` | max heap 1.5 GiB (75%); the JLCPCB file is read through the OS page cache, not the heap |
+| `kina` | ~485 MiB of the 2 GiB `mem_limit` | max heap 1.5 GiB (75%); the JLCPCB file is read through the OS page cache, not the heap; the cross-encoder session adds native memory outside the heap (about 100-200 MB int8, estimate) |
 | `postgres` | ~45 MiB | `pgdata` ~50 MB after the e2e run |
-| `laya-serve` | ~1.9 GiB | after ranking; idle at ~0% CPU |
 
-Disk: `kina_kina-data` 5.33 GB, `kina_laya-models` 1.5 GB, `laya-serve` image 1.76 GB, `kina` image ~580 MB.
+Disk: `kina_kina-data` 5.33 GB JLCPCB database + 23 MB int8 cross-encoder (`/data/cross-encoder`; 91 MB for fp32),
+`kina` image ~580 MB before the ONNX Runtime jar (53 MB, native libraries for Linux x64/aarch64, macOS and Windows; `kina.jar` is now 115 MB).
 
-Startup: Spring context ~1.9 s; Flyway V1-V3 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
-(validation `count(*)`) ~19 s in the background; `laya-serve` with a cached checkpoint healthy in < 30 s.
+Startup: Spring context ~2 s; Flyway V1-V3 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
+(validation `count(*)`) ~19 s in the background; cross-encoder first start (download of vocab, configs and the
+23 MB int8 file from Hugging Face, session creation, warm-up) 3.6 s in the background, later starts < 0.5 s.
 
-Search latency (wall clock at the client; the server logs `search '<key>': fetch N ms [...], rank N ms (laya|fallback)`):
+Ranking, local jar (`taskset -c 0-7`, `KINA_CROSS_ENCODER_THREADS` default = 4, int8 `model_qint8_avx512_vnni.onnx`,
+all three distributors; the server logs `search '<key>': fetch N ms [...], rank N ms (blended|fallback)` and, at DEBUG,
+`cross-encoder scored N candidates in M ms`):
 
-| Request | Cold (distributor calls) | Warm (Postgres cache hit) |
-|---|---|---|
-| MCP `search_parts` `10uF X7R 0805`, 3 distributors, `max_results` 5 | 6.1 s | 4.3 s (fetch 49 ms, Laya rank 4.2 s for 40 candidates) |
-| same query, `max_results` 20 (cache + Laya score cache hit) | - | 0.06 s |
-| MCP `search_parts_batch`, 2 queries, 3 distributors | 8.5 s | 4.4 s |
-| REST `4.7k 1% 0603 resistor`, LCSC + TME | 6.3 s | 4.8 s |
-| REST batch, 2 queries, LCSC + TME | 9.1 s | 8.7 s |
-| REST `SOT-23 N-channel MOSFET 30V`, TME (0 hits -> fallback `MOSFET 30V SOT-23`, 54 parts) | 8.3 s | 4.1 s |
-| `get_part` / `GET /api/v1/parts/TME/<symbol>` (cached part) | - | < 10 ms |
+| Query (`max_results` 10) | fetch (cold) | cross-encoder, 40 candidates | rank total | ranking |
+|---|---|---|---|---|
+| `10uF X7R 0805` (first search after start) | 1962 ms | 245 ms | 294 ms | blended |
+| `SOT-23 N-channel MOSFET 30V` | 2881 ms | 264 ms | 293 ms | blended |
+| `LM358 SOIC-8` | 2916 ms | 211 ms | 226 ms | blended |
+| `16MHz crystal 3225 SMD` | 1702 ms | 230 ms | 245 ms | blended |
+| four further queries (JIT warm) | 1.1-4.1 s | 113-206 ms | 130-230 ms | blended |
+| `10uF X7R 0805` again (Postgres and score cache hit) | 35 ms | not called | 16 ms | blended |
 
-Ranking dominates warm searches: Laya on CPU costs ~90 ms per candidate at `LAYA_THREADS=4` (21 candidates 1.9 s,
-40 candidates 3.7-4.3 s) and ~50-60 ms per candidate at `LAYA_THREADS=8` (10 candidates 0.5 s, 33 candidates 2.1 s),
-i.e. 8 threads are ~1.5-1.8x faster; everything stays well inside the 18 s ranking budget. LCSC (SQLite FTS5) usually
-answers in 50-450 ms but a query whose tokens are short (LIKE clauses) on a cold page cache took 4.1 s
-(`1uF 50V X7R 0402`).
+`CrossEncoderEvaluationTest` (32 queries of `ranking-eval.jsonl`, 20-40 candidates each, 4 threads, no CPU pinning):
+int8 median 125 ms / max 256 ms per query, fp32 median 256 ms / max 476 ms. The rest of a search is distributor time:
+Mouser and TME answer in 1-4 s, LCSC (SQLite FTS5) usually in 50-450 ms, but a query whose tokens are short (LIKE
+clauses) on a cold page cache took 4.1 s (`1uF 50V X7R 0402`).
 
