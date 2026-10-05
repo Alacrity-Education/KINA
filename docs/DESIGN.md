@@ -491,8 +491,10 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 - Token: `POST {base}/auth/token`, header `Authorization: Basic base64(token:secret)`, body `grant_type=client_credentials`
   -> `{"access_token","token_type":"Bearer","expires_in":300,"refresh_token"}`. `TmeTokenManager` caches the token and
   requests a new one when fewer than 30 s remain (ignore the refresh token; client credentials are cheap).
-- Search: `GET {base}/products/search?phrase=<q>&scope[]=products&scope[]=counters&country=RO&limit=<n>&page=<p>`
-  with `Accept-Language: en`. Default `limit` 20; probe the maximum (try 50) once and clamp. Response
+- Search: `GET {base}/products/search?phrase=<q>&scope[]=products&scope[]=counters&filter[in_stock]=true&country=RO&limit=<n>&page=<p>`
+  with `Accept-Language: en`. Verified live: `limit` max 100 (101 -> 400), `phrase` must be 2-40 characters (longer
+  queries are shortened at a word boundary), `filter[in_stock]=true` makes `counters.count` an in-stock total. Auth
+  failures are HTTP 400 `E_AUTH_TOKEN_IS_INVALID` / 403 `E_AUTH_TOKEN_EXPIRED` (not 401): drop the token, retry once. Response
   `data.products.elements[]` with `symbol`, `product_status[]` (e.g. `HARDLY_AVAILABLE`), `category{id,name}`,
   `manufacturer_symbols[]`, `manufacturer{id,name}`, `description`, `multiples`, `minimal_amount`, `unit`, `packing`,
   `assets.primary_photo{prime,thumbnail,high_resolution}` (protocol-relative URLs: prefix `https:`), and
@@ -502,8 +504,8 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   `prices.tax{type,rate}`. Stock = `stock_quantity`; drop when <= 0.
 - Parameters: `GET {base}/products/parameters?symbols[]=...&country=RO` (batch of up to 50) ->
   `data.elements[{symbol, parameters.elements[{id,name,values[{id,value}]}]}]`; map name -> values joined with `", "`.
-- `productUrl = https://www.tme.eu/en/details/<symbol>/`, `datasheetUrl` from `/products/files` only if cheap
-  (optional; otherwise null), `photoUrl = https:` + `assets.primary_photo.prime`.
+- `productUrl = https://www.tme.eu/en/details/<symbol>/`, `datasheetUrl` = first `/products/files` document with
+  `type == "DTE"` (prefer PDF; one call per page, <= 50 symbols), `photoUrl = https:` + `assets.primary_photo.prime`.
 - Extra: `product_status`, `category_id`, `manufacturer_id`, `unit`, `packing`, `price_type`, `tax_rate`.
 - Errors: `{"code":"E_INPUT_PARAMS_VALIDATION_ERROR",...}` -> `BAD_RESPONSE`; 401 -> refresh token once and retry; 429 -> `RATE_LIMITED`.
 
