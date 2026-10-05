@@ -15,7 +15,7 @@ All paths are relative to the public origin, for example `https://kina.example.c
 | `dev` | No credentials needed; requests run as the "Development Admin". A bearer token that is sent is still validated. |
 | `prod` | `Authorization: Bearer <token>` required. |
 
-A token is either a 30-day token from the web UI (`kina_` followed by 43 characters) or an access token issued by the OAuth flow (same format, same table, same validity).
+A token is either a static token from the web UI (`kina_` followed by 43 characters, valid 30 days) or an access token issued by the OAuth flow (same format and table, valid 1 hour, `kina.oauth.access-token-validity`).
 
 A missing, unknown, expired or revoked token gives `401` with an `application/problem+json` body and:
 
@@ -24,6 +24,8 @@ WWW-Authenticate: Bearer realm="kina", resource_metadata="https://<host>/.well-k
 ```
 
 `error="invalid_token"` is added only when a token was sent. The `resource_metadata` link is how MCP clients find the authorization server.
+
+In `prod` with required groups (`OIDC_REQUIRED_GROUPS`), a user who is no longer a member is blocked: every token of that user gives `401` with `error="invalid_token"`, and the web session ends. A static token of a member triggers a background membership re-check at most once per user per interval; the request itself never waits for the identity provider.
 
 `/actuator/health` and `/actuator/info` are public.
 
@@ -410,9 +412,11 @@ No parameters. Returns `{"status": "ok", "version": "<build version>"}`.
 
 ## OAuth 2.1 authorization server
 
-Used by Claude's remote connector and any other MCP client that supports OAuth. The access tokens it issues are the same 30-day KINA tokens as the web UI ones. They appear in the web UI as `MCP: <client name>` and can be revoked there. Scope: `kina` (the only scope).
+Used by Claude's remote connector and any other MCP client that supports OAuth. The access tokens it issues are KINA tokens like the web UI ones, but they live 1 hour (`expires_in` is 3600) and come with a 30-day refresh token. They appear in the web UI as `MCP: <client name>` and can be revoked there. Scope: `kina` (the only scope).
 
-Flow: the client calls `/mcp`, gets 401 with `resource_metadata`, reads the metadata documents, registers at `/oauth/register`, sends the user to `/oauth/authorize` (PKCE `S256`), receives a code on its redirect URI and exchanges it at `/oauth/token`.
+Flow: the client calls `/mcp`, gets 401 with `resource_metadata`, reads the metadata documents, identifies itself (an `https` `client_id` URL, or a registration at `/oauth/register`), sends the user to `/oauth/authorize` (PKCE `S256`), receives a code on its redirect URI and exchanges it at `/oauth/token`.
+
+In `prod`, the user signs in at the organisation's OIDC provider. With required groups configured, a user outside the groups ends on `GET /login-denied` (see [Web UI endpoints](#web-ui-endpoints)) and no code is issued.
 
 ### Discovery documents
 
@@ -443,9 +447,12 @@ Flow: the client calls `/mcp`, gets 401 with `resource_metadata`, reads the meta
   "code_challenge_methods_supported": ["S256"],
   "token_endpoint_auth_methods_supported": ["none", "client_secret_basic", "client_secret_post"],
   "revocation_endpoint_auth_methods_supported": ["none", "client_secret_basic", "client_secret_post"],
-  "scopes_supported": ["kina"]
+  "scopes_supported": ["kina"],
+  "client_id_metadata_document_supported": true
 }
 ```
+
+`client_id_metadata_document_supported` is `true` unless `kina.oauth.trusted-client-metadata-hosts` is empty. See [Client ID Metadata Documents](#client-id-metadata-documents).
 
 The origin comes from `KINA_PUBLIC_BASE_URL` or, when empty, from the `X-Forwarded-*` headers of the request.
 
@@ -469,6 +476,20 @@ curl -s -X POST https://kina.example.com/oauth/register -H 'Content-Type: applic
 
 Returns 201 with `client_id`, `client_secret` (only when the method is not `none`; it is shown once and stored hashed), `client_id_issued_at`, `client_secret_expires_at` (always 0) and the registered metadata. Errors are `invalid_redirect_uri` or `invalid_client_metadata` with status 400.
 
+The endpoint is rate limited per client IP (`kina.oauth.register-rate-limit-per-minute`, default 30, `0` disables). Over the limit KINA answers `429` with a `Retry-After` header (seconds) and the body `{"error": "too_many_requests", "error_description": "..."}`. The client IP is the one the reverse proxy reports in `X-Forwarded-For`, so the proxy must overwrite that header.
+
+Dynamically registered clients that were not used for 90 days and hold no live token are deleted by a daily cleanup. `oauth_clients.last_used_at` records each token issuance.
+
+### Client ID Metadata Documents
+
+Instead of registering, a client may use an `https` URL as its `client_id`. The URL points to a JSON document that describes the client (draft-ietf-oauth-client-id-metadata-document; Claude Code uses `https://claude.ai/oauth/claude-code-client-metadata`). KINA accepts this only for hosts in `kina.oauth.trusted-client-metadata-hosts` (default `claude.ai`, `claude.com`, `*.anthropic.com`).
+
+- KINA fetches the document with a 5 second timeout, a 1 MB cap and no redirects, and caches it for 1 hour (`kina.oauth.client-metadata-cache`). The client is stored in `oauth_clients` with `metadata_url`.
+- The document's `client_id` must equal the URL. `redirect_uris` must be valid. `token_endpoint_auth_method` must be absent or `none`.
+- `redirect_uri` must match an entry of the document exactly. A loopback `http` entry (`http://localhost/callback`) accepts any port.
+- An unknown host or an invalid document gives an error page at `/oauth/authorize` (never a redirect) and `invalid_client` at `/oauth/token`.
+- Consent is skipped only for trusted documents with a non-loopback redirect URI (for example claude.ai). Loopback redirects (Claude Code) still show the Approve page.
+
 ### `GET /oauth/authorize`
 
 Requires a signed-in user (`dev`: automatic; `prod`: OIDC login, then the request resumes). Parameters:
@@ -476,18 +497,18 @@ Requires a signed-in user (`dev`: automatic; `prod`: OIDC login, then the reques
 | Parameter | Meaning |
 |---|---|
 | `response_type` | Must be `code`. |
-| `client_id` | A registered client. |
-| `redirect_uri` | Exact match with a registered URI. May be omitted when the client registered exactly one. |
+| `client_id` | A registered client, or an `https` URL of a Client ID Metadata Document on a trusted host. |
+| `redirect_uri` | Exact match with a registered URI (or with an entry of the metadata document; loopback `http` entries accept any port). May be omitted when the client registered exactly one. |
 | `code_challenge`, `code_challenge_method` | Required. Method must be `S256`. |
 | `state` | Echoed back on the redirect. |
 | `scope` | Accepted; the granted scope is always `kina`. |
 | `resource` | Stored and echoed. A value outside the public origin is logged, not rejected. |
 
-It renders a consent page (Approve and Deny buttons, `POST /oauth/authorize`). Approve redirects to `redirect_uri?code=...&state=...` with a single-use code valid for 10 minutes. Deny redirects with `error=access_denied`. An unknown client or an unregistered `redirect_uri` shows an error page with status 400 and never redirects. Other request problems redirect to the client with `error` and `error_description`.
+In `prod`, the user is sent to the OIDC provider first. With required groups, a refused user sees `/login-denied` and the request does not continue. It renders a consent page (Approve and Deny buttons, `POST /oauth/authorize`); trusted metadata-document clients with a non-loopback redirect URI skip it. Approve redirects to `redirect_uri?code=...&state=...` with a single-use code valid for 10 minutes. Deny redirects with `error=access_denied`. An unknown client, an untrusted or invalid metadata document, or an unregistered `redirect_uri` shows an error page with status 400 and never redirects. Other request problems redirect to the client with `error` and `error_description`.
 
 ### `POST /oauth/token`
 
-Form-encoded (`application/x-www-form-urlencoded`). Clients registered with a secret authenticate with HTTP Basic or `client_secret` in the form; public clients send only `client_id`.
+Form-encoded (`application/x-www-form-urlencoded`). Clients registered with a secret authenticate with HTTP Basic or `client_secret` in the form; public clients (and metadata-document clients) send only `client_id`, which may be the `https` URL.
 
 Authorization code grant:
 
@@ -507,10 +528,19 @@ curl -s -X POST https://kina.example.com/oauth/token \
 Response:
 
 ```json
-{"access_token": "kina_...", "token_type": "Bearer", "expires_in": 2592000, "refresh_token": "kina_rt_...", "scope": "kina"}
+{"access_token": "kina_...", "token_type": "Bearer", "expires_in": 3600, "refresh_token": "kina_rt_...", "scope": "kina"}
 ```
 
-The code is single use: the first attempt consumes it, even if PKCE verification then fails. Errors are `{"error": "...", "error_description": "..."}`: `invalid_request`, `invalid_client` (401), `invalid_grant`, `unauthorized_client`, `unsupported_grant_type`, `invalid_scope`. Refresh tokens last 90 days (`kina.oauth.refresh-token-validity`). Revoking an access token, in the web UI or at `/oauth/revoke`, also revokes the refresh tokens issued with it.
+The code is single use: the first attempt consumes it, even if PKCE verification then fails. **Refresh semantics.** In `prod` with required groups, a refresh grant first re-checks the user's group membership at the identity provider when the last check is older than `KINA_MEMBERSHIP_RECHECK_INTERVAL` (1 hour). The check is synchronous:
+
+- Still a member: the old pair is rotated and a new pair is issued.
+- No longer a member, or the provider reports the grant as invalid: `invalid_grant`. The user is blocked and all their tokens are revoked.
+- Provider unreachable: access continues for `KINA_MEMBERSHIP_GRACE` (4 hours) after the last successful check. After that the answer is `invalid_grant` ("identity provider unreachable"). Nothing is revoked, and the same refresh token works again when the provider is back.
+- No stored provider token (no `KINA_TOKEN_ENCRYPTION_KEY`): refresh works for 24 hours after the user's last interactive login, then `invalid_grant` ("sign in again").
+
+Claude reacts to `invalid_grant` by asking the user to reconnect.
+
+Errors are `{"error": "...", "error_description": "..."}`: `invalid_request`, `invalid_client` (401), `invalid_grant`, `unauthorized_client`, `unsupported_grant_type`, `invalid_scope`. `expires_in` is the real lifetime of the access token (`kina.oauth.access-token-validity`, default 1 hour). Refresh tokens last 30 days (`kina.oauth.refresh-token-validity`) and rotate on every use. Revoking an access token, in the web UI or at `/oauth/revoke`, also revokes the refresh tokens issued with it.
 
 ### `POST /oauth/revoke`
 
@@ -522,7 +552,8 @@ These need a signed-in user (`prod`: OIDC session, `dev`: automatic) and use CSR
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /` | List your tokens. |
-| `POST /tokens` | Create a token (`name`, up to 100 characters). The plaintext is shown once. |
+| `GET /` | List your tokens, with a short explanation of how to connect Claude. When `kina.tokens.ui-enabled` is `false` it shows only that explanation. |
+| `POST /tokens` | Create a static token (`name`, up to 100 characters). The plaintext is shown once. Returns `404` when `kina.tokens.ui-enabled` (`KINA_TOKENS_UI_ENABLED`) is `false`; existing tokens keep working until they expire or are revoked. |
 | `POST /tokens/{id}/revoke` | Revoke one of your tokens. For an OAuth token this also revokes its refresh tokens. |
 | `GET`/`POST /oauth/authorize` | Consent page and decision. |
+| `GET /login-denied` | Shown after a login that the group or e-mail-domain policy refused. Status `403`. Names the required group (or the allowed domains). The user gets no session. Public. |
