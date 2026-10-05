@@ -1,0 +1,42 @@
+{
+ "laya_ml_noul_p8": {
+  "model": "multilingual",
+  "threads": 8,
+  "cpus": "0-7",
+  "cold_load_s": 3.17,
+  "mem_idle_mib": 169,
+  "mem_after_mib": 2254,
+  "lat40_median_ms": 2396,
+  "lat40_max_ms": 3015
+ },
+ "laya_ml_noul_p4": {
+  "model": "multilingual",
+  "threads": 4,
+  "cpus": "0-3",
+  "cold_load_s": 2.84,
+  "mem_idle_mib": 167,
+  "mem_after_mib": 1851,
+  "lat40_median_ms": 4258,
+  "lat40_max_ms": 5349
+ },
+ "laya_td_noul_p8": {
+  "model": "typed-decisions",
+  "threads": 8,
+  "cpus": "0-7",
+  "cold_load_s": 1.82,
+  "mem_idle_mib": 168,
+  "mem_after_mib": 2122,
+  "lat40_median_ms": 6082,
+  "lat40_max_ms": 7407
+ },
+ "laya_td_noul_p4": {
+  "model": "typed-decisions",
+  "threads": 4,
+  "cpus": "0-3",
+  "cold_load_s": 1.37,
+  "mem_idle_mib": 168,
+  "mem_after_mib": 2314,
+  "lat40_median_ms": 10908,
+  "lat40_max_ms": 13333
+ }
+}
