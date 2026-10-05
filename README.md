@@ -22,6 +22,15 @@ The distributors are LCSC (served from the JLCPCB parts database, downloaded and
   - Pitch: `2.54mm`, `0.1"`, `1.27mm`. The word `dupont` implies a 2.54 mm header.
   - Orientation: "right angle", `90°`, "angled", "horizontal" versus "vertical" or "straight". Mounting: `THT` or `SMD`.
   - IC packages such as `SOIC-8`, `LQFP-48` and `SOT-23-6` are not read as connector positions.
+- USB connector precision. USB requests are read in more detail than other connectors:
+  - Type: Type-C or USB-C, Micro-B, Micro-AB, Mini-B, Type-A, Type-B, "USB 3.0 Micro-B", "USB 3.0 Type-A".
+  - Gender: receptacle, socket or female versus plug or male.
+  - Standard, mapped to one speed class: USB 2.0 is 480 Mbps. USB 3.0, USB 3.1 Gen 1 and USB 3.2 Gen 1 are all 5 Gbps. USB 3.1 Gen 2 and USB 3.2 Gen 2 are 10 Gbps. USB 3.2 Gen 2x2 is 20 Gbps. USB4 is 40 Gbps.
+  - Type-C pin configuration: 6P (power only), 12P, 14P, 16P (USB 2.0) and 24P (full featured).
+  - Mounting style: SMD, THT, hybrid, mid-mount (also "recessed"), top-mount. Also orientation.
+  - Features: power only, PD, waterproof or IPX7, board lock.
+  - Examples: `USB-C receptacle 16 pin SMD USB 2.0`, `USB Type-C 24 pin USB 3.1 receptacle horizontal`, `micro USB B receptacle 5 pin SMD`, `USB-C 6 pin power only`, `waterproof USB-C receptacle IP67`, `mid-mount USB-C 16P`.
+  - Pin counts are normalised. Some distributors count 1 or 2 shell or mounting pins, so a 16-pin connector can be listed as 17P or 18P. KINA keeps the reported `Positions` and adds the canonical `PinConfiguration`. Ranking compares configurations, so a 17P listing fully matches a 16-pin request, and a "17 pin" request finds 16-pin parts.
 - Batch search of up to 20 queries in one call.
 - Graceful rate limits: when Mouser or TME answer with a rate limit, KINA waits and retries instead of failing at once, for up to 2 minutes per request (`kina.search.max-request-duration`). `rate_limit_waited_ms` in each distributor entry says how long it waited.
 - Ranking: deterministic parametric ranker blended 50/50 by rank with an in-process cross-encoder (ONNX Runtime, CPU, no extra container, nothing leaves the host), with a 5 s budget per query and an automatic fallback (`ranking: "fallback"`). Search never fails because of the model.
@@ -270,6 +279,23 @@ Response (abridged):
 
 `total_results` is what the distributor reported. `fetched` is how many in-stock parts KINA holds for the query. `returned` is `min(max_results, fetched)`.
 
+### USB connectors: pin counts and standards
+
+- **Pin-count normalisation.** KINA maps a reported count to the canonical configuration: 17 or 18 to 16, 25 or 26 to 24, 7 or 8 to 6. 14 stays 14, because it is a real USB 2.0 Type-C configuration. `Positions` stays as the distributor reported it. `ShieldPinsCounted` says how many extra pins were counted (1 or 2).
+- **Inference.** If you name no pin count, USB 2.0 Type-C implies 16 pins and USB 3.x Type-C implies 24. `parsed.connector.pin_configuration_implied` is then `true`, and the pin signal counts half.
+- **Physical consistency.** A Type-C part with 12 to 16 pins is treated as USB 2.0, and one with 2 to 6 pins as power only, whatever the distributor label says. JLCPCB labels many 16P and 6P parts "USB 3.1", although they cannot carry SuperSpeed.
+- **Honest limit.** No distributor lists a 17P or 18P Type-C part in the data seen on 2026-10-05. The rule is covered by tests and by the "17 pin" request direction.
+- **Data quality differs.** LCSC has description text only (mid-mount shows as "Recessed" or "Sink board", waterproofing only in part numbers). TME has the richest parameters. Mouser's search API returns no USB attributes, so everything comes from descriptions, and many Mouser descriptions give no pin count.
+
+Example: `USB-C receptacle 17 pin` gives this `parsed.connector` (abridged):
+
+```json
+{"type": "usb-c", "gender": "female", "positions": 17,
+ "usb_type": "Type-C", "pin_configuration": 16, "shield_pins_counted": 1}
+```
+
+Checked live on 2026-10-05: it returns 16-pin Type-C parts on all three distributors (TME `USB4145-03-0170-C`, Mouser `217182-0001` and `DX07S016JA3R1500`). Before, it returned power supplies, cables and circular connectors. `USB Type-C 24 pin USB 3.1 receptacle horizontal` now ranks exact-class 24P parts above USB4 ones.
+
 ### Example: a connector query
 
 Request:
@@ -306,14 +332,14 @@ Known limit: KINA does not send rows to Mouser, and Mouser keyword search is loo
 
 1. The query is parsed: component family, value, tolerance, voltage, dielectric, package, mounting, and leftover keywords.
 2. A deterministic ranker scores every part from 0 to 1: primary value (0.30), package (0.20), dielectric (0.15), voltage/current/power rating (0.10), tolerance (0.10), family keyword (0.05), lexical match (0.10), and small tie-break bonuses for stock, price and the JLCPCB Basic/Preferred library. A mismatch on value, package, dielectric, rating or tolerance is penalised by the same amount a match earns.
-   For connector requests the value feature is replaced by connector features: positions (0.30), gender (0.20), orientation (0.15), pitch (0.15, where 2.54 mm equals 0.1"), connector type (0.10) and mounting (0.05). A wrong row count costs 0.10. Multi-row parts cost 0.08 when you did not ask for rows. Attributes a part does not list never count against it.
+   For USB requests see the weights in [docs/API.md](docs/API.md#usb-connector-queries). For other connector requests the value feature is replaced by connector features: positions (0.30), gender (0.20), orientation (0.15), pitch (0.15, where 2.54 mm equals 0.1"), connector type (0.10) and mounting (0.05). A wrong row count costs 0.10. Multi-row parts cost 0.08 when you did not ask for rows. Attributes a part does not list never count against it.
 3. The top 40 candidates (shared across distributors, at least 5 per distributor) go to the cross-encoder `cross-encoder/ms-marco-MiniLM-L6-v2`. It reads the query text and the part text (manufacturer, MPN, description, category, package, attributes) together and returns one relevance score per part. It runs inside the KINA JVM through ONNX Runtime on the CPU. The score is cached in memory for 1 hour.
 4. Both orders are turned into ranks inside the candidate set, and the final score is `0.5 * deterministic rank + 0.5 * model rank`. Parts that were not sent to the model come after the scored ones. The response says `"ranking": "blended"`.
 5. When the model cannot score, the deterministic order is used and the response says `"ranking": "fallback"` with a `ranking_note`: `cross-encoder disabled`, `cross-encoder model not loaded yet`, `cross-encoder timeout after 5s`, `cross-encoder timeout: budget exhausted`, `cross-encoder busy: no free slot within ...` or `cross-encoder failed: ...`. In a batch, queries reached after the 60 s ranking budget also fall back. Search never fails because of the model.
 
 ### Measured results
 
-The study is in [docs/research/ranking-evaluation-2026-10-05.md](docs/research/ranking-evaluation-2026-10-05.md). It uses 32 labelled queries (1259 candidates). Score is NDCG@10, higher is better.
+The study is in [docs/research/ranking-evaluation-2026-10-05.md](docs/research/ranking-evaluation-2026-10-05.md). It uses 32 labelled queries (1259 candidates). Score is NDCG@10, higher is better. The dataset in `docs/research/data` has since grown to 41 queries and 1 619 candidates with 9 labelled USB connector queries; the numbers below are from the 32-query study.
 
 | Ranking | NDCG@10 | Time per search |
 |---|---|---|
@@ -374,6 +400,7 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 | Symptom | Cause and fix |
 |---|---|
 | Connector results look generic or wrong | Look at `parsed.connector`: it shows what KINA understood (type, gender, positions, pitch, orientation). If a field is missing, state it more plainly, for example "female header 1x6 right angle 2.54mm". Then look at `distributor_query` per distributor to see the phrase KINA really sent. Results cached before an upgrade can look old; ask again with `bypass_cache`. Mouser ignores rows. |
+| USB results show the wrong pin count or standard | Look at `parsed.connector`: `pin_configuration` is what KINA compared, `positions` is what you wrote. If `pin_configuration_implied` is `true`, you gave no pin count and KINA guessed from the standard (16 for USB 2.0, 24 for USB 3.x); state the count to fix it. Check the part's `PinConfiguration`, `ShieldPinsCounted` and `UsbStandard` attributes: a 17P listing is a 16-pin part, and a 12 to 16 pin Type-C is USB 2.0 whatever its label says. Mouser gives no USB attributes, so its parts depend on description text. Ask again with `bypass_cache` if the results were cached before the upgrade. |
 | LCSC `error: "unavailable"`, detail "JLCPCB parts database not downloaded yet" | The first download is still running (about 1 GB). Watch `docker compose logs kina`. If it failed, `jlcpcb.last_error` in `list_distributors` says why; check disk space and internet access. |
 | `ranking: "fallback"` | Read `ranking_note`. `cross-encoder model not loaded yet`: the first download is still running or failed; check `ranking.last_error` in `list_distributors` and `docker compose logs kina`, then internet access, disk space and write access to `/data/cross-encoder`. KINA retries every hour. `cross-encoder disabled`: `KINA_CROSS_ENCODER_ENABLED` is `false`. `cross-encoder timeout ...` or `busy ...`: the host is short of CPU; lower the load or check `KINA_CROSS_ENCODER_THREADS`. `cross-encoder failed: ...`: see the log. Search still works. |
 | TME or Mouser `error: "not_configured"` | The credentials are missing in `.env`. Restart with `docker compose up -d`. |

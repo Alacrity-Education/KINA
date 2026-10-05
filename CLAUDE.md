@@ -11,6 +11,7 @@ An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search 
 - `docs/API.md`, `docs/OPERATIONS.md`, `README.md`: user-facing docs. Update them when endpoints, variables or defaults change.
 - `task.md`: the original requirements.
 - Connector vocabulary (types, gender, positions, rows, pitch, orientation, and the per-distributor phrases) lives in `ConnectorRecognizer` and `DistributorPhraser`. Add new connector types there and in the labelled tests, and document the wording in `docs/DESIGN.md` 3.2 and 3.4.
+- USB vocabulary (types, standards and speed classes, pin configurations, features, mounting styles) lives in `UsbVocabulary`. Keep the pin-count normalisation rule (17/18 to 16, 25/26 to 24, 7/8 to 6, 14 stays 14; `Positions` as reported, ranking on `PinConfiguration`) and its tests.
 - `.env.example` documents every environment variable. Keep it in sync with `application.yml`.
 
 ## Build and test

@@ -144,6 +144,10 @@ Flyway applies new database migrations when `kina` starts (the current ones are 
 
 Upgrading to connector-aware search: cached TME and Mouser results from before the upgrade stay in the cache until they expire (5 days by default). Connector queries asked before the upgrade keep returning the old, generic results until then, because the cache key is your own query text. Ask again with `bypass_cache` to refresh one query at once, or wait for the cache TTL. Bypassing costs Mouser calls, so use it only for the queries you care about. No migration is involved.
 
+Upgrading to USB connector precision: the same cache rule applies. USB queries asked before the upgrade keep their old results (for example power supplies and cables for `USB-C receptacle 17 pin`) until the cache entry expires. Ask again with `bypass_cache` for the queries you care about. No migration is involved.
+
+The research dataset in `docs/research/data` (41 queries, 1 619 candidates) is rebuilt with `scripts/research/build_dataset.py`, then `scripts/research/build_usb_dataset.py`, in that order. It is not needed to run KINA.
+
 Roll back by checking out the previous version and running `docker compose up -d --build` again. Migrations are not reversed, so restore the dump if a migration must be undone.
 
 ## Ranking model
