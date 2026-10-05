@@ -144,6 +144,8 @@ docker compose up -d --build
 
 Flyway applies new database migrations when `kina` starts (the current ones are V1 to V3). Take a `pg_dump` first. The `laya-serve` image is pinned to tag `v0.3.27`, so it only rebuilds when `compose.yaml` changes. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
 
+Upgrading to connector-aware search: cached TME and Mouser results from before the upgrade stay in the cache until they expire (5 days by default). Connector queries asked before the upgrade keep returning the old, generic results until then, because the cache key is your own query text. Ask again with `bypass_cache` to refresh one query at once, or wait for the cache TTL. Bypassing costs Mouser calls, so use it only for the queries you care about. No migration is involved.
+
 Roll back by checking out the previous version and running `docker compose up -d --build` again. Migrations are not reversed, so restore the dump if a migration must be undone.
 
 ## GPU overlay

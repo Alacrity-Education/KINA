@@ -13,7 +13,15 @@ The distributors are LCSC (served from the JLCPCB parts database, downloaded and
 - `max_results` is per distributor (1 to 50, default 10). Every distributor entry also reports how many matches the distributor found, how many KINA holds, and how many it returned.
 - Cache of 5 days for TME and Mouser. Ask again with a larger `max_results` and the answer comes from the cache; KINA only calls the distributor when the cache holds too few parts.
 - `bypass_cache` skips the cache lookup and still refreshes the cache.
-- Phrase fallback: when Mouser or TME find nothing for the full query, KINA retries once with the parametric core of the query (for example `MOSFET 30V SOT-23` for `SOT-23 N-channel MOSFET 30V`) and reports it in `fallback_query`.
+- Phrase fallback: when Mouser or TME find nothing for the full query, KINA retries once with the parametric core of the query (for example `MOSFET 30V SOT-23` for `SOT-23 N-channel MOSFET 30V`) and reports it in `fallback_query`. A query with only keywords gets the 3 to 5 most informative tokens instead.
+- Distributor phrasing: when KINA rewrites a connector request for a distributor, `distributor_query` shows the phrase it sent. It is null when your text went through as written. The cache key stays your own query text.
+- Connector-aware search. Describe a connector in plain words ("90 degree dupont style female pin header, THT, 6 position") and KINA extracts the type, gender, positions, rows, pitch, orientation and mounting, then rewrites the request into each distributor's own vocabulary (`distributor_query`). Accepted wording:
+  - Types: pin header (male), female header, socket or receptacle, box or shrouded header, terminal block or screw terminal, JST series XH, PH, GH, SH and ZH, USB-C, micro USB, FPC or FFC, RJ45, D-sub, barrel jack, or just "connector".
+  - Positions: `6-position`, `6 pos`, `6 pin`, `6P`, `6 way`, `PIN: 6`.
+  - Rows: `1x6`, `2x3`, "single row", "dual row".
+  - Pitch: `2.54mm`, `0.1"`, `1.27mm`. The word `dupont` implies a 2.54 mm header.
+  - Orientation: "right angle", `90°`, "angled", "horizontal" versus "vertical" or "straight". Mounting: `THT` or `SMD`.
+  - IC packages such as `SOIC-8`, `LQFP-48` and `SOT-23-6` are not read as connector positions.
 - Batch search of up to 20 queries in one call.
 - Graceful rate limits: when Mouser or TME answer with a rate limit, KINA waits and retries instead of failing at once, for up to 2 minutes per request (`kina.search.max-request-duration`). `rate_limit_waited_ms` in each distributor entry says how long it waited.
 - Ranking: deterministic parametric ranker blended with Laya, with an 18 s budget per query and an automatic fallback (`ranking: "fallback"`).
@@ -265,10 +273,43 @@ Response (abridged):
 
 `total_results` is what the distributor reported. `fetched` is how many in-stock parts KINA holds for the query. `returned` is `min(max_results, fetched)`.
 
+### Example: a connector query
+
+Request:
+
+```json
+{"query": "90 degree dupont style female pin header, THT, 6 position", "max_results": 3}
+```
+
+Response (abridged, one distributor entry shown in full):
+
+```json
+{
+  "query": "90 degree dupont style female pin header, THT, 6 position",
+  "parsed": {
+    "family": "connector", "mounting": "THT", "keywords": [],
+    "connector": {"type": "female header", "gender": "female", "positions": 6, "pitch": "2.54mm", "orientation": "right angle"}
+  },
+  "ranking": "laya",
+  "distributors": [
+    {"distributor": "LCSC", "distributor_query": "\"Female Header\" 6P \"Right Angle\" 2.54mm", "fallback_query": null,
+     "parts": [{"rank": 1, "part_number": "C...", "mpn": "PM254-1-06-W-8.5",
+                "attributes": {"ConnectorType": "female header", "Gender": "female", "Positions": "6", "Pitch": "2.54mm", "Orientation": "right angle"}}]},
+    {"distributor": "TME", "distributor_query": "pin strips female 6 angled", "...": "..."},
+    {"distributor": "MOUSER", "distributor_query": "female header 6 pos right angle", "...": "..."}
+  ]
+}
+```
+
+Checked on a local instance on 2026-10-05. The top results were LCSC `PM254-1-06-W-8.5`, `DW254W-11-06-85` and `X5511FR-06`; TME `ZL263-6SG` and `DS1002-01-1X06R13`; Mouser `PRT-12590`, `613006143121` and `M22-6540642R`.
+
+Known limit: KINA does not send rows to Mouser, and Mouser keyword search is loose. A `2x3` request can therefore return single-row parts there. TME and LCSC handle rows.
+
 ## How ranking works
 
 1. The query is parsed: component family, value, tolerance, voltage, dielectric, package, mounting, and leftover keywords.
 2. A deterministic ranker scores every part from 0 to 1: primary value (0.30), package (0.20), dielectric (0.15), voltage/current/power rating (0.10), tolerance (0.10), family keyword (0.05), lexical match (0.10), and small tie-break bonuses for stock, price and the JLCPCB Basic/Preferred library. A mismatch on value, package, dielectric, rating or tolerance is penalised by the same amount a match earns.
+   For connector requests the value feature is replaced by connector features: positions (0.30), gender (0.20), orientation (0.15), pitch (0.15, where 2.54 mm equals 0.1"), connector type (0.10) and mounting (0.05). A wrong row count costs 0.10. Multi-row parts cost 0.08 when you did not ask for rows. Attributes a part does not list never count against it.
 3. The top 40 candidates (shared across distributors, at least 5 per distributor) go to Laya, one state per part. Laya answers one yes/no question per part: does it satisfy every requirement of the request. KINA rank-normalises the raw probabilities within the candidate set (best 1.0, worst 0.0), because they cluster near 1.0.
 4. Final score is `0.8 * deterministic + 0.2 * Laya`. Parts that were not sent to Laya come after the Laya-ranked ones.
 5. On Laya timeout (18 s per query), unavailability, or `KINA_LAYA_ENABLED=false`, the deterministic order is used and the response says `"ranking": "fallback"` with a `ranking_note`. In a batch, queries reached after the 60 s ranking budget also fall back.
@@ -313,6 +354,7 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 
 | Symptom | Cause and fix |
 |---|---|
+| Connector results look generic or wrong | Look at `parsed.connector`: it shows what KINA understood (type, gender, positions, pitch, orientation). If a field is missing, state it more plainly, for example "female header 1x6 right angle 2.54mm". Then look at `distributor_query` per distributor to see the phrase KINA really sent. Results cached before an upgrade can look old; ask again with `bypass_cache`. Mouser ignores rows. |
 | LCSC `error: "unavailable"`, detail "JLCPCB parts database not downloaded yet" | The first download is still running (about 1 GB). Watch `docker compose logs kina`. If it failed, `jlcpcb.last_error` in `list_distributors` says why; check disk space and internet access. |
 | `ranking: "fallback"` with a Laya note | Laya is not healthy yet (the first start loads the checkpoint), is overloaded or timed out. Check `docker compose ps` and `docker compose logs laya-serve`. Search still works. |
 | TME or Mouser `error: "not_configured"` | The credentials are missing in `.env`. Restart with `docker compose up -d`. |

@@ -38,10 +38,26 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | Field | Type | Meaning |
 |---|---|---|
 | `query` | string | The query as sent. |
-| `parsed` | object | What KINA understood: `family`, value fields such as `capacitance` or `resistance` (display form, for example `"10uF"`), `dielectric`, `package`, `mounting`, `keywords`. Absent values are omitted. |
+| `parsed` | object | What KINA understood: `family`, value fields such as `capacitance` or `resistance` (display form, for example `"10uF"`), `dielectric`, `package`, `mounting`, `keywords`, and for connectors `connector` (see [`parsed.connector`](#parsedconnector)). Absent values are omitted. |
 | `ranking` | string | `laya` or `fallback`. |
 | `ranking_note` | string or null | Why the ranking fell back, for example `"laya timeout after 18s"`. Always present, null when Laya ranked. |
 | `distributors` | array | One `DistributorResult` per searched distributor. |
+
+### `parsed.connector`
+
+Present when KINA reads the query as a connector request (`parsed.family` is then `"connector"`). Absent attributes are omitted.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `type` | string | For example `pin header`, `female header`, `box header`, `terminal block`, `usb-c`, `fpc`, `rj45`, `d-sub`, `barrel jack`, or a generic `connector`. |
+| `series` | string | A series such as JST `XH`, `PH`, `GH`, `SH`, `ZH`. |
+| `gender` | string | `male` or `female`. |
+| `positions` | integer | Number of positions. Read from `6-position`, `6 pos`, `6 pin`, `6P`, `6 way`, `PIN: 6` or from `rows x pins`. IC packages such as `SOIC-8` are not read as positions. |
+| `rows` | integer | From `1x6`, `2x3`, "single row", "dual row". |
+| `pitch` | string | Display form, for example `"2.54mm"`. `0.1"` becomes `2.54mm`. `dupont` implies `2.54mm`. |
+| `orientation` | string | `right angle` or `vertical`. |
+
+Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whether a pitch was implied rather than written, but it does not put that in the response.
 
 `DistributorResult`:
 
@@ -52,7 +68,8 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | `fetched` | integer | In-stock parts KINA holds for the query and ranked. |
 | `returned` | integer | `min(max_results, fetched)`; the length of `parts`. |
 | `cache` | string | `hit`, `partial`, `miss`, `bypassed` or `not_applicable` (LCSC, and distributors that were never looked up). |
-| `fallback_query` | string or null | Set when the full query found nothing at this distributor and KINA retried with a shorter parametric core phrase, for example `"MOSFET 30V SOT-23"` for `"SOT-23 N-channel MOSFET 30V"`. Only Mouser and TME; null otherwise (always present in the JSON). The parts in the entry come from that phrase. |
+| `fallback_query` | string or null | Set when the full query found nothing at this distributor and KINA retried with a shorter parametric core phrase, for example `"MOSFET 30V SOT-23"` for `"SOT-23 N-channel MOSFET 30V"`. Only Mouser and TME; null otherwise (always present in the JSON). The parts in the entry come from that phrase. The fallback rules: connector requests fall back to the type words plus the positions (TME) or plus pitch and orientation (Mouser); other requests fall back to the parametric core; a query with only keywords falls back to its 3 to 5 most informative tokens. No fallback is tried when the shorter phrase equals what was already sent. |
+| `distributor_query` | string or null | The phrase KINA sent when it rewrote your request into this distributor's vocabulary (connector requests). Null when your text went through as written. Always present. If it found nothing, `fallback_query` is what was sent after it. |
 | `error` | string or null | `rate_limited`, `unavailable`, `not_configured`, `timeout` or `bad_response`. A failing distributor has an empty `parts` list, except that parts already in hand are kept. `rate_limited` means the rate limit outlasted the request deadline (see [Rate limits and timing](#rate-limits-and-timing)). |
 | `rate_limit_waited_ms` | integer | Milliseconds this distributor's fetch spent waiting on rate limits, including waiting for a shared cool-down. Always present, 0 when KINA did not wait. |
 | `parts` | array | `PartResponse` entries, best first. |
@@ -77,8 +94,26 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | `datasheet_url` | string or null | |
 | `photo_url` | string or null | Null when the distributor gives none (LCSC). |
 | `product_url` | string or null | |
-| `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. |
+| `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. Connector parts also carry `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`, `Orientation` and `Mounting` when the distributor data allows it. |
 | `extra` | object | Distributor-specific details (lifecycle, RoHS, library type, lead time, and so on). |
+
+### Connector queries
+
+Write a connector request in plain words, for example `90 degree dupont style female pin header, THT, 6 position`. KINA extracts type, gender, positions, rows, pitch, orientation and mounting (`parsed.connector`), rewrites the request for each distributor (`distributor_query`) and ranks with connector features. For that request the phrases were:
+
+| Distributor | `distributor_query` |
+|---|---|
+| LCSC | `"Female Header" 6P "Right Angle" 2.54mm` |
+| TME | `pin strips female 6 angled` (TME phrases are cut at 40 characters) |
+| MOUSER | `female header 6 pos right angle` |
+
+LCSC searches the local JLCPCB database. A known connector type becomes a category filter, `THT` matches `Through Hole` or `Plugin`, and `SMD` or `SMT` match `Surface Mount`. If the first search finds nothing, KINA relaxes it step by step: all terms; terms that occur nowhere in the database removed; one term dropped at a time (least informative first); parametric terms only; an OR of all terms.
+
+Ranking for connectors uses positions (0.30), gender (0.20), orientation (0.15), pitch (0.15, 2.54 mm equals 0.1"), type (0.10) and mounting (0.05). A wrong row count costs 0.10 and multi-row parts cost 0.08 when rows were not requested. Unknown attributes never lower a score.
+
+Known limit: rows are not sent to Mouser and Mouser keyword search is loose, so a `2x3` request returns single-row parts there. TME and LCSC handle rows.
+
+The cache key is your own query text, not the distributor phrase.
 
 ### Rate limits and timing
 
