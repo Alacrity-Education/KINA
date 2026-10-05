@@ -127,6 +127,19 @@ class CacheRepositoriesTest {
     }
 
     @Test
+    void partsWithoutShipsNowStockAreNeverCachedOrServed() {
+        parts.upsertAll(List.of(part(Distributor.TME, "in-stock", 3, NOW), part(Distributor.TME, "zero", 0, NOW)));
+        assertThat(count("cached_parts")).isEqualTo(1);
+
+        // a row written by an older version (or by hand) is not served
+        insertRaw("TME", "legacy-zero", "{\"distributor\":\"TME\",\"distributorPartNumber\":\"legacy-zero\","
+                + "\"stock\":0,\"fetchedAt\":\"" + NOW + "\"}");
+        assertThat(parts.findFresh(Distributor.TME, List.of("in-stock", "zero", "legacy-zero"), NOW.minusSeconds(60)))
+                .containsOnlyKeys("in-stock");
+        assertThat(parts.find(Distributor.TME, "legacy-zero", NOW.minusSeconds(60))).isEmpty();
+    }
+
+    @Test
     void stats() {
         parts.upsertAll(List.of(
                 part(Distributor.TME, "a", 1, NOW),

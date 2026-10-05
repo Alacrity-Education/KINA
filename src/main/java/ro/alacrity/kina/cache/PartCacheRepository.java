@@ -60,7 +60,8 @@ public class PartCacheRepository {
     }
 
     /**
-     * Inserts or replaces every part using JDBC batches. {@code fetched_at} is the part's own
+     * Inserts or replaces every part using JDBC batches; parts with {@code stock <= 0} are skipped (and rows holding
+     * one are never returned by the finders), so the cache can never serve a part without ships-now stock. {@code fetched_at} is the part's own
      * {@link Part#fetchedAt()} (the clock's now when that is null), so re-upserting a part that was loaded from
      * the cache does not make it look fresher than it is.
      */
@@ -73,6 +74,11 @@ public class PartCacheRepository {
         for (Part part : parts) {
             Objects.requireNonNull(part.distributor(), "part.distributor");
             Objects.requireNonNull(part.distributorPartNumber(), "part.distributorPartNumber");
+            if (part.stock() <= 0) {
+                // stock rule (DESIGN.md 2): a part without ships-now stock is never cached
+                log.warn("Not caching {}:{} without ships-now stock", part.distributor(), part.distributorPartNumber());
+                continue;
+            }
             Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
             rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
                     jsonMapper.writeValueAsString(part), utc(fetchedAt)});
@@ -150,7 +156,12 @@ public class PartCacheRepository {
     private Optional<Part> readPart(Distributor distributor, ResultSet rs) throws SQLException {
         String partNumber = rs.getString("part_number");
         try {
-            return Optional.of(jsonMapper.readValue(rs.getString("payload"), Part.class));
+            Part part = jsonMapper.readValue(rs.getString("payload"), Part.class);
+            if (part.stock() <= 0) {
+                log.warn("Skipping cached_parts row {}:{} without ships-now stock", distributor, partNumber);
+                return Optional.empty();
+            }
+            return Optional.of(part);
         } catch (RuntimeException e) { // JacksonException, or a Part invariant violated by the payload
             log.warn("Skipping unreadable cached_parts payload for {}:{}: {}", distributor, partNumber,
                     e.getMessage());

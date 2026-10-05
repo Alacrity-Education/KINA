@@ -438,6 +438,20 @@ class OAuthFlowTest {
         assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
     }
 
+    @Test
+    void devModeRejectsAnEmptyBearerTokenInsteadOfFallingBackToTheAdmin() throws Exception {
+        // "Authorization: Bearer " reaches the application as "Bearer" (the container strips trailing whitespace)
+        for (String header : List.of("Bearer", "bearer  ", "Bearer ")) {
+            MockHttpServletResponse response = mvc.perform(get("/api/v1/test-echo")
+                    .header(HttpHeaders.AUTHORIZATION, header)).andReturn().getResponse();
+            assertThat(response.getStatus()).as(header).isEqualTo(401);
+            assertThat(response.getHeader(HttpHeaders.WWW_AUTHENTICATE)).as(header).contains("error=\"invalid_token\"");
+        }
+        // a different scheme is still "no bearer credentials" (development fallback)
+        assertThat(mvc.perform(get("/api/v1/test-echo").header(HttpHeaders.AUTHORIZATION, "Bearerx"))
+                .andReturn().getResponse().getStatus()).isEqualTo(200);
+    }
+
     // ---- helpers -------------------------------------------------------------------------------------------------
 
     String registerPublicClient(String name) throws Exception {

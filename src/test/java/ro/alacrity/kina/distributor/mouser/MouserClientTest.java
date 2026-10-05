@@ -104,7 +104,10 @@ class MouserClientTest {
         small.search("x", 0, 40);
 
         server.verify();
-        assertThat(small.maxPageSize()).isEqualTo(50);
+        // the orchestrator pages by maxPageSize(): it must equal the records one call returns
+        assertThat(small.maxPageSize()).isEqualTo(20);
+        assertThat(client(50).maxPageSize()).isEqualTo(50);
+        assertThat(client(0).maxPageSize()).isEqualTo(50);
     }
 
     @Test

@@ -70,6 +70,15 @@ class ProdModeSecurityTest {
     }
 
     @Test
+    void emptyBearerTokenIsAnInvalidToken() throws Exception {
+        MockHttpServletResponse response = mvc.perform(get("/api/v1/test-echo")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer")).andReturn().getResponse();
+        assertThat(response.getStatus()).isEqualTo(401);
+        assertThat(response.getHeader(HttpHeaders.WWW_AUTHENTICATE))
+                .isEqualTo(EXPECTED_CHALLENGE + ", error=\"invalid_token\"");
+    }
+
+    @Test
     void basicAuthIsNotAcceptedOnApi() throws Exception {
         MockHttpServletResponse response = mvc.perform(get("/api/v1/test-echo")
                 .header(HttpHeaders.AUTHORIZATION, "Basic dXNlcjpwYXNz")).andReturn().getResponse();

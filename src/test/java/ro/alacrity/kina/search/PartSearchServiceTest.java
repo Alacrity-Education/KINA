@@ -684,6 +684,26 @@ class PartSearchServiceTest {
     }
 
     @Test
+    void batchWithLayaDisabledKeepsTheLayaDisabledNoteWhenTheBudgetIsUsedUp() {
+        FakeClient lcsc = new FakeClient(Distributor.LCSC).records(5, i -> part(Distributor.LCSC, "C" + i));
+        KinaProperties props = RankingFixtures.properties("kina.ranking.batch-timeout", "0s",
+                "kina.ranking.laya.enabled", "false");
+        ParametricExtractor extractor = new ParametricExtractor();
+        RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
+                mock(PartRanker.class), () -> true, new RankingScoreCache(Duration.ofHours(1)));
+        service = new PartSearchService(props, new DistributorRegistry(List.of(lcsc)), new QueryParser(), extractor,
+                ranking, mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
+
+        BatchSearchResponse response = service.searchBatch(BatchSearchRequest.of(List.of(
+                SearchRequest.of("10uF X7R 0805"), SearchRequest.of("100nF 0603")), null, null));
+
+        assertThat(response.results()).allSatisfy(r -> {
+            assertThat(r.ranking()).isEqualTo(RankingMode.FALLBACK);
+            assertThat(r.rankingNote()).isEqualTo("laya disabled");
+        });
+    }
+
+    @Test
     void batchAppliesSharedDistributorsAndRejectsEmptyOrOversizedBatches() {
         FakeClient lcsc = new FakeClient(Distributor.LCSC).records(5, i -> part(Distributor.LCSC, "C" + i));
         FakeClient mouser = new FakeClient(Distributor.MOUSER).records(5, i -> part(Distributor.MOUSER, "M" + i));

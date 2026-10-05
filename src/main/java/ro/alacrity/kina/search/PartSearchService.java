@@ -160,7 +160,8 @@ public class PartSearchService {
             if (remaining.compareTo(MIN_BATCH_RANKING_BUDGET) < 0) {
                 // zero budget: Laya is not called; scores already in the score cache may still be used
                 ranked = ranking.rank(p.parsed(), parts, Duration.ZERO);
-                note = ranked.mode() == RankingMode.FALLBACK
+                // with Laya disabled the fallback has nothing to do with the budget: keep "laya disabled"
+                note = ranked.mode() == RankingMode.FALLBACK && properties.ranking().laya().enabled()
                         ? "batch ranking budget of " + format(batchBudget) + " exhausted"
                         : ranked.note();
             } else {

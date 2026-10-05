@@ -64,9 +64,13 @@ public class MouserClient implements DistributorClient {
         return api != null && properties.isConfigured();
     }
 
+    /**
+     * The records one call really returns ({@code min(50, max-results-per-search)}): the orchestrator advances the raw
+     * offset by this amount, so reporting more than {@link #search} fetches would skip records.
+     */
     @Override
     public int maxPageSize() {
-        return MAX_PAGE_SIZE;
+        return pageLimit();
     }
 
     @Override

@@ -44,13 +44,25 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
         this.entryPoint = entryPoint;
     }
 
-    /** The bearer token of the request, or empty when no {@code Bearer} authorization header is present. */
+    /**
+     * The bearer token of the request, or empty when no {@code Bearer} authorization header is present. A header of
+     * just {@code Bearer} (the servlet container strips the trailing space of {@code "Bearer "}) is a presented, empty
+     * token: it is rejected as invalid instead of being treated as "no credentials" (which would fall back to the
+     * development admin).
+     */
     static Optional<String> bearerToken(HttpServletRequest request) {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header == null || !header.regionMatches(true, 0, BEARER, 0, BEARER.length())) {
+        if (header == null) {
             return Optional.empty();
         }
-        return Optional.of(header.substring(BEARER.length()).strip());
+        String value = header.strip();
+        if (value.equalsIgnoreCase(BEARER.strip())) {
+            return Optional.of("");
+        }
+        if (!value.regionMatches(true, 0, BEARER, 0, BEARER.length())) {
+            return Optional.empty();
+        }
+        return Optional.of(value.substring(BEARER.length()).strip());
     }
 
     @Override
