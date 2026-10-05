@@ -11,6 +11,7 @@ without an API key, and Hugging Face models are public.
 | `fetch_stack.py` | fetches candidate lists from the running KINA stack and the distributors' own order from its Postgres cache (each new query = 1 Mouser call) |
 | `queries.py`, `rubric_lib.py` | the 32 evaluation queries, their written rubrics and labelling functions, hand `OVERRIDES` |
 | `build_dataset.py` | builds `docs/research/data/ranking-eval.jsonl` (`--review FILE` writes a human-readable label dump) |
+| `usb_queries.py`, `build_usb_dataset.py` | the 9 USB connector queries (`u01`-`u09`): rubrics, labelling functions, and the builder that appends them to `ranking-eval.jsonl` after `build_dataset.py` (stack responses in `raw/stack/usb/`, plain-SQL JLCPCB mining cached in `raw/lcsc-usb.jsonl`) |
 | `java/ro/alacrity/kina/search/ResearchRunner.java` | bridge to the production Java code: `lcsc` (KINA's LCSC retrieval) and `score` (production `DeterministicRanker` score + feature vector, checked to reproduce the score exactly) |
 | `common.py` | dataset loading, score-file format, the production Laya state, plain candidate text |
 | `evaluate.py` | the harness: NDCG@5/@10, P@3, MRR, Spearman, latency, per-category NDCG@10, paired bootstrap CI vs `det`; `--native-only` |
@@ -49,6 +50,7 @@ python3 scripts/research/fetch_stack.py
 
 # 2. dataset (uses docs/research/data/raw/lcsc.jsonl; --refresh-lcsc needs JLC_DB=/path/to/parts-fts5.db)
 python3 scripts/research/build_dataset.py --review /tmp/review.txt
+python3 scripts/research/build_usb_dataset.py --review /tmp/review-usb.txt   # appends u01-u09
 
 # 3. research image and caches
 docker build -t kina-laya-research:local scripts/research/docker

@@ -1,19 +1,26 @@
 # KINA ranking evaluation set (2026-10-05)
 
 `ranking-eval.jsonl` is a labelled set for evaluating how KINA ranks candidate parts against a free-text request.
-It was built by `scripts/research/build_dataset.py` from the rubrics in `scripts/research/queries.py`; rerun that
-script to rebuild it bit for bit from the raw sources in `raw/`.
+The 32 original queries were built by `scripts/research/build_dataset.py` from the rubrics in
+`scripts/research/queries.py`; the 9 USB connector queries (`u01`-`u09`, added 2026-10-05) are appended by
+`scripts/research/build_usb_dataset.py` from `scripts/research/usb_queries.py`. Rerun both, in that order, to rebuild
+the file bit for bit from the raw sources in `raw/`.
 
 ## Contents
 
-- 32 queries, 1259 candidates (20 to 40 per query).
+- 41 queries, 1619 candidates (20 to 40 per query): the 32 original queries (1259 candidates) and 9 USB connector
+  queries (360 candidates).
 - Categories: 10 passive (MLCC, chip resistors incl. RKM notation `4k7`, `10R`, `2R2`, power inductor, ferrite bead,
   electrolytic), 6 discrete (Schottky, TVS, N-MOSFET, 1N4148W, MMBT3904, Zener), 7 IC (AMS1117-3.3, LDO, STM32F103,
   LM358, rail-to-rail op amp, RS-485 transceiver, CH340C), 4 crystal/connector (16 MHz crystal, 32.768 kHz crystal,
   USB-C receptacle, 2.54 mm header) and 5 vague natural-language requests (low-noise audio op amp, decoupling cap for a
-  3.3 V MCU, MOSFET for a 12 V LED strip from a 3.3 V GPIO, I2C pull-up, USB 2.0 ESD protection).
-- Labels: 0 = 166, 1 = 342, 2 = 292, 3 = 459 candidates.
-- Distributors: LCSC 1004, Mouser 170, TME 85 candidates.
+  3.3 V MCU, MOSFET for a 12 V LED strip from a 3.3 V GPIO, I2C pull-up, USB 2.0 ESD protection), and 9 USB
+  connectors (category `usb_connector`: `USB-C receptacle 16 pin SMD USB 2.0`, `USB Type-C 24 pin USB 3.1 receptacle
+  horizontal`, `micro USB B receptacle 5 pin SMD`, `USB-C 6 pin power only`, `USB 3.0 Type-A receptacle THT`,
+  `USB-C plug 24 pin`, `waterproof USB-C receptacle IP67`, `mid-mount USB-C 16P`, `USB-C receptacle 17 pin`).
+- Labels: 0 = 246, 1 = 419, 2 = 381, 3 = 573 candidates (original: 166 / 342 / 292 / 459; USB: 80 / 77 / 89 / 114).
+- Distributors: LCSC 1141, TME 237, Mouser 241 candidates (original: LCSC 1004, Mouser 170, TME 85; USB: LCSC 137,
+  TME 152, Mouser 71).
 
 ## Candidate sources
 
@@ -22,6 +29,21 @@ script to rebuild it bit for bit from the raw sources in `raw/`.
 | `stack:LCSC/TME/MOUSER` | the running KINA stack (`/api/v1/parts/search?max_results=50`), 15 stack queries (13 new, 2 already cached); raw responses in `raw/stack/` | 413 |
 | `native:LCSC` | KINA's own LCSC retrieval for the query text (`JlcpcbSqliteSearch` via `ResearchRunner lcsc`, full 7.1 M part JLCPCB database) | 289 |
 | `mined:LCSC` | KINA's LCSC retrieval for perturbed queries (other dielectric, package, value, rating, polarity; neighbouring families; unrelated parts), top 6 each | 557 |
+
+USB queries (`build_usb_dataset.py`):
+
+| source | what | count |
+|---|---|---|
+| `stack:LCSC/TME/MOUSER` | the running KINA stack (main @ `560a32e`, `distributors=LCSC,TME,MOUSER`, `max_results=50`), 9 queries (9 Mouser calls) plus `USB-C receptacle 18 pin` for one extra part; raw responses with the distributors' own order in `raw/stack/usb/` | 319 |
+| `mined:LCSC` | plain FTS5 queries on the JLCPCB database restricted to `"Second Category" : "USB Connectors"` (other pin counts, types, genders, sealing and mid-mount words), top 6 by stock each, plus the out-of-stock `C9900163433` (`TYPE-C-24`, package `SMD-26P`); cached in `raw/lcsc-usb.jsonl`. This is SQL, independent of KINA's `JlcpcbQuery` | 40 |
+| `mined:MOUSER` | Mouser `10178589-00011LF` ("USB C Receptacle Right Angle 8 Positions ... IPX5") from the `USB-C receptacle 18 pin` response: the one shell-counted Type-C listing found (8 positions = a 6-contact power-only part + 2, inferred from the counting rule, not checked against the datasheet) | 1 |
+
+No real 17P/18P Type-C part exists in the JLCPCB database (it lists signal contacts: the only `17P`/`18P` hits are a
+part number `TYPE C-DB-117PWB` whose description says `16P` and dual-stacked USB 3.0 Type-A `18P` = 2 x 9), in TME
+(`Number of pins` values seen: 4, 5, 6, 9, 10, 16, 24) or in Mouser's results for `USB type C receptacle 17 pos` /
+`18 pos` (circular connectors and headers). `u09` (`USB-C receptacle 17 pin`) therefore tests the opposite direction:
+a 17-pin request must accept the 16-pin parts; the shell-counted listings in the set are `C9900163433` (26P, a 24-pin
+configuration) and Mouser's 8-position part.
 
 `raw/lcsc.jsonl` caches every LCSC retrieval so the set can be rebuilt without the 5 GB database. Stack queries whose
 text differs from the evaluation query (`p01`: candidates from the stack query `10uF X7R 0805`) are marked in
@@ -78,6 +100,18 @@ Labelling procedure: rubric functions in `queries.py` (deliberately independent 
 do not inherit their parsing errors) produced a label and a reason for every candidate; every label was then reviewed by
 hand and 10 corrections were added to `OVERRIDES` in `queries.py` (9 of them land in the sampled set; reasons start with
 `override:`), mostly garbled distributor descriptions and parts whose type is only evident from the MPN.
+
+USB rubric rules (stated in `usb_queries.py` and in every `u*` record's `rubric`, written before scoring): 0 = not a USB
+board connector (cable, adapter, hub, power supply, other connector family); 1 = wrong USB type or gender, or two or more
+violations; 2 = one violation or unverifiable requirements; 3 = all met. Pin counts compare signal configurations
+(Type-C 6/12/14/16/24, Micro-B 5/10, Type-A/B 4/9; N matches C when N - C is 1 or 2 and N is not itself a
+configuration of the type); a Type-C with 12-16 contacts is USB 2.0 and one with 2-6 contacts power only, whatever its
+label; a standard requirement is met by the same or a higher speed class; IP67 is met by a water digit >= 7. The USB
+labels were reviewed by hand; the review fixed the labelling code (part numbers no longer feed type/standard detection,
+non-connector products such as couplers, extension leads and dev kits are 0) rather than adding overrides
+(`USB_OVERRIDES` is empty). The labelling code is independent of the Java recognisers, but its rules share their author
+with the USB ranking weights, so the USB queries measure consistency with the stated rules more than independent
+relevance.
 
 ## Known limitations
 

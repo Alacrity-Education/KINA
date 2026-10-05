@@ -128,7 +128,9 @@ final class ConnectorRecognizer {
     private static final Pattern NOISE = Pattern.compile(
             "\\b(?:style|degrees?|deg|pins?|positions?|pos|ways?|rows?|pitch|angle|mount(?:ing)?|type|kind|"
                     + "contacts?|circuits?|with|for)\\b", F);
-    private static final Pattern BARE_NUMBER = Pattern.compile("(?<![\\w.,+-])(\\d{1,2})(?![\\w.,%+-])");
+    /** A bare 1-2 digit number not followed by a unit ("USB C socket 16", not Mouser "5 Vdc", "20 V", "5 A"). */
+    private static final Pattern BARE_NUMBER = Pattern.compile("(?<![\\w.,+-])(\\d{1,2})(?![\\w.,%+-])"
+            + "(?!\\s*(?:v|vdc|vac|a|ma|w|mm|ohm|gbps|mbps|hz|khz|mhz|k|°|℃|cycles|times|ports?|pcs)\\b)", F);
     /** "USB port", "charging port": a port is a connector only in USB wording. */
     private static final Pattern PORT = Pattern.compile("\\bports?\\b", F);
     /**

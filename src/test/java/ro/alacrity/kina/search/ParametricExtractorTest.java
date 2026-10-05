@@ -553,6 +553,12 @@ class ParametricExtractorTest {
                 "USB Connectors USB 2.0 micro B jack 5 pin Horizontal SMT", "USB Connectors", null, Map.of()))))
                 .containsEntry("UsbType", "Micro-B").containsEntry("PinConfiguration", "5")
                 .containsEntry("UsbStandard", "USB 2.0").containsEntry("Gender", "female");
+        // "5 Vdc" is no pin count
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("UJ2-MIBH-G-SMT-TR", "Same Sky",
+                "USB Connectors Micro B, USB 2.0, 480 Mbps, 5 Vdc, 1.8 A, Right Angle, Surface Mount Mounting Style, "
+                        + "Surface Mount Contact Pin Type, Black Insulator, USB Receptacle", "USB Connectors", null,
+                Map.of())))).doesNotContainKey("Positions").doesNotContainKey("PinConfiguration")
+                .containsEntry("UsbStandard", "USB 2.0");
         assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("USB-A3-S-RA", "Adam Tech",
                 "USB Connectors USB 3.0 TYPE A FML RIGHT ANGLE T/H", "USB Connectors", null, Map.of()))))
                 .containsEntry("UsbType", "Type-A").containsEntry("UsbStandard", "USB 3.2 Gen 1")
