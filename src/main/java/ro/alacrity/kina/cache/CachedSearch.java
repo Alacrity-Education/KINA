@@ -18,6 +18,8 @@ import java.util.Objects;
  * @param fetchedAt    when the list was (last) fetched
  * @param nextOffset   0-based distributor record offset where the next page starts (raw records, including parts
  *                     dropped for having no ships-now stock); null when unknown (rows written before V2)
+ * @param fallbackQuery the shorter core phrase that was sent to the distributor instead of the query (phrase
+ *                      fallback), null when the query itself was searched
  */
 public record CachedSearch(
         Distributor distributor,
@@ -26,13 +28,20 @@ public record CachedSearch(
         List<String> partNumbers,
         boolean exhausted,
         Instant fetchedAt,
-        Integer nextOffset
+        Integer nextOffset,
+        String fallbackQuery
 ) {
 
     /** A row without a known next offset. */
     public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
                         boolean exhausted, Instant fetchedAt) {
-        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, null);
+        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, null, null);
+    }
+
+    /** A row for a search of the query itself (no phrase fallback). */
+    public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
+                        boolean exhausted, Instant fetchedAt, Integer nextOffset) {
+        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, nextOffset, null);
     }
 
     public CachedSearch {

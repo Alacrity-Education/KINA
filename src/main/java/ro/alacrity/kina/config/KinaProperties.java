@@ -64,7 +64,14 @@ public record KinaProperties(
     public record OAuth(@DefaultValue("90d") Duration refreshTokenValidity) {
     }
 
-    public record Cache(@DefaultValue("5d") Duration ttl) {
+    /**
+     * {@code kina.cache.*}.
+     *
+     * @param ttl            freshness of cached Mouser/TME searches and parts
+     * @param emptyResultTtl freshness of a cached search that found no in-stock part (a transient distributor glitch
+     *                       or a new listing should not hide parts for the whole {@code ttl})
+     */
+    public record Cache(@DefaultValue("5d") Duration ttl, @DefaultValue("1h") Duration emptyResultTtl) {
     }
 
     public record Search(

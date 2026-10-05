@@ -145,6 +145,23 @@ final class Recognizers {
         }
     }
 
+    /**
+     * The first token of {@code text} (original case, e.g. "MOSFET", "MLCC", "LDO") that names {@code family}, or
+     * null when the family was inferred rather than written.
+     */
+    static String familyToken(String text, String family) {
+        if (text == null || family == null) {
+            return null;
+        }
+        for (String token : tokenize(prepare(text))) {
+            FamilyWord word = FAMILY_WORDS.get(token.toLowerCase(Locale.ROOT));
+            if (word != null && word.family().equals(family)) {
+                return token;
+            }
+        }
+        return null;
+    }
+
     /** Families that are a specialisation of a generic family ({@code schottky} is a {@code diode}). */
     private static final Map<String, String> FAMILY_PARENT = Map.of(
             "schottky", "diode", "zener", "diode", "tvs", "diode", "led", "diode", "mosfet", "transistor",

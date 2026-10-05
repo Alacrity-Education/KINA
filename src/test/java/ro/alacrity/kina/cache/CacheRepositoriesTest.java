@@ -201,7 +201,13 @@ class CacheRepositoriesTest {
         assertThat(read.exhausted()).isTrue();
         assertThat(read.totalResults()).isNull();
         assertThat(read.nextOffset()).isNull();
+        assertThat(read.fallbackQuery()).isNull();
         assertThat(count("cached_searches")).isEqualTo(1);
+
+        CachedSearch fallback = new CachedSearch(Distributor.MOUSER, "10uf x7r 0805", 7, List.of("a"), false,
+                NOW.plusSeconds(6), 50, "MLCC 10uF 0805");
+        searches.upsert(fallback);
+        assertThat(searches.find(Distributor.MOUSER, "10uf x7r 0805")).contains(fallback);
         String json = jdbc.sql("SELECT jsonb_typeof(part_numbers) FROM cached_searches").query(String.class).single();
         assertThat(json).isEqualTo("array");
     }

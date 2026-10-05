@@ -221,10 +221,15 @@ public class PartSearchService {
      * What one distributor contributed: in-stock parts (enriched, distributor order, deduplicated), the
      * distributor-reported total, the cache status and an error code (null on success).
      */
-    record Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error) {
+    record Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
+                   String fallbackQuery) {
 
         Fetched {
             parts = parts == null ? List.of() : List.copyOf(parts);
+        }
+
+        Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error) {
+            this(distributor, parts, totalResults, cache, error, null);
         }
 
         static Fetched failed(Distributor distributor, CacheStatus cache, String error) {
@@ -237,6 +242,7 @@ public class PartSearchService {
         volatile CacheStatus cache;
         volatile List<Part> parts = List.of();
         volatile Integer totalResults;
+        volatile String fallbackQuery;
 
         Progress(CacheStatus cache) {
             this.cache = cache;
@@ -272,7 +278,7 @@ public class PartSearchService {
                 log.info("{} did not answer '{}' within {}", distributor, prepared.parsed().normalizedKey(),
                         format(timeout));
                 results.put(distributor, new Fetched(distributor, p.parts, p.totalResults, p.cache,
-                        DistributorException.Kind.TIMEOUT.code()));
+                        DistributorException.Kind.TIMEOUT.code(), p.fallbackQuery));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 future.cancel(true);
@@ -281,7 +287,7 @@ public class PartSearchService {
             } catch (ExecutionException | CancellationException e) {
                 Throwable cause = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
                 results.put(distributor, new Fetched(distributor, p.parts, p.totalResults, p.cache,
-                        errorCode(distributor, cause)));
+                        errorCode(distributor, cause), p.fallbackQuery));
             }
         });
         return results;
@@ -321,42 +327,114 @@ public class PartSearchService {
         String queryKey = prepared.parsed().normalizedKey();
         Instant now = clock.instant();
         Instant freshSince = now.minus(properties.cache().ttl());
+        Instant emptyFreshSince = now.minus(properties.cache().emptyResultTtl());
 
         if (!prepared.request().bypassCache()) {
             Optional<CachedSearch> cached = readCachedSearch(distributor, queryKey)
-                    .filter(c -> !c.fetchedAt().isBefore(freshSince));
+                    .filter(c -> isFresh(c, freshSince, emptyFreshSince));
             if (cached.isPresent()) {
                 CachedSearch search = cached.get();
+                String fallbackQuery = search.fallbackQuery();
                 Optional<List<Part>> parts = readCachedParts(distributor, search.partNumbers(), freshSince);
                 if (parts.isPresent()) {
                     List<Part> cachedParts = parts.get().stream().map(extractor::enrich).toList();
                     if (isSufficient(search, prepared.maxResults(), window)) {
-                        return new Fetched(distributor, cachedParts, search.totalResults(), CacheStatus.HIT, null);
+                        return new Fetched(distributor, cachedParts, search.totalResults(), CacheStatus.HIT, null,
+                                fallbackQuery);
                     }
-                    // fresh but short and not exhausted: further querying is needed
+                    // fresh but short and not exhausted: further querying is needed (with the phrase the list
+                    // was built from, so the raw offsets stay valid)
                     progress.cache = CacheStatus.PARTIAL;
                     progress.parts = cachedParts;
                     progress.totalResults = search.totalResults();
+                    progress.fallbackQuery = fallbackQuery;
                     int offset = search.nextOffset() != null ? search.nextOffset() : cachedParts.size();
                     Collected collected;
                     try {
-                        collected = collect(client, query, offset, window, maxPages, cachedParts, progress, deadline);
+                        collected = collect(client, fallbackQuery != null ? fallbackQuery : query, offset, window,
+                                maxPages, cachedParts, progress, deadline);
                     } catch (DistributorException e) {
                         // serve what the cache holds, flagged with the error
                         log.info("{} could not extend cached search '{}': {}", distributor, queryKey, e.getMessage());
                         return new Fetched(distributor, cachedParts, search.totalResults(), CacheStatus.PARTIAL,
-                                e.errorCode());
+                                e.errorCode(), fallbackQuery);
                     }
-                    store(distributor, queryKey, collected, search.fetchedAt());
-                    return collected.toFetched(distributor, CacheStatus.PARTIAL);
+                    store(distributor, queryKey, collected, search.fetchedAt(), fallbackQuery);
+                    return collected.toFetched(distributor, CacheStatus.PARTIAL, fallbackQuery);
                 }
                 // some cached parts are missing or stale: refetch from the start
             }
         }
         CacheStatus status = prepared.request().bypassCache() ? CacheStatus.BYPASSED : CacheStatus.MISS;
         Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline);
-        store(distributor, queryKey, collected, now);
-        return collected.toFetched(distributor, status);
+        String fallbackQuery = null;
+        if (collected.all().isEmpty() && collected.error() == null && System.nanoTime() < deadline) {
+            String core = corePhrase(prepared.parsed());
+            if (core != null) {
+                log.info("{} found nothing for '{}', retrying with the core phrase '{}'", distributor, queryKey, core);
+                progress.fallbackQuery = core;
+                try {
+                    collected = collect(client, core, 0, window, maxPages, List.of(), progress, deadline);
+                } catch (DistributorException e) {
+                    // the full query did answer (with nothing): report the fallback failure, cache nothing
+                    log.info("{} fallback search '{}' failed: {}", distributor, core, e.getMessage());
+                    return new Fetched(distributor, List.of(), collected.totalResults(), status, e.errorCode(), core);
+                }
+                fallbackQuery = core;
+            }
+        }
+        store(distributor, queryKey, collected, now, fallbackQuery);
+        return collected.toFetched(distributor, status, fallbackQuery);
+    }
+
+    /**
+     * Fresh for {@code kina.cache.ttl}, except a list without any in-stock part, which is fresh only for
+     * {@code kina.cache.empty-result-ttl} (whichever is shorter).
+     */
+    static boolean isFresh(CachedSearch search, Instant freshSince, Instant emptyFreshSince) {
+        Instant since = search.partNumbers().isEmpty() && emptyFreshSince.isAfter(freshSince)
+                ? emptyFreshSince : freshSince;
+        return !search.fetchedAt().isBefore(since);
+    }
+
+    /**
+     * The parametric core of a query for the distributor phrase fallback: the family word as written, the values
+     * (tolerance excluded), the dielectric and the package, e.g. "MOSFET 30V SOT-23" for
+     * "SOT-23 N-channel MOSFET 30V". Null when the query has no parametric constraint, when the core would be a
+     * single term, or when it is not shorter than the query (nothing to drop).
+     */
+    static String corePhrase(ParsedQuery parsed) {
+        List<String> terms = new ArrayList<>();
+        String familyWord = Recognizers.familyToken(parsed.originalText(), parsed.family());
+        if (familyWord != null) {
+            terms.add(familyWord);
+        }
+        int parametric = 0;
+        for (ParsedQuery.Constraint constraint : parsed.constraints().values()) {
+            if (ParsedQuery.TOLERANCE.equals(constraint.kind()) || constraint.display() == null
+                    || constraint.display().isBlank()) {
+                continue;
+            }
+            terms.add(constraint.display());
+            parametric++;
+        }
+        if (parsed.dielectric() != null) {
+            terms.add(parsed.dielectric());
+            parametric++;
+        }
+        if (parsed.packageName() != null) {
+            terms.add(parsed.packageName());
+            parametric++;
+        }
+        if (parametric == 0 || terms.size() < 2) {
+            return null;
+        }
+        String core = String.join(" ", terms);
+        String original = parsed.originalText() == null ? "" : parsed.originalText().strip();
+        if (core.length() >= original.length() || QueryParser.normalizeKey(core).equals(parsed.normalizedKey())) {
+            return null;
+        }
+        return core;
     }
 
     /**
@@ -411,7 +489,11 @@ public class PartSearchService {
                      String error) {
 
         Fetched toFetched(Distributor distributor, CacheStatus cache) {
-            return new Fetched(distributor, all, totalResults, cache, error);
+            return toFetched(distributor, cache, null);
+        }
+
+        Fetched toFetched(Distributor distributor, CacheStatus cache, String fallbackQuery) {
+            return new Fetched(distributor, all, totalResults, cache, error, fallbackQuery);
         }
     }
 
@@ -478,12 +560,13 @@ public class PartSearchService {
     }
 
     /** Writes the new parts and the search list. Cache failures are logged, never propagated. */
-    private void store(Distributor distributor, String queryKey, Collected collected, Instant listFetchedAt) {
+    private void store(Distributor distributor, String queryKey, Collected collected, Instant listFetchedAt,
+                       String fallbackQuery) {
         try {
             partCache.upsertAll(collected.fetched());
             searchCache.upsert(new CachedSearch(distributor, queryKey, collected.totalResults(),
                     collected.all().stream().map(Part::distributorPartNumber).toList(), collected.exhausted(),
-                    listFetchedAt, collected.nextOffset()));
+                    listFetchedAt, collected.nextOffset(), fallbackQuery));
         } catch (RuntimeException e) {
             log.warn("Caching {} results for '{}' failed: {}", distributor, queryKey, e.toString());
         }
@@ -547,7 +630,7 @@ public class PartSearchService {
                 parts.add(PartResponse.from(rp.part(), i + 1, roundScore(rp.score())));
             }
             results.add(new DistributorResult(distributor, f.totalResults(), rankedParts.size(), returned, f.cache(),
-                    f.error(), parts));
+                    f.error(), parts, f.fallbackQuery()));
         }
         return new SearchResponse(prepared.parsed().originalText(), ParsedQueryResponse.from(prepared.parsed()),
                 ranked.mode(), note, results);

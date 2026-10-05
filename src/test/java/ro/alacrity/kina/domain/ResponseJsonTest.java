@@ -41,8 +41,16 @@ class ResponseJsonTest {
                 "\"package\":\"0805\"", "\"min_order_qty\":1", "\"order_multiple\":1", "\"datasheet_url\":",
                 "\"photo_url\":", "\"product_url\":", "\"distributor\":\"MOUSER\"",
                 "\"parsed\":{\"family\":\"capacitor\"", "\"capacitance\":\"10uF\"", "\"dielectric\":\"X7R\"",
-                "\"keywords\":[]", "{\"qty\":1,\"unit_price\":1.40,\"currency\":\"EUR\"}");
+                "\"keywords\":[]", "{\"qty\":1,\"unit_price\":1.40,\"currency\":\"EUR\"}",
+                "\"fallback_query\":null");
         assertThat(json).doesNotContain("\"qty\":100", "mounting", "constraints", "packageName");
+    }
+
+    @Test
+    void distributorResultCarriesTheFallbackQuery() {
+        DistributorResult result = new DistributorResult(Distributor.TME, 12, 12, 5, CacheStatus.MISS, null, List.of(),
+                "MOSFET 30V SOT-23");
+        assertThat(mapper.writeValueAsString(result)).contains("\"fallback_query\":\"MOSFET 30V SOT-23\"");
     }
 
     @Test

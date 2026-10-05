@@ -75,6 +75,9 @@ class PartSearchServiceTest {
         long delayMillis;
         RuntimeException failure;
         Integer failOnCall;
+        /** Queries this distributor finds nothing for (every other query returns {@link #raw}). */
+        final Set<String> emptyFor = new java.util.HashSet<>();
+        final List<String> queries = new CopyOnWriteArrayList<>();
 
         FakeClient(Distributor distributor) {
             this.distributor = distributor;
@@ -105,6 +108,7 @@ class PartSearchServiceTest {
         @Override
         public DistributorSearchPage search(String query, int offset, int limit) {
             calls.add(new int[] {offset, limit});
+            queries.add(query);
             if (delayMillis > 0) {
                 try {
                     Thread.sleep(delayMillis);
@@ -115,6 +119,9 @@ class PartSearchServiceTest {
             }
             if (failure != null && (failOnCall == null || failOnCall == calls.size())) {
                 throw failure;
+            }
+            if (emptyFor.contains(query)) {
+                return new DistributorSearchPage(List.of(), 0, false);
             }
             int to = Math.min(raw.size(), offset + limit);
             List<Part> parts = offset >= raw.size() ? List.of()
@@ -330,6 +337,149 @@ class PartSearchServiceTest {
         assertThat(lcsc.calls.getFirst()).containsExactly(0, 40);
         assertThat(cachedParts).isEmpty();
         assertThat(cachedSearches).isEmpty();
+    }
+
+    @Test
+    void emptyCachedSearchExpiresAfterTheEmptyResultTtl() {
+        FakeClient tme = new FakeClient(Distributor.TME).records(5, i -> part(Distributor.TME, "T" + i));
+        service(List.of(tme));
+        String key = QueryParser.normalizeKey(QUERY);
+        // an empty list fetched 30 minutes ago is still fresh (default empty-result-ttl 1h)
+        cachedSearches.put(key(Distributor.TME), new CachedSearch(Distributor.TME, key, 0, List.of(), true,
+                NOW.minus(Duration.ofMinutes(30))));
+        DistributorResult fresh = result(service.search(request(10, Distributor.TME)), Distributor.TME);
+        assertThat(fresh.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(fresh.fetched()).isZero();
+        assertThat(tme.calls).isEmpty();
+
+        // two hours old: stale although far younger than the 5 day ttl
+        cachedSearches.put(key(Distributor.TME), new CachedSearch(Distributor.TME, key, 0, List.of(), true,
+                NOW.minus(Duration.ofHours(2))));
+        DistributorResult stale = result(service.search(request(10, Distributor.TME)), Distributor.TME);
+        assertThat(stale.cache()).isEqualTo(CacheStatus.MISS);
+        assertThat(stale.fetched()).isEqualTo(5);
+        assertThat(tme.calls).hasSize(1);
+    }
+
+    @Test
+    void nonEmptyCachedSearchKeepsTheFullTtlAndEmptyResultTtlIsConfigurable() {
+        FakeClient tme = new FakeClient(Distributor.TME).records(5, i -> part(Distributor.TME, "T" + i));
+        service(List.of(tme), "kina.cache.empty-result-ttl", "10m");
+        String key = QueryParser.normalizeKey(QUERY);
+        service.search(request(10, Distributor.TME));
+        // a non-empty list written 2 days ago is still a hit
+        CachedSearch stored = cachedSearches.get(key(Distributor.TME));
+        cachedSearches.put(key(Distributor.TME), new CachedSearch(Distributor.TME, key, stored.totalResults(),
+                stored.partNumbers(), true, NOW.minus(Duration.ofDays(2))));
+        assertThat(result(service.search(request(10, Distributor.TME)), Distributor.TME).cache())
+                .isEqualTo(CacheStatus.HIT);
+
+        cachedSearches.put(key(Distributor.TME), new CachedSearch(Distributor.TME, key, 0, List.of(), true,
+                NOW.minus(Duration.ofMinutes(11))));
+        assertThat(result(service.search(request(10, Distributor.TME)), Distributor.TME).cache())
+                .isEqualTo(CacheStatus.MISS);
+        assertThat(tme.calls).hasSize(2);
+    }
+
+    // ---- phrase fallback ------------------------------------------------------------------------------------------
+
+    static final String MOSFET_QUERY = "SOT-23 N-channel MOSFET 30V";
+
+    @Test
+    void corePhraseKeepsFamilyValuesDielectricAndPackage() {
+        QueryParser parser = new QueryParser();
+        assertThat(PartSearchService.corePhrase(parser.parse(MOSFET_QUERY))).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(PartSearchService.corePhrase(parser.parse("MLCC 10uF 25V X7R 0805 ceramic low ESR")))
+                .isEqualTo("MLCC 10uF 25V X7R 0805");
+        // nothing to drop, no parametric core, single term
+        assertThat(PartSearchService.corePhrase(parser.parse(QUERY))).isNull();
+        assertThat(PartSearchService.corePhrase(parser.parse("USB type C receptacle"))).isNull();
+        assertThat(PartSearchService.corePhrase(parser.parse("0805 something exotic"))).isNull();
+    }
+
+    @Test
+    void apiDistributorWithNoResultsIsRetriedOnceWithTheCorePhrase() {
+        FakeClient tme = new FakeClient(Distributor.TME).records(8, i -> part(Distributor.TME, "T" + i));
+        tme.emptyFor.add(MOSFET_QUERY);
+        FakeClient mouser = new FakeClient(Distributor.MOUSER).records(3, i -> part(Distributor.MOUSER, "M" + i));
+        service(List.of(tme, mouser));
+
+        SearchResponse response = service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(), false));
+
+        DistributorResult t = result(response, Distributor.TME);
+        assertThat(tme.queries).containsExactly(MOSFET_QUERY, "MOSFET 30V SOT-23");
+        assertThat(t.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(t.fetched()).isEqualTo(8);
+        assertThat(t.returned()).isEqualTo(5);
+        assertThat(t.cache()).isEqualTo(CacheStatus.MISS);
+        // a distributor that answered the full query is not retried
+        DistributorResult m = result(response, Distributor.MOUSER);
+        assertThat(mouser.queries).containsExactly(MOSFET_QUERY);
+        assertThat(m.fallbackQuery()).isNull();
+
+        // cached under the original query key, with the phrase that was searched
+        CachedSearch stored = cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(MOSFET_QUERY));
+        assertThat(stored.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(stored.partNumbers()).hasSize(8);
+
+        DistributorResult again = result(service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(Distributor.TME),
+                false)), Distributor.TME);
+        assertThat(again.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(again.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(tme.queries).hasSize(2);
+    }
+
+    @Test
+    void partialExtensionOfAFallbackListUsesTheFallbackPhrase() {
+        FakeClient mouser = new FakeClient(Distributor.MOUSER)
+                .records(150, i -> i < 50 && i % 5 != 0 ? null : part(Distributor.MOUSER, "M" + i));
+        mouser.emptyFor.add(MOSFET_QUERY);
+        service(List.of(mouser));
+
+        service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(Distributor.MOUSER), false));
+        DistributorResult partial = result(service.search(new SearchRequest(MOSFET_QUERY, 20,
+                Set.of(Distributor.MOUSER), false)), Distributor.MOUSER);
+
+        assertThat(partial.cache()).isEqualTo(CacheStatus.PARTIAL);
+        assertThat(partial.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(mouser.queries).containsExactly(MOSFET_QUERY, "MOSFET 30V SOT-23", "MOSFET 30V SOT-23");
+        assertThat(mouser.offsets()).containsExactly(0, 0, 50);
+    }
+
+    @Test
+    void noFallbackForLcscOrWhenTheFallbackAlsoFindsNothing() {
+        FakeClient lcsc = new FakeClient(Distributor.LCSC).records(3, i -> part(Distributor.LCSC, "C" + i));
+        lcsc.pageSize = 200;
+        lcsc.emptyFor.add(MOSFET_QUERY);
+        FakeClient tme = new FakeClient(Distributor.TME);   // finds nothing for anything
+        service(List.of(lcsc, tme));
+
+        SearchResponse response = service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(), false));
+
+        assertThat(lcsc.queries).containsExactly(MOSFET_QUERY);
+        assertThat(result(response, Distributor.LCSC).fallbackQuery()).isNull();
+        assertThat(result(response, Distributor.LCSC).fetched()).isZero();
+        assertThat(tme.queries).containsExactly(MOSFET_QUERY, "MOSFET 30V SOT-23");
+        DistributorResult t = result(response, Distributor.TME);
+        assertThat(t.fetched()).isZero();
+        assertThat(t.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        // the empty result is cached (and expires after kina.cache.empty-result-ttl)
+        assertThat(cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(MOSFET_QUERY)).partNumbers())
+                .isEmpty();
+    }
+
+    @Test
+    void failedFirstPageIsNotRetriedWithTheCorePhrase() {
+        FakeClient tme = new FakeClient(Distributor.TME).records(5, i -> part(Distributor.TME, "T" + i));
+        tme.failure = new DistributorException(Distributor.TME, DistributorException.Kind.RATE_LIMITED, "429");
+        service(List.of(tme));
+
+        DistributorResult t = result(service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(), false)),
+                Distributor.TME);
+
+        assertThat(t.error()).isEqualTo("rate_limited");
+        assertThat(t.fallbackQuery()).isNull();
+        assertThat(tme.queries).containsExactly(MOSFET_QUERY);
     }
 
     // ---- paging ---------------------------------------------------------------------------------------------------

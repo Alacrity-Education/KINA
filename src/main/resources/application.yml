@@ -22,7 +22,9 @@ kina:
   security.oidc: { issuer-uri: "${OIDC_ISSUER_URI:}", client-id: "${OIDC_CLIENT_ID:}", client-secret: "${OIDC_CLIENT_SECRET:}" }
   tokens.validity: 30d
   oauth.refresh-token-validity: 90d
-  cache.ttl: 5d
+  cache:
+    ttl: 5d
+    empty-result-ttl: 1h
   search:
     candidate-window: 40
     default-max-results: 10

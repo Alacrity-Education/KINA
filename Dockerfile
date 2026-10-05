@@ -17,11 +17,14 @@ RUN groupadd --system --gid 10001 kina \
     && chown -R kina:kina /data
 WORKDIR /app
 COPY --from=build /build/target/kina.jar /app/kina.jar
-ENV KINA_JLCPCB_DATA_DIR=/data/jlcpcb \
-    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
+ENV KINA_JLCPCB_DATA_DIR=/data/jlcpcb
 VOLUME ["/data"]
 USER kina
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl -fsS http://localhost:8080/actuator/health || exit 1
-ENTRYPOINT ["java","-jar","/app/kina.jar"]
+# --enable-native-access: sqlite-jdbc loads its native library (silences the JDK 21+ restricted-method warning).
+# MaxRAMPercentage sizes the heap from the container memory limit (compose sets mem_limit for kina).
+# Extra JVM flags can still be passed with JAVA_TOOL_OPTIONS.
+ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED", "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", \
+            "-jar", "/app/kina.jar"]

@@ -1,7 +1,18 @@
 # KINA: app + PostgreSQL + Laya ranking sidecar.
 #   cp .env.example .env   # fill in API keys
-#   docker compose up --build
-# GPU ranking: docker compose -f compose.yaml -f compose.cuda.yaml up --build
+#   docker compose up -d --build
+# GPU ranking: docker compose -f compose.yaml -f compose.cuda.yaml up -d --build
+#
+# Resource hints (measured on a 24-core / 30 GB host, see docs/DEVELOPMENT.md):
+#   kina        ~0.5-1 GB RAM (heap = 75% of mem_limit); the JLCPCB SQLite file (~5.3 GB) is read through the
+#               OS page cache, so free host RAM makes LCSC searches faster but is not required.
+#   postgres    < 100 MB RAM.
+#   laya-serve  ~1.5-2.5 GB RAM with the multilingual checkpoint; CPU-bound while ranking. LAYA_THREADS (default 4)
+#               should be <= the physical cores you can spare (never count SMT siblings); 8 threads roughly halve
+#               ranking time on a host with >= 8 free physical cores.
+#   disk        ~5.3 GB JLCPCB database (kina-data), ~1.4 GB Laya checkpoint (laya-models), ~2 GB Laya image.
+name: kina
+
 services:
   kina:
     build: .
@@ -15,14 +26,17 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kina
       SPRING_DATASOURCE_USERNAME: kina
       SPRING_DATASOURCE_PASSWORD: kina
+      # Always the sidecar on the compose network (overrides any LAYA_URL in .env).
       LAYA_URL: http://laya-serve:8000
       KINA_JLCPCB_DATA_DIR: /data/jlcpcb
     volumes:
       - kina-data:/data
+    # The JVM heap is 75% of this limit (Dockerfile ENTRYPOINT: -XX:MaxRAMPercentage=75).
+    mem_limit: ${KINA_MEM_LIMIT:-2g}
     depends_on:
       postgres:
         condition: service_healthy
-      # Laya is deliberately not a hard dependency: KINA falls back to deterministic ranking.
+      # Laya is deliberately not a hard dependency: KINA falls back to deterministic ranking while it is down.
     restart: unless-stopped
 
   postgres:
@@ -54,11 +68,15 @@ services:
       LAYA_MODELS: multilingual
       LAYA_DEFAULT_MODEL: multilingual
       LAYA_PRELOAD: "1"
+      # CPU threads for one forward pass. Default 4; raise to the number of physical cores you can dedicate
+      # (e.g. LAYA_THREADS=8 in .env). Oversubscribing SMT siblings is a ~10x slowdown.
       LAYA_THREADS: "${LAYA_THREADS:-4}"
       OMP_NUM_THREADS: "${LAYA_THREADS:-4}"
+      # Kept equal to KINA's own semaphore (kina.ranking.laya.max-concurrent-requests).
       LAYA_MAX_CONCURRENT: "${KINA_LAYA_MAX_CONCURRENT:-1}"
       LAYA_API_KEY: "${LAYA_API_KEY:-}"
     volumes:
+      # Hugging Face cache: the checkpoint (~1.4 GB) is downloaded on first start, then reused.
       - laya-models:/home/laya/.cache/huggingface
     # No host port: reachable only from the compose network as http://laya-serve:8000.
     healthcheck:
@@ -66,7 +84,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # The first start downloads the checkpoint; later starts load it in a few seconds.
       start_period: 10m
+      start_interval: 5s
     restart: unless-stopped
 
 volumes:
