@@ -165,9 +165,11 @@ public interface PartRanker {
    TTL `kina.ranking.score-cache-ttl` default 1h, max 50 000 entries) are not re-sent.
 3. Acquire the Laya semaphore (`kina.ranking.laya.max-concurrent-requests`, default 1) with a
    bounded wait; the wait counts inside the budget (`kina.ranking.timeout`, default 18s).
-4. Call `PartRanker.rank`. Final score = `w * laya + (1 - w) * deterministic`, `w = kina.ranking.laya.weight`
-   (default 0.6). Parts not sent to Laya are ordered after the Laya-ranked ones by deterministic score.
-   Ties: deterministic score, then stock desc, then lowest unit price asc.
+4. Call `PartRanker.rank`. Laya scores are **rank-normalised within the candidate set** (best = 1.0, worst = 0.0,
+   ties share a value) before blending, because the raw probabilities cluster near 1.0. Final score =
+   `(1 - w) * deterministic + w * layaNormalised`, `w = kina.ranking.laya.weight` (default **0.2**). Parts not sent to
+   Laya are ordered after the Laya-ranked ones by deterministic score. Ties: deterministic score, then stock desc, then
+   lowest unit price asc. The deterministic ranker is the primary signal by design: see "Measured zero-shot quality" in 3.5.
 5. On any failure, timeout, or `kina.ranking.laya.enabled=false`: order by deterministic score and
    report `RankingMode.FALLBACK` with a short `rankingNote` (e.g. `"laya timeout after 18s"`).
 
@@ -228,18 +230,27 @@ One state per candidate, serialised as compact JSON:
  "description": "...", "package": "0805", "attributes": {"Capacitance": "10uF", "Voltage": "16V", "Dielectric": "X7R", "Tolerance": "20%"}}}
 ```
 
-Questions (identical for every state):
+Question (identical for every state; a single question halves the CPU time compared with two):
 
 ```json
 {
-  "fits": {"type": "noul", "instructions": "The candidate electronic component satisfies every requirement stated in the request: component type, value, tolerance, voltage or current rating, dielectric or technology, package or footprint and mounting type."},
-  "relevance": {"type": "score", "instructions": "How well does the candidate match the request?",
-                "criteria": ["unrelated component", "right component type but a key parameter is wrong", "partial match, some stated requirements unverified", "matches all stated requirements", "matches all stated requirements and is a common, well-stocked choice"]}
+  "fits": {"type": "noul", "instructions": "The candidate electronic component satisfies every requirement stated in the request: component type, value, tolerance, voltage or current rating, dielectric or technology, package or footprint and mounting type."}
 }
 ```
 
-Score per candidate = `0.5 * answers.fits.noul + 0.5 * answers.relevance.score / 4`.
+Raw score per candidate = `answers.fits.noul`; `RankingService` rank-normalises it (section 3.3). Make the question text
+and the state field list configurable in code constants so a fine-tuned checkpoint can be swapped in.
 Never send part data anywhere except the configured local Laya URL.
+
+**Measured zero-shot quality (2026-10-05, laya 0.3.27, `multilingual` checkpoint, CPU, 8 threads):** 40 states x 2
+questions took 6.5 s (163 ms/state); 40 x 1 question about 3.5 s. On a 10-candidate labelled set for
+"10uF X7R 0805 MLCC ceramic capacitor" (3 true matches, 7 distractors) the `fits` probability was 0.996 for matches
+and 0.78 on average for distractors, but a 10k resistor scored 0.98 and the X5R variant 0.01; only 2 of the 3 matches
+ranked in the top 3. `score`, `choice` and per-attribute `noul` shapes, plain-text states and the `typed-decisions`
+checkpoint were all worse or equal. Conclusion: zero-shot Laya is a weak secondary signal, hence the low default
+weight, rank normalisation and the deterministic ranker as primary. The labelled set lives in the test fixtures
+(`LayaRankerEvaluationTest`, runs only when `KINA_LAYA_TEST_URL` is set) so a fine-tuned checkpoint can be re-evaluated.
+A warm Laya container for local experiments can be started with the compose file (`laya-serve` service).
 
 ## 4. MCP tools
 
@@ -564,7 +575,7 @@ kina:
       model: ${KINA_LAYA_MODEL:multilingual}
       max-candidates: 40
       max-concurrent-requests: ${KINA_LAYA_MAX_CONCURRENT:1}
-      weight: 0.6
+      weight: 0.2
   distributors:
     mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3 }
