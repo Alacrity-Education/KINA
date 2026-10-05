@@ -205,6 +205,8 @@ Changing the validity (`KINA_TOKENS_VALIDITY`, `KINA_OAUTH_REFRESH_TOKEN_VALIDIT
 - Run `KINA_MODE=prod` for anything reachable beyond your own machine. In `dev` mode there is no login: API, MCP, token creation and OAuth approval are open to anyone who reaches the port.
 - Keep KINA behind HTTPS. Tokens travel in headers; plain HTTP exposes them.
 - Bind KINA to loopback (`KINA_PORT=127.0.0.1:8080`) when the proxy runs on the same host, or firewall the port.
+- Set `KINA_PUBLIC_BASE_URL` in production. KINA trusts `X-Forwarded-*` headers from any client (`server.forward-headers-strategy=framework`); with the variable set, the advertised origin cannot be influenced by request headers. Also configure the proxy to overwrite, not append, the forwarded headers.
+- Client registration (`/oauth/register`) is anonymous, as the MCP specification requires. A malformed `/oauth/authorize` request for a registered client is answered with a redirect to that client's registered URI (RFC 6749 behaviour), without user interaction. Approving access always needs a signed-in user and the consent page.
 - Do not publish PostgreSQL or Laya ports. `compose.yaml` does not. If you add a port, set a real password: the compose file uses the database password `kina`, which you can change in the `kina` and `postgres` services (or in a `compose.override.yaml`) together with `SPRING_DATASOURCE_PASSWORD`.
 - Set `LAYA_API_KEY` to a random string. KINA sends it as a bearer token to laya-serve and laya-serve requires it. Laya has no host port, so this is defence in depth against other containers on the network.
 - Never put part data or credentials in logs. KINA logs neither tokens nor API keys; keep it that way when adding debug output.
