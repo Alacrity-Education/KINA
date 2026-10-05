@@ -55,7 +55,7 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 |---|---|
 | `config` | `KinaProperties` - the single `@ConfigurationProperties("kina")` record tree for every `kina.*` key (do not add a second binding for the same prefix; extend this record) |
 | `domain` | `Distributor`, `RankingMode`, `PriceBreak`, `Part`, `PartKey`, `ParsedQuery` (+ `Constraint`), `SearchRequest`, `BatchSearchRequest`, response DTOs `SearchResponse`, `BatchSearchResponse`, `DistributorResult`, `PartResponse` (trims prices to 3 brackets), `PriceResponse`, `ParsedQueryResponse` |
-| `distributor` | `DistributorClient`, `DistributorSearchPage`, `DistributorException` (+ `Kind.code()`), `DistributorRegistry` |
+| `distributor` | `DistributorClient`, `DistributorSearchPage`, `DistributorException` (+ `Kind.code()`, `rateLimitWaitedMillis()`), `DistributorRegistry`; rate limiting (DESIGN.md 3.6): `Deadline` (request deadline + rate-limit wait accounting), `RateLimitRetry` (retry policy around every Mouser/TME HTTP call), `DistributorCooldown` (shared per-distributor cool-down) |
 | `distributor.{mouser,tme,lcsc}` | `MouserClient`, `TmeClient` (+ `TmeTokenManager`), `LcscClient` over the JLCPCB SQLite file (`JlcpcbDatabaseManager` downloads/adopts it) |
 | `search` | `PartRanker`, `RankingException` (checked, with `Reason`), `QueryParser`, `ParametricExtractor`, `DeterministicRanker`, `LayaPartRanker`, `RankingService`, `PartSearchService` (cache, paging, phrase fallback), `PartLookupService`, `DistributorStatusService` |
 | `cache` | `CacheStatus`, `PartCacheRepository`, `SearchCacheRepository` (`CachedSearch`), `CacheMaintenance` |
@@ -71,6 +71,10 @@ Gotchas:
   the DTOs use explicit `@JsonProperty` names instead. Jackson 3 exceptions are unchecked (`JacksonException`).
 - `Part` is the cache payload (`cached_parts.payload`): default camelCase JSON, round-trip tested.
 - Response wire format is snake_case and pinned by `ResponseJsonTest`; `RankingMode` and `CacheStatus` serialise lower-case.
+- Rate-limit tests never sleep for real: `ro.alacrity.kina.distributor.FakeTime` (test sources) is the ticker, wall clock
+  and `RateLimitRetry.Sleeper` in one, and `FakeTime.retry(distributor, 0.5)` builds a jitter-free policy to inject via
+  the package-private `MouserApi`/`TmeClient` constructors. The client methods without a `Deadline` never wait on a rate
+  limit, so tests calling them see `RATE_LIMITED` at once.
 - MCP: annotations live in `org.springframework.ai.mcp.annotation`; tool beans are plain `@Component`s scanned
   automatically. Tool results are serialised to JSON text content by the MCP server's own Jackson 3 mapper.
 - Boot 4 starters: `spring-boot-starter-webmvc`, `-restclient`, `-flyway`, `-jdbc`, `-security-oauth2-client`;

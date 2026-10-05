@@ -93,12 +93,18 @@ public interface DistributorClient {
      *  offset is 0-based. totalResults is the distributor-reported total for the query. */
     DistributorSearchPage search(String query, int offset, int limit) throws DistributorException;
     Optional<Part> getPart(String distributorPartNumber) throws DistributorException;
+    /** Same, but rate-limited calls may wait and retry within the request deadline (section 3.6).
+     *  Defaults delegate to the methods above (LCSC has no rate limits); Mouser and TME override them,
+     *  and their deadline-less methods use Deadline.immediate() (rate limits fail fast). */
+    default DistributorSearchPage search(String query, int offset, int limit, Deadline deadline) { ... }
+    default Optional<Part> getPart(String distributorPartNumber, Deadline deadline) { ... }
 }
 
 public record DistributorSearchPage(List<Part> parts, int totalResults, boolean hasMore) {}
 
 public class DistributorException extends RuntimeException {
     public enum Kind { NOT_CONFIGURED, UNAVAILABLE, RATE_LIMITED, BAD_RESPONSE, TIMEOUT }
+    public long rateLimitWaitedMillis();   // time the failed call waited on rate limits (0 if none)
     ...
 }
 ```
@@ -128,7 +134,8 @@ capped by `kina.distributors.<name>.max-results-per-search` (Mouser default 50 =
 TME default 60, LCSC default 200).
 
 Algorithm (`PartSearchService.fetchDistributor`; every requested distributor runs on its own virtual thread,
-bounded by `kina.search.distributor-timeout`):
+bounded by `kina.search.distributor-timeout` of active work; time spent waiting on a rate limit is added to that
+budget, but never beyond the request deadline `kina.search.max-request-duration`, section 3.6):
 
 1. `bypassCache == false`: read `cached_searches(distributor, query_key)`. When it is fresh, load its parts from
    `cached_parts` (fresh rows only); if any part is missing or stale, go to step 2 with `offset = 0` (`MISS`).
@@ -142,7 +149,8 @@ bounded by `kina.search.distributor-timeout`):
 2. Call `DistributorClient.search(query, offset, limit)` page by page with `limit = maxPageSize()` (the first page is
    shortened so pages end on a page boundary) and `offset += limit`, until `window` in-stock parts are collected,
    the distributor reports no more results (`hasMore == false`), `max-pages-per-search` (Mouser 1, TME 3, LCSC 1) is
-   hit, or the next page would not finish before the distributor deadline. Paging is driven by **raw record offsets**,
+   hit, or the next page would not finish before the distributor deadline (estimated from the previous page's active
+   time, rate-limit waits excluded). Paging is driven by **raw record offsets**,
    not by the number of parts kept: distributors drop records without ships-now stock (live: TME reported 32 in-stock
    matches for "10uF X7R 0805" of which 26 were kept), so `part_numbers.size` is not a valid resume offset.
    LCSC is queried once with `limit = window`.
@@ -166,7 +174,9 @@ bounded by `kina.search.distributor-timeout`):
    `error` (`"rate_limited"`, `"unavailable"`, `"not_configured"`, `"timeout"`, `"bad_response"` = `DistributorException.Kind.code()`).
    The part list is empty, except that parts already in hand are kept and ranked: the cached list when extending a
    `PARTIAL` search fails, pages fetched before a later page failed, and pages fetched before the timeout. Unexpected
-   exceptions map to `unavailable`. A requested distributor without a configured client reports `not_configured` with
+   exceptions map to `unavailable`. A rate limit is not an immediate error: the call waits and retries (section 3.6);
+   `rate_limited` is reported only when the next retry would end after the request deadline. Every distributor entry
+   reports `rate_limit_waited_ms` (0 when it did not wait, also on a cache hit). A requested distributor without a configured client reports `not_configured` with
    cache status `not_applicable`; with no `distributors` given only configured ones are searched.
 
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
@@ -198,7 +208,10 @@ public interface PartRanker {
    Laya are ordered after the Laya-ranked ones by deterministic score. Ties: deterministic score, then stock desc, then
    lowest unit price asc. The deterministic ranker is the primary signal by design: see "Measured zero-shot quality" in 3.5.
 5. On any failure, timeout, or `kina.ranking.laya.enabled=false`: order by deterministic score and
-   report `RankingMode.FALLBACK` with a short `rankingNote` (e.g. `"laya timeout after 18s"`).
+   report `RankingMode.FALLBACK` with a short `rankingNote` (e.g. `"laya timeout after 18s"`). Exception: an HTTP 503
+   with `Retry-After` (laya-serve busy) is retried after that delay (at least 1 s) when the wait ends within the
+   remaining ranking budget; otherwise, and for 429 or a 503 without the header, the fallback applies at once
+   (`"laya busy: HTTP 503"`). The ranking budget is not extended by rate limiting.
 
 Batch search fetches the queries in parallel (at most 4 queries at a time, to respect distributor rate limits),
 then ranks each query independently through the same path (sequentially through the semaphore), each with
@@ -282,6 +295,68 @@ weight, rank normalisation and the deterministic ranker as primary. The labelled
 (`LayaRankerEvaluationTest`, runs only when `KINA_LAYA_TEST_URL` is set) so a fine-tuned checkpoint can be re-evaluated.
 A warm Laya container for local experiments can be started with the compose file (`laya-serve` service).
 
+### 3.6 Rate limiting
+
+Distributor APIs that answer with a rate limit are waited for and retried instead of failing the request at once,
+within a hard per-request cap.
+
+**Request deadline.** Every incoming request gets one deadline = start + `kina.search.max-request-duration`
+(default `2m`): one `search_parts` / `GET /api/v1/parts/search`, one whole `search_parts_batch` /
+`POST .../search/batch` (all queries share it), one `get_part` / `GET /api/v1/parts/{distributor}/{partNumber}`. It is a
+`ro.alacrity.kina.distributor.Deadline` (`System.nanoTime()`-based); each distributor fetch gets its own `fork()` (same
+deadline, separate wait accounting) and passes it to `DistributorClient.search/getPart(..., Deadline)`.
+
+**Budgets.** `kina.search.distributor-timeout` (12 s) still bounds a fetch's *active* work. The distributor deadline is
+`min(request deadline, fetch start + distributor-timeout + rate-limit time waited)`: the client records each wait on
+its `Deadline` *before* sleeping, and the orchestrator (`DistributorBudget.await`) keeps waiting while a recorded wait
+moves the deadline. Overlapping waits of parallel calls of one fetch (TME data/parameters/files) count once. The
+ranking budgets (`kina.ranking.timeout` 18 s, `batch-timeout` 60 s) are unchanged and come after the fetch phase, so a
+search that waited the full two minutes can still spend up to the ranking budget afterwards.
+
+**Retry policy (`RateLimitRetry`, one per distributor client, around every Mouser and TME HTTP call: Mouser keyword
+and part-number search; TME `/auth/token`, `/products/search`, `/products`, `/products/data`, `/products/parameters`,
+`/products/files`).**
+
+- Triggers: HTTP 429; HTTP 502, 503 and 504 **only with** a `Retry-After` header (without it they stay `unavailable`,
+  an outage is not waited for); Mouser's in-body error `Errors[].Code == "TooManyRequests"` on HTTP 200. TME documents no
+  throttling error code (`docs/vendor/tme-api-v2-openapi.json` has none), so TME triggers on the statuses only.
+- Wait: `Retry-After` as delta-seconds or HTTP-date (RFC 1123, converted with the wall clock), at least 1 s; without the
+  header exponential backoff 2, 4, 8, 16, 30, 30, ... s (cap 30 s), each multiplied by a uniform jitter factor in
+  [0.8, 1.2] and never below 1 s.
+- Retry while `now + wait <= request deadline`; otherwise fail with `RATE_LIMITED`, message e.g.
+  `rate limited by Mouser (/search/keyword returned HTTP 429); waited 84 s, next retry in 30 s would exceed the request deadline`;
+  `DistributorException.rateLimitWaitedMillis()` carries the waited time. The retry count is bounded only by the
+  deadline.
+- Sleeps happen on the calling virtual thread; an interrupt (the orchestrator cancelling a timed-out fetch) stops the
+  call with `RATE_LIMITED` and the interrupt flag restored.
+- Calls without a deadline (`search(q, o, l)`, `getPart(pn)`) use `Deadline.immediate()`: no waiting, `RATE_LIMITED` at
+  once (the pre-3.6 behaviour).
+
+**Shared cool-down (`DistributorCooldown`, in memory, per distributor, thread-safe).** Every rate-limit signal records
+`cooldownUntil = now + wait` (extended, never shortened). Before every attempt a call first waits until `cooldownUntil`
+when that fits its own deadline, otherwise it fails fast with `RATE_LIMITED` without sending a request. A successful
+call clears the cool-down (unless another call recorded a new rate limit meanwhile). This keeps concurrent requests
+(and the parallel TME enrichment calls) from hammering a throttled API. One WARN is logged per cool-down episode
+(`Mouser rate limited (/search/keyword returned HTTP 429, Retry-After 30 s); cooling down for 30 s`); retries within
+it, and new rate limits less than 60 s after it ended, log at DEBUG. API keys and tokens never appear in these
+messages (Mouser messages are masked, TME messages contain only paths).
+
+**TME token.** The token request is retried like any other call; a thread waiting for the token lock while another
+thread's token request sleeps on a rate limit waits at most until its own deadline (at least 15 s), then fails with
+`RATE_LIMITED`.
+
+**Reporting.** `DistributorResult.rate_limit_waited_ms` (snake_case, always present, 0 when none) is the time that
+distributor's fetch spent waiting on rate limits (including the cool-down wait). When the budget runs out the entry
+reports `error: "rate_limited"` and keeps the parts fetched before (earlier pages; the cached list of a `PARTIAL`
+extension). A fetch whose active work exceeds its budget still reports `timeout`.
+
+**Server-side timeouts.** Requests can now take up to two minutes plus ranking. The stateless MCP transport
+(`WebMvcStatelessServerTransport`) blocks on the tool call without a timeout; `spring.ai.mcp.server.request-timeout` is
+set to `3m` anyway (it is not applied in `STATELESS` mode by spring-ai 2.0.1, but would be by a session-based
+protocol). The REST controllers are synchronous (no `spring.mvc.async.request-timeout` involved) and Tomcat's
+`connection-timeout` only limits reading the request, not processing it. Clients and reverse proxies in front of KINA
+need a read timeout above two minutes (plus the ranking budget) to see such answers.
+
 ## 4. MCP tools
 
 Server name `kina`, version from the build. Tools (JSON Schema generated from the method
@@ -312,6 +387,7 @@ parameters; descriptions are read by the LLM, keep them precise):
       "cache": "hit",
       "error": null,
       "fallback_query": null,
+      "rate_limit_waited_ms": 0,
       "parts": [
         {"rank": 1, "score": 0.93, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
          "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106", "description": "...", "category": "...",
@@ -328,7 +404,9 @@ parameters; descriptions are read by the LLM, keep them precise):
 `total_results` is what the distributor reported for the query (in-stock where the API can filter),
 `fetched` is how many in-stock parts KINA holds for the query, `returned` is `min(max_results, fetched)`.
 `fallback_query` is the shorter core phrase actually sent to the distributor when the full query found nothing
-(section 3.2), otherwise null.
+(section 3.2), otherwise null. `rate_limit_waited_ms` is how long the distributor's fetch waited on rate limits
+(section 3.6), 0 normally. The `search_parts` tool description tells the LLM that a rate-limited distributor can make
+the call take up to two minutes.
 `max_results` is clamped to `1..kina.search.max-max-results` (MCP; the REST API rejects out-of-range values with 400).
 Tool parameter names are the Java parameter names (`-parameters`), so the tool methods use snake_case parameters.
 
@@ -526,7 +604,9 @@ CREATE TABLE jlcpcb_database (
   when followed by 1-3 digits at the end. Currency from `Currency`.
 - Attributes: `ProductAttributes` by name (repeated names joined with `", "`). Extra: `lifecycle_status`, `rohs`,
   `lead_time`, `factory_stock`, `category`, `suggested_replacement`, `reeling`, `sales_maximum_order_qty`, `availability_on_order`.
-- Errors: HTTP 429 or `Errors[].Code == "TooManyRequests"` -> `RATE_LIMITED`; other non-empty `Errors` -> `BAD_RESPONSE`.
+- Errors: HTTP 429, HTTP 502/503/504 with `Retry-After`, or `Errors[].Code == "TooManyRequests"` (HTTP 200) are rate
+  limits: retried within the request deadline (section 3.6, Mouser allows 30 calls/min), `RATE_LIMITED` when it runs
+  out; other non-empty `Errors` -> `BAD_RESPONSE`; other 5xx -> `UNAVAILABLE`.
 
 ### 9.2 TME API v2 (`distributor/tme`)
 
@@ -557,7 +637,9 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 - Products whose `product_status` contains one of `kina.distributors.tme.excluded-statuses` (default
   `CANNOT_BE_ORDERED`, `ONLY_FOR_SPECIAL_ORDER`, `EXTERNAL_WAREHOUSE`, compared case-insensitively) do not ship now
   and are dropped by `TmePartMapper`. `product_status` stays in `extra`.
-- Errors: `{"code":"E_INPUT_PARAMS_VALIDATION_ERROR",...}` -> `BAD_RESPONSE`; 401 -> refresh token once and retry; 429 -> `RATE_LIMITED`.
+- Errors: `{"code":"E_INPUT_PARAMS_VALIDATION_ERROR",...}` -> `BAD_RESPONSE`; 401 -> refresh token once and retry;
+  429 (and 502/503/504 with `Retry-After`) on any endpoint, the token request included -> retried within the request
+  deadline (section 3.6), `RATE_LIMITED` when it runs out. The OpenAPI document defines no throttling `E_*` code.
 
 ### 9.3 LCSC via the JLCPCB parts database (`distributor/lcsc`)
 
@@ -611,6 +693,7 @@ spring:
     type: SYNC
     protocol: STATELESS           # SSE | STREAMABLE | STATELESS
     streamable-http.mcp-endpoint: /mcp
+    request-timeout: 3m           # above kina.search.max-request-duration (unused by STATELESS, set defensively)
 server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
@@ -627,7 +710,8 @@ kina:
     candidate-window: 40
     default-max-results: 10
     max-max-results: 50
-    distributor-timeout: 12s
+    distributor-timeout: 12s     # active work per distributor fetch; rate-limit waits do not count
+    max-request-duration: 2m     # hard cap per request (search, whole batch, get_part) incl. rate-limit waits
   ranking:
     timeout: 18s
     batch-timeout: 60s
