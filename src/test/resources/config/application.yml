@@ -1,0 +1,6 @@
+# Test-only overrides, layered on top of src/main/resources/application.yml (classpath:/config/ wins).
+kina:
+  jlcpcb:
+    # Spring tests must never download the ~1 GB JLCPCB database from the internet.
+    auto-download: false
+    data-dir: target/test-data/jlcpcb
