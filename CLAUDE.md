@@ -2,7 +2,7 @@
 
 ## What KINA is
 
-An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search electronic components at LCSC (via the JLCPCB parts database), TME (API v2) and Mouser. Only ships-now stock is returned. TME and Mouser results are cached in PostgreSQL for 5 days (1 hour for searches with no parts), and a search that finds nothing is retried once with a shorter core phrase (`fallback_query`). Parts are ranked by a deterministic parametric ranker blended (weight 0.2) with a local Laya sidecar, with a deterministic fallback. KINA is also an OAuth 2.1 authorization server for Claude's remote MCP connector.
+An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search electronic components at LCSC (via the JLCPCB parts database), TME (API v2) and Mouser. Only ships-now stock is returned. TME and Mouser results are cached in PostgreSQL for 5 days (1 hour for searches with no parts), and a search that finds nothing is retried once with a shorter core phrase (`fallback_query`). Parts are ranked by a deterministic parametric ranker blended 50/50 by rank with an in-process cross-encoder (`cross-encoder/ms-marco-MiniLM-L6-v2` on ONNX Runtime, CPU), with the deterministic order as fallback. KINA is also an OAuth 2.1 authorization server for Claude's remote MCP connector.
 
 ## Where things are documented
 
@@ -19,14 +19,14 @@ An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search 
 ./mvnw -q verify                 # compile + all tests; needs Docker (Testcontainers, PostgreSQL 17)
 ./mvnw -q -DskipTests package    # target/kina.jar
 ./mvnw test -Dtest=PartsApiTest  # one test class
-docker compose up -d --build     # kina + postgres + laya-serve
+docker compose up -d --build     # kina + postgres (the ranking model downloads on first start)
 ```
 
 Always use `./mvnw`. The build must stay free of compiler warnings (`-Xlint:all`).
 
 End-to-end checks against a running compose stack: `python3 scripts/e2e/kina_e2e.py` and `scripts/e2e/prod_smoke.sh` (see `docs/DEVELOPMENT.md`).
 
-Optional live tests: `KINA_LAYA_TEST_URL=http://127.0.0.1:8001 ./mvnw test -Dtest=LayaRankerEvaluationTest`; the Mouser live test needs `KINA_MOUSER_LIVE_TEST=true` and `MOUSER_API_KEY`.
+Optional live tests: `KINA_CROSS_ENCODER_TEST_MODEL_DIR=<model dir> ./mvnw test -Dtest=CrossEncoderEvaluationTest` (blended NDCG@10 must be at least 0.90 on `docs/research/data/ranking-eval.jsonl`); the Mouser live test needs `KINA_MOUSER_LIVE_TEST=true` and `MOUSER_API_KEY`.
 
 ## Module map (`src/main/java/ro/alacrity/kina/`)
 
@@ -36,7 +36,8 @@ Optional live tests: `KINA_LAYA_TEST_URL=http://127.0.0.1:8001 ./mvnw test -Dtes
 | `domain` | Records and enums shared everywhere: `Part`, `PriceBreak`, `ParsedQuery`, requests, response DTOs (snake_case wire format). |
 | `distributor` | `DistributorClient` contract, `DistributorRegistry`, `DistributorException`; subpackages `lcsc` (JLCPCB download, SQLite FTS5 search), `tme`, `mouser`. |
 | `cache` | `PartCacheRepository`, `SearchCacheRepository`, `CacheStatus`, purge job. |
-| `search` | `QueryParser`, `ParametricExtractor`, `DeterministicRanker`, `LayaPartRanker` (`PartRanker`), `RankingService`, `PartSearchService`, `PartLookupService`, `DistributorStatusService`. |
+| `search` | `QueryParser`, `ParametricExtractor`, `DeterministicRanker`, `RankingService` (blend and fallback), `PartSearchService`, `PartLookupService`, `DistributorStatusService`. |
+| `search/ce` | `CrossEncoderPartRanker` (the `PartRanker`), `CrossEncoderModel` (download, load, hourly retry), `ModelDownloader`, `ModelLayout`, `BertTokenizer`, `OnnxScoringBackend`. |
 | `mcp` | `KinaMcpTools`: the `@McpTool` methods (`search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping`). |
 | `api` | `PartsController`, `DistributorsController` under `/api/v1`; `ApiExceptionHandler` (problem+json). |
 | `security` | Two filter chains in `SecurityConfig` (machine: bearer tokens; web: session/OIDC), dev-mode admin, `AccessTokenService`, OIDC login. |
@@ -56,7 +57,9 @@ SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V3). Templates:
 - Prices are stored complete and trimmed to the 3 smallest brackets only when building responses.
 - MCP tool parameters are snake_case Java parameter names (compiled with `-parameters`).
 - LLM-facing descriptions in `KinaMcpTools` are part of the product; keep them precise.
-- The Laya sidecar is local only. Never send part data to a third-party inference service. Keep the deterministic fallback working.
+- The ranking model runs in-process. Never send part data to a third-party inference service.
+- Never block startup on the model download: it runs in the background after `ApplicationReadyEvent`, and a failure is logged once and retried hourly.
+- Keep the deterministic fallback working. Whenever the model cannot score, return the deterministic order with `ranking: "fallback"` and a `ranking_note`. Search must never fail because of the model.
 - Tests: JUnit 5, Mockito, `MockRestServiceServer` and recorded JSON fixtures for distributors, Testcontainers PostgreSQL for DB tests (`@Import(TestcontainersConfiguration.class)`), `RestTestClient` for HTTP. Spring tests must not download the JLCPCB database (`kina.jlcpcb.auto-download=false` in `src/test/resources/config/application.yml`).
 
 ## Rules

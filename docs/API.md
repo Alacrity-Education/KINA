@@ -39,9 +39,23 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 |---|---|---|
 | `query` | string | The query as sent. |
 | `parsed` | object | What KINA understood: `family`, value fields such as `capacitance` or `resistance` (display form, for example `"10uF"`), `dielectric`, `package`, `mounting`, `keywords`, and for connectors `connector` (see [`parsed.connector`](#parsedconnector)). Absent values are omitted. |
-| `ranking` | string | `laya` or `fallback`. |
-| `ranking_note` | string or null | Why the ranking fell back, for example `"laya timeout after 18s"`. Always present, null when Laya ranked. |
+| `ranking` | string | `blended` (deterministic score blended 50/50 by rank with the in-process cross-encoder) or `fallback` (deterministic order only). |
+| `ranking_note` | string or null | Why the ranking fell back. Always present, null when `ranking` is `blended`. See [Ranking notes](#ranking-notes). |
 | `distributors` | array | One `DistributorResult` per searched distributor. |
+
+### Ranking notes
+
+Ranking is the deterministic parametric score blended 50/50 by rank with a cross-encoder model that runs inside KINA. When the model cannot score, KINA returns the deterministic order, sets `ranking` to `fallback` and explains why in `ranking_note`. A search never fails because of the model.
+
+| `ranking_note` | Meaning |
+|---|---|
+| `cross-encoder disabled` | `KINA_CROSS_ENCODER_ENABLED=false`. |
+| `cross-encoder model not loaded yet` | The model is still downloading or loading (first start), or the download failed and is retried hourly. |
+| `cross-encoder timeout after 5s` | Scoring did not finish within the ranking budget (`kina.ranking.timeout`). |
+| `cross-encoder timeout: budget exhausted` | No ranking time was left before the model was called. |
+| `cross-encoder busy: no free slot within 5s` | Other searches were using all scoring slots for the whole budget. |
+| `cross-encoder failed: <reason>` | The model raised an error. |
+| `batch ranking budget of 60s exhausted` | Batch only: the query was reached after the batch ranking budget (`kina.ranking.batch-timeout`) ran out. |
 
 ### `parsed.connector`
 
@@ -124,7 +138,7 @@ When Mouser or TME rate limit a call, KINA waits and retries instead of failing 
 - Request deadline: `kina.search.max-request-duration`, default `2m`, for each incoming request. A batch shares one deadline for all its queries. The waits extend a distributor's 12 s work budget but never the deadline.
 - Shared cool-down: after a rate limit, other calls to the same distributor wait for the cool-down to end if that fits their deadline. Otherwise they fail at once with `rate_limited`, without calling the distributor.
 - Result: `rate_limit_waited_ms` in each distributor entry tells how long KINA waited. `error: "rate_limited"` means the limit outlasted the deadline. Parts fetched before that (earlier pages, a cached list) are still returned.
-- Ranking runs after fetching (18 s per query, 60 s per batch). The worst case is therefore about 2 minutes plus ranking.
+- Ranking runs after fetching (5 s per query, 60 s per batch). The worst case is therefore about 2 minutes plus ranking.
 - Mouser quotas stay at 1 000 calls a day and 30 a minute. The retry helps with the per-minute limit, not with an exhausted daily quota.
 
 Set the read timeout of your HTTP client or proxy above about 2.5 minutes for the search endpoints.
@@ -202,10 +216,26 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/distri
      "cached_parts": 0, "max_results_per_search": 50}
   ],
   "cache": {"ttl": "PT120H", "parts": 0, "fresh_parts": 0, "searches": 0, "oldest_fetch": null},
-  "ranking": {"laya_enabled": true, "laya_healthy": true, "model": "multilingual",
-              "max_candidates": 40, "weight": 0.2, "timeout": "..."}
+  "ranking": {"mode": "blended", "cross_encoder_enabled": true, "ready": true,
+              "model": "cross-encoder/ms-marco-MiniLM-L6-v2", "model_variant": "int8",
+              "model_revision": "<hugging face commit>", "model_dir": "/data/cross-encoder",
+              "threads": 4, "avg_latency_ms": 180.0, "last_error": null,
+              "max_candidates": 40, "weight": 0.5, "timeout": "PT5S"}
 }
 ```
+
+The `ranking` object:
+
+| Field | Meaning |
+|---|---|
+| `mode` | `blended` when the cross-encoder is enabled and loaded, else `fallback`. |
+| `cross_encoder_enabled` | `kina.ranking.cross-encoder.enabled`. |
+| `ready` | The model is loaded and warmed up. |
+| `model`, `model_variant`, `model_revision`, `model_dir` | Model name, `int8` or `fp32`, source revision (Hugging Face commit, null when unknown) and directory. |
+| `threads` | ONNX Runtime threads used for scoring. |
+| `avg_latency_ms` | Mean scoring time per query since start. Null before the first scored query. |
+| `last_error` | Why the model is not loaded. Null when fine. |
+| `max_candidates`, `weight`, `timeout` | Candidates scored per query (40), weight of the model in the blend (0.5) and ranking budget per query (ISO-8601 duration). |
 
 Numbers above are placeholders. `available` for TME and Mouser means "configured"; there is no live probe. `cache` is null when the database cannot be read. Null fields in a distributor entry are omitted.
 
@@ -326,7 +356,7 @@ Returns:
 
 ### `list_distributors`
 
-No parameters. Returns the same payload as `GET /api/v1/distributors`: per-distributor state, cache statistics and Laya health. Does not call the Mouser or TME APIs.
+No parameters. Returns the same payload as `GET /api/v1/distributors`: per-distributor state, cache statistics and ranking status. Does not call the Mouser or TME APIs.
 
 ### `ping`
 

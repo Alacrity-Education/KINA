@@ -4,19 +4,18 @@ This guide covers running KINA for real: HTTPS, secrets, storage, backups, upgra
 
 ## Services and volumes
 
-`compose.yaml` runs three services.
+`compose.yaml` runs two services. Ranking needs no extra container: the model runs inside `kina`.
 
 | Service | Image | Port | Volume | Purpose |
 |---|---|---|---|---|
-| `kina` | built from `Dockerfile` (memory limit `KINA_MEM_LIMIT`, default `2g`) | `${KINA_PORT:-8080}` published on the host | `kina-data` at `/data` | The application. Holds the JLCPCB SQLite file in `/data/jlcpcb`. |
+| `kina` | built from `Dockerfile` (memory limit `KINA_MEM_LIMIT`, default `2g`) | `${KINA_PORT:-8080}` published on the host | `kina-data` at `/data` | The application. Holds the JLCPCB SQLite file in `/data/jlcpcb` and the ranking model in `/data/cross-encoder`. |
 | `postgres` | `postgres:17-alpine` | none published | `pgdata` | Cache, users, tokens, OAuth clients, JLCPCB download timestamp. Schema is managed by Flyway at KINA startup. |
-| `laya-serve` | built from the Laya git repository (tag `v0.3.27`) | none published (internal `laya-serve:8000`) | `laya-models` | Local ranking model. Not a hard dependency of `kina`. |
 
-`compose.yaml` sets the project name `name: kina`, so the volumes are `kina_kina-data`, `kina_pgdata` and `kina_laya-models` whatever the directory is called. Use `docker volume ls` to see them.
+`compose.yaml` sets the project name `name: kina`, so the volumes are `kina_kina-data` and `kina_pgdata` whatever the directory is called. Use `docker volume ls` to see them.
 
 ## Environment
 
-Create `.env` from `.env.example`, keep it out of git and restrict it (`chmod 600 .env`). Compose passes it to the `kina` container, and substitutes `LAYA_THREADS`, `KINA_LAYA_MAX_CONCURRENT`, `LAYA_API_KEY`, `LAYA_GPU_ID` and `KINA_PORT` in `compose.yaml`. The full variable list is in the [README](../README.md#configuration-reference).
+Create `.env` from `.env.example`, keep it out of git and restrict it (`chmod 600 .env`). Compose passes it to the `kina` container, and substitutes `KINA_PORT` and `KINA_MEM_LIMIT` in `compose.yaml`. The ranking variables (`KINA_CROSS_ENCODER_*`) reach the `kina` container through `.env`. The full variable list is in the [README](../README.md#configuration-reference).
 
 A minimal production `.env`:
 
@@ -29,8 +28,7 @@ OIDC_CLIENT_SECRET=<secret>
 MOUSER_API_KEY=<key>
 TME_TOKEN=<token>
 TME_APPLICATION_SECRET=<secret>
-LAYA_API_KEY=<random string>
-LAYA_THREADS=4
+KINA_CROSS_ENCODER_THREADS=4
 KINA_PORT=127.0.0.1:8080
 KINA_MEM_LIMIT=2g
 ```
@@ -46,7 +44,7 @@ KINA speaks plain HTTP. Claude's remote connector and OAuth need HTTPS, so termi
 1. The proxy must send `X-Forwarded-Proto` and `X-Forwarded-Host` (and `X-Forwarded-Port` for a non-standard port). KINA honours them (`server.forward-headers-strategy=framework`) and uses them in the OAuth metadata, redirects and the `WWW-Authenticate` header. Or set `KINA_PUBLIC_BASE_URL`, which wins over the headers.
 2. The proxy should overwrite, not append to, any `X-Forwarded-*` headers a client sent, and must be the only way to reach KINA.
 
-Do not buffer the MCP endpoint, and allow long requests. A search can wait up to 2 minutes for a rate-limited distributor (`kina.search.max-request-duration`) and then rank (18 s per query, 60 s per batch), so set the read timeout above about 2.5 minutes. `spring.ai.mcp.server.request-timeout` is `3m`.
+Do not buffer the MCP endpoint, and allow long requests. A search can wait up to 2 minutes for a rate-limited distributor (`kina.search.max-request-duration`) and then rank (5 s per query, 60 s per batch), so set the read timeout above about 2.5 minutes. `spring.ai.mcp.server.request-timeout` is `3m`.
 
 ### Caddy
 
@@ -104,7 +102,7 @@ Every URL in the answers must start with `https://kina.example.com`. If they sho
 |---|---|---|
 | Users, tokens, OAuth clients, refresh tokens, TME/Mouser cache | PostgreSQL, volume `pgdata` | Back up with `pg_dump`. |
 | JLCPCB parts database | SQLite file in volume `kina-data` (`/data/jlcpcb`) | Not needed. KINA downloads it again. |
-| Laya checkpoint | Volume `laya-models` | Not needed. It is downloaded again from Hugging Face. |
+| Ranking model | Directory `/data/cross-encoder` in volume `kina-data` | Not needed. It is downloaded again from Hugging Face (about 23 MB). Back it up only if it is a fine-tuned model that you cannot rebuild, or if the host has no internet access. |
 
 Dump and restore PostgreSQL:
 
@@ -142,32 +140,53 @@ git pull
 docker compose up -d --build
 ```
 
-Flyway applies new database migrations when `kina` starts (the current ones are V1 to V3). Take a `pg_dump` first. The `laya-serve` image is pinned to tag `v0.3.27`, so it only rebuilds when `compose.yaml` changes. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
+Flyway applies new database migrations when `kina` starts (the current ones are V1 to V3). Take a `pg_dump` first. The ranking model stays in the `kina-data` volume, so an upgrade does not download it again. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
 
 Upgrading to connector-aware search: cached TME and Mouser results from before the upgrade stay in the cache until they expire (5 days by default). Connector queries asked before the upgrade keep returning the old, generic results until then, because the cache key is your own query text. Ask again with `bypass_cache` to refresh one query at once, or wait for the cache TTL. Bypassing costs Mouser calls, so use it only for the queries you care about. No migration is involved.
 
 Roll back by checking out the previous version and running `docker compose up -d --build` again. Migrations are not reversed, so restore the dump if a migration must be undone.
 
-## GPU overlay
+## Ranking model
 
-On a host with an NVIDIA GPU and the NVIDIA Container Toolkit:
+Ranking blends the deterministic score with the `cross-encoder/ms-marco-MiniLM-L6-v2` model (Apache-2.0, 22.7 M parameters). It runs in the KINA process on the CPU with ONNX Runtime. There is no GPU overlay, no sidecar and no ranking API key. The CPU is fast enough: 40 candidates take 130 to 300 ms with 4 threads (int8), and 16 ms when the scores are cached.
+
+### First start
+
+KINA downloads the model in the background after startup, from `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` into `/data/cross-encoder`. The default int8 file is about 23 MB and the first start took a few seconds on the measured host. Each file is checked by size and SHA-256, and `model.json` records the source and revision. Startup never waits for it. Until the model is loaded, searches work and report `ranking: "fallback"` with the note `cross-encoder model not loaded yet`. A failure is logged once and retried every hour (`kina.ranking.cross-encoder.check-interval`).
+
+The int8 file matches the CPU: `model_qint8_avx512_vnni` (AVX-VNNI and ARM) or `model_quint8_avx2`. A CPU without AVX2 uses fp32 (91 MB). Set `KINA_CROSS_ENCODER_VARIANT=fp32` to force fp32.
+
+### Air-gapped hosts
+
+Files that are already in the model directory are used without any download. To provision a host without internet access:
+
+1. On a machine with internet access, copy the files from `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` with this layout: `vocab.txt`, `config.json`, `tokenizer_config.json`, and `onnx/model_qint8_avx512_vnni.onnx` and `onnx/model_quint8_avx2.onnx` (int8) or `onnx/model.onnx` (fp32). Or start a normal KINA once and copy `/data/cross-encoder` (it also holds `model.json`).
+2. Put the directory into the `kina-data` volume as `/data/cross-encoder`. The directory must be writable and owned by the user of the `kina` container (uid 10001):
 
 ```bash
-docker compose -f compose.yaml -f compose.cuda.yaml up -d --build
+docker run --rm -v kina_kina-data:/data -v "$PWD/cross-encoder":/src:ro alpine \
+  sh -c 'mkdir -p /data/cross-encoder && cp -r /src/. /data/cross-encoder/ && chown -R 10001:10001 /data/cross-encoder'
+docker compose up -d kina
 ```
 
-The overlay rebuilds Laya with `TORCH_INDEX=cu128`, sets `LAYA_DEVICE=cuda` and reserves the GPU named by `LAYA_GPU_ID` (default `0`). KINA needs no change. Use the same two `-f` flags for every later `docker compose` command that should keep the overlay (`ps`, `logs`, `down`). Measured by the Laya project on a T4: about 33 ms for one question and 7 ms for each further question, against about 600 ms per question on a 4-core CPU with the English checkpoints.
+3. Optionally set `KINA_RANKING_CROSS_ENCODER_AUTO_DOWNLOAD=false` (key `kina.ranking.cross-encoder.auto-download`) so KINA never tries the network.
+
+Check `ranking.ready` in `list_distributors`.
+
+### Fine-tuned or mirrored model
+
+`KINA_CROSS_ENCODER_MODEL_URL` accepts an HTTP(S) directory with the same layout (for example an internal mirror) or a local path, which is used in place without a download. Build a fine-tuned model with `scripts/ranking/finetune_cross_encoder.sh` (about 4 to 5 minutes on 16 cores, runs in a `kina-ce-finetune:local` Docker image). It writes a Hugging Face layout directory plus `model.json`. Copy it into the volume as above, for example to `/data/cross-encoder-finetuned`, and set `KINA_CROSS_ENCODER_MODEL_URL=/data/cross-encoder-finetuned` in `.env`. Run `CrossEncoderEvaluationTest` first (see the [README](../README.md#fine-tuning)); it must give a blended NDCG@10 of at least 0.90. `model_revision` in `list_distributors` shows which model is loaded. Back up a fine-tuned model directory yourself.
 
 ## Sizing
 
 | Component | Memory | Notes |
 |---|---|---|
-| Laya (`multilingual`, CPU) | about 1.9 GiB measured | One loaded checkpoint is about 1.5 GB. On disk: checkpoint 1.5 GB, image 1.76 GB. |
-| KINA JVM | about 485 MiB measured | The container limit is `KINA_MEM_LIMIT` (default `2g`) and the heap is 75 percent of it (1.5 GiB). The JVM exits on out-of-memory (`-XX:+ExitOnOutOfMemoryError`) and Compose restarts it. |
+| Ranking model (cross-encoder) | an estimated 100 to 250 MB, outside the JVM heap | Not measured yet. int8 about 100 to 200 MB, fp32 about 150 to 250 MB. On disk: 23 MB int8 or 91 MB fp32. There is no separate container. |
+| KINA JVM | about 485 MiB measured (before the model was added) | The container limit is `KINA_MEM_LIMIT` (default `2g`) and the heap is 75 percent of it (1.5 GiB). The JVM exits on out-of-memory (`-XX:+ExitOnOutOfMemoryError`) and Compose restarts it. |
 | PostgreSQL | about 45 MiB measured | The cache and tokens are small (`pgdata` about 50 MB after the end-to-end run). |
 | JLCPCB SQLite file | page cache | The file is read through the operating system page cache; free RAM makes LCSC queries faster. |
 
-These numbers come from the measurements in `docs/DEVELOPMENT.md` ("Measured on 2026-10-05"; 24-core, 30 GB host). A host with 4 GB of free RAM is a safe minimum, 8 GB is comfortable. CPU: `LAYA_THREADS` must not exceed the physical core count. Oversubscribing SMT siblings makes Laya many times slower and then rankings time out and fall back. Keep `KINA_LAYA_MAX_CONCURRENT=1` unless you have measured otherwise; a second concurrent pass slows both. Measured Laya cost on CPU: about 90 ms per candidate with 4 threads (40 candidates 3.7 to 4.3 s) and 50 to 60 ms per candidate with 8 threads. A cold search for three distributors took about 6 s, a repeat with a larger `max_results` about 60 ms. Check `ranking_note` in search results for timeouts.
+These numbers come from the measurements in `docs/DEVELOPMENT.md` ("Measured on 2026-10-05"; 24-core, 30 GB host). A host with 2 GB of free RAM is a safe minimum, 4 GB is comfortable. The old 2 GB ranking sidecar is gone. The `kina` container limit (`KINA_MEM_LIMIT`, default `2g`) must cover the heap (75 percent of it) plus the model's native memory and the Java runtime; if the container is killed for memory, raise it a little. CPU: `KINA_CROSS_ENCODER_THREADS` (default: the smaller of 4 and the cores) should not exceed the physical core count. Oversubscribing SMT siblings makes scoring much slower and rankings can time out and fall back. Measured cost of ranking 40 candidates: 130 to 300 ms with 4 threads and int8, 16 ms with cached scores. A cold search for three distributors took about 6 s, a repeat with a larger `max_results` about 60 ms. Check `ranking_note` in search results for timeouts. The size of the artefacts: `kina.jar` is about 115 MB, of which the ONNX Runtime jar is about 53 MB.
 
 ## Token lifecycle
 
@@ -210,21 +229,21 @@ Changing the validity (`KINA_TOKENS_VALIDITY`, `KINA_OAUTH_REFRESH_TOKEN_VALIDIT
 - Bind KINA to loopback (`KINA_PORT=127.0.0.1:8080`) when the proxy runs on the same host, or firewall the port.
 - Set `KINA_PUBLIC_BASE_URL` in production. KINA trusts `X-Forwarded-*` headers from any client (`server.forward-headers-strategy=framework`); with the variable set, the advertised origin cannot be influenced by request headers. Also configure the proxy to overwrite, not append, the forwarded headers.
 - Client registration (`/oauth/register`) is anonymous, as the MCP specification requires. A malformed `/oauth/authorize` request for a registered client is answered with a redirect to that client's registered URI (RFC 6749 behaviour), without user interaction. Approving access always needs a signed-in user and the consent page.
-- Do not publish PostgreSQL or Laya ports. `compose.yaml` does not. If you add a port, set a real password: the compose file uses the database password `kina`, which you can change in the `kina` and `postgres` services (or in a `compose.override.yaml`) together with `SPRING_DATASOURCE_PASSWORD`.
-- Set `LAYA_API_KEY` to a random string. KINA sends it as a bearer token to laya-serve and laya-serve requires it. Laya has no host port, so this is defence in depth against other containers on the network.
+- Do not publish the PostgreSQL port. `compose.yaml` does not. If you add a port, set a real password: the compose file uses the database password `kina`, which you can change in the `kina` and `postgres` services (or in a `compose.override.yaml`) together with `SPRING_DATASOURCE_PASSWORD`.
+- The ranking model runs inside the KINA process. There is no ranking service to secure, and nothing leaves the host for ranking. The only outbound call is the one-time model download from Hugging Face (or your own mirror).
 - Never put part data or credentials in logs. KINA logs neither tokens nor API keys; keep it that way when adding debug output.
 - Keep `.env` out of git and readable only by the deploy user. Rotate `MOUSER_API_KEY`, `TME_TOKEN`, `TME_APPLICATION_SECRET` and `OIDC_CLIENT_SECRET` if they leak.
 - CORS for `/mcp`, `/oauth/*` and `/.well-known/*` allows any origin without credentials. This is intended for browser-based MCP clients and is safe because bearer tokens are not cookies.
 - Limit who can sign in at the OIDC provider. Every user the provider lets in can create API tokens and use the distributors' quotas (Mouser: 1 000 calls a day).
-- Part data is only sent to the configured Laya URL, which should stay the local sidecar.
+- Only the model files are downloaded. If you set `KINA_CROSS_ENCODER_MODEL_URL`, point it at a source you trust, because the files are loaded and executed as a model. KINA checks size and SHA-256 against the source's own headers, which protects against corrupt downloads, not against a malicious source.
 
 ## Monitoring
 
-- `GET /actuator/health` is public and returns `{"status":"UP"}`. The Docker `HEALTHCHECK` of the `kina` image uses it. It does not check Laya, the distributors or the JLCPCB database.
-- For those, call `list_distributors` (MCP) or `GET /api/v1/distributors` with a token. Watch `jlcpcb.available`, `jlcpcb.downloading`, `jlcpcb.last_error`, `ranking.laya_healthy`, and `cache.fresh_parts`.
-- `ranking: "fallback"` in search results means Laya was unavailable, slow or disabled; `ranking_note` gives the reason.
+- `GET /actuator/health` is public and returns `{"status":"UP"}`. The Docker `HEALTHCHECK` of the `kina` image uses it. It does not check the ranking model, the distributors or the JLCPCB database.
+- For those, call `list_distributors` (MCP) or `GET /api/v1/distributors` with a token. Watch `jlcpcb.available`, `jlcpcb.downloading`, `jlcpcb.last_error`, `ranking.ready`, `ranking.last_error`, `ranking.avg_latency_ms` and `cache.fresh_parts`.
+- `ranking: "fallback"` in search results means the model was not loaded, slow, busy, failed or disabled; `ranking_note` gives the reason (see the troubleshooting table below). `ranking.mode` in `list_distributors` is `blended` when the model is loaded.
 - Logs: `docker compose logs -f kina`. Each search logs how long fetching and ranking took. Cache purges (every 6 hours, rows older than twice the cache TTL; a cached search with no parts is already stale after 1 hour) and JLCPCB downloads are logged too.
-- `docker compose ps` shows the health of `postgres` and `laya-serve`. `laya-serve` has a 10 minute start period for the first checkpoint download.
+- `docker compose ps` shows the health of `kina` and `postgres`. The model download does not delay the health check. Set `LOGGING_LEVEL_RO_ALACRITY_KINA_SEARCH_CE=DEBUG` to log the scoring time of every search.
 - Mouser quota: 1 000 calls a day and 30 a minute. KINA does not count calls. Avoid `bypass_cache` for bulk work.
 - Rate limits: KINA waits and retries when a distributor rate limits a call. One WARN line is logged per episode, for example `Mouser rate limited (/search/keyword returned HTTP 429, Retry-After 30 s); cooling down for 30 s`. Retries inside the episode log at DEBUG. A WARN now and then is normal. Frequent WARNs, or `error: "rate_limited"` in results, mean the quota is too small for the load.
 - `rate_limit_waited_ms` in each distributor entry shows how long a request waited. Values near 120000 with `error: "rate_limited"` mean the limit outlasted the deadline.
@@ -240,7 +259,7 @@ Set them in `.env` as `KINA_SEARCH_MAX_REQUEST_DURATION=2m`. Keep `spring.ai.mcp
 
 The retry helps with the per-minute limit (Mouser: 30 calls a minute). It does not help when the daily quota (1 000 calls) is used up: the request waits out its budget and then reports `rate_limited`. Use the cache and avoid `bypass_cache` in that case.
 
-A 503 without a `Retry-After` header is treated as an outage and fails at once. Only 429, and 502, 503 or 504 with `Retry-After`, are waited for. When laya-serve answers 503 with `Retry-After`, KINA retries within the remaining ranking budget; otherwise it falls back to the deterministic ranking.
+A 503 without a `Retry-After` header is treated as an outage and fails at once. Only 429, and 502, 503 or 504 with `Retry-After`, are waited for.
 
 ## Troubleshooting rate limits
 
@@ -250,3 +269,14 @@ A 503 without a `Retry-After` header is treated as an outage and fails at once. 
 | `error: "rate_limited"` after about 2 minutes | The limit outlasted the request deadline. For Mouser this is usually the exhausted daily quota. Wait for the quota to reset and rely on the cache. |
 | `error: "rate_limited"` at once, `rate_limit_waited_ms` 0 | Another request put the distributor into a cool-down that does not fit this request's deadline. Retry later. |
 | Gateway timeout (502 or 504) from the proxy, or the client gives up | The proxy or client read timeout is below the request duration. Raise it above about 2.5 minutes. |
+
+## Troubleshooting ranking
+
+| Symptom | Cause and fix |
+|---|---|
+| `ranking: "fallback"`, note `cross-encoder model not loaded yet` | The model is still downloading, or the download failed. Look at `ranking.last_error` in `list_distributors` and at `docker compose logs kina`. Check internet access to `huggingface.co`, free disk space and that `/data/cross-encoder` is writable by uid 10001. KINA retries every hour. For hosts without internet access, provision the directory (see Ranking model). |
+| Note `cross-encoder disabled` | `KINA_CROSS_ENCODER_ENABLED=false`. Remove it or set it to `true`, then `docker compose up -d`. |
+| Note `cross-encoder timeout after 5s` or `cross-encoder timeout: budget exhausted` | The host is short of CPU, or too many threads share too few cores. Lower the load, set `KINA_CROSS_ENCODER_THREADS` to the physical cores you can spare, and check `ranking.avg_latency_ms`. |
+| Note `cross-encoder busy: no free slot within ...` | Two scoring calls (`kina.ranking.cross-encoder.max-concurrent`) were already running for the whole budget. Reduce parallel searches or add CPU. |
+| Note `cross-encoder failed: ...` | An error while scoring. Read the log line, and check that the model files are complete (`model.json` and the `onnx` directory). Delete the directory to download it again. |
+| Model failed to load after a manual copy | Wrong layout, a missing `vocab.txt`, or files not owned by uid 10001. Compare with the layout under Ranking model. |
