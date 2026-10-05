@@ -119,7 +119,9 @@ BatchSearchRequest(List<SearchRequest> queries /*1..20*/, Set<Distributor> distr
 ### 3.2 Per-distributor fetch with cache
 
 Normalised query key: trim, collapse whitespace, lower-case, Unicode NFKC, `µ` -> `u`, `Ω` -> `ohm`.
-Freshness: `kina.cache.ttl` default `5d`; anything younger is fresh.
+Freshness: `kina.cache.ttl` default `5d`; anything younger is fresh. Exception: a cached search whose part list is
+**empty** is fresh only for `kina.cache.empty-result-ttl` (default `1h`, the shorter of the two applies), so a transient
+distributor glitch or a newly stocked part is not hidden for five days.
 
 Fetch window per distributor: `window = max(maxResults, kina.search.candidate-window /*default 40*/)`
 capped by `kina.distributors.<name>.max-results-per-search` (Mouser default 50 = one API call,
@@ -144,6 +146,16 @@ bounded by `kina.search.distributor-timeout`):
    not by the number of parts kept: distributors drop records without ships-now stock (live: TME reported 32 in-stock
    matches for "10uF X7R 0805" of which 26 were kept), so `part_numbers.size` is not a valid resume offset.
    LCSC is queried once with `limit = window`.
+   **Phrase fallback** (Mouser and TME only, not LCSC): when the first fetch of the full query succeeds with **zero**
+   in-stock parts and the deadline has not passed, the search is retried once with the query's parametric core
+   (`PartSearchService.corePhrase`): the family word as written in the query (`MOSFET`, `MLCC`, `LDO`...), the parsed
+   values except tolerance (display form, e.g. `30V`, `10uF`), the dielectric and the package, in that order, e.g.
+   `"SOT-23 N-channel MOSFET 30V"` -> `"MOSFET 30V SOT-23"`. No retry when the query has no value/dielectric/package,
+   when the core would be a single term, or when it is not shorter than the query. The retry's result (even if also
+   empty) is what gets cached, under the original query key, together with the phrase (`cached_searches.fallback_query`);
+   a `PARTIAL` extension pages on with that phrase. The distributor entry reports it as `fallback_query` (null when the
+   query itself was searched). A failure of the retry is reported as the distributor's `error` and nothing is cached.
+   TME's 40-character phrase limit is applied by the client as for any query.
    Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is cached or
    ranked (Mouser and LCSC deliver almost no parametric attributes).
 3. Upsert the newly fetched parts into `cached_parts` (payload = JSON of `Part`, `fetched_at = part.fetchedAt`) and
@@ -236,7 +248,8 @@ Clamp to [0,1].
 
 ### 3.5 Laya ranker (`LayaPartRanker`)
 
-Endpoint `POST {kina.ranking.laya.url}/v1/systemone/batch` (default `http://laya-serve:8000`),
+Endpoint `POST {kina.ranking.laya.url}/v1/systemone/batch` (`LAYA_URL`; default `http://localhost:8000`, compose sets
+`http://laya-serve:8000`),
 optional bearer `kina.ranking.laya.api-key`, `model = kina.ranking.laya.model` (default `multilingual`),
 `sort_by_length = true`, connect timeout 2s, read timeout = remaining budget.
 
@@ -298,6 +311,7 @@ parameters; descriptions are read by the LLM, keep them precise):
       "returned": 10,
       "cache": "hit",
       "error": null,
+      "fallback_query": null,
       "parts": [
         {"rank": 1, "score": 0.93, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
          "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106", "description": "...", "category": "...",
@@ -313,6 +327,8 @@ parameters; descriptions are read by the LLM, keep them precise):
 
 `total_results` is what the distributor reported for the query (in-stock where the API can filter),
 `fetched` is how many in-stock parts KINA holds for the query, `returned` is `min(max_results, fetched)`.
+`fallback_query` is the shorter core phrase actually sent to the distributor when the full query found nothing
+(section 3.2), otherwise null.
 `max_results` is clamped to `1..kina.search.max-max-results` (MCP; the REST API rejects out-of-range values with 400).
 Tool parameter names are the Java parameter names (`-parameters`), so the tool methods use snake_case parameters.
 
@@ -351,7 +367,10 @@ No provider-specific code (`spring-boot-starter-security-oauth2-client`). On log
 **Access tokens** (`AccessTokenService`): plaintext `kina_` + 43 base64url chars from 32 random
 bytes; stored as SHA-256 hex in `access_tokens.token_hash`; `token_prefix` = first 12 chars for display;
 validity `kina.tokens.validity` default `30d`; shown to the user exactly once. `last_used_at` is
-updated at most once per minute per token. Revocation sets `revoked_at`. The same table and service
+updated at most once per minute per token. Revocation sets `revoked_at` and, in the same transaction, revokes every
+`oauth_refresh_tokens` row whose `access_token_id` is that token (`AccessTokenRepository.revoke*`): a user revoking an
+OAuth-issued token in the web UI, or a client revoking its access token at `/oauth/revoke`, must not leave a refresh
+token that mints a new one. The same table and service
 issue the OAuth access tokens (`oauth_client_id` set, name `MCP: <client_name>`).
 
 **Bearer filter**: `Authorization: Bearer <token>` -> lookup by hash -> must be unexpired and
@@ -379,7 +398,7 @@ All endpoints are relative to the public origin.
 | `POST /oauth/register` (RFC 7591, anonymous) | Accepts `redirect_uris` (required, absolute, no fragment; `https`, `http://localhost`/`127.0.0.1` any port, or custom schemes), `client_name`, `token_endpoint_auth_method` (default `none`), `grant_types` (default `["authorization_code","refresh_token"]`), `response_types` (`["code"]`), `scope`. Returns 201 with `client_id`, `client_secret` (only when auth method is not `none`), `client_id_issued_at`, `client_secret_expires_at: 0` and the echoed metadata. Clients are stored in `oauth_clients`. |
 | `GET /oauth/authorize` | Requires `response_type=code`, registered `client_id`, exact `redirect_uri` match, `code_challenge` + `code_challenge_method=S256` (PKCE mandatory), optional `scope`, `state`, `resource`. Requires an authenticated user (dev: automatic admin; prod: OIDC login, then return). Renders a consent page (client name, user, Approve/Deny). Approve -> authorization code (32 random bytes base64url, SHA-256 stored, 10 min validity, bound to client, redirect URI, user, challenge, scope, resource) -> 302 `redirect_uri?code=&state=`. Deny -> `error=access_denied`. Invalid client or redirect URI -> error page, never a redirect. |
 | `POST /oauth/token` (form-encoded) | `grant_type=authorization_code`: verify client (secret if registered with one; public clients need none), code unused and unexpired, `redirect_uri` equal, PKCE `S256(code_verifier) == code_challenge`; mark code used; issue access token (30 days, via `AccessTokenService`) and refresh token (`kina.oauth.refresh-token-validity` default `90d`, `oauth_refresh_tokens`). Response `{"access_token","token_type":"Bearer","expires_in","refresh_token","scope"}`. `grant_type=refresh_token`: rotate (revoke old refresh token and its access token, issue new pair). Errors follow RFC 6749 (`invalid_request`, `invalid_client` (401), `invalid_grant`, `unsupported_grant_type`). |
-| `POST /oauth/revoke` (RFC 7009) | Revokes an access or refresh token belonging to the authenticated client; always 200. |
+| `POST /oauth/revoke` (RFC 7009) | Revokes an access or refresh token belonging to the authenticated client; always 200. Revoking a refresh token also revokes its current access token; revoking an access token also revokes the refresh token issued with it. |
 
 `resource` (RFC 8707) is stored and echoed; a value outside the public origin is logged, not rejected.
 
@@ -470,6 +489,8 @@ CREATE TABLE cached_searches (
 );
 -- V2__cached_search_next_offset.sql: raw distributor offset where the next page starts (NULL = unknown)
 ALTER TABLE cached_searches ADD COLUMN next_offset INTEGER;
+-- V3__cached_search_fallback_query.sql: core phrase searched instead of the query (phrase fallback), NULL otherwise
+ALTER TABLE cached_searches ADD COLUMN fallback_query TEXT;
 
 CREATE TABLE jlcpcb_database (
   id            INTEGER PRIMARY KEY CHECK (id = 1),
@@ -549,7 +570,13 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   them into `<library>.zip`, extract the single entry, verify it opens as SQLite and `SELECT count(*) FROM parts` works,
   then atomically move it to `<data-dir>/<library>`; record `jlcpcb_database(id=1, downloaded_at=now, ...)`; delete temp files.
 - Refresh policy: at startup, download in the background when the file is missing or `downloaded_at` is older than
-  `refresh-after`. A scheduled task (`check-interval`) re-checks. While no database is available the LCSC client reports
+  `refresh-after`. A file that exists without a `jlcpcb_database` row (pre-seeded or restored volume, fresh Postgres) is
+  **adopted**: validated (`SELECT count(*) FROM parts`, about 20 s for the full 7.1 M-part file), registered with
+  `downloaded_at` = the file's mtime, logged as `Adopted existing JLCPCB database ... (N parts, modified ...)`; an
+  unusable file is re-downloaded.
+  The data directory must be writable by uid 10001 for later refreshes (the image creates `/data/jlcpcb` owned by
+  `kina`, so a new named volume inherits that; a file copied in as root only needs to be readable if the directory is
+  writable). A scheduled task (`check-interval`) re-checks. While no database is available the LCSC client reports
   `UNAVAILABLE` ("JLCPCB database not downloaded yet"); searches on other distributors proceed. Swapping the file takes a
   write lock; queries take read locks; SQLite is opened read-only (`jdbc:sqlite:<path>?mode=ro`, `open_mode=1`).
 - Schema (SQLite): `parts` is an **FTS5 virtual table with the trigram tokenizer** and columns
@@ -593,7 +620,9 @@ kina:
   security.mode: ${KINA_MODE:dev}
   tokens.validity: 30d
   oauth.refresh-token-validity: 90d
-  cache.ttl: 5d
+  cache:
+    ttl: 5d
+    empty-result-ttl: 1h       # cached searches with no in-stock part
   search:
     candidate-window: 40
     default-max-results: 10
@@ -628,17 +657,23 @@ not break development mode startup.
 ## 11. Docker
 
 - `Dockerfile`: stage 1 `maven:3.9-eclipse-temurin-21` (copy `pom.xml`, `./mvnw`, `.mvn`, run `dependency:go-offline`,
-  then copy `src`, `package -DskipTests`); stage 2 `eclipse-temurin:21-jre`, non-root user, `/data` volume,
-  `HEALTHCHECK` on `/actuator/health`, `ENTRYPOINT ["java","-jar","/app/kina.jar"]`.
-- `compose.yaml` services:
-  - `kina`: build `.`, ports `8080:8080`, `env_file: .env`, environment for datasource/Laya/JLCPCB dir, volume `kina-data:/data`,
-    `depends_on: postgres (healthy)`; Laya is not a hard dependency (fallback ranking).
+  then copy `src`, `package -DskipTests`); stage 2 `eclipse-temurin:21-jre`, non-root user `kina` (uid 10001), `/data`
+  volume, `HEALTHCHECK` on `/actuator/health` (curl), `ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED",
+  "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/kina.jar"]` (native access for sqlite-jdbc;
+  heap sized from the container memory limit; extra flags via `JAVA_TOOL_OPTIONS`).
+- `compose.yaml`: top-level `name: kina` (volumes are `kina_kina-data`, `kina_pgdata`, `kina_laya-models`, network
+  `kina_default`; a pre-seeded JLCPCB file in `kina_kina-data` is adopted at startup, see 9.3). Services:
+  - `kina`: build `.`, ports `${KINA_PORT:-8080}:8080`, `env_file: .env` (optional), environment for datasource/JLCPCB dir and
+    `LAYA_URL=http://laya-serve:8000` (overrides `.env`), volume `kina-data:/data`, `mem_limit: ${KINA_MEM_LIMIT:-2g}` (heap
+    = 75%), `depends_on: postgres (healthy)`; Laya is not a hard dependency (fallback ranking).
   - `postgres`: `postgres:17-alpine`, `POSTGRES_DB/USER/PASSWORD=kina`, volume `pgdata`, healthcheck `pg_isready`.
   - `laya-serve`: build from the Laya git repository (`context: https://github.com/NandhaKishorM/laya.git#v0.3.27`,
     args `TORCH_INDEX=cpu`), `command: ["laya-serve"]`, environment `LAYA_DEVICE=cpu`, `LAYA_MODELS=multilingual`,
     `LAYA_DEFAULT_MODEL=multilingual`, `LAYA_PRELOAD=1`, `LAYA_THREADS=${LAYA_THREADS:-4}`, `OMP_NUM_THREADS=${LAYA_THREADS:-4}`,
     `LAYA_MAX_CONCURRENT=${KINA_LAYA_MAX_CONCURRENT:-1}`, volume `laya-models:/home/laya/.cache/huggingface`,
-    healthcheck `GET /health`; no host port by default (internal only).
+    healthcheck `GET /health` (python urllib; `start_period: 10m` for the first checkpoint download, `start_interval: 5s`);
+    no host port by default (internal only). Raise `LAYA_THREADS` to the physical cores you can dedicate
+    (measured: 8 threads ~1.5-1.8x faster than 4, see docs/DEVELOPMENT.md).
 - `compose.cuda.yaml`: overlay for `laya-serve` with `TORCH_INDEX=cu128`, `LAYA_DEVICE=cuda` and the NVIDIA device reservation.
 - `.env.example` documenting every variable; `.env` is git-ignored.
 
