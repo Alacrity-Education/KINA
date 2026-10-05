@@ -359,7 +359,7 @@ class TmeClientTest {
     @Test
     void notConfigured() {
         KinaProperties.Tme blankSecret = new KinaProperties.Tme("token", " ", "RO", "EUR", "en",
-                TmeTestSupport.BASE, 60, 3);
+                TmeTestSupport.BASE, 60, 3, KinaProperties.Tme.DEFAULT_EXCLUDED_STATUSES);
         TmeClient client = client(blankSecret);
 
         assertThat(client.isConfigured()).isFalse();

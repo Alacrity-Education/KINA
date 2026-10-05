@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Every {@code kina.*} setting (DESIGN.md section 10). Defaults here mirror {@code application.yml} so tests
@@ -129,7 +130,17 @@ public record KinaProperties(
             @DefaultValue("en") String language,
             @DefaultValue("https://api.tme.eu") String baseUrl,
             @DefaultValue("60") int maxResultsPerSearch,
-            @DefaultValue("3") int maxPagesPerSearch) {
+            @DefaultValue("3") int maxPagesPerSearch,
+            @DefaultValue({"CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE"})
+            List<String> excludedStatuses) {
+
+        /** {@code product_status} values that mean the part does not ship now; such parts are dropped. */
+        public static final List<String> DEFAULT_EXCLUDED_STATUSES =
+                List.of("CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE");
+
+        public Tme {
+            excludedStatuses = excludedStatuses == null ? DEFAULT_EXCLUDED_STATUSES : List.copyOf(excludedStatuses);
+        }
 
         public boolean isConfigured() {
             return token != null && !token.isBlank() && secret != null && !secret.isBlank();
@@ -140,7 +151,8 @@ public record KinaProperties(
             return "Tme[token=" + (token == null || token.isBlank() ? "" : "***") + ", secret="
                     + (secret == null || secret.isBlank() ? "" : "***") + ", country=" + country + ", currency="
                     + currency + ", language=" + language + ", baseUrl=" + baseUrl + ", maxResultsPerSearch="
-                    + maxResultsPerSearch + ", maxPagesPerSearch=" + maxPagesPerSearch + "]";
+                    + maxResultsPerSearch + ", maxPagesPerSearch=" + maxPagesPerSearch + ", excludedStatuses="
+                    + excludedStatuses + "]";
         }
     }
 
@@ -150,7 +162,8 @@ public record KinaProperties(
             @DefaultValue("https://bouni.github.io/kicad-jlcpcb-tools/") String baseUrl,
             @DefaultValue("5d") Duration refreshAfter,
             @DefaultValue("1h") Duration checkInterval,
-            @DefaultValue("200") int maxResultsPerSearch) {
+            @DefaultValue("200") int maxResultsPerSearch,
+            @DefaultValue("true") boolean autoDownload) {
 
         /** {@code <data-dir>/<library>}. */
         public Path databaseFile() {

@@ -187,7 +187,7 @@ class CacheRepositoriesTest {
     @Test
     void searchCacheRoundTrip() {
         CachedSearch search = new CachedSearch(Distributor.MOUSER, "10uf x7r 0805", 113,
-                List.of("603-CC0805", "81-GRM21BR71A106KA3L", "187-CL21B106KOQNNNE"), false, NOW);
+                List.of("603-CC0805", "81-GRM21BR71A106KA3L", "187-CL21B106KOQNNNE"), false, NOW, 50);
         searches.upsert(search);
         assertThat(searches.find(Distributor.MOUSER, "10uf x7r 0805")).contains(search);
         assertThat(searches.find(Distributor.TME, "10uf x7r 0805")).isEmpty();
@@ -200,6 +200,7 @@ class CacheRepositoriesTest {
         assertThat(read.partNumbers()).isEmpty();
         assertThat(read.exhausted()).isTrue();
         assertThat(read.totalResults()).isNull();
+        assertThat(read.nextOffset()).isNull();
         assertThat(count("cached_searches")).isEqualTo(1);
         String json = jdbc.sql("SELECT jsonb_typeof(part_numbers) FROM cached_searches").query(String.class).single();
         assertThat(json).isEqualTo("array");

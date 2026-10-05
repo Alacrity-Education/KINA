@@ -10,6 +10,7 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,7 +40,21 @@ final class TmePartMapper {
      */
     static Optional<Part> toPart(TmeResponses.Product product, TmeResponses.ProductData data,
                                  TmeResponses.ProductParameters parameters, String datasheetUrl, Instant fetchedAt) {
+        return toPart(product, data, parameters, datasheetUrl, fetchedAt, List.of());
+    }
+
+    /**
+     * As {@link #toPart(TmeResponses.Product, TmeResponses.ProductData, TmeResponses.ProductParameters, String, Instant)},
+     * additionally empty when the product carries one of the {@code excludedStatuses} (compared case-insensitively):
+     * statuses such as {@code CANNOT_BE_ORDERED} mean the stock does not ship now.
+     */
+    static Optional<Part> toPart(TmeResponses.Product product, TmeResponses.ProductData data,
+                                 TmeResponses.ProductParameters parameters, String datasheetUrl, Instant fetchedAt,
+                                 Collection<String> excludedStatuses) {
         if (product == null || product.symbol() == null || data == null || data.stockQuantity() == null) {
+            return Optional.empty();
+        }
+        if (hasExcludedStatus(product, excludedStatuses)) {
             return Optional.empty();
         }
         int stock = toIntFloor(data.stockQuantity());
@@ -70,6 +85,25 @@ final class TmePartMapper {
                 attributes(params),
                 extra(product, data),
                 fetchedAt));
+    }
+
+    /** True when one of the product's {@code product_status} values is in {@code excludedStatuses} (ignoring case). */
+    static boolean hasExcludedStatus(TmeResponses.Product product, Collection<String> excludedStatuses) {
+        if (product == null || product.productStatus() == null || excludedStatuses == null
+                || excludedStatuses.isEmpty()) {
+            return false;
+        }
+        for (String status : product.productStatus()) {
+            if (status == null) {
+                continue;
+            }
+            for (String excluded : excludedStatuses) {
+                if (excluded != null && excluded.strip().equalsIgnoreCase(status.strip())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     static String productUrl(String symbol) {

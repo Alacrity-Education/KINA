@@ -50,7 +50,7 @@ class JlcpcbDatabaseManagerTest {
     @BeforeEach
     void setUp() {
         KinaProperties.Jlcpcb config = new KinaProperties.Jlcpcb(dir, LIBRARY, "http://example.invalid/",
-                Duration.ofDays(5), Duration.ofHours(1), 200);
+                Duration.ofDays(5), Duration.ofHours(1), 200, true);
         file = config.databaseFile().toAbsolutePath().normalize();
         search = new JlcpcbSqliteSearch(file);
         manager = new JlcpcbDatabaseManager(config, downloader, repository, search, true,

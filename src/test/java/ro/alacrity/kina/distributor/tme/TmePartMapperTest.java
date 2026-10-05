@@ -163,6 +163,27 @@ class TmePartMapperTest {
     }
 
     @Test
+    void excludedProductStatusesAreDroppedButOtherStatusesKept() {
+        TmeResponses.ProductData stock = new TmeResponses.ProductData(new BigDecimal("500"), "EXT-0", null, null);
+        List<String> excluded = ro.alacrity.kina.config.KinaProperties.Tme.DEFAULT_EXCLUDED_STATUSES;
+
+        for (String status : excluded) {
+            TmeResponses.Product product = new TmeResponses.Product(List.of("NEW", status.toLowerCase()), "EXT-0",
+                    null, List.of(), null, "desc", null, null, null, null, null);
+            assertThat(TmePartMapper.toPart(product, stock, null, null, NOW, excluded)).as(status).isEmpty();
+            // without an exclusion list the same product maps (legacy overload)
+            assertThat(TmePartMapper.toPart(product, stock, null, null, NOW)).isPresent();
+        }
+
+        TmeResponses.Product hardly = new TmeResponses.Product(List.of("HARDLY_AVAILABLE"), "EXT-0", null,
+                List.of(), null, "desc", null, null, null, null, null);
+        Part part = TmePartMapper.toPart(hardly, stock, null, null, NOW, excluded).orElseThrow();
+        assertThat(part.extra()).containsEntry("product_status", List.of("HARDLY_AVAILABLE"));
+        assertThat(TmePartMapper.toPart(new TmeResponses.Product(null, "EXT-0", null, List.of(), null, "desc",
+                null, null, null, null, null), stock, null, null, NOW, excluded)).isPresent();
+    }
+
+    @Test
     void specialPricesAndMissingOptionalFields() {
         TmeResponses.Product bare = new TmeResponses.Product(null, "ABC/1", null, List.of(), null, "desc",
                 null, null, null, null, null);

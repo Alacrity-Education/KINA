@@ -36,7 +36,8 @@ final class TmeTestSupport {
     }
 
     static KinaProperties.Tme properties(int maxResultsPerSearch) {
-        return new KinaProperties.Tme("test-token", "test-secret", "RO", "EUR", "en", BASE, maxResultsPerSearch, 3);
+        return new KinaProperties.Tme("test-token", "test-secret", "RO", "EUR", "en", BASE, maxResultsPerSearch, 3,
+                KinaProperties.Tme.DEFAULT_EXCLUDED_STATUSES);
     }
 
     /** Reads {@code src/test/resources/fixtures/tme/<name>}. */

@@ -170,7 +170,8 @@ public class TmeClient implements DistributorClient {
             if (symbol == null) {
                 continue;
             }
-            TmePartMapper.toPart(product, data.get(symbol), parameters.get(symbol), datasheets.get(symbol), now)
+            TmePartMapper.toPart(product, data.get(symbol), parameters.get(symbol), datasheets.get(symbol), now,
+                            properties.excludedStatuses())
                     .ifPresent(parts::add);
         }
         return parts;
