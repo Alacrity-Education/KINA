@@ -36,6 +36,17 @@ import java.util.regex.Pattern;
  * positions ({@code 1x6}, {@code 2*3P} -&gt; {@code 1x6P}/{@code 2x3P}; {@code 6P}, {@code 6 pin}, {@code 6-position}
  * -&gt; {@code 6P}) and pitches ({@code 2.54mm}).
  *
+ * <p>USB wording (DESIGN.md 9.3, mined from the 8 606 {@code USB Connectors} rows): the connector types
+ * {@code Type-C}/{@code TypeC}/{@code USB-C}/{@code USBC}, {@code Micro-B}/{@code MicroB}/{@code micro-USB},
+ * {@code Micro-AB}, {@code Mini-B}/{@code MiniB}, {@code Type-A}/{@code TypeA}/{@code USB-A},
+ * {@code Type-B}/{@code TypeB}/{@code USB-B} become {@link Kind#FAMILY} terms whose alternatives are the database
+ * spellings ({@code ("Type-C" OR "TypeC")}; trigram matching is case-insensitive, so {@code TYPE-C} in a part number
+ * matches too); {@link Kind#FEATURE} terms: {@code "USB 2.0"} -&gt; {@code ("USB 2.0" OR "USB2.0")}, {@code "USB 3"}
+ * -&gt; {@code ("USB 3" OR "USB3")} (any 3.x), {@code USB4} -&gt; {@code ("USB4" OR "USB 4")}, {@code mid-mount} -&gt;
+ * {@code ("Recessed" OR "Sink board" OR "Sinking" OR "Laminated board" OR "Mid-mount")} (JLCPCB's words for 沉板),
+ * {@code waterproof} -&gt; {@code ("IPX" OR "IP67" OR "IP68" OR "Waterproof" OR "O-ring")} (the sealing is mostly only in
+ * the part number), {@code "board lock"} -&gt; {@code ("Locating" OR "with Post" OR "Board Lock")}.
+ *
  * <p>Each remaining token is classified ({@link Kind}); everything but {@link Kind#KEYWORD} counts as "parametric" for
  * the query relaxation in {@link JlcpcbSqliteSearch}.
  */
@@ -52,7 +63,9 @@ public record JlcpcbQuery(List<Term> terms) {
         /** Connector orientation ({@code "Right Angle"}). */
         ORIENTATION,
         /** Mounting ({@code Through Hole} / {@code Surface Mount}). */
-        MOUNTING
+        MOUNTING,
+        /** A USB standard or connector feature ({@code "USB 2.0"}, {@code mid-mount}, {@code waterproof}). */
+        FEATURE
     }
 
     /**
@@ -120,6 +133,28 @@ public record JlcpcbQuery(List<Term> terms) {
     private static final Set<String> RIGHT_ANGLE_WORDS = Set.of("right angle", "right-angle", "right angled",
             "rightangle", "90°", "90deg", "90 degree", "90 degrees", "90 deg", "angled", "horizontal", "90*");
     private static final Set<String> VERTICAL_WORDS = Set.of("vertical", "straight", "180°", "180 degree");
+    /** USB connector types (lower-case token) and their JLCPCB spellings. */
+    static final Map<String, List<String>> USB_TYPES = Map.ofEntries(
+            Map.entry("type-c", List.of("Type-C", "TypeC")), Map.entry("typec", List.of("Type-C", "TypeC")),
+            Map.entry("usb-c", List.of("Type-C", "TypeC")), Map.entry("usbc", List.of("Type-C", "TypeC")),
+            Map.entry("micro-b", List.of("Micro-B", "MicroB")), Map.entry("microb", List.of("Micro-B", "MicroB")),
+            Map.entry("micro-usb", List.of("Micro-B", "MicroB")), Map.entry("microusb", List.of("Micro-B", "MicroB")),
+            Map.entry("micro-ab", List.of("Micro-AB", "MicroAB")),
+            Map.entry("mini-b", List.of("Mini-B", "MiniB")), Map.entry("minib", List.of("Mini-B", "MiniB")),
+            Map.entry("type-a", List.of("Type-A", "TypeA")), Map.entry("typea", List.of("Type-A", "TypeA")),
+            Map.entry("usb-a", List.of("Type-A", "TypeA")),
+            Map.entry("type-b", List.of("Type-B", "TypeB")), Map.entry("typeb", List.of("Type-B", "TypeB")),
+            Map.entry("usb-b", List.of("Type-B", "TypeB")));
+    /** USB standards and features (lower-case token or phrase) and their JLCPCB wording. */
+    static final Map<String, List<String>> USB_FEATURES = Map.ofEntries(
+            Map.entry("usb 2.0", List.of("USB 2.0", "USB2.0")), Map.entry("usb2.0", List.of("USB 2.0", "USB2.0")),
+            Map.entry("usb 3", List.of("USB 3", "USB3")), Map.entry("usb4", List.of("USB4", "USB 4")),
+            Map.entry("usb 4", List.of("USB4", "USB 4")),
+            Map.entry("mid-mount", List.of("Recessed", "Sink board", "Sinking", "Laminated board", "Mid-mount")),
+            Map.entry("mid mount", List.of("Recessed", "Sink board", "Sinking", "Laminated board", "Mid-mount")),
+            Map.entry("waterproof", List.of("IPX", "IP67", "IP68", "Waterproof", "O-ring")),
+            Map.entry("board lock", List.of("Locating", "with Post", "Board Lock")));
+
     private static final Pattern GRID = Pattern.compile("(?i)(\\d{1,2})[x×*](\\d{1,3})p?");
     /** {@code 6P} (upper-case: a lower-case {@code 22p} stays a capacitance), {@code 6pin}, {@code 6-pos}, {@code 6way}. */
     private static final Pattern POSITIONS = Pattern.compile("(\\d{1,3})-?(?:P|(?i:pins?|pos|positions?|ways?))");
@@ -279,8 +314,22 @@ public record JlcpcbQuery(List<Term> terms) {
         if (connector != null) {
             return connector;
         }
+        Term usb = usbTerm(lower);
+        if (usb != null) {
+            return usb;
+        }
         String cleaned = phrase.replace("\"", "");
         return cleaned.isBlank() ? null : new Term(cleaned, Kind.KEYWORD);
+    }
+
+    /** USB type / standard / feature words in the database vocabulary, or null. */
+    private static Term usbTerm(String lower) {
+        List<String> type = USB_TYPES.get(lower);
+        if (type != null) {
+            return new Term(type.getFirst(), Kind.FAMILY, type, null);
+        }
+        List<String> feature = USB_FEATURES.get(lower);
+        return feature == null ? null : new Term(feature.getFirst(), Kind.FEATURE, feature, null);
     }
 
     /** Mounting / orientation synonyms in the database vocabulary, or null. */
@@ -315,6 +364,10 @@ public record JlcpcbQuery(List<Term> terms) {
         Term connector = connectorTerm(lower);
         if (connector != null) {
             return connector;
+        }
+        Term usb = usbTerm(lower);
+        if (usb != null) {
+            return usb;
         }
         Matcher grid = GRID.matcher(t);
         if (grid.matches()) {

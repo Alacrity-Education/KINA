@@ -240,4 +240,45 @@ class JlcpcbSqliteSearchTest {
     private static List<String> lcsc(Result result) {
         return result.rows().stream().map(JlcpcbRow::lcscPart).toList();
     }
+
+    // ---------------------------------------------------------------- USB connectors
+
+    private void useUsbDatabase() throws SQLException {
+        search.close();
+        search = new JlcpcbSqliteSearch(JlcpcbTestDatabase.create(dir.resolve("usb.db"), JlcpcbTestDatabase.withUsb()));
+    }
+
+    @Test
+    void usbPhraseFiltersTheCategoryTypeStandardAndMounting() throws SQLException {
+        useUsbDatabase();
+        // the DistributorPhraser phrase for "USB-C receptacle 16 pin SMD USB 2.0": no pin count (17P/18P parts)
+        Result result = search.search("\"USB Connectors\" Type-C \"USB 2.0\" \"Surface Mount\"", 0, 50);
+        assertThat(result.mode()).isEqualTo(MatchMode.ALL);
+        assertThat(lcsc(result)).containsExactly("C52209111");
+        // without the standard: every SMD Type-C (package "SMD" counts), also the "TypeC" spelling; not Micro-B, Type-A
+        Result typeC = search.search("\"USB Connectors\" Type-C \"Surface Mount\"", 0, 50);
+        assertThat(lcsc(typeC)).containsExactlyInAnyOrder("C2765186", "C52209111", "C3020043", "C7500849", "C5454922",
+                "C5260493", "C20883026");
+        // "USB 3" matches every 3.x label
+        assertThat(lcsc(search.search("\"USB Connectors\" Type-C \"USB 3\"", 0, 50)))
+                .containsExactlyInAnyOrder("C3020043", "C5454922");
+    }
+
+    @Test
+    void usbTypeTokensAndPositions() throws SQLException {
+        useUsbDatabase();
+        JlcpcbQuery query = JlcpcbQuery.parse("USB-C 24P");
+        assertThat(query.terms()).extracting(JlcpcbQuery.Term::kind)
+                .containsExactly(JlcpcbQuery.Kind.FAMILY, JlcpcbQuery.Kind.POSITIONS);
+        assertThat(query.terms().getFirst().phrases()).containsExactly("Type-C", "TypeC");
+        assertThat(lcsc(search.search("USB-C 24P", 0, 50))).containsExactly("C5454922");
+        // 6P must not match 16P/24P (number boundary)
+        assertThat(lcsc(search.search("Type-C 6P", 0, 50))).containsExactly("C5260493");
+        assertThat(lcsc(search.search("\"USB Connectors\" Micro-B", 0, 50))).containsExactly("C10418");
+        assertThat(lcsc(search.search("\"USB Connectors\" Type-A \"Through Hole\"", 0, 50))).containsExactly("C2345");
+        // JLCPCB's mid-mount words (沉板 = "Laminated board") and the sealing in the part number
+        assertThat(lcsc(search.search("\"USB Connectors\" Type-C mid-mount", 0, 50))).containsExactly("C20883026");
+        assertThat(lcsc(search.search("\"USB Connectors\" Type-C waterproof", 0, 50))).containsExactly("C3020043");
+        assertThat(lcsc(search.search("\"USB Connectors\" Type-C \"board lock\"", 0, 50))).containsExactly("C52209111");
+    }
 }

@@ -24,6 +24,13 @@ import java.util.regex.Pattern;
  *       first, e.g. {@code pin strips female 6 angled}.</li>
  *   <li>Mouser (keyword): {@code female header 6 pos right angle}, {@code male header 40 pos 2.54mm vertical}.</li>
  * </ul>
+ *
+ * <p>USB connector requests ({@link #usbPhrase}) never carry the pin count: distributors list some Type-C receptacles
+ * with their shell pins (17P/18P for a 16-pin part, {@code PIN: 17}, {@code 17 Positions}), so a count in the phrase
+ * would exclude them; the ranker sorts by the canonical configuration instead. Type, gender, mounting, standard and
+ * features stay, e.g. for {@code USB-C receptacle 16 pin SMD USB 2.0}: LCSC
+ * {@code "USB Connectors" Type-C "USB 2.0" "Surface Mount"}, TME {@code USB C socket SMT 2.0}, Mouser
+ * {@code USB type C receptacle SMD 2.0}.
  */
 public final class DistributorPhraser {
 
@@ -44,7 +51,7 @@ public final class DistributorPhraser {
         if (query == null || !query.isConnector() || query.connector().isEmpty()) {
             return null;
         }
-        String phrase = switch (distributor) {
+        String phrase = query.connector().isUsb() ? usbPhrase(distributor, query) : switch (distributor) {
             case LCSC -> lcsc(query);
             case TME -> tme(query);
             case MOUSER -> mouser(query);
@@ -68,7 +75,9 @@ public final class DistributorPhraser {
             return null;
         }
         String candidate = null;
-        if (query.isConnector() && !query.connector().isEmpty()) {
+        if (query.isConnector() && query.connector().isUsb()) {
+            candidate = usbFallback(distributor, query.connector());
+        } else if (query.isConnector() && !query.connector().isEmpty()) {
             candidate = distributor == Distributor.TME ? tmeFallback(query) : mouserFallback(query);
         }
         if (candidate == null) {
@@ -304,6 +313,166 @@ public final class DistributorPhraser {
             tokens.add(c.orientation());
         }
         return String.join(" ", tokens);
+    }
+
+    // ---------------------------------------------------------------- USB connectors
+
+    /**
+     * USB connector phrase (DESIGN.md 3.2): type, gender, mounting, standard and features in each distributor's
+     * wording; never the pin count (see the class comment). LCSC: {@code "USB Connectors"} + the dominant JLCPCB
+     * spelling of the type ({@code Type-C}, {@code Micro-B}, {@code Type-A}...; {@code JlcpcbQuery} adds
+     * {@code TypeC}/{@code MicroB}/... as alternatives), {@code Male} for plugs, the standard ({@code "USB 2.0"},
+     * {@code "USB 3"} for any 3.x, {@code USB4}), mounting, orientation and {@code mid-mount}/{@code waterproof}/
+     * {@code "board lock"} (mapped to the database words by {@code JlcpcbQuery}). TME (40 characters, TME ANDs the
+     * words): {@code USB C socket}, {@code SMT}/{@code THT}, {@code horizontal}/{@code vertical}, {@code 2.0} (3.x is
+     * left out: TME's Version values vary between 3.0, 3.1, 3.2 and Gen spellings, and "USB C socket 24 horizontal 3.1"
+     * found nothing live), {@code charging} (TME "only for charging (6p)"), {@code middle} (TME "middle board mount"),
+     * the IP rating or {@code waterproof}. Mouser: {@code USB type C receptacle}, orientation, mounting, the version
+     * as written ({@code 2.0}, {@code 3.1}, {@code USB4}), {@code mid}, {@code hybrid}, the IP rating or
+     * {@code waterproof}, and for power-only requests {@code 6 pos power only} (the one exception to "no pin count":
+     * live, "USB type C receptacle 6 pos power only" returned 11 power-only parts, "... power only" without it 1).
+     */
+    static String usbPhrase(Distributor distributor, ParsedQuery q) {
+        ParsedQuery.Connector c = q.connector();
+        String usbType = c.usbType() != null ? c.usbType() : UsbVocabulary.usbTypeOf(c.type());
+        boolean plug = ParsedQuery.MALE.equals(c.gender());
+        String version = UsbVocabulary.analyze(new StringBuilder(q.originalText()), true).versionToken();
+        UsbVocabulary.Standard standard = UsbVocabulary.standard(c.usbStandard());
+        List<String> tokens = new ArrayList<>();
+        switch (distributor) {
+            case LCSC -> {
+                tokens.add("\"USB Connectors\"");
+                if (usbType != null) {
+                    tokens.add(usbType);
+                }
+                if (plug) {
+                    tokens.add("Male");
+                }
+                if (standard != null) {
+                    tokens.add(standard.rank() <= 1 ? "\"" + standard.name() + "\"" : standard.rank() >= 5 ? "USB4"
+                            : "\"USB 3\"");
+                }
+                if ("THT".equals(q.mounting())) {
+                    tokens.add("\"Through Hole\"");
+                } else if ("SMD".equals(q.mounting())) {
+                    tokens.add("\"Surface Mount\"");
+                }
+                if (ParsedQuery.RIGHT_ANGLE.equals(c.orientation())) {
+                    tokens.add("\"Right Angle\"");
+                } else if (ParsedQuery.VERTICAL.equals(c.orientation())) {
+                    tokens.add("Vertical");
+                }
+                if (c.hasFeature(UsbVocabulary.MID_MOUNT)) {
+                    tokens.add("mid-mount");
+                }
+                if (c.hasFeature(UsbVocabulary.WATERPROOF)) {
+                    tokens.add("waterproof");
+                }
+                if (c.hasFeature(UsbVocabulary.BOARD_LOCK)) {
+                    tokens.add("\"board lock\"");
+                }
+                tokens.addAll(informativeKeywords(q, 2));
+                return String.join(" ", tokens);
+            }
+            case TME -> {
+                tokens.add(tmeUsbType(usbType, c.type()) + " " + (plug ? "plug" : "socket"));
+                if ("THT".equals(q.mounting())) {
+                    tokens.add("THT");
+                } else if ("SMD".equals(q.mounting())) {
+                    tokens.add("SMT");
+                }
+                String orientation = tmeOrientation(c);
+                if (orientation != null) {
+                    tokens.add(orientation);
+                }
+                if (standard != null && standard.rank() == 1) {
+                    tokens.add("2.0");
+                } else if (standard != null && standard.rank() == 2 && !ParsedQuery.USB_TYPE_C.equals(usbType)) {
+                    tokens.add("3.0");
+                }
+                if (c.hasFeature(UsbVocabulary.POWER_ONLY)) {
+                    tokens.add("charging");
+                }
+                if (c.hasFeature(UsbVocabulary.MID_MOUNT)) {
+                    tokens.add("middle");
+                }
+                if (c.hasFeature(UsbVocabulary.WATERPROOF)) {
+                    tokens.add(ipRating(c) != null ? ipRating(c) : "waterproof");
+                }
+                tokens.addAll(informativeKeywords(q, 2));
+                return join(tokens, TME_MAX_LENGTH);
+            }
+            default -> {
+                tokens.add(mouserUsbType(usbType, c.type()) + " " + (plug ? "plug" : "receptacle"));
+                if (c.orientation() != null) {
+                    tokens.add(c.orientation());
+                }
+                if (q.mounting() != null) {
+                    tokens.add(q.mounting());
+                }
+                if (version != null) {
+                    tokens.add(version);
+                }
+                if (c.hasFeature(UsbVocabulary.POWER_ONLY)) {
+                    tokens.add("6 pos power only");
+                }
+                if (c.hasFeature(UsbVocabulary.MID_MOUNT)) {
+                    tokens.add("mid");
+                }
+                if (UsbVocabulary.HYBRID.equals(c.mountingStyle())) {
+                    tokens.add("hybrid");
+                }
+                if (c.hasFeature(UsbVocabulary.WATERPROOF)) {
+                    tokens.add(ipRating(c) != null ? ipRating(c) : "waterproof");
+                }
+                tokens.addAll(informativeKeywords(q, 2));
+                return String.join(" ", tokens);
+            }
+        }
+    }
+
+    /** The shorter USB phrase tried when the first one found nothing: the type and gender words only. */
+    private static String usbFallback(Distributor distributor, ParsedQuery.Connector c) {
+        String usbType = c.usbType() != null ? c.usbType() : UsbVocabulary.usbTypeOf(c.type());
+        boolean plug = ParsedQuery.MALE.equals(c.gender());
+        return distributor == Distributor.TME ? tmeUsbType(usbType, c.type()) + " " + (plug ? "plug" : "socket")
+                : mouserUsbType(usbType, c.type()) + " " + (plug ? "plug" : "receptacle");
+    }
+
+    /** TME "Type of connector" wording: {@code USB C}, {@code USB B micro}, {@code USB A}... */
+    private static String tmeUsbType(String usbType, String type) {
+        if (usbType == null) {
+            return ParsedQuery.MICRO_USB.equals(type) ? "USB B micro" : "USB";
+        }
+        return switch (usbType) {
+            case ParsedQuery.USB_TYPE_C -> "USB C";
+            case ParsedQuery.USB_MICRO_B -> "USB B micro";
+            case ParsedQuery.USB_MICRO_AB -> "USB AB micro";
+            case ParsedQuery.USB_MINI_B, ParsedQuery.USB_MINI_AB -> "USB B mini";
+            case ParsedQuery.USB_TYPE_A -> "USB A";
+            case ParsedQuery.USB_TYPE_B -> "USB B";
+            default -> "USB";
+        };
+    }
+
+    /** Mouser keyword wording: {@code USB type C}, {@code micro USB}, {@code USB type A}... */
+    private static String mouserUsbType(String usbType, String type) {
+        if (usbType == null) {
+            return ParsedQuery.MICRO_USB.equals(type) ? "micro USB" : "USB";
+        }
+        return switch (usbType) {
+            case ParsedQuery.USB_TYPE_C -> "USB type C";
+            case ParsedQuery.USB_MICRO_B -> "micro USB";
+            case ParsedQuery.USB_MICRO_AB -> "micro USB AB";
+            case ParsedQuery.USB_MINI_B, ParsedQuery.USB_MINI_AB -> "mini USB";
+            case ParsedQuery.USB_TYPE_A -> "USB type A";
+            case ParsedQuery.USB_TYPE_B -> "USB type B";
+            default -> "USB";
+        };
+    }
+
+    private static String ipRating(ParsedQuery.Connector c) {
+        return c.features().stream().filter(f -> f.startsWith("IP")).findFirst().orElse(null);
     }
 
     // ---------------------------------------------------------------- keyword core

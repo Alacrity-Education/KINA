@@ -65,10 +65,44 @@ final class JlcpcbTestDatabase {
                     "Extended", "-55℃~+105℃ 1 1x40P 2.54mm 2.54mm 3A 3mm 40P Black Brass Gold Pin Header Right Angle"
                             + " 弯插,P=2.54mm", "1-:0.09", "4652"));
 
+    /** Real {@code Connectors / USB Connectors} rows of the JLCPCB database (2026-10-05). */
+    static final List<JlcpcbRow> USB = List.of(
+            row("C2765186", "Connectors", "USB Connectors", "TYPE-C 16PIN 2MD(073)", "SMD", "SHOU HAN", "Extended",
+                    "-25℃~+85℃ 1 10 thousand cycles 16P 3A 5V Black Female Surface Mount, Right Angle Type-C",
+                    "1-:0.1", "1013673"),
+            row("C52209111", "Connectors", "USB Connectors", "HH 16P TYPE-C (Y495)", "SMD", "HH", "Extended",
+                    "-40℃~+85℃ 1 16P 20V 3,000 Cycles 3A 7.35mm Black Female Surface Mount, Right Angle Type-C USB 2.0"
+                            + " With Locating Pins", "1-:0.1", "11681"),
+            row("C3020043", "Connectors", "USB Connectors", "TYPE-C 16PFS 4J-H7.05 IPX6", "SMD", "SHOU HAN", "Extended",
+                    "-30℃~+85℃ 1 10 thousand cycles 16P 3A Black Female Surface Mount, Right Angle Type-C USB 3.1",
+                    "1-:0.2", "12512"),
+            row("C20883026", "Connectors", "USB Connectors", "TYPE-C-F02C-1BBWC1.6", "SMD", "XYECONN", "Extended",
+                    "-40℃~+85℃ 1 10000 times 16P 5A 5V 6.5mm Female Laminated board Type-C", "1-:0.2", "1526"),
+            row("C7500849", "Connectors", "USB Connectors", "161N-4BSD78", "-", "HanElectricity", "Extended",
+                    "1 10,000 cycles 16P 20V 5A 8mm Black Female Surface Mount, Right Angle TypeC", "1-:0.2", "450"),
+            row("C5454922", "Connectors", "USB Connectors", "TYPEC-324GC-ACP24", "SMD", "XUNPU", "Extended",
+                    "-40℃~+85℃ 1 10000 times 24P 5A 5V 7.9mm Black Female Surface Mount, Right Angle Type-C USB 3.1",
+                    "1-:0.3", "260"),
+            row("C5260493", "Connectors", "USB Connectors", "YTC-TC6-150", "SMD", "YIYUAN", "Extended",
+                    "-20℃~+85℃ 1 10000 times 3A 5V 5mm 6P Female Surface Mount, Right Angle Type-C", "1-:0.05", "1810"),
+            row("C10418", "Connectors", "USB Connectors", "920-E52A2021S10100", "SMD", "Jing Extension of the Electronic Co.",
+                    "Extended", "-30℃~+80℃ 1 1A 5.15mm 5P Black Female Micro-B Surface Mount, Right Angle USB 2.0",
+                    "1-:0.05", "33937"),
+            row("C2345", "Connectors", "USB Connectors", "902-131A1011D10100", "Plugin",
+                    "Jing Extension of the Electronic Co.", "Extended",
+                    "1 1.5A 14.1mm 1500 Cycles 30V 4P Female Type-A USB 2.0 White 插件", "1-:0.05", "39160"));
+
     /** {@link #SAMPLE} plus {@link #CONNECTORS}. */
     static List<JlcpcbRow> withConnectors() {
         List<JlcpcbRow> rows = new java.util.ArrayList<>(SAMPLE);
         rows.addAll(CONNECTORS);
+        return rows;
+    }
+
+    /** {@link #SAMPLE}, {@link #CONNECTORS} and {@link #USB}. */
+    static List<JlcpcbRow> withUsb() {
+        List<JlcpcbRow> rows = new java.util.ArrayList<>(withConnectors());
+        rows.addAll(USB);
         return rows;
     }
 

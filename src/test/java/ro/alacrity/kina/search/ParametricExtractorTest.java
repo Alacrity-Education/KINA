@@ -8,6 +8,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -335,5 +336,226 @@ class ParametricExtractorTest {
         Part mcu = RankingFixtures.lcsc("C2040", "Raspberry Pi", "RP2040", "133MHz 264KB ARM Cortex-M0+ USB 1.1",
                 "Embedded Processors & Controllers / Microcontrollers (MCU/MPU/SOC)", "LQFP-56", Map.of());
         assertThat(extractor.extract(mcu)).doesNotContainKeys("Positions", "ConnectorType");
+    }
+
+    // ------------------------------------------------------------------ USB connectors (real strings, 2026-10-05)
+
+    private static Map<String, String> usbKeys(Map<String, String> attributes) {
+        Map<String, String> out = new LinkedHashMap<>();
+        for (String key : List.of("ConnectorType", "Gender", "Positions", "Orientation", "Mounting", "UsbType",
+                "UsbStandard", "UsbSpeedGbps", "PinConfiguration", "ShieldPinsCounted", "MountingStyle", "Waterproof",
+                "Features")) {
+            if (attributes.containsKey(key)) {
+                out.put(key, attributes.get(key));
+            }
+        }
+        return out;
+    }
+
+    private Map<String, String> lcscUsb(String mpn, String description, String packageName) {
+        return usbKeys(extractor.extract(RankingFixtures.lcsc("C1", "X", mpn, description,
+                "Connectors / USB Connectors", packageName, Map.of())));
+    }
+
+    @Test
+    void lcscUsbDescriptions() {
+        // JLCPCB labels many 16P Type-C parts "USB 3.1": 16 contacts carry no SuperSpeed pairs -> USB 2.0
+        assertThat(lcscUsb("TYPE-C-F02C-1BBWC2.1", "-40℃~+85℃ 1 1.63mm 10,000 Cycles 16P 5A 5V 6.5mm Black Female "
+                + "Laminated board Type-C USB 3.1", "SMD")).containsExactlyEntriesOf(RankingFixtures.attrs(
+                "ConnectorType", "usb-c", "Gender", "female", "Positions", "16", "Mounting", "SMD", "UsbType", "Type-C",
+                "UsbStandard", "USB 2.0", "UsbSpeedGbps", "0.48", "PinConfiguration", "16", "MountingStyle", "mid-mount",
+                "Features", "mid-mount"));
+        assertThat(lcscUsb("TYPEC-324GC-ACP24", "-40℃~+85℃ 1 10000 times 24P 5A 5V 7.9mm Black Female Surface Mount, "
+                + "Right Angle Type-C USB 3.1", "SMD")).containsExactlyEntriesOf(RankingFixtures.attrs(
+                "ConnectorType", "usb-c", "Gender", "female", "Positions", "24", "Orientation", "right angle",
+                "Mounting", "SMD", "UsbType", "Type-C", "UsbStandard", "USB 3.x", "UsbSpeedGbps", "5",
+                "PinConfiguration", "24", "MountingStyle", "SMD"));
+        assertThat(lcscUsb("HH 16P TYPE-C (Y495)", "-40℃~+85℃ 1 16P 20V 3,000 Cycles 3A 7.35mm Black Female Surface "
+                + "Mount, Right Angle Type-C USB 2.0 With Locating Pins", "SMD"))
+                .containsEntry("UsbStandard", "USB 2.0").containsEntry("PinConfiguration", "16")
+                .containsEntry("Features", "board lock");
+        // 6P Type-C: power only, whatever the label says
+        assertThat(lcscUsb("YTC-TC6-150", "-20℃~+85℃ 1 10000 times 3A 5V 5mm 6P Female Surface Mount, Right Angle "
+                + "Type-C", "SMD")).containsEntry("PinConfiguration", "6").containsEntry("Features", "power only")
+                .doesNotContainKey("UsbStandard");
+        // sealing only in the part number
+        assertThat(lcscUsb("TYPE-C 6PFS 4J-H7.5 IPX8", "-20℃~+85℃ 1 30V 3A 5 thousand cycles 6P Black Female Surface "
+                + "Mount, Right Angle Type-C USB 3.1", "SMD")).containsEntry("Waterproof", "IPX8")
+                .doesNotContainKey("UsbStandard").containsEntry("Features", "waterproof, IPX8, power only");
+        assertThat(lcscUsb("920-E52A2021S10100", "-30℃~+80℃ 1 1A 5.15mm 5P Black Female Micro-B Surface Mount, Right "
+                + "Angle USB 2.0", "SMD")).containsEntry("ConnectorType", "micro usb").containsEntry("UsbType", "Micro-B")
+                .containsEntry("UsbStandard", "USB 2.0").containsEntry("PinConfiguration", "5");
+        assertThat(lcscUsb("HC-USB3.0-L168-WP", "-25℃~+70℃ 1 1,500 Cycles 1.5A 16.8mm 30V 9P Blue Female Right Angle "
+                + "Type-A USB 3.0 弯插", "Push-Pull")).containsEntry("ConnectorType", "usb").containsEntry("UsbType", "Type-A")
+                .containsEntry("UsbStandard", "USB 3.2 Gen 1").containsEntry("PinConfiguration", "9")
+                .containsEntry("Orientation", "right angle");
+        // unlabelled Type-A 4P is USB 2.0 by its contacts
+        assertThat(lcscUsb("U-G-O4DD-W-1", "1 18.75mm 1A 30V 4P Black Laminated board Male Type-A USB 2.0 插件", "Plugin"))
+                .containsEntry("Gender", "male").containsEntry("UsbStandard", "USB 2.0").containsEntry("Mounting", "THT");
+        assertThat(lcscUsb("TYPE-C 24P GTJB", "-40℃~+85℃ 1 10 thousand cycles 20V 24P 5A Clamping plate Male Type-C",
+                "SMD")).containsEntry("Gender", "male").containsEntry("PinConfiguration", "24")
+                .doesNotContainKey("UsbStandard").containsEntry("Features", "straddle-mount");
+        assertThat(lcscUsb("PTCFW-H22F-027", "-25℃~+85℃ 1 1.68mm 10 thousand cycles 24P 48V 5A 7.9mm Black Female "
+                + "Surface Mount, Right Angle Type-C USB4 With Locating Pins", "SMD"))
+                .containsEntry("UsbStandard", "USB4").containsEntry("UsbSpeedGbps", "40");
+    }
+
+    @Test
+    void shellPinsCountedInThePinCount() {
+        // 17P/18P -> 16, 25P/26P -> 24 (distributors that count shell/shield pins); 14 stays 14
+        for (String[] row : new String[][]{{"17", "16", "1"}, {"18", "16", "2"}, {"25", "24", "1"},
+                {"26", "24", "2"}, {"7", "6", "1"}, {"8", "6", "2"}, {"13", "12", "1"}}) {
+            Map<String, String> keys = lcscUsb("X", "1 " + row[0] + "P 5A Female Surface Mount, Right Angle Type-C", "SMD");
+            assertThat(keys).as(row[0]).containsEntry("Positions", row[0]).containsEntry("PinConfiguration", row[1])
+                    .containsEntry("ShieldPinsCounted", row[2]);
+        }
+        assertThat(lcscUsb("X", "1 14P 5A Female Surface Mount, Right Angle Type-C USB 2.0", "SMD"))
+                .containsEntry("PinConfiguration", "14").doesNotContainKey("ShieldPinsCounted");
+        // Micro-B 6/7 -> 5, Type-A 5/6 -> 4, USB 3.0 Type-A 10/11 -> 9
+        assertThat(lcscUsb("X", "1 7P Female Micro-B Surface Mount", "SMD")).containsEntry("PinConfiguration", "5")
+                .containsEntry("ShieldPinsCounted", "2");
+        assertThat(lcscUsb("X", "1 5P Female Type-A USB 2.0", "Plugin")).containsEntry("PinConfiguration", "4")
+                .containsEntry("ShieldPinsCounted", "1");
+        assertThat(lcscUsb("X", "1 11P Female Type-A USB 3.0", "Plugin")).containsEntry("PinConfiguration", "9")
+                .containsEntry("ShieldPinsCounted", "2");
+        // the only shell-counted Type-C in the JLCPCB database: package "SMD-26P" (C9900163433, TYPE-C-24)
+        assertThat(lcscUsb("TYPE-C-24", "Type-C not ROHS", "SMD-26P")).containsEntry("Positions", "26")
+                .containsEntry("PinConfiguration", "24").containsEntry("ShieldPinsCounted", "2");
+        // TME "PIN: 17" (Number of pins parameter) and Mouser "8 Positions" (10178589-00011LF, a 6-pin power-only part)
+        assertThat(usbKeys(extractor.extract(RankingFixtures.tme("X17", "GCT", "Connector: USB C; socket; SMT; PIN: 17",
+                "USB & IEEE1394 connectors", null, RankingFixtures.attrs("Type of connector", "USB C",
+                        "Number of pins", "17", "Version", "USB 2.0")))))
+                .containsEntry("Positions", "17").containsEntry("PinConfiguration", "16")
+                .containsEntry("ShieldPinsCounted", "1").containsEntry("UsbStandard", "USB 2.0");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("10178589-00011LF", "Amphenol",
+                "USB Connectors USB C Receptacle Right Angle 8 Positions G/F Sink 0.8mm IPX5", "USB Connectors", null,
+                Map.of())))).containsEntry("Positions", "8").containsEntry("PinConfiguration", "6")
+                .containsEntry("ShieldPinsCounted", "2").containsEntry("MountingStyle", "mid-mount")
+                .containsEntry("Waterproof", "IPX5").containsEntry("Gender", "female");
+    }
+
+    @Test
+    void explicitPinSumsInUsbDescriptions() {
+        // forms found in the JLCPCB database: stacked ports, combos, pins + legs
+        assertThat(lcscUsb("907-322A1101Y10210", "1.5A USB 2.0 2 Straight 4P+4P Female -55℃~+85℃ Type-A Plugin",
+                "Plugin")).containsEntry("Positions", "8").containsEntry("PinConfiguration", "4")
+                .containsEntry("Features", "multi-port");
+        assertThat(lcscUsb("MU-221", "-30℃~+85℃ 11mm 2 20V 4P+14P 5A Female Through Hole Type-A、Type-C USB 2.0 插件",
+                "Plugin")).containsEntry("UsbType", "Type-C").containsEntry("PinConfiguration", "14")
+                .containsEntry("Features", "multi-port");
+        assertThat(lcscUsb("2171800001", "-40℃~+85℃ 1 10000 times 30V 5A 8P+16P Black Female Type-C USB 2.0", "SMD"))
+                .containsEntry("Positions", "24").containsEntry("PinConfiguration", "16")
+                .containsEntry("UsbStandard", "USB 2.0").doesNotContainKey("Features");
+        assertThat(lcscUsb("HX TYPE-C-2P+4J", "-30℃~+80℃ 1 2P+4J 3A 5V Black Female Right Angle Type-C", "SMD"))
+                .containsEntry("Positions", "2").containsEntry("PinConfiguration", "2")
+                .containsEntry("Features", "4 legs, power only");
+        // a user's "16+2P": 16 signal contacts plus 2 shell pins
+        assertThat(lcscUsb("X", "Type-C 16+2P Female", "SMD")).containsEntry("Positions", "18")
+                .containsEntry("PinConfiguration", "16").containsEntry("ShieldPinsCounted", "2");
+    }
+
+    @Test
+    void tmeUsbParameters() {
+        // real TME parameters (2026-10-05, /products/parameters)
+        Part midMount = RankingFixtures.tme("USB4500-03-0-A", "GCT",
+                "Connector: USB C; socket; SMT; PIN: 16; horizontal; USB 2.0; 5A", "USB & IEEE1394 connectors", null,
+                RankingFixtures.attrs("Version", "USB 2.0", "Connector variant", "middle board mount", "Number of pins",
+                        "16", "Current rating", "5A", "Electrical mounting", "SMT", "Type of connector", "USB C",
+                        "Connector", "socket", "Spatial orientation", "horizontal", "Rated voltage", "48V DC"));
+        assertThat(usbKeys(extractor.extract(midMount))).containsExactlyEntriesOf(RankingFixtures.attrs(
+                "ConnectorType", "usb-c", "Gender", "female", "Positions", "16", "Orientation", "right angle",
+                "Mounting", "SMD", "UsbType", "Type-C", "UsbStandard", "USB 2.0", "UsbSpeedGbps", "0.48",
+                "PinConfiguration", "16", "MountingStyle", "mid-mount", "Features", "mid-mount"));
+        Part charging = RankingFixtures.tme("USB4736-GF-A-KIT", "GCT",
+                "Connector: USB C; socket; SMT; PIN: 6; top board mount; IP67; 3A", "USB & IEEE1394 connectors", null,
+                RankingFixtures.attrs("Type of connector", "USB C", "Connector", "socket", "Electrical mounting", "SMT",
+                        "Number of pins", "6", "Connector variant", "top board mount", "IP rating", "IP67",
+                        "Current rating", "3A", "Connectors application", "only for charging (6p)"));
+        assertThat(usbKeys(extractor.extract(charging))).containsEntry("PinConfiguration", "6")
+                .containsEntry("Waterproof", "IP67").containsEntry("MountingStyle", "top-mount")
+                .containsEntry("Features", "waterproof, power only, top-mount, IP67").doesNotContainKey("UsbStandard");
+        Part hybrid = RankingFixtures.tme("USB4056-03-A", "GCT",
+                "Connector: USB C; socket; hybrid SMT/THT; PIN: 24; horizontal; 5A", "USB & IEEE1394 connectors", null,
+                RankingFixtures.attrs("Type of connector", "USB C", "Connector", "socket", "Electrical mounting",
+                        "hybrid SMT/THT", "Number of pins", "24", "Spatial orientation", "horizontal", "Version", "USB 3.2"));
+        assertThat(usbKeys(extractor.extract(hybrid))).containsEntry("MountingStyle", "hybrid")
+                .containsEntry("UsbStandard", "USB 3.x").containsEntry("PinConfiguration", "24");
+        // "Data transfer rate" beats "Version": USB 4.0 + 20Gbps + Gen.2x2 is a 20 Gbps part
+        Part gen2x2 = RankingFixtures.tme("CX90B1-24P/C", "HIROSE",
+                "Connector: USB C; socket; CX; on PCBs; SMT; PIN: 24; horizontal; 5A", null, null,
+                RankingFixtures.attrs("Type of connector", "USB C", "Connector", "socket", "Electrical mounting", "SMT",
+                        "Number of pins", "24", "Version", "USB 4.0", "Data transfer rate", "20Gbps",
+                        "Connector variant", "Gen.2x2"));
+        assertThat(usbKeys(extractor.extract(gen2x2))).containsEntry("UsbStandard", "USB 3.2 Gen 2x2")
+                .containsEntry("UsbSpeedGbps", "20");
+        // TME "Version: USB 3.0" on a 16-pin part with "Data transfer rate: 0.48Gbps"
+        Part cx90m = RankingFixtures.tme("CX90M-16P/C", "HIROSE",
+                "Connector: USB C; socket; CX; on PCBs; SMT; PIN: 16; horizontal; 6A", null, null,
+                RankingFixtures.attrs("Version", "USB 3.0", "Data transfer rate", "0.48Gbps", "Number of pins", "16",
+                        "Electrical mounting", "SMT", "Type of connector", "USB C", "Connector", "socket"));
+        assertThat(usbKeys(extractor.extract(cx90m))).containsEntry("UsbStandard", "USB 2.0");
+        Part micro = RankingFixtures.tme("USB3131-30-0230-A", "GCT",
+                "Connector: USB B micro; socket; THT; PIN: 5; straight; USB 2.0; 1.8A", "USB & IEEE1394 connectors", null,
+                RankingFixtures.attrs("Type of connector", "USB B micro", "Connector", "socket", "Electrical mounting",
+                        "THT", "Number of pins", "5", "Spatial orientation", "straight", "Version", "USB 2.0"));
+        assertThat(usbKeys(extractor.extract(micro))).containsEntry("UsbType", "Micro-B")
+                .containsEntry("ConnectorType", "micro usb").containsEntry("Orientation", "vertical")
+                .containsEntry("Mounting", "THT");
+        // TME cables and adapters are not board connectors
+        Part cable = RankingFixtures.tme("80034", "BASEUS", "Cable; USB C plug,USB C plug 90° up/down; 1m; black; 10Gbps; 60W",
+                "USB cables and adapters", null, Map.of());
+        assertThat(extractor.extract(cable)).doesNotContainKey("ConnectorType").doesNotContainKey("UsbType");
+    }
+
+    @Test
+    void mouserUsbDescriptions() {
+        // Mouser's search returns no USB ProductAttributes (only Packaging / Standard Pack Qty): description only
+        Map<String, String> uj20 = usbKeys(extractor.extract(RankingFixtures.mouser("UJ20-C-H-G-MSMT-4-P16-TR",
+                "Same Sky", "USB Connectors Type C,2.0, Horizontal, Gold plated 3u, Mid Surface Mount 1.86mm, 16 pin, T&R",
+                "USB Connectors", null, RankingFixtures.attrs("Packaging", "Reel, Cut Tape"))));
+        assertThat(uj20).containsEntry("UsbType", "Type-C").containsEntry("UsbStandard", "USB 2.0")
+                .containsEntry("PinConfiguration", "16").containsEntry("MountingStyle", "mid-mount")
+                .containsEntry("Orientation", "right angle");
+        // "3u" gold plating and "6.5H" height are not a capacitance / inductance of a connector
+        Part plated = RankingFixtures.mouser("UJ20-C-H-G-MSMT-4-P16-TR", "Same Sky",
+                "USB Connectors Type C,2.0, Horizontal, Gold plated 3u, Mid Surface Mount 1.86mm, 16 pin, T&R",
+                "USB Connectors", null, Map.of());
+        assertThat(extractor.extract(plated)).doesNotContainKey("Capacitance");
+        assertThat(extractor.extract(RankingFixtures.mouser("UJ20-C-V-C-1-SMT-TR", "Same Sky",
+                "USB Connectors USB Jack 2.0, Type-C, Vertical, Copper Alloy, Surface Mount, 6.5H, T&R", "USB Connectors",
+                null, Map.of()))).doesNotContainKey("Inductance").containsEntry("UsbStandard", "USB 2.0")
+                .containsEntry("Gender", "female").containsEntry("Orientation", "vertical");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("UJ31-CH-G-SMT-TR-67", "Same Sky",
+                "USB Connectors Type C, USB 3.2 Gen 2x1, 10 Gbps, 20 Vdc, 5 A, Horizontal, Hybrid Mount Mounting Style, "
+                        + "Hybrid Mount Contact Pin Type, Gold Flash, 24 Pins, IP67, USB Receptacle", "USB Connectors", null,
+                Map.of())))).containsEntry("UsbStandard", "USB 3.2 Gen 2").containsEntry("UsbSpeedGbps", "10")
+                .containsEntry("PinConfiguration", "24").containsEntry("MountingStyle", "hybrid")
+                .containsEntry("Waterproof", "IP67").containsEntry("Gender", "female");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("CX90MW9-24P", "Hirose",
+                "USB Connectors Receptacle, USB4, 24pos., 5A, right angle", "USB Connectors", null, Map.of()))))
+                .containsEntry("UsbStandard", "USB4").containsEntry("Positions", "24");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("217184-0001", "Molex",
+                "USB Connectors Mid-Mnt DR SMT 24Ckt Type C Rec.", "USB Connectors", null, Map.of()))))
+                .containsEntry("Positions", "24").containsEntry("MountingStyle", "mid-mount")
+                .containsEntry("Gender", "female");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("UJC-HP-3-SMT-TR", "Same Sky",
+                "USB Connectors Type C, Power Only, 20 Vdc, 3 A, Horizontal, Surface Mount Anchor Pins Mounting Style, "
+                        + "Surface Mount Contact Pin Type, Gold Flash, Long Tabs, 6 Pins, Receptacle", "USB Connectors",
+                null, Map.of())))).containsEntry("PinConfiguration", "6").containsEntry("Features", "power only");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("UJ2-MIBH-4-SMT-TR", "Same Sky",
+                "USB Connectors USB 2.0 micro B jack 5 pin Horizontal SMT", "USB Connectors", null, Map.of()))))
+                .containsEntry("UsbType", "Micro-B").containsEntry("PinConfiguration", "5")
+                .containsEntry("UsbStandard", "USB 2.0").containsEntry("Gender", "female");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("USB-A3-S-RA", "Adam Tech",
+                "USB Connectors USB 3.0 TYPE A FML RIGHT ANGLE T/H", "USB Connectors", null, Map.of()))))
+                .containsEntry("UsbType", "Type-A").containsEntry("UsbStandard", "USB 3.2 Gen 1")
+                .containsEntry("Gender", "female").containsEntry("Orientation", "right angle");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("DX07P024AJ5R1500", "JAE",
+                "USB Connectors Type C USB 3.1 Gen 2 Slim Plug", "USB Connectors", null, Map.of()))))
+                .containsEntry("Gender", "male").containsEntry("UsbStandard", "USB 3.2 Gen 2");
+        assertThat(usbKeys(extractor.extract(RankingFixtures.mouser("USB4960-00-C", "GCT",
+                "USB Connectors USB C 2.0, 16P, Receptacle, Vertical, SMT & TH stakes, H = 6.50mm,  T&R", "USB Connectors",
+                null, Map.of())))).containsEntry("MountingStyle", "hybrid").containsEntry("PinConfiguration", "16")
+                .containsEntry("UsbStandard", "USB 2.0").containsEntry("Orientation", "vertical");
     }
 }

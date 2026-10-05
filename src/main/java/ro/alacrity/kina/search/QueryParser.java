@@ -26,7 +26,7 @@ public class QueryParser {
         ParsedQuery.Connector connector = null;
         ConnectorRecognizer.Result c = ConnectorRecognizer.analyze(original);
         if (isConnectorQuery(analysis, c)) {
-            connector = c.connector();
+            connector = withImpliedConfiguration(c.connector());
             // the generic recognisers only see what the connector vocabulary left (no "90 degree", "2.54mm", "6 pos")
             analysis = Recognizers.analyze(c.residual());
         }
@@ -53,6 +53,25 @@ public class QueryParser {
             return false;
         }
         return !analysis.familyExplicit() || "connector".equals(analysis.family()) || icSocket;
+    }
+
+    /**
+     * A USB request without a pin count gets the configuration its standard implies (DESIGN.md 3.4): "USB 2.0 Type-C"
+     * -&gt; 16, "USB 3.1 Type-C" -&gt; 24, a power-only Type-C -&gt; 6 ({@link UsbVocabulary#impliedConfiguration});
+     * {@code pinConfigurationImplied} marks it so the ranker gives it half weight. The positions stay unknown.
+     */
+    static ParsedQuery.Connector withImpliedConfiguration(ParsedQuery.Connector c) {
+        if (c == null || !c.isUsb() || c.pinConfiguration() != null || c.positions() != null) {
+            return c;
+        }
+        Integer implied = UsbVocabulary.impliedConfiguration(c.usbType(), UsbVocabulary.standard(c.usbStandard()),
+                c.hasFeature(UsbVocabulary.POWER_ONLY));
+        if (implied == null) {
+            return c;
+        }
+        return new ParsedQuery.Connector(c.type(), c.series(), c.gender(), c.positions(), c.rows(), c.pitchMm(),
+                c.pitchImplied(), c.orientation(), c.usbType(), c.usbStandard(), c.usbSpeedGbps(), implied, true,
+                c.shieldPinsCounted(), c.mountingStyle(), c.features());
     }
 
     /** Cache key normalisation: trim, collapse whitespace, lower-case, Unicode NFKC, µ-&gt;u, Ω-&gt;ohm. */

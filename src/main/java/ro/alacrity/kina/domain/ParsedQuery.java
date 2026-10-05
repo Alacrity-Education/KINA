@@ -62,6 +62,15 @@ public record ParsedQuery(
     /** Generic connector without a recognised type. */
     public static final String CONNECTOR = "connector";
 
+    /** USB connector types ({@link Connector#usbType()}). */
+    public static final String USB_TYPE_C = "Type-C";
+    public static final String USB_MICRO_B = "Micro-B";
+    public static final String USB_MICRO_AB = "Micro-AB";
+    public static final String USB_MINI_B = "Mini-B";
+    public static final String USB_MINI_AB = "Mini-AB";
+    public static final String USB_TYPE_A = "Type-A";
+    public static final String USB_TYPE_B = "Type-B";
+
     public static final String MALE = "male";
     public static final String FEMALE = "female";
 
@@ -87,22 +96,58 @@ public record ParsedQuery(
     /**
      * Connector attributes of a query or a part (DESIGN.md 3.4). Every field is null when unknown.
      *
-     * @param type         one of the connector type constants of {@link ParsedQuery} ("female header", "usb-c"...)
-     * @param series       wire-to-board series ("XH", "PH", "GH", "SH", "ZH"), else null
-     * @param gender       {@link #MALE} or {@link #FEMALE}
-     * @param positions    total number of positions (pins / contacts / ways), e.g. 6 for {@code 2x3}
-     * @param rows         number of rows ({@code 1x6} -&gt; 1, {@code 2x3} -&gt; 2, "dual row" -&gt; 2)
-     * @param pitchMm      contact pitch in millimetres (0.1" -&gt; 2.54)
-     * @param pitchImplied true when the pitch was not written but implied (Dupont -&gt; 2.54 mm, JST XH -&gt; 2.5 mm)
-     * @param orientation  {@link #RIGHT_ANGLE} or {@link #VERTICAL}
+     * @param type          one of the connector type constants of {@link ParsedQuery} ("female header", "usb-c"...)
+     * @param series        wire-to-board series ("XH", "PH", "GH", "SH", "ZH"), else null
+     * @param gender        {@link #MALE} or {@link #FEMALE}
+     * @param positions     total number of positions (pins / contacts / ways) as written or reported, e.g. 6 for
+     *                      {@code 2x3}; 17 for a Type-C part listed as {@code 17P}
+     * @param rows          number of rows ({@code 1x6} -&gt; 1, {@code 2x3} -&gt; 2, "dual row" -&gt; 2)
+     * @param pitchMm       contact pitch in millimetres (0.1" -&gt; 2.54)
+     * @param pitchImplied  true when the pitch was not written but implied (Dupont -&gt; 2.54 mm, JST XH -&gt; 2.5 mm)
+     * @param orientation   {@link #RIGHT_ANGLE} or {@link #VERTICAL}
+     * @param usbType       USB connector type ({@link #USB_TYPE_C}, {@link #USB_MICRO_B}, {@link #USB_TYPE_A}...)
+     * @param usbStandard   canonical USB standard ("USB 2.0", "USB 3.2 Gen 1", "USB 3.x" (generation not stated),
+     *                      "USB 3.2 Gen 2", "USB 3.2 Gen 2x2", "USB4", "Thunderbolt 3", "Thunderbolt 4")
+     * @param usbSpeedGbps  speed class of the standard in Gbit/s (0.48, 5, 10, 20, 40)
+     * @param pinConfiguration canonical signal-pin configuration (Type-C 6/12/14/16/24, Micro-B 5/10, Type-A 4/9);
+     *                      {@code 17P}/{@code 18P} Type-C -&gt; 16 (shell pins counted), see {@link #shieldPinsCounted}
+     * @param pinConfigurationImplied true when a query did not state the pin count and the configuration is inferred
+     *                      from the standard ("USB 2.0 Type-C" -&gt; 16, "USB 3.1 Type-C" -&gt; 24, power only -&gt; 6)
+     * @param shieldPinsCounted shell/shield/mounting pins included in {@link #positions} (17P -&gt; 1), else null
+     * @param mountingStyle "mid-mount", "hybrid" (SMD signal pins with through-hole shell legs) or "top-mount"
+     * @param features      USB features ("power only", "PD", "mid-mount", "hybrid", "waterproof", "IP67",
+     *                      "board lock", "through-hole shell", "4 legs", "multi-port"...), never null
      */
     public record Connector(String type, String series, String gender, Integer positions, Integer rows, Double pitchMm,
-                            boolean pitchImplied, String orientation) {
+                            boolean pitchImplied, String orientation, String usbType, String usbStandard,
+                            Double usbSpeedGbps, Integer pinConfiguration, boolean pinConfigurationImplied,
+                            Integer shieldPinsCounted, String mountingStyle, List<String> features) {
+
+        public Connector {
+            features = features == null ? List.of() : List.copyOf(features);
+        }
+
+        /** Connector attributes without USB details. */
+        public Connector(String type, String series, String gender, Integer positions, Integer rows, Double pitchMm,
+                         boolean pitchImplied, String orientation) {
+            this(type, series, gender, positions, rows, pitchMm, pitchImplied, orientation, null, null, null, null,
+                    false, null, null, List.of());
+        }
 
         /** True when no attribute is known. */
         public boolean isEmpty() {
             return type == null && series == null && gender == null && positions == null && rows == null
-                    && pitchMm == null && orientation == null;
+                    && pitchMm == null && orientation == null && usbType == null && usbStandard == null
+                    && pinConfiguration == null && mountingStyle == null && features.isEmpty();
+        }
+
+        /** True for USB connectors (a USB type, or the connector type usb-c / micro usb / usb). */
+        public boolean isUsb() {
+            return usbType != null || USB_C.equals(type) || MICRO_USB.equals(type) || USB.equals(type);
+        }
+
+        public boolean hasFeature(String feature) {
+            return features.contains(feature);
         }
 
         /** Pitch as display text ("2.54mm", "2mm"), or null. */

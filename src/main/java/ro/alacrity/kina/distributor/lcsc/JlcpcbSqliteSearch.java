@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * <p>Query relaxation (DESIGN.md 9.3): when the full AND query ({@link MatchMode#ALL}) has no in-stock match,
  * {@link MatchMode#RELAXED} first removes the terms that occur nowhere in the database (one cheap
  * {@code MATCH ... LIMIT 1} probe per term: {@code dupont}, {@code THT} wording...), then drops terms one at a time,
- * least informative first ({@link #DROP_ORDER}: free-text keywords, mounting, orientation, pitch, package, dielectric,
+ * least informative first ({@link #DROP_ORDER}: free-text keywords, USB standard/features, mounting, orientation, pitch, package, dielectric,
  * value, positions, family, category; later terms of the same kind before earlier ones) and retries while at least
  * {@value #MIN_RELAXED_TERMS} terms remain. A step whose terms are exactly the parametric ones is reported as
  * {@link MatchMode#PARAMETRIC}. Then {@link MatchMode#PARAMETRIC} (only values, packages, dielectrics, family and
@@ -63,7 +63,8 @@ public class JlcpcbSqliteSearch {
     public enum MatchMode { ALL, RELAXED, PARAMETRIC, ANY }
 
     /** Relaxation drops terms in this order of kinds (first = least informative). */
-    static final List<JlcpcbQuery.Kind> DROP_ORDER = List.of(JlcpcbQuery.Kind.KEYWORD, JlcpcbQuery.Kind.MOUNTING,
+    static final List<JlcpcbQuery.Kind> DROP_ORDER = List.of(JlcpcbQuery.Kind.KEYWORD, JlcpcbQuery.Kind.FEATURE,
+            JlcpcbQuery.Kind.MOUNTING,
             JlcpcbQuery.Kind.ORIENTATION, JlcpcbQuery.Kind.PITCH, JlcpcbQuery.Kind.PACKAGE, JlcpcbQuery.Kind.DIELECTRIC,
             JlcpcbQuery.Kind.VALUE, JlcpcbQuery.Kind.POSITIONS, JlcpcbQuery.Kind.FAMILY, JlcpcbQuery.Kind.CATEGORY);
     /** Relaxation never drops below this many terms (a single term is too vague; PARAMETRIC/ANY follow). */
