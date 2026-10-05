@@ -30,13 +30,13 @@ class ResponseJsonTest {
         constraints.put(ParsedQuery.CAPACITANCE, new ParsedQuery.Constraint(ParsedQuery.CAPACITANCE, 10e-6, "10uF"));
         ParsedQuery parsed = new ParsedQuery("10uF X7R 0805", "10uf x7r 0805", "capacitor", constraints, "X7R", "0805",
                 null, List.of());
-        SearchResponse response = new SearchResponse("10uF X7R 0805", ParsedQueryResponse.from(parsed), RankingMode.LAYA,
+        SearchResponse response = new SearchResponse("10uF X7R 0805", ParsedQueryResponse.from(parsed), RankingMode.BLENDED,
                 null, List.of(new DistributorResult(Distributor.MOUSER, 113, 50, 1, CacheStatus.HIT, null,
                 List.of(PartResponse.from(part, 1, 0.93)))));
 
         String json = mapper.writeValueAsString(response);
 
-        assertThat(json).contains("\"ranking\":\"laya\"", "\"ranking_note\":null", "\"total_results\":113",
+        assertThat(json).contains("\"ranking\":\"blended\"", "\"ranking_note\":null", "\"total_results\":113",
                 "\"cache\":\"hit\"", "\"part_number\":\"603-CC0805\"", "\"mpn\":\"CC0805MKX7R7BB106\"",
                 "\"package\":\"0805\"", "\"min_order_qty\":1", "\"order_multiple\":1", "\"datasheet_url\":",
                 "\"photo_url\":", "\"product_url\":", "\"distributor\":\"MOUSER\"",
@@ -98,5 +98,17 @@ class ResponseJsonTest {
                 Map.of("a", "b"), Map.of("unit", "pcs"), Instant.parse("2026-10-05T00:00:00Z"));
         assertThat(mapper.readValue(mapper.writeValueAsString(part), Part.class)).isEqualTo(part);
         assertThat(part.key()).isEqualTo("TME:CL21A106KOQNNNE");
+    }
+
+    @Test
+    void rankingSummaryIsSnakeCaseAndKeepsNullFields() {
+        DistributorStatusResponse.RankingSummary summary = new DistributorStatusResponse.RankingSummary("blended", true,
+                true, "cross-encoder/ms-marco-MiniLM-L6-v2", "int8", "c5ee24cb16019beea0893ab7796b1df96625c6b8",
+                "/data/cross-encoder", 4, 87.5, null, 40, 0.5, "PT5S");
+        String json = mapper.writeValueAsString(summary);
+        assertThat(json).contains("\"mode\":\"blended\"", "\"cross_encoder_enabled\":true", "\"ready\":true",
+                "\"model_variant\":\"int8\"", "\"model_revision\":\"c5ee24cb16019beea0893ab7796b1df96625c6b8\"",
+                "\"model_dir\":\"/data/cross-encoder\"", "\"threads\":4", "\"avg_latency_ms\":87.5",
+                "\"last_error\":null", "\"max_candidates\":40", "\"weight\":0.5", "\"timeout\":\"PT5S\"");
     }
 }

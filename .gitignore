@@ -19,6 +19,7 @@ target/
 
 # runtime data
 data/
+*.onnx
 *.db
 *.db-journal
 *.sqlite

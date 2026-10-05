@@ -9,7 +9,7 @@ import java.util.Map;
  * <p>Typed constraints are keyed by the constants below. {@link Constraint#value()} is normalised to
  * the SI base unit: farad, ohm, henry, volt, ampere, watt, hertz; tolerance is in percent
  * (e.g. {@code 5.0} for {@code ±5%}). {@link Constraint#display()} is a compact human form
- * ("10uF", "4.7kohm", "16V", "5%") used in responses and Laya prompts.
+ * ("10uF", "4.7kohm", "16V", "5%") used in responses.
  *
  * @param originalText the query as received
  * @param normalizedKey normalised cache key (trim, collapse whitespace, lower-case, NFKC, µ-&gt;u, Ω-&gt;ohm)

@@ -90,31 +90,68 @@ public record KinaProperties(
             @DefaultValue("2m") Duration maxRequestDuration) {
     }
 
+    /**
+     * {@code kina.ranking.*} (DESIGN.md 3.3).
+     *
+     * @param timeout       budget for ranking one query (deterministic + cross-encoder); 40 candidates take about
+     *                      0.1 to 0.35 s, so the default leaves a wide margin inside the 20 s requirement
+     * @param batchTimeout  overall ranking budget of one {@code search_parts_batch}
+     * @param scoreCacheTtl lifetime of cached raw cross-encoder scores (normalised query + part key)
+     */
     public record Ranking(
-            @DefaultValue("18s") Duration timeout,
+            @DefaultValue("5s") Duration timeout,
             @DefaultValue("60s") Duration batchTimeout,
             @DefaultValue("1h") Duration scoreCacheTtl,
-            @DefaultValue Laya laya) {
+            @DefaultValue CrossEncoder crossEncoder) {
     }
 
-    public record Laya(
+    /**
+     * {@code kina.ranking.cross-encoder.*}: the in-process MiniLM cross-encoder blended with the deterministic ranker
+     * (DESIGN.md 3.5).
+     *
+     * @param enabled           false: deterministic ranking only ({@code ranking: "fallback"})
+     * @param variant           {@code int8} (quantised, about 2x faster, CPU-specific file) or {@code fp32}
+     * @param modelDir          where the model files live / are downloaded to
+     * @param modelUrl          base of the model files: a Hugging Face {@code resolve/<revision>/} URL or any HTTP(S)
+     *                          directory with the same layout, or a local directory (used in place, no download)
+     * @param threads           ONNX Runtime intra-op threads; 0 = {@code min(4, availableProcessors)}
+     * @param maxConcurrent     concurrent scoring calls; further calls wait within their ranking budget
+     * @param batchSize         pairs per inference call
+     * @param maxSequenceLength tokens per pair, {@code [CLS] query [SEP] document [SEP]} (the document is cut first)
+     * @param maxCandidates     candidates scored per query, shared proportionally between distributors
+     * @param weight            {@code final = (1 - weight) * ranknorm(deterministic) + weight * ranknorm(model)}
+     * @param checkInterval     how often a missing or failed model is retried
+     * @param downloadTimeout   upper bound for downloading one model file
+     * @param autoDownload      false: never download, only use files already present (tests, air-gapped hosts)
+     */
+    public record CrossEncoder(
             @DefaultValue("true") boolean enabled,
-            @DefaultValue("http://localhost:8000") String url,
-            String apiKey,
-            @DefaultValue("multilingual") String model,
+            @DefaultValue("int8") Variant variant,
+            @DefaultValue("./data/cross-encoder") Path modelDir,
+            @DefaultValue(DEFAULT_MODEL_URL) String modelUrl,
+            @DefaultValue("0") int threads,
+            @DefaultValue("2") int maxConcurrent,
+            @DefaultValue("16") int batchSize,
+            @DefaultValue("256") int maxSequenceLength,
             @DefaultValue("40") int maxCandidates,
-            @DefaultValue("1") int maxConcurrentRequests,
-            @DefaultValue("0.2") double weight) {
+            @DefaultValue("0.5") double weight,
+            @DefaultValue("1h") Duration checkInterval,
+            @DefaultValue("10m") Duration downloadTimeout,
+            @DefaultValue("true") boolean autoDownload) {
 
-        public boolean hasApiKey() {
-            return apiKey != null && !apiKey.isBlank();
+        public static final String DEFAULT_MODEL_URL =
+                "https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/";
+
+        public enum Variant { FP32, INT8 }
+
+        /** Configured threads, or {@code min(4, availableProcessors)} when 0 or negative. */
+        public int effectiveThreads() {
+            return threads > 0 ? threads : Math.min(4, Runtime.getRuntime().availableProcessors());
         }
 
-        @Override
-        public String toString() {
-            return "Laya[enabled=" + enabled + ", url=" + url + ", apiKey=" + (hasApiKey() ? "***" : "") + ", model="
-                    + model + ", maxCandidates=" + maxCandidates + ", maxConcurrentRequests=" + maxConcurrentRequests
-                    + ", weight=" + weight + "]";
+        /** {@link #modelDir()} made absolute and normalised ({@code /data/jlcpcb/../cross-encoder} -&gt; {@code /data/cross-encoder}). */
+        public Path resolvedModelDir() {
+            return modelDir.toAbsolutePath().normalize();
         }
     }
 

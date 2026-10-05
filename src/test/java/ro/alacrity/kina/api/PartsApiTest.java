@@ -75,7 +75,7 @@ class PartsApiTest {
     }
 
     static SearchResponse response(String query) {
-        return new SearchResponse(query, ParsedQueryResponse.from(new QueryParser().parse(query)), RankingMode.LAYA,
+        return new SearchResponse(query, ParsedQueryResponse.from(new QueryParser().parse(query)), RankingMode.BLENDED,
                 null, List.of(new DistributorResult(Distributor.TME, 77, 40, 1, CacheStatus.HIT, null,
                 List.of(PartResponse.from(part(), 1, 0.93)))));
     }
@@ -93,7 +93,7 @@ class PartsApiTest {
 
         verify(searchService).search(new SearchRequest("10uF X7R 0805", 5, Set.of(Distributor.TME, Distributor.LCSC),
                 true));
-        assertThat(body).contains("\"ranking\":\"laya\"", "\"total_results\":77", "\"cache\":\"hit\"",
+        assertThat(body).contains("\"ranking\":\"blended\"", "\"total_results\":77", "\"cache\":\"hit\"",
                 "\"part_number\":\"CL21B106KPQNNNE\"", "\"min_order_qty\":10", "\"ranking_note\":null");
         assertThat(body).contains("{\"qty\":10,\"unit_price\":0.05,\"currency\":\"EUR\"}")
                 .doesNotContain("\"qty\":5000");
@@ -103,7 +103,7 @@ class PartsApiTest {
     void searchReportsTheDistributorQueryAndTheParsedConnector() {
         String query = "90 degree dupont style female pin header 90 degree THT pins 6 position";
         when(searchService.search(any())).thenReturn(new SearchResponse(query,
-                ParsedQueryResponse.from(new QueryParser().parse(query)), RankingMode.FALLBACK, "laya disabled",
+                ParsedQueryResponse.from(new QueryParser().parse(query)), RankingMode.FALLBACK, "cross-encoder disabled",
                 List.of(new DistributorResult(Distributor.TME, 166, 40, 1, CacheStatus.MISS, null,
                         List.of(PartResponse.from(part(), 1, 0.93)), "pin strips female 6", 0,
                         "pin strips female 6 angled"))));
@@ -283,7 +283,9 @@ class PartsApiTest {
         when(statusService.status()).thenReturn(new DistributorStatusResponse(List.of(
                 new DistributorStatusResponse.DistributorStatus(Distributor.LCSC, true, false,
                         "JLCPCB parts database not downloaded yet", false, null, 200, null)),
-                null, new DistributorStatusResponse.RankingSummary(true, false, "multilingual", 40, 0.2, "PT18S")));
+                null, new DistributorStatusResponse.RankingSummary("fallback", true, false,
+                        "cross-encoder/ms-marco-MiniLM-L6-v2", "int8", null, "/data/cross-encoder", 4, null,
+                        "cross-encoder model not loaded yet", 40, 0.5, "PT5S")));
 
         client.get().uri("/api/v1/distributors")
                 .exchange()
@@ -292,7 +294,11 @@ class PartsApiTest {
                 .jsonPath("$.distributors[0].distributor").isEqualTo("LCSC")
                 .jsonPath("$.distributors[0].uses_cache").isEqualTo(false)
                 .jsonPath("$.distributors[0].max_results_per_search").isEqualTo(200)
-                .jsonPath("$.ranking.laya_enabled").isEqualTo(true)
+                .jsonPath("$.ranking.cross_encoder_enabled").isEqualTo(true)
+                .jsonPath("$.ranking.mode").isEqualTo("fallback")
+                .jsonPath("$.ranking.ready").isEqualTo(false)
+                .jsonPath("$.ranking.model_variant").isEqualTo("int8")
+                .jsonPath("$.ranking.weight").isEqualTo(0.5)
                 .jsonPath("$.ranking.max_candidates").isEqualTo(40);
     }
 }

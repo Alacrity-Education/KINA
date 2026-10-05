@@ -30,7 +30,7 @@ docker run -d --name "$NAME" --network "$NETWORK" -p "127.0.0.1:${PORT}:8080" \
   -e OIDC_ISSUER_URI="$ISSUER" -e OIDC_CLIENT_ID=dummy -e OIDC_CLIENT_SECRET=dummy \
   -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/kina \
   -e SPRING_DATASOURCE_USERNAME=kina -e SPRING_DATASOURCE_PASSWORD=kina \
-  -e KINA_LAYA_ENABLED=false -e KINA_JLCPCB_AUTODOWNLOAD=false \
+  -e KINA_RANKING_CROSSENCODER_AUTODOWNLOAD=false -e KINA_JLCPCB_AUTODOWNLOAD=false \
   -v kina_kina-data:/data:ro \
   --memory 1g kina:latest >/dev/null
 

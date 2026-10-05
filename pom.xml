@@ -99,6 +99,12 @@
         </dependency>
 
         <!-- Caching (ranking score cache) -->
+        <!-- In-process cross-encoder ranking (DESIGN.md 3.5): CPU build, bundles its native library -->
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>1.30.0</version>
+        </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>

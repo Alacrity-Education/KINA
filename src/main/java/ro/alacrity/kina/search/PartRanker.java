@@ -11,12 +11,13 @@ import java.util.Map;
 public interface PartRanker {
 
     /**
-     * Scores candidates for one query. Returns a score in [0,1] per candidate key
-     * ({@link ro.alacrity.kina.domain.PartKey}: distributor + ":" + distributorPartNumber).
-     * Throws on failure/timeout; the caller falls back to the deterministic ranking.
+     * Scores candidates for one query. Returns a raw score per candidate key
+     * ({@link ro.alacrity.kina.domain.PartKey}: distributor + ":" + distributorPartNumber), higher = more relevant;
+     * only the order matters, the caller rank-normalises it. Throws on failure/timeout; the caller falls back to
+     * the deterministic ranking.
      */
     Map<String, Double> rank(ParsedQuery query, List<Part> candidates, Duration budget) throws RankingException;
 
-    /** Short name, e.g. "laya". */
+    /** Short name, e.g. "cross-encoder". */
     String name();
 }

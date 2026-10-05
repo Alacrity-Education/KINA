@@ -33,17 +33,23 @@ kina:
     distributor-timeout: 12s
     max-request-duration: 2m     # hard cap per request, including rate-limit waits (DESIGN.md 3.6)
   ranking:
-    timeout: 18s
+    timeout: 5s                  # per query; the cross-encoder needs about 0.1-0.35 s for 40 candidates
     batch-timeout: 60s
     score-cache-ttl: 1h
-    laya:
-      enabled: ${KINA_LAYA_ENABLED:true}
-      url: ${LAYA_URL:http://localhost:8000}
-      api-key: ${LAYA_API_KEY:}
-      model: ${KINA_LAYA_MODEL:multilingual}
+    cross-encoder:               # DESIGN.md 3.5: in-process MiniLM cross-encoder (ONNX Runtime), 50/50 rank blend
+      enabled: ${KINA_CROSS_ENCODER_ENABLED:true}
+      variant: ${KINA_CROSS_ENCODER_VARIANT:int8}
+      model-dir: "${KINA_CROSS_ENCODER_MODEL_DIR:${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}/../cross-encoder}"
+      model-url: "${KINA_CROSS_ENCODER_MODEL_URL:https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/}"
+      threads: ${KINA_CROSS_ENCODER_THREADS:0}      # 0 = min(4, available processors)
+      max-concurrent: 2
+      batch-size: 16
+      max-sequence-length: 256
       max-candidates: 40
-      max-concurrent-requests: ${KINA_LAYA_MAX_CONCURRENT:1}
-      weight: 0.2
+      weight: 0.5
+      check-interval: 1h
+      download-timeout: 10m
+      auto-download: true
   distributors:
     mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,

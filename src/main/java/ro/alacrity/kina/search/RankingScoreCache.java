@@ -9,7 +9,7 @@ import ro.alacrity.kina.config.KinaProperties;
 import java.time.Duration;
 
 /**
- * In-memory cache of raw Laya scores (DESIGN.md section 3.3), keyed by {@code normalizedKey + "|" + partKey},
+ * In-memory cache of raw cross-encoder scores (DESIGN.md section 3.3), keyed by {@code normalizedKey + "|" + partKey},
  * expiring {@code kina.ranking.score-cache-ttl} after write, at most {@value #MAX_ENTRIES} entries.
  */
 @Component
@@ -24,7 +24,7 @@ public class RankingScoreCache {
         this(properties.ranking().scoreCacheTtl());
     }
 
-    RankingScoreCache(Duration ttl) {
+    public RankingScoreCache(Duration ttl) {
         this.cache = Caffeine.newBuilder().expireAfterWrite(ttl).maximumSize(MAX_ENTRIES).build();
     }
 

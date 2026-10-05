@@ -11,6 +11,7 @@ import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartKey;
 import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.domain.RankingMode;
+import ro.alacrity.kina.search.ce.CrossEncoderPartRanker;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -21,27 +22,29 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 /**
- * Ranks fetched parts for one query (DESIGN.md section 3.3): deterministic scores for every part, Laya scores for a
- * bounded candidate set, rank-normalised and blended with weight {@code kina.ranking.laya.weight}. Never throws; on
- * any Laya problem the deterministic order is returned with {@link RankingMode#FALLBACK} and a note.
+ * Ranks fetched parts for one query (DESIGN.md section 3.3): deterministic scores for every part; for a bounded
+ * candidate set (the deterministic top {@code max-candidates}, shared proportionally between distributors) raw
+ * cross-encoder scores; both rank-normalised within the candidate set and blended,
+ * {@code final = (1 - w) * ranknorm(det) + w * ranknorm(ce)} with {@code w = kina.ranking.cross-encoder.weight}.
+ * Never throws; whenever the cross-encoder cannot score (disabled, not loaded, busy, timeout, failure) the
+ * deterministic order is returned with {@link RankingMode#FALLBACK} and a note.
  */
 @Service
 public class RankingService {
 
     private static final Logger log = LoggerFactory.getLogger(RankingService.class);
 
-    /** Minimum number of Laya candidates per distributor that has results. */
+    /** Minimum number of candidates per distributor that has results. */
     static final int MIN_CANDIDATES_PER_DISTRIBUTOR = 5;
-    /** Below this remaining budget a Laya call is not attempted. */
-    static final Duration MIN_CALL_BUDGET = Duration.ofMillis(100);
+    /** Below this remaining budget the cross-encoder is not called. */
+    static final Duration MIN_CALL_BUDGET = Duration.ofMillis(20);
 
     /** A part with its final score in [0,1]. */
     public record RankedPart(Part part, double score) {
@@ -49,49 +52,66 @@ public class RankingService {
 
     /**
      * Ranked parts per distributor (best first, same distributors as the input), the ranking mode and an optional
-     * note explaining a fallback (null when Laya ranking succeeded).
+     * note explaining a fallback (null when the blend succeeded).
      */
     public record RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note) {
     }
 
-    /** Ranking configuration and Laya health, for {@code list_distributors}/diagnostics. */
-    public record RankingStatus(boolean layaEnabled, String layaUrl, String model, boolean layaHealthy,
-                                int maxCandidates, double weight) {
+    /**
+     * Ranking configuration and cross-encoder health, for {@code list_distributors}.
+     *
+     * @param crossEncoderEnabled {@code kina.ranking.cross-encoder.enabled}
+     * @param modelVariant        variant in use ({@code int8}/{@code fp32}), the configured one until loaded
+     * @param modelDir            model directory
+     * @param modelRevision       source revision from {@code model.json} (Hugging Face commit), null when unknown
+     * @param ready               the model is loaded and warmed up
+     * @param maxCandidates       candidates scored per query
+     * @param weight              cross-encoder weight in the rank blend
+     * @param lastError           why the model is not loaded (null when fine)
+     * @param threads             ONNX Runtime intra-op threads
+     * @param avgLatencyMs        mean cross-encoder time per scored query since start, null before the first one
+     */
+    public record RankingStatus(boolean crossEncoderEnabled, String modelVariant, String modelDir,
+                                String modelRevision, boolean ready, int maxCandidates, double weight,
+                                String lastError, int threads, Double avgLatencyMs) {
     }
 
     private final KinaProperties.Ranking config;
     private final DeterministicRanker deterministic;
     private final PartRanker ranker;
-    private final BooleanSupplier healthCheck;
+    private final Supplier<CrossEncoderPartRanker.Status> modelStatus;
     private final RankingScoreCache cache;
-    private final Semaphore slots;
 
     @Autowired
-    public RankingService(KinaProperties properties, DeterministicRanker deterministic, LayaPartRanker laya,
-                          RankingScoreCache cache) {
-        this(properties, deterministic, laya, laya::isHealthy, cache);
+    public RankingService(KinaProperties properties, DeterministicRanker deterministic,
+                          CrossEncoderPartRanker crossEncoder, RankingScoreCache cache) {
+        this(properties, deterministic, crossEncoder, crossEncoder::status, cache);
     }
 
     RankingService(KinaProperties properties, DeterministicRanker deterministic, PartRanker ranker,
-                   BooleanSupplier healthCheck, RankingScoreCache cache) {
+                   Supplier<CrossEncoderPartRanker.Status> modelStatus, RankingScoreCache cache) {
         this.config = properties.ranking();
         this.deterministic = deterministic;
         this.ranker = ranker;
-        this.healthCheck = healthCheck;
+        this.modelStatus = modelStatus;
         this.cache = cache;
-        this.slots = new Semaphore(Math.max(1, config.laya().maxConcurrentRequests()), true);
     }
 
     public RankingStatus status() {
-        KinaProperties.Laya laya = config.laya();
-        boolean healthy;
+        KinaProperties.CrossEncoder ce = config.crossEncoder();
+        CrossEncoderPartRanker.Status s;
         try {
-            healthy = laya.enabled() && healthCheck.getAsBoolean();
+            s = modelStatus.get();
         } catch (RuntimeException e) {
-            healthy = false;
+            s = null;
         }
-        return new RankingStatus(laya.enabled(), laya.url(), laya.model(), healthy, laya.maxCandidates(),
-                laya.weight());
+        if (s == null) {
+            return new RankingStatus(ce.enabled(), ce.variant().name().toLowerCase(Locale.ROOT),
+                    ce.resolvedModelDir().toString(), null, false, ce.maxCandidates(), ce.weight(),
+                    "status unavailable", ce.effectiveThreads(), null);
+        }
+        return new RankingStatus(ce.enabled(), s.variant(), s.modelDir(), s.revision(), ce.enabled() && s.loaded(),
+                ce.maxCandidates(), ce.weight(), s.lastError(), s.threads(), s.avgLatencyMs());
     }
 
     /**
@@ -119,78 +139,72 @@ public class RankingService {
             return fallback(sorted, det, "ranking failed: " + e.getClass().getSimpleName());
         }
 
-        if (!config.laya().enabled()) {
-            return fallback(sorted, det, "laya disabled");
+        if (!config.crossEncoder().enabled()) {
+            return fallback(sorted, det, "cross-encoder disabled");
         }
         if (sorted.values().stream().allMatch(List::isEmpty)) {
-            return blended(sorted, det, Map.of(), null);
+            return new RankedResults(emptyLists(sorted), RankingMode.BLENDED, null);
         }
         try {
-            return layaRanking(query, sorted, det, deadline, effective);
+            return blendedRanking(query, sorted, det, deadline, effective);
         } catch (RankingException e) {
             log.info("ranking fallback for '{}': {}", query.normalizedKey(), e.getMessage());
             return fallback(sorted, det, e.getMessage());
         } catch (RuntimeException e) {
             log.warn("ranking fallback after unexpected error", e);
-            return fallback(sorted, det, "laya failed: " + e.getClass().getSimpleName());
+            return fallback(sorted, det, "cross-encoder failed: " + e.getClass().getSimpleName());
         }
     }
 
-    private RankedResults layaRanking(ParsedQuery query, Map<Distributor, List<Part>> sorted, Map<String, Double> det,
-                                      long deadline, Duration budget) throws RankingException {
-        Map<Distributor, Integer> quotas = quotas(sorted, config.laya().maxCandidates());
+    private RankedResults blendedRanking(ParsedQuery query, Map<Distributor, List<Part>> sorted,
+                                         Map<String, Double> det, long deadline, Duration budget)
+            throws RankingException {
+        Map<Distributor, Integer> quotas = quotas(sorted, config.crossEncoder().maxCandidates());
         List<Part> candidates = new ArrayList<>();
         sorted.forEach((d, parts) -> candidates.addAll(parts.subList(0, quotas.getOrDefault(d, 0))));
 
         String queryKey = query.normalizedKey();
         Map<String, Double> raw = new HashMap<>();
-        List<Part> toSend = new ArrayList<>();
+        List<Part> toScore = new ArrayList<>();
         for (Part p : candidates) {
             Double cached = cache.get(queryKey, PartKey.of(p));
             if (cached != null) {
                 raw.put(PartKey.of(p), cached);
             } else {
-                toSend.add(p);
+                toScore.add(p);
             }
         }
 
-        if (!toSend.isEmpty()) {
-            long waitNanos = deadline - System.nanoTime() - MIN_CALL_BUDGET.toNanos();
-            if (waitNanos < 0) {
-                throw new RankingException(RankingException.Reason.TIMEOUT, "laya timeout: budget exhausted");
+        if (!toScore.isEmpty()) {
+            Duration remaining = Duration.ofNanos(Math.max(0, deadline - System.nanoTime()));
+            if (remaining.compareTo(MIN_CALL_BUDGET) < 0) {
+                throw new RankingException(RankingException.Reason.TIMEOUT, "cross-encoder timeout: budget exhausted");
             }
-            boolean acquired;
+            Map<String, Double> scores;
             try {
-                acquired = slots.tryAcquire(waitNanos, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RankingException(RankingException.Reason.BUSY, "laya busy: interrupted while waiting", e);
-            }
-            if (!acquired) {
-                throw new RankingException(RankingException.Reason.BUSY,
-                        "laya busy: no free slot within " + LayaPartRanker.format(budget));
-            }
-            try {
-                Duration remaining = Duration.ofNanos(Math.max(0, deadline - System.nanoTime()));
-                if (remaining.compareTo(MIN_CALL_BUDGET) < 0) {
-                    throw new RankingException(RankingException.Reason.TIMEOUT, "laya timeout: budget exhausted");
+                scores = ranker.rank(query, toScore, remaining);
+            } catch (RankingException e) {
+                if (e.reason() == RankingException.Reason.TIMEOUT) {
+                    // name the whole ranking budget, not what was left of it for the model
+                    throw new RankingException(RankingException.Reason.TIMEOUT,
+                            "cross-encoder timeout after " + CrossEncoderPartRanker.format(budget), e);
                 }
-                Map<String, Double> scores = ranker.rank(query, toSend, remaining);
-                for (Part p : toSend) {
-                    Double s = scores.get(PartKey.of(p));
-                    if (s != null && !s.isNaN()) {
-                        raw.put(PartKey.of(p), s);
-                        cache.put(queryKey, PartKey.of(p), s);
-                    }
+                throw e;
+            }
+            for (Part p : toScore) {
+                Double s = scores.get(PartKey.of(p));
+                if (s != null && !s.isNaN() && !s.isInfinite()) {
+                    raw.put(PartKey.of(p), s);
+                    cache.put(queryKey, PartKey.of(p), s);
                 }
-            } finally {
-                slots.release();
             }
         }
         if (raw.isEmpty()) {
-            throw new RankingException(RankingException.Reason.BAD_RESPONSE, "laya bad response: no scores");
+            throw new RankingException(RankingException.Reason.FAILED, "cross-encoder failed: no scores");
         }
-        return blended(sorted, det, normalise(raw), null);
+        Map<String, Double> detCandidates = new HashMap<>();
+        raw.keySet().forEach(k -> detCandidates.put(k, det.getOrDefault(k, 0.0)));
+        return blended(sorted, det, normalise(detCandidates), normalise(raw));
     }
 
     /**
@@ -256,8 +270,8 @@ public class RankingService {
     }
 
     /**
-     * Rank normalisation within the candidate set: best distinct raw score 1.0, worst 0.0, linear in the dense rank;
-     * equal scores share a value; a single distinct score maps to 1.0.
+     * Rank normalisation within the candidate set: best distinct score 1.0, worst 0.0, linear in the dense rank;
+     * equal scores (to 4 decimals) share a value; a single distinct score maps to 1.0.
      */
     static Map<String, Double> normalise(Map<String, Double> raw) {
         TreeSet<Double> distinct = new TreeSet<>(Comparator.reverseOrder());
@@ -275,28 +289,36 @@ public class RankingService {
         return Math.round(v * 1e4) / 1e4;
     }
 
+    /**
+     * Candidates (parts with a model score) first, by {@code (1 - w) * detNorm + w * ceNorm}; then the other parts
+     * by deterministic score, scored {@code lowest candidate score of the distributor * det} so that the scores stay
+     * in [0,1] and descending.
+     */
     private RankedResults blended(Map<Distributor, List<Part>> sorted, Map<String, Double> det,
-                                  Map<String, Double> layaNorm, String note) {
-        double w = Math.clamp(config.laya().weight(), 0.0, 1.0);
+                                  Map<String, Double> detNorm, Map<String, Double> modelNorm) {
+        double w = Math.clamp(config.crossEncoder().weight(), 0.0, 1.0);
         Map<String, Double> finalScores = new HashMap<>();
-        det.forEach((key, d) -> {
-            Double l = layaNorm.get(key);
-            // non-candidates get layaNorm = 0, which keeps them below every candidate of the same distributor
-            finalScores.put(key, (1 - w) * d + w * (l == null ? 0.0 : l));
-        });
+        modelNorm.forEach((key, m) -> finalScores.put(key, (1 - w) * detNorm.getOrDefault(key, 0.0) + w * m));
         Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
         sorted.forEach((distributor, parts) -> {
             List<Part> candidates = new ArrayList<>();
             List<Part> others = new ArrayList<>();
-            parts.forEach(p -> (layaNorm.containsKey(PartKey.of(p)) ? candidates : others).add(p));
+            parts.forEach(p -> (modelNorm.containsKey(PartKey.of(p)) ? candidates : others).add(p));
             candidates.sort(byScore(finalScores, det));
             others.sort(byScore(det, det));
             List<RankedPart> ranked = new ArrayList<>(parts.size());
             candidates.forEach(p -> ranked.add(new RankedPart(p, finalScores.get(PartKey.of(p)))));
-            others.forEach(p -> ranked.add(new RankedPart(p, finalScores.get(PartKey.of(p)))));
+            double floor = candidates.isEmpty() ? 1.0 : ranked.getLast().score();
+            others.forEach(p -> ranked.add(new RankedPart(p, floor * det.getOrDefault(PartKey.of(p), 0.0))));
             out.put(distributor, List.copyOf(ranked));
         });
-        return new RankedResults(out, RankingMode.LAYA, note);
+        return new RankedResults(out, RankingMode.BLENDED, null);
+    }
+
+    private static Map<Distributor, List<RankedPart>> emptyLists(Map<Distributor, List<Part>> sorted) {
+        Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
+        sorted.keySet().forEach(d -> out.put(d, List.of()));
+        return out;
     }
 
     private static RankedResults fallback(Map<Distributor, List<Part>> sorted, Map<String, Double> det, String note) {
