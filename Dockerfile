@@ -3,7 +3,7 @@
 # ---- build ----
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
-COPY mvnw pom.xml ./
+COPY mvnw pom.xml lombok.config ./
 COPY .mvn .mvn
 RUN chmod +x mvnw && ./mvnw -B -q dependency:go-offline
 COPY src src

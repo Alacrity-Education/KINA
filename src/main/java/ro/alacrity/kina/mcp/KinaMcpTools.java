@@ -2,7 +2,6 @@ package ro.alacrity.kina.mcp;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import lombok.RequiredArgsConstructor;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +29,6 @@ import java.util.Set;
  * MCP server serialises to JSON text content.
  */
 @Component
-@RequiredArgsConstructor
 public class KinaMcpTools {
 
     static final String SEARCH_DESCRIPTION = """
@@ -91,11 +89,21 @@ public class KinaMcpTools {
             the results still refresh the cache. Mouser has a small daily API quota, so use it only when fresh data \
             matters. No effect on LCSC (served from a local JLCPCB database).""";
 
-    @Value("${spring.ai.mcp.server.version:dev}")
     private final String version;
     private final PartSearchService searchService;
     private final PartLookupService lookupService;
     private final DistributorStatusService statusService;
+
+    /** Explicit constructor: the {@code @Value} parameter must not rely on Lombok copying field annotations. */
+    public KinaMcpTools(@Value("${spring.ai.mcp.server.version:dev}") String version,
+                        PartSearchService searchService,
+                        PartLookupService lookupService,
+                        DistributorStatusService statusService) {
+        this.version = version;
+        this.searchService = searchService;
+        this.lookupService = lookupService;
+        this.statusService = statusService;
+    }
 
     @McpTool(name = "ping", description = "Health check. Returns {\"status\":\"ok\",\"version\":...} when the KINA MCP server is reachable.",
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true,
