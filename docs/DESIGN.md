@@ -38,9 +38,9 @@ ro.alacrity.kina
 │   └── lcsc/        JlcpcbDatabaseManager (download/refresh), JlcpcbSqliteSearch, LcscClient, JlcpcbPriceParser
 ├── cache/           PartCacheRepository, SearchCacheRepository, CacheProperties
 ├── search/          QueryParser, ParametricExtractor, DeterministicRanker, PartRanker, LayaPartRanker,
-│                    RankingService, RankingScoreCache, PartSearchService
+│                    RankingService, RankingScoreCache, PartSearchService, PartLookupService, DistributorStatusService
 ├── mcp/             KinaMcpTools (@McpTool methods)
-├── api/             REST controllers under /api/v1, ProblemDetail error handling
+├── api/             PartsController, DistributorsController (/api/v1), ApiExceptionHandler (ProblemDetail)
 ├── security/        SecurityConfig, SecurityProperties, DevModeAuthenticationFilter, BearerTokenAuthenticationFilter,
 │                    AccessTokenService, AccessTokenRepository, UserRepository, OidcUserSynchronizer, KinaPrincipal
 ├── oauth/           OAuthMetadataController, ClientRegistrationController, AuthorizationController, TokenController,
@@ -88,7 +88,7 @@ when building responses (`SearchResponse`/`PartResponse`).
 public interface DistributorClient {
     Distributor distributor();
     boolean isConfigured();            // false when credentials/database are missing -> distributor reported as unavailable
-    int maxPageSize();                 // Mouser 50, TME 50 (verify; fall back to 20), LCSC 200
+    int maxPageSize();                 // Mouser 50, TME = max-results-per-search (default 60, API max 100), LCSC 200
     /** Returns in-stock parts only (stock > 0), in the distributor's own relevance order.
      *  offset is 0-based. totalResults is the distributor-reported total for the query. */
     DistributorSearchPage search(String query, int offset, int limit) throws DistributorException;
@@ -125,22 +125,37 @@ Fetch window per distributor: `window = max(maxResults, kina.search.candidate-wi
 capped by `kina.distributors.<name>.max-results-per-search` (Mouser default 50 = one API call,
 TME default 60, LCSC default 200).
 
-Algorithm (`PartSearchService.fetchDistributor`):
+Algorithm (`PartSearchService.fetchDistributor`; every requested distributor runs on its own virtual thread,
+bounded by `kina.search.distributor-timeout`):
 
-1. `bypassCache == false`: read `cached_searches(distributor, query_key)`.
-   - fresh and (`part_numbers.size >= window` or `exhausted`): load the parts from `cached_parts`
-     (fresh rows only). If every part is present -> cache status `HIT`. Otherwise fall to step 2
-     with `offset = 0`.
-   - fresh but short and not exhausted ("further querying is needed"): keep the cached list, fetch
-     more pages starting at `offset = part_numbers.size`, append -> status `PARTIAL`.
+1. `bypassCache == false`: read `cached_searches(distributor, query_key)`. When it is fresh, load its parts from
+   `cached_parts` (fresh rows only); if any part is missing or stale, go to step 2 with `offset = 0` (`MISS`).
+   - the list is sufficient (`exhausted`, or `part_numbers.size >= window`, or `part_numbers.size >= maxResults`)
+     -> status `HIT`, no distributor call. The `>= maxResults` clause keeps a repeat of the same query from
+     re-querying a distributor whose single allowed page held fewer than `window` in-stock parts (Mouser quota).
+   - fresh but shorter than `maxResults` and not exhausted ("further querying is needed"): keep the cached list and
+     fetch more pages starting at `offset = next_offset` (the raw distributor record offset stored with the list;
+     the part count when unknown), append -> status `PARTIAL`.
    - missing or stale -> step 2 with `offset = 0`, status `MISS`.
-2. Call `DistributorClient.search` page by page until `window` in-stock parts are collected, the
-   distributor reports no more results, or `max-pages-per-search` (Mouser 1, TME 3, LCSC 1) is hit.
-3. Upsert every part into `cached_parts` (payload = JSON of `Part`, `fetched_at = now`) and the
-   ordered part-number list + `total_results` + `exhausted` into `cached_searches`.
-   `bypassCache == true` skips step 1 but still performs step 3 (status `BYPASSED`).
+2. Call `DistributorClient.search(query, offset, limit)` page by page with `limit = maxPageSize()` (the first page is
+   shortened so pages end on a page boundary) and `offset += limit`, until `window` in-stock parts are collected,
+   the distributor reports no more results (`hasMore == false`), `max-pages-per-search` (Mouser 1, TME 3, LCSC 1) is
+   hit, or the next page would not finish before the distributor deadline. Paging is driven by **raw record offsets**,
+   not by the number of parts kept: distributors drop records without ships-now stock (live: TME reported 32 in-stock
+   matches for "10uF X7R 0805" of which 26 were kept), so `part_numbers.size` is not a valid resume offset.
+   LCSC is queried once with `limit = window`.
+   Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is cached or
+   ranked (Mouser and LCSC deliver almost no parametric attributes).
+3. Upsert the newly fetched parts into `cached_parts` (payload = JSON of `Part`, `fetched_at = part.fetchedAt`) and
+   the ordered part-number list + `total_results` + `exhausted` + `next_offset` into `cached_searches`
+   (`fetched_at = now`; a `PARTIAL` extension keeps the list's original `fetched_at`). Cache read/write failures are
+   logged and never fail the search. `bypassCache == true` skips step 1 but still performs step 3 (status `BYPASSED`).
 4. Distributor failures never fail the whole search: the distributor entry carries
-   `error` (`"rate_limited"`, `"unavailable"`, `"not_configured"`, `"timeout"`, `"bad_response"` = `DistributorException.Kind.code()`) and an empty list.
+   `error` (`"rate_limited"`, `"unavailable"`, `"not_configured"`, `"timeout"`, `"bad_response"` = `DistributorException.Kind.code()`).
+   The part list is empty, except that parts already in hand are kept and ranked: the cached list when extending a
+   `PARTIAL` search fails, pages fetched before a later page failed, and pages fetched before the timeout. Unexpected
+   exceptions map to `unavailable`. A requested distributor without a configured client reports `not_configured` with
+   cache status `not_applicable`; with no `distributors` given only configured ones are searched.
 
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
@@ -173,9 +188,11 @@ public interface PartRanker {
 5. On any failure, timeout, or `kina.ranking.laya.enabled=false`: order by deterministic score and
    report `RankingMode.FALLBACK` with a short `rankingNote` (e.g. `"laya timeout after 18s"`).
 
-Batch search ranks each query independently through the same path (sequentially through the
-semaphore). The whole batch has `kina.ranking.batch-timeout` (default 60s); queries that have not
-been ranked when it expires use the fallback ranking.
+Batch search fetches the queries in parallel (at most 4 queries at a time, to respect distributor rate limits),
+then ranks each query independently through the same path (sequentially through the semaphore), each with
+`min(kina.ranking.timeout, remaining batch budget)`. The ranking phase has `kina.ranking.batch-timeout` (default
+60s); queries reached after it expired are ranked with a zero budget (fallback ranking, `ranking_note`
+`"batch ranking budget of 60s exhausted"`; Laya scores already in `RankingScoreCache` are still used).
 
 ### 3.4 Deterministic ranking and query parsing
 
@@ -261,8 +278,8 @@ parameters; descriptions are read by the LLM, keep them precise):
 |---|---|---|
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache) | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results}`, 1..20), `distributors`, `bypass_cache` | `{ "results": [SearchResponse...] }` |
-| `get_part` | `distributor`, `part_number`, `bypass_cache` | `PartResponse` or a not-found error |
-| `list_distributors` | none | per distributor: configured, healthy, cache statistics, JLCPCB database date |
+| `get_part` | `distributor` (case-insensitive), `part_number`, `bypass_cache` | `PartLookupResponse` `{found, distributor, part_number, cache, error, part}`; unknown/out-of-stock parts and distributor failures return `found: false` (with `error` for failures) instead of a tool error |
+| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{laya_enabled, laya_healthy, model, max_candidates, weight, timeout}`. Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 `SearchResponse` JSON (snake_case):
@@ -296,6 +313,8 @@ parameters; descriptions are read by the LLM, keep them precise):
 
 `total_results` is what the distributor reported for the query (in-stock where the API can filter),
 `fetched` is how many in-stock parts KINA holds for the query, `returned` is `min(max_results, fetched)`.
+`max_results` is clamped to `1..kina.search.max-max-results` (MCP; the REST API rejects out-of-range values with 400).
+Tool parameter names are the Java parameter names (`-parameters`), so the tool methods use snake_case parameters.
 
 ## 5. HTTP API
 
@@ -303,11 +322,16 @@ parameters; descriptions are read by the LLM, keep them precise):
 |---|---|
 | `GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=` | `SearchResponse` |
 | `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case), returns `{results: [...]}` |
-| `GET /api/v1/parts/{distributor}/{partNumber}?bypass_cache=` | `PartResponse` |
+| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; 404 problem when unknown or not in stock |
 | `GET /api/v1/distributors` | same as `list_distributors` |
 | `GET /actuator/health`, `GET /actuator/info` | public |
 
-Errors use RFC 9457 `application/problem+json`. `/api/**` and `/mcp/**` require a bearer token
+Distributor names are case-insensitive everywhere (query, path and JSON body). Errors use RFC 9457
+`application/problem+json` (`ApiExceptionHandler`, `@RestControllerAdvice(basePackages = "ro.alacrity.kina.api")`), types
+`urn:kina:problem:{validation|unknown-distributor|not-found|distributor-error|internal}`: validation 400 (with
+`errors[{field, message}]`), unknown distributor 400, not found 404, lookup failures 503 (`not_configured`,
+`unavailable`) / 429 / 504 / 502 with an `error` property, anything else 500 without internals.
+`/api/**` and `/mcp/**` require a bearer token
 (section 6), except in development mode where missing credentials fall back to the dev admin.
 
 ## 6. Security
@@ -444,6 +468,8 @@ CREATE TABLE cached_searches (
   fetched_at    TIMESTAMPTZ NOT NULL,
   PRIMARY KEY (distributor, query_key)
 );
+-- V2__cached_search_next_offset.sql: raw distributor offset where the next page starts (NULL = unknown)
+ALTER TABLE cached_searches ADD COLUMN next_offset INTEGER;
 
 CREATE TABLE jlcpcb_database (
   id            INTEGER PRIMARY KEY CHECK (id = 1),
@@ -507,6 +533,9 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 - `productUrl = https://www.tme.eu/en/details/<symbol>/`, `datasheetUrl` = first `/products/files` document with
   `type == "DTE"` (prefer PDF; one call per page, <= 50 symbols), `photoUrl = https:` + `assets.primary_photo.prime`.
 - Extra: `product_status`, `category_id`, `manufacturer_id`, `unit`, `packing`, `price_type`, `tax_rate`.
+- Products whose `product_status` contains one of `kina.distributors.tme.excluded-statuses` (default
+  `CANNOT_BE_ORDERED`, `ONLY_FOR_SPECIAL_ORDER`, `EXTERNAL_WAREHOUSE`, compared case-insensitively) do not ship now
+  and are dropped by `TmePartMapper`. `product_status` stays in `extra`.
 - Errors: `{"code":"E_INPUT_PARAMS_VALIDATION_ERROR",...}` -> `BAD_RESPONSE`; 401 -> refresh token once and retry; 429 -> `RATE_LIMITED`.
 
 ### 9.3 LCSC via the JLCPCB parts database (`distributor/lcsc`)
@@ -584,8 +613,10 @@ kina:
       weight: 0.2
   distributors:
     mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
-    tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3 }
-  jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200 }
+    tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
+              excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE] }
+  jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
+            auto-download: true }   # false in src/test/resources/config/application.yml
 ```
 
 Production OIDC (only read when `kina.security.mode=prod`):

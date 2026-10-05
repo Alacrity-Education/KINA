@@ -104,8 +104,15 @@ public class PartSearchService {
     /** Runs one search. Never fails because of a distributor; rejects a blank query. */
     public SearchResponse search(SearchRequest request) {
         Prepared prepared = prepare(request);
+        long started = System.nanoTime();
         Map<Distributor, Fetched> fetched = fetchAll(prepared);
+        long fetchedAt = System.nanoTime();
         RankedResults ranked = ranking.rank(prepared.parsed(), partsByDistributor(fetched), null);
+        if (log.isInfoEnabled()) {
+            log.info("search '{}': fetch {} ms {}, rank {} ms ({})", prepared.parsed().normalizedKey(),
+                    (fetchedAt - started) / 1_000_000, summary(fetched), (System.nanoTime() - fetchedAt) / 1_000_000,
+                    ranked.mode().jsonValue());
+        }
         return assemble(prepared, fetched, ranked, ranked.note());
     }
 
@@ -509,6 +516,14 @@ public class PartSearchService {
     }
 
     // ---- assembly -------------------------------------------------------------------------------------------------
+
+    /** {@code [MOUSER=hit/50, TME=timeout/0]} for the timing log. */
+    private static String summary(Map<Distributor, Fetched> fetched) {
+        StringBuilder out = new StringBuilder("[");
+        fetched.forEach((d, f) -> out.append(out.length() > 1 ? ", " : "").append(d).append('=')
+                .append(f.error() != null ? f.error() : f.cache().jsonValue()).append('/').append(f.parts().size()));
+        return out.append(']').toString();
+    }
 
     private static Map<Distributor, List<Part>> partsByDistributor(Map<Distributor, Fetched> fetched) {
         Map<Distributor, List<Part>> parts = new EnumMap<>(Distributor.class);
