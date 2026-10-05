@@ -441,7 +441,6 @@ JVM with ONNX Runtime for Java (CPU). No sidecar, no HTTP hop, part data never l
 | cross-encoder alone, fp32 / int8 | 0.874 / 0.877 | 165 / 335; int8 85 / 200 |
 | rank blend 0.5 det / 0.5 cross-encoder (shipped) | **0.913** (+0.021, 95% CI +0.003 to +0.041) | |
 | same, cross-encoder fine-tuned on synthetic rubric labels + real labels (2-fold) | 0.917 | |
-| previous production blend (det + 0.2 x rank-normalised decision-model score, removed) | 0.823 | 2400 |
 
 Largest gains on discretes, ICs and connectors (words the parametric parser does not model: RS-485 vs CAN, `1x4P`,
 unidirectional); passives and vague requests are not hurt. The Java implementation reproduces the study exactly

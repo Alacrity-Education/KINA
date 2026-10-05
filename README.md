@@ -346,9 +346,8 @@ The study is in [docs/research/ranking-evaluation-2026-10-05.md](docs/research/r
 | Deterministic ranker alone | 0.898 | under 5 ms |
 | Blend with the cross-encoder, zero-shot (shipped default) | 0.913 | 130 to 300 ms (40 candidates, 4 threads, int8); 16 ms when the scores are cached |
 | Blend with a fine-tuned cross-encoder | 0.918 | same |
-| Former blend with a decision-model sidecar (removed) | 0.823 | about 2.4 s |
 
-The earlier approach, a separate sidecar container with a decision model, scored below the deterministic ranker alone and cost about 2.4 s per search plus a 2 GB container. That is why it was removed. The cross-encoder helps most on discrete parts, ICs and connectors, where the parser does not model words such as `RS-485` or `1x4P`. Passives and vague requests are not hurt.
+The cross-encoder helps most on discrete parts, ICs and connectors, where the parser does not model words such as `RS-485` or `1x4P`. Passives and vague requests are not hurt.
 
 ### Model files
 
