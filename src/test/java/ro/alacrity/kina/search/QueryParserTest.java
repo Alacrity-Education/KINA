@@ -1,0 +1,144 @@
+package ro.alacrity.kina.search;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import ro.alacrity.kina.domain.ParsedQuery;
+
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+
+class QueryParserTest {
+
+    private final QueryParser parser = new QueryParser();
+
+    /**
+     * query | family | constraints ("kind=display;...") | dielectric | package | mounting | keywords (space separated).
+     * Empty strings mean "absent".
+     */
+    static Stream<Arguments> table() {
+        return Stream.of(
+                row("10uF X7R 0805", "capacitor", "capacitance=10uF", "X7R", "0805", "", ""),
+                row("10µF 25V X7R ±10% 0805", "capacitor", "capacitance=10uF;voltage=25V;tolerance=10%", "X7R", "0805", "", ""),
+                row("4k7 0603 1%", "resistor", "resistance=4.7kohm;tolerance=1%", "", "0603", "", ""),
+                row("100nF 50V X7R 0402", "capacitor", "capacitance=100nF;voltage=50V", "X7R", "0402", "", ""),
+                row("10k resistor 0805 1% 1/8W", "resistor", "resistance=10kohm;power=125mW;tolerance=1%", "", "0805", "", ""),
+                row("2.2uH 1A inductor 0806", "inductor", "inductance=2.2uH;current=1A", "", "0806", "", ""),
+                row("SOT-23 NPN transistor 40V", "transistor", "voltage=40V", "", "SOT-23", "", "npn"),
+                row("1N4148 SOD-123", "diode", "", "", "SOD-123", "", "1n4148"),
+                row("LM358 SOIC-8", "", "", "", "SOIC-8", "", "lm358"),
+                row("ESP32-WROOM-32", "", "", "", "", "", "esp32-wroom-32"),
+                row("C0G 22pF 50V 0402", "capacitor", "capacitance=22pF;voltage=50V", "C0G", "0402", "", ""),
+                row("100 ohm 0805", "resistor", "resistance=100ohm", "", "0805", "", ""),
+                row("10R 1206", "resistor", "resistance=10ohm", "", "1206", "", ""),
+                row("2R2 2512 1W", "resistor", "resistance=2.2ohm;power=1W", "", "2512", "", ""),
+                row("Schottky diode 40V 3A SMA", "schottky", "voltage=40V;current=3A", "", "SMA", "", ""),
+                row("3.3V LDO SOT-223 1A", "regulator", "voltage=3.3V;current=1A", "", "SOT-223", "", "ldo"),
+                row("USB-C connector 16 pin", "connector", "", "", "", "", "usb-c 16 pin"),
+                row("12MHz crystal 3225", "crystal", "frequency=12MHz", "", "3225", "", ""),
+                row("TVS diode 5V SOD-323", "tvs", "voltage=5V", "", "SOD-323", "", ""),
+                row("0.1uF 16V X5R 0201", "capacitor", "capacitance=100nF;voltage=16V", "X5R", "0201", "", ""),
+                row("NP0 100pF 0603", "capacitor", "capacitance=100pF", "C0G", "0603", "", ""),
+                row("10uF 2012 MLCC", "capacitor", "capacitance=10uF", "", "0805", "", "mlcc"),
+                row("4u7 0805", "capacitor", "capacitance=4.7uF", "", "0805", "", ""),
+                row("4u7 inductor 1210", "inductor", "inductance=4.7uH", "", "1210", "", ""),
+                row("N-channel MOSFET 30V 5A SOT-23", "mosfet", "voltage=30V;current=5A", "", "SOT-23", "", "n-channel"),
+                row("1k 1% THT resistor", "resistor", "resistance=1kohm;tolerance=1%", "", "", "THT", ""),
+                row("LED red 0603 SMD", "led", "", "", "0603", "SMD", "red"),
+                row("10 uF 25 V", "capacitor", "capacitance=10uF;voltage=25V", "", "", "", ""),
+                row("47uF 35V electrolytic capacitor through hole", "capacitor", "capacitance=47uF;voltage=35V", "", "", "THT", "electrolytic"),
+                row("100mΩ 2512 shunt", "resistor", "resistance=100mohm", "", "2512", "", "shunt"),
+                row("1MΩ 0402", "resistor", "resistance=1Mohm", "", "0402", "", ""),
+                row("TO-220 MOSFET", "mosfet", "", "", "TO-220", "", ""),
+                row("ferrite bead 600 ohm 0603", "ferrite", "resistance=600ohm", "", "0603", "", ""),
+                row("op amp SOIC-8", "opamp", "", "", "SOIC-8", "", ""),
+                row("32.768kHz crystal", "crystal", "frequency=32.768kHz", "", "", "", ""),
+                row("Zener 5.1V SOD-123", "zener", "voltage=5.1V", "", "SOD-123", "", ""),
+                row("±5% 10k 0402", "resistor", "resistance=10kohm;tolerance=5%", "", "0402", "", ""),
+                row("2,2uF 0603", "capacitor", "capacitance=2.2uF", "", "0603", "", ""),
+                row("STM32F103C8T6 LQFP-48", "", "", "", "LQFP-48", "", "stm32f103c8t6"),
+                row("2012", "", "", "", "", "", "2012"),
+                row("10uF 10V Y5V 1206 SMT", "capacitor", "capacitance=10uF;voltage=10V", "Y5V", "1206", "SMD", ""),
+                row("4n7 50V", "capacitor", "capacitance=4.7nF;voltage=50V", "", "", "", ""),
+                row("R47 1206", "resistor", "resistance=470mohm", "", "1206", "", ""),
+                row("2N7002 SOT23", "", "", "", "SOT-23", "", "2n7002"),
+                row("AMS1117-3.3 regulator SOT-223", "regulator", "", "", "SOT-223", "", "ams1117-3.3"),
+                row("relay 5V coil", "relay", "voltage=5V", "", "", "", "coil"),
+                row("100nF 0402 or 0603", "capacitor", "capacitance=100nF", "", "0402", "", "0603")
+        );
+    }
+
+    private static Arguments row(String query, String family, String constraints, String dielectric, String pkg,
+                                 String mounting, String keywords) {
+        Map<String, String> expected = new LinkedHashMap<>();
+        if (!constraints.isEmpty()) {
+            for (String pair : constraints.split(";")) {
+                String[] kv = pair.split("=", 2);
+                expected.put(kv[0], kv[1]);
+            }
+        }
+        List<String> kw = keywords.isEmpty() ? List.of() : Arrays.asList(keywords.split(" "));
+        return Arguments.of(query, blankToNull(family), expected, blankToNull(dielectric), blankToNull(pkg),
+                blankToNull(mounting), kw);
+    }
+
+    private static String blankToNull(String s) {
+        return s.isEmpty() ? null : s;
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("table")
+    void parsesQuery(String query, String family, Map<String, String> constraints, String dielectric, String pkg,
+                     String mounting, List<String> keywords) {
+        ParsedQuery parsed = parser.parse(query);
+
+        Map<String, String> actual = new LinkedHashMap<>();
+        parsed.constraints().forEach((kind, c) -> actual.put(kind, c.display()));
+        assertThat(parsed.originalText()).isEqualTo(query);
+        assertThat(parsed.family()).as("family").isEqualTo(family);
+        assertThat(actual).as("constraints").containsExactlyInAnyOrderEntriesOf(constraints);
+        assertThat(parsed.dielectric()).as("dielectric").isEqualTo(dielectric);
+        assertThat(parsed.packageName()).as("package").isEqualTo(pkg);
+        assertThat(parsed.mounting()).as("mounting").isEqualTo(mounting);
+        assertThat(parsed.keywords()).as("keywords").containsExactlyElementsOf(keywords);
+    }
+
+    @Test
+    void valuesAreInSiBaseUnits() {
+        ParsedQuery q = parser.parse("10µF 25V ±10% 0805");
+        assertThat(q.constraint(ParsedQuery.CAPACITANCE).value()).isCloseTo(10e-6, within(1e-15));
+        assertThat(q.constraint(ParsedQuery.VOLTAGE).value()).isEqualTo(25.0);
+        assertThat(q.constraint(ParsedQuery.TOLERANCE).value()).isEqualTo(10.0);
+        assertThat(parser.parse("4k7").constraint(ParsedQuery.RESISTANCE).value()).isCloseTo(4700, within(1e-9));
+        assertThat(parser.parse("2R2").constraint(ParsedQuery.RESISTANCE).value()).isCloseTo(2.2, within(1e-12));
+        assertThat(parser.parse("1/4W").constraint(ParsedQuery.POWER).value()).isEqualTo(0.25);
+        assertThat(parser.parse("12MHz crystal").constraint(ParsedQuery.FREQUENCY).value()).isEqualTo(12e6);
+        assertThat(parser.parse("100mA").constraint(ParsedQuery.CURRENT).value()).isCloseTo(0.1, within(1e-12));
+    }
+
+    @Test
+    void normalizedKey() {
+        assertThat(parser.parse("  10µF   X7R\t0805 ").normalizedKey()).isEqualTo("10uf x7r 0805");
+        assertThat(parser.parse("100Ω ±1%").normalizedKey()).isEqualTo("100ohm ±1%");
+        assertThat(parser.parse("4.7kΩ").normalizedKey()).isEqualTo(QueryParser.normalizeKey("4.7KOHM"));
+        // NFKC: full-width digits and letters, micro sign vs Greek mu
+        assertThat(QueryParser.normalizeKey("１０μＦ")).isEqualTo("10uf");
+    }
+
+    @Test
+    void emptyQuery() {
+        ParsedQuery q = parser.parse(null);
+        assertThat(q.originalText()).isEmpty();
+        assertThat(q.normalizedKey()).isEmpty();
+        assertThat(q.constraints()).isEmpty();
+        assertThat(q.keywords()).isEmpty();
+        assertThat(q.family()).isNull();
+    }
+}
