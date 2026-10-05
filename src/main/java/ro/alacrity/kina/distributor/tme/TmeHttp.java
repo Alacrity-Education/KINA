@@ -1,11 +1,13 @@
 package ro.alacrity.kina.distributor.tme;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
+import ro.alacrity.kina.distributor.RateLimitRetry;
 import ro.alacrity.kina.domain.Distributor;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.DeserializationFeature;
@@ -31,8 +33,17 @@ final class TmeHttp {
     private TmeHttp() {
     }
 
-    /** Status code and body bytes of a completed exchange. */
-    record Response(int status, byte[] body) {
+    /** Status code, body bytes and {@code Retry-After} header (null when absent) of a completed exchange. */
+    record Response(int status, byte[] body, String retryAfter) {
+
+        Response(int status, byte[] body) {
+            this(status, body, null);
+        }
+
+        /** HTTP 429, or 502/503/504 with {@code Retry-After} (DESIGN.md 3.6); TME documents no throttling error code. */
+        boolean isRateLimited() {
+            return RateLimitRetry.isRateLimitStatus(status, retryAfter);
+        }
 
         boolean isSuccess() {
             return status >= 200 && status < 300;
@@ -48,7 +59,7 @@ final class TmeHttp {
     static Response exchange(RestClient.RequestHeadersSpec<?> request, String what) {
         try {
             return request.exchange((req, res) -> new Response(res.getStatusCode().value(),
-                    StreamUtils.copyToByteArray(res.getBody())));
+                    StreamUtils.copyToByteArray(res.getBody()), res.getHeaders().getFirst(HttpHeaders.RETRY_AFTER)));
         } catch (RestClientException e) {
             throw transportFailure(e, what);
         }

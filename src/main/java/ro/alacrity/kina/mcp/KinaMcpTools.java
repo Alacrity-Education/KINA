@@ -46,6 +46,10 @@ public class KinaMcpTools {
             cache = hit | partial | miss | bypassed | not_applicable (LCSC is a local database); error = null or \
             rate_limited | unavailable | not_configured | timeout | bad_response (a failing distributor never \
             fails the whole search, its list is just empty).
+            Rate limits: when a distributor API is rate limited KINA waits and retries instead of failing at once, \
+            so a call may take up to 2 minutes; rate_limit_waited_ms on the distributor entry reports how long it \
+            waited (0 normally). error rate_limited means the limit outlasted that budget; parts fetched before \
+            are still returned.
             Parts carry rank (1 = best within the distributor), score (0..1), distributor part_number, \
             manufacturer, mpn, description, package, stock, min_order_qty, order_multiple, prices (only the 3 \
             smallest quantity brackets: qty, unit_price, currency), datasheet_url, photo_url (when the distributor \
@@ -60,7 +64,8 @@ public class KinaMcpTools {
             cache behaviour and result shape as search_parts; returns {"results": [one search_parts result per \
             query, in request order]}. distributors and bypass_cache apply to every query; each query has its own \
             max_results. Queries are ranked one after another within an overall ranking budget; queries ranked \
-            after it ran out report ranking "fallback".""";
+            after it ran out report ranking "fallback". Rate-limit waits share one 2-minute budget for the whole \
+            batch.""";
 
     static final String QUERY_PARAM = """
             Component description or part number, e.g. "10uF X7R 0805", "100nF 50V C0G 0603", "2N7002 SOT-23".""";

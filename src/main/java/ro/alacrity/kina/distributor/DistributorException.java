@@ -20,15 +20,25 @@ public class DistributorException extends RuntimeException {
 
     private final Distributor distributor;
     private final Kind kind;
+    private final long rateLimitWaitedMillis;
 
     public DistributorException(Distributor distributor, Kind kind, String message) {
         this(distributor, kind, message, null);
     }
 
     public DistributorException(Distributor distributor, Kind kind, String message, Throwable cause) {
+        this(distributor, kind, message, cause, 0);
+    }
+
+    /**
+     * @param rateLimitWaitedMillis how long the failed call waited on rate limits before giving up (DESIGN.md 3.6)
+     */
+    public DistributorException(Distributor distributor, Kind kind, String message, Throwable cause,
+                                long rateLimitWaitedMillis) {
         super(distributor + " " + kind.code() + ": " + message, cause);
         this.distributor = distributor;
         this.kind = kind;
+        this.rateLimitWaitedMillis = Math.max(0, rateLimitWaitedMillis);
     }
 
     public static DistributorException notConfigured(Distributor distributor) {
@@ -41,6 +51,11 @@ public class DistributorException extends RuntimeException {
 
     public Kind kind() {
         return kind;
+    }
+
+    /** Milliseconds the failed call spent waiting on rate limits (0 when it did not wait). */
+    public long rateLimitWaitedMillis() {
+        return rateLimitWaitedMillis;
     }
 
     /** Shortcut for {@code kind().code()}. */

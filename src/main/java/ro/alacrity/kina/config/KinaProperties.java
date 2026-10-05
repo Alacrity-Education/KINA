@@ -74,11 +74,20 @@ public record KinaProperties(
     public record Cache(@DefaultValue("5d") Duration ttl, @DefaultValue("1h") Duration emptyResultTtl) {
     }
 
+    /**
+     * {@code kina.search.*}.
+     *
+     * @param distributorTimeout active-work budget of one distributor fetch; time spent waiting on a rate limit does
+     *                           not count (DESIGN.md 3.6)
+     * @param maxRequestDuration hard cap on one incoming request ({@code search_parts}, a whole batch, {@code get_part})
+     *                           within which rate-limited distributor calls may wait and retry
+     */
     public record Search(
             @DefaultValue("40") int candidateWindow,
             @DefaultValue("10") int defaultMaxResults,
             @DefaultValue("50") int maxMaxResults,
-            @DefaultValue("12s") Duration distributorTimeout) {
+            @DefaultValue("12s") Duration distributorTimeout,
+            @DefaultValue("2m") Duration maxRequestDuration) {
     }
 
     public record Ranking(

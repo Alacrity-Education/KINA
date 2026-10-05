@@ -7,10 +7,12 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.RateLimitRetry;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 
@@ -40,6 +42,9 @@ import java.util.function.Supplier;
  * <p>Paging: TME pages are 1-based with a fixed page size ({@link #maxPageSize()} = {@code max-results-per-search}
  * clamped to the live-verified maximum {@code limit} of 100). A 0-based {@code offset} maps to
  * {@code page = offset / pageSize + 1} and an in-page skip of {@code offset % pageSize}.
+ *
+ * <p>Rate limits: every call (token included) goes through one shared {@link RateLimitRetry}, so a cool-down seen by
+ * one request also holds back the others (DESIGN.md 3.6).
  */
 @Component
 public class TmeClient implements DistributorClient {
@@ -65,12 +70,17 @@ public class TmeClient implements DistributorClient {
     }
 
     TmeClient(KinaProperties.Tme properties, RestClient restClient, Clock clock, Executor executor) {
+        this(properties, restClient, clock, executor, new RateLimitRetry(Distributor.TME));
+    }
+
+    TmeClient(KinaProperties.Tme properties, RestClient restClient, Clock clock, Executor executor,
+              RateLimitRetry retry) {
         this.properties = properties;
         this.clock = clock;
         this.executor = executor;
         TmeTokenManager tokens = new TmeTokenManager(restClient, properties.baseUrl(),
-                nullToEmpty(properties.token()), nullToEmpty(properties.secret()), clock);
-        this.api = new TmeApi(restClient, tokens, properties.baseUrl(), properties.language());
+                nullToEmpty(properties.token()), nullToEmpty(properties.secret()), clock, retry);
+        this.api = new TmeApi(restClient, tokens, properties.baseUrl(), properties.language(), retry);
     }
 
     static RestClient defaultRestClient() {
@@ -100,6 +110,13 @@ public class TmeClient implements DistributorClient {
 
     @Override
     public DistributorSearchPage search(String query, int offset, int limit) throws DistributorException {
+        return search(query, offset, limit, Deadline.immediate());
+    }
+
+    /** Waits for TME rate limits (HTTP 429) within {@code deadline} (DESIGN.md 3.6). */
+    @Override
+    public DistributorSearchPage search(String query, int offset, int limit, Deadline deadline)
+            throws DistributorException {
         requireConfigured();
         String phrase = phrase(query);
         if (limit <= 0) {
@@ -110,7 +127,7 @@ public class TmeClient implements DistributorClient {
         int page = safeOffset / pageSize + 1;
         int skip = safeOffset % pageSize;
 
-        TmeResponses.SearchResponse response = api.search(phrase, properties.country(), pageSize, page);
+        TmeResponses.SearchResponse response = api.search(phrase, properties.country(), pageSize, page, deadline);
         TmeResponses.SearchData data = response.data();
         List<TmeResponses.Product> elements = data == null || data.products() == null
                 || data.products().elements() == null ? List.of() : data.products().elements();
@@ -120,30 +137,35 @@ public class TmeClient implements DistributorClient {
 
         int from = Math.min(skip, elements.size());
         int to = (int) Math.min((long) skip + limit, elements.size());
-        List<Part> parts = enrich(elements.subList(from, to));
+        List<Part> parts = enrich(elements.subList(from, to), deadline);
         boolean hasMore = to < elements.size() || page < pages;
         return new DistributorSearchPage(parts, total, hasMore);
     }
 
     @Override
     public Optional<Part> getPart(String distributorPartNumber) throws DistributorException {
+        return getPart(distributorPartNumber, Deadline.immediate());
+    }
+
+    @Override
+    public Optional<Part> getPart(String distributorPartNumber, Deadline deadline) throws DistributorException {
         requireConfigured();
         if (distributorPartNumber == null || distributorPartNumber.isBlank()) {
             return Optional.empty();
         }
         String symbol = distributorPartNumber.strip();
-        List<TmeResponses.Product> products = api.products(List.of(symbol), properties.country()).stream()
+        List<TmeResponses.Product> products = api.products(List.of(symbol), properties.country(), deadline).stream()
                 .filter(p -> p.symbol() != null && p.symbol().equalsIgnoreCase(symbol))
                 .limit(1)
                 .toList();
         if (products.isEmpty()) {
             return Optional.empty();
         }
-        return enrich(products).stream().findFirst();
+        return enrich(products, deadline).stream().findFirst();
     }
 
     /** Fetches stock/prices, parameters and datasheets for the products and maps the in-stock ones, keeping order. */
-    private List<Part> enrich(List<TmeResponses.Product> products) {
+    private List<Part> enrich(List<TmeResponses.Product> products, Deadline deadline) {
         if (products.isEmpty()) {
             return List.of();
         }
@@ -153,10 +175,10 @@ public class TmeClient implements DistributorClient {
             return List.of();
         }
         CompletableFuture<List<TmeResponses.ProductData>> dataFuture =
-                async(() -> api.data(symbols, properties.country(), properties.currency()));
+                async(() -> api.data(symbols, properties.country(), properties.currency(), deadline));
         CompletableFuture<List<TmeResponses.ProductParameters>> parametersFuture =
-                async(() -> api.parameters(symbols, properties.country()));
-        CompletableFuture<Map<String, String>> datasheetsFuture = async(() -> datasheets(symbols));
+                async(() -> api.parameters(symbols, properties.country(), deadline));
+        CompletableFuture<Map<String, String>> datasheetsFuture = async(() -> datasheets(symbols, deadline));
 
         Map<String, TmeResponses.ProductData> data = bySymbol(join(dataFuture), TmeResponses.ProductData::symbol);
         Map<String, TmeResponses.ProductParameters> parameters =
@@ -182,13 +204,13 @@ public class TmeClient implements DistributorClient {
      * this account (a 4xx other than auth/rate limiting) it is disabled with a single WARN; other failures are
      * logged and yield no datasheets for this call.
      */
-    private Map<String, String> datasheets(List<String> symbols) {
+    private Map<String, String> datasheets(List<String> symbols, Deadline deadline) {
         if (filesDisabled.get()) {
             return Map.of();
         }
         try {
             Map<String, String> result = new HashMap<>();
-            for (TmeResponses.ProductFiles files : api.files(symbols, properties.country())) {
+            for (TmeResponses.ProductFiles files : api.files(symbols, properties.country(), deadline)) {
                 String url = TmePartMapper.datasheetUrl(files);
                 if (files.symbol() != null && url != null) {
                     result.putIfAbsent(files.symbol(), url);

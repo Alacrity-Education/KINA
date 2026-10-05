@@ -10,6 +10,7 @@ import ro.alacrity.kina.cache.CachedSearch;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
@@ -45,7 +46,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -54,6 +54,10 @@ import java.util.concurrent.TimeoutException;
  * enriches parts with comparable attributes, ranks them and assembles the {@link SearchResponse}.
  *
  * <p>Distributor failures never fail a search: they become the distributor entry's {@code error}.
+ *
+ * <p>Every incoming request (one search, one whole batch) has one hard deadline,
+ * {@code kina.search.max-request-duration} (DESIGN.md 3.6). Rate-limited distributor calls may wait and retry within
+ * it; the time they wait does not count against {@code kina.search.distributor-timeout}.
  */
 @Service
 public class PartSearchService {
@@ -104,8 +108,9 @@ public class PartSearchService {
     /** Runs one search. Never fails because of a distributor; rejects a blank query. */
     public SearchResponse search(SearchRequest request) {
         Prepared prepared = prepare(request);
+        Deadline deadline = requestDeadline();
         long started = System.nanoTime();
-        Map<Distributor, Fetched> fetched = fetchAll(prepared);
+        Map<Distributor, Fetched> fetched = fetchAll(prepared, deadline);
         long fetchedAt = System.nanoTime();
         RankedResults ranked = ranking.rank(prepared.parsed(), partsByDistributor(fetched), null);
         if (log.isInfoEnabled()) {
@@ -130,6 +135,7 @@ public class PartSearchService {
             throw new IllegalArgumentException("at most " + BatchSearchRequest.MAX_QUERIES + " queries per batch");
         }
         List<Prepared> prepared = requests.stream().map(this::prepare).toList();
+        Deadline requestDeadline = requestDeadline(); // one incoming request: one deadline for every query of the batch
 
         Semaphore slots = new Semaphore(BATCH_FETCH_CONCURRENCY);
         List<Future<Map<Distributor, Fetched>>> futures = new ArrayList<>();
@@ -137,7 +143,7 @@ public class PartSearchService {
             futures.add(executor.submit(() -> {
                 slots.acquire();
                 try {
-                    return fetchAll(p);
+                    return fetchAll(p, requestDeadline);
                 } finally {
                     slots.release();
                 }
@@ -172,6 +178,11 @@ public class PartSearchService {
             results.add(assemble(p, fetched.get(i), ranked, note));
         }
         return new BatchSearchResponse(results);
+    }
+
+    /** {@code now + kina.search.max-request-duration}. */
+    Deadline requestDeadline() {
+        return Deadline.after(properties.search().maxRequestDuration());
     }
 
     // ---- preparation ----------------------------------------------------------------------------------------------
@@ -220,17 +231,27 @@ public class PartSearchService {
 
     /**
      * What one distributor contributed: in-stock parts (enriched, distributor order, deduplicated), the
-     * distributor-reported total, the cache status and an error code (null on success).
+     * distributor-reported total, the cache status, an error code (null on success) and the time spent waiting on
+     * rate limits.
      */
     record Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
-                   String fallbackQuery) {
+                   String fallbackQuery, long rateLimitWaitedMs) {
 
         Fetched {
             parts = parts == null ? List.of() : List.copyOf(parts);
         }
 
+        Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
+                String fallbackQuery) {
+            this(distributor, parts, totalResults, cache, error, fallbackQuery, 0);
+        }
+
         Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error) {
             this(distributor, parts, totalResults, cache, error, null);
+        }
+
+        Fetched withRateLimitWaitedMs(long millis) {
+            return new Fetched(distributor, parts, totalResults, cache, error, fallbackQuery, millis);
         }
 
         static Fetched failed(Distributor distributor, CacheStatus cache, String error) {
@@ -250,12 +271,16 @@ public class PartSearchService {
         }
     }
 
-    private Map<Distributor, Fetched> fetchAll(Prepared prepared) {
+    /**
+     * Fetches every distributor of the query in parallel. Each fetch has {@code distributor-timeout} of active work,
+     * extended by its rate-limit waits, never beyond {@code requestDeadline}.
+     */
+    private Map<Distributor, Fetched> fetchAll(Prepared prepared, Deadline requestDeadline) {
         Duration timeout = properties.search().distributorTimeout();
-        long deadline = System.nanoTime() + timeout.toNanos();
         Map<Distributor, Fetched> results = new EnumMap<>(Distributor.class);
         Map<Distributor, Future<Fetched>> futures = new EnumMap<>(Distributor.class);
         Map<Distributor, Progress> progress = new EnumMap<>(Distributor.class);
+        Map<Distributor, DistributorBudget> budgets = new EnumMap<>(Distributor.class);
 
         for (Distributor distributor : prepared.distributors()) {
             Optional<DistributorClient> client = registry.find(distributor).filter(DistributorClient::isConfigured);
@@ -266,30 +291,34 @@ public class PartSearchService {
             }
             Progress p = new Progress(initialStatus(distributor, prepared.request().bypassCache()));
             progress.put(distributor, p);
-            futures.put(distributor, executor.submit(() -> fetchDistributor(client.get(), prepared, p, deadline)));
+            DistributorBudget budget = new DistributorBudget(requestDeadline, timeout);
+            budgets.put(distributor, budget);
+            futures.put(distributor, executor.submit(() -> fetchDistributor(client.get(), prepared, p, budget)));
         }
 
         futures.forEach((distributor, future) -> {
             Progress p = progress.get(distributor);
+            DistributorBudget budget = budgets.get(distributor);
+            Fetched fetched;
             try {
-                long waitNanos = Math.max(0, deadline - System.nanoTime()) + TIMEOUT_GRACE.toNanos();
-                results.put(distributor, future.get(waitNanos, TimeUnit.NANOSECONDS));
+                fetched = budget.await(future, TIMEOUT_GRACE);
             } catch (TimeoutException e) {
                 future.cancel(true);
-                log.info("{} did not answer '{}' within {}", distributor, prepared.parsed().normalizedKey(),
-                        format(timeout));
-                results.put(distributor, new Fetched(distributor, p.parts, p.totalResults, p.cache,
-                        DistributorException.Kind.TIMEOUT.code(), p.fallbackQuery));
+                log.info("{} did not answer '{}' within {}{}", distributor, prepared.parsed().normalizedKey(),
+                        format(timeout), budget.rateLimitWaitedNanos() > 0
+                                ? " (+ " + budget.rateLimitWaitedMillis() + " ms rate-limit wait)" : "");
+                fetched = new Fetched(distributor, p.parts, p.totalResults, p.cache,
+                        DistributorException.Kind.TIMEOUT.code(), p.fallbackQuery);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 future.cancel(true);
-                results.put(distributor, Fetched.failed(distributor, p.cache,
-                        DistributorException.Kind.TIMEOUT.code()));
+                fetched = Fetched.failed(distributor, p.cache, DistributorException.Kind.TIMEOUT.code());
             } catch (ExecutionException | CancellationException e) {
                 Throwable cause = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
-                results.put(distributor, new Fetched(distributor, p.parts, p.totalResults, p.cache,
-                        errorCode(distributor, cause), p.fallbackQuery));
+                fetched = new Fetched(distributor, p.parts, p.totalResults, p.cache,
+                        errorCode(distributor, cause), p.fallbackQuery);
             }
+            results.put(distributor, fetched.withRateLimitWaitedMs(budget.rateLimitWaitedMillis()));
         });
         return results;
     }
@@ -311,10 +340,10 @@ public class PartSearchService {
     }
 
     /**
-     * DESIGN.md 3.2 for one distributor. Runs on a virtual thread; {@code deadline} is a {@link System#nanoTime()}
-     * value after which no further page is requested.
+     * DESIGN.md 3.2 for one distributor. Runs on a virtual thread; no further page is requested once {@code budget}
+     * has run out.
      */
-    Fetched fetchDistributor(DistributorClient client, Prepared prepared, Progress progress, long deadline) {
+    Fetched fetchDistributor(DistributorClient client, Prepared prepared, Progress progress, DistributorBudget deadline) {
         Distributor distributor = client.distributor();
         String query = prepared.parsed().originalText();
         int window = window(distributor, prepared.maxResults());
@@ -369,7 +398,7 @@ public class PartSearchService {
         CacheStatus status = prepared.request().bypassCache() ? CacheStatus.BYPASSED : CacheStatus.MISS;
         Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline);
         String fallbackQuery = null;
-        if (collected.all().isEmpty() && collected.error() == null && System.nanoTime() < deadline) {
+        if (collected.all().isEmpty() && collected.error() == null && deadline.remainingNanos() > 0) {
             String core = corePhrase(prepared.parsed());
             if (core != null) {
                 log.info("{} found nothing for '{}', retrying with the core phrase '{}'", distributor, queryKey, core);
@@ -501,13 +530,13 @@ public class PartSearchService {
     /**
      * Pages through {@link DistributorClient#search} from {@code offset} until {@code window} parts are held, the
      * distributor reports no more results, {@code maxPages} pages were requested or the next page would not fit
-     * before {@code deadline}. Pages have the distributor's {@link DistributorClient#maxPageSize()} (the first one is
+     * within {@code deadline}. Pages have the distributor's {@link DistributorClient#maxPageSize()} (the first one is
      * shortened to end on a page boundary) because distributors drop parts without ships-now stock: paging is driven
      * by raw record offsets, not by the number of parts kept. A failure on the first page propagates; a failure on a
      * later page keeps what was collected and reports the error code.
      */
     Collected collect(DistributorClient client, String query, int offset, int window, int maxPages,
-                      List<Part> existing, Progress progress, long deadline) {
+                      List<Part> existing, Progress progress, DistributorBudget deadline) {
         Distributor distributor = client.distributor();
         boolean pagedByRecords = usesPostgresCache(distributor);
         int pageSize = Math.max(1, client.maxPageSize());
@@ -522,15 +551,16 @@ public class PartSearchService {
         long lastPageNanos = 0;
         String error = null;
         while (pages < maxPages && hasMore && all.size() < window) {
-            if (pages > 0 && System.nanoTime() + lastPageNanos > deadline) {
+            if (pages > 0 && deadline.remainingNanos() < lastPageNanos) {
                 log.debug("{}: no time for another page of '{}'", distributor, query);
                 break;
             }
             int limit = pagedByRecords ? pageSize - next % pageSize : Math.min(window, pageSize);
             long started = System.nanoTime();
+            long waitedBefore = deadline.rateLimitWaitedNanos();
             DistributorSearchPage page;
             try {
-                page = client.search(query, next, limit);
+                page = client.search(query, next, limit, deadline.deadline());
             } catch (DistributorException e) {
                 if (pages == 0) {
                     throw e;
@@ -540,7 +570,8 @@ public class PartSearchService {
                 error = e.errorCode();
                 break;
             }
-            lastPageNanos = System.nanoTime() - started;
+            // active time of the page: rate-limit waits do not predict how long the next page takes
+            lastPageNanos = Math.max(0, System.nanoTime() - started - (deadline.rateLimitWaitedNanos() - waitedBefore));
             pages++;
             next += limit;
             total = page.totalResults();
@@ -631,7 +662,7 @@ public class PartSearchService {
                 parts.add(PartResponse.from(rp.part(), i + 1, roundScore(rp.score())));
             }
             results.add(new DistributorResult(distributor, f.totalResults(), rankedParts.size(), returned, f.cache(),
-                    f.error(), parts, f.fallbackQuery()));
+                    f.error(), parts, f.fallbackQuery(), f.rateLimitWaitedMs()));
         }
         return new SearchResponse(prepared.parsed().originalText(), ParsedQueryResponse.from(prepared.parsed()),
                 ranked.mode(), note, results);

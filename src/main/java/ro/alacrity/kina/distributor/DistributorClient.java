@@ -22,9 +22,25 @@ public interface DistributorClient {
     /**
      * Returns in-stock parts only (stock &gt; 0), in the distributor's own relevance order.
      * {@code offset} is 0-based. {@code totalResults} is the distributor-reported total for the query.
+     * Rate limits are not waited for ({@code RATE_LIMITED} at once).
      */
     DistributorSearchPage search(String query, int offset, int limit) throws DistributorException;
 
+    /**
+     * Like {@link #search(String, int, int)}, but a rate-limited distributor call may wait and retry while the wait
+     * fits {@code deadline} (the request deadline, DESIGN.md section 3.6); waits are recorded on {@code deadline}.
+     * The default ignores the deadline (no rate limiting to handle, e.g. LCSC's local database).
+     */
+    default DistributorSearchPage search(String query, int offset, int limit, Deadline deadline)
+            throws DistributorException {
+        return search(query, offset, limit);
+    }
+
     /** Looks up one part by distributor part number; empty when unknown or not in stock. */
     Optional<Part> getPart(String distributorPartNumber) throws DistributorException;
+
+    /** Like {@link #getPart(String)}, waiting for rate limits within {@code deadline} (see {@link #search(String, int, int, Deadline)}). */
+    default Optional<Part> getPart(String distributorPartNumber, Deadline deadline) throws DistributorException {
+        return getPart(distributorPartNumber);
+    }
 }

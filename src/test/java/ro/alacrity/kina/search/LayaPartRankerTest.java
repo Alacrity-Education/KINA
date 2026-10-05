@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.StaticListableBeanFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,8 +16,10 @@ import ro.alacrity.kina.domain.Part;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -209,5 +212,55 @@ class LayaPartRankerTest {
                     assertThat(e.getMessage()).isEqualTo(message);
                 });
         server.verify();
+    }
+    // ---- busy laya-serve (DESIGN.md 3.6) ----------------------------------------------------------------------------
+
+    private final List<Duration> sleeps = new CopyOnWriteArrayList<>();
+
+    private LayaPartRanker rankerWithFakeSleeper() {
+        KinaProperties properties = RankingFixtures.properties("kina.ranking.laya.url", URL);
+        RestClient.Builder builder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(builder).build();
+        return new LayaPartRanker(properties, new ParametricExtractor(), builder.build(), sleeps::add,
+                Clock.systemUTC());
+    }
+
+    @Test
+    void busyWithRetryAfterIsRetriedWithinTheRankingBudget() throws Exception {
+        LayaPartRanker ranker = rankerWithFakeSleeper();
+        server.expect(requestTo(BATCH)).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE)
+                .header(HttpHeaders.RETRY_AFTER, "2"));
+        server.expect(requestTo(BATCH)).andRespond(withSuccess(response(0.9, 0.4), MediaType.APPLICATION_JSON));
+
+        Map<String, Double> scores = ranker.rank(query, List.of(first, second), Duration.ofSeconds(18));
+
+        server.verify();
+        assertThat(scores).hasSize(2);
+        assertThat(sleeps).containsExactly(Duration.ofSeconds(2));
+    }
+
+    @Test
+    void busyWithRetryAfterBeyondTheBudgetFallsBackAtOnce() {
+        LayaPartRanker ranker = rankerWithFakeSleeper();
+        server.expect(requestTo(BATCH)).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE)
+                .header(HttpHeaders.RETRY_AFTER, "30"));
+
+        assertThatThrownBy(() -> ranker.rank(query, List.of(first, second), Duration.ofSeconds(18)))
+                .isInstanceOfSatisfying(RankingException.class,
+                        e -> assertThat(e.reason()).isEqualTo(RankingException.Reason.BUSY));
+        server.verify();
+        assertThat(sleeps).isEmpty();
+    }
+
+    @Test
+    void busyWithoutRetryAfterIsNotRetried() {
+        LayaPartRanker ranker = rankerWithFakeSleeper();
+        server.expect(ExpectedCount.once(), requestTo(BATCH)).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThatThrownBy(() -> ranker.rank(query, List.of(first, second), Duration.ofSeconds(18)))
+                .isInstanceOfSatisfying(RankingException.class,
+                        e -> assertThat(e.reason()).isEqualTo(RankingException.Reason.BUSY));
+        server.verify();
+        assertThat(sleeps).isEmpty();
     }
 }

@@ -9,9 +9,11 @@ import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.FakeTime;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpTimeoutException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
@@ -49,13 +52,20 @@ class MouserClientTest {
         client = client(50);
     }
 
+    private final FakeTime time = new FakeTime(NOW);
+
     private MouserClient client(int maxResultsPerSearch) {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        MouserApi api = new MouserApi(builder, BASE + "/", API_KEY);
+        MouserApi api = new MouserApi(builder, BASE + "/", API_KEY, time.retry(Distributor.MOUSER, 0.5));
         return new MouserClient(new KinaProperties.Mouser(API_KEY, BASE, maxResultsPerSearch, 1), api,
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
+
+    private static final String TOO_MANY_REQUESTS_BODY = """
+            {"Errors":[{"Id":0,"Code":"TooManyRequests","Message":"Maximum calls per minute exceeded.",
+              "ResourceKey":"TooManyRequests","PropertyName":null}],"SearchResults":null}
+            """;
 
     private static String keywordBody(String keyword, int records, int startingRecord) {
         return """
@@ -162,12 +172,99 @@ class MouserClientTest {
 
     @Test
     void tooManyRequestsErrorIsRateLimited() {
-        server.expect(requestTo(KEYWORD_URL)).andRespond(withSuccess("""
-                {"Errors":[{"Id":0,"Code":"TooManyRequests","Message":"Maximum calls per minute exceeded.",
-                  "ResourceKey":"TooManyRequests","PropertyName":null}],"SearchResults":null}
-                """, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(KEYWORD_URL)).andRespond(withSuccess(TOO_MANY_REQUESTS_BODY, MediaType.APPLICATION_JSON));
 
         assertKind(() -> client.search("x", 0, 10), Kind.RATE_LIMITED);
+    }
+
+    // ---- rate limiting (DESIGN.md 3.6) ------------------------------------------------------------------------------
+
+    @Test
+    void http429ThenSuccessWaitsRetryAfterAndReportsTheWait() {
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "3"));
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.KEYWORD), MediaType.APPLICATION_JSON));
+        Deadline deadline = time.deadline(Duration.ofMinutes(2));
+
+        DistributorSearchPage page = client.search("10uF X7R 0805", 0, 5, deadline);
+
+        server.verify();
+        assertThat(page.parts()).hasSize(5);
+        assertThat(time.sleeps()).containsExactly(Duration.ofSeconds(3));
+        assertThat(deadline.rateLimitWaitedMillis()).isEqualTo(3_000);
+    }
+
+    @Test
+    void http429WithoutRetryAfterBacksOff() {
+        server.expect(requestTo(KEYWORD_URL)).andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+        server.expect(requestTo(KEYWORD_URL)).andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.KEYWORD), MediaType.APPLICATION_JSON));
+
+        assertThat(client.search("x", 0, 5, time.deadline(Duration.ofMinutes(2))).parts()).isNotEmpty();
+
+        server.verify();
+        assertThat(time.sleeps()).containsExactly(Duration.ofSeconds(2), Duration.ofSeconds(4));
+    }
+
+    @Test
+    void retryAfterBeyondTheDeadlineIsRateLimitedAtOnceAndCoolsDownLaterCalls() {
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "300"));
+
+        DistributorException e = assertKind(() -> client.search("x", 0, 10, time.deadline(Duration.ofMinutes(2))),
+                Kind.RATE_LIMITED);
+
+        server.verify();
+        assertThat(time.sleeps()).isEmpty();
+        assertThat(e.getMessage()).contains("next retry in 300 s would exceed the request deadline");
+        assertNoKey(e);
+        // the shared cool-down keeps a concurrent/next request from calling Mouser at all
+        DistributorException next = assertKind(() -> client.getPart("603-CC0805MKX77BB106",
+                time.deadline(Duration.ofMinutes(2))), Kind.RATE_LIMITED);
+        assertThat(next.getMessage()).contains("cooling down");
+        server.verify();
+    }
+
+    @Test
+    void inBodyTooManyRequestsThenSuccessIsRetried() {
+        server.expect(requestTo(KEYWORD_URL)).andRespond(withSuccess(TOO_MANY_REQUESTS_BODY, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.KEYWORD), MediaType.APPLICATION_JSON));
+        Deadline deadline = time.deadline(Duration.ofMinutes(2));
+
+        assertThat(client.search("x", 0, 5, deadline).totalResults()).isEqualTo(113);
+
+        server.verify();
+        assertThat(time.sleeps()).containsExactly(Duration.ofSeconds(2));
+        assertThat(deadline.rateLimitWaitedMillis()).isEqualTo(2_000);
+    }
+
+    @Test
+    void serviceUnavailableIsRetriedOnlyWithRetryAfter() {
+        server.expect(requestTo(PART_URL))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE).header("Retry-After", "5"));
+        server.expect(requestTo(PART_URL))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.PART_NUMBER), MediaType.APPLICATION_JSON));
+
+        assertThat(client.getPart("603-CC0805MKX77BB106", time.deadline(Duration.ofMinutes(2)))).isPresent();
+        server.verify();
+        assertThat(time.sleeps()).containsExactly(Duration.ofSeconds(5));
+
+        MouserClient other = client(50);
+        server.expect(requestTo(PART_URL)).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        assertKind(() -> other.getPart("603-CC0805MKX77BB106", time.deadline(Duration.ofMinutes(2))), Kind.UNAVAILABLE);
+        server.verify();
+    }
+
+    @Test
+    void withoutADeadlineRateLimitsFailFast() {
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "1"));
+
+        assertKind(() -> client.search("x", 0, 10), Kind.RATE_LIMITED);
+        assertThat(time.sleeps()).isEmpty();
     }
 
     @Test

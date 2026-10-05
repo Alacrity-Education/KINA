@@ -12,6 +12,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.RateLimitRetry;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartKey;
@@ -24,6 +25,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.net.SocketTimeoutException;
 import java.net.http.HttpClient;
 import java.net.http.HttpTimeoutException;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,6 +45,10 @@ import java.util.concurrent.TimeoutException;
  *
  * <p>Timeouts: connect {@value #CONNECT_TIMEOUT_SECONDS}s; the read timeout is the remaining budget, enforced by a
  * bounded wait on the call (the in-flight JDK HTTP request is cancelled on expiry).
+ *
+ * <p>Busy: an HTTP 503 with {@code Retry-After} (laya-serve's queue is full) is retried after that delay when it fits
+ * the remaining ranking budget (not the request's two-minute cap, DESIGN.md 3.6); otherwise, and for 429 or a 503
+ * without the header, the ranking falls back as before.
  */
 @Component
 public class LayaPartRanker implements PartRanker {
@@ -71,6 +77,8 @@ public class LayaPartRanker implements PartRanker {
     private final RestClient restClient;
     private final JsonMapper mapper = JsonMapper.builder().build();
     private final String baseUrl;
+    private final RateLimitRetry.Sleeper sleeper;
+    private final Clock clock;
 
     private record Health(boolean healthy, long checkedAtNanos) {
     }
@@ -87,6 +95,14 @@ public class LayaPartRanker implements PartRanker {
 
     /** For tests: uses the given client as is (e.g. bound to {@code MockRestServiceServer}). */
     LayaPartRanker(KinaProperties properties, ParametricExtractor extractor, RestClient restClient) {
+        this(properties, extractor, restClient, d -> Thread.sleep(d), Clock.systemUTC());
+    }
+
+    /** For tests: also replaces the sleeper used for {@code Retry-After} waits. */
+    LayaPartRanker(KinaProperties properties, ParametricExtractor extractor, RestClient restClient,
+                   RateLimitRetry.Sleeper sleeper, Clock clock) {
+        this.sleeper = sleeper;
+        this.clock = clock;
         this.laya = properties.ranking().laya();
         this.extractor = extractor;
         this.restClient = restClient;
@@ -125,16 +141,43 @@ public class LayaPartRanker implements PartRanker {
         String body = requestBody(query, unique.values());
 
         long started = System.nanoTime();
-        String response = callWithin(budget, () -> {
-            RestClient.RequestBodySpec spec = restClient.post()
-                    .uri(baseUrl + BATCH_PATH)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON);
-            if (laya.hasApiKey()) {
-                spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + laya.apiKey());
+        long deadline = started + budget.toNanos();
+        String response;
+        boolean first = true;
+        while (true) {
+            // the first call gets the whole budget, so timeout messages name the configured budget
+            Duration remaining = first ? budget : Duration.ofNanos(deadline - System.nanoTime());
+            first = false;
+            if (!remaining.isPositive()) {
+                throw new RankingException(RankingException.Reason.TIMEOUT, "laya timeout after " + format(budget));
             }
-            return spec.body(body).retrieve().body(String.class);
-        });
+            try {
+                response = callWithin(remaining, () -> {
+                    RestClient.RequestBodySpec spec = restClient.post()
+                            .uri(baseUrl + BATCH_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON);
+                    if (laya.hasApiKey()) {
+                        spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + laya.apiKey());
+                    }
+                    return spec.body(body).retrieve().body(String.class);
+                });
+                break;
+            } catch (RankingException e) {
+                Duration retryAfter = busyRetryAfter(e);
+                if (retryAfter == null || retryAfter.toNanos() >= deadline - System.nanoTime()) {
+                    throw e;
+                }
+                log.debug("laya busy, retrying in {}", format(retryAfter));
+                try {
+                    sleeper.sleep(retryAfter);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw new RankingException(RankingException.Reason.BUSY, "laya busy: interrupted while waiting",
+                            interrupted);
+                }
+            }
+        }
         Map<String, Double> scores = parseScores(response, keys);
         log.debug("laya scored {} candidates in {} ms", keys.size(), (System.nanoTime() - started) / 1_000_000);
         return scores;
@@ -214,6 +257,21 @@ public class LayaPartRanker implements PartRanker {
             scores.put(keys.get(i), Math.clamp(noul.doubleValue(), 0.0, 1.0));
         }
         return scores;
+    }
+
+    /** The {@code Retry-After} delay of a busy HTTP 503 (at least 1 s), or null when the failure is anything else. */
+    private Duration busyRetryAfter(RankingException e) {
+        if (e.reason() != RankingException.Reason.BUSY
+                || !(e.getCause() instanceof RestClientResponseException http) || http.getStatusCode().value() != 503
+                || http.getResponseHeaders() == null) {
+            return null;
+        }
+        Duration retryAfter = RateLimitRetry.parseRetryAfter(
+                http.getResponseHeaders().getFirst(HttpHeaders.RETRY_AFTER), clock);
+        if (retryAfter == null) {
+            return null;
+        }
+        return retryAfter.compareTo(RateLimitRetry.MIN_WAIT) < 0 ? RateLimitRetry.MIN_WAIT : retryAfter;
     }
 
     /** True when {@code GET {url}/health} answered 2xx within 2 s; cached for 30 s. Never throws. */

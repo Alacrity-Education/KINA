@@ -12,6 +12,7 @@ spring:
     type: SYNC
     protocol: STATELESS
     streamable-http.mcp-endpoint: /mcp
+    request-timeout: 3m           # above kina.search.max-request-duration (rate-limit waits)
 server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
@@ -30,6 +31,7 @@ kina:
     default-max-results: 10
     max-max-results: 50
     distributor-timeout: 12s
+    max-request-duration: 2m     # hard cap per request, including rate-limit waits (DESIGN.md 3.6)
   ranking:
     timeout: 18s
     batch-timeout: 60s

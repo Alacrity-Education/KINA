@@ -8,15 +8,19 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.FakeTime;
+import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.net.http.HttpTimeoutException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -29,6 +33,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -45,12 +50,16 @@ class TmeClientTest {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-05T10:00:00Z"), ZoneOffset.UTC);
 
     private MockRestServiceServer server;
+    private final FakeTime time = new FakeTime(CLOCK.instant());
 
-    /** Client with a direct executor so the data/parameters/files calls happen in a deterministic order. */
+    /**
+     * Client with a direct executor so the data/parameters/files calls happen in a deterministic order, and a
+     * rate-limit policy on fake time (no real sleeping, no jitter).
+     */
     private TmeClient client(KinaProperties.Tme properties) {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        return new TmeClient(properties, builder.build(), CLOCK, Runnable::run);
+        return new TmeClient(properties, builder.build(), CLOCK, Runnable::run, time.retry(Distributor.TME, 0.5));
     }
 
     private static String json(Object value) {
@@ -454,5 +463,83 @@ class TmeClientTest {
 
         assertThatThrownBy(() -> client.search("10uF", 0, 10))
                 .isInstanceOfSatisfying(DistributorException.class, e -> assertThat(e.kind()).isEqualTo(Kind.RATE_LIMITED));
+    }
+    // ---- rate limiting (DESIGN.md 3.6) ------------------------------------------------------------------------------
+
+    private void expectEnrichment(List<String> symbols) {
+        server.expect(get("/products/data")).andRespond(withSuccess(dataJson(symbols, 5), jsonType()));
+        server.expect(get("/products/parameters")).andRespond(withSuccess(parametersJson(symbols), jsonType()));
+        server.expect(get("/products/files")).andRespond(withSuccess(filesJson(symbols), jsonType()));
+    }
+
+    @Test
+    void searchRateLimitedThenSuccessWaitsAndReportsTheWait() {
+        TmeClient client = client(TmeTestSupport.properties(20));
+        List<String> symbols = symbols(2);
+        expectToken(server, "t");
+        server.expect(get("/products/search"))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).header(HttpHeaders.RETRY_AFTER, "4"));
+        server.expect(get("/products/search")).andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer t"))
+                .andRespond(withSuccess(searchJson(symbols, 2, 1, 1), jsonType()));
+        expectEnrichment(symbols);
+        Deadline deadline = time.deadline(Duration.ofMinutes(2));
+
+        DistributorSearchPage page = client.search("10uF", 0, 20, deadline);
+
+        server.verify();
+        assertThat(page.parts()).hasSize(2);
+        assertThat(time.sleeps()).containsExactly(Duration.ofSeconds(4));
+        assertThat(deadline.rateLimitWaitedMillis()).isEqualTo(4_000);
+    }
+
+    @Test
+    void retryAfterBeyondTheDeadlineIsRateLimitedAtOnce() {
+        TmeClient client = client(TmeTestSupport.properties(20));
+        expectToken(server, "t");
+        server.expect(get("/products/search"))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).header(HttpHeaders.RETRY_AFTER, "600"));
+
+        assertThatThrownBy(() -> client.search("10uF", 0, 20, time.deadline(Duration.ofMinutes(2))))
+                .isInstanceOfSatisfying(DistributorException.class, e -> {
+                    assertThat(e.kind()).isEqualTo(Kind.RATE_LIMITED);
+                    assertThat(e.distributor()).isEqualTo(Distributor.TME);
+                    assertThat(e.getMessage()).contains("rate limited by TME", "would exceed the request deadline");
+                });
+        server.verify();
+        assertThat(time.sleeps()).isEmpty();
+    }
+
+    @Test
+    void rateLimitedTokenRequestIsRetried() {
+        TmeClient client = client(TmeTestSupport.properties(60));
+        server.expect(requestTo(TmeTestSupport.BASE + "/auth/token"))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+        expectToken(server, "t");
+        server.expect(get("/products")).andRespond(withSuccess(fixture("products.json"), jsonType()));
+        server.expect(get("/products/data")).andRespond(withSuccess(fixture("data.json"), jsonType()));
+        server.expect(get("/products/parameters")).andRespond(withSuccess(fixture("parameters.json"), jsonType()));
+        server.expect(get("/products/files")).andRespond(withSuccess(fixture("files.json"), jsonType()));
+
+        assertThat(client.getPart("CL21B106KPQNNNE", time.deadline(Duration.ofMinutes(2)))).isPresent();
+
+        server.verify();
+        assertThat(time.sleeps()).containsExactly(Duration.ofSeconds(2));
+    }
+
+    @Test
+    void rateLimitedEnrichmentCallIsRetried() {
+        TmeClient client = client(TmeTestSupport.properties(20));
+        List<String> symbols = symbols(2);
+        expectToken(server, "t");
+        server.expect(get("/products/search")).andRespond(withSuccess(searchJson(symbols, 2, 1, 1), jsonType()));
+        server.expect(get("/products/data"))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE).header(HttpHeaders.RETRY_AFTER, "1"));
+        expectEnrichment(symbols);
+        Deadline deadline = time.deadline(Duration.ofMinutes(2));
+
+        assertThat(client.search("10uF", 0, 20, deadline).parts()).hasSize(2);
+
+        server.verify();
+        assertThat(deadline.rateLimitWaitedMillis()).isEqualTo(1_000);
     }
 }

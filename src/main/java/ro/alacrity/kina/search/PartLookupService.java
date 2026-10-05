@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
@@ -24,7 +25,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -129,12 +129,17 @@ public class PartLookupService {
         return extractor.enrich(withTime);
     }
 
-    /** {@link DistributorClient#getPart} bounded by {@code kina.search.distributor-timeout}; drops parts without stock. */
+    /**
+     * {@link DistributorClient#getPart} bounded by {@code kina.search.distributor-timeout} of active work, extended by
+     * rate-limit waits up to {@code kina.search.max-request-duration} (DESIGN.md 3.6); drops parts without stock.
+     */
     private Optional<Part> fetch(DistributorClient client, String partNumber) {
         Duration timeout = properties.search().distributorTimeout();
-        Future<Optional<Part>> future = executor.submit(() -> client.getPart(partNumber));
+        DistributorBudget budget = new DistributorBudget(
+                Deadline.after(properties.search().maxRequestDuration()), timeout);
+        Future<Optional<Part>> future = executor.submit(() -> client.getPart(partNumber, budget.deadline()));
         try {
-            Optional<Part> part = future.get(timeout.toNanos(), TimeUnit.NANOSECONDS);
+            Optional<Part> part = budget.await(future, Duration.ZERO);
             return part == null ? Optional.empty() : part.filter(p -> p.stock() > 0);
         } catch (TimeoutException e) {
             future.cancel(true);

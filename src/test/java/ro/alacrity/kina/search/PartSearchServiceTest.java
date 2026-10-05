@@ -7,6 +7,7 @@ import ro.alacrity.kina.cache.CachedSearch;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
@@ -137,6 +138,43 @@ class PartSearchServiceTest {
 
         List<Integer> offsets() {
             return calls.stream().map(c -> c[0]).toList();
+        }
+    }
+
+    /**
+     * Emulates {@link ro.alacrity.kina.distributor.RateLimitRetry} inside a client: the listed calls (1-based) are
+     * rate limited and wait {@link #wait} (recorded on the deadline, then really slept) when it fits the deadline,
+     * else fail with {@code RATE_LIMITED}. {@link #ignoreDeadline} makes it wait regardless (a misbehaving client).
+     */
+    static class RateLimitedClient extends FakeClient {
+        final Set<Integer> rateLimitedCalls = new java.util.HashSet<>();
+        final List<Deadline> deadlines = new CopyOnWriteArrayList<>();
+        final java.util.concurrent.atomic.AtomicInteger callCount = new java.util.concurrent.atomic.AtomicInteger();
+        Duration wait = Duration.ofMillis(500);
+        boolean ignoreDeadline;
+
+        RateLimitedClient(Distributor distributor, Integer... rateLimited) {
+            super(distributor);
+            rateLimitedCalls.addAll(List.of(rateLimited));
+        }
+
+        @Override
+        public DistributorSearchPage search(String query, int offset, int limit, Deadline deadline) {
+            deadlines.add(deadline);
+            if (rateLimitedCalls.contains(callCount.incrementAndGet())) {
+                if (!ignoreDeadline && !deadline.fits(wait.toNanos())) {
+                    throw new DistributorException(distributor, DistributorException.Kind.RATE_LIMITED,
+                            "next retry would exceed the request deadline", null, 0);
+                }
+                deadline.recordWait(deadline.nanoTime(), wait.toNanos());
+                try {
+                    Thread.sleep(wait);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new DistributorException(distributor, DistributorException.Kind.RATE_LIMITED, "interrupted");
+                }
+            }
+            return super.search(query, offset, limit);
         }
     }
 
@@ -744,5 +782,93 @@ class PartSearchServiceTest {
                     : new RankedResults(out, RankingMode.LAYA, null);
         });
         return ranking;
+    }
+    // ---- rate limiting (DESIGN.md 3.6) ------------------------------------------------------------------------------
+
+    @Test
+    void rateLimitWaitExtendsTheDistributorDeadlineAndIsReported() {
+        RateLimitedClient mouser = new RateLimitedClient(Distributor.MOUSER, 1);
+        mouser.records(10, i -> part(Distributor.MOUSER, "M" + i));
+        mouser.wait = Duration.ofMillis(800);
+        FakeClient lcsc = new FakeClient(Distributor.LCSC).records(3, i -> part(Distributor.LCSC, "C" + i));
+        service(List.of(mouser, lcsc), "kina.search.distributor-timeout", "300ms",
+                "kina.search.max-request-duration", "10s");
+
+        SearchResponse response = service.search(request(10));
+
+        DistributorResult m = result(response, Distributor.MOUSER);
+        assertThat(m.error()).as("the 800 ms wait does not count against the 300 ms distributor timeout").isNull();
+        assertThat(m.returned()).isEqualTo(10);
+        assertThat(m.rateLimitWaitedMs()).isEqualTo(800);
+        assertThat(result(response, Distributor.LCSC).rateLimitWaitedMs()).isZero();
+    }
+
+    @Test
+    void rateLimitWaitNeverExtendsBeyondTheRequestDeadline() {
+        RateLimitedClient tme = new RateLimitedClient(Distributor.TME, 1);
+        tme.records(10, i -> part(Distributor.TME, "T" + i));
+        tme.wait = Duration.ofSeconds(5);
+        tme.ignoreDeadline = true; // misbehaves: waits past the request deadline
+        service(List.of(tme), "kina.search.distributor-timeout", "300ms", "kina.search.max-request-duration", "600ms");
+
+        long started = System.nanoTime();
+        SearchResponse response = service.search(request(10, Distributor.TME));
+        Duration took = Duration.ofNanos(System.nanoTime() - started);
+
+        assertThat(took).isLessThan(Duration.ofSeconds(2));
+        assertThat(result(response, Distributor.TME).error()).isEqualTo("timeout");
+        assertThat(result(response, Distributor.TME).rateLimitWaitedMs()).isEqualTo(5_000);
+    }
+
+    @Test
+    void rateLimitBeyondTheRequestDeadlineIsReportedAndKeepsEarlierPages() {
+        RateLimitedClient tme = new RateLimitedClient(Distributor.TME, 2);
+        tme.records(60, i -> part(Distributor.TME, "T" + i));
+        tme.pageSize = 20;
+        tme.wait = Duration.ofSeconds(30);
+        service(List.of(tme), "kina.search.max-request-duration", "2s");
+
+        DistributorResult t = result(service.search(request(40, Distributor.TME)), Distributor.TME);
+
+        assertThat(t.error()).isEqualTo("rate_limited");
+        assertThat(t.fetched()).as("the first page is kept").isEqualTo(20);
+        assertThat(t.rateLimitWaitedMs()).isZero();
+        assertThat(tme.callCount).hasValue(2);
+    }
+
+    @Test
+    void distributorsGetForksOfOneRequestDeadline() {
+        RateLimitedClient mouser = new RateLimitedClient(Distributor.MOUSER);
+        mouser.records(3, i -> part(Distributor.MOUSER, "M" + i));
+        RateLimitedClient tme = new RateLimitedClient(Distributor.TME);
+        tme.records(3, i -> part(Distributor.TME, "T" + i));
+        service(List.of(mouser, tme), "kina.search.max-request-duration", "2m");
+
+        long before = System.nanoTime();
+        service.search(request(10));
+
+        Deadline m = mouser.deadlines.getFirst();
+        Deadline t = tme.deadlines.getFirst();
+        assertThat(m).isNotSameAs(t);
+        assertThat(m.deadlineNanos()).isEqualTo(t.deadlineNanos());
+        assertThat(m.deadlineNanos() - before).isBetween(Duration.ofMinutes(2).toNanos(), Duration.ofSeconds(121).toNanos());
+    }
+
+    @Test
+    void batchSharesOneRequestDeadline() {
+        RateLimitedClient tme = new RateLimitedClient(Distributor.TME, 1);
+        tme.records(5, i -> part(Distributor.TME, "T" + i));
+        tme.wait = Duration.ofMillis(300);
+        service(List.of(tme), "kina.search.max-request-duration", "1m");
+
+        BatchSearchResponse response = service.searchBatch(new BatchSearchRequest(List.of(
+                new SearchRequest("10uF X7R 0805", 5, Set.of(), false),
+                new SearchRequest("100nF X7R 0603", 5, Set.of(), false),
+                new SearchRequest("1k 0603 resistor", 5, Set.of(), false)), Set.of(Distributor.TME), false));
+
+        assertThat(tme.deadlines).hasSize(3);
+        assertThat(tme.deadlines.stream().map(Deadline::deadlineNanos).distinct()).hasSize(1);
+        assertThat(response.results().stream().mapToLong(r -> r.distributors().getFirst().rateLimitWaitedMs()).sum())
+                .as("only the rate-limited query reports a wait").isEqualTo(300);
     }
 }

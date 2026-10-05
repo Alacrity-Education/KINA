@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.PartCacheRepository;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
@@ -184,5 +185,27 @@ class PartLookupServiceTest {
 
         assertThat(service.lookup(Distributor.MOUSER, "M9", false).cache()).isEqualTo(CacheStatus.HIT);
         verify(cache, never()).upsertAll(anyCollection());
+    }
+    @Test
+    void rateLimitWaitDoesNotCountAgainstTheDistributorTimeout() {
+        FakeClient tme = new FakeClient(Distributor.TME) {
+            @Override
+            public Optional<Part> getPart(String partNumber, Deadline deadline) {
+                long wait = Duration.ofMillis(700).toNanos();
+                assertThat(deadline.fits(wait)).isTrue();
+                deadline.recordWait(deadline.nanoTime(), wait);
+                try {
+                    Thread.sleep(700);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new DistributorException(Distributor.TME, DistributorException.Kind.RATE_LIMITED, "interrupted");
+                }
+                return super.getPart(partNumber);
+            }
+        }.records(1, i -> part(Distributor.TME, "T0"));
+        when(cache.find(any(), any(), any())).thenReturn(Optional.empty());
+        service(tme);
+
+        assertThat(service.getPart(Distributor.TME, "T0", false)).isPresent();
     }
 }

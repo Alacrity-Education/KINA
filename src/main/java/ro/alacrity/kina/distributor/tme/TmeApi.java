@@ -3,7 +3,11 @@ package ro.alacrity.kina.distributor.tme;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
+import ro.alacrity.kina.distributor.RateLimitRetry;
+import ro.alacrity.kina.distributor.RateLimitRetry.RateLimitedResponse;
+import ro.alacrity.kina.domain.Distributor;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -17,7 +21,8 @@ import java.util.function.Function;
  * Thin wrapper over the TME API v2 GET endpoints. Adds {@code Authorization: Bearer}, {@code Accept} and
  * {@code Accept-Language}; repeats array parameters as {@code symbols[]=A&symbols[]=B}. On an authentication failure
  * the token is invalidated and the call retried once. Symbol lists longer than {@link #MAX_SYMBOLS} are split into
- * batches.
+ * batches. Every HTTP exchange goes through {@link RateLimitRetry}: rate limits are waited for within the caller's
+ * {@link Deadline} (DESIGN.md 3.6).
  */
 final class TmeApi {
 
@@ -31,8 +36,14 @@ final class TmeApi {
     private final TmeTokenManager tokens;
     private final String baseUrl;
     private final String language;
+    private final RateLimitRetry retry;
 
     TmeApi(RestClient restClient, TmeTokenManager tokens, String baseUrl, String language) {
+        this(restClient, tokens, baseUrl, language, new RateLimitRetry(Distributor.TME));
+    }
+
+    TmeApi(RestClient restClient, TmeTokenManager tokens, String baseUrl, String language, RateLimitRetry retry) {
+        this.retry = retry;
         this.restClient = restClient;
         this.tokens = tokens;
         this.baseUrl = TmeTokenManager.stripTrailingSlash(baseUrl);
@@ -40,7 +51,7 @@ final class TmeApi {
     }
 
     /** {@code GET /products/search?phrase=&scope[]=products&scope[]=counters&filter[in_stock]=true&country=&limit=&page=}. */
-    TmeResponses.SearchResponse search(String phrase, String country, int limit, int page) {
+    TmeResponses.SearchResponse search(String phrase, String country, int limit, int page, Deadline deadline) {
         List<Map.Entry<String, String>> params = new ArrayList<>();
         params.add(Map.entry("phrase", phrase));
         params.add(Map.entry("scope[]", "products"));
@@ -49,49 +60,55 @@ final class TmeApi {
         params.add(Map.entry("country", country));
         params.add(Map.entry("limit", Integer.toString(limit)));
         params.add(Map.entry("page", Integer.toString(page)));
-        return get("/products/search", params, TmeResponses.SearchResponse.class);
+        return get("/products/search", params, TmeResponses.SearchResponse.class, deadline);
+    }
+
+    /** {@code GET /products?symbols[]=...&country=}; rate limits fail fast. */
+    List<TmeResponses.Product> products(List<String> symbols, String country) {
+        return products(symbols, country, Deadline.immediate());
     }
 
     /** {@code GET /products?symbols[]=...&country=}. */
-    List<TmeResponses.Product> products(List<String> symbols, String country) {
+    List<TmeResponses.Product> products(List<String> symbols, String country, Deadline deadline) {
         return batched(symbols, batch -> {
             List<Map.Entry<String, String>> params = symbolParams(batch);
             params.add(Map.entry("country", country));
-            TmeResponses.ProductsResponse response = get("/products", params, TmeResponses.ProductsResponse.class);
+            TmeResponses.ProductsResponse response =
+                    get("/products", params, TmeResponses.ProductsResponse.class, deadline);
             return response.data() == null ? null : response.data().elements();
         });
     }
 
     /** {@code GET /products/data?symbols[]=...&scope[]=prices&scope[]=stock&country=&currency=}. */
-    List<TmeResponses.ProductData> data(List<String> symbols, String country, String currency) {
+    List<TmeResponses.ProductData> data(List<String> symbols, String country, String currency, Deadline deadline) {
         return batched(symbols, batch -> {
             List<Map.Entry<String, String>> params = symbolParams(batch);
             params.add(Map.entry("scope[]", "prices"));
             params.add(Map.entry("scope[]", "stock"));
             params.add(Map.entry("country", country));
             params.add(Map.entry("currency", currency));
-            TmeResponses.DataResponse response = get("/products/data", params, TmeResponses.DataResponse.class);
+            TmeResponses.DataResponse response = get("/products/data", params, TmeResponses.DataResponse.class, deadline);
             return response.data() == null ? null : response.data().elements();
         });
     }
 
     /** {@code GET /products/parameters?symbols[]=...&country=}. */
-    List<TmeResponses.ProductParameters> parameters(List<String> symbols, String country) {
+    List<TmeResponses.ProductParameters> parameters(List<String> symbols, String country, Deadline deadline) {
         return batched(symbols, batch -> {
             List<Map.Entry<String, String>> params = symbolParams(batch);
             params.add(Map.entry("country", country));
             TmeResponses.ParametersResponse response =
-                    get("/products/parameters", params, TmeResponses.ParametersResponse.class);
+                    get("/products/parameters", params, TmeResponses.ParametersResponse.class, deadline);
             return response.data() == null ? null : response.data().elements();
         });
     }
 
     /** {@code GET /products/files?symbols[]=...&country=}. */
-    List<TmeResponses.ProductFiles> files(List<String> symbols, String country) {
+    List<TmeResponses.ProductFiles> files(List<String> symbols, String country, Deadline deadline) {
         return batched(symbols, batch -> {
             List<Map.Entry<String, String>> params = symbolParams(batch);
             params.add(Map.entry("country", country));
-            TmeResponses.FilesResponse response = get("/products/files", params, TmeResponses.FilesResponse.class);
+            TmeResponses.FilesResponse response = get("/products/files", params, TmeResponses.FilesResponse.class, deadline);
             return response.data() == null ? null : response.data().elements();
         });
     }
@@ -115,17 +132,17 @@ final class TmeApi {
         return result;
     }
 
-    /** Authenticated GET with one retry after an authentication failure. */
-    <T> T get(String path, List<Map.Entry<String, String>> params, Class<T> type) {
+    /** Authenticated GET with one retry after an authentication failure and rate-limit retries within {@code deadline}. */
+    <T> T get(String path, List<Map.Entry<String, String>> params, Class<T> type, Deadline deadline) {
         URI uri = uri(path, params);
         String what = "TME " + path;
-        String token = tokens.accessToken();
-        TmeHttp.Response response = execute(uri, token, what);
+        String token = tokens.accessToken(deadline);
+        TmeHttp.Response response = execute(uri, token, what, deadline);
         if (!response.isSuccess()) {
             TmeResponses.ErrorResponse error = TmeHttp.error(response);
             if (TmeHttp.isAuthFailure(response, error)) {
                 tokens.invalidate(token);
-                response = execute(uri, tokens.accessToken(), what);
+                response = execute(uri, tokens.accessToken(deadline), what, deadline);
             }
         }
         if (!response.isSuccess()) {
@@ -134,12 +151,19 @@ final class TmeApi {
         return TmeHttp.decode(response, type, what);
     }
 
-    private TmeHttp.Response execute(URI uri, String token, String what) throws DistributorException {
-        return TmeHttp.exchange(restClient.get()
-                .uri(uri)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                .header(HttpHeaders.ACCEPT_LANGUAGE, language)
-                .accept(MediaType.APPLICATION_JSON), what);
+    private TmeHttp.Response execute(URI uri, String token, String what, Deadline deadline)
+            throws DistributorException {
+        return retry.call(deadline, () -> {
+            TmeHttp.Response response = TmeHttp.exchange(restClient.get()
+                    .uri(uri)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .header(HttpHeaders.ACCEPT_LANGUAGE, language)
+                    .accept(MediaType.APPLICATION_JSON), what);
+            if (response.isRateLimited()) {
+                throw new RateLimitedResponse(what + " returned HTTP " + response.status(), response.retryAfter());
+            }
+            return response;
+        });
     }
 
     private URI uri(String path, List<Map.Entry<String, String>> params) {

@@ -235,5 +235,6 @@ class McpToolsIntegrationTest {
         assertThat(search.path("inputSchema").path("required").toString()).contains("query")
                 .doesNotContain("max_results");
         assertThat(properties.path("max_results").path("description").asString()).contains("PER DISTRIBUTOR");
+        assertThat(search.path("description").asString()).contains("up to 2 minutes", "rate_limit_waited_ms");
     }
 }

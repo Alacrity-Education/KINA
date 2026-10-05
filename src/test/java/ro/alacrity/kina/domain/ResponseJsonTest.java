@@ -42,7 +42,7 @@ class ResponseJsonTest {
                 "\"photo_url\":", "\"product_url\":", "\"distributor\":\"MOUSER\"",
                 "\"parsed\":{\"family\":\"capacitor\"", "\"capacitance\":\"10uF\"", "\"dielectric\":\"X7R\"",
                 "\"keywords\":[]", "{\"qty\":1,\"unit_price\":1.40,\"currency\":\"EUR\"}",
-                "\"fallback_query\":null");
+                "\"fallback_query\":null", "\"rate_limit_waited_ms\":0");
         assertThat(json).doesNotContain("\"qty\":100", "mounting", "constraints", "packageName");
     }
 
@@ -51,6 +51,14 @@ class ResponseJsonTest {
         DistributorResult result = new DistributorResult(Distributor.TME, 12, 12, 5, CacheStatus.MISS, null, List.of(),
                 "MOSFET 30V SOT-23");
         assertThat(mapper.writeValueAsString(result)).contains("\"fallback_query\":\"MOSFET 30V SOT-23\"");
+    }
+
+    @Test
+    void distributorResultCarriesTheRateLimitWait() {
+        DistributorResult result = new DistributorResult(Distributor.MOUSER, null, 0, 0, CacheStatus.MISS,
+                "rate_limited", List.of(), null, 84_000);
+        assertThat(mapper.writeValueAsString(result)).contains("\"error\":\"rate_limited\"",
+                "\"rate_limit_waited_ms\":84000");
     }
 
     @Test

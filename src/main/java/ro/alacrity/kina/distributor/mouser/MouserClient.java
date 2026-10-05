@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
@@ -75,17 +76,24 @@ public class MouserClient implements DistributorClient {
 
     @Override
     public DistributorSearchPage search(String query, int offset, int limit) throws DistributorException {
-        return guarded(() -> doSearch(query, offset, limit));
+        return search(query, offset, limit, Deadline.immediate());
     }
 
-    private DistributorSearchPage doSearch(String query, int offset, int limit) {
+    /** Waits for Mouser rate limits (HTTP 429, {@code TooManyRequests}) within {@code deadline} (DESIGN.md 3.6). */
+    @Override
+    public DistributorSearchPage search(String query, int offset, int limit, Deadline deadline)
+            throws DistributorException {
+        return guarded(() -> doSearch(query, offset, limit, deadline));
+    }
+
+    private DistributorSearchPage doSearch(String query, int offset, int limit, Deadline deadline) {
         MouserApi mouser = requireConfigured();
         int records = Math.min(limit, pageLimit());
         int start = Math.max(0, offset);
         if (query == null || query.isBlank() || records <= 0) {
             return DistributorSearchPage.empty();
         }
-        MouserSearchResponse response = mouser.searchByKeyword(query.strip(), records, startingRecord(start));
+        MouserSearchResponse response = mouser.searchByKeyword(query.strip(), records, startingRecord(start), deadline);
         MouserSearchResponse.SearchResults results = requireResults(response);
         Instant now = clock.instant();
         List<Part> parts = new ArrayList<>();
@@ -101,10 +109,15 @@ public class MouserClient implements DistributorClient {
 
     @Override
     public Optional<Part> getPart(String distributorPartNumber) throws DistributorException {
-        return guarded(() -> doGetPart(distributorPartNumber));
+        return getPart(distributorPartNumber, Deadline.immediate());
     }
 
-    private Optional<Part> doGetPart(String distributorPartNumber) {
+    @Override
+    public Optional<Part> getPart(String distributorPartNumber, Deadline deadline) throws DistributorException {
+        return guarded(() -> doGetPart(distributorPartNumber, deadline));
+    }
+
+    private Optional<Part> doGetPart(String distributorPartNumber, Deadline deadline) {
         MouserApi mouser = requireConfigured();
         if (distributorPartNumber == null || distributorPartNumber.isBlank()) {
             return Optional.empty();
@@ -113,7 +126,7 @@ public class MouserClient implements DistributorClient {
         if (partNumber.contains("|")) {
             return Optional.empty(); // '|' separates several part numbers in a Mouser part-number search
         }
-        List<MouserPart> found = requireResults(mouser.searchByPartNumber(partNumber)).parts();
+        List<MouserPart> found = requireResults(mouser.searchByPartNumber(partNumber, deadline)).parts();
         Instant now = clock.instant();
         Optional<MouserPart> match = found.stream()
                 .filter(p -> partNumber.equalsIgnoreCase(trim(p.mouserPartNumber())))

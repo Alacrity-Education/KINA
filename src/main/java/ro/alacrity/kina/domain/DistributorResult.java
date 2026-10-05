@@ -14,6 +14,7 @@ import java.util.List;
  * @param error        null, or "rate_limited", "unavailable", "not_configured", "timeout", "bad_response"
  * @param fallbackQuery null, or the shorter parametric core phrase that was sent to the distributor because the full
  *                      query found nothing (e.g. "MOSFET 30V SOT-23" for "SOT-23 N-channel MOSFET 30V")
+ * @param rateLimitWaitedMs milliseconds this distributor's fetch spent waiting on rate limits (0 when none)
  */
 public record DistributorResult(
         @JsonProperty("distributor") Distributor distributor,
@@ -23,11 +24,18 @@ public record DistributorResult(
         @JsonProperty("cache") CacheStatus cache,
         @JsonProperty("error") String error,
         @JsonProperty("parts") List<PartResponse> parts,
-        @JsonProperty("fallback_query") String fallbackQuery
+        @JsonProperty("fallback_query") String fallbackQuery,
+        @JsonProperty("rate_limit_waited_ms") long rateLimitWaitedMs
 ) {
 
     public DistributorResult {
         parts = parts == null ? List.of() : List.copyOf(parts);
+    }
+
+    /** An entry without rate-limit waits. */
+    public DistributorResult(Distributor distributor, Integer totalResults, int fetched, int returned,
+                             CacheStatus cache, String error, List<PartResponse> parts, String fallbackQuery) {
+        this(distributor, totalResults, fetched, returned, cache, error, parts, fallbackQuery, 0);
     }
 
     /** An entry for a search of the query itself (no phrase fallback). */
