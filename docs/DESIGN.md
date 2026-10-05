@@ -659,49 +659,151 @@ Presented bearer tokens are still validated. No login page.
 
 **Production mode**: web pages require OIDC login through `spring-boot-starter-oauth2-client`,
 registration id `oidc`, provider configured only by `OIDC_ISSUER_URI`, `OIDC_CLIENT_ID`,
-`OIDC_CLIENT_SECRET` (discovery via `/.well-known/openid-configuration`, scopes `openid profile email`).
-No provider-specific code (`spring-boot-starter-security-oauth2-client`). On login `OidcUserSynchronizer` upserts `users(issuer, subject, email, display_name, last_login_at)`.
-`/api/**` and `/mcp/**` accept bearer tokens only.
+`OIDC_CLIENT_SECRET` (lazy discovery via `/.well-known/openid-configuration`). Scopes: `openid profile email`, plus
+`kina.security.oidc.extra-scopes`, plus `offline_access` when membership re-checks are enabled (required groups and an
+encryption key, section 7.1) and the provider lists it in `scopes_supported`. No provider-specific code. Every call to
+the provider made by KINA's code (code exchange, userinfo, JWKS, re-checks) has a 5 s connect and read timeout
+(`OidcHttp`); ID tokens are verified with the provider's JWKS and the asymmetric algorithms it advertises
+(`OidcIdTokenDecoders`, RS256 when it advertises none).
+On login `OidcUserSynchronizer` applies the group and e-mail-domain policy (`OidcAccessPolicy`, section 7.1) and then
+upserts `users(issuer, subject, email, display_name, last_login_at)`, sets `membership_checked_at` and clears
+`access_revoked_at`. A refused identity is not signed in: the login ends on `/login-denied` (403, names the required
+group or the allowed domains), and an existing user row is blocked (`access_revoked_at`, all tokens revoked).
+The login's authorized client lives in the HTTP session (`UpstreamTokenCapturingClientRepository`), which hands the
+provider's refresh token to `MembershipVerifier` (stored encrypted, section 7.1).
+`/api/**` and `/mcp/**` accept bearer tokens only. `RevokedUserSessionFilter` ends the web session of a user blocked
+after signing in; the next page view starts a new login (and so a new group check).
 
 **Access tokens** (`AccessTokenService`): plaintext `kina_` + 43 base64url chars from 32 random
 bytes; stored as SHA-256 hex in `access_tokens.token_hash`; `token_prefix` = first 12 chars for display;
-validity `kina.tokens.validity` default `30d`; shown to the user exactly once. `last_used_at` is
-updated at most once per minute per token. Revocation sets `revoked_at` and, in the same transaction, revokes every
-`oauth_refresh_tokens` row whose `access_token_id` is that token (`AccessTokenRepository.revoke*`): a user revoking an
-OAuth-issued token in the web UI, or a client revoking its access token at `/oauth/revoke`, must not leave a refresh
-token that mints a new one. The same table and service
-issue the OAuth access tokens (`oauth_client_id` set, name `MCP: <client_name>`).
+shown to the user exactly once. Lifetime: `kina.tokens.validity` (default `30d`) for tokens created in the web UI
+("static tokens"), `kina.oauth.access-token-validity` (default `1h`) for tokens issued by `/oauth/token`.
+`last_used_at` is updated at most once per minute per token. Revocation sets `revoked_at` and, in the same
+transaction, revokes every `oauth_refresh_tokens` row whose `access_token_id` is that token
+(`AccessTokenRepository.revoke*`): a user revoking an OAuth-issued token in the web UI, or a client revoking its access
+token at `/oauth/revoke`, must not leave a refresh token that mints a new one.
+`AccessTokenRepository.revokeAllForUser` revokes every access and refresh token of a user (group membership lost).
+The same table and service issue the OAuth access tokens (`oauth_client_id` set, name `MCP: <client_name>`).
 
 **Bearer filter**: `Authorization: Bearer <token>` -> lookup by hash -> must be unexpired and
-unrevoked -> `KinaPrincipal(userId, displayName, tokenId)` with `ROLE_USER`. Failures return 401 with
+unrevoked -> the user must not be blocked (`users.access_revoked_at` null) -> for a static token under group
+authorisation, `MembershipVerifier.allowsStaticToken` (section 7.1; may start a background re-check, never waits for
+the provider) -> `KinaPrincipal(userId, displayName, tokenId)` with `ROLE_USER`. Failures return 401 with
 `WWW-Authenticate: Bearer realm="kina", resource_metadata="<public>/.well-known/oauth-protected-resource"`
 (plus `error="invalid_token"` when a token was presented). This header is what makes Claude's MCP
 connector discover the authorization server.
 
-**Public origin**: `server.forward-headers-strategy=framework` so `X-Forwarded-Proto/Host/Port/Prefix`
-are honoured; `PublicUrlResolver` returns `kina.public-base-url` when set, otherwise the request's
-forwarded origin. All metadata, redirect URIs and `resource_metadata` values use it.
+**Public origin**: `server.forward-headers-strategy=framework` so `X-Forwarded-Proto/Host/Port/Prefix` (and
+`X-Forwarded-For` for the client address) are honoured; `PublicUrlResolver` returns `kina.public-base-url` when set,
+otherwise the request's forwarded origin. All metadata, redirect URIs and `resource_metadata` values use it.
 
-**Web UI** (Thymeleaf, CSRF on): `GET /` lists the current user's tokens (name, prefix, created,
-expires, last used, revoked), `POST /tokens` creates one (name required) and renders the plaintext
-once, `POST /tokens/{id}/revoke`. Keep the pages plain and dependency-free (inline CSS).
+**Web UI** (Thymeleaf, CSRF on): `GET /` first explains the main path (Claude's connector with the `/mcp` URL, or
+`claude mcp add` + `/mcp` sign-in in Claude Code), then lists the current user's tokens (name, prefix, created,
+expires, last used, revoked). Static tokens are presented as the option for scripts calling the HTTP API and for Claude
+Code on machines without a browser. `POST /tokens` creates one (name required) and renders the plaintext once,
+`POST /tokens/{id}/revoke`. `kina.tokens.ui-enabled=false` (`KINA_TOKENS_UI_ENABLED`) replaces `/` with a short page
+explaining that access is through Claude's connector and that static tokens are disabled, and makes `POST /tokens` a
+404 (existing tokens keep working until they expire or are revoked). Keep the pages plain and dependency-free (inline
+CSS).
 
 ## 7. OAuth 2.1 authorization server for MCP clients
 
-All endpoints are relative to the public origin.
+All endpoints are relative to the public origin. `/.well-known/**`, `/oauth/register`, `/oauth/token` and
+`/oauth/revoke` are anonymous and CORS-enabled (as is `/mcp`); `/oauth/authorize` runs in the web chain (signed-in
+user).
 
 | Endpoint | Behaviour |
 |---|---|
 | `GET /.well-known/oauth-protected-resource` and `/.well-known/oauth-protected-resource/mcp` | `{"resource": "<public>/mcp", "authorization_servers": ["<public>"], "bearer_methods_supported": ["header"], "scopes_supported": ["kina"], "resource_name": "KINA"}` |
-| `GET /.well-known/oauth-authorization-server`, `/.well-known/oauth-authorization-server/mcp`, `/.well-known/openid-configuration` | `issuer`, `authorization_endpoint=/oauth/authorize`, `token_endpoint=/oauth/token`, `registration_endpoint=/oauth/register`, `revocation_endpoint=/oauth/revoke`, `response_types_supported=["code"]`, `response_modes_supported=["query"]`, `grant_types_supported=["authorization_code","refresh_token"]`, `code_challenge_methods_supported=["S256"]`, `token_endpoint_auth_methods_supported=["none","client_secret_basic","client_secret_post"]`, `scopes_supported=["kina"]` |
-| `POST /oauth/register` (RFC 7591, anonymous) | Accepts `redirect_uris` (required, absolute, no fragment; `https`, `http://localhost`/`127.0.0.1` any port, or custom schemes), `client_name`, `token_endpoint_auth_method` (default `none`), `grant_types` (default `["authorization_code","refresh_token"]`), `response_types` (`["code"]`), `scope`. Returns 201 with `client_id`, `client_secret` (only when auth method is not `none`), `client_id_issued_at`, `client_secret_expires_at: 0` and the echoed metadata. Clients are stored in `oauth_clients`. |
-| `GET /oauth/authorize` | Requires `response_type=code`, registered `client_id`, exact `redirect_uri` match, `code_challenge` + `code_challenge_method=S256` (PKCE mandatory), optional `scope`, `state`, `resource`. Requires an authenticated user (dev: automatic admin; prod: OIDC login, then return). Renders a consent page (client name, user, Approve/Deny). Approve -> authorization code (32 random bytes base64url, SHA-256 stored, 10 min validity, bound to client, redirect URI, user, challenge, scope, resource) -> 302 `redirect_uri?code=&state=`. Deny -> `error=access_denied`. Invalid client or redirect URI -> error page, never a redirect. |
-| `POST /oauth/token` (form-encoded) | `grant_type=authorization_code`: verify client (secret if registered with one; public clients need none), code unused and unexpired, `redirect_uri` equal, PKCE `S256(code_verifier) == code_challenge`; mark code used; issue access token (30 days, via `AccessTokenService`) and refresh token (`kina.oauth.refresh-token-validity` default `90d`, `oauth_refresh_tokens`). Response `{"access_token","token_type":"Bearer","expires_in","refresh_token","scope"}`. `grant_type=refresh_token`: rotate (revoke old refresh token and its access token, issue new pair). Errors follow RFC 6749 (`invalid_request`, `invalid_client` (401), `invalid_grant`, `unsupported_grant_type`). |
+| `GET /.well-known/oauth-authorization-server`, `/.well-known/oauth-authorization-server/mcp`, `/.well-known/openid-configuration` | `issuer`, `authorization_endpoint=/oauth/authorize`, `token_endpoint=/oauth/token`, `registration_endpoint=/oauth/register`, `revocation_endpoint=/oauth/revoke`, `response_types_supported=["code"]`, `response_modes_supported=["query"]`, `grant_types_supported=["authorization_code","refresh_token"]`, `code_challenge_methods_supported=["S256"]`, `token_endpoint_auth_methods_supported=["none","client_secret_basic","client_secret_post"]`, `scopes_supported=["kina"]`, `client_id_metadata_document_supported` (`true` unless `kina.oauth.trusted-client-metadata-hosts` is empty; section 7.2) |
+| `POST /oauth/register` (RFC 7591, anonymous) | Rate-limited per client IP (section 7.3; 429 + `Retry-After`). Accepts `redirect_uris` (required, absolute, no fragment; `https`, `http://localhost`/`127.0.0.1` any port, or custom schemes), `client_name`, `token_endpoint_auth_method` (default `none`), `grant_types` (default `["authorization_code","refresh_token"]`), `response_types` (`["code"]`), `scope`. Returns 201 with `client_id`, `client_secret` (only when auth method is not `none`), `client_id_issued_at`, `client_secret_expires_at: 0` and the echoed metadata. Clients are stored in `oauth_clients`. |
+| `GET /oauth/authorize` | Requires `response_type=code`, a known `client_id` (registered, or an `https` metadata document URL on a trusted host, section 7.2), exact `redirect_uri` match (metadata-document clients: loopback redirect URIs may use any port), `code_challenge` + `code_challenge_method=S256` (PKCE mandatory), optional `scope`, `state`, `resource`. Requires an authenticated user who is not blocked (dev: automatic admin; prod: OIDC login with the group check, then return). Renders a consent page (client name, user, token lifetimes, the client's metadata host, a warning for loopback redirects, Approve/Deny); trusted metadata-document clients skip it (section 7.2). Approve -> authorization code (32 random bytes base64url, SHA-256 stored, 10 min validity, bound to client, redirect URI, user, challenge, scope, resource) -> 302 `redirect_uri?code=&state=`. Deny -> `error=access_denied`. Invalid or untrusted client, invalid document, or unregistered redirect URI -> error page, never a redirect. |
+| `POST /oauth/token` (form-encoded) | `grant_type=authorization_code`: verify client (secret if registered with one; public clients need none), code unused and unexpired, `redirect_uri` equal, PKCE `S256(code_verifier) == code_challenge`, user not blocked; mark code used; issue access token (`kina.oauth.access-token-validity`, default `1h`, via `AccessTokenService`) and refresh token (`kina.oauth.refresh-token-validity`, default `30d`, `oauth_refresh_tokens`); record `oauth_clients.last_used_at`. Response `{"access_token","token_type":"Bearer","expires_in","refresh_token","scope"}`, `expires_in` is the real lifetime (3600). `grant_type=refresh_token`: the group membership is re-checked first when due (section 7.1; a refusal is `invalid_grant`, which makes Claude ask the user to reconnect), then rotate (revoke old refresh token and its access token, issue new pair). Errors follow RFC 6749 (`invalid_request`, `invalid_client` (401), `invalid_grant`, `unsupported_grant_type`). |
 | `POST /oauth/revoke` (RFC 7009) | Revokes an access or refresh token belonging to the authenticated client; always 200. Revoking a refresh token also revokes its current access token; revoking an access token also revokes the refresh token issued with it. |
 
 `resource` (RFC 8707) is stored and echoed; a value outside the public origin is logged, not rejected.
 
-## 8. Database schema (Flyway `V1__init.sql`)
+### 7.1 Group authorisation and membership re-checks
+
+KINA stays the authorization server Claude talks to and delegates the login to the organisation's OIDC provider
+(Authentik in the reference setup; nothing provider-specific in code). Who may use KINA is decided by the provider's
+group membership, checked at three points:
+
+| Point | Where | What |
+|---|---|---|
+| Login | `OidcUserSynchronizer` + `OidcAccessPolicy` | The groups claim (`kina.security.oidc.groups-claim`, default `groups`) is read from the ID token; only when the ID token does not carry it, from userinfo. The name is looked up literally (namespaced claims such as `https://example.com/groups` work), then as a dotted path (`realm_access.roles`). An array of strings or a single string; group names compare case-insensitively, a leading `/` is ignored. The user must be in at least one of `required-groups`. Optional `allowed-email-domains`: the `email` claim must be in one of them and not marked `email_verified=false`. Failure: `/login-denied`, no session, existing user blocked (`access_revoked_at`, all tokens revoked), WARN log with the subject only. Success: `membership_checked_at = now`, `access_revoked_at` cleared. |
+| Refresh grant | `TokenController` -> `MembershipVerifier.checkRefreshGrant` (synchronous) | When `membership_checked_at` is older than `membership-recheck-interval` (default `1h`), re-check at the provider before rotating. With 1-hour access tokens, a removed member is cut off within about an hour. |
+| Static tokens | `BearerTokenAuthenticationFilter` -> `MembershipVerifier.allowsStaticToken` (asynchronous) | Same interval; the re-check runs on a virtual thread (at most one per user), the request is never blocked. OAuth access tokens are only checked for `access_revoked_at` (they live one hour and are re-checked at refresh). |
+
+**Re-check**: `MembershipVerifier` decrypts the stored upstream refresh token (`UpstreamTokenCipher`, AES-256-GCM, key
+`kina.security.oidc.token-encryption-key`, base64 of 32 bytes, user id as associated data; stored as `v1.` +
+base64url(IV || ciphertext || tag)), redeems it at the provider's token endpoint from discovery (client
+authentication as discovered, 5 s timeouts, HTTP/1.1), stores the rotated refresh token, verifies the new ID token with
+the JWKS (same subject), and reads the groups claim from it or, if absent, from userinfo with the new access token
+(same subject). Re-checks of one user are serialised (striped locks) so the upstream refresh token is never redeemed
+twice concurrently.
+
+| Outcome | Effect |
+|---|---|
+| Still a member | `membership_checked_at = now`. |
+| Not a member, or the provider answers `invalid_grant` (user removed, disabled, grant revoked or expired) | User revoked: `access_revoked_at` set, upstream token deleted, every access and refresh token revoked; the refresh grant fails with `invalid_grant`; the web session ends. A later successful interactive login lifts the block. |
+| Provider unreachable (network error, timeout, 5xx, other error responses, unverifiable ID token, discovery failing) | Access continues while `membership_checked_at` is younger than `membership-grace` (default `4h`); after that refresh grants fail with `invalid_grant` ("identity provider unreachable"), nothing is revoked, and the same refresh token works again once the provider is back (the refused attempt does not rotate it). Static tokens: denied once the grace period is over and the latest background re-check found the provider unreachable. |
+| No upstream refresh token (no encryption key configured, the provider issued none, or the key changed) | Refresh grants (and static tokens) keep working while the last interactive login is younger than `relogin-interval-without-recheck` (default `24h`); then `invalid_grant` ("sign in again"), which makes Claude ask the user to reconnect, and the new login re-checks the group. A WARN at startup explains this when the key is missing. |
+
+Enforcement is active only in production mode with at least one required group (`KinaProperties.Security.enforcesGroups`);
+otherwise only `access_revoked_at` is honoured. After enabling it, existing users must sign in once before their
+refresh grants and static tokens work again (they have no `membership_checked_at`). In the reference setup the
+provider also denies non-members itself (group binding on the application), so KINA's checks are the second gate and
+the only one that acts after the login.
+
+Verified with a real Authentik 2026.8.3 (`scripts/e2e/authentik`): Authentik answers a refresh grant for a user who
+was removed from the bound group with new tokens whose `groups` lack the group (the application binding is not
+re-evaluated on refresh), so KINA's claim check is what revokes the user.
+
+### 7.2 Client ID metadata documents
+
+MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a client may use an `https` URL as its
+`client_id`; the document at that URL describes it (Claude's "published identity"; Claude Code's is
+`https://claude.ai/oauth/claude-code-client-metadata`).
+
+- **Detection**: a `client_id` starting with `https://` is a metadata document URL (`ClientMetadataDocumentResolver`,
+  via `OAuthClientLookup`, used by `/oauth/authorize`, `/oauth/token` and `/oauth/revoke`).
+- **URL rules**: `https`, a host, a path other than `/`, no user info, no fragment, no `.`/`..` segments.
+- **Trust**: the host must match `kina.oauth.trusted-client-metadata-hosts` (default `claude.ai`, `claude.com`,
+  `*.anthropic.com`; `*.x` matches subdomains, not the apex). Other hosts are never fetched (SSRF protection):
+  `/oauth/authorize` shows an error page, the token endpoint answers `invalid_client`.
+- **Fetch**: GET with a 5 s budget for the whole exchange, no redirects, at most 1 MB, HTTP/1.1. 5xx and network errors
+  count as unreachable; other statuses reject the client.
+- **Validation**: a JSON object whose `client_id` equals the URL exactly; non-empty `redirect_uris` passing the
+  registration rules; `token_endpoint_auth_method` absent or `none` (KINA supports no `private_key_jwt`, and shared
+  secrets are forbidden, as are `client_secret`/`client_secret_expires_at`); `grant_types` default
+  `["authorization_code"]`, must include `authorization_code`, unsupported types are ignored; `response_types` must
+  include `code`; `client_name` (falls back to the host).
+- **Redirect URI**: exact string match against the document, except that a loopback `http` entry
+  (`http://localhost/callback`) matches any port (RFC 8252 section 7.3; Claude Code listens on an ephemeral port).
+- **Cache and persistence**: a valid document is cached for `kina.oauth.client-metadata-cache` (default `1h`) and
+  upserted into `oauth_clients` (`client_id` = `metadata_url` = the URL; codes and refresh tokens reference it). When the
+  cache expired and the host is unreachable, the persisted copy is used, so refreshes survive a short outage.
+- **Consent**: with `kina.oauth.auto-approve-trusted-clients=true` (default) the consent page is skipped for these
+  clients, but only for non-loopback redirect URIs (for example `https://claude.ai/api/mcp/auth_callback`): any local
+  program can listen on a loopback port and claim a trusted client's identity, so loopback redirects keep the consent
+  page with a warning. The user must still be signed in and pass the group check.
+
+### 7.3 Registration hygiene
+
+- **Rate limit**: `RegistrationRateLimiter`, an in-memory token bucket per client IP for `POST /oauth/register`:
+  `kina.oauth.register-rate-limit-per-minute` (default 30, refilled continuously; 0 disables). The client IP is
+  `request.getRemoteAddr()`, which reflects `X-Forwarded-For` because forwarded headers are trusted
+  (`server.forward-headers-strategy=framework`; the proxy must overwrite the header). Over the limit: 429,
+  `Retry-After` in seconds, body `{"error":"too_many_requests"}`.
+- **Usage tracking**: every token issuance sets `oauth_clients.last_used_at`.
+- **Cleanup**: `OAuthClientMaintenance`, daily (first run 15 minutes after start), deletes dynamically registered
+  clients (`metadata_url IS NULL`) whose `COALESCE(last_used_at, created_at)` is older than
+  `kina.oauth.unused-client-retention` (default `90d`) and that have no unrevoked, unexpired access or refresh token.
+  Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
+  connection when it uses dynamic registration, so without this the table only grows.
+
+## 8. Database schema (Flyway `V1__init.sql` to `V4__group_authorisation.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -790,6 +892,19 @@ CREATE TABLE cached_searches (
 ALTER TABLE cached_searches ADD COLUMN next_offset INTEGER;
 -- V3__cached_search_fallback_query.sql: core phrase searched instead of the query (phrase fallback), NULL otherwise
 ALTER TABLE cached_searches ADD COLUMN fallback_query TEXT;
+
+-- V4__group_authorisation.sql (section 7.1 to 7.3)
+ALTER TABLE users
+  ADD COLUMN access_revoked_at                 TIMESTAMPTZ,  -- blocked (failed group check / invalid_grant upstream)
+  ADD COLUMN membership_checked_at             TIMESTAMPTZ,  -- last successful membership check
+  ADD COLUMN upstream_refresh_token            TEXT,         -- provider refresh token, AES-GCM (UpstreamTokenCipher)
+  ADD COLUMN upstream_refresh_token_updated_at TIMESTAMPTZ;
+ALTER TABLE oauth_clients
+  ADD COLUMN metadata_url TEXT,                              -- Client ID Metadata Document URL (= client_id)
+  ADD COLUMN last_used_at TIMESTAMPTZ;                       -- last token issuance (cleanup)
+CREATE INDEX oauth_refresh_tokens_user_idx ON oauth_refresh_tokens (user_id);
+CREATE INDEX oauth_refresh_tokens_client_idx ON oauth_refresh_tokens (client_id);
+CREATE INDEX access_tokens_oauth_client_idx ON access_tokens (oauth_client_id) WHERE oauth_client_id IS NOT NULL;
 
 CREATE TABLE jlcpcb_database (
   id            INTEGER PRIMARY KEY CHECK (id = 1),
@@ -988,8 +1103,29 @@ management.endpoints.web.exposure.include: health,info
 kina:
   public-base-url: ${KINA_PUBLIC_BASE_URL:}
   security.mode: ${KINA_MODE:dev}
-  tokens.validity: 30d
-  oauth.refresh-token-validity: 90d
+  security.oidc:                 # production only (section 6, 7.1)
+    issuer-uri: "${OIDC_ISSUER_URI:}"
+    client-id: "${OIDC_CLIENT_ID:}"
+    client-secret: "${OIDC_CLIENT_SECRET:}"
+    groups-claim: "${OIDC_GROUPS_CLAIM:groups}"                 # ID token first, then userinfo; dotted path for nested claims
+    required-groups: "${OIDC_REQUIRED_GROUPS:}"                 # comma separated, any of them; empty = no group check
+    allowed-email-domains: "${OIDC_ALLOWED_EMAIL_DOMAINS:}"     # comma separated; empty = any domain
+    extra-scopes: "${OIDC_EXTRA_SCOPES:}"                       # besides openid profile email; offline_access is automatic
+    token-encryption-key: "${KINA_TOKEN_ENCRYPTION_KEY:}"       # base64 of 32 bytes; unset = no upstream refresh tokens
+    membership-recheck-interval: ${KINA_MEMBERSHIP_RECHECK_INTERVAL:1h}
+    membership-grace: ${KINA_MEMBERSHIP_GRACE:4h}               # provider unreachable: access continues this long
+    relogin-interval-without-recheck: ${KINA_RELOGIN_INTERVAL_WITHOUT_RECHECK:24h}
+  tokens:
+    validity: 30d                                               # static tokens created in the web UI
+    ui-enabled: ${KINA_TOKENS_UI_ENABLED:true}
+  oauth:                         # section 7
+    access-token-validity: ${KINA_OAUTH_ACCESS_TOKEN_VALIDITY:1h}
+    refresh-token-validity: ${KINA_OAUTH_REFRESH_TOKEN_VALIDITY:30d}
+    trusted-client-metadata-hosts: "${KINA_OAUTH_TRUSTED_CLIENT_HOSTS:claude.ai,claude.com,*.anthropic.com}"
+    client-metadata-cache: 1h
+    auto-approve-trusted-clients: ${KINA_OAUTH_AUTO_APPROVE_TRUSTED_CLIENTS:true}
+    unused-client-retention: 90d
+    register-rate-limit-per-minute: ${KINA_OAUTH_REGISTER_RATE_LIMIT_PER_MINUTE:30}   # very high in src/test/resources
   cache:
     ttl: 5d
     empty-result-ttl: 1h       # cached searches with no in-stock part
@@ -1025,11 +1161,13 @@ kina:
             auto-download: true }   # false in src/test/resources/config/application.yml
 ```
 
-Production OIDC (only read when `kina.security.mode=prod`):
-`spring.security.oauth2.client.provider.oidc.issuer-uri=${OIDC_ISSUER_URI}`,
-`spring.security.oauth2.client.registration.oidc.{client-id,client-secret}`, `scope=openid,profile,email`,
-`redirect-uri={baseUrl}/login/oauth2/code/oidc`. Use a profile or conditional configuration so a missing issuer does
-not break development mode startup.
+Production OIDC is configured only through `kina.security.oidc.*` (read when `kina.security.mode=prod`), not through
+`spring.security.oauth2.client.*`: `OidcLoginConfiguration` (conditional on prod mode) builds the single registration
+`oidc` lazily from the issuer's discovery document (`LazyOidcClientRegistrationRepository`, redirect URI
+`{baseUrl}/login/oauth2/code/oidc`), so development mode needs no OIDC settings and production starts while the
+provider is unreachable. A malformed `token-encryption-key` fails startup with a message saying how to generate one.
+Comma-separated environment values bind to the list settings; leave unused duration and boolean variables unset (an
+empty value is not a valid duration or boolean).
 
 ## 11. Docker
 
@@ -1056,6 +1194,9 @@ not break development mode startup.
   parsing and mapping (JSON fixtures), TME mapping and token refresh (`MockRestServiceServer`), JLCPCB price parsing and
   SQLite search (build a tiny FTS5 database in the test), the cross-encoder tokenizer (fixtures from the Hugging Face
   tokenizer), ranker batching/timeouts, model download/verification and the rank blend with its fallbacks, PKCE, token hashing,
-  OAuth metadata/register/authorize/token flow (MockMvc), bearer filter; Testcontainers-backed repository tests.
+  OAuth metadata/register/authorize/token flow (MockMvc), bearer filter; group-claim evaluation, upstream token
+  cipher, Client ID Metadata Document parsing and host allowlist, registration rate limit; a production-mode
+  integration test against an in-process OIDC provider (`FakeOidcProvider`: login gate, refresh re-checks, grace,
+  fallback without upstream token, static-token background re-check); Testcontainers-backed repository tests.
 - No secrets in code, logs or test fixtures. Never log bearer tokens or API keys.
 - Every external call has a timeout. Every distributor error is isolated per distributor.

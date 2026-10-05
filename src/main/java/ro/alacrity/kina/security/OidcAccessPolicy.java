@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Group and e-mail-domain authorisation of an OIDC identity (DESIGN.md 7.6). Provider-agnostic: the claim name,
+ * Group and e-mail-domain authorisation of an OIDC identity (DESIGN.md 7.1). Provider-agnostic: the claim name,
  * the required groups and the allowed domains are configuration.
  * <ul>
  *   <li>The groups claim ({@code kina.security.oidc.groups-claim}, default {@code groups}) is read from the ID token

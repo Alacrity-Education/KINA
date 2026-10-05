@@ -70,8 +70,8 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 | `search/ce` | `CrossEncoderPartRanker` (the `PartRanker`), `CrossEncoderModel` (download, load, retry), `ModelDownloader`, `ModelLayout`, `BertTokenizer`, `ScoringBackend` / `OnnxScoringBackend` (ONNX Runtime) |
 | `search` | `PartRanker`, `RankingException` (checked, with `Reason`), `QueryParser` (+ `Recognizers`, `ConnectorRecognizer`), `ParametricExtractor`, `DeterministicRanker`, `DistributorPhraser` (connector phrasing per distributor, fallback phrases), `RankingService`, `PartSearchService` (cache, paging, phrase fallback), `PartLookupService`, `DistributorStatusService` |
 | `cache` | `CacheStatus`, `PartCacheRepository`, `SearchCacheRepository` (`CachedSearch`), `CacheMaintenance` |
-| `security` | `SecurityConfig` (dev/prod filter chains), `DevModeAuthenticationFilter`, `BearerTokenAuthenticationFilter` + `BearerAuthenticationEntryPoint` (401 with `resource_metadata`), `AccessTokenService`/`AccessTokenRepository` (30-day tokens; revoking one also revokes its OAuth refresh tokens), OIDC login (`OidcLoginConfiguration`, `LazyOidcClientRegistrationRepository`, `OidcUserSynchronizer`) |
-| `oauth` | OAuth 2.1 authorization server for MCP clients: metadata, `/oauth/register`, `/oauth/authorize` (consent page), `/oauth/token`, `/oauth/revoke`, PKCE |
+| `security` | `SecurityConfig` (dev/prod filter chains, login failure routing), `DevModeAuthenticationFilter`, `BearerTokenAuthenticationFilter` + `BearerAuthenticationEntryPoint` (401 with `resource_metadata`), `AccessTokenService`/`AccessTokenRepository` (static tokens 30 days, OAuth tokens 1 hour; revoking one also revokes its OAuth refresh tokens; `revokeAllForUser`), OIDC login (`OidcLoginConfiguration`, `LazyOidcClientRegistrationRepository`, `OidcUserSynchronizer`, `OidcIdTokenDecoders`, `OidcHttp` timeouts), group authorisation (`OidcAccessPolicy` claim/domain rules, `MembershipVerifier` re-checks, `UpstreamTokenCipher` AES-GCM, `UpstreamTokenCapturingClientRepository`, `RevokedUserSessionFilter`) |
+| `oauth` | OAuth 2.1 authorization server for MCP clients: metadata, `/oauth/register` (+ `RegistrationRateLimiter`), `/oauth/authorize` (consent page, auto-approval of trusted metadata-document clients), `/oauth/token`, `/oauth/revoke`, PKCE; Client ID Metadata Documents (`ClientMetadataDocument` rules, `ClientMetadataDocumentResolver` fetch/trust/cache, `OAuthClientLookup`); `OAuthClientMaintenance` (daily cleanup of unused registered clients) |
 | `mcp` | `KinaMcpTools`: `search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping` |
 | `api` / `web` | `/api/v1` controllers + `ApiExceptionHandler` (RFC 9457 problems); Thymeleaf token UI (`TokenPageController`), `PublicUrlResolver` |
 
@@ -88,6 +88,18 @@ Gotchas:
   limit, so tests calling them see `RATE_LIMITED` at once.
 - MCP: annotations live in `org.springframework.ai.mcp.annotation`; tool beans are plain `@Component`s scanned
   automatically. Tool results are serialised to JSON text content by the MCP server's own Jackson 3 mapper.
+- Group authorisation tests: `OidcGroupAuthorisationIntegrationTest` runs production mode against
+  `FakeOidcProvider` (test sources; in-process `HttpServer` with discovery, JWKS from a generated RSA key, an
+  `/authorize` that redirects straight back for the scripted user, rotating refresh tokens, userinfo, switches for
+  "group removed", "grant revoked", "token endpoint down" and "groups only in userinfo"). The issuer URL is dynamic,
+  so it comes from `@DynamicPropertySource`; time is simulated by ageing `users.membership_checked_at` in SQL. Replay
+  the provider's redirect into MockMvc with `get(URI)`, not a template string (the `state` value is already encoded).
+- `OAuthHardeningTest` has its own context (rate limit 3, token UI off) and replaces `ClientMetadataDocumentResolver`
+  with a `@Primary` instance that trusts `127.0.0.1` and accepts `http` client IDs, so metadata documents can be served
+  by an in-process `HttpServer`. Production code never accepts `http` client IDs. The shared test configuration sets
+  `kina.oauth.register-rate-limit-per-minute` very high because many tests register clients from the same address.
+- The JDK `HttpClient` tries an `h2c` upgrade on plain `http`; Authentik's server then loses POST bodies. Clients that
+  talk to identity providers or metadata hosts pin `HttpClient.Version.HTTP_1_1`.
 - Boot 4 starters: `spring-boot-starter-webmvc`, `-restclient`, `-flyway`, `-jdbc`, `-security-oauth2-client`;
   test slices come from `spring-boot-starter-{webmvc,restclient,jdbc,security}-test`. All are already in the POM.
 
@@ -112,14 +124,48 @@ scripts/e2e/prod_smoke.sh                           # prod-mode smoke in a throw
 | `rest` | `GET /api/v1/parts/search`, `POST .../search/batch`, TME phrase fallback (`fallback_query`, informational), `GET /api/v1/parts/TME/<symbol>`, 404/400 problem documents, invalid token -> 401, public health |
 | `prod` | (via `prod_smoke.sh`) app starts with `KINA_MODE=prod` and dummy OIDC client credentials; `/mcp` and `/api` without a token are 401 (with `resource_metadata`); `GET /` -> `/oauth2/authorization/oidc` -> 302 to the authorization endpoint discovered from `OIDC_ISSUER_URI` (default `https://accounts.google.com`; override `OIDC_ISSUER_URI` and `EXPECTED_AUTH_HOST` for another provider) |
 
+### Group authorisation against a real Authentik
+
+`scripts/e2e/authentik/` runs a disposable Authentik 2026.8.3 (server + worker + PostgreSQL; Authentik no longer needs
+Redis) next to a throwaway PostgreSQL for KINA, configures it through the API and drives the real login over HTTP:
+
+```bash
+./mvnw -q -DskipTests package                                   # the driver runs target/kina.jar
+python3 scripts/e2e/authentik/kina_authentik_e2e.py             # about 70 s on a warm image cache, then removes everything
+python3 scripts/e2e/authentik/kina_authentik_e2e.py --keep      # leave Authentik (localhost:19000) and KINA (18080) running
+python3 scripts/e2e/authentik/kina_authentik_e2e.py --reuse     # reuse a kept Authentik and its .env
+```
+
+- The driver writes `scripts/e2e/authentik/.env` with fresh random secrets (`PG_PASS`, `AUTHENTIK_SECRET_KEY`,
+  `AUTHENTIK_BOOTSTRAP_PASSWORD`, `AUTHENTIK_BOOTSTRAP_TOKEN`; git-ignored, deleted at the end unless `--keep`) and runs
+  `docker compose -f scripts/e2e/authentik/compose.yaml up -d` (project `kina-authentik-e2e`, Authentik on
+  `127.0.0.1:19000`, KINA's database on `127.0.0.1:15432`).
+- `bootstrap.py` (also runnable alone with `AUTHENTIK_URL` and `AUTHENTIK_BOOTSTRAP_TOKEN`) creates the group
+  `ElectronicsEngineer` and a second group `KinaGuests`, users `e2e-member`, `e2e-nonmember`, `e2e-guest` with random
+  passwords, a scope mapping `groups`, a confidential OAuth2/OIDC provider (`grant_types` authorization_code +
+  refresh_token, which Authentik 2026.8 requires when the provider is created through the API; strict redirect URI
+  `http://localhost:18080/login/oauth2/code/oidc`; self-signed RS256 key; scopes openid, email, profile,
+  offline_access, groups; implicit consent), the application `kina` and bindings of both groups.
+- KINA runs from `target/kina.jar` in prod mode with `OIDC_REQUIRED_GROUPS=ElectronicsEngineer`,
+  `OIDC_EXTRA_SCOPES=groups` and a random `KINA_TOKEN_ENCRYPTION_KEY`; log in `scripts/e2e/authentik/out/kina.log`.
+- Checks (15): member login through Authentik's identification and password stages (flow executor API) -> KINA consent
+  -> code -> tokens (`expires_in` 3600) -> MCP `tools/list`; upstream refresh token stored as `v1.` ciphertext;
+  refresh within the interval; refresh with an aged check re-verified at Authentik; member removed from the group in
+  Authentik -> next refresh `invalid_grant`, access token 401, `access_revoked_at` set; non-member refused by
+  Authentik's binding ("Permission denied"), no KINA session; `e2e-guest` (bound group, not `ElectronicsEngineer`)
+  passes Authentik and is refused by KINA (`/login-denied`, 403).
+- Result on 2026-10-05: 15/15. Authentik answers the refresh of a removed member with tokens whose `groups` lack the
+  group (it does not re-evaluate the application binding on refresh), so KINA's claim check does the revocation.
+
 Quota: on a cold cache the dev suites make 2 Mouser calls (one search, one new batch query); REST checks are restricted to
 LCSC and TME, and reruns within the cache TTL make no Mouser calls. In dev mode an anonymous `POST /mcp` is served as
 the dev admin, so the dev `oauth` suite triggers the 401 challenge with an unknown token; the anonymous 401 is covered
 by the `prod` suite. Tokens are never printed (only their 12-character prefix); the suites leave their tokens and
 OAuth clients in the database (revoke them on the token page if you care).
 
-Claude Code (verified with Claude Code 2.1.286): `claude mcp add --transport http kina http://localhost:8080/mcp
---header "Authorization: Bearer <token>"` -> `claude mcp list` shows `kina: ... (HTTP) - Connected`, and
+Claude Code normally connects through OAuth (`claude mcp add --transport http kina <url>/mcp`, then `/mcp` to sign
+in); a static token is for machines without a browser. Static-token check (verified with Claude Code 2.1.286):
+`claude mcp add --transport http kina http://localhost:8080/mcp --header "Authorization: Bearer <token>"` -> `claude mcp list` shows `kina: ... (HTTP) - Connected`, and
 `claude -p "Call the ping tool of the kina MCP server" --allowedTools mcp__kina__ping` returns
 `{"status":"ok","version":"0.1.0-SNAPSHOT"}`.
 
@@ -139,7 +185,7 @@ estimate in the notes):
 Disk: `kina_kina-data` 5.33 GB JLCPCB database + 23 MB int8 cross-encoder (`/data/cross-encoder`; 91 MB for fp32),
 `kina` image ~580 MB before the ONNX Runtime jar (53 MB, native libraries for Linux x64/aarch64, macOS and Windows; `kina.jar` is now 115 MB).
 
-Startup: Spring context ~2 s; Flyway V1-V3 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
+Startup: Spring context ~2 s; Flyway V1-V4 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
 (validation `count(*)`) ~19 s in the background; cross-encoder first start (download of vocab, configs and the
 23 MB int8 file from Hugging Face, session creation, warm-up) 3.6 s in the background, later starts < 0.5 s.
 

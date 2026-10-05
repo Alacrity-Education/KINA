@@ -169,7 +169,7 @@ public class TokenController extends OAuthEndpointSupport {
         if (requestedScope != null && !scopeSubset(requestedScope, stored.scope())) {
             throw new OAuthException("invalid_scope", "Requested scope exceeds the original grant");
         }
-        // Group authorisation (DESIGN.md 7.6): re-verify membership with the identity provider when due. Checked
+        // Group authorisation (DESIGN.md 7.1): re-verify membership with the identity provider when due. Checked
         // before rotation; a refusal is invalid_grant, which makes Claude ask the user to reconnect.
         MembershipVerifier.Verdict verdict = membership.checkRefreshGrant(stored.userId());
         if (!verdict.allowed()) {

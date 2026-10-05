@@ -1,4 +1,4 @@
--- Group authorisation and membership re-checks (DESIGN.md 7.6).
+-- Group authorisation and membership re-checks (DESIGN.md 7.1).
 -- access_revoked_at: set when the user failed a group check (login or re-check) or the identity provider rejected the
 --   stored grant; every token of the user is revoked at the same time and bearer authentication refuses the user until
 --   a successful interactive login clears it.

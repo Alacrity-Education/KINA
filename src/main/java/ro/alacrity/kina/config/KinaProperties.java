@@ -54,7 +54,7 @@ public record KinaProperties(
 
     /**
      * {@code kina.security.oidc.*}: generic OIDC provider used for web login in production mode, plus the group
-     * authorisation settings (DESIGN.md 7.6).
+     * authorisation settings (DESIGN.md 7.1).
      *
      * @param groupsClaim                    claim holding the user's groups; read from the ID token first, then from
      *                                       userinfo; a dotted path ({@code realm_access.roles}) reaches nested claims

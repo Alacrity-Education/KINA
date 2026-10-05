@@ -39,7 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
- * Group authorisation after login (DESIGN.md 7.6): stores the identity provider's refresh token at login and
+ * Group authorisation after login (DESIGN.md 7.1): stores the identity provider's refresh token at login and
  * re-verifies the user's group membership against the provider when the last check is older than
  * {@code kina.security.oidc.membership-recheck-interval}.
  * <p>

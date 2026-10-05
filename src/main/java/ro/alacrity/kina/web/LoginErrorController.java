@@ -21,7 +21,7 @@ public class LoginErrorController {
     }
 
     /**
-     * The identity provider authenticated the user but KINA refused them (DESIGN.md 7.6): not in a required group, or
+     * The identity provider authenticated the user but KINA refused them (DESIGN.md 7.1): not in a required group, or
      * an e-mail domain that is not allowed. No session is established.
      */
     @GetMapping("/login-denied")

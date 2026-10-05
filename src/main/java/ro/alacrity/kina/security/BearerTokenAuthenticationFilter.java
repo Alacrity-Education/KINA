@@ -97,7 +97,7 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
 
     /**
      * The principal of a valid token, unless its user is blocked ({@code access_revoked_at}) or, for a static web-UI
-     * token under group authorisation, the user's membership can no longer be vouched for (DESIGN.md 7.6; the
+     * token under group authorisation, the user's membership can no longer be vouched for (DESIGN.md 7.1; the
      * re-check itself runs in the background). OAuth access tokens live one hour and are re-checked at refresh.
      */
     private Optional<KinaPrincipal> toPrincipal(AccessToken token) {
