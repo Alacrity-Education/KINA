@@ -463,7 +463,8 @@ CREATE TABLE jlcpcb_database (
 - Config: `kina.distributors.mouser.api-key` (`MOUSER_API_KEY`), `base-url=https://api.mouser.com/api/v1`,
   `max-results-per-search=50`, `max-pages-per-search=1` (daily quota is 1 000 calls, 30/min).
 - Keyword search: `POST {base}/search/keyword?apiKey=...` JSON
-  `{"SearchByKeywordRequest":{"keyword":q,"records":n (<=50),"startingRecord":offset,"searchOptions":"InStock","searchWithYourSignUpLanguage":"false"}}`.
+  `{"SearchByKeywordRequest":{"keyword":q,"records":n (<=50),"startingRecord":offset + 1,"searchOptions":"InStock","searchWithYourSignUpLanguage":"false"}}`
+  (`startingRecord` is **1-based**, verified live: 1 returns results #1.., 3 returns #3..).
   Response `{"Errors":[...],"SearchResults":{"NumberOfResult":113,"Parts":[...]}}`.
 - Part lookup: `POST {base}/search/partnumber` with `{"SearchByPartRequest":{"mouserPartNumber":pn,"partSearchOptions":"Exact"}}`
   (verify the option value against the API; fall back to filtering the result by `MouserPartNumber`).
