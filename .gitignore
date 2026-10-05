@@ -29,3 +29,8 @@ data/
 
 # agent worktrees
 .claude/worktrees/
+
+# research data is committed (the generic data/ rule above is for runtime data)
+!docs/research/data/
+scripts/research/out/logs/
+__pycache__/
