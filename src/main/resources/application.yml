@@ -19,6 +19,7 @@ management.endpoints.web.exposure.include: health,info
 kina:
   public-base-url: ${KINA_PUBLIC_BASE_URL:}
   security.mode: ${KINA_MODE:dev}
+  security.oidc: { issuer-uri: "${OIDC_ISSUER_URI:}", client-id: "${OIDC_CLIENT_ID:}", client-secret: "${OIDC_CLIENT_SECRET:}" }
   tokens.validity: 30d
   oauth.refresh-token-validity: 90d
   cache.ttl: 5d

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <th:block th:fragment="pageHead(title)">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="referrer" content="no-referrer">
+        <title th:text="${title} + ' - KINA'">KINA</title>
+        <style>
+            :root { color-scheme: light dark; --fg: #1d232b; --muted: #5b6570; --bg: #f6f7f9; --card: #fff;
+                    --line: #d9dee4; --accent: #1f6feb; --danger: #c62828; --ok: #2e7d32; }
+            @media (prefers-color-scheme: dark) {
+                :root { --fg: #e6e9ed; --muted: #9aa4ae; --bg: #14171b; --card: #1c2026; --line: #333a43;
+                        --accent: #4c8dff; --danger: #ef5350; --ok: #66bb6a; }
+            }
+            * { box-sizing: border-box; }
+            body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg);
+                   background: var(--bg); }
+            header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;
+                     border-bottom: 1px solid var(--line); background: var(--card); }
+            header strong { font-size: 17px; letter-spacing: .5px; }
+            main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+            .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px;
+                    margin-bottom: 20px; }
+            h1 { font-size: 22px; margin: 0 0 12px; }
+            h2 { font-size: 17px; margin: 0 0 12px; }
+            .muted { color: var(--muted); }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+            th { font-size: 13px; color: var(--muted); font-weight: 600; }
+            .table-wrap { overflow-x: auto; }
+            code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+            pre { white-space: pre-wrap; word-break: break-all; background: var(--bg); border: 1px solid var(--line);
+                  border-radius: 6px; padding: 10px; margin: 8px 0; }
+            input[type=text] { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
+                               background: var(--bg); color: var(--fg); min-width: 0; flex: 1; }
+            input.secret { width: 100%; font-family: ui-monospace, monospace; }
+            button { font: inherit; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--accent);
+                     background: var(--accent); color: #fff; cursor: pointer; }
+            button.secondary { background: transparent; color: var(--fg); border-color: var(--line); }
+            button.danger { background: transparent; color: var(--danger); border-color: var(--danger);
+                            padding: 3px 10px; }
+            form.inline { display: inline; margin: 0; }
+            .row { display: flex; gap: 8px; flex-wrap: wrap; }
+            .error { color: var(--danger); margin: 8px 0 0; }
+            .notice { color: var(--ok); }
+            .status-active { color: var(--ok); }
+            .status-revoked, .status-expired { color: var(--muted); }
+            .warn { border-left: 4px solid var(--accent); padding: 4px 12px; }
+            a { color: var(--accent); }
+        </style>
+    </th:block>
+</head>
+<body>
+<header th:fragment="pageHeader(user)">
+    <strong>KINA</strong>
+    <span class="muted" th:if="${user != null}" th:text="'Signed in as ' + ${user}">Signed in as user</span>
+</header>
+</body>
+</html>
