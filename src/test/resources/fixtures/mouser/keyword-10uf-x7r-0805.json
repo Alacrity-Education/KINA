@@ -1,0 +1,700 @@
+{
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 113,
+    "Parts": [
+      {
+        "Availability": "76689 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/UPY_GPHC_X7R_6_3V_TO_250V.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 10uF X7R 0805 20% HI CV",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/AC_capacitor_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "140 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "YAGEO",
+        "ManufacturerPartNumber": "CC0805MKX7R7BB106",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "603-CC0805MKX77BB106",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "A MouseReel\u2122 fee of 5,00 \u20ac will be added and calculated in your basket. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "1,40 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 10,
+            "Price": "0,853 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 50,
+            "Price": "0,631 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 100,
+            "Price": "0,57 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 500,
+            "Price": "0,488 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 1500,
+            "Price": "0,266 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "0,259 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "0,245 \u20ac",
+            "Currency": "EUR"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/YAGEO/CC0805MKX7R7BB106?qs=WS5Jv%252B%252Bx1qV0JXGhy8Ef5g%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "76689",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SalesMaximumOrderQty": "12000",
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ],
+        "TradeCompliance": [
+          {
+            "ComplianceName": "Country of Origin",
+            "ComplianceValue": "Taiwan"
+          },
+          {
+            "ComplianceName": "Assembly Country of Origin",
+            "ComplianceValue": "Taiwan"
+          },
+          {
+            "ComplianceName": "Country of Diffusion",
+            "ComplianceValue": "Not available"
+          }
+        ]
+      },
+      {
+        "Availability": "92212 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 10uF 0805 X7R 10% RF/Micro Cap",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "140 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "0805X7R106KT1AT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-0805X7R106KT1AT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "A MouseReel\u2122 fee of 5,00 \u20ac will be added and calculated in your basket. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "1,56 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 10,
+            "Price": "1,05 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 50,
+            "Price": "0,833 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 100,
+            "Price": "0,768 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 500,
+            "Price": "0,658 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "0,357 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "0,257 \u20ac",
+            "Currency": "EUR"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/KYOCERA-AVX/0805X7R106KT1AT?qs=XAiT9M5g4x%252Bo4s7i6ql7Og%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "92212",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 98000,
+            "Date": "2026-10-19T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SalesMaximumOrderQty": "8000",
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ],
+        "TradeCompliance": [
+          {
+            "ComplianceName": "Country of Origin",
+            "ComplianceValue": "Korea, Republic of"
+          },
+          {
+            "ComplianceName": "Assembly Country of Origin",
+            "ComplianceValue": "Not available"
+          },
+          {
+            "ComplianceName": "Country of Diffusion",
+            "ComplianceValue": "Not available"
+          }
+        ]
+      },
+      {
+        "Availability": "15614 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/UPY-AC_NP0X7RX7S_6.3V-to-2KV_21.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 6.3V 10uF X7R 0805 10% AEC-Q200 HI CV",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/AC-MLCC-series_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "196 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "YAGEO",
+        "ManufacturerPartNumber": "AC0805KKX7R5BB106",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "603-AC0805KKX7R5BB16",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "A MouseReel\u2122 fee of 5,00 \u20ac will be added and calculated in your basket. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "0,439 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 10,
+            "Price": "0,262 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 50,
+            "Price": "0,194 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 100,
+            "Price": "0,173 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 500,
+            "Price": "0,165 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "0,165 \u20ac",
+            "Currency": "EUR"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/YAGEO/AC0805KKX7R5BB106?qs=t7xnP681wgULGJoIPQ2XAA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "15614",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 6000,
+            "Date": "2026-12-09T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SalesMaximumOrderQty": "12000",
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ],
+        "TradeCompliance": [
+          {
+            "ComplianceName": "Country of Origin",
+            "ComplianceValue": "Taiwan"
+          },
+          {
+            "ComplianceName": "Assembly Country of Origin",
+            "ComplianceValue": "Not available"
+          },
+          {
+            "ComplianceName": "Country of Diffusion",
+            "ComplianceValue": "Not available"
+          }
+        ]
+      },
+      {
+        "Availability": "57545 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/UPY_GPHC_X7R_6_3V_TO_250V.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 6.3V 10uF X7R 0805 10% HI CV",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/AC_capacitor_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "140 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "YAGEO",
+        "ManufacturerPartNumber": "CC0805KKX7R5BB106",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "603-CC805KKX7R5BB106",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "A MouseReel\u2122 fee of 5,00 \u20ac will be added and calculated in your basket. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "0,662 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 10,
+            "Price": "0,404 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 50,
+            "Price": "0,304 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 100,
+            "Price": "0,273 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 500,
+            "Price": "0,222 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "0,186 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "0,171 \u20ac",
+            "Currency": "EUR"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/YAGEO/CC0805KKX7R5BB106?qs=IinxsTLir9kHys0Gct84kA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "57545",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 36000,
+            "Date": "2027-06-29T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SalesMaximumOrderQty": "12000",
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ],
+        "TradeCompliance": [
+          {
+            "ComplianceName": "Country of Origin",
+            "ComplianceValue": "Taiwan"
+          },
+          {
+            "ComplianceName": "Assembly Country of Origin",
+            "ComplianceValue": "Not available"
+          },
+          {
+            "ComplianceName": "Country of Diffusion",
+            "ComplianceValue": "Not available"
+          }
+        ]
+      },
+      {
+        "Availability": "61831 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/UPY_GPHC_X7R_6_3V_TO_250V.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 10uF X7R 0805 10% HI CV",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/AC_capacitor_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "140 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "YAGEO",
+        "ManufacturerPartNumber": "CC0805KKX7R7BB106",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "603-CC0805KKX77BB106",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "A MouseReel\u2122 fee of 5,00 \u20ac will be added and calculated in your basket. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "1,44 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 10,
+            "Price": "0,886 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 50,
+            "Price": "0,651 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 100,
+            "Price": "0,588 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 500,
+            "Price": "0,504 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 1500,
+            "Price": "0,273 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "0,267 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "0,253 \u20ac",
+            "Currency": "EUR"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/YAGEO/CC0805KKX7R7BB106?qs=UgE%2F0m3bTsbyPftnSvLmPQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "61831",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 6000,
+            "Date": "2026-12-09T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SalesMaximumOrderQty": "12000",
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ],
+        "TradeCompliance": [
+          {
+            "ComplianceName": "Country of Origin",
+            "ComplianceValue": "Taiwan"
+          },
+          {
+            "ComplianceName": "Assembly Country of Origin",
+            "ComplianceValue": "Not available"
+          },
+          {
+            "ComplianceName": "Country of Diffusion",
+            "ComplianceValue": "Not available"
+          }
+        ]
+      }
+    ]
+  }
+}

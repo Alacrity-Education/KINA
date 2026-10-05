@@ -1,0 +1,150 @@
+{
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 1,
+    "Parts": [
+      {
+        "Availability": "76689 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/UPY_GPHC_X7R_6_3V_TO_250V.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 10uF X7R 0805 20% HI CV",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/AC_capacitor_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "140 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "YAGEO",
+        "ManufacturerPartNumber": "CC0805MKX7R7BB106",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "603-CC0805MKX77BB106",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "A MouseReel\u2122 fee of 5,00 \u20ac will be added and calculated in your basket. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "1,40 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 10,
+            "Price": "0,853 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 50,
+            "Price": "0,631 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 100,
+            "Price": "0,57 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 500,
+            "Price": "0,488 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 1500,
+            "Price": "0,266 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "0,259 \u20ac",
+            "Currency": "EUR"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "0,245 \u20ac",
+            "Currency": "EUR"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/YAGEO/CC0805MKX7R7BB106?qs=WS5Jv%252B%252Bx1qV0JXGhy8Ef5g%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "76689",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SalesMaximumOrderQty": "12000",
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ],
+        "TradeCompliance": [
+          {
+            "ComplianceName": "Country of Origin",
+            "ComplianceValue": "Taiwan"
+          },
+          {
+            "ComplianceName": "Assembly Country of Origin",
+            "ComplianceValue": "Taiwan"
+          },
+          {
+            "ComplianceName": "Country of Diffusion",
+            "ComplianceValue": "Not available"
+          }
+        ]
+      }
+    ]
+  }
+}
