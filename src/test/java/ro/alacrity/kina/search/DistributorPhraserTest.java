@@ -30,8 +30,8 @@ class DistributorPhraserTest {
                         "pin header male 40 straight 2.54mm", "male header 40 pos 2.54mm vertical"),
                 Arguments.of("6 pin JST XH connector 2.5mm", "\"Wire To Board\" XH 6P 2.5mm", "wire-board XH 6 2.5mm",
                         "JST XH 6 pos 2.5mm"),
-                Arguments.of("USB-C receptacle 16 pin SMD", "\"USB Connectors\" Type-C 16P \"Surface Mount\"",
-                        "USB C socket 16", "USB type C receptacle 16 pos SMD"),
+                Arguments.of("USB-C receptacle 16 pin SMD", "\"USB Connectors\" Type-C 16P/17P/18P \"Surface Mount\"",
+                        "USB C socket SMT", "USB type C receptacle SMD"),
                 Arguments.of("2x5 box header 2.54mm", "\"IDC Header\" 2x5P 2.54mm", "IDC male 2x5 2.54mm",
                         "shrouded header 10 pos 2.54mm"),
                 Arguments.of("screw terminal block 2 position 5.08mm", "\"Terminal Block\" 2P 5.08mm",
@@ -82,7 +82,7 @@ class DistributorPhraserTest {
         assertThat(DistributorPhraser.fallback(Distributor.LCSC, failing, "x")).isNull();
         // nothing shorter to try
         assertThat(DistributorPhraser.fallback(Distributor.TME, parser.parse("USB-C receptacle 16 pin"),
-                "USB C socket 16")).isNull();
+                "USB C socket")).isNull();
     }
 
     @Test
@@ -101,5 +101,67 @@ class DistributorPhraserTest {
         assertThat(DistributorPhraser.keywordCore(parser.parse("ESP32 module wifi"))).isNull();
         assertThat(DistributorPhraser.fallback(Distributor.TME, parser.parse("10uF X7R 0805"), "10uF X7R 0805"))
                 .isNull();
+    }
+
+    /**
+     * USB requests: query | LCSC phrase | TME phrase | Mouser phrase. No pin count for TME and Mouser (except Mouser
+     * power-only); LCSC gets the stated count as a group with its shell-counted variants.
+     */
+    static Stream<Arguments> usbPhrases() {
+        return Stream.of(
+                Arguments.of("USB-C receptacle 16 pin SMD USB 2.0", "\"USB Connectors\" Type-C 16P/17P/18P \"USB 2.0\" \"Surface Mount\"",
+                        "USB C socket SMT 2.0", "USB type C receptacle SMD 2.0"),
+                Arguments.of("USB Type-C 24 pin USB 3.1 receptacle horizontal",
+                        "\"USB Connectors\" Type-C 24P/25P/26P \"USB 3\" \"Right Angle\"", "USB C socket horizontal",
+                        "USB type C receptacle right angle 3.1"),
+                Arguments.of("17 pin USB-C receptacle", "\"USB Connectors\" Type-C 16P/17P/18P", "USB C socket",
+                        "USB type C receptacle"),
+                Arguments.of("micro USB B receptacle 5 pin SMD", "\"USB Connectors\" Micro-B 5P/6P/7P \"Surface Mount\"",
+                        "USB B micro socket SMT", "micro USB receptacle SMD"),
+                Arguments.of("USB-C 6 pin power only", "\"USB Connectors\" Type-C 6P/7P/8P", "USB C socket charging",
+                        "USB type C receptacle 6 pos power only"),
+                Arguments.of("USB 3.0 Type-A receptacle THT", "\"USB Connectors\" Type-A \"USB 3\" \"Through Hole\"",
+                        "USB A socket THT 3.0", "USB type A receptacle THT 3.0"),
+                Arguments.of("USB-C plug 24 pin", "\"USB Connectors\" Type-C Male 24P/25P/26P", "USB C plug", "USB type C plug"),
+                Arguments.of("waterproof USB-C receptacle IP67", "\"USB Connectors\" Type-C waterproof", "USB C socket IP67",
+                        "USB type C receptacle IP67"),
+                Arguments.of("mid-mount USB-C 16P", "\"USB Connectors\" Type-C 16P/17P/18P mid-mount", "USB C socket middle",
+                        "USB type C receptacle mid"),
+                Arguments.of("USB4 Type-C receptacle vertical", "\"USB Connectors\" Type-C USB4 Vertical",
+                        "USB C socket vertical", "USB type C receptacle vertical USB4"),
+                Arguments.of("USB-C receptacle 16 pin board lock", "\"USB Connectors\" Type-C 16P/17P/18P \"board lock\"",
+                        "USB C socket",
+                        "USB type C receptacle"),
+                Arguments.of("mini USB B receptacle", "\"USB Connectors\" Mini-B", "USB B mini socket", "mini USB receptacle"));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("usbPhrases")
+    void usbQueriesUseTheDistributorsWordingWithoutPinCounts(String query, String lcsc, String tme, String mouser) {
+        ParsedQuery parsed = parser.parse(query);
+        assertThat(DistributorPhraser.phrase(Distributor.LCSC, parsed)).isEqualTo(lcsc);
+        assertThat(DistributorPhraser.phrase(Distributor.TME, parsed)).isEqualTo(tme)
+                .hasSizeLessThanOrEqualTo(DistributorPhraser.TME_MAX_LENGTH);
+        assertThat(DistributorPhraser.phrase(Distributor.MOUSER, parsed)).isEqualTo(mouser);
+    }
+
+    @Test
+    void usbFallbacksAreTheTypeWords() {
+        ParsedQuery q = parser.parse("USB-C receptacle 16 pin SMD USB 2.0");
+        assertThat(DistributorPhraser.fallback(Distributor.TME, q, "USB C socket SMT 2.0")).isEqualTo("USB C socket");
+        assertThat(DistributorPhraser.fallback(Distributor.MOUSER, q, "USB type C receptacle SMD 2.0"))
+                .isEqualTo("USB type C receptacle");
+        assertThat(DistributorPhraser.fallback(Distributor.MOUSER, parser.parse("USB-C plug"), "USB type C plug")).isNull();
+        // the LCSC phrase is understood by JlcpcbQuery: category filter, Type-C/TypeC, "USB 2.0"/"USB2.0"
+        var lcsc = ro.alacrity.kina.distributor.lcsc.JlcpcbQuery.parse(DistributorPhraser.phrase(Distributor.LCSC, q));
+        assertThat(lcsc.terms()).extracting(t -> t.kind().name() + ":" + String.join("|", t.phrases()))
+                .containsExactly("CATEGORY:USB Connector", "FAMILY:Type-C|TypeC", "POSITIONS:16P|17P|18P",
+                        "FEATURE:USB 2.0|USB2.0", "MOUNTING:SMD|SMT|Surface Mount");
+        // 14 is a configuration of its own: "14 pin" is 14P/15P, never 16P
+        assertThat(DistributorPhraser.phrase(Distributor.LCSC, parser.parse("USB-C receptacle 14 pin")))
+                .isEqualTo("\"USB Connectors\" Type-C 14P/15P");
+        // an implied configuration stays out of every phrase
+        assertThat(DistributorPhraser.phrase(Distributor.LCSC, parser.parse("USB 2.0 Type-C receptacle")))
+                .isEqualTo("\"USB Connectors\" Type-C \"USB 2.0\"");
     }
 }

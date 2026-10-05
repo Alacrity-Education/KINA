@@ -33,6 +33,14 @@ import java.util.Map;
  * mounting {@value #W_CONNECTOR_MOUNTING}; each is +weight on a match and -weight on a mismatch, 0 when either side
  * is unknown. A header query with positions but no rows mildly prefers single-row parts
  * (-{@value #W_ROWS_UNSPECIFIED} for multi-row ones).
+ *
+ * <p>USB connector requests ({@link ParsedQuery.Connector#isUsb()}) use USB signals instead
+ * ({@link #usbScore}): USB type {@value #W_USB_TYPE} (Type-C vs Micro-B vs Type-A...), pin configuration
+ * {@value #W_USB_PINS} (canonical configuration, so a 17P/18P part is a 16-pin Type-C; half weight when the request only
+ * implies the count through its standard), USB standard {@value #W_USB_STANDARD} (same speed class; a higher class
+ * earns half, a lower one or a power-only part is a mismatch), gender {@value #W_USB_GENDER}, mounting style
+ * {@value #W_USB_MOUNTING} (mid-mount / hybrid / SMD / THT), orientation {@value #W_USB_ORIENTATION} and
+ * +{@value #W_USB_FEATURE} per requested feature present (waterproof, board lock, power only).
  */
 @Component
 public class DeterministicRanker {
@@ -54,6 +62,17 @@ public class DeterministicRanker {
     static final double W_PITCH = 0.15;
     static final double W_CONNECTOR_TYPE = 0.10;
     static final double W_CONNECTOR_MOUNTING = 0.05;
+    // USB connector signals (replace the connector signals for USB requests, DESIGN.md 3.4)
+    static final double W_USB_TYPE = 0.30;
+    static final double W_USB_PINS = 0.20;
+    static final double W_USB_STANDARD = 0.20;
+    static final double W_USB_GENDER = 0.15;
+    static final double W_USB_MOUNTING = 0.10;
+    static final double W_USB_ORIENTATION = 0.05;
+    static final double W_USB_FEATURE = 0.03;
+    /** Features that earn {@link #W_USB_FEATURE} when requested and present. */
+    static final List<String> USB_BONUS_FEATURES = List.of(UsbVocabulary.WATERPROOF, UsbVocabulary.BOARD_LOCK,
+            UsbVocabulary.POWER_ONLY);
     /** Absolute tolerance for "same pitch" in millimetres (2.54 == 0.1" == 2.540). */
     static final double PITCH_TOLERANCE_MM = 0.03;
     static final double W_TIE_STOCK = 0.03;
@@ -151,6 +170,9 @@ public class DeterministicRanker {
         if (wanted == null || actual == null) {
             return 0;
         }
+        if (wanted.isUsb()) {
+            return usbScore(query, wanted, actual, f.mounting());
+        }
         double score = 0;
         if (wanted.positions() != null && actual.positions() != null) {
             score += wanted.positions().equals(actual.positions()) ? W_POSITIONS : -W_POSITIONS;
@@ -178,6 +200,92 @@ public class DeterministicRanker {
             score += query.mounting().equals(f.mounting()) ? W_CONNECTOR_MOUNTING : -W_CONNECTOR_MOUNTING;
         }
         return score;
+    }
+
+    /**
+     * USB signals (class comment); every attribute unknown on either side scores 0. A part that is not a USB connector
+     * (a pin header, an RJ45 jack) is a type mismatch for a USB request.
+     */
+    static double usbScore(ParsedQuery query, ParsedQuery.Connector wanted, ParsedQuery.Connector actual,
+                           String partMounting) {
+        double score = 0;
+        // USB type: Type-C vs Micro-B vs Type-A...; a generic "USB" on either side is unknown
+        String wantedType = wanted.usbType() != null ? wanted.usbType() : UsbVocabulary.usbTypeOf(wanted.type());
+        String actualType = actual.usbType() != null ? actual.usbType() : UsbVocabulary.usbTypeOf(actual.type());
+        if (wantedType != null) {
+            if (actualType != null) {
+                score += wantedType.equals(actualType) ? W_USB_TYPE : -W_USB_TYPE;
+            } else if (!actual.isUsb() && actual.type() != null && !ParsedQuery.CONNECTOR.equals(actual.type())) {
+                score -= W_USB_TYPE;
+            }
+        }
+        // pin configuration: canonical on both sides (17P/18P == 16); implied by the standard -> half weight
+        Integer wantedPins = wanted.pinConfiguration() != null ? wanted.pinConfiguration()
+                : UsbVocabulary.configuration(wantedType, wanted.positions());
+        if (wantedPins == null) {
+            wantedPins = wanted.positions();
+        }
+        Integer actualPins = actual.pinConfiguration() != null ? actual.pinConfiguration()
+                : UsbVocabulary.configuration(wantedType, actual.positions());
+        if (wantedPins != null && actualPins != null) {
+            double w = wanted.pinConfigurationImplied() ? W_USB_PINS / 2 : W_USB_PINS;
+            score += wantedPins.equals(actualPins) ? w : -w;
+        }
+        // standard: same speed class +, higher half, lower or power-only -
+        UsbVocabulary.Standard wantedStandard = UsbVocabulary.standard(wanted.usbStandard());
+        if (wantedStandard != null) {
+            if (actual.hasFeature(UsbVocabulary.POWER_ONLY) && actual.usbStandard() == null) {
+                score -= W_USB_STANDARD;
+            } else {
+                Double cmp = UsbVocabulary.compare(wantedStandard, UsbVocabulary.standard(actual.usbStandard()));
+                if (cmp != null) {
+                    score += cmp > 0 ? W_USB_STANDARD * cmp : -W_USB_STANDARD;
+                }
+            }
+        }
+        if (wanted.gender() != null && actual.gender() != null) {
+            score += wanted.gender().equals(actual.gender()) ? W_USB_GENDER : -W_USB_GENDER;
+        }
+        Double mounting = usbMounting(wanted.mountingStyle(), query.mounting(), actual, partMounting);
+        if (mounting != null) {
+            score += W_USB_MOUNTING * mounting;
+        }
+        if (wanted.orientation() != null && actual.orientation() != null) {
+            score += wanted.orientation().equals(actual.orientation()) ? W_USB_ORIENTATION : -W_USB_ORIENTATION;
+        }
+        for (String feature : USB_BONUS_FEATURES) {
+            if (wanted.hasFeature(feature) && actual.hasFeature(feature)) {
+                score += W_USB_FEATURE;
+            }
+        }
+        return score;
+    }
+
+    /**
+     * Mounting comparison in [-1, 1], null when unknown: a requested mid-mount / hybrid / top-mount style against the
+     * part's style (a part that does not say is unknown); else SMD/THT against the part's mounting, where a hybrid part
+     * (SMD signal pins, through-hole shell legs) counts half for either.
+     */
+    static Double usbMounting(String wantedStyle, String wantedMounting, ParsedQuery.Connector actual,
+                              String partMounting) {
+        String actualStyle = actual.mountingStyle();
+        if (wantedStyle != null && actualStyle != null) {
+            return wantedStyle.equals(actualStyle) ? 1.0 : -1.0;
+        }
+        if (wantedStyle != null && UsbVocabulary.HYBRID.equals(wantedStyle)
+                && actual.hasFeature(UsbVocabulary.FULLY_SMD)) {
+            return -1.0;
+        }
+        if (wantedMounting == null) {
+            return null;
+        }
+        if (UsbVocabulary.HYBRID.equals(actualStyle)) {
+            return 0.5;
+        }
+        if (partMounting == null) {
+            return null;
+        }
+        return wantedMounting.equals(partMounting) ? 1.0 : -1.0;
     }
 
     /** First of capacitance/resistance/inductance in the query; frequency for crystals and oscillators. */

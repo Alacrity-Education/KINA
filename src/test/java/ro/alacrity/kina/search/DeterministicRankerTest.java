@@ -215,9 +215,117 @@ class DeterministicRankerTest {
                 + " Right Angle Type-C", "Connectors / USB Connectors", "SMD", Map.of());
         Part tht = RankingFixtures.tme("USB4085-GF-A", "GCT", "Connector: USB C; socket; THT; PIN: 16; horizontal",
                 "USB & IEEE1394 connectors", null, Map.of());
-        assertThat(score(q, smd) - score(q, tht)).isCloseTo(2 * DeterministicRanker.W_CONNECTOR_MOUNTING,
+        assertThat(score(q, smd) - score(q, tht)).isCloseTo(2 * DeterministicRanker.W_USB_MOUNTING,
                 within(0.011));   // tie-break (library type) differs by up to 0.01
         assertThat(DeterministicRanker.W_POSITIONS + DeterministicRanker.W_GENDER + DeterministicRanker.W_ORIENTATION
                 + DeterministicRanker.W_PITCH + DeterministicRanker.W_CONNECTOR_TYPE).isCloseTo(0.90, within(1e-9));
+    }
+
+    // ------------------------------------------------------------------ USB connectors
+
+    private static Part usbC(String code, String description) {
+        return RankingFixtures.lcsc(code, "ACME", "M-" + code, description, "Connectors / USB Connectors", "SMD",
+                Map.of());
+    }
+
+    private static final Part TYPE_C_16 = usbC("C16", "1 16P 5A Black Female Surface Mount, Right Angle Type-C USB 2.0");
+    private static final Part TYPE_C_17 = usbC("C17", "1 17P 5A Black Female Surface Mount, Right Angle Type-C USB 2.0");
+    private static final Part TYPE_C_18 = usbC("C18", "1 18P 5A Black Female Surface Mount, Right Angle Type-C USB 2.0");
+    private static final Part TYPE_C_14 = usbC("C14", "1 14P 5A Black Female Surface Mount, Right Angle Type-C USB 2.0");
+    private static final Part TYPE_C_24 = usbC("C24", "1 24P 5A Black Female Surface Mount, Right Angle Type-C USB 3.1");
+    private static final Part TYPE_C_25 = usbC("C25", "1 25P 5A Black Female Surface Mount, Right Angle Type-C USB 3.1");
+    private static final Part TYPE_C_26 = usbC("C26", "1 26P 5A Black Female Surface Mount, Right Angle Type-C USB 3.1");
+    private static final Part TYPE_C_6 = usbC("C6", "1 3A 5V 6P Black Female Surface Mount, Right Angle Type-C");
+    private static final Part MICRO_B = usbC("C5", "1 1A 5P Black Female Micro-B Surface Mount, Right Angle USB 2.0");
+    /** LCSC labels many 16P Type-C parts "USB 3.1" (physically USB 2.0). */
+    private static final Part TYPE_C_16_LABELLED_31 = usbC("C161",
+            "1 16P 5A Black Female Surface Mount, Right Angle Type-C USB 3.1");
+
+    @Test
+    void usbC16PinUsb20Request() {
+        String q = "USB-C receptacle 16 pin SMD USB 2.0";
+        // 17P/18P parts count 1-2 shell pins: the same 16-pin configuration, full credit, tied with 16P
+        assertThat(score(q, TYPE_C_17)).isEqualTo(score(q, TYPE_C_16));
+        assertThat(score(q, TYPE_C_18)).isEqualTo(score(q, TYPE_C_16));
+        assertThat(score(q, TYPE_C_16)).isGreaterThan(score(q, TYPE_C_14));
+        assertThat(score(q, TYPE_C_14)).isGreaterThan(score(q, TYPE_C_24));   // 14P is USB 2.0, 24P a higher class
+        assertThat(score(q, TYPE_C_24)).isGreaterThan(score(q, TYPE_C_6));    // power only: no data
+        assertThat(score(q, TYPE_C_6)).isGreaterThan(score(q, MICRO_B));      // a Micro-B never beats a Type-C
+        // the ranked order
+        List<Part> ranked = List.of(MICRO_B, TYPE_C_6, TYPE_C_24, TYPE_C_14, TYPE_C_18, TYPE_C_17, TYPE_C_16).stream()
+                .sorted((a, b) -> Double.compare(score(q, b), score(q, a))).toList();
+        assertThat(ranked.subList(0, 3)).containsExactlyInAnyOrder(TYPE_C_16, TYPE_C_17, TYPE_C_18);
+        assertThat(ranked.subList(3, 7)).containsExactly(TYPE_C_14, TYPE_C_24, TYPE_C_6, MICRO_B);
+        // the USB signals: type + pins + standard + gender + mounting
+        ParsedQuery query = parser.parse(q);
+        ParametricExtractor extractor = new ParametricExtractor();
+        assertThat(DeterministicRanker.connectorScore(query, extractor.features(TYPE_C_17)))
+                .isCloseTo(DeterministicRanker.W_USB_TYPE + DeterministicRanker.W_USB_PINS
+                        + DeterministicRanker.W_USB_STANDARD + DeterministicRanker.W_USB_GENDER
+                        + DeterministicRanker.W_USB_MOUNTING, within(1e-9));
+        // higher speed class than requested: half credit for the standard, wrong pins
+        assertThat(DeterministicRanker.connectorScore(query, extractor.features(TYPE_C_24)))
+                .isCloseTo(DeterministicRanker.W_USB_TYPE - DeterministicRanker.W_USB_PINS
+                        + DeterministicRanker.W_USB_STANDARD / 2 + DeterministicRanker.W_USB_GENDER
+                        + DeterministicRanker.W_USB_MOUNTING, within(1e-9));
+        assertThat(DeterministicRanker.connectorScore(query, extractor.features(MICRO_B)))
+                .isCloseTo(-DeterministicRanker.W_USB_TYPE - DeterministicRanker.W_USB_PINS
+                        + DeterministicRanker.W_USB_STANDARD + DeterministicRanker.W_USB_GENDER
+                        + DeterministicRanker.W_USB_MOUNTING, within(1e-9));
+    }
+
+    @Test
+    void usbC24PinUsb31Request() {
+        String q = "USB Type-C 24 pin USB 3.1";
+        assertThat(score(q, TYPE_C_25)).isEqualTo(score(q, TYPE_C_24));
+        assertThat(score(q, TYPE_C_26)).isEqualTo(score(q, TYPE_C_24));
+        for (Part lower : List.of(TYPE_C_16, TYPE_C_17, TYPE_C_16_LABELLED_31, TYPE_C_6, MICRO_B)) {
+            assertThat(score(q, TYPE_C_26)).as(lower.description()).isGreaterThan(score(q, lower));
+        }
+        // a 16P "USB 3.1" label is USB 2.0: standard and pins mismatch like any 16-pin part
+        assertThat(score(q, TYPE_C_16_LABELLED_31)).isEqualTo(score(q, TYPE_C_16));
+    }
+
+    @Test
+    void pinConfigurationImpliedByTheStandardCountsHalf() {
+        // "USB 2.0 Type-C" implies 16 pins, "USB 3.1 Type-C" 24; the pin signal then has half weight
+        String usb2 = "USB 2.0 Type-C receptacle";
+        assertThat(score(usb2, TYPE_C_16)).isGreaterThan(score(usb2, TYPE_C_24));
+        assertThat(score(usb2, TYPE_C_24)).isGreaterThan(score(usb2, TYPE_C_6));
+        assertThat(score(usb2, TYPE_C_16) - score(usb2, TYPE_C_14)).isCloseTo(DeterministicRanker.W_USB_PINS,
+                within(1e-9));   // +W/2 vs -W/2
+        String usb3 = "USB 3.1 Type-C receptacle";
+        assertThat(score(usb3, TYPE_C_24)).isGreaterThan(score(usb3, TYPE_C_16_LABELLED_31));
+        assertThat(score(usb3, TYPE_C_24)).isGreaterThan(score(usb3, TYPE_C_16));
+        // power-only request: 6P first
+        String power = "USB-C receptacle power only";
+        assertThat(score(power, TYPE_C_6)).isGreaterThan(score(power, TYPE_C_16));
+    }
+
+    @Test
+    void usbMountingStyleAndFeatures() {
+        Part midMount = usbC("CM", "1 16P 5A Black Female Laminated board Type-C USB 2.0");
+        Part topMount = RankingFixtures.lcsc("CT", "ACME", "M-CT", "Connector: USB C; socket; SMT; PIN: 16; horizontal",
+                "Connectors / USB Connectors", "SMD", RankingFixtures.attrs("Connector variant", "top board mount"));
+        String q = "mid-mount USB-C 16P";
+        assertThat(score(q, midMount) - score(q, topMount)).isCloseTo(2 * DeterministicRanker.W_USB_MOUNTING,
+                within(1e-9));
+        // a hybrid part (SMD + through-hole shell) counts half for an SMD request
+        Part hybrid = usbC("CH", "1 16P 5A Black Female Hybrid SMT/THT Right Angle Type-C USB 2.0");
+        Double half = DeterministicRanker.usbMounting(null, "SMD",
+                new ParametricExtractor().features(hybrid).connector(), "SMD");
+        assertThat(half).isEqualTo(0.5);
+        // requested features present earn a small bonus
+        Part sealed = usbC("CW", "1 16P 5A Black Female Surface Mount, Right Angle Type-C USB 2.0 with O-ring");
+        String waterproof = "waterproof USB-C receptacle 16 pin";
+        assertThat(score(waterproof, sealed) - score(waterproof, TYPE_C_16)).isCloseTo(DeterministicRanker.W_USB_FEATURE,
+                within(1e-9));
+        // gender: a plug request ranks plugs first
+        Part plug = usbC("CP", "1 24P 5A Black Clamping plate Male Type-C USB 3.1");
+        assertThat(score("USB-C plug 24 pin", plug)).isGreaterThan(score("USB-C plug 24 pin", TYPE_C_24));
+        // a non-USB connector is a type mismatch for a USB request
+        Part header = RankingFixtures.lcsc("CX", "ACME", "M", "1x16P 2.54mm Female Header Surface Mount",
+                "Connectors / Female Headers", "SMD", Map.of());
+        assertThat(score("USB-C receptacle 16 pin SMD", TYPE_C_16)).isGreaterThan(score("USB-C receptacle 16 pin SMD", header) + 0.5);
     }
 }

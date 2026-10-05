@@ -42,7 +42,10 @@ public record ParsedQueryResponse(
     /**
      * The {@code parsed.connector} object of a connector query, e.g.
      * {@code {"type":"female header","gender":"female","positions":6,"pitch":"2.54mm","orientation":"right angle"}};
-     * absent attributes are omitted, the whole object is omitted for other queries.
+     * USB requests add {@code usb_type}, {@code usb_standard}, {@code usb_speed_gbps}, {@code pin_configuration}
+     * (+ {@code pin_configuration_implied} when inferred from the standard), {@code shield_pins_counted},
+     * {@code mounting_style} and {@code features}. Absent attributes are omitted, the whole object is omitted for
+     * other queries.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ConnectorResponse(
@@ -52,13 +55,32 @@ public record ParsedQueryResponse(
             @JsonProperty("positions") Integer positions,
             @JsonProperty("rows") Integer rows,
             @JsonProperty("pitch") String pitch,
-            @JsonProperty("orientation") String orientation
+            @JsonProperty("orientation") String orientation,
+            @JsonProperty("usb_type") String usbType,
+            @JsonProperty("usb_standard") String usbStandard,
+            @JsonProperty("usb_speed_gbps") Double usbSpeedGbps,
+            @JsonProperty("pin_configuration") Integer pinConfiguration,
+            @JsonProperty("pin_configuration_implied") Boolean pinConfigurationImplied,
+            @JsonProperty("shield_pins_counted") Integer shieldPinsCounted,
+            @JsonProperty("mounting_style") String mountingStyle,
+            @JsonProperty("features") List<String> features
     ) {
 
-        static ConnectorResponse from(ParsedQuery.Connector connector) {
-            return connector == null ? null : new ConnectorResponse(connector.type(), connector.series(),
-                    connector.gender(), connector.positions(), connector.rows(), connector.pitchDisplay(),
-                    connector.orientation());
+        /** A connector without USB details. */
+        public ConnectorResponse(String type, String series, String gender, Integer positions, Integer rows,
+                                 String pitch, String orientation) {
+            this(type, series, gender, positions, rows, pitch, orientation, null, null, null, null, null, null, null,
+                    null);
+        }
+
+        static ConnectorResponse from(ParsedQuery.Connector c) {
+            if (c == null) {
+                return null;
+            }
+            return new ConnectorResponse(c.type(), c.series(), c.gender(), c.positions(), c.rows(), c.pitchDisplay(),
+                    c.orientation(), c.usbType(), c.usbStandard(), c.usbSpeedGbps(), c.pinConfiguration(),
+                    c.pinConfigurationImplied() ? Boolean.TRUE : null, c.shieldPinsCounted(), c.mountingStyle(),
+                    c.features().isEmpty() ? null : c.features());
         }
     }
 }

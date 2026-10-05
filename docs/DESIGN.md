@@ -204,6 +204,25 @@ the user's normalised query; the phrase is a pure function of the parsed query, 
 | TME | TME description wording, most informative first, at most 40 characters (a token that does not fit is skipped): type (`pin strips female`, `pin header male`, `IDC male`, `terminal block`, `wire-board XH`, `USB C socket`, `FFC/FPC`, `RJ45 socket`, `D-Sub female`, `DC supply socket`), positions (`6`, or `2x3` for several rows), orientation (`angled`/`straight`; `horizontal`/`vertical` for USB and FFC/FPC), the pitch only when written (not implied), keywords | `pin strips female 6 angled` |
 | Mouser | type (`female header`, `male header`, `header`, `shrouded header`, `terminal block`, `JST XH`, `USB type C receptacle`, `micro USB receptacle`, `FPC connector`, `RJ45 jack`, `D-Sub female`, `DC power jack`), positions as `N pos`, pitch only when written, orientation (`right angle`/`vertical`), mounting for non-header types, keywords. Verified live: `female header 6 pos right angle` finds 6-pin right-angle female headers, `... 6 position ...` matched 9 modular jacks | `female header 6 pos right angle` |
 
+**USB connector requests** (`DistributorPhraser.usbPhrase`, any request whose `parsed.connector` is USB, section 3.4)
+use their own wording and **never put the pin count into the TME or Mouser phrase**: distributors may list a 16-pin
+Type-C receptacle with its shell pins (17P/18P, `PIN: 17`, `17 Positions`), so a count would exclude it; the ranker
+sorts by the canonical pin configuration instead. Type, gender, mounting, standard and features stay. The
+configuration implied by a standard (`USB 2.0 Type-C` -> 16) is used for ranking only, never in a phrase.
+
+| Distributor | USB rules | `USB-C receptacle 16 pin SMD USB 2.0` |
+|---|---|---|
+| LCSC | `"USB Connectors"` (category column filter) + the dominant JLCPCB spelling of the type (`Type-C`, `Micro-B`, `Micro-AB`, `Mini-B`, `Type-A`, `Type-B`; `JlcpcbQuery` adds `TypeC`/`MicroB`/... as alternatives), `Male` for plugs, the **stated** pin count as an OR group of the configuration and its shell-counted variants (`16P/17P/18P`, `24P/25P/26P`, `6P/7P/8P`, `5P/6P/7P`; `14P/15P` because 16 is a configuration of its own), the standard (`"USB 2.0"`, `"USB 3"` for any 3.x, `USB4`), `"Through Hole"`/`"Surface Mount"`, `"Right Angle"`/`Vertical`, `mid-mount`, `waterproof`, `"board lock"`, up to 2 keywords | `"USB Connectors" Type-C 16P/17P/18P "USB 2.0" "Surface Mount"` |
+| TME | TME `Type of connector` wording + `socket`/`plug` (`USB C socket`, `USB B micro socket`, `USB AB micro`, `USB B mini`, `USB A`, `USB B`), `SMT`/`THT`, `horizontal`/`vertical`, `2.0` (and `3.0` for Type-A/B/Micro-B; Type-C 3.x is left out because TME's `Version` varies between 3.0/3.1/3.2/Gen spellings and live `USB C socket 24 horizontal 3.1` found nothing), `charging` (power only, TME "only for charging (6p)"), `middle` (mid-mount), the IP rating or `waterproof`; 40 characters | `USB C socket SMT 2.0` |
+| Mouser | `USB type C`/`micro USB`/`mini USB`/`USB type A`/`USB type B` + `receptacle`/`plug`, orientation, `SMD`/`THT`, the version as written (`2.0`, `3.1`, `3.2 Gen 2x2`, `USB4`), `mid`, `hybrid`, the IP rating or `waterproof`; power-only requests add `6 pos power only` (the one pin count kept: live, `USB type C receptacle 6 pos power only` returned 11 power-only parts, `USB type C receptacle power only` 1) | `USB type C receptacle SMD 2.0` |
+
+USB fallback (TME, Mouser): the type and gender words only (`USB C socket`, `USB type C receptacle`). Verified live on
+2026-10-05 through the stack: Mouser `USB type C receptacle SMD 2.0` (18 parts, 16-pin USB 2.0 receptacles first),
+`USB type C receptacle right angle SMD 3.1` (50), `USB type C receptacle mid` (15, GCT/Same Sky mid-mounts),
+`micro USB receptacle SMD` (50), `USB type C plug` (50; with `24 pos` only 1), TME `USB C socket charging` (50, all
+6-pin) and `USB C socket waterproof` (27). The new TME phrases with `SMT`/`THT` and the Mouser `USB type A ...`
+phrases could not be sent verbatim through the stack (it runs the previous phraser) and are not verified live.
+
 Each distributor entry reports the phrase as `distributor_query` (null when the user's text was sent verbatim);
 `fallback_query` keeps its meaning (the shorter phrase sent after the first one found nothing).
 
@@ -289,6 +308,31 @@ recognised spans are removed before the generic recognisers run, so `90 degree`,
 | `pitchMm` | `2.54mm`, `2.54 mm pitch`, `P=2.54mm` (LCSC), `0.1"`, `0.1 inch`, `100 mil`, `.100`, a bare `2.54`/`1.27`/`5.08`...; in descriptions only standard pitches count (0.5 ... 10.16 mm, so the `8.5mm` height is ignored); `pitchImplied` for `dupont` (2.54 mm) and JST series (XH 2.5, PH 2.0, GH 1.25, SH 1.0, ZH 1.5 mm) |
 | `orientation` | `right angle` for `right angle(d)`, `RA`, `R/A`, `RT ANGL`, `90 degree(s)`, `90°`, `90*`, `angled`, `horizontal`, `HORIZ`, `side entry`, `弯插`; `vertical` for `vertical`, `straight`, `180°`, `top entry`, `直插`, and JLCPCB headers whose description says `插件` without a right-angle word |
 
+**USB connectors** (`search.UsbVocabulary`, shared by parser, extractor, ranker and phraser). A query is a USB connector
+request when it names a USB type, or says `USB` together with connector words (`connector`, `receptacle`, `socket`,
+`jack`, `plug`, `port`, `female`/`male`); a USB type next to product words that are not board connectors (`IC`, `chip`,
+`controller`, `bridge`, `UART`, `hub`, `PHY`, `transceiver`, `ESD`, `TVS`, `protection`, `diode`, `cable`, `adapter`,
+`charger`, `power supply`, `module`, `switch`...) is not, so `USB to UART bridge IC`, `USB ESD protection diode`,
+`USB 5V 2A power adapter`, `USB-C PD controller`, `USB Type-C cable` stay non-connector queries. Additional
+`ParsedQuery.Connector` fields (exposed additively in `parsed.connector` as `usb_type`, `usb_standard`,
+`usb_speed_gbps`, `pin_configuration`, `pin_configuration_implied`, `shield_pins_counted`, `mounting_style`,
+`features`):
+
+| Field | Recognised wording |
+|---|---|
+| `usbType` (`type`) | `Type-C` (`USB-C`, `USBC`, `USB Type-C`, `Type C`, `TypeC`, Mouser `C type`; type `usb-c`), `Micro-B` (`micro USB`, `microUSB`, `Micro-USB B`, `Micro B`, `MicroB`, TME `USB B micro`; type `micro usb`), `Micro-AB`, `Mini-B` (`mini USB`, `Mini-B`, TME `USB B mini`), `Mini-AB`, `Type-A` (`USB-A`, `USB A`, `Type A`), `Type-B` (`USB-B`, `USB B`); the last four have type `usb`. A USB4/Thunderbolt part without a type word is Type-C |
+| `gender` | as for other connectors; also Mouser `Rec`, `Recpt`, `Rcpt`, `Skt`, `Jack`, `FML` (female), `Plug` (male) |
+| `usbStandard`, `usbSpeedGbps` | canonical speed classes: `USB 2.0` (0.48; `USB 2.0`, `USB2.0`, `480 Mbps`, `0.48Gbps`, Mouser `Type C, 2.0`, `USB Jack 2.0`), `USB 3.2 Gen 1` (5; `USB 3.0` = `USB 3.1 Gen 1` = `USB 3.2 Gen 1`, `5Gbps`, Mouser `5G`), `USB 3.x` (5, generation not stated: `USB 3.1`, `USB 3.2`), `USB 3.2 Gen 2` (10; `USB 3.1 Gen 2`, `Gen 2x1`, `10Gbps`), `USB 3.2 Gen 2x2` (20; TME `Gen.2x2`, `20Gbps`), `USB4` (40; `USB4`, `USB 4.0`, `40Gbps`), `Thunderbolt 3`/`Thunderbolt 4` (40), `USB 1.1`. `Gen 2x2` is not read as a 2x2 grid |
+| `positions` | the count as written or reported (`17 pin` -> 17) |
+| `pinConfiguration`, `shieldPinsCounted` | the canonical signal configuration. Configurations per type: Type-C 6 (power only: VBUS/GND/CC), 12, 14, 16 (USB 2.0 data), 24 (full-featured); Micro-B/Micro-AB 5 and 10 (USB 3.0 Micro-B); Mini-B 5; Type-A/Type-B 4 (USB 2.0) and 9 (USB 3.x). A count N that is not itself a configuration of the type but exceeds one (C) by 1 or 2 is that configuration with `shieldPinsCounted = N - C` (shell / shield / mounting pins counted by the distributor): Type-C 17/18 -> 16, 25/26 -> 24, 7/8 -> 6, 13 -> 12; Micro-B 6/7 -> 5; Type-A 5/6 -> 4, 10/11 -> 9. 14 stays 14 (a real USB 2.0 Type-C configuration); Type-C 2P/4P stay (power only). Explicit sums: `16+2P` -> 18 positions, configuration 16, 2 shield pins; `4P+4P`, `9P+9P` (stacked ports) and `4P+14P` next to two USB types (combo) -> feature `multi-port`, configuration = the largest configuration term; `8P+16P` -> configuration 16; `2P+4J` -> 2 pins and feature `4 legs` (J = 脚, legs). JLCPCB uses `aP+bP` only for several ports, never for shield pins (mined 2026-10-05) |
+| `pinConfigurationImplied` | a request without a pin count gets the configuration its standard implies: Type-C `USB 2.0` -> 16, `USB 3.x`/`USB4`/Thunderbolt -> 24, power only -> 6; Micro-B `USB 2.0` -> 5, `USB 3.0` -> 10; Type-A/B `USB 2.0` -> 4, `USB 3.x` -> 9. Used by the ranker at half weight, never in a phrase |
+| `mountingStyle` | `mid-mount` (`mid-mount`, `mid mount`, `Mid Mnt`, `MidMt`, `MSMT`, `Mid Surface Mount`, `sunken`, `middle board mount`, JLCPCB `Recessed`, `Sink board`, `Sinking`, `Laminated board` = 沉板), else `hybrid` (`hybrid`, `SMD+THT`, `SMT, THT`, TME `hybrid SMT/THT`, or a through-hole shell: Mouser `SMT & TH stakes`, `W/Shell Stake`), else `top-mount` (`top mount`, TME `top board mount`, Mouser `TOPMNT`, `T.Mt.`) |
+| `features` | `power only` (`power only`, `charging only`, Mouser `Charge-Only`, TME `only for charging (6p)`; parts: any Type-C with 2-6 contacts), `PD` (`PD`, `power delivery`), `mid-mount`, `top-mount`, `hybrid`, `through-hole shell`, `fully SMD` (TME `Fully SMT`), `waterproof` (`waterproof`, `sealed`, `O-ring`, `gasket`, any IP rating) plus the rating (`IP67`, `IP68`, `IPX7`...), `board lock` (`board lock`, `locating pins/pegs/posts`, `with post`, `peg`), `straddle-mount` (JLCPCB `Clamping plate`), `N legs`, `multi-port` |
+| `orientation` | as for other connectors, plus `horz`, `hrz`, `HZ`, `side insertion` (right angle), `vert`, `upright` (vertical); TME `horizontal` = right angle |
+
+A bare number after the type words (`USB C socket 16`, TME's own wording) is the pin count when it is a configuration
+(or shell-counted variant) of the type; not when a unit follows (`5 Vdc`, `20 V`).
+
 `ParsedQuery` holds the original text, normalised key, the extracted constraints (typed, with SI
 values normalised to base units as `double`), and the free-text tokens.
 
@@ -311,6 +355,25 @@ THT; angled 90°`; Mouser `6P RT ANGL PCB RECEP`, `10 POS 2.54MM RA Female Recep
 (`Female Headers` gives `Gender=female`, `ConnectorType=female header`). An explicit gender in the description beats the
 category (TME files female sockets under "Pin headers"; Samtec "socket; male" is male). Mounting falls back to the
 JLCPCB words `插件`/`Plugin` (THT) and `卧贴` (SMD).
+
+USB connector parts additionally get `UsbType`, `UsbStandard` (canonical name), `UsbSpeedGbps` (`0.48`, `5`, `10`,
+`20`, `40`), `PinConfiguration`, `ShieldPinsCounted` (only when non-zero), `MountingStyle` (`mid-mount`, `hybrid`,
+`top-mount`, else `SMD`/`THT`), `Waterproof` (the IP rating, or `yes`) and `Features` (comma-separated); `Positions`
+stays the count the distributor reports (a 17P part: `Positions=17`, `PinConfiguration=16`, `ShieldPinsCounted=1`).
+Precedence: TME parameters (`Type of connector`, `Connector`, `Number of pins`, `Version`, `Data transfer rate` (wins
+over `Version`: TME lists `CX90B1-24P/C` as `USB 4.0` with `20Gbps` and `Gen.2x2`), `Connector variant`,
+`Connectors application`, `IP rating`, `Electrical mounting`), then the description, then the category; LCSC and Mouser
+have only the description (Mouser's keyword search returns no USB `ProductAttributes`, only `Packaging` and
+`Standard Pack Qty`). The sealing of JLCPCB parts is often only in the part number (`USBC-0032IPX8-00`): an IP rating
+in the MPN adds `waterproof`. Physical consistency rules (distributor labels are kept otherwise): a Type-C part with
+12, 14 or 16 contacts is `USB 2.0` (no SuperSpeed pairs; JLCPCB labels 841 Type-C rows "USB 3.1", many of them 16P or
+6P, after the Type-C specification generation), one with 2-6 contacts is `power only` with no data standard; an
+unlabelled Micro-B 5P / Mini-B 5P / Type-A or B 4P is `USB 2.0`, Micro-B 10P / Type-A or B 9P `USB 3.2 Gen 1`; a
+Type-C 24P part without a stated standard keeps none (no pin-based guess: USB 2.0-only 24P parts exist). Connector
+parts no longer carry a capacitance/inductance/resistance read from the description (Mouser `Gold plated 3u`, `6.5H`
+height). Not connectors: categories naming cables, adapters, power supplies, hubs (`USB cables and adapters`,
+`Plug-in Power Supplies`, `Sensor Cables / Actuator Cables`) unless they say "connector", and TME descriptions that start
+with the product kind (`Adapter;`, `Cable;`, `Hub USB;`, `Power supply`).
 
 `DeterministicRanker.score(ParsedQuery, Part) -> double in [0,1]` (weights configurable in code constants):
 
@@ -346,6 +409,24 @@ family, lexical and tie-break signals stay as above.
 With these weights, for `female header 1x6 right angle 2.54mm`: 1x6 female right angle (0.90 + family + tie-break) >
 2x3 female right angle (-0.10) > 1x6 female straight (-0.30) > 1x10 female right angle (-0.60) = 1x6 male right angle
 (-0.60, gender and type) > unrelated parts.
+
+USB connector requests (`ParsedQuery.Connector.isUsb()`) use USB signals instead of the connector signals above
+(`DeterministicRanker.usbScore`; other connectors keep the table above). Unknown attributes score 0.
+
+| Signal | Weight | Rule |
+|---|---|---|
+| USB type (`W_USB_TYPE`) | 0.30 | Type-C vs Micro-B vs Type-A...: same +0.30, different -0.30 (a Micro-B never outranks a Type-C for a Type-C request); a non-USB connector (pin header, RJ45) -0.30; a generic `usb` on either side: 0 |
+| pin configuration (`W_USB_PINS`) | 0.20 | canonical configuration on both sides (17P/18P == 16, 25P/26P == 24): same +0.20, different -0.20; half (±0.10) when the request only implies it through the standard |
+| USB standard (`W_USB_STANDARD`) | 0.20 | same speed class +0.20; a higher class than requested +0.10; a lower class or a power-only part -0.20; `USB 3.x` (generation not stated) matches any 3.x class; a Gen 2 request against a `USB 3.x` part is unknown |
+| gender (`W_USB_GENDER`) | 0.15 | receptacle vs plug |
+| mounting style (`W_USB_MOUNTING`) | 0.10 | requested mid-mount/hybrid/top-mount vs the part's style (a part that does not say: 0; hybrid vs `Fully SMT`: -); else SMD/THT vs the part's mounting, a hybrid part counts half (+0.05) |
+| orientation (`W_USB_ORIENTATION`) | 0.05 | horizontal/right angle vs vertical |
+| features (`W_USB_FEATURE`) | +0.03 each | waterproof, board lock, power only: requested and present |
+
+For `USB-C receptacle 16 pin SMD USB 2.0`: Type-C 16P = 17P = 18P USB 2.0 receptacle SMD (0.95) > 14P USB 2.0 (0.55) >
+24P USB 3.1 (0.45: wrong pins, higher class) > 6P power only (0.15) > Micro-B 5P (-0.05). For `USB Type-C 24 pin USB
+3.1`: 24P = 25P = 26P USB 3.x (0.70) > 16P/17P (-0.10, also when labelled "USB 3.1"). Scores are clamped to [0,1], so
+several complete matches can tie at 1.0 and keep their distributor order.
 
 ### 3.5 Cross-encoder ranker (`search/ce`)
 
@@ -748,6 +829,18 @@ CREATE TABLE jlcpcb_database (
 - Errors: HTTP 429, HTTP 502/503/504 with `Retry-After`, or `Errors[].Code == "TooManyRequests"` (HTTP 200) are rate
   limits: retried within the request deadline (section 3.6, Mouser allows 30 calls/min), `RATE_LIMITED` when it runs
   out; other non-empty `Errors` -> `BAD_RESPONSE`; other 5xx -> `UNAVAILABLE`.
+- USB connectors (category `USB Connectors`, verified 2026-10-05): `ProductAttributes` carry only `Packaging` and
+  `Standard Pack Qty`, so type, pins, standard, gender and mounting come from the description, whose wording varies
+  by manufacturer: `Type C, 2.0, Horizontal, Gold plated 3u, Mid Surface Mount 1.86mm, 16 pin, T&R`,
+  `USB2.0 Type C Rcpt, SMT, Hrz`, `USB Jack 2.0, Type-C, Vertical`, `USB jack 3.1 C type 24pin Horz SMT`,
+  `USB 3.2 Type C Gen 1 Receptacle Hybrid 24Pin IP67`, `Type C, USB 3.2 Gen 2x1, 10 Gbps, ... 24 Pins, IP67`,
+  `Receptacle, USB4, 24pos., 5A, right angle`, `Mid-Mnt DR SMT 24Ckt Type C Rec.`, `USB C Rec 16P 3u" Mid Mnt`,
+  `Type C, Power Only, ... 6 Pins`, `USB Type-C Charge-Only Receptacle,6 Pin`, `USB 2.0 micro B jack 5 pin`,
+  `Micro B Skt, Vertical, SMT`, `USB A 3.0 Skt RA ... T Hole W/Shell Stake`, `USB 3.0 TYPE A FML RIGHT ANGLE T/H`,
+  `USB C Receptacle Right Angle 8 Positions G/F Sink 0.8mm IPX5`. Many omit the pin count (`480Mbps, 20VDC, 5A
+  Type-C USB 2.0 Receptacle`). Keyword search: a pin count in the phrase over-constrains USB searches
+  (`USB type C plug 24 pos` 1 result, `USB type C receptacle 16 pos mid` 1) and `17 pos`/`18 pos` return circular
+  connectors and headers; no 17/18-position Type-C was found.
 
 ### 9.2 TME API v2 (`distributor/tme`)
 
@@ -778,6 +871,18 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 - Products whose `product_status` contains one of `kina.distributors.tme.excluded-statuses` (default
   `CANNOT_BE_ORDERED`, `ONLY_FOR_SPECIAL_ORDER`, `EXTERNAL_WAREHOUSE`, compared case-insensitively) do not ship now
   and are dropped by `TmePartMapper`. `product_status` stays in `extra`.
+- USB connectors (category `USB & IEEE1394 connectors`, verified 2026-10-05): description
+  `Connector: USB C; socket; SMT; PIN: 16; horizontal; USB 2.0; 5A`; parameters `Type of connector` (`USB C`,
+  `USB B micro`, `USB A`, `USB B`), `Connector` (`socket`/`plug`), `Number of pins` (4, 5, 6, 9, 10, 16, 24 seen;
+  no 17/18), `Version` (`USB 2.0`, `USB 3.0`, `USB 3.1`, `USB 3.1 Gen 1`, `USB 3.1 Gen 2`, `USB 3.2`, `USB 3.2 Gen 2`,
+  `USB 4.0`), `Data transfer rate` (`0.48Gbps`, `5Gbps`, `10Gbps`, `20Gbps`), `Connector variant` (`top board mount`,
+  `middle board mount`, `bottom board mount`, `Gen.2x2`, `sealed`, `shielded`), `Electrical mounting` (`SMT`, `THT`,
+  `SMT, THT`, `hybrid SMT/THT`, `Fully SMT`), `Spatial orientation` (`horizontal`, `vertical`, `angled 90°`,
+  `straight`), `Connectors application` (`only for charging (6p)`), `IP rating` (`IP67`, `IP68`, `IPX7`),
+  `Mechanical durability`, `Current rating`, `Rated voltage`. `Version` and `Data transfer rate` can disagree
+  (`USB 4.0` + `20Gbps`): the rate wins. The search ANDs the phrase words (`USB C socket 24 horizontal 3.1`: 0 results,
+  `USB C socket 16 2.0`: 50); cables and adapters (`USB cables and adapters`) and hubs match `USB C socket` too and are
+  not connectors.
 - Errors: `{"code":"E_INPUT_PARAMS_VALIDATION_ERROR",...}` -> `BAD_RESPONSE`; 401 -> refresh token once and retry;
   429 (and 502/503/504 with `Retry-After`) on any endpoint, the token request included -> retried within the request
   deadline (section 3.6), `RATE_LIMITED` when it runs out. The OpenAPI document defines no throttling `E_*` code.
@@ -823,6 +928,25 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   `6 pin`, `6-pos`, `6 position` -> `6P` (a lower-case `22p` stays a capacitance). `2.54 mm` -> `2.54mm`. Stop words
   include `dupont`, `style`, `degree(s)`, `pins`, `position(s)`. The 2-character CJK words (`弯插`, `插件`) cannot be
   trigram-matched and are only used by the extractor.
+- USB vocabulary (mined from the 8 606 `Connectors / USB Connectors` rows, 6 503 in stock, 2026-10-05): descriptions
+  only (no parametric columns), e.g. `-40℃~+85℃ 1 16P 20V 3,000 Cycles 3A 7.35mm Black Female Surface Mount, Right
+  Angle Type-C USB 2.0 With Locating Pins`; the lone `1`/`2` is the port count. Types `Type-C` (2 739 rows), `TypeC`
+  (131), `Type-A` (1 663), `TypeA` (64), `Type-B` (119), `Micro-B` (668), `MicroB` (15), `Micro-AB` (16), `Mini-B`
+  (115), `Mini-AB` (19); Type-C positions `16P` (1 119), `24P` (804), `6P` (480), `14P` (107), `12P` (48), `2P`, `8P`,
+  no 17P/18P (the only shell-counted Type-C is `TYPE-C-24` with package `SMD-26P`, out of stock); standards `USB 2.0`,
+  `USB 3.0`, `USB 3.1` (841 Type-C rows, including 16P and 6P parts), `USB 3.2`, `USB4`/`USB 4`; `Female`/`Male`;
+  `Surface Mount`, `Through Hole`, package `SMD`/`Plugin`/`插件`; `Right Angle`, `Vertical`, `Vertical, Flag`,
+  `Side insertion`; mid-mount `Recessed`, `Sink board`, `Sinking`, `Laminated board`; `Clamping plate` (straddle-mount
+  plugs); `With Locating Pins`, `with Post`; waterproof only in the part number (`IPX7`, `IPX8`) or `with O-ring`; no
+  power-only or PD wording; `aP+bP` = several ports (`4P+4P`, `9P+9P`, `4P+14P` Type-A + Type-C).
+  `JlcpcbQuery` maps `Type-C`/`TypeC`/`USB-C`/`USBC` -> `("Type-C" OR "TypeC")` (likewise `Micro-B`, `Micro-AB`,
+  `Mini-B`, `Type-A`, `Type-B`; kind `FAMILY`), and, as kind `FEATURE` (dropped right after free-text keywords in the
+  relaxation), `"USB 2.0"` -> `("USB 2.0" OR "USB2.0")`, `"USB 3"` -> `("USB 3" OR "USB3")`, `USB4` ->
+  `("USB4" OR "USB 4")`, `mid-mount` -> `("Recessed" OR "Sink board" OR "Sinking" OR "Laminated board" OR "Mid-mount")`,
+  `waterproof` -> `("IPX" OR "IP67" OR "IP68" OR "Waterproof" OR "O-ring")`, `"board lock"` -> `("Locating" OR
+  "with Post" OR "Board Lock")`. A positions group `16P/17P/18P` is one `POSITIONS` term matched as an OR of its
+  alternatives, each checked at a number boundary (`6P/7P/8P` never matches `16P`). `24P` is a positions token as before;
+  the hyphen in `Type-C` is kept (trigram phrase).
 - Relaxation (`JlcpcbSqliteSearch`): `ALL` (every term) first. When it has no in-stock match, `RELAXED`: (1) remove
   the dead terms, i.e. terms that occur nowhere in the database (one `MATCH ... LIMIT 1` probe per matchable term,
   stock ignored, so it stops at the first hit; e.g. `dupont`, misspellings), and retry; (2) drop the least informative

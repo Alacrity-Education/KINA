@@ -231,4 +231,141 @@ class QueryParserTest {
         assertThat(q.keywords()).isEmpty();
         assertThat(q.family()).isNull();
     }
+
+    // ------------------------------------------------------------------ USB connectors (DESIGN.md 3.4)
+
+    /**
+     * query | usb type | connector type | gender | positions | pin configuration (* = implied) | shield pins |
+     * standard | mounting style | features (comma separated) | orientation | mounting; empty = absent.
+     */
+    static Stream<Arguments> usbConnectors() {
+        return Stream.of(
+                usb("USB-C receptacle 16 pin SMD USB 2.0", "Type-C", "usb-c", "female", "16", "16", "", "USB 2.0", "", "", "", "SMD"),
+                usb("USB Type-C 24 pin USB 3.1 receptacle horizontal", "Type-C", "usb-c", "female", "24", "24", "", "USB 3.x", "", "", "right angle", ""),
+                usb("USBC socket 16P", "Type-C", "usb-c", "female", "16", "16", "", "", "", "", "", ""),
+                usb("Type C female connector 24P vertical", "Type-C", "usb-c", "female", "24", "24", "", "", "", "", "vertical", ""),
+                usb("TypeC receptacle 6P", "Type-C", "usb-c", "female", "6", "6", "", "", "", "", "", ""),
+                usb("USB 2.0 Type-C receptacle", "Type-C", "usb-c", "female", "", "16*", "", "USB 2.0", "", "", "", ""),
+                usb("USB 3.2 Gen 2 Type-C receptacle", "Type-C", "usb-c", "female", "", "24*", "", "USB 3.2 Gen 2", "", "", "", ""),
+                usb("USB 3.2 Gen 2x2 USB-C receptacle", "Type-C", "usb-c", "female", "", "24*", "", "USB 3.2 Gen 2x2", "", "", "", ""),
+                usb("USB 3.1 Gen 1 type-c connector", "Type-C", "usb-c", "", "", "24*", "", "USB 3.2 Gen 1", "", "", "", ""),
+                usb("USB4 USB-C receptacle", "Type-C", "usb-c", "female", "", "24*", "", "USB4", "", "", "", ""),
+                usb("Thunderbolt 3 USB-C receptacle", "Type-C", "usb-c", "female", "", "24*", "", "Thunderbolt 3", "", "", "", ""),
+                usb("USB-C 6 pin power only", "Type-C", "usb-c", "", "6", "6", "", "", "", "power only", "", ""),
+                usb("USB-C receptacle charging only", "Type-C", "usb-c", "female", "", "6*", "", "", "", "power only", "", ""),
+                usb("USB-C PD receptacle 24 pin", "Type-C", "usb-c", "female", "24", "24", "", "", "", "PD", "", ""),
+                usb("mid-mount USB-C 16P", "Type-C", "usb-c", "", "16", "16", "", "", "mid-mount", "mid-mount", "", ""),
+                usb("USB-C receptacle mid mount 16 pin", "Type-C", "usb-c", "female", "16", "16", "", "", "mid-mount", "mid-mount", "", ""),
+                usb("USB-C receptacle sunken 16 pin", "Type-C", "usb-c", "female", "16", "16", "", "", "mid-mount", "mid-mount", "", ""),
+                usb("USB-C receptacle top mount 16 pin", "Type-C", "usb-c", "female", "16", "16", "", "", "top-mount", "top-mount", "", ""),
+                usb("USB-C receptacle 16 pin hybrid", "Type-C", "usb-c", "female", "16", "16", "", "", "hybrid", "hybrid", "", ""),
+                usb("USB-C receptacle 16 pin SMD+THT", "Type-C", "usb-c", "female", "16", "16", "", "", "hybrid", "hybrid", "", ""),
+                usb("USB-C receptacle 16 pin through-hole shell", "Type-C", "usb-c", "female", "16", "16", "", "", "hybrid", "through-hole shell", "", ""),
+                usb("waterproof USB-C receptacle IP67", "Type-C", "usb-c", "female", "", "", "", "", "", "waterproof,IP67", "", ""),
+                usb("USB-C receptacle IP68 24 pin", "Type-C", "usb-c", "female", "24", "24", "", "", "", "waterproof,IP68", "", ""),
+                usb("USB-C receptacle with board lock 16 pin", "Type-C", "usb-c", "female", "16", "16", "", "", "", "board lock", "", ""),
+                usb("USB-C receptacle 16 pin locating pegs 4 legs", "Type-C", "usb-c", "female", "16", "16", "", "", "", "board lock,4 legs", "", ""),
+                usb("USB-C receptacle right angle 16 pin", "Type-C", "usb-c", "female", "16", "16", "", "", "", "", "right angle", ""),
+                usb("USB-C receptacle upright 16 pin", "Type-C", "usb-c", "female", "16", "16", "", "", "", "", "vertical", ""),
+                usb("USB-C plug 24 pin", "Type-C", "usb-c", "male", "24", "24", "", "", "", "", "", ""),
+                usb("USB-C male 24 pin", "Type-C", "usb-c", "male", "24", "24", "", "", "", "", "", ""),
+                usb("USB-C jack 16 pin", "Type-C", "usb-c", "female", "16", "16", "", "", "", "", "", ""),
+                // shell / shield pins counted: 17/18 -> 16, 25/26 -> 24, 8 -> 6; 14 stays 14
+                usb("17 pin USB-C", "Type-C", "usb-c", "", "17", "16", "1", "", "", "", "", ""),
+                usb("USB-C receptacle 18P", "Type-C", "usb-c", "female", "18", "16", "2", "", "", "", "", ""),
+                usb("USB-C receptacle 26 pin", "Type-C", "usb-c", "female", "26", "24", "2", "", "", "", "", ""),
+                usb("USB-C receptacle 14 pin", "Type-C", "usb-c", "female", "14", "14", "", "", "", "", "", ""),
+                usb("USB-C receptacle 16+2P", "Type-C", "usb-c", "female", "18", "16", "2", "", "", "", "", ""),
+                usb("micro USB B receptacle 5 pin SMD", "Micro-B", "micro usb", "female", "5", "5", "", "", "", "", "", "SMD"),
+                usb("microUSB socket", "Micro-B", "micro usb", "female", "", "", "", "", "", "", "", ""),
+                usb("Micro-USB B connector", "Micro-B", "micro usb", "", "", "", "", "", "", "", "", ""),
+                usb("USB 3.0 Micro-B receptacle", "Micro-B", "micro usb", "female", "", "10*", "", "USB 3.2 Gen 1", "", "", "", ""),
+                usb("micro USB AB receptacle", "Micro-AB", "micro usb", "female", "", "", "", "", "", "", "", ""),
+                usb("mini USB B receptacle THT", "Mini-B", "usb", "female", "", "", "", "", "", "", "", "THT"),
+                usb("USB-A receptacle", "Type-A", "usb", "female", "", "", "", "", "", "", "", ""),
+                usb("USB A plug 4 pin", "Type-A", "usb", "male", "4", "4", "", "", "", "", "", ""),
+                usb("USB 3.0 Type-A receptacle THT", "Type-A", "usb", "female", "", "9*", "", "USB 3.2 Gen 1", "", "", "", "THT"),
+                usb("USB 3.0 Type-A receptacle 9 pin", "Type-A", "usb", "female", "9", "9", "", "USB 3.2 Gen 1", "", "", "", ""),
+                usb("USB-B receptacle THT", "Type-B", "usb", "female", "", "", "", "", "", "", "", "THT"),
+                usb("USB C socket 16 SMT", "Type-C", "usb-c", "female", "16", "16", "", "", "", "", "", "SMD"));
+    }
+
+    private static Arguments usb(String query, String usbType, String type, String gender, String positions,
+                                 String configuration, String shield, String standard, String style, String features,
+                                 String orientation, String mounting) {
+        return Arguments.of(query, usbType, type, blankToNull(gender), positions.isEmpty() ? null : Integer.valueOf(positions),
+                configuration, shield.isEmpty() ? null : Integer.valueOf(shield), blankToNull(standard),
+                blankToNull(style), features.isEmpty() ? List.of() : Arrays.asList(features.split(",")),
+                blankToNull(orientation), blankToNull(mounting));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("usbConnectors")
+    void parsesUsbConnectorQuery(String query, String usbType, String type, String gender, Integer positions,
+                                 String configuration, Integer shield, String standard, String style,
+                                 List<String> features, String orientation, String mounting) {
+        ParsedQuery parsed = parser.parse(query);
+
+        assertThat(parsed.isConnector()).as("connector").isTrue();
+        ParsedQuery.Connector c = parsed.connector();
+        assertThat(c.isUsb()).isTrue();
+        assertThat(c.usbType()).as("usb type").isEqualTo(usbType);
+        assertThat(c.type()).as("type").isEqualTo(type);
+        assertThat(c.gender()).as("gender").isEqualTo(gender);
+        assertThat(c.positions()).as("positions").isEqualTo(positions);
+        Integer expectedConfiguration = configuration.isEmpty() ? null : Integer.valueOf(configuration.replace("*", ""));
+        assertThat(c.pinConfiguration()).as("pin configuration").isEqualTo(expectedConfiguration);
+        assertThat(c.pinConfigurationImplied()).as("implied").isEqualTo(configuration.endsWith("*"));
+        assertThat(c.shieldPinsCounted()).as("shield pins").isEqualTo(shield);
+        assertThat(c.usbStandard()).as("standard").isEqualTo(standard);
+        assertThat(c.mountingStyle()).as("mounting style").isEqualTo(style);
+        assertThat(c.features()).as("features").containsExactlyElementsOf(features);
+        assertThat(c.orientation()).as("orientation").isEqualTo(orientation);
+        assertThat(parsed.mounting()).as("mounting").isEqualTo(mounting);
+        assertThat(parsed.keywords()).as("keywords").isEmpty();
+    }
+
+    @Test
+    void usbStandardsHaveCanonicalSpeedClasses() {
+        assertThat(parser.parse("USB 2.0 Type-C receptacle").connector().usbSpeedGbps()).isEqualTo(0.48);
+        // USB 3.0 == USB 3.1 Gen 1 == USB 3.2 Gen 1 (5 Gbps)
+        for (String q : new String[]{"USB 3.0 Type-C receptacle", "USB 3.1 Gen 1 Type-C receptacle",
+                "USB 3.2 Gen 1 Type-C receptacle", "USB-C receptacle 5Gbps"}) {
+            assertThat(parser.parse(q).connector().usbStandard()).as(q).isEqualTo("USB 3.2 Gen 1");
+            assertThat(parser.parse(q).connector().usbSpeedGbps()).as(q).isEqualTo(5.0);
+        }
+        // USB 3.1 Gen 2 == USB 3.2 Gen 2 (10 Gbps)
+        for (String q : new String[]{"USB 3.1 Gen 2 Type-C receptacle", "USB 3.2 Gen 2 Type-C receptacle",
+                "USB-C receptacle 10Gbps"}) {
+            assertThat(parser.parse(q).connector().usbStandard()).as(q).isEqualTo("USB 3.2 Gen 2");
+            assertThat(parser.parse(q).connector().usbSpeedGbps()).as(q).isEqualTo(10.0);
+        }
+        assertThat(parser.parse("USB 3.2 Gen 2x2 Type-C receptacle").connector().usbSpeedGbps()).isEqualTo(20.0);
+        assertThat(parser.parse("USB4 Type-C receptacle").connector().usbSpeedGbps()).isEqualTo(40.0);
+        assertThat(parser.parse("Thunderbolt 4 Type-C receptacle").connector().usbSpeedGbps()).isEqualTo(40.0);
+        // "USB 3.1" without a generation: the 3.x class, 5 Gbps minimum; "Gen 2x2" is not a 2x2 grid
+        assertThat(parser.parse("USB 3.1 Type-C receptacle").connector().usbStandard()).isEqualTo("USB 3.x");
+        assertThat(parser.parse("USB 3.2 Gen 2x2 Type-C receptacle").connector().rows()).isNull();
+        // the parsed response exposes the USB fields
+        var response = ro.alacrity.kina.domain.ParsedQueryResponse.from(parser.parse("17 pin USB-C receptacle"))
+                .connector();
+        assertThat(response.usbType()).isEqualTo("Type-C");
+        assertThat(response.positions()).isEqualTo(17);
+        assertThat(response.pinConfiguration()).isEqualTo(16);
+        assertThat(response.shieldPinsCounted()).isEqualTo(1);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("usbNotConnectors")
+    void usbProductsThatAreNotConnectors(String query) {
+        ParsedQuery parsed = parser.parse(query);
+        assertThat(parsed.isConnector()).as(query).isFalse();
+        assertThat(parsed.connector()).isNull();
+    }
+
+    static Stream<String> usbNotConnectors() {
+        return Stream.of("USB to UART bridge IC", "USB ESD protection diode", "USB 5V 2A power adapter",
+                "USB-C PD controller", "USB Type-C cable 1m", "USB 2.0 hub IC", "USB 3.0 ESD protection array",
+                "USB-C to HDMI adapter", "CH340C USB serial chip");
+    }
 }

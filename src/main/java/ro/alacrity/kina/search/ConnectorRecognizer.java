@@ -36,7 +36,12 @@ final class ConnectorRecognizer {
      *                       else null
      * @param residual       the text (NFKC) with every recognised span replaced by a blank
      */
-    record Result(ParsedQuery.Connector connector, boolean connectorWords, String mounting, String residual) {
+    record Result(ParsedQuery.Connector connector, boolean connectorWords, String mounting, String residual,
+                  UsbVocabulary.Analysis usb) {
+
+        Result(ParsedQuery.Connector connector, boolean connectorWords, String mounting, String residual) {
+            this(connector, connectorWords, mounting, residual, null);
+        }
     }
 
     // ------------------------------------------------------------------ patterns (applied to lower-case text)
@@ -70,15 +75,15 @@ final class ConnectorRecognizer {
 
     private static final Pattern RIGHT_ANGLE = Pattern.compile(
             "\\bright[- ]?angled?\\b|\\br/?a\\b|\\brt\\.?[- ]?angl(?:e|ed)?\\b|\\brtan\\b|\\bhorz\\b|\\bhoriz\\b|\\bhorztl\\b|(?<![\\w.])90\\s*(?:°|º|˚|\\*|-?\\s*deg(?:ree)?s?\\b)|\\bangled\\b"
-                    + "|\\bhorizontal\\b|\\bside[- ]entry\\b|弯插|\\bbent\\b", F);
+                    + "|\\bhorizontal\\b|\\bside[- ]entry\\b|\\bside[- ]insertion\\b|弯插|\\bbent\\b|\\bhrz\\b|\\bhz\\b", F);
     private static final Pattern VERTICAL = Pattern.compile(
-            "\\bvertical\\b|\\bstraight\\b|(?<![\\w.])180\\s*(?:°|º|˚|-?\\s*deg(?:ree)?s?\\b)|\\btop[- ]entry\\b|直插|立贴", F);
+            "\\bvertical\\b|\\bvert\\b\\.?|\\bupright\\b|\\bstraight\\b|(?<![\\w.])180\\s*(?:°|º|˚|-?\\s*deg(?:ree)?s?\\b)|\\btop[- ]entry\\b|直插|立贴", F);
 
     private static final Pattern FEMALE = Pattern.compile("\\bfemale\\b|\\bfem\\b|\\bfml\\b", F);
     private static final Pattern MALE = Pattern.compile("\\bmale\\b", F);
     /** Mouser abbreviates receptacles as RECEP / RECPT / RCPT. */
     private static final Pattern WEAK_FEMALE = Pattern.compile(
-            "\\breceptacles?\\b|\\brecep(?:t)?s?\\b|\\brcpt\\b|\\bsockets?\\b|\\bskt\\b|\\bjacks?\\b", F);
+            "\\breceptacles?\\b|\\brecep(?:t)?s?\\b|\\brecpt\\b|\\brcpt\\b|\\brec\\b|\\bsockets?\\b|\\bskt\\b|\\bjacks?\\b", F);
     private static final Pattern WEAK_MALE = Pattern.compile("\\bplugs?\\b", F);
 
     private record TypeRule(Pattern pattern, String type) {
@@ -98,9 +103,11 @@ final class ConnectorRecognizer {
             new TypeRule(Pattern.compile("\\b(?:male[- ])?pin[- ]?headers?\\b|\\bmale[- ]headers?\\b|\\bbreak[- ]?away[- ]headers?\\b"
                     + "|\\bpin[- ]strips?\\b|\\bterminal[- ]strips?\\b", F), ParsedQuery.PIN_HEADER),
             new TypeRule(Pattern.compile("\\bjst\\b|\\bwire[- ]to[- ]board\\b|\\bwire-board\\b", F), ParsedQuery.WIRE_TO_BOARD),
-            new TypeRule(Pattern.compile("\\busb[- ]?(?:type[- ]?)?c\\b|\\btype[- ]?c\\b", F), ParsedQuery.USB_C),
-            new TypeRule(Pattern.compile("\\bmicro[- ]?usb\\b|\\busb[- ](?:b[- ])?micro\\b|\\bmicro[- ]?b\\b", F),
-                    ParsedQuery.MICRO_USB),
+            new TypeRule(Pattern.compile("\\busb[\\s-]*(?:type[\\s-]*)?c\\b|\\btype[\\s-]*c\\b|(?<![°º℃\\d])\\bc[\\s-]type\\b", F),
+                    ParsedQuery.USB_C),
+            new TypeRule(Pattern.compile("\\bmicro[\\s-]*(?:usb[\\s-]*)?(?:type[\\s-]*)?a?b\\b|\\bmicro[\\s-]*usb\\b"
+                    + "|\\busb[\\s-]+a?b[\\s-]+micro\\b|\\busb[\\s-]+micro(?:[\\s-]+a?b)?\\b", F), ParsedQuery.MICRO_USB),
+            new TypeRule(UsbVocabulary.ANY_TYPE, ParsedQuery.USB),
             new TypeRule(Pattern.compile("\\busb\\b", F), ParsedQuery.USB),
             new TypeRule(Pattern.compile("\\bffc\\b|\\bfpc\\b|\\bffc/fpc\\b|\\bflat flexible\\b", F), ParsedQuery.FPC),
             new TypeRule(Pattern.compile("\\brj-?45\\b|\\b8p8c\\b|\\bmodular jacks?\\b|\\bethernet (?:jacks?|connectors?)\\b",
@@ -121,6 +128,19 @@ final class ConnectorRecognizer {
     private static final Pattern NOISE = Pattern.compile(
             "\\b(?:style|degrees?|deg|pins?|positions?|pos|ways?|rows?|pitch|angle|mount(?:ing)?|type|kind|"
                     + "contacts?|circuits?|with|for)\\b", F);
+    /** A bare 1-2 digit number not followed by a unit ("USB C socket 16", not Mouser "5 Vdc", "20 V", "5 A"). */
+    private static final Pattern BARE_NUMBER = Pattern.compile("(?<![\\w.,+-])(\\d{1,2})(?![\\w.,%+-])"
+            + "(?!\\s*(?:v|vdc|vac|a|ma|w|mm|ohm|gbps|mbps|hz|khz|mhz|k|°|℃|cycles|times|ports?|pcs)\\b)", F);
+    /** "USB port", "charging port": a port is a connector only in USB wording. */
+    private static final Pattern PORT = Pattern.compile("\\bports?\\b", F);
+    /**
+     * Products that name a USB type without being a board connector (DESIGN.md 3.4): "USB-C PD controller",
+     * "USB to UART bridge IC", "USB ESD protection diode", "USB-C cable", "USB 5V 2A power adapter".
+     */
+    static final Pattern NOT_A_CONNECTOR = Pattern.compile("\\b(?:ic|ics|chip|controllers?|bridge|uart|serial|hubs?|phy"
+            + "|transceivers?|esd|tvs|protection|diodes?|cables?|cords?|adapters?|adaptors?|chargers?|power\\s+suppl(?:y|ies)"
+            + "|modules?|switch(?:es)?|mux|converters?|flash\\s+drives?|sticks?|card\\s+readers?|isolators?|drivers?"
+            + "|docking|testers?|breakout)\\b", F);
     private static final Pattern THT_WORDS = Pattern.compile("插件|\\bplugin\\b", F);
     private static final Pattern SMD_WORDS = Pattern.compile("卧贴|立贴", F);
 
@@ -139,6 +159,9 @@ final class ConnectorRecognizer {
                     text == null ? "" : text);
         }
         StringBuilder s = new StringBuilder(normalise(text));
+
+        // USB standard, features and explicit sums first ("Gen 2x2" is no 2x2 grid, "IP67" no value)
+        UsbVocabulary.Analysis usb = UsbVocabulary.analyze(s, false);
 
         // type: the first rule that matches (priority order); every rule's matches are blanked
         String type = null;
@@ -263,7 +286,16 @@ final class ConnectorRecognizer {
         String original = normalise(text);
         String gender = gender(original);
 
-        boolean connectorWords = type != null || dupont || series != null || GENERIC.matcher(original).find();
+        boolean generic = GENERIC.matcher(original).find();
+        boolean connectorWords = type != null || dupont || series != null || generic;
+        if (usb.usbType() != null && (type == null || UsbVocabulary.isUsbType(type))) {
+            type = UsbVocabulary.connectorType(usb.usbType());
+        }
+        if (UsbVocabulary.isUsbType(type) && !generic && !dupont && series == null) {
+            // a bare "USB" or a USB type next to IC/cable/adapter words is not a connector request
+            boolean explicit = gender != null || PORT.matcher(original).find();
+            connectorWords = explicit || usb.usbType() != null && !NOT_A_CONNECTOR.matcher(original).find();
+        }
         if (type == null && dupont) {
             type = ParsedQuery.HEADER;
         }
@@ -291,9 +323,68 @@ final class ConnectorRecognizer {
             blank(GENERIC, s);
             blank(NOISE, s);
         }
-        ParsedQuery.Connector connector = new ParsedQuery.Connector(type, series, gender, positions, rows, pitch,
-                pitchImplied, orientation);
-        return new Result(connector, connectorWords, mounting, s.toString());
+        ParsedQuery.Connector connector;
+        if (UsbVocabulary.isUsbType(type) || usb.usbType() != null) {
+            if (connectorWords) {
+                blank(PORT, s);
+            }
+            // TME wording "USB C socket 16": a bare number that is a pin configuration of the USB type
+            Matcher bare = BARE_NUMBER.matcher(s);
+            String usbType = usb.usbType() != null ? usb.usbType() : UsbVocabulary.usbTypeOf(type);
+            if (positions == null && usb.plusPositions() == null && bare.find()
+                    && UsbVocabulary.configuration(usbType, Integer.parseInt(bare.group(1))) != null) {
+                positions = Integer.parseInt(bare.group(1));
+                s.replace(bare.start(), bare.end(), " ".repeat(bare.end() - bare.start()));
+            }
+            connector = usbConnector(type, gender, positions, orientation, usb);
+        } else {
+            connector = new ParsedQuery.Connector(type, series, gender, positions, rows, pitch, pitchImplied,
+                    orientation);
+        }
+        return new Result(connector, connectorWords, mounting, s.toString(), usb);
+    }
+
+    /**
+     * A USB connector: the reported positions are kept, the canonical pin configuration is derived from them
+     * ({@link UsbVocabulary#configuration}) or from an explicit sum ({@code 16+2P}); standard and features as written.
+     * No inference here: a query's implied configuration ({@link QueryParser}) and a part's physical standard
+     * ({@link ParametricExtractor}) are applied by the callers.
+     */
+    static ParsedQuery.Connector usbConnector(String type, String gender, Integer positions, String orientation,
+                                              UsbVocabulary.Analysis usb) {
+        String usbType = usb.usbType() != null ? usb.usbType() : UsbVocabulary.usbTypeOf(type);
+        Integer configuration;
+        Integer shield = null;
+        if (usb.plusPositions() != null) {
+            positions = usb.plusPositions();
+            configuration = usb.plusConfiguration();
+            shield = usb.plusShield();
+        } else {
+            configuration = UsbVocabulary.configuration(usbType, positions);
+            if (configuration != null && positions != null && positions > configuration) {
+                shield = positions - configuration;
+            }
+        }
+        List<String> features = new ArrayList<>(usb.features());
+        if (usb.ipRating() != null) {
+            features.add(usb.ipRating());
+        }
+        UsbVocabulary.Standard standard = usb.standard();
+        return new ParsedQuery.Connector(type == null ? UsbVocabulary.connectorType(usbType) : type, null, gender,
+                positions, null, null, false, orientation, usbType, standard == null ? null : standard.name(),
+                standard == null ? null : standard.gbps(), configuration, false, shield,
+                mountingStyle(usb.features()), features);
+    }
+
+    /** mid-mount, else hybrid (also SMD with through-hole shell legs), else top-mount; null when none is said. */
+    static String mountingStyle(List<String> features) {
+        if (features.contains(UsbVocabulary.MID_MOUNT)) {
+            return UsbVocabulary.MID_MOUNT;
+        }
+        if (features.contains(UsbVocabulary.HYBRID) || features.contains(UsbVocabulary.THROUGH_HOLE_SHELL)) {
+            return UsbVocabulary.HYBRID;
+        }
+        return features.contains(UsbVocabulary.TOP_MOUNT) ? UsbVocabulary.TOP_MOUNT : null;
     }
 
     private static String gender(String text) {

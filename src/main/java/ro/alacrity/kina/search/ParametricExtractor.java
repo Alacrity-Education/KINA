@@ -45,6 +45,15 @@ public class ParametricExtractor {
     public static final String PITCH = "Pitch";
     public static final String ORIENTATION = "Orientation";
     public static final String SERIES = "Series";
+    // USB connectors (DESIGN.md 3.4)
+    public static final String USB_TYPE = "UsbType";
+    public static final String USB_STANDARD = "UsbStandard";
+    public static final String USB_SPEED = "UsbSpeedGbps";
+    public static final String PIN_CONFIGURATION = "PinConfiguration";
+    public static final String SHIELD_PINS = "ShieldPinsCounted";
+    public static final String MOUNTING_STYLE = "MountingStyle";
+    public static final String WATERPROOF = "Waterproof";
+    public static final String FEATURES = "Features";
 
     /** Comparable key per {@link ParsedQuery} value kind, in output order. */
     private static final Map<String, String> KIND_KEYS = orderedKindKeys();
@@ -115,6 +124,16 @@ public class ParametricExtractor {
     private static final List<String> ORIENTATION_NAMES = List.of("spatial orientation", "mounting angle", "orientation",
             "angle", "termination orientation");
     private static final List<String> SERIES_NAMES = List.of("manufacturer series", "series");
+    /**
+     * TME parameters that carry USB details (verified live 2026-10-05: {@code Version} = USB 2.0 / USB 3.1 Gen 2 /
+     * USB 4.0, {@code Data transfer rate} = 5Gbps, {@code Connector variant} = middle board mount / Gen.2x2 / sealed,
+     * {@code Connectors application} = only for charging (6p), {@code IP rating} = IP67, {@code Electrical mounting}
+     * = hybrid SMT/THT). Mouser's keyword search returns no such ProductAttributes for USB connectors (only
+     * Packaging and Standard Pack Qty) and LCSC has no parameter columns, so both rely on the description.
+     */
+    private static final List<String> USB_ATTRIBUTE_NAMES = List.of("type of connector", "version", "usb version",
+            "usb standard", "data transfer rate", "data rate", "connector variant", "connectors application",
+            "ip rating", "ingress protection", "electrical mounting", "mounting style");
     private static final Pattern DIGITS = Pattern.compile("\\d{1,3}");
     private static final Pattern CONNECTOR_ATTRIBUTE = Pattern.compile(
             "type of connector|connector type|number of positions|contact gender|kind of connector");
@@ -169,6 +188,22 @@ public class ParametricExtractor {
             putIfNotNull(out, ROWS, c.rows() == null ? null : c.rows().toString());
             putIfNotNull(out, PITCH, c.pitchDisplay());
             putIfNotNull(out, ORIENTATION, c.orientation());
+            if (c.isUsb()) {
+                putIfNotNull(out, USB_TYPE, c.usbType());
+                putIfNotNull(out, USB_STANDARD, c.usbStandard());
+                putIfNotNull(out, USB_SPEED, c.usbSpeedGbps() == null ? null
+                        : UsbVocabulary.speedDisplay(c.usbSpeedGbps()));
+                putIfNotNull(out, PIN_CONFIGURATION, c.pinConfiguration() == null ? null
+                        : c.pinConfiguration().toString());
+                putIfNotNull(out, SHIELD_PINS, c.shieldPinsCounted() == null ? null : c.shieldPinsCounted().toString());
+                putIfNotNull(out, MOUNTING_STYLE, c.mountingStyle() != null ? c.mountingStyle() : f.mounting());
+                if (c.hasFeature(UsbVocabulary.WATERPROOF)) {
+                    out.put(WATERPROOF, c.features().stream().filter(x -> x.startsWith("IP")).findFirst().orElse("yes"));
+                }
+                if (!c.features().isEmpty()) {
+                    out.put(FEATURES, String.join(", ", c.features()));
+                }
+            }
         }
         return out;
     }
@@ -225,6 +260,7 @@ public class ParametricExtractor {
         }
         attributeValue(attrs, POWER_NAMES, ParsedQuery.POWER, valueFamily, values);
         attributeValue(attrs, TOLERANCE_NAMES, ParsedQuery.TOLERANCE, valueFamily, values);
+        Set<String> fromAttributes = Set.copyOf(values.keySet());
         description.values().forEach(values::putIfAbsent);
 
         String family = explicitFamily;
@@ -268,6 +304,16 @@ public class ParametricExtractor {
             family = "connector";
             if (mounting == null) {
                 mounting = connectorMounting(part, attrs);
+            }
+            if (mounting == null && (UsbVocabulary.MID_MOUNT.equals(connector.mountingStyle())
+                    || connector.hasFeature(UsbVocabulary.FULLY_SMD))) {
+                mounting = "SMD";   // Mouser "MSMT", TME "Fully SMT"
+            }
+            // Mouser "Gold plated 3u", "6.5H" (height) are no capacitance/inductance of a connector
+            for (String kind : List.of(ParsedQuery.CAPACITANCE, ParsedQuery.INDUCTANCE, ParsedQuery.RESISTANCE)) {
+                if (!fromAttributes.contains(kind)) {
+                    values.remove(kind);
+                }
             }
         }
 
@@ -313,6 +359,20 @@ public class ParametricExtractor {
                 && !ParsedQuery.USB.equals(descriptionType);
         boolean connectorFamily = "connector".equals(family);
         if (!(category.connectorWords() || hasAttributes || specificDescription || connectorFamily)) {
+            return null;
+        }
+        // TME "USB cables and adapters" ("Cable; USB C plug,USB C plug"), "Plug-in Power Supplies", Mouser "Sensor
+        // Cables / Actuator Cables": no board connector
+        if (categoryText != null && !categoryText.toLowerCase(Locale.ROOT).contains("connector")
+                && ConnectorRecognizer.NOT_A_CONNECTOR.matcher(categoryText).find()) {
+            return null;
+        }
+        if (part.description() != null && PRODUCT_NOT_CONNECTOR.matcher(part.description()).find()) {
+            return null;   // TME "Adapter; USB A socket,USB C plug" filed under "USB & IEEE1394 connectors"
+        }
+        if (!category.connectorWords() && !hasAttributes && part.description() != null
+                && ConnectorRecognizer.NOT_A_CONNECTOR.matcher(part.description()).find()
+                && UsbVocabulary.isUsbType(descriptionType)) {
             return null;
         }
         String categoryType = category.connector().type();
@@ -417,8 +477,114 @@ public class ParametricExtractor {
         if (rows == null && positions != null && positions == 1) {
             rows = 1;
         }
-        return new ParsedQuery.Connector(type == null ? ParsedQuery.CONNECTOR : type, series, gender, positions, rows,
-                pitch, false, orientation);
+        String finalType = type == null ? ParsedQuery.CONNECTOR : type;
+        if (UsbVocabulary.isUsbType(finalType) || d.usbType() != null || c.usbType() != null) {
+            boolean positionsFromAttributes = firstInt(attrs, POSITIONS_NAMES) != null;
+            return usbConnector(part, attrs, finalType, gender, positions, positionsFromAttributes, orientation, d, c,
+                    description.usb());
+        }
+        return new ParsedQuery.Connector(finalType, series, gender, positions, rows, pitch, false, orientation);
+    }
+
+    /**
+     * USB details of a USB connector part (DESIGN.md 3.4). Distributor parameters (TME {@code Type of connector},
+     * {@code Version}, {@code Data transfer rate}, {@code Connector variant}, {@code Connectors application},
+     * {@code IP rating}, {@code Electrical mounting}, {@code Number of pins}) win over the description, the description
+     * over the category. {@code Positions} stays the reported count; the pin configuration maps shell-counted counts
+     * to the canonical one (17P/18P -&gt; 16, {@link UsbVocabulary#configuration}). Physical consistency: a Type-C part
+     * with 12/14/16 contacts is USB 2.0 whatever the label says (LCSC writes "USB 3.1" on many 16P parts), one with
+     * 2/4/6 contacts is power only (no data standard); an unlabelled Micro-B 5P / Type-A 4P is USB 2.0, Micro-B 10P /
+     * Type-A 9P USB 3.x Gen 1. A Type-C 24P part without a stated standard keeps none (no pin-based guess).
+     */
+    private static ParsedQuery.Connector usbConnector(Part part, Map<String, String> attrs, String type, String gender,
+                                                      Integer positions, boolean positionsFromAttributes,
+                                                      String orientation, ParsedQuery.Connector description,
+                                                      ParsedQuery.Connector category,
+                                                      UsbVocabulary.Analysis descriptionUsb) {
+        StringBuilder attrText = new StringBuilder();
+        for (String name : USB_ATTRIBUTE_NAMES) {
+            String v = attrs.get(name);
+            if (v != null) {
+                attrText.append(v).append(" ; ");
+            }
+        }
+        UsbVocabulary.Analysis attr = UsbVocabulary.analyze(attrText, true);
+        String usbType = attr.usbType() != null ? attr.usbType()
+                : description.usbType() != null ? description.usbType()
+                : category.usbType() != null ? category.usbType() : UsbVocabulary.usbTypeOf(type);
+        String connectorType = UsbVocabulary.isUsbType(type) || ParsedQuery.CONNECTOR.equals(type)
+                ? (usbType != null ? UsbVocabulary.connectorType(usbType) : type) : type;
+
+        Integer configuration;
+        Integer shield = null;
+        if (!positionsFromAttributes && descriptionUsb != null && descriptionUsb.plusPositions() != null) {
+            positions = descriptionUsb.plusPositions();
+            configuration = descriptionUsb.plusConfiguration();
+            shield = descriptionUsb.plusShield();
+        } else {
+            configuration = UsbVocabulary.configuration(usbType, positions);
+            if (configuration != null && positions != null && positions > configuration) {
+                shield = positions - configuration;
+            }
+        }
+
+        Set<String> features = new java.util.LinkedHashSet<>(attr.features());
+        if (attr.ipRating() != null) {
+            features.add(attr.ipRating());
+        }
+        features.addAll(description.features());
+        String mpnIp = part.manufacturerPartNumber() == null ? null : ipInPartNumber(part.manufacturerPartNumber());
+        if (mpnIp != null && features.stream().noneMatch(x -> x.startsWith("IP"))) {
+            // LCSC/JLCPCB write the sealing only in the part number ("USBC-0032IPX8-00", "TYPE-C 6PFS ... IPX7")
+            features.add(UsbVocabulary.WATERPROOF);
+            features.add(mpnIp);
+        }
+        // TME "Data transfer rate" (5Gbps) beats "Version" when both are given (CX90B1-24P: USB 4.0 + 20Gbps + Gen.2x2)
+        UsbVocabulary.Standard rate = null;
+        for (String name : List.of("data transfer rate", "data rate")) {
+            String v = attrs.get(name);
+            if (v != null && rate == null) {
+                rate = UsbVocabulary.analyze(new StringBuilder(v), true).standard();
+            }
+        }
+        UsbVocabulary.Standard standard = rate != null ? rate : attr.standard() != null ? attr.standard()
+                : UsbVocabulary.standard(description.usbStandard());
+        if (usbType == null && standard != null && standard.rank() >= 5) {
+            usbType = ParsedQuery.USB_TYPE_C;   // USB4 and Thunderbolt 3/4 exist only on Type-C (Mouser "Receptacle, USB4")
+            connectorType = UsbVocabulary.isUsbType(connectorType) || ParsedQuery.CONNECTOR.equals(connectorType)
+                    ? ParsedQuery.USB_C : connectorType;
+            if (configuration == null) {
+                configuration = UsbVocabulary.configuration(usbType, positions);
+                if (configuration != null && positions != null && positions > configuration) {
+                    shield = positions - configuration;
+                }
+            }
+        }
+        if (ParsedQuery.USB_TYPE_C.equals(usbType) && configuration != null
+                && UsbVocabulary.TYPE_C_POWER_ONLY.contains(configuration)) {
+            features.add(UsbVocabulary.POWER_ONLY);
+        }
+        if (features.contains(UsbVocabulary.POWER_ONLY) && ParsedQuery.USB_TYPE_C.equals(usbType)) {
+            standard = null;   // no D+/D- or SuperSpeed contacts, whatever the label says
+        } else {
+            standard = UsbVocabulary.physicalStandard(usbType, configuration, standard);
+        }
+        List<String> featureList = List.copyOf(features);
+        return new ParsedQuery.Connector(connectorType, null, gender, positions, null, null, false, orientation,
+                usbType, standard == null ? null : standard.name(), standard == null ? null : standard.gbps(),
+                configuration, false, shield, ConnectorRecognizer.mountingStyle(featureList), featureList);
+    }
+
+    /** TME descriptions that start with the product kind: "Adapter; ...", "Cable; ...", "Hub USB; ...". */
+    private static final Pattern PRODUCT_NOT_CONNECTOR = Pattern.compile(
+            "(?i)^\\s*(?:adapter|cable|hub|power supply|usb power supply|charger|card reader|docking station)\\b");
+
+    private static final Pattern IP_IN_MPN = Pattern.compile("(?i)IP(X[4-8]|6[5-8])(?![0-9])");
+
+    /** {@code IPX8}, {@code IP67} inside a part number, else null. */
+    private static String ipInPartNumber(String mpn) {
+        java.util.regex.Matcher m = IP_IN_MPN.matcher(mpn);
+        return m.find() ? "IP" + m.group(1).toUpperCase(Locale.ROOT) : null;
     }
 
     /** The first type that is more specific than "connector"/"header"/"usb"; else the first non-null one. */
