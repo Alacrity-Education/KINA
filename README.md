@@ -2,7 +2,7 @@
 
 KINA is an MCP server and HTTP API that lets Claude search electronic components. You describe a part ("10uF X7R 0805 MLCC 25V") and KINA queries three distributors, drops everything that is not in stock, ranks the rest and returns full part details: prices, stock, datasheet, photo, parametric attributes.
 
-The distributors are LCSC (served from the JLCPCB parts database, downloaded and read locally), TME (API v2) and Mouser. Results from TME and Mouser are cached in PostgreSQL for five days. Ranking is a deterministic parametric score blended with a small local decision model ([Laya](https://github.com/NandhaKishorM/laya)) that runs as a sidecar container. If Laya is slow or down, KINA falls back to the deterministic ranking and says so in the response.
+The distributors are LCSC (served from the JLCPCB parts database, downloaded and read locally), TME (API v2) and Mouser. Results from TME and Mouser are cached in PostgreSQL for five days. Ranking is a deterministic parametric score blended 50/50 by rank with a small cross-encoder model (`cross-encoder/ms-marco-MiniLM-L6-v2`, Apache-2.0) that runs inside the KINA process on the CPU. If the model is not loaded, slow or disabled, KINA falls back to the deterministic ranking and says so in the response.
 
 ## Features
 
@@ -24,7 +24,7 @@ The distributors are LCSC (served from the JLCPCB parts database, downloaded and
   - IC packages such as `SOIC-8`, `LQFP-48` and `SOT-23-6` are not read as connector positions.
 - Batch search of up to 20 queries in one call.
 - Graceful rate limits: when Mouser or TME answer with a rate limit, KINA waits and retries instead of failing at once, for up to 2 minutes per request (`kina.search.max-request-duration`). `rate_limit_waited_ms` in each distributor entry says how long it waited.
-- Ranking: deterministic parametric ranker blended with Laya, with an 18 s budget per query and an automatic fallback (`ranking: "fallback"`).
+- Ranking: deterministic parametric ranker blended 50/50 by rank with an in-process cross-encoder (ONNX Runtime, CPU, no extra container, nothing leaves the host), with a 5 s budget per query and an automatic fallback (`ranking: "fallback"`). Search never fails because of the model.
 - OAuth 2.1 authorization server for Claude's remote connector (dynamic client registration, PKCE, consent page).
 - 30-day static access tokens for Claude Code and the HTTP API, created in the web UI.
 - Two security modes: `dev` (no login, fake admin) and `prod` (OIDC login, bearer tokens required).
@@ -35,8 +35,8 @@ The distributors are LCSC (served from the JLCPCB parts database, downloaded and
 ### Prerequisites
 
 - Docker with the Compose plugin.
-- About 10 GB of free disk: the JLCPCB database takes 5.3 GB once unpacked, the Laya checkpoint 1.5 GB and the Laya image 1.8 GB.
-- RAM: about 4 GB free is a safe minimum. Measured: `laya-serve` about 1.9 GiB, `kina` about 485 MiB, PostgreSQL about 45 MiB. See [Measured numbers](#measured-numbers) and [docs/OPERATIONS.md](docs/OPERATIONS.md).
+- About 7 GB of free disk: the JLCPCB database takes 5.3 GB once unpacked (about 1 GB more for the zip while it downloads), the ranking model 23 MB (int8) or 91 MB (fp32), and the images about 0.6 GB.
+- RAM: about 2 GB free is a safe minimum, 4 GB is comfortable. Measured: `kina` about 485 MiB before the model was added, PostgreSQL about 45 MiB. The model adds an estimated 100 to 250 MB outside the JVM heap. See [Measured numbers](#measured-numbers) and [docs/OPERATIONS.md](docs/OPERATIONS.md).
 - Optional: a Mouser API key and TME API v2 credentials. Without them those distributors report `not_configured` and LCSC still works.
 
 ### Start
@@ -51,16 +51,15 @@ docker compose up -d --build
 ### What happens on the first start
 
 - The `kina` image is built (Maven build, a few minutes).
-- The `laya-serve` image is built from the Laya git repository and downloads PyTorch. This is slow the first time.
-- Laya downloads its checkpoint (`multilingual`, about 650 MB) into the `laya-models` volume.
 - KINA starts and, in the background, downloads the JLCPCB parts database (about 1 GB zipped, 5.3 GB on disk) into the `kina-data` volume. KINA does not wait for it. Until the file is ready, LCSC reports `unavailable` ("JLCPCB database not downloaded yet") and TME and Mouser work normally.
+- Also in the background, KINA downloads the ranking model from Hugging Face into `/data/cross-encoder` on the same volume (about 23 MB for the default int8 file, a few seconds). It checks size and SHA-256 and records the revision in `model.json`. Until the model is loaded, searches still work and report `ranking: "fallback"` with the note `cross-encoder model not loaded yet`. If the download fails, KINA logs it once and tries again every hour. Files that are already in the directory are used without downloading.
 - The JLCPCB database is downloaded again when it is older than 5 days.
 
 ### Check that it is ready
 
 ```bash
 curl -s localhost:8080/actuator/health          # {"status":"UP"}
-docker compose ps                               # laya-serve shows "healthy" once the checkpoint is loaded
+docker compose ps                               # kina and postgres show "healthy"
 docker compose logs -f kina                     # download progress and errors
 ```
 
@@ -70,7 +69,7 @@ Then call the `list_distributors` MCP tool, or the REST equivalent:
 curl -s localhost:8080/api/v1/distributors
 ```
 
-Check that LCSC is `available: true` (with the JLCPCB part count), that TME and Mouser are `configured: true`, and that `ranking.laya_healthy` is `true`. In `prod` mode the REST call needs a bearer token.
+Check that LCSC is `available: true` (with the JLCPCB part count), that TME and Mouser are `configured: true`, and that `ranking.ready` is `true` (`ranking.mode` is then `blended`). A first search with `ranking: "blended"` confirms it. In `prod` mode the REST call needs a bearer token.
 
 ### Web UI
 
@@ -149,23 +148,15 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 | `OIDC_CLIENT_ID` | empty | OIDC client id. Required in `prod`. |
 | `OIDC_CLIENT_SECRET` | empty | OIDC client secret. |
 
-### Ranking and Laya
+### Ranking (cross-encoder)
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `KINA_LAYA_ENABLED` | `true` | `false` disables Laya; searches use the deterministic ranking (`ranking_note: "laya disabled"`). |
-| `KINA_LAYA_MODEL` | `multilingual` | Checkpoint name sent to laya-serve. It must be loaded by the sidecar (compose sets `LAYA_MODELS=multilingual`). |
-| `KINA_LAYA_MAX_CONCURRENT` | `1` | Ranking requests in flight at once. Also becomes the sidecar's `LAYA_MAX_CONCURRENT`, so both limits stay equal. |
-| `LAYA_THREADS` | `4` | CPU threads for Laya (also `OMP_NUM_THREADS`). Keep it at or below the physical cores you can dedicate; never count SMT siblings, oversubscribing is about a 10x slowdown. On a host with 8 or more free physical cores, 8 threads were measured about 1.5 to 1.8 times faster than 4. |
-| `LAYA_API_KEY` | empty | Optional shared secret. KINA sends it as a bearer token and laya-serve requires it when set. |
-| `LAYA_GPU_ID` | `0` | GPU index used by `compose.cuda.yaml`. |
-| `LAYA_URL` | `http://laya-serve:8000` in Compose, `http://localhost:8000` otherwise | Base URL of laya-serve. Set by `compose.yaml`. |
-
-GPU ranking (needs the NVIDIA Container Toolkit; no KINA change needed):
-
-```bash
-docker compose -f compose.yaml -f compose.cuda.yaml up -d --build
-```
+| `KINA_CROSS_ENCODER_ENABLED` | `true` | `false` disables the model; searches use the deterministic ranking (`ranking: "fallback"`, note `cross-encoder disabled`). |
+| `KINA_CROSS_ENCODER_VARIANT` | `int8` | `int8` (about 23 MB, quantised, about twice as fast) or `fp32` (91 MB). int8 picks the file that matches the CPU: `model_qint8_avx512_vnni` (AVX-VNNI and ARM) or `model_quint8_avx2`. |
+| `KINA_CROSS_ENCODER_MODEL_DIR` | `/data/cross-encoder` in Docker, `./data/cross-encoder` otherwise | Where the model files live. In Compose it is on the `kina-data` volume. |
+| `KINA_CROSS_ENCODER_MODEL_URL` | `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` | Where the files are downloaded from: an HTTP(S) directory with the same layout, or a local path that is used in place (for a fine-tuned or pre-provisioned model). |
+| `KINA_CROSS_ENCODER_THREADS` | `0` | ONNX Runtime threads for one ranking call. `0` means the smaller of 4 and the number of cores. Count physical cores only. |
 
 ### JLCPCB / LCSC database
 
@@ -187,7 +178,7 @@ docker compose -f compose.yaml -f compose.cuda.yaml up -d --build
 
 ### Tuning keys without a dedicated variable
 
-Every `kina.*` key can still be overridden with Spring's relaxed binding, for example `KINA_CACHE_TTL=2d` or `KINA_RANKING_LAYA_WEIGHT=0.3`. Put them in `.env`; Compose passes `.env` into the `kina` container.
+Every `kina.*` key can still be overridden with Spring's relaxed binding, for example `KINA_CACHE_TTL=2d` or `KINA_RANKING_CROSS_ENCODER_WEIGHT=0.3`. Put them in `.env`; Compose passes `.env` into the `kina` container.
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -200,11 +191,17 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `kina.search.max-max-results` | `50` | Upper limit for `max_results`. |
 | `kina.search.distributor-timeout` | `12s` | Budget for the active work of one distributor fetch. Time spent waiting on a rate limit does not count against it. |
 | `kina.search.max-request-duration` | `2m` | Hard cap for one incoming request (`search_parts`, a whole `search_parts_batch`, `get_part` and the REST equivalents), including rate-limit waits. Clients and proxies need a read timeout above this plus ranking, about 2.5 minutes. |
-| `kina.ranking.timeout` | `18s` | Ranking budget per query. |
+| `kina.ranking.timeout` | `5s` | Ranking budget per query (the model needs about 0.1 to 0.35 s for 40 candidates). |
 | `kina.ranking.batch-timeout` | `60s` | Ranking budget for a whole batch. |
-| `kina.ranking.score-cache-ttl` | `1h` | In-memory cache of Laya scores. |
-| `kina.ranking.laya.max-candidates` | `40` | Parts sent to Laya per query, across distributors. |
-| `kina.ranking.laya.weight` | `0.2` | Weight of the Laya score in the final score. |
+| `kina.ranking.score-cache-ttl` | `1h` | In-memory cache of model scores. |
+| `kina.ranking.cross-encoder.max-candidates` | `40` | Parts scored by the model per query, across distributors. |
+| `kina.ranking.cross-encoder.weight` | `0.5` | Weight of the model in the rank blend. |
+| `kina.ranking.cross-encoder.max-concurrent` | `2` | Scoring calls that run at once. Others wait inside their ranking budget. |
+| `kina.ranking.cross-encoder.batch-size` | `16` | Part and query pairs per inference call. |
+| `kina.ranking.cross-encoder.max-sequence-length` | `256` | Tokens per pair. The part text is cut first. |
+| `kina.ranking.cross-encoder.check-interval` | `1h` | How often a missing or failed model is tried again. |
+| `kina.ranking.cross-encoder.download-timeout` | `10m` | Upper bound for downloading one model file. |
+| `kina.ranking.cross-encoder.auto-download` | `true` | `false` never downloads; only files already present are used (air-gapped hosts). |
 | `kina.distributors.mouser.max-results-per-search` | `50` | Parts requested from Mouser per query (one API call). |
 | `kina.distributors.tme.max-results-per-search` | `60` | Parts requested from TME per query (up to 3 pages). |
 | `kina.distributors.tme.currency` and `.language` | `EUR` and `en` | TME price currency and language. |
@@ -221,7 +218,7 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `search_parts` | `query` (required), `max_results` (1 to 50, default 10, per distributor), `distributors` (`LCSC`, `TME`, `MOUSER`; default all configured), `bypass_cache` (default false) | Search and rank in-stock parts. Can take up to 2 minutes when a distributor is rate limited. |
 | `search_parts_batch` | `queries` (1 to 20 of `{query, max_results}`), `distributors`, `bypass_cache` | Several searches in one call. Returns `{"results": [...]}` in request order. The whole batch shares one 2-minute limit for rate-limit waits. |
 | `get_part` | `distributor`, `part_number`, `bypass_cache` | One part by distributor part number (LCSC `C15850`, TME symbol, Mouser number). Returns `found: false` for unknown or out-of-stock parts. Can take up to 2 minutes when the distributor is rate limited. |
-| `list_distributors` | none | State of each distributor, cache statistics and Laya health. Never calls the Mouser or TME APIs. |
+| `list_distributors` | none | State of each distributor, cache statistics and ranking status (mode, model, readiness, latency, last error). Never calls the Mouser or TME APIs. |
 | `ping` | none | `{"status":"ok","version":"..."}`. |
 
 Full schemas are in [docs/API.md](docs/API.md).
@@ -240,7 +237,7 @@ Response (abridged):
 {
   "query": "10uF X7R 0805",
   "parsed": {"family": "capacitor", "capacitance": "10uF", "dielectric": "X7R", "package": "0805", "keywords": []},
-  "ranking": "laya",
+  "ranking": "blended",
   "ranking_note": null,
   "distributors": [
     {
@@ -290,7 +287,7 @@ Response (abridged, one distributor entry shown in full):
     "family": "connector", "mounting": "THT", "keywords": [],
     "connector": {"type": "female header", "gender": "female", "positions": 6, "pitch": "2.54mm", "orientation": "right angle"}
   },
-  "ranking": "laya",
+  "ranking": "blended",
   "distributors": [
     {"distributor": "LCSC", "distributor_query": "\"Female Header\" 6P \"Right Angle\" 2.54mm", "fallback_query": null,
      "parts": [{"rank": 1, "part_number": "C...", "mpn": "PM254-1-06-W-8.5",
@@ -310,31 +307,52 @@ Known limit: KINA does not send rows to Mouser, and Mouser keyword search is loo
 1. The query is parsed: component family, value, tolerance, voltage, dielectric, package, mounting, and leftover keywords.
 2. A deterministic ranker scores every part from 0 to 1: primary value (0.30), package (0.20), dielectric (0.15), voltage/current/power rating (0.10), tolerance (0.10), family keyword (0.05), lexical match (0.10), and small tie-break bonuses for stock, price and the JLCPCB Basic/Preferred library. A mismatch on value, package, dielectric, rating or tolerance is penalised by the same amount a match earns.
    For connector requests the value feature is replaced by connector features: positions (0.30), gender (0.20), orientation (0.15), pitch (0.15, where 2.54 mm equals 0.1"), connector type (0.10) and mounting (0.05). A wrong row count costs 0.10. Multi-row parts cost 0.08 when you did not ask for rows. Attributes a part does not list never count against it.
-3. The top 40 candidates (shared across distributors, at least 5 per distributor) go to Laya, one state per part. Laya answers one yes/no question per part: does it satisfy every requirement of the request. KINA rank-normalises the raw probabilities within the candidate set (best 1.0, worst 0.0), because they cluster near 1.0.
-4. Final score is `0.8 * deterministic + 0.2 * Laya`. Parts that were not sent to Laya come after the Laya-ranked ones.
-5. On Laya timeout (18 s per query), unavailability, or `KINA_LAYA_ENABLED=false`, the deterministic order is used and the response says `"ranking": "fallback"` with a `ranking_note`. In a batch, queries reached after the 60 s ranking budget also fall back.
+3. The top 40 candidates (shared across distributors, at least 5 per distributor) go to the cross-encoder `cross-encoder/ms-marco-MiniLM-L6-v2`. It reads the query text and the part text (manufacturer, MPN, description, category, package, attributes) together and returns one relevance score per part. It runs inside the KINA JVM through ONNX Runtime on the CPU. The score is cached in memory for 1 hour.
+4. Both orders are turned into ranks inside the candidate set, and the final score is `0.5 * deterministic rank + 0.5 * model rank`. Parts that were not sent to the model come after the scored ones. The response says `"ranking": "blended"`.
+5. When the model cannot score, the deterministic order is used and the response says `"ranking": "fallback"` with a `ranking_note`: `cross-encoder disabled`, `cross-encoder model not loaded yet`, `cross-encoder timeout after 5s`, `cross-encoder timeout: budget exhausted`, `cross-encoder busy: no free slot within ...` or `cross-encoder failed: ...`. In a batch, queries reached after the 60 s ranking budget also fall back. Search never fails because of the model.
 
-### Measured limits
+### Measured results
 
-Zero-shot Laya is a weak signal. On a labelled set for "10uF X7R 0805 MLCC ceramic capacitor" (3 true matches, 7 distractors) with the `multilingual` checkpoint:
+The study is in [docs/research/ranking-evaluation-2026-10-05.md](docs/research/ranking-evaluation-2026-10-05.md). It uses 32 labelled queries (1259 candidates). Score is NDCG@10, higher is better.
 
-- Matches scored 0.996 on average and distractors 0.78, but a 10k resistor scored 0.98 and the X5R variant 0.01.
-- Only 2 of the 3 true matches landed in the top 3.
-- Other question shapes (`score`, `choice`, per-attribute) and the `typed-decisions` checkpoint were no better.
+| Ranking | NDCG@10 | Time per search |
+|---|---|---|
+| Deterministic ranker alone | 0.898 | under 5 ms |
+| Blend with the cross-encoder, zero-shot (shipped default) | 0.913 | 130 to 300 ms (40 candidates, 4 threads, int8); 16 ms when the scores are cached |
+| Blend with a fine-tuned cross-encoder | 0.918 | same |
+| Former blend with a decision-model sidecar (removed) | 0.823 | about 2.4 s |
 
-That is why the deterministic ranker is primary and Laya has a weight of 0.2. Speed on CPU (8 threads): 40 candidates take about 3.5 s with one question per part.
+The earlier approach, a separate sidecar container with a decision model, scored below the deterministic ranker alone and cost about 2.4 s per search plus a 2 GB container. That is why it was removed. The cross-encoder helps most on discrete parts, ICs and connectors, where the parser does not model words such as `RS-485` or `1x4P`. Passives and vague requests are not hurt.
 
-The labelled set is in the test fixtures, in `src/test/java/ro/alacrity/kina/search/LayaRankerEvaluationTest.java`. It runs only against a live Laya:
+### Model files
+
+- KINA downloads the model files on the first start, in the background, from `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` into `KINA_CROSS_ENCODER_MODEL_DIR`. Each file is checked by size and SHA-256. `model.json` in that directory records the source and revision. `list_distributors` shows `model_revision`.
+- The default is the int8 file (about 23 MB). Set `KINA_CROSS_ENCODER_VARIANT=fp32` for the 91 MB file. It is slower and scored the same in the study.
+- Files that are already in the directory are used without downloading, so you can provision the directory yourself (see [docs/OPERATIONS.md](docs/OPERATIONS.md)).
+- A failed download is logged once and retried every hour. KINA never waits for it at startup.
+
+### Fine-tuning
+
+You can fine-tune the model on your own labelled parts. The script runs in a Docker image (`kina-ce-finetune:local`, built from `python:3.11-slim`) and takes about 4 to 5 minutes on 16 cores:
 
 ```bash
-KINA_LAYA_TEST_URL=http://127.0.0.1:8001 ./mvnw test -Dtest=LayaRankerEvaluationTest
+scripts/ranking/finetune_cross_encoder.sh                    # mode synth (default): synthetic labels only
+scripts/ranking/finetune_cross_encoder.sh -m synth_real -o ./data/ce-synth-real
 ```
 
-Set `KINA_LAYA_TEST_MODEL` to evaluate another checkpoint (default `multilingual`). To use a fine-tuned checkpoint, make laya-serve load it (`LAYA_MODELS`, `LAYA_DEFAULT_MODEL` and the Hugging Face cache volume in `compose.yaml`), set `KINA_LAYA_MODEL` to its name, re-run the evaluation, and only then consider raising `kina.ranking.laya.weight`. Part data is only ever sent to the local Laya URL.
+It writes a model directory in the Hugging Face layout plus `model.json`. Point `KINA_CROSS_ENCODER_MODEL_URL` at it (a local path is used in place). Details are in `scripts/ranking/README.md`.
+
+Check a model before you ship it. The evaluation test runs when `KINA_CROSS_ENCODER_TEST_MODEL_DIR` is set, and it asserts a blended NDCG@10 of at least 0.90 on `docs/research/data/ranking-eval.jsonl`:
+
+```bash
+KINA_CROSS_ENCODER_TEST_MODEL_DIR=$PWD/data/cross-encoder-finetuned ./mvnw test -Dtest=CrossEncoderEvaluationTest
+```
+
+Part data is never sent to a third-party service for ranking.
 
 ## Operations
 
-- Volumes: `kina-data` (JLCPCB SQLite file), `pgdata` (PostgreSQL), `laya-models` (Hugging Face cache).
+- Volumes: `kina-data` (JLCPCB SQLite file), `pgdata` (PostgreSQL). The ranking model is in `kina-data` too, under `/data/cross-encoder`.
 - JLCPCB database: checked every hour, downloaded again when older than 5 days. The old file keeps serving while the new one downloads.
 - TME and Mouser cache: 5 days. A cached search with zero parts goes stale after 1 hour (`kina.cache.empty-result-ttl`). Rows older than 10 days (2 x TTL) are purged every 6 hours.
 - Rate limits: Mouser allows 1 000 calls per day and 30 per minute. KINA makes one Mouser call per uncached query and does not throttle itself. When a distributor answers with a rate limit, KINA waits and retries (see the next item). Use `bypass_cache` sparingly.
@@ -344,11 +362,12 @@ Set `KINA_LAYA_TEST_MODEL` to evaluate another checkpoint (default `multilingual
 
 ### Measured numbers
 
-From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB host, CPU Laya with `LAYA_THREADS=4`, full JLCPCB database of 7.1 million parts):
+From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB host, full JLCPCB database of 7.1 million parts):
 
-- RAM after the end-to-end run: `kina` about 485 MiB (limit 2 GiB), `laya-serve` about 1.9 GiB, `postgres` about 45 MiB.
-- Disk: JLCPCB database 5.33 GB, Laya models 1.5 GB, Laya image 1.76 GB.
-- Search: cold (distributor calls) about 6 s for three distributors; the same query again with a larger `max_results` about 60 ms; Laya ranking 2 to 4 s per search on CPU.
+- RAM after the end-to-end run: `kina` about 485 MiB (limit 2 GiB), `postgres` about 45 MiB. That was measured before the in-process model replaced the old ranking container. The model adds an estimated 100 to 250 MB outside the JVM heap.
+- Disk: JLCPCB database 5.33 GB, int8 model 23 MB (91 MB for fp32), `kina.jar` about 115 MB (the ONNX Runtime jar is about 53 MB of it).
+- Search: cold (distributor calls) about 6 s for three distributors; the same query again with a larger `max_results` about 60 ms.
+- Ranking: 130 to 300 ms per search for 40 candidates (4 threads, int8), 16 ms when the scores are cached. First start of the model (download, load, warm-up) took 3.6 s in the background.
 
 ### Troubleshooting
 
@@ -356,7 +375,7 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 |---|---|
 | Connector results look generic or wrong | Look at `parsed.connector`: it shows what KINA understood (type, gender, positions, pitch, orientation). If a field is missing, state it more plainly, for example "female header 1x6 right angle 2.54mm". Then look at `distributor_query` per distributor to see the phrase KINA really sent. Results cached before an upgrade can look old; ask again with `bypass_cache`. Mouser ignores rows. |
 | LCSC `error: "unavailable"`, detail "JLCPCB parts database not downloaded yet" | The first download is still running (about 1 GB). Watch `docker compose logs kina`. If it failed, `jlcpcb.last_error` in `list_distributors` says why; check disk space and internet access. |
-| `ranking: "fallback"` with a Laya note | Laya is not healthy yet (the first start loads the checkpoint), is overloaded or timed out. Check `docker compose ps` and `docker compose logs laya-serve`. Search still works. |
+| `ranking: "fallback"` | Read `ranking_note`. `cross-encoder model not loaded yet`: the first download is still running or failed; check `ranking.last_error` in `list_distributors` and `docker compose logs kina`, then internet access, disk space and write access to `/data/cross-encoder`. KINA retries every hour. `cross-encoder disabled`: `KINA_CROSS_ENCODER_ENABLED` is `false`. `cross-encoder timeout ...` or `busy ...`: the host is short of CPU; lower the load or check `KINA_CROSS_ENCODER_THREADS`. `cross-encoder failed: ...`: see the log. Search still works. |
 | TME or Mouser `error: "not_configured"` | The credentials are missing in `.env`. Restart with `docker compose up -d`. |
 | Slow search (up to 2 minutes), `rate_limit_waited_ms` above 0 | The distributor rate limited the request and KINA waited. This is normal for Mouser's 30 calls per minute. The log has a `rate limited ... cooling down` line. |
 | Mouser `error: "rate_limited"` | The limit outlasted the 2-minute budget, usually an exhausted daily quota (1 000 calls). Wait, and rely on the cache. |
@@ -377,4 +396,4 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the toolchain and local run. 
 
 End-to-end checks against a running stack are in `scripts/e2e/` (`python3 scripts/e2e/kina_e2e.py`, and `scripts/e2e/prod_smoke.sh` for a `prod` mode smoke test); see the "End-to-end checks" section of `docs/DEVELOPMENT.md`. They create tokens and OAuth clients in the database and make a couple of Mouser calls on a cold cache.
 
-Tests live in `src/test/java/ro/alacrity/kina/`, one package per main package (`search`, `distributor/{lcsc,mouser,tme}`, `security`, `oauth`, `api`, `mcp`, `cache`, `domain`, `web`). JSON fixtures are in `src/test/resources/fixtures`. Tests start PostgreSQL 17 through Testcontainers and never download the JLCPCB database. Tests that need live services (the Laya evaluation, the Mouser live test) run only when their environment variables are set.
+Tests live in `src/test/java/ro/alacrity/kina/`, one package per main package (`search`, `distributor/{lcsc,mouser,tme}`, `security`, `oauth`, `api`, `mcp`, `cache`, `domain`, `web`). JSON fixtures are in `src/test/resources/fixtures`. Tests start PostgreSQL 17 through Testcontainers and never download the JLCPCB database. Tests that need live services or a model directory (`CrossEncoderEvaluationTest`, the Mouser live test) run only when their environment variables are set.
