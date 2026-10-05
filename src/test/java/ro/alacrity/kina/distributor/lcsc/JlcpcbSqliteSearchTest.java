@@ -93,14 +93,90 @@ class JlcpcbSqliteSearchTest {
 
     @Test
     void relaxesToOrSemantics() throws SQLException {
+        // the dead term "zzzzz" occurs nowhere: dropped first, the remaining terms still match
         Result result = search.search("RP2040 raspberry zzzzz", 0, 50);
-        assertThat(result.mode()).isEqualTo(MatchMode.ANY);
+        assertThat(result.mode()).isEqualTo(MatchMode.RELAXED);
+        assertThat(result.dropped()).containsExactly("zzzzz");
         assertThat(lcsc(result)).containsExactly("C2040");
 
         // parametric terms that cannot all match still yield candidates (ranked by BM25, then stock)
         Result any = search.search("100nF 0805 Murata", 0, 50);
         assertThat(any.mode()).isEqualTo(MatchMode.ANY);
         assertThat(lcsc(any)).contains("C1525", "C15850", "C17414").doesNotContain("C99999");
+    }
+
+    // ---------------------------------------------------------------- connectors
+
+    private void useConnectorDatabase() throws SQLException {
+        search.close();
+        search = new JlcpcbSqliteSearch(JlcpcbTestDatabase.create(dir.resolve("connectors.db"),
+                JlcpcbTestDatabase.withConnectors()));
+    }
+
+    @Test
+    void distributorPhraseUsesTheCategoryColumnPositionsOrientationAndPitch() throws SQLException {
+        useConnectorDatabase();
+        Result result = search.search("\"Female Header\" 6P \"Right Angle\" 2.54mm", 0, 50);
+        assertThat(result.mode()).isEqualTo(MatchMode.ALL);
+        // not: 2 mm pitch, 1x16P ("6P" is checked at a number boundary), out of stock, straight, male pin headers
+        assertThat(lcsc(result)).containsExactlyInAnyOrder("C2897388", "C5333441", "C50878477", "C2897423",
+                "C5142239");
+        assertThat(result.total()).isEqualTo(5);
+
+        Result rows = search.search("\"Female Header\" 1x6P \"Right Angle\" 2.54mm", 0, 50);
+        assertThat(lcsc(rows)).containsExactlyInAnyOrder("C2897388", "C5333441", "C50878477", "C5142239");
+    }
+
+    @Test
+    void categoryPhraseIsAColumnFilter() throws SQLException {
+        useConnectorDatabase();
+        JlcpcbQuery.Term category = JlcpcbQuery.parse("\"Female Header\"").terms().getFirst();
+        assertThat(category.kind()).isEqualTo(JlcpcbQuery.Kind.CATEGORY);
+        assertThat(JlcpcbSqliteSearch.matchExpression(category)).isEqualTo("\"Second Category\" : \"Female Header\"");
+        // "Pin Header" appears in the descriptions of male headers only; the category decides
+        assertThat(lcsc(search.search("\"Pin Header\" 1x40P", 0, 50))).containsExactly("C2337", "C2334");
+        // no female 1x40P header: no conjunction matches, only the OR fallback does
+        assertThat(search.search("\"Female Header\" 1x40P", 0, 50).mode()).isEqualTo(MatchMode.ANY);
+    }
+
+    @Test
+    void mountingSynonymsMapToTheDatabaseVocabulary() throws SQLException {
+        useConnectorDatabase();
+        // THT -> "Through Hole" / "Plugin", SMD -> "Surface Mount" / "SMD"
+        assertThat(lcsc(search.search("pin header 1x40 THT", 0, 50))).containsExactly("C2337");
+        assertThat(lcsc(search.search("female header 1x6 SMD", 0, 50))).containsExactly("C5142239");
+        // right angle THT: JLCPCB writes only "Right Angle", so the THT term is not required
+        Result rightAngle = search.search("female header 1x6 right angle THT 2.54mm", 0, 50);
+        assertThat(rightAngle.mode()).isEqualTo(MatchMode.ALL);
+        assertThat(lcsc(rightAngle)).contains("C2897388", "C5333441", "C50878477");
+    }
+
+    @Test
+    void theFailingUserQueryFindsRightAngleFemaleSixPinHeaders() throws SQLException {
+        useConnectorDatabase();
+        Result result = search.search("90 degree dupont style female pin header 90 degree THT pins 6 position", 0, 50);
+        assertThat(lcsc(result)).containsExactlyInAnyOrder("C2897388", "C5333441", "C50878477", "C2897423",
+                "C5142239", "C2906055");
+        assertThat(lcsc(result)).doesNotContain("C2337", "C2334", "C2897404");
+    }
+
+    @Test
+    void dropsTermsOneAtATimeLeastInformativeFirst() throws SQLException {
+        useConnectorDatabase();
+        // no straight THT 1x6 female header: the mounting term goes first, then the pitch would
+        Result result = search.search("\"Female Header\" 1x6P 2.54mm \"Through Hole\" Copper", 0, 50);
+        assertThat(result.mode()).isEqualTo(MatchMode.RELAXED);
+        assertThat(result.dropped()).containsExactly("Copper", "Through Hole");
+        assertThat(lcsc(result)).containsExactlyInAnyOrder("C2897388", "C5333441", "C50878477", "C5142239");
+        // the step that found rows defines total and page
+        Result page = search.search("\"Female Header\" 1x6P 2.54mm \"Through Hole\" Copper", 1, 2);
+        assertThat(page.total()).isEqualTo(result.total());
+        assertThat(lcsc(page)).containsExactlyElementsOf(lcsc(result).subList(1, 3));
+
+        assertThat(JlcpcbSqliteSearch.leastInformative(JlcpcbQuery.parse("\"Female Header\" 6P \"Right Angle\" 2.54mm"
+                + " THT gold").terms()).text()).isEqualTo("gold");
+        assertThat(JlcpcbSqliteSearch.leastInformative(JlcpcbQuery.parse("\"Female Header\" 6P \"Right Angle\" 2.54mm")
+                .terms()).text()).isEqualTo("Right Angle");
     }
 
     @Test

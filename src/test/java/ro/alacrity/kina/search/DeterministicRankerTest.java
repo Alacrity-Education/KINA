@@ -139,4 +139,85 @@ class DeterministicRankerTest {
         assertThat(first).isLessThanOrEqualTo(1.0);
         assertThat(ranker.score(parser.parse(""), match)).isBetween(0.0, DeterministicRanker.W_TIE_BREAK);
     }
+
+    // ---------------------------------------------------------------- connectors
+
+    private static Part lcscHeader(String code, String layout, int positions, String orientation, String category) {
+        return RankingFixtures.lcsc(code, "HCTL", "MPN-" + code, "-40℃~+105℃ " + layout + " 2.54mm 3A "
+                + positions + "P 8.5mm Copper alloy " + orientation + " Square Hole", "Connectors / " + category,
+                "P=2.54mm", Map.of());
+    }
+
+    @Test
+    void connectorFeaturesOrderFemaleRightAngleHeaders() {
+        String q = "female header 1x6 right angle 2.54mm";
+        double exact = score(q, lcscHeader("C1", "1 1x6P", 6, "Right Angle Side", "Female Headers"));
+        double dualRow = score(q, lcscHeader("C2", "2 2x3P", 6, "Right Angle Side", "Female Headers"));
+        double straight = score(q, lcscHeader("C4", "1 1x6P", 6, "Vertical", "Female Headers"));
+        double tenPin = score(q, lcscHeader("C3", "1 1x10P", 10, "Right Angle Side", "Female Headers"));
+        double male = score(q, lcscHeader("C5", "1 1x6P", 6, "Right Angle", "Pin Headers"));
+        double unrelated = score(q, part("RES", "Resistor: thick film; SMD; 0805; 10kΩ", "SMD resistors", "0805",
+                Map.of()));
+
+        // positions/rows/gender/orientation/pitch/type: +0.30 / -0.10 / ±0.20 / ±0.15 / ±0.15 / ±0.10
+        assertThat(exact).isGreaterThan(dualRow);
+        assertThat(dualRow).isGreaterThan(straight);
+        assertThat(straight).isGreaterThan(tenPin);
+        assertThat(straight).isGreaterThan(male);
+        assertThat(tenPin).isGreaterThan(unrelated);
+        assertThat(male).isGreaterThan(unrelated);
+        assertThat(exact - dualRow).isCloseTo(DeterministicRanker.W_ROWS, within(1e-9));
+        assertThat(exact - straight).isCloseTo(2 * DeterministicRanker.W_ORIENTATION, within(1e-9));
+        assertThat(exact - tenPin).isCloseTo(2 * DeterministicRanker.W_POSITIONS, within(1e-9));
+        assertThat(exact - male).isCloseTo(2 * DeterministicRanker.W_GENDER + 2 * DeterministicRanker.W_CONNECTOR_TYPE,
+                within(1e-9));
+        assertThat(exact).isGreaterThan(0.9);
+    }
+
+    @Test
+    void failingQueryRanksRightAngleFemaleSixPinHeadersFirst() {
+        String q = "90 degree dupont style female pin header 90 degree THT pins 6 position";
+        Part femaleRa = lcscHeader("C2897388", "1 1x6P", 6, "Right Angle Side", "Female Headers");
+        Part maleStraight = RankingFixtures.lcsc("C2337", "BOOMELE", "2.54-1*6P", "1 1x6P 2.54mm 3A 6P Pin Header"
+                + " Through Hole 插件,P=2.54mm", "Connectors / Pin Headers", "Plugin,P=2.54mm", Map.of());
+        Part tme = RankingFixtures.tme("DS1024-1*6RF1", "CONNFLY",
+                "Connector: pin strips; socket; female; PIN: 6; THT; angled 90°; 3A", "Pin headers", null, Map.of());
+        Part dualRow = lcscHeader("C2897423", "2 2x3P", 6, "Right Angle Side", "Female Headers");
+        assertThat(score(q, femaleRa)).isGreaterThan(score(q, dualRow));
+        // positions unspecified rows: single-row parts are mildly preferred
+        assertThat(score(q, femaleRa) - score(q, dualRow))
+                .isCloseTo(DeterministicRanker.W_ROWS_UNSPECIFIED, within(1e-9));
+        assertThat(score(q, dualRow)).isGreaterThan(score(q, maleStraight) + 0.5);
+        assertThat(score(q, tme)).isGreaterThan(0.85);
+    }
+
+    @Test
+    void pitchIsComparedInMillimetresAndUnknownAttributesAreNeutral() {
+        Part metric = lcscHeader("C1", "1 1x6P", 6, "Right Angle Side", "Female Headers");
+        assertThat(score("0.1\" female header 1x6 right angle", metric))
+                .isCloseTo(score("2.54mm female header 1x6 right angle", metric), within(1e-9));
+        Part twoMm = RankingFixtures.lcsc("C9", "HCTL", "M", "1 1x6P 2mm 6P Right Angle", "Connectors / Female Headers",
+                "P=2mm", Map.of());
+        assertThat(score("2.54mm female header 1x6 right angle", metric)
+                - score("2.54mm female header 1x6 right angle", twoMm))
+                .isCloseTo(2 * DeterministicRanker.W_PITCH, within(1e-9));
+        // nothing known about the part's connector attributes: no penalty, only the family signal
+        Part bare = RankingFixtures.lcsc("C8", "ACME", "M", "", "Connectors / Connectors", null, Map.of());
+        ParsedQuery query = parser.parse("female header 1x6 right angle 2.54mm");
+        assertThat(DeterministicRanker.connectorScore(query, new ParametricExtractor().features(bare))).isZero();
+    }
+
+    @Test
+    void connectorWeightsReplaceThePrimaryValue() {
+        // a 16-pin USB-C query does not use the C/R/L signal, and SMD vs THT counts
+        String q = "USB-C receptacle 16 pin SMD";
+        Part smd = RankingFixtures.lcsc("C2765186", "SHOU HAN", "TYPE-C 16PIN", "16P 3A 5V Black Female Surface Mount,"
+                + " Right Angle Type-C", "Connectors / USB Connectors", "SMD", Map.of());
+        Part tht = RankingFixtures.tme("USB4085-GF-A", "GCT", "Connector: USB C; socket; THT; PIN: 16; horizontal",
+                "USB & IEEE1394 connectors", null, Map.of());
+        assertThat(score(q, smd) - score(q, tht)).isCloseTo(2 * DeterministicRanker.W_CONNECTOR_MOUNTING,
+                within(0.011));   // tie-break (library type) differs by up to 0.01
+        assertThat(DeterministicRanker.W_POSITIONS + DeterministicRanker.W_GENDER + DeterministicRanker.W_ORIENTATION
+                + DeterministicRanker.W_PITCH + DeterministicRanker.W_CONNECTOR_TYPE).isCloseTo(0.90, within(1e-9));
+    }
 }

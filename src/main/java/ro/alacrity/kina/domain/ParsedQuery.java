@@ -19,6 +19,7 @@ import java.util.Map;
  * @param packageName  "0805", "SOT-23"..., imperial code for chip packages, null when absent
  * @param mounting     "SMD" or "THT", null when absent
  * @param keywords     remaining free-text tokens (lower-case)
+ * @param connector    connector attributes when the query asks for a connector (family {@code "connector"}), else null
  */
 public record ParsedQuery(
         String originalText,
@@ -28,7 +29,8 @@ public record ParsedQuery(
         String dielectric,
         String packageName,
         String mounting,
-        List<String> keywords
+        List<String> keywords,
+        Connector connector
 ) {
 
     public static final String CAPACITANCE = "capacitance";
@@ -40,9 +42,77 @@ public record ParsedQuery(
     public static final String FREQUENCY = "frequency";
     public static final String TOLERANCE = "tolerance";
 
+    /** Connector types ({@link Connector#type()}). */
+    public static final String PIN_HEADER = "pin header";
+    public static final String FEMALE_HEADER = "female header";
+    /** A header whose gender is not known (Dupont style, Mouser "Headers &amp; Wire Housings"). */
+    public static final String HEADER = "header";
+    public static final String BOX_HEADER = "box header";
+    public static final String IDC_SOCKET = "idc socket";
+    public static final String IC_SOCKET = "ic socket";
+    public static final String TERMINAL_BLOCK = "terminal block";
+    public static final String WIRE_TO_BOARD = "wire-to-board";
+    public static final String USB_C = "usb-c";
+    public static final String MICRO_USB = "micro usb";
+    public static final String USB = "usb";
+    public static final String FPC = "fpc";
+    public static final String RJ45 = "rj45";
+    public static final String D_SUB = "d-sub";
+    public static final String BARREL_JACK = "barrel jack";
+    /** Generic connector without a recognised type. */
+    public static final String CONNECTOR = "connector";
+
+    public static final String MALE = "male";
+    public static final String FEMALE = "female";
+
+    public static final String RIGHT_ANGLE = "right angle";
+    public static final String VERTICAL = "vertical";
+
     public ParsedQuery {
         constraints = constraints == null ? Map.of() : constraints;
         keywords = keywords == null ? List.of() : List.copyOf(keywords);
+    }
+
+    /** A query without connector attributes. */
+    public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
+                       String dielectric, String packageName, String mounting, List<String> keywords) {
+        this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null);
+    }
+
+    /** True when the query asks for a connector (connector words were recognised). */
+    public boolean isConnector() {
+        return connector != null;
+    }
+
+    /**
+     * Connector attributes of a query or a part (DESIGN.md 3.4). Every field is null when unknown.
+     *
+     * @param type         one of the connector type constants of {@link ParsedQuery} ("female header", "usb-c"...)
+     * @param series       wire-to-board series ("XH", "PH", "GH", "SH", "ZH"), else null
+     * @param gender       {@link #MALE} or {@link #FEMALE}
+     * @param positions    total number of positions (pins / contacts / ways), e.g. 6 for {@code 2x3}
+     * @param rows         number of rows ({@code 1x6} -&gt; 1, {@code 2x3} -&gt; 2, "dual row" -&gt; 2)
+     * @param pitchMm      contact pitch in millimetres (0.1" -&gt; 2.54)
+     * @param pitchImplied true when the pitch was not written but implied (Dupont -&gt; 2.54 mm, JST XH -&gt; 2.5 mm)
+     * @param orientation  {@link #RIGHT_ANGLE} or {@link #VERTICAL}
+     */
+    public record Connector(String type, String series, String gender, Integer positions, Integer rows, Double pitchMm,
+                            boolean pitchImplied, String orientation) {
+
+        /** True when no attribute is known. */
+        public boolean isEmpty() {
+            return type == null && series == null && gender == null && positions == null && rows == null
+                    && pitchMm == null && orientation == null;
+        }
+
+        /** Pitch as display text ("2.54mm", "2mm"), or null. */
+        public String pitchDisplay() {
+            if (pitchMm == null) {
+                return null;
+            }
+            String s = java.math.BigDecimal.valueOf(pitchMm).stripTrailingZeros().toPlainString();
+            return s + "mm";
+        }
     }
 
     /**

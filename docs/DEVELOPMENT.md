@@ -39,6 +39,14 @@ services `healthy`; on a fresh volume the JLCPCB database (~5.3 GB) downloads in
 set it to the physical cores you can dedicate, see the measurements below).
 Every environment variable is documented in `.env.example`; `.env` is git-ignored and must never be committed.
 
+A second instance next to a running compose stack (e.g. to test ranking changes against the full JLCPCB database without
+touching the stack): start a throwaway Postgres on another port, then run the jar with `PORT=8081`,
+`SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:<port>/kina`, `KINA_LAYA_ENABLED=false` (deterministic ranking
+only) and `KINA_JLCPCB_DATA_DIR` pointing at a directory that already holds `parts-fts5.db` (it is adopted, not
+downloaded). Connector checks: `curl -G localhost:8081/api/v1/parts/search --data-urlencode "q=2x3 female header right
+angle" --data-urlencode max_results=5`; each distributor entry shows the phrase it was sent as `distributor_query`.
+Mind the Mouser quota (1 000 calls a day): every new query costs one call, plus one when the fallback runs.
+
 MCP smoke test (stateless Streamable HTTP, no `initialize` needed):
 
 ```bash
@@ -54,10 +62,10 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 | Package (`ro.alacrity.kina.`) | Contents |
 |---|---|
 | `config` | `KinaProperties` - the single `@ConfigurationProperties("kina")` record tree for every `kina.*` key (do not add a second binding for the same prefix; extend this record) |
-| `domain` | `Distributor`, `RankingMode`, `PriceBreak`, `Part`, `PartKey`, `ParsedQuery` (+ `Constraint`), `SearchRequest`, `BatchSearchRequest`, response DTOs `SearchResponse`, `BatchSearchResponse`, `DistributorResult`, `PartResponse` (trims prices to 3 brackets), `PriceResponse`, `ParsedQueryResponse` |
+| `domain` | `Distributor`, `RankingMode`, `PriceBreak`, `Part`, `PartKey`, `ParsedQuery` (+ `Constraint`, `Connector`), `SearchRequest`, `BatchSearchRequest`, response DTOs `SearchResponse`, `BatchSearchResponse`, `DistributorResult`, `PartResponse` (trims prices to 3 brackets), `PriceResponse`, `ParsedQueryResponse` |
 | `distributor` | `DistributorClient`, `DistributorSearchPage`, `DistributorException` (+ `Kind.code()`, `rateLimitWaitedMillis()`), `DistributorRegistry`; rate limiting (DESIGN.md 3.6): `Deadline` (request deadline + rate-limit wait accounting), `RateLimitRetry` (retry policy around every Mouser/TME HTTP call), `DistributorCooldown` (shared per-distributor cool-down) |
 | `distributor.{mouser,tme,lcsc}` | `MouserClient`, `TmeClient` (+ `TmeTokenManager`), `LcscClient` over the JLCPCB SQLite file (`JlcpcbDatabaseManager` downloads/adopts it) |
-| `search` | `PartRanker`, `RankingException` (checked, with `Reason`), `QueryParser`, `ParametricExtractor`, `DeterministicRanker`, `LayaPartRanker`, `RankingService`, `PartSearchService` (cache, paging, phrase fallback), `PartLookupService`, `DistributorStatusService` |
+| `search` | `PartRanker`, `RankingException` (checked, with `Reason`), `QueryParser` (+ `Recognizers`, `ConnectorRecognizer`), `ParametricExtractor`, `DeterministicRanker`, `DistributorPhraser` (connector phrasing per distributor, fallback phrases), `LayaPartRanker`, `RankingService`, `PartSearchService` (cache, paging, phrase fallback), `PartLookupService`, `DistributorStatusService` |
 | `cache` | `CacheStatus`, `PartCacheRepository`, `SearchCacheRepository` (`CachedSearch`), `CacheMaintenance` |
 | `security` | `SecurityConfig` (dev/prod filter chains), `DevModeAuthenticationFilter`, `BearerTokenAuthenticationFilter` + `BearerAuthenticationEntryPoint` (401 with `resource_metadata`), `AccessTokenService`/`AccessTokenRepository` (30-day tokens; revoking one also revokes its OAuth refresh tokens), OIDC login (`OidcLoginConfiguration`, `LazyOidcClientRegistrationRepository`, `OidcUserSynchronizer`) |
 | `oauth` | OAuth 2.1 authorization server for MCP clients: metadata, `/oauth/register`, `/oauth/authorize` (consent page), `/oauth/token`, `/oauth/revoke`, PKCE |

@@ -520,6 +520,103 @@ class PartSearchServiceTest {
         assertThat(tme.queries).containsExactly(MOSFET_QUERY);
     }
 
+    // ---- distributor phrasing (connector queries) -----------------------------------------------------------------
+
+    static final String CONNECTOR_QUERY = "90 degree dupont style female pin header 90 degree THT pins 6 position";
+
+    @Test
+    void connectorQueriesAreSentInEachDistributorsWording() {
+        FakeClient lcsc = new FakeClient(Distributor.LCSC).records(3, i -> part(Distributor.LCSC, "C" + i));
+        lcsc.pageSize = 200;
+        FakeClient tme = new FakeClient(Distributor.TME).records(4, i -> part(Distributor.TME, "T" + i));
+        FakeClient mouser = new FakeClient(Distributor.MOUSER).records(2, i -> part(Distributor.MOUSER, "M" + i));
+        service(List.of(lcsc, tme, mouser));
+
+        SearchResponse response = service.search(new SearchRequest(CONNECTOR_QUERY, 5, Set.of(), false));
+
+        assertThat(lcsc.queries).containsExactly("\"Female Header\" 6P \"Right Angle\" 2.54mm");
+        assertThat(tme.queries).containsExactly("pin strips female 6 angled");
+        assertThat(mouser.queries).containsExactly("female header 6 pos right angle");
+        assertThat(result(response, Distributor.LCSC).distributorQuery())
+                .isEqualTo("\"Female Header\" 6P \"Right Angle\" 2.54mm");
+        assertThat(result(response, Distributor.TME).distributorQuery()).isEqualTo("pin strips female 6 angled");
+        assertThat(result(response, Distributor.TME).fallbackQuery()).isNull();
+        assertThat(result(response, Distributor.MOUSER).distributorQuery())
+                .isEqualTo("female header 6 pos right angle");
+        assertThat(response.parsed().connector().type()).isEqualTo("female header");
+
+        // cached under the user's normalised query; a hit still reports the phrase
+        assertThat(cachedSearches).containsKey(Distributor.TME + "|" + QueryParser.normalizeKey(CONNECTOR_QUERY));
+        DistributorResult hit = result(service.search(new SearchRequest(CONNECTOR_QUERY, 5, Set.of(Distributor.TME),
+                false)), Distributor.TME);
+        assertThat(hit.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(hit.distributorQuery()).isEqualTo("pin strips female 6 angled");
+        assertThat(tme.queries).hasSize(1);
+    }
+
+    @Test
+    void connectorPhraseWithoutResultsFallsBackToTheShorterPhrase() {
+        FakeClient tme = new FakeClient(Distributor.TME).records(4, i -> part(Distributor.TME, "T" + i));
+        tme.emptyFor.add("pin strips female 6 angled");
+        FakeClient mouser = new FakeClient(Distributor.MOUSER).records(2, i -> part(Distributor.MOUSER, "M" + i));
+        mouser.emptyFor.add("female header 6 pos right angle");
+        service(List.of(tme, mouser));
+
+        SearchResponse response = service.search(new SearchRequest(CONNECTOR_QUERY, 5, Set.of(), false));
+
+        assertThat(tme.queries).containsExactly("pin strips female 6 angled", "pin strips female 6");
+        DistributorResult t = result(response, Distributor.TME);
+        assertThat(t.distributorQuery()).isEqualTo("pin strips female 6 angled");
+        assertThat(t.fallbackQuery()).isEqualTo("pin strips female 6");
+        assertThat(t.fetched()).isEqualTo(4);
+        assertThat(mouser.queries).containsExactly("female header 6 pos right angle", "female header right angle");
+        assertThat(result(response, Distributor.MOUSER).fallbackQuery()).isEqualTo("female header right angle");
+        assertThat(cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(CONNECTOR_QUERY))
+                .fallbackQuery()).isEqualTo("pin strips female 6");
+    }
+
+    @Test
+    void keywordOnlyQueriesFallBackToTheirMostInformativeTokens() {
+        String query = "ESP32-WROOM-32 wifi bluetooth module with antenna";
+        FakeClient tme = new FakeClient(Distributor.TME).records(3, i -> part(Distributor.TME, "T" + i));
+        tme.emptyFor.add(query);
+        service(List.of(tme));
+
+        DistributorResult t = result(service.search(new SearchRequest(query, 5, Set.of(), false)), Distributor.TME);
+
+        assertThat(tme.queries).containsExactly(query, "ESP32-WROOM-32 wifi bluetooth antenna");
+        assertThat(t.fallbackQuery()).isEqualTo("ESP32-WROOM-32 wifi bluetooth antenna");
+        assertThat(t.distributorQuery()).isNull();   // the user's text was sent verbatim
+        assertThat(t.fetched()).isEqualTo(3);
+    }
+
+    @Test
+    void nonConnectorQueriesReportNoDistributorQuery() {
+        FakeClient tme = new FakeClient(Distributor.TME).records(3, i -> part(Distributor.TME, "T" + i));
+        service(List.of(tme));
+        DistributorResult t = result(service.search(request(5, Distributor.TME)), Distributor.TME);
+        assertThat(tme.queries).containsExactly(QUERY);
+        assertThat(t.distributorQuery()).isNull();
+        assertThat(t.fallbackQuery()).isNull();
+    }
+
+    @Test
+    void partialExtensionOfAConnectorSearchPagesOnWithThePhrase() {
+        FakeClient mouser = new FakeClient(Distributor.MOUSER)
+                .records(150, i -> i < 50 && i % 5 != 0 ? null : part(Distributor.MOUSER, "M" + i));
+        service(List.of(mouser));
+
+        service.search(new SearchRequest(CONNECTOR_QUERY, 5, Set.of(Distributor.MOUSER), false));
+        DistributorResult partial = result(service.search(new SearchRequest(CONNECTOR_QUERY, 20,
+                Set.of(Distributor.MOUSER), false)), Distributor.MOUSER);
+
+        assertThat(partial.cache()).isEqualTo(CacheStatus.PARTIAL);
+        assertThat(mouser.queries).containsExactly("female header 6 pos right angle",
+                "female header 6 pos right angle");
+        assertThat(mouser.offsets()).containsExactly(0, 50);
+        assertThat(partial.distributorQuery()).isEqualTo("female header 6 pos right angle");
+    }
+
     // ---- paging ---------------------------------------------------------------------------------------------------
 
     @Test

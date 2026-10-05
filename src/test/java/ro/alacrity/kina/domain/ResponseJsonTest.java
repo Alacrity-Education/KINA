@@ -42,8 +42,8 @@ class ResponseJsonTest {
                 "\"photo_url\":", "\"product_url\":", "\"distributor\":\"MOUSER\"",
                 "\"parsed\":{\"family\":\"capacitor\"", "\"capacitance\":\"10uF\"", "\"dielectric\":\"X7R\"",
                 "\"keywords\":[]", "{\"qty\":1,\"unit_price\":1.40,\"currency\":\"EUR\"}",
-                "\"fallback_query\":null", "\"rate_limit_waited_ms\":0");
-        assertThat(json).doesNotContain("\"qty\":100", "mounting", "constraints", "packageName");
+                "\"fallback_query\":null", "\"rate_limit_waited_ms\":0", "\"distributor_query\":null");
+        assertThat(json).doesNotContain("\"qty\":100", "mounting", "constraints", "packageName", "\"connector\"");
     }
 
     @Test
@@ -51,6 +51,23 @@ class ResponseJsonTest {
         DistributorResult result = new DistributorResult(Distributor.TME, 12, 12, 5, CacheStatus.MISS, null, List.of(),
                 "MOSFET 30V SOT-23");
         assertThat(mapper.writeValueAsString(result)).contains("\"fallback_query\":\"MOSFET 30V SOT-23\"");
+    }
+
+    @Test
+    void distributorResultCarriesTheDistributorQuery() {
+        DistributorResult result = new DistributorResult(Distributor.TME, 166, 40, 5, CacheStatus.MISS, null,
+                List.of(), null, 0, "pin strips female 6 angled");
+        assertThat(mapper.writeValueAsString(result)).contains("\"distributor_query\":\"pin strips female 6 angled\"",
+                "\"fallback_query\":null");
+    }
+
+    @Test
+    void parsedConnectorOmitsUnknownAttributes() {
+        ParsedQuery parsed = new ParsedQuery("USB-C receptacle", "usb-c receptacle", "connector", Map.of(), null, null,
+                null, List.of(), new ParsedQuery.Connector("usb-c", null, "female", null, null, null, false, null));
+        assertThat(mapper.writeValueAsString(ParsedQueryResponse.from(parsed)))
+                .isEqualTo("{\"family\":\"connector\",\"keywords\":[],\"connector\":{\"type\":\"usb-c\","
+                        + "\"gender\":\"female\"}}");
     }
 
     @Test

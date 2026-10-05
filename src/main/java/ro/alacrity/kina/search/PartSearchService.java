@@ -235,10 +235,15 @@ public class PartSearchService {
      * rate limits.
      */
     record Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
-                   String fallbackQuery, long rateLimitWaitedMs) {
+                   String fallbackQuery, long rateLimitWaitedMs, String distributorQuery) {
 
         Fetched {
             parts = parts == null ? List.of() : List.copyOf(parts);
+        }
+
+        Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
+                String fallbackQuery, long rateLimitWaitedMs) {
+            this(distributor, parts, totalResults, cache, error, fallbackQuery, rateLimitWaitedMs, null);
         }
 
         Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
@@ -251,7 +256,11 @@ public class PartSearchService {
         }
 
         Fetched withRateLimitWaitedMs(long millis) {
-            return new Fetched(distributor, parts, totalResults, cache, error, fallbackQuery, millis);
+            return new Fetched(distributor, parts, totalResults, cache, error, fallbackQuery, millis, distributorQuery);
+        }
+
+        Fetched withDistributorQuery(String phrase) {
+            return new Fetched(distributor, parts, totalResults, cache, error, fallbackQuery, rateLimitWaitedMs, phrase);
         }
 
         static Fetched failed(Distributor distributor, CacheStatus cache, String error) {
@@ -318,7 +327,8 @@ public class PartSearchService {
                 fetched = new Fetched(distributor, p.parts, p.totalResults, p.cache,
                         errorCode(distributor, cause), p.fallbackQuery);
             }
-            results.put(distributor, fetched.withRateLimitWaitedMs(budget.rateLimitWaitedMillis()));
+            results.put(distributor, fetched.withRateLimitWaitedMs(budget.rateLimitWaitedMillis())
+                    .withDistributorQuery(DistributorPhraser.phrase(distributor, prepared.parsed())));
         });
         return results;
     }
@@ -345,7 +355,9 @@ public class PartSearchService {
      */
     Fetched fetchDistributor(DistributorClient client, Prepared prepared, Progress progress, DistributorBudget deadline) {
         Distributor distributor = client.distributor();
-        String query = prepared.parsed().originalText();
+        // connector queries are sent in the distributor's own wording; the cache key stays the user's query
+        String phrase = DistributorPhraser.phrase(distributor, prepared.parsed());
+        String query = phrase != null ? phrase : prepared.parsed().originalText();
         int window = window(distributor, prepared.maxResults());
         int maxPages = maxPages(distributor);
 
@@ -399,9 +411,9 @@ public class PartSearchService {
         Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline);
         String fallbackQuery = null;
         if (collected.all().isEmpty() && collected.error() == null && deadline.remainingNanos() > 0) {
-            String core = corePhrase(prepared.parsed());
+            String core = DistributorPhraser.fallback(distributor, prepared.parsed(), query);
             if (core != null) {
-                log.info("{} found nothing for '{}', retrying with the core phrase '{}'", distributor, queryKey, core);
+                log.info("{} found nothing for '{}', retrying with the shorter phrase '{}'", distributor, query, core);
                 progress.fallbackQuery = core;
                 try {
                     collected = collect(client, core, 0, window, maxPages, List.of(), progress, deadline);
@@ -428,7 +440,8 @@ public class PartSearchService {
     }
 
     /**
-     * The parametric core of a query for the distributor phrase fallback: the family word as written, the values
+     * The parametric core of a query for the distributor phrase fallback (see also
+     * {@link DistributorPhraser#fallback}, which falls back to the most informative keywords without a core): the family word as written, the values
      * (tolerance excluded), the dielectric and the package, e.g. "MOSFET 30V SOT-23" for
      * "SOT-23 N-channel MOSFET 30V". Null when the query has no parametric constraint, when the core would be a
      * single term, or when it is not shorter than the query (nothing to drop).
@@ -662,7 +675,7 @@ public class PartSearchService {
                 parts.add(PartResponse.from(rp.part(), i + 1, roundScore(rp.score())));
             }
             results.add(new DistributorResult(distributor, f.totalResults(), rankedParts.size(), returned, f.cache(),
-                    f.error(), parts, f.fallbackQuery(), f.rateLimitWaitedMs()));
+                    f.error(), parts, f.fallbackQuery(), f.rateLimitWaitedMs(), f.distributorQuery()));
         }
         return new SearchResponse(prepared.parsed().originalText(), ParsedQueryResponse.from(prepared.parsed()),
                 ranked.mode(), note, results);

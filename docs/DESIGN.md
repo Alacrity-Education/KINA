@@ -154,15 +154,23 @@ budget, but never beyond the request deadline `kina.search.max-request-duration`
    not by the number of parts kept: distributors drop records without ships-now stock (live: TME reported 32 in-stock
    matches for "10uF X7R 0805" of which 26 were kept), so `part_numbers.size` is not a valid resume offset.
    LCSC is queried once with `limit = window`.
-   **Phrase fallback** (Mouser and TME only, not LCSC): when the first fetch of the full query succeeds with **zero**
-   in-stock parts and the deadline has not passed, the search is retried once with the query's parametric core
-   (`PartSearchService.corePhrase`): the family word as written in the query (`MOSFET`, `MLCC`, `LDO`...), the parsed
-   values except tolerance (display form, e.g. `30V`, `10uF`), the dielectric and the package, in that order, e.g.
-   `"SOT-23 N-channel MOSFET 30V"` -> `"MOSFET 30V SOT-23"`. No retry when the query has no value/dielectric/package,
-   when the core would be a single term, or when it is not shorter than the query. The retry's result (even if also
+   **Phrase fallback** (Mouser and TME only, not LCSC): when the first fetch of the sent query (the user's text, or the
+   distributor phrase below) succeeds with **zero** in-stock parts and the deadline has not passed, the search is
+   retried once with a shorter phrase (`DistributorPhraser.fallback`):
+   - connector queries: TME the type words with the positions (`pin strips female 6`), Mouser the type words with the
+     written pitch and the orientation (`female header right angle`, `male header 2.54mm`);
+   - otherwise the query's parametric core (`PartSearchService.corePhrase`): the family word as written in the query
+     (`MOSFET`, `MLCC`, `LDO`...), the parsed values except tolerance (display form, e.g. `30V`, `10uF`), the dielectric
+     and the package, in that order, e.g. `"SOT-23 N-channel MOSFET 30V"` -> `"MOSFET 30V SOT-23"`;
+   - keyword-only queries (no value/dielectric/package): the 3 to 5 most informative tokens in query order
+     (`DistributorPhraser.keywordCore`): the family word, recognised values and packages, part-number-like tokens with
+     letters and digits, then longer words; filler words (`nice`, `cheap`, `module`, `with`...) never, e.g.
+     `"ESP32-WROOM-32 wifi bluetooth module with antenna"` -> `"ESP32-WROOM-32 wifi bluetooth antenna"`.
+   No retry when there is no shorter phrase: the core would be a single term or is not shorter than the query, a
+   keyword-only query has 3 or fewer tokens, or the phrase equals what was sent. The retry's result (even if also
    empty) is what gets cached, under the original query key, together with the phrase (`cached_searches.fallback_query`);
    a `PARTIAL` extension pages on with that phrase. The distributor entry reports it as `fallback_query` (null when the
-   query itself was searched). A failure of the retry is reported as the distributor's `error` and nothing is cached.
+   sent query found parts). A failure of the retry is reported as the distributor's `error` and nothing is cached.
    TME's 40-character phrase limit is applied by the client as for any query.
    Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is cached or
    ranked (Mouser and LCSC deliver almost no parametric attributes).
@@ -181,6 +189,20 @@ budget, but never beyond the request deadline `kina.search.max-request-duration`
 
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
+
+**Distributor phrasing** (`search.DistributorPhraser`, connector queries only). A query that `QueryParser` recognises as
+a connector request (section 3.4) is not sent verbatim: each distributor gets the wording its search understands, as
+the primary query of step 2 (and of a `PARTIAL` extension). Every other query is sent as written. The cache key stays
+the user's normalised query; the phrase is a pure function of the parsed query, so a cache hit reports it again.
+
+| Distributor | Rules | Example for `90 degree dupont style female pin header 90 degree THT pins 6 position` |
+|---|---|---|
+| LCSC | quoted category phrase (`"Female Header"`, `"Pin Header"`, `"Header"`, `"IDC Header"`, `"IC Socket"`, `"Terminal Block"`, `"Wire To Board"` + series, `"USB Connectors"` + `Type-C`/`Micro-B`, `"FPC"`, `RJ45`, `"D-Sub"` + gender, `"DC Power"`); positions `RxNP` when the rows are known, else `NP`; `"Right Angle"`; pitch (`2.54mm`, also when implied); mounting `"Through Hole"` (not for right angle: JLCPCB writes only "Right Angle" there) or `"Surface Mount"` (+ `Vertical`); up to 2 free-text keywords last | `"Female Header" 6P "Right Angle" 2.54mm` |
+| TME | TME description wording, most informative first, at most 40 characters (a token that does not fit is skipped): type (`pin strips female`, `pin header male`, `IDC male`, `terminal block`, `wire-board XH`, `USB C socket`, `FFC/FPC`, `RJ45 socket`, `D-Sub female`, `DC supply socket`), positions (`6`, or `2x3` for several rows), orientation (`angled`/`straight`; `horizontal`/`vertical` for USB and FFC/FPC), the pitch only when written (not implied), keywords | `pin strips female 6 angled` |
+| Mouser | type (`female header`, `male header`, `header`, `shrouded header`, `terminal block`, `JST XH`, `USB type C receptacle`, `micro USB receptacle`, `FPC connector`, `RJ45 jack`, `D-Sub female`, `DC power jack`), positions as `N pos`, pitch only when written, orientation (`right angle`/`vertical`), mounting for non-header types, keywords. Verified live: `female header 6 pos right angle` finds 6-pin right-angle female headers, `... 6 position ...` matched 9 modular jacks | `female header 6 pos right angle` |
+
+Each distributor entry reports the phrase as `distributor_query` (null when the user's text was sent verbatim);
+`fallback_query` keeps its meaning (the shorter phrase sent after the first one found nothing).
 
 ### 3.3 Ranking
 
@@ -232,8 +254,26 @@ then ranks each query independently through the same path (sequentially through 
 - tolerance (`±5%`, `5%`, `1%`), dielectric (`X7R X5R C0G NP0 Y5V X7S X6S X8R`),
   package (`0201 0402 0603 0805 1206 1210 1812 2010 2220 2512`, `SOT-23 SOT-23-5 SOT-223 SOT-89 SOD-123 SOD-323 SOD-523
   TO-220 TO-252 TO-263 DPAK D2PAK SOIC-8 SOP-8 TSSOP-20 MSOP QFN-32 DFN LQFP-48 TQFP-64 BGA ...` via regex),
-  metric case codes (`2012` etc. only when a family keyword says MLCC/resistor), mounting (`SMD SMT THT through-hole`)
+  metric case codes (`2012` etc. only when a family keyword says MLCC/resistor), mounting (`SMD SMT THT through-hole`,
+  JLCPCB `插件` = THT, `卧贴` = SMD)
+- connector attributes (`search.ConnectorRecognizer`, `ParsedQuery.Connector`, see below)
 - remaining tokens are free text keywords.
+
+**Connectors.** A query is a connector request (`ParsedQuery.isConnector()`, family `connector`) when it contains
+connector words (a type below, `connector`, `header`, `socket`, `plug`, `jack`, `receptacle`, `dupont`, `JST`...) and
+neither an IC/discrete package (`SOIC-8`, `LQFP-48`, `SOT-23-6`; allowed for IC sockets) nor another explicitly named
+family (op amp, LDO, MCU...). So `8 pin SOIC op amp`, `LQFP-48 MCU` and `SOT-23-6 LDO` are not connectors. The
+recognised spans are removed before the generic recognisers run, so `90 degree`, `degree(s)`, `style`, `dupont`,
+`pins`, `position` do not remain as keywords. `ParsedQuery.Connector` (all fields nullable):
+
+| Field | Recognised wording |
+|---|---|
+| `type` | `pin header` (male: `pin header`, `male header`, `pin strips`, `terminal strip`), `female header` (`female header`, `socket strip`, `pin socket`, `socket header`, `female pin header`, `dupont female`), `header` (gender unknown: `header`, `dupont`, Mouser "Headers & Wire Housings"), `box header` (`box header`, `shrouded header`, `IDC header`, TME `IDC; male`), `idc socket`, `ic socket` (`IC socket`, `DIP socket`, `IC / Transistor Socket`), `terminal block` (`terminal block`, `screw terminal`), `wire-to-board` (`JST`, `wire to board`, `wire-board`, with series `XH PH GH SH ZH EH VH`), `usb-c`, `micro usb`, `usb`, `fpc` (`FPC`, `FFC`), `rj45` (`RJ45`, `8P8C`, `modular jack`), `d-sub` (`D-sub`, `DB9`, `DE-9`), `barrel jack` (`barrel jack`, `DC jack`, `DC supply`), else `connector` |
+| `gender` | `male`/`female` (explicit words win, earliest first; also Mouser `FEM`, `FML`); weak: `receptacle`, `RECEP`, `RCPT`, `socket`, `SKT`, `jack` = female, `plug` = male; else implied by the type (pin/box header male, female header/IC socket female). The type is refined by the gender: `female` + `pin header` = `female header` |
+| `positions` | `6-position`, `6 position(s)`, `6 pos`, `6 pin(s)`, `6-pin`, `6P`, `6 way`, `6 circuits`, `6 CKT`, `6 contacts`, `PIN: 6`, `Number of pins: 6`; rows x pins gives the total (`2x3` = 6) |
+| `rows` | `1x6`, `2x3`, `1*6`, `2×20`, `single row`, `dual row`, `2 row`, Mouser `SIL`/`DIL` |
+| `pitchMm` | `2.54mm`, `2.54 mm pitch`, `P=2.54mm` (LCSC), `0.1"`, `0.1 inch`, `100 mil`, `.100`, a bare `2.54`/`1.27`/`5.08`...; in descriptions only standard pitches count (0.5 ... 10.16 mm, so the `8.5mm` height is ignored); `pitchImplied` for `dupont` (2.54 mm) and JST series (XH 2.5, PH 2.0, GH 1.25, SH 1.0, ZH 1.5 mm) |
+| `orientation` | `right angle` for `right angle(d)`, `RA`, `R/A`, `RT ANGL`, `90 degree(s)`, `90°`, `90*`, `angled`, `horizontal`, `HORIZ`, `side entry`, `弯插`; `vertical` for `vertical`, `straight`, `180°`, `top entry`, `直插`, and JLCPCB headers whose description says `插件` without a right-angle word |
 
 `ParsedQuery` holds the original text, normalised key, the extracted constraints (typed, with SI
 values normalised to base units as `double`), and the free-text tokens.
@@ -243,6 +283,20 @@ part's description and attribute values, so parts from all three distributors ex
 `Capacitance`, `Resistance`, `Inductance`, `Voltage`, `Current`, `Power`, `Tolerance`, `Dielectric`,
 `Package`, `Mounting` keys. Distributor attributes (TME parameters, Mouser ProductAttributes) take
 precedence over description parsing.
+
+Connector parts additionally get `Family=connector`, `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`
+(`2.54mm`) and `Orientation` (`right angle`/`vertical`). A part is a connector when its category names one
+(`Connectors / Female Headers`, TME `Pin headers`, Mouser `Headers & Wire Housings`, `IC / Transistor Socket`), when it
+has connector attributes, or when its description names a specific connector type; never when it has an IC package
+(except IC sockets). Precedence: attributes (TME `Type of connector`, `Connector`, `Kind of connector` (gender),
+`Number of pins`, `Connector pinout layout` (`1x6`), `Contacts pitch`, `Spatial orientation`, `Electrical mounting`,
+`Manufacturer series`, verified on the live API; Mouser `Number of Positions`, `Number of Rows`, `Pitch`, `Gender`,
+`Contact Gender`, `Mounting Angle`, `Orientation`), then the description with the package field (LCSC
+`1x6P 2.54mm ... Right Angle 弯插,P=2.54mm`, package `Push-Pull,P=2.54mm`; TME `pin strips; socket; female; PIN: 6;
+THT; angled 90°`; Mouser `6P RT ANGL PCB RECEP`, `10 POS 2.54MM RA Female Receptacle`), then the last category segment
+(`Female Headers` gives `Gender=female`, `ConnectorType=female header`). An explicit gender in the description beats the
+category (TME files female sockets under "Pin headers"; Samtec "socket; male" is male). Mounting falls back to the
+JLCPCB words `插件`/`Plugin` (THT) and `卧贴` (SMD).
 
 `DeterministicRanker.score(ParsedQuery, Part) -> double in [0,1]` (weights configurable in code constants):
 
@@ -258,6 +312,26 @@ precedence over description parsing.
 | tie-break bonuses | up to 0.05 | log10(stock) scaled, has price, JLCPCB "Basic"/"Preferred" library |
 
 Clamp to [0,1].
+
+For connector queries (`ParsedQuery.isConnector()`) the primary value signal is replaced by connector signals
+(`DeterministicRanker.connectorScore`; constants next to the others). Each applies only when both the query and the
+part know the attribute; an unknown attribute scores 0, never a penalty. Package, dielectric, ratings (e.g. `3A`),
+family, lexical and tie-break signals stay as above.
+
+| Signal | Weight | Rule |
+|---|---|---|
+| positions (`W_POSITIONS`) | 0.30 | same total -> +0.30; different -> -0.30 |
+| rows (`W_ROWS`) | -0.10 | both known and different (`1x6` vs `2x3`: same positions, -0.10); same -> 0 |
+| rows unspecified (`W_ROWS_UNSPECIFIED`) | -0.08 | header query with positions but no rows, part with more than one row (a "6 position header" is usually 1x6) |
+| gender (`W_GENDER`) | 0.20 | same -> +0.20; different -> -0.20 |
+| orientation (`W_ORIENTATION`) | 0.15 | right angle vs vertical: same -> +0.15; different -> -0.15 |
+| pitch (`W_PITCH`) | 0.15 | within 0.03 mm (2.54 mm == 0.1") -> +0.15; different -> -0.15 |
+| connector type (`W_CONNECTOR_TYPE`) | 0.10 | same -> +0.10; different (female header vs pin header vs IC socket) -> -0.10; a gender-less `header` is compatible with pin/female/box headers and `connector`/`usb` with anything (0) |
+| mounting (`W_CONNECTOR_MOUNTING`) | 0.05 | query THT/SMD vs part mounting: same -> +0.05; different -> -0.05 |
+
+With these weights, for `female header 1x6 right angle 2.54mm`: 1x6 female right angle (0.90 + family + tie-break) >
+2x3 female right angle (-0.10) > 1x6 female straight (-0.30) > 1x10 female right angle (-0.60) = 1x6 male right angle
+(-0.60, gender and type) > unrelated parts.
 
 ### 3.5 Laya ranker (`LayaPartRanker`)
 
@@ -388,6 +462,7 @@ parameters; descriptions are read by the LLM, keep them precise):
       "error": null,
       "fallback_query": null,
       "rate_limit_waited_ms": 0,
+      "distributor_query": null,
       "parts": [
         {"rank": 1, "score": 0.93, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
          "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106", "description": "...", "category": "...",
@@ -403,8 +478,11 @@ parameters; descriptions are read by the LLM, keep them precise):
 
 `total_results` is what the distributor reported for the query (in-stock where the API can filter),
 `fetched` is how many in-stock parts KINA holds for the query, `returned` is `min(max_results, fetched)`.
-`fallback_query` is the shorter core phrase actually sent to the distributor when the full query found nothing
-(section 3.2), otherwise null. `rate_limit_waited_ms` is how long the distributor's fetch waited on rate limits
+`distributor_query` is the distributor-specific phrase KINA sent instead of the user's text (connector queries,
+section 3.2 "Distributor phrasing"), null when the text was sent verbatim. `fallback_query` is the shorter phrase actually
+sent to the distributor when the first query found nothing (section 3.2), otherwise null. For a connector query
+`parsed` also carries `connector`, e.g. `{"type": "female header", "gender": "female", "positions": 6, "rows": 1,
+"pitch": "2.54mm", "orientation": "right angle"}` (unknown attributes omitted; absent for other queries). `rate_limit_waited_ms` is how long the distributor's fetch waited on rate limits
 (section 3.6), 0 normally. The `search_parts` tool description tells the LLM that a rate-limited distributor can make
 the call take up to two minutes.
 `max_results` is clamped to `1..kina.search.max-max-results` (MCP; the REST API rejects out-of-range values with 400).
@@ -665,10 +743,33 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   `"LCSC Part", "First Category", "Second Category", "MFR.Part", "Package", "Solder Joint", "Manufacturer", "Library Type",
   "Description", "Datasheet", "Price", "Stock"` (`Solder Joint`, `Datasheet`, `Price`, `Stock` are unindexed). Also tables
   `categories("First Category","Second Category")`, `meta(filename,size,partcount,date,last_update)`, `mapping`.
-- Query: tokens of 3+ characters go into `parts MATCH '"tok1" AND "tok2" ...'` (escape embedded double quotes by doubling);
-  shorter tokens (`1k`, `5%`) become `"Description" LIKE '%tok%'` clauses; always `CAST("Stock" AS INTEGER) > 0`;
+- Query (`JlcpcbQuery`): tokens of 3+ characters go into `parts MATCH '"tok1" AND "tok2" ...'` (escape embedded double
+  quotes by doubling); shorter tokens (`1k`, `5%`, `6P`, `XH`) become `"Description" LIKE '%tok%'` clauses; values,
+  positions and pitches must also occur at a number boundary (`kina_value`: `10k` not in `510kΩ`, `6P` not in `16P`;
+  positions also in `MFR.Part`, pitches also in `Package`); always `CAST("Stock" AS INTEGER) > 0`;
   `ORDER BY rank, CAST("Stock" AS INTEGER) DESC LIMIT <window>`. `totalResults` = `COUNT(*)` of the same predicate.
   Part lookup: `WHERE "LCSC Part" = ?`.
+- Vocabulary mapping before querying: a double-quoted phrase is one term. Connector category phrases (quoted, or the
+  words `female header(s)`, `female pin header`, `pin header(s)`, `terminal block`, `screw terminal`, `IC socket`) are
+  matched as a column filter, e.g. `"Second Category" : "Female Header"` (matches `Female Headers` and
+  `Pin Header & Female Header`), `"Second Category" : ("IC Socket" OR "Transistor Socket")`. Mounting:
+  `THT`, `PTH`, `through hole` -> `("Through Hole" OR "Plugin" OR "THT")`; `SMD`, `SMT`, `surface mount` ->
+  `("SMD" OR "SMT" OR "Surface Mount")`. Orientation: `right angle`, `90°`, `90 degree`, `angled`, `horizontal` ->
+  `"Right Angle"` (a THT term is then dropped: JLCPCB right-angle THT headers never say "Through Hole");
+  `vertical`, `straight` -> `("Vertical" OR "Straight")`. Positions: `1x6`, `2*3`, `1x6P` -> `1x6P`; `6P` (upper-case),
+  `6 pin`, `6-pos`, `6 position` -> `6P` (a lower-case `22p` stays a capacitance). `2.54 mm` -> `2.54mm`. Stop words
+  include `dupont`, `style`, `degree(s)`, `pins`, `position(s)`. The 2-character CJK words (`弯插`, `插件`) cannot be
+  trigram-matched and are only used by the extractor.
+- Relaxation (`JlcpcbSqliteSearch`): `ALL` (every term) first. When it has no in-stock match, `RELAXED`: (1) remove
+  the dead terms, i.e. terms that occur nowhere in the database (one `MATCH ... LIMIT 1` probe per matchable term,
+  stock ignored, so it stops at the first hit; e.g. `dupont`, misspellings), and retry; (2) drop the least informative
+  remaining term and retry, one term at a time, while at least 2 terms remain. Drop order by kind: free-text keyword,
+  mounting, orientation, pitch, package, dielectric, value, positions, family word, category; within a kind the last
+  term of the query first. A step whose predicate has no MATCH (LIKE-only, a full scan) is skipped. A step whose
+  terms are exactly the parametric terms is reported as `PARAMETRIC`. Then `PARAMETRIC` (values, packages,
+  dielectrics, family and connector terms) when not tried yet, then `ANY` (every matchable term OR-ed, no
+  value-boundary check, BM25 order). The first step with a non-zero count defines both `totalResults` and the page,
+  so paging is stable; the result carries the mode and the dropped terms (debug log).
 - Mapping: `distributorPartNumber = "LCSC Part"`, `manufacturer`, `manufacturerPartNumber = "MFR.Part"`, `description`,
   `category = "First Category" + " / " + "Second Category"`, `packageName = "Package"`, `stock = int("Stock")`,
   `prices` parsed from `"Price"` strings like `1-199:0.0068,200-999:0.0056,1000-:0.0043` (`qty = lower bound`, USD),

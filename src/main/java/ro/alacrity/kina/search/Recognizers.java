@@ -201,8 +201,10 @@ final class Recognizers {
             Map.entry("x6s", "X6S"), Map.entry("x8r", "X8R"), Map.entry("x5s", "X5S"), Map.entry("x7t", "X7T"),
             Map.entry("x8l", "X8L"), Map.entry("z5u", "Z5U"), Map.entry("x6t", "X6T"), Map.entry("x8g", "X8G"));
 
+    /** Mounting words; {@code 插件} (plug-in) and {@code 卧贴} (horizontal SMD) are JLCPCB description wording. */
     private static final Map<String, String> MOUNTINGS = Map.of(
-            "smd", "SMD", "smt", "SMD", "tht", "THT", "through-hole", "THT", "pth", "THT");
+            "smd", "SMD", "smt", "SMD", "tht", "THT", "through-hole", "THT", "pth", "THT", "插件", "THT", "卧贴", "SMD",
+            "立贴", "SMD");
 
     /** "X7R", "C0G" (NP0/NPO/COG are normalised to C0G), or null. */
     static String dielectric(String token) {

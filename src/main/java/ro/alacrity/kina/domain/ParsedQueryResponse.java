@@ -22,13 +22,43 @@ public record ParsedQueryResponse(
         @JsonProperty("dielectric") String dielectric,
         @JsonProperty("package") String packageName,
         @JsonProperty("mounting") String mounting,
-        @JsonProperty("keywords") List<String> keywords
+        @JsonProperty("keywords") List<String> keywords,
+        @JsonProperty("connector") ConnectorResponse connector
 ) {
+
+    /** A parsed query without connector attributes. */
+    public ParsedQueryResponse(String family, Map<String, String> constraints, String dielectric, String packageName,
+                               String mounting, List<String> keywords) {
+        this(family, constraints, dielectric, packageName, mounting, keywords, null);
+    }
 
     public static ParsedQueryResponse from(ParsedQuery query) {
         Map<String, String> constraints = new LinkedHashMap<>();
         query.constraints().forEach((kind, c) -> constraints.put(kind, c.display()));
         return new ParsedQueryResponse(query.family(), constraints, query.dielectric(), query.packageName(),
-                query.mounting(), query.keywords());
+                query.mounting(), query.keywords(), ConnectorResponse.from(query.connector()));
+    }
+
+    /**
+     * The {@code parsed.connector} object of a connector query, e.g.
+     * {@code {"type":"female header","gender":"female","positions":6,"pitch":"2.54mm","orientation":"right angle"}};
+     * absent attributes are omitted, the whole object is omitted for other queries.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record ConnectorResponse(
+            @JsonProperty("type") String type,
+            @JsonProperty("series") String series,
+            @JsonProperty("gender") String gender,
+            @JsonProperty("positions") Integer positions,
+            @JsonProperty("rows") Integer rows,
+            @JsonProperty("pitch") String pitch,
+            @JsonProperty("orientation") String orientation
+    ) {
+
+        static ConnectorResponse from(ParsedQuery.Connector connector) {
+            return connector == null ? null : new ConnectorResponse(connector.type(), connector.series(),
+                    connector.gender(), connector.positions(), connector.rows(), connector.pitchDisplay(),
+                    connector.orientation());
+        }
     }
 }

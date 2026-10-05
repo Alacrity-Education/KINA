@@ -45,7 +45,13 @@ public class KinaMcpTools {
             KINA holds for the query and ranked; returned = min(max_results, fetched) = parts in this response; \
             cache = hit | partial | miss | bypassed | not_applicable (LCSC is a local database); error = null or \
             rate_limited | unavailable | not_configured | timeout | bad_response (a failing distributor never \
-            fails the whole search, its list is just empty).
+            fails the whole search, its list is just empty); distributor_query = null when your query text was \
+            sent as written, else the distributor-specific phrase KINA sent instead (connector queries such as \
+            "female header 1x6 right angle 2.54mm" are rewritten into each distributor's wording); \
+            fallback_query = null, or the shorter phrase KINA tried because that search found nothing.
+            Connector queries: type (pin header, female header, box header, terminal block, JST, USB-C, FPC, \
+            RJ45...), gender, number of positions, rows (1x6, 2x3), pitch (2.54mm, 0.1") and orientation (right \
+            angle / vertical) are recognised (parsed.connector) and ranked; say them explicitly.
             Rate limits: when a distributor API is rate limited KINA waits and retries instead of failing at once, \
             so a call may take up to 2 minutes; rate_limit_waited_ms on the distributor entry reports how long it \
             waited (0 normally). error rate_limited means the limit outlasted that budget; parts fetched before \

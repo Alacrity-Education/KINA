@@ -26,28 +26,106 @@ import java.util.regex.Pattern;
  *       are dropped. Plural family words are singularised ({@code capacitors} -&gt; {@code capacitor}); a few
  *       abbreviations map to the database wording ({@code res} -&gt; {@code resistor}, {@code op amp} -&gt; {@code amplifier}).</li>
  * </ul>
- * Each remaining token is classified ({@link Kind}); everything but {@link Kind#KEYWORD} counts as "parametric" for
+ * Connector wording (DESIGN.md 9.3): a double-quoted phrase is one term ({@code "Female Header"}); quoted connector
+ * category phrases ({@code "Female Header"}, {@code "Pin Header"}, {@code "IC Socket"}, {@code "Terminal Block"}...)
+ * and the unquoted words {@code female header(s)} / {@code pin header(s)} become {@link Kind#CATEGORY} terms matched
+ * as a {@code "Second Category"} column filter; mounting synonyms map to the database vocabulary ({@code THT},
+ * {@code through hole}, {@code PTH} -&gt; {@code ("Through Hole" OR "Plugin" OR "THT")}; {@code SMD}, {@code SMT},
+ * {@code surface mount} -&gt; {@code ("SMD" OR "SMT" OR "Surface Mount")}), orientation words ({@code right angle},
+ * {@code 90°}, {@code 90 degree}, {@code angled} -&gt; {@code "Right Angle"}; {@code vertical}, {@code straight}),
+ * positions ({@code 1x6}, {@code 2*3P} -&gt; {@code 1x6P}/{@code 2x3P}; {@code 6P}, {@code 6 pin}, {@code 6-position}
+ * -&gt; {@code 6P}) and pitches ({@code 2.54mm}).
+ *
+ * <p>Each remaining token is classified ({@link Kind}); everything but {@link Kind#KEYWORD} counts as "parametric" for
  * the query relaxation in {@link JlcpcbSqliteSearch}.
  */
 public record JlcpcbQuery(List<Term> terms) {
 
-    public enum Kind { VALUE, PACKAGE, DIELECTRIC, FAMILY, KEYWORD }
+    public enum Kind {
+        VALUE, PACKAGE, DIELECTRIC, FAMILY, KEYWORD,
+        /** A JLCPCB "Second Category" phrase, matched as a column filter. */
+        CATEGORY,
+        /** Connector positions in JLCPCB wording ({@code 1x6P}, {@code 6P}), checked like a value. */
+        POSITIONS,
+        /** A pitch / length in millimetres ({@code 2.54mm}), checked like a value. */
+        PITCH,
+        /** Connector orientation ({@code "Right Angle"}). */
+        ORIENTATION,
+        /** Mounting ({@code Through Hole} / {@code Surface Mount}). */
+        MOUNTING
+    }
 
     /**
-     * @param text the normalised token
-     * @param kind its classification
+     * @param text         the normalised token (for display, logging and LIKE matching)
+     * @param kind         its classification
+     * @param alternatives MATCH alternatives OR-ed together (empty: {@code text} itself)
+     * @param column       column filter for the MATCH ({@code "Second Category"}), or null for all indexed columns
      */
-    public record Term(String text, Kind kind) {
+    public record Term(String text, Kind kind, List<String> alternatives, String column) {
+
+        public Term {
+            alternatives = alternatives == null ? List.of() : List.copyOf(alternatives);
+        }
+
+        public Term(String text, Kind kind) {
+            this(text, kind, List.of(), null);
+        }
 
         public boolean parametric() {
             return kind != Kind.KEYWORD;
         }
 
-        /** Trigram MATCH needs at least 3 characters. */
+        /** The phrases to MATCH: the alternatives, or the text itself. */
+        public List<String> phrases() {
+            return alternatives.isEmpty() ? List.of(text) : alternatives;
+        }
+
+        /** Trigram MATCH needs at least 3 characters (in every alternative). */
         public boolean matchable() {
-            return text.codePointCount(0, text.length()) >= 3;
+            return phrases().stream().allMatch(p -> p.codePointCount(0, p.length()) >= 3);
+        }
+
+        /** Checked with the value-boundary function ({@code 6P} must not match {@code 16P}). */
+        public boolean boundaryChecked() {
+            return kind == Kind.VALUE || kind == Kind.POSITIONS || kind == Kind.PITCH;
         }
     }
+
+    /** Known JLCPCB connector category phrases (lower-case key) and the "Second Category" alternatives they match. */
+    static final Map<String, List<String>> CATEGORIES = Map.ofEntries(
+            Map.entry("female header", List.of("Female Header")),
+            Map.entry("female headers", List.of("Female Header")),
+            Map.entry("pin header", List.of("Pin Header")),
+            Map.entry("pin headers", List.of("Pin Header")),
+            Map.entry("header", List.of("Header")),
+            Map.entry("ic socket", List.of("IC Socket", "Transistor Socket")),
+            Map.entry("ic sockets", List.of("IC Socket", "Transistor Socket")),
+            Map.entry("terminal block", List.of("Terminal Block", "Screw Terminal")),
+            Map.entry("screw terminal", List.of("Terminal Block", "Screw Terminal")),
+            Map.entry("wire to board", List.of("Wire To Board")),
+            Map.entry("usb connectors", List.of("USB Connector")),
+            Map.entry("idc connectors", List.of("IDC Connector")),
+            Map.entry("fpc", List.of("FPC")),
+            Map.entry("d-sub", List.of("D-Sub")),
+            Map.entry("dc power", List.of("DC Power")));
+    static final String CATEGORY_COLUMN = "Second Category";
+
+    private static final List<String> THT = List.of("Through Hole", "Plugin", "THT");
+    private static final List<String> SMD = List.of("SMD", "SMT", "Surface Mount");
+    private static final List<String> RIGHT_ANGLE = List.of("Right Angle");
+    private static final List<String> VERTICAL = List.of("Vertical", "Straight");
+    private static final Set<String> THT_WORDS = Set.of("tht", "pth", "through-hole", "through hole", "thru-hole",
+            "thru hole", "plugin");
+    private static final Set<String> SMD_WORDS = Set.of("smd", "smt", "surface mount", "surface-mount");
+    private static final Set<String> RIGHT_ANGLE_WORDS = Set.of("right angle", "right-angle", "right angled",
+            "rightangle", "90°", "90deg", "90 degree", "90 degrees", "90 deg", "angled", "horizontal", "90*");
+    private static final Set<String> VERTICAL_WORDS = Set.of("vertical", "straight", "180°", "180 degree");
+    private static final Pattern GRID = Pattern.compile("(?i)(\\d{1,2})[x×*](\\d{1,3})p?");
+    /** {@code 6P} (upper-case: a lower-case {@code 22p} stays a capacitance), {@code 6pin}, {@code 6-pos}, {@code 6way}. */
+    private static final Pattern POSITIONS = Pattern.compile("(\\d{1,3})-?(?:P|(?i:pins?|pos|positions?|ways?))");
+    private static final Pattern PITCH = Pattern.compile("(?i)\\d{1,2}(?:\\.\\d{1,2})?mm");
+    private static final Pattern POSITION_WORD = Pattern.compile("(?i)pins?|pos|positions?|ways?|circuits?|contacts?");
+    private static final Pattern QUOTED = Pattern.compile("(?<=^|\\s)\"([^\"]+)\"(?=\\s|$)");
 
     public JlcpcbQuery {
         terms = List.copyOf(terms);
@@ -66,7 +144,8 @@ public record JlcpcbQuery(List<Term> terms) {
             "a", "an", "the", "and", "or", "not", "near", "for", "with", "without", "of", "in", "on", "to", "at",
             "by", "from", "as", "is", "are", "be", "i", "me", "my", "we", "our", "need", "needs", "want", "looking",
             "find", "search", "some", "any", "please", "least", "most", "max", "min", "minimum", "maximum", "type",
-            "part", "parts", "component", "components", "that", "this", "which", "can", "should", "it", "use", "used");
+            "part", "parts", "component", "components", "that", "this", "which", "can", "should", "it", "use", "used",
+            "style", "dupont", "degree", "degrees", "deg", "pins", "position", "positions");
 
     private static final Map<String, String> SYNONYMS = Map.ofEntries(
             Map.entry("res", "resistor"), Map.entry("resistance", "resistor"),
@@ -107,18 +186,26 @@ public record JlcpcbQuery(List<Term> terms) {
         }
         String text = Normalizer.normalize(query, Normalizer.Form.NFKC)
                 .replace('µ', 'u').replace('μ', 'u').replace("+/-", "±");
+        // double-quoted phrases at token boundaries are single terms ("Female Header", "Right Angle")
         List<String> raw = new ArrayList<>();
-        for (String piece : text.split("[\\s,;|]+")) {
-            String token = strip(piece);
-            if (!token.isEmpty()) {
-                raw.add(token);
+        Matcher quoted = QUOTED.matcher(text);
+        int last = 0;
+        while (quoted.find()) {
+            split(text.substring(last, quoted.start()), raw);
+            String phrase = quoted.group(1).strip().replaceAll("\\s+", " ");
+            if (!phrase.isEmpty()) {
+                raw.add(phrase.contains(" ") ? "\u0000" + phrase : strip(phrase));
             }
+            last = quoted.end();
         }
-        // merge "10 uF" / "10k ohm" / "op amp"
+        split(text.substring(last), raw);
+        // merge "10 uF" / "10k ohm" / "op amp" / "right angle" / "90 degree" / "6 pin" / "female header"
         List<String> merged = new ArrayList<>();
         for (int i = 0; i < raw.size(); i++) {
             String token = raw.get(i);
             String next = i + 1 < raw.size() ? raw.get(i + 1) : null;
+            String lower = token.toLowerCase(Locale.ROOT);
+            String nextLower = next == null ? "" : next.toLowerCase(Locale.ROOT);
             if (next != null && NUMBER.matcher(token).matches() && UNIT_ONLY.matcher(next).matches()) {
                 merged.add(token + next);
                 i++;
@@ -126,8 +213,31 @@ public record JlcpcbQuery(List<Term> terms) {
                     && token.matches("(?i)\\d+(?:\\.\\d+)?[kmg]?")) {
                 merged.add(token + "Ω");
                 i++;
-            } else if (next != null && token.equalsIgnoreCase("op") && next.toLowerCase(Locale.ROOT).startsWith("amp")) {
+            } else if (next != null && lower.equals("op") && nextLower.startsWith("amp")) {
                 merged.add("opamp");
+                i++;
+            } else if (lower.equals("female") && nextLower.equals("pin") && i + 2 < raw.size()
+                    && raw.get(i + 2).toLowerCase(Locale.ROOT).matches("headers?")) {
+                merged.add("\u0000female header");   // "female pin header" is a female header
+                i += 2;
+            } else if (next != null && NUMBER.matcher(token).matches() && nextLower.equals("mm")) {
+                merged.add(token + "mm");
+                i++;
+            } else if (next != null && token.matches("\\d{1,3}") && POSITION_WORD.matcher(next).matches()) {
+                merged.add(token + "P");
+                i++;
+            } else if (next != null && (lower.equals("90") || lower.equals("180"))
+                    && nextLower.matches("°|deg|degrees?")) {
+                merged.add("\u0000" + lower + " degree");
+                i++;
+            } else if (next != null && (lower.equals("right") && nextLower.startsWith("angle")
+                    || lower.equals("through") && nextLower.equals("hole")
+                    || lower.equals("surface") && nextLower.startsWith("mount")
+                    || (lower.equals("female") || lower.equals("pin")) && nextLower.matches("headers?")
+                    || lower.equals("terminal") && nextLower.matches("blocks?")
+                    || lower.equals("screw") && nextLower.matches("terminals?")
+                    || lower.equals("ic") && nextLower.matches("sockets?"))) {
+                merged.add("\u0000" + token + " " + next);
                 i++;
             } else {
                 merged.add(token);
@@ -136,12 +246,58 @@ public record JlcpcbQuery(List<Term> terms) {
         Set<String> seen = new LinkedHashSet<>();
         List<Term> terms = new ArrayList<>();
         for (String token : merged) {
-            Term term = classify(token);
-            if (term != null && seen.add(term.text().toLowerCase(Locale.ROOT))) {
+            Term term = token.startsWith("\u0000") ? classifyPhrase(token.substring(1)) : classify(token);
+            if (term != null && seen.add(term.kind() + ":" + term.text().toLowerCase(Locale.ROOT))) {
                 terms.add(term);
             }
         }
+        // JLCPCB never writes "Through Hole" next to "Right Angle" (right-angle THT headers only say "Right Angle")
+        boolean rightAngle = terms.stream().anyMatch(t -> t.kind() == Kind.ORIENTATION && t.text().equals("Right Angle"));
+        if (rightAngle) {
+            terms.removeIf(t -> t.kind() == Kind.MOUNTING && t.alternatives().equals(THT));
+        }
         return new JlcpcbQuery(terms);
+    }
+
+    private static void split(String text, List<String> out) {
+        for (String piece : text.split("[\\s,;|]+")) {
+            String token = strip(piece);
+            if (!token.isEmpty()) {
+                out.add(token);
+            }
+        }
+    }
+
+    /** A multi-word phrase: a category, mounting or orientation phrase, else a keyword phrase. */
+    private static Term classifyPhrase(String phrase) {
+        String lower = phrase.toLowerCase(Locale.ROOT);
+        List<String> category = CATEGORIES.get(lower);
+        if (category != null) {
+            return new Term(category.getFirst(), Kind.CATEGORY, category, CATEGORY_COLUMN);
+        }
+        Term connector = connectorTerm(lower);
+        if (connector != null) {
+            return connector;
+        }
+        String cleaned = phrase.replace("\"", "");
+        return cleaned.isBlank() ? null : new Term(cleaned, Kind.KEYWORD);
+    }
+
+    /** Mounting / orientation synonyms in the database vocabulary, or null. */
+    private static Term connectorTerm(String lower) {
+        if (THT_WORDS.contains(lower)) {
+            return new Term("Through Hole", Kind.MOUNTING, THT, null);
+        }
+        if (SMD_WORDS.contains(lower)) {
+            return new Term("SMD", Kind.MOUNTING, SMD, null);
+        }
+        if (RIGHT_ANGLE_WORDS.contains(lower)) {
+            return new Term("Right Angle", Kind.ORIENTATION, RIGHT_ANGLE, null);
+        }
+        if (VERTICAL_WORDS.contains(lower)) {
+            return new Term("Vertical", Kind.ORIENTATION, VERTICAL, null);
+        }
+        return null;
     }
 
     private static Term classify(String token) {
@@ -155,6 +311,21 @@ public record JlcpcbQuery(List<Term> terms) {
         String lower = t.toLowerCase(Locale.ROOT);
         if (STOP_WORDS.contains(lower) || OHM_WORD.matcher(t).matches() || t.equals("-")) {
             return null;
+        }
+        Term connector = connectorTerm(lower);
+        if (connector != null) {
+            return connector;
+        }
+        Matcher grid = GRID.matcher(t);
+        if (grid.matches()) {
+            return new Term(grid.group(1) + "x" + grid.group(2) + "P", Kind.POSITIONS);
+        }
+        Matcher positions = POSITIONS.matcher(t);
+        if (positions.matches()) {
+            return new Term(positions.group(1) + "P", Kind.POSITIONS);
+        }
+        if (PITCH.matcher(t).matches()) {
+            return new Term(t.substring(0, t.length() - 2) + "mm", Kind.PITCH);
         }
         t = canonicalValue(t);
         if (VALUE.matcher(t).matches()) {

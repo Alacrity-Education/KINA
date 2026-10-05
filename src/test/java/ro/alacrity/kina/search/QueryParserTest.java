@@ -41,7 +41,7 @@ class QueryParserTest {
                 row("2R2 2512 1W", "resistor", "resistance=2.2ohm;power=1W", "", "2512", "", ""),
                 row("Schottky diode 40V 3A SMA", "schottky", "voltage=40V;current=3A", "", "SMA", "", ""),
                 row("3.3V LDO SOT-223 1A", "regulator", "voltage=3.3V;current=1A", "", "SOT-223", "", "ldo"),
-                row("USB-C connector 16 pin", "connector", "", "", "", "", "usb-c 16 pin"),
+                row("USB-C connector 16 pin", "connector", "", "", "", "", ""),
                 row("12MHz crystal 3225", "crystal", "frequency=12MHz", "", "3225", "", ""),
                 row("TVS diode 5V SOD-323", "tvs", "voltage=5V", "", "SOD-323", "", ""),
                 row("0.1uF 16V X5R 0201", "capacitor", "capacitance=100nF;voltage=16V", "X5R", "0201", "", ""),
@@ -108,6 +108,96 @@ class QueryParserTest {
         assertThat(parsed.packageName()).as("package").isEqualTo(pkg);
         assertThat(parsed.mounting()).as("mounting").isEqualTo(mounting);
         assertThat(parsed.keywords()).as("keywords").containsExactlyElementsOf(keywords);
+    }
+
+    /**
+     * query | type | gender | positions | rows | pitch (mm) | orientation | mounting | keywords; empty = absent.
+     */
+    static Stream<Arguments> connectors() {
+        return Stream.of(
+                connector("90 degree dupont style female pin header 90 degree THT pins 6 position",
+                        "female header", "female", "6", "", "2.54", "right angle", "THT", ""),
+                connector("dupont female 1x6 right angle", "female header", "female", "6", "1", "2.54", "right angle", "", ""),
+                connector("6 pin JST XH connector 2.5mm", "wire-to-board", "", "6", "", "2.5", "", "", ""),
+                connector("USB-C receptacle 16 pin SMD", "usb-c", "female", "16", "", "", "", "SMD", ""),
+                connector("2x5 box header 2.54mm", "box header", "male", "10", "2", "2.54", "", "", ""),
+                connector("screw terminal block 2 position 5.08mm", "terminal block", "", "2", "", "5.08", "", "", ""),
+                connector("1x40 pin header 2.54mm straight", "pin header", "male", "40", "1", "2.54", "vertical", "", ""),
+                connector("2.54mm 2x20 female header", "female header", "female", "40", "2", "2.54", "", "", ""),
+                connector("RJ45 jack with magnetics", "rj45", "female", "", "", "", "", "", "magnetics"),
+                connector("2x3 female header right angle", "female header", "female", "6", "2", "", "right angle", "", ""),
+                connector("female header 6 pos 90°", "female header", "female", "6", "", "", "right angle", "", ""),
+                connector("0.1\" header 1x8 vertical", "header", "", "8", "1", "2.54", "vertical", "", ""),
+                connector("pin socket 1*6 angled", "female header", "female", "6", "1", "", "right angle", "", ""),
+                connector("micro USB receptacle SMD", "micro usb", "female", "", "", "", "", "SMD", ""),
+                connector("FPC connector 0.5mm 24 pin horizontal", "fpc", "", "24", "", "0.5", "right angle", "", ""),
+                connector("DB9 male connector", "d-sub", "male", "", "", "", "", "", ""),
+                connector("4 circuits wire to board PH 2.0mm", "wire-to-board", "", "4", "", "2", "", "", ""),
+                connector("6-way connector 3.5mm pitch", "connector", "", "6", "", "3.5", "", "", ""),
+                connector("dual row pin header 20 pins 2 mm", "pin header", "male", "20", "2", "2", "", "", ""),
+                connector("IC socket DIP-8", "ic socket", "female", "", "", "", "", "", ""),
+                connector("header 1*6 2.54 180°", "header", "", "6", "1", "2.54", "vertical", "", ""),
+                connector("barrel jack 2.1mm", "barrel jack", "female", "", "", "", "", "", "2.1mm"));
+    }
+
+    private static Arguments connector(String query, String type, String gender, String positions, String rows,
+                                       String pitch, String orientation, String mounting, String keywords) {
+        return Arguments.of(query, type, blankToNull(gender), positions.isEmpty() ? null : Integer.valueOf(positions),
+                rows.isEmpty() ? null : Integer.valueOf(rows), pitch.isEmpty() ? null : Double.valueOf(pitch),
+                blankToNull(orientation), blankToNull(mounting),
+                keywords.isEmpty() ? List.of() : Arrays.asList(keywords.split(" ")));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("connectors")
+    void parsesConnectorQuery(String query, String type, String gender, Integer positions, Integer rows, Double pitch,
+                              String orientation, String mounting, List<String> keywords) {
+        ParsedQuery parsed = parser.parse(query);
+
+        assertThat(parsed.isConnector()).as("connector").isTrue();
+        assertThat(parsed.family()).as("family").isEqualTo("connector");
+        ParsedQuery.Connector c = parsed.connector();
+        assertThat(c.type()).as("type").isEqualTo(type);
+        assertThat(c.gender()).as("gender").isEqualTo(gender);
+        assertThat(c.positions()).as("positions").isEqualTo(positions);
+        assertThat(c.rows()).as("rows").isEqualTo(rows);
+        assertThat(c.pitchMm()).as("pitch").isEqualTo(pitch);
+        assertThat(c.orientation()).as("orientation").isEqualTo(orientation);
+        assertThat(parsed.mounting()).as("mounting").isEqualTo(mounting);
+        assertThat(parsed.keywords()).as("keywords").containsExactlyElementsOf(keywords);
+    }
+
+    @Test
+    void connectorDetailsAndNoise() {
+        ParsedQuery failing = parser.parse("90 degree dupont style female pin header 90 degree THT pins 6 position");
+        assertThat(failing.connector().pitchImplied()).isTrue();     // Dupont implies 2.54 mm
+        assertThat(failing.constraints()).isEmpty();
+        assertThat(parser.parse("6 pin JST XH connector 2.5mm").connector().series()).isEqualTo("XH");
+        assertThat(parser.parse("JST PH 4 pin").connector().pitchMm()).isEqualTo(2.0);   // series pitch
+        assertThat(parser.parse("JST PH 4 pin").connector().pitchImplied()).isTrue();
+        assertThat(parser.parse("2x5 box header 2.54mm").connector().pitchImplied()).isFalse();
+        // ratings stay ordinary constraints
+        assertThat(parser.parse("female header 1x6 3A").constraint(ParsedQuery.CURRENT).display()).isEqualTo("3A");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("notConnectors")
+    void pinCountsOfIcsAreNotConnectorPositions(String query, String family, String pkg) {
+        ParsedQuery parsed = parser.parse(query);
+        assertThat(parsed.isConnector()).isFalse();
+        assertThat(parsed.connector()).isNull();
+        assertThat(parsed.family()).isEqualTo(family);
+        assertThat(parsed.packageName()).isEqualTo(pkg);
+    }
+
+    static Stream<Arguments> notConnectors() {
+        return Stream.of(
+                Arguments.of("8 pin SOIC op amp", "opamp", "SOIC"),
+                Arguments.of("LQFP-48 MCU", "mcu", "LQFP-48"),
+                Arguments.of("SOT-23-6 LDO", "regulator", "SOT-23-6"),
+                Arguments.of("SOIC-8 8 pin EEPROM", null, "SOIC-8"),
+                Arguments.of("10uF X7R 0805", "capacitor", "0805"),
+                Arguments.of("NE555 DIP-8", null, "DIP-8"));
     }
 
     @Test

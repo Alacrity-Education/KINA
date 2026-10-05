@@ -26,6 +26,13 @@ import java.util.Map;
  *   <tr><td>lexical</td><td>{@value #W_LEXICAL}</td><td>share of free-text keywords found in the part text</td></tr>
  *   <tr><td>tie-break</td><td>up to {@value #W_TIE_BREAK}</td><td>log10(stock), has a price, JLCPCB Basic/Preferred</td></tr>
  * </table>
+ *
+ * <p>Connector queries ({@link ParsedQuery#isConnector()}) replace the primary value signal by connector signals:
+ * positions {@value #W_POSITIONS}, rows mismatch -{@value #W_ROWS}, gender {@value #W_GENDER}, orientation
+ * {@value #W_ORIENTATION}, pitch {@value #W_PITCH} (2.54 mm == 0.1"), connector type {@value #W_CONNECTOR_TYPE},
+ * mounting {@value #W_CONNECTOR_MOUNTING}; each is +weight on a match and -weight on a mismatch, 0 when either side
+ * is unknown. A header query with positions but no rows mildly prefers single-row parts
+ * (-{@value #W_ROWS_UNSPECIFIED} for multi-row ones).
  */
 @Component
 public class DeterministicRanker {
@@ -38,6 +45,17 @@ public class DeterministicRanker {
     static final double W_FAMILY = 0.05;
     static final double W_LEXICAL = 0.10;
     static final double W_TIE_BREAK = 0.05;
+    // connector signals (replace W_PRIMARY_VALUE for connector queries)
+    static final double W_POSITIONS = 0.30;
+    static final double W_ROWS = 0.10;
+    static final double W_ROWS_UNSPECIFIED = 0.08;
+    static final double W_GENDER = 0.20;
+    static final double W_ORIENTATION = 0.15;
+    static final double W_PITCH = 0.15;
+    static final double W_CONNECTOR_TYPE = 0.10;
+    static final double W_CONNECTOR_MOUNTING = 0.05;
+    /** Absolute tolerance for "same pitch" in millimetres (2.54 == 0.1" == 2.540). */
+    static final double PITCH_TOLERANCE_MM = 0.03;
     static final double W_TIE_STOCK = 0.03;
     static final double W_TIE_PRICE = 0.01;
     static final double W_TIE_LIBRARY = 0.01;
@@ -67,8 +85,11 @@ public class DeterministicRanker {
     double score(ParsedQuery query, Part part, ParametricExtractor.Features f) {
         double score = 0;
 
-        // primary value
-        String primary = primaryKind(query);
+        // primary value; connector queries use the connector signals instead
+        String primary = query.isConnector() ? null : primaryKind(query);
+        if (query.isConnector()) {
+            score += connectorScore(query, f);
+        }
         if (primary != null) {
             Double partValue = f.value(primary);
             if (partValue != null) {
@@ -121,6 +142,42 @@ public class DeterministicRanker {
 
         score += tieBreak(part);
         return Math.clamp(score, 0.0, 1.0);
+    }
+
+    /** Connector signals (class comment); 0 for every attribute unknown on either side. */
+    static double connectorScore(ParsedQuery query, ParametricExtractor.Features f) {
+        ParsedQuery.Connector wanted = query.connector();
+        ParsedQuery.Connector actual = f.connector();
+        if (wanted == null || actual == null) {
+            return 0;
+        }
+        double score = 0;
+        if (wanted.positions() != null && actual.positions() != null) {
+            score += wanted.positions().equals(actual.positions()) ? W_POSITIONS : -W_POSITIONS;
+        }
+        if (wanted.rows() != null && actual.rows() != null) {
+            score += wanted.rows().equals(actual.rows()) ? 0 : -W_ROWS;
+        } else if (wanted.rows() == null && wanted.positions() != null && actual.rows() != null && actual.rows() > 1
+                && ConnectorRecognizer.isHeader(wanted.type())) {
+            score -= W_ROWS_UNSPECIFIED;
+        }
+        if (wanted.gender() != null && actual.gender() != null) {
+            score += wanted.gender().equals(actual.gender()) ? W_GENDER : -W_GENDER;
+        }
+        if (wanted.orientation() != null && actual.orientation() != null) {
+            score += wanted.orientation().equals(actual.orientation()) ? W_ORIENTATION : -W_ORIENTATION;
+        }
+        if (wanted.pitchMm() != null && actual.pitchMm() != null) {
+            score += Math.abs(wanted.pitchMm() - actual.pitchMm()) <= PITCH_TOLERANCE_MM ? W_PITCH : -W_PITCH;
+        }
+        Boolean type = ConnectorRecognizer.typesMatch(wanted.type(), actual.type());
+        if (type != null) {
+            score += type ? W_CONNECTOR_TYPE : -W_CONNECTOR_TYPE;
+        }
+        if (query.mounting() != null && f.mounting() != null) {
+            score += query.mounting().equals(f.mounting()) ? W_CONNECTOR_MOUNTING : -W_CONNECTOR_MOUNTING;
+        }
+        return score;
     }
 
     /** First of capacitance/resistance/inductance in the query; frequency for crystals and oscillators. */

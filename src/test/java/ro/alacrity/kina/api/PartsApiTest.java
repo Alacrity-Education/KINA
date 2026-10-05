@@ -100,6 +100,26 @@ class PartsApiTest {
     }
 
     @Test
+    void searchReportsTheDistributorQueryAndTheParsedConnector() {
+        String query = "90 degree dupont style female pin header 90 degree THT pins 6 position";
+        when(searchService.search(any())).thenReturn(new SearchResponse(query,
+                ParsedQueryResponse.from(new QueryParser().parse(query)), RankingMode.FALLBACK, "laya disabled",
+                List.of(new DistributorResult(Distributor.TME, 166, 40, 1, CacheStatus.MISS, null,
+                        List.of(PartResponse.from(part(), 1, 0.93)), "pin strips female 6", 0,
+                        "pin strips female 6 angled"))));
+
+        String body = client.get().uri("/api/v1/parts/search?q=" + query)
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(String.class).getResponseBody();
+
+        assertThat(body).contains("\"distributor_query\":\"pin strips female 6 angled\"",
+                "\"fallback_query\":\"pin strips female 6\"", "\"family\":\"connector\"",
+                "\"connector\":{\"type\":\"female header\",\"gender\":\"female\",\"positions\":6,"
+                        + "\"pitch\":\"2.54mm\",\"orientation\":\"right angle\"}", "\"mounting\":\"THT\"");
+    }
+
+    @Test
     void searchDefaultsAndRepeatedDistributorParameters() {
         when(searchService.search(any())).thenAnswer(inv -> response(((SearchRequest) inv.getArgument(0)).query()));
 

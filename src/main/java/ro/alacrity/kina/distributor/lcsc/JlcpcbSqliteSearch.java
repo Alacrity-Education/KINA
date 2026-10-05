@@ -17,7 +17,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -35,10 +37,16 @@ import java.util.stream.Collectors;
  * (trigram matching is plain substring matching). Always {@code CAST("Stock" AS INTEGER) > 0}, ordered by
  * {@code rank, stock DESC}.
  *
- * <p>Query relaxation: when the full AND query has no in-stock match the search retries with
- * {@link MatchMode#PARAMETRIC} (only values, packages, dielectrics and family words, still AND), then
- * {@link MatchMode#ANY} (every 3+ character term OR-ed, no value-boundary check; BM25 puts rows matching more terms
- * first). The first mode with a non-zero count is used for both the count and the page, so pagination is stable.
+ * <p>Query relaxation (DESIGN.md 9.3): when the full AND query ({@link MatchMode#ALL}) has no in-stock match,
+ * {@link MatchMode#RELAXED} first removes the terms that occur nowhere in the database (one cheap
+ * {@code MATCH ... LIMIT 1} probe per term: {@code dupont}, {@code THT} wording...), then drops terms one at a time,
+ * least informative first ({@link #DROP_ORDER}: free-text keywords, mounting, orientation, pitch, package, dielectric,
+ * value, positions, family, category; later terms of the same kind before earlier ones) and retries while at least
+ * {@value #MIN_RELAXED_TERMS} terms remain. A step whose terms are exactly the parametric ones is reported as
+ * {@link MatchMode#PARAMETRIC}. Then {@link MatchMode#PARAMETRIC} (only values, packages, dielectrics, family and
+ * connector terms, still AND) when not tried yet, then {@link MatchMode#ANY} (every 3+ character term OR-ed, no
+ * value-boundary check; BM25 puts rows matching more terms first). The first step with a non-zero count is used for
+ * both the count and the page, so pagination is stable.
  */
 @Component
 public class JlcpcbSqliteSearch {
@@ -52,17 +60,30 @@ public class JlcpcbSqliteSearch {
             "Manufacturer", "Library Type", "Description", "Datasheet", "Price", "Stock\"""";
     private static final String IN_STOCK = "CAST(\"Stock\" AS INTEGER) > 0";
 
-    public enum MatchMode { ALL, PARAMETRIC, ANY }
+    public enum MatchMode { ALL, RELAXED, PARAMETRIC, ANY }
+
+    /** Relaxation drops terms in this order of kinds (first = least informative). */
+    static final List<JlcpcbQuery.Kind> DROP_ORDER = List.of(JlcpcbQuery.Kind.KEYWORD, JlcpcbQuery.Kind.MOUNTING,
+            JlcpcbQuery.Kind.ORIENTATION, JlcpcbQuery.Kind.PITCH, JlcpcbQuery.Kind.PACKAGE, JlcpcbQuery.Kind.DIELECTRIC,
+            JlcpcbQuery.Kind.VALUE, JlcpcbQuery.Kind.POSITIONS, JlcpcbQuery.Kind.FAMILY, JlcpcbQuery.Kind.CATEGORY);
+    /** Relaxation never drops below this many terms (a single term is too vague; PARAMETRIC/ANY follow). */
+    static final int MIN_RELAXED_TERMS = 2;
 
     /**
-     * @param rows  the requested page of in-stock rows
-     * @param total number of in-stock rows matching the predicate of {@code mode}
-     * @param mode  the relaxation step that produced the rows ({@code null} when the query had no usable terms)
+     * @param rows    the requested page of in-stock rows
+     * @param total   number of in-stock rows matching the predicate of {@code mode}
+     * @param mode    the relaxation step that produced the rows ({@code null} when the query had no usable terms)
+     * @param dropped the terms the relaxation removed (empty for {@link MatchMode#ALL})
      */
-    public record Result(List<JlcpcbRow> rows, int total, MatchMode mode) {
+    public record Result(List<JlcpcbRow> rows, int total, MatchMode mode, List<String> dropped) {
 
         public Result {
             rows = List.copyOf(rows);
+            dropped = dropped == null ? List.of() : List.copyOf(dropped);
+        }
+
+        public Result(List<JlcpcbRow> rows, int total, MatchMode mode) {
+            this(rows, total, mode, List.of());
         }
 
         static Result empty() {
@@ -170,20 +191,102 @@ public class JlcpcbSqliteSearch {
         lock.readLock().lock();
         try {
             Connection c = requireConnection();
-            for (MatchMode mode : MatchMode.values()) {
+            Predicate all = predicate(parsed, MatchMode.ALL);
+            int total = all == null ? 0 : count(c, all);
+            if (total > 0) {
+                return found(c, query, all, total, offset, limit, MatchMode.ALL, List.of());
+            }
+            // RELAXED: remove dead terms, then drop the least informative term one at a time
+            List<JlcpcbQuery.Term> remaining = new ArrayList<>(parsed.terms());
+            List<String> dropped = new ArrayList<>();
+            List<JlcpcbQuery.Term> dead = remaining.stream().filter(t -> t.matchable() && !occurs(c, t)).toList();
+            Set<List<JlcpcbQuery.Term>> tried = new HashSet<>();
+            tried.add(List.copyOf(remaining));
+            if (!dead.isEmpty() && dead.size() < remaining.size()) {
+                remaining.removeAll(dead);
+                dead.forEach(t -> dropped.add(t.text()));
+                Result r = attempt(c, query, parsed, remaining, dropped, tried, offset, limit);
+                if (r != null) {
+                    return r;
+                }
+            }
+            while (remaining.size() > MIN_RELAXED_TERMS) {
+                JlcpcbQuery.Term next = leastInformative(remaining);
+                remaining.remove(next);
+                dropped.add(next.text());
+                Result r = attempt(c, query, parsed, remaining, dropped, tried, offset, limit);
+                if (r != null) {
+                    return r;
+                }
+            }
+            for (MatchMode mode : List.of(MatchMode.PARAMETRIC, MatchMode.ANY)) {
+                if (mode == MatchMode.PARAMETRIC && tried.contains(parsed.parametricTerms())) {
+                    continue;
+                }
                 Predicate predicate = predicate(parsed, mode);
                 if (predicate == null) {
                     continue;
                 }
-                int total = count(c, predicate);
+                total = count(c, predicate);
                 if (total > 0) {
-                    log.debug("JLCPCB query '{}' matched {} rows with mode {}", query, total, mode);
-                    return new Result(page(c, predicate, offset, limit), total, mode);
+                    return found(c, query, predicate, total, offset, limit, mode, List.of());
                 }
             }
             return Result.empty();
         } finally {
             lock.readLock().unlock();
+        }
+    }
+
+    /** One relaxation step: the conjunction of {@code terms}, unless that set was tried before. */
+    private Result attempt(Connection c, String query, JlcpcbQuery parsed, List<JlcpcbQuery.Term> terms,
+                           List<String> dropped, Set<List<JlcpcbQuery.Term>> tried, int offset, int limit)
+            throws SQLException {
+        if (terms.isEmpty() || !tried.add(List.copyOf(terms))) {
+            return null;
+        }
+        Predicate predicate = conjunction(terms);
+        if (!predicate.hasMatch()) {
+            return null;   // LIKE-only predicates scan the whole table
+        }
+        int total = count(c, predicate);
+        if (total == 0) {
+            return null;
+        }
+        MatchMode mode = terms.equals(parsed.parametricTerms()) ? MatchMode.PARAMETRIC : MatchMode.RELAXED;
+        return found(c, query, predicate, total, offset, limit, mode, dropped);
+    }
+
+    private Result found(Connection c, String query, Predicate predicate, int total, int offset, int limit,
+                         MatchMode mode, List<String> dropped) throws SQLException {
+        log.debug("JLCPCB query '{}' matched {} rows with mode {}{}", query, total, mode,
+                dropped.isEmpty() ? "" : " (dropped " + dropped + ")");
+        return new Result(page(c, predicate, offset, limit), total, mode, dropped);
+    }
+
+    /** The term to drop next: the first kind of {@link #DROP_ORDER}, the last such term of the query. */
+    static JlcpcbQuery.Term leastInformative(List<JlcpcbQuery.Term> terms) {
+        JlcpcbQuery.Term best = null;
+        int bestRank = Integer.MAX_VALUE;
+        for (JlcpcbQuery.Term term : terms) {
+            int rank = DROP_ORDER.indexOf(term.kind());
+            if (rank <= bestRank) {
+                best = term;
+                bestRank = rank;
+            }
+        }
+        return best;
+    }
+
+    /** True when the term occurs anywhere in the database (stock ignored, so the probe stops at the first hit). */
+    private static boolean occurs(Connection c, JlcpcbQuery.Term term) {
+        try (PreparedStatement ps = c.prepareStatement("SELECT 1 FROM parts WHERE parts MATCH ? LIMIT 1")) {
+            ps.setString(1, matchExpression(term));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            return true;   // never drop a term because a probe failed
         }
     }
 
@@ -219,6 +322,7 @@ public class JlcpcbSqliteSearch {
     static Predicate predicate(JlcpcbQuery query, MatchMode mode) {
         return switch (mode) {
             case ALL -> conjunction(query.terms());
+            case RELAXED -> null;   // built step by step in search()
             case PARAMETRIC -> {
                 List<JlcpcbQuery.Term> parametric = query.parametricTerms();
                 yield parametric.isEmpty() || parametric.size() == query.terms().size() ? null : conjunction(parametric);
@@ -231,7 +335,8 @@ public class JlcpcbSqliteSearch {
                 if (matchable.isEmpty()) {
                     yield null;
                 }
-                String match = matchable.stream().map(t -> quote(t.text())).collect(Collectors.joining(" OR "));
+                String match = matchable.stream().map(t -> "(" + matchExpression(t) + ")")
+                        .collect(Collectors.joining(" OR "));
                 List<Object> params = new ArrayList<>();
                 params.add(match);
                 yield new Predicate("parts MATCH ? AND " + IN_STOCK, params, true);
@@ -242,7 +347,7 @@ public class JlcpcbSqliteSearch {
     private static Predicate conjunction(List<JlcpcbQuery.Term> terms) {
         List<String> clauses = new ArrayList<>();
         List<Object> params = new ArrayList<>();
-        String match = terms.stream().filter(JlcpcbQuery.Term::matchable).map(t -> quote(t.text()))
+        String match = terms.stream().filter(JlcpcbQuery.Term::matchable).map(t -> "(" + matchExpression(t) + ")")
                 .collect(Collectors.joining(" AND "));
         boolean hasMatch = !match.isEmpty();
         if (hasMatch) {
@@ -251,16 +356,37 @@ public class JlcpcbSqliteSearch {
         }
         for (JlcpcbQuery.Term term : terms) {
             if (!term.matchable()) {
-                clauses.add("\"Description\" LIKE ? ESCAPE '\\'");
-                params.add("%" + escapeLike(term.text()) + "%");
+                List<String> likes = new ArrayList<>();
+                for (String phrase : term.phrases()) {
+                    likes.add("\"Description\" LIKE ? ESCAPE '\\'");
+                    params.add("%" + escapeLike(phrase) + "%");
+                }
+                clauses.add(likes.size() == 1 ? likes.getFirst() : "(" + String.join(" OR ", likes) + ")");
             }
             if (term.kind() == JlcpcbQuery.Kind.VALUE) {
                 clauses.add(VALUE_FUNCTION + "(\"Description\", ?)");
+                params.add(term.text());
+            } else if (term.boundaryChecked()) {
+                // positions and pitches also appear in the part number / package ("PM2.54-1x6P", "P=2.54mm")
+                String column = term.kind() == JlcpcbQuery.Kind.PITCH ? "\"Package\"" : "\"MFR.Part\"";
+                clauses.add("(" + VALUE_FUNCTION + "(\"Description\", ?) OR " + VALUE_FUNCTION + "(" + column + ", ?))");
+                params.add(term.text());
                 params.add(term.text());
             }
         }
         clauses.add(IN_STOCK);
         return new Predicate(String.join(" AND ", clauses), params, hasMatch);
+    }
+
+    /**
+     * MATCH expression of one term: its phrase, or its alternatives OR-ed, behind its column filter, e.g.
+     * {@code "Second Category" : ("IC Socket" OR "Transistor Socket")}.
+     */
+    static String matchExpression(JlcpcbQuery.Term term) {
+        List<String> phrases = term.phrases();
+        String inner = phrases.size() == 1 ? quote(phrases.getFirst())
+                : "(" + phrases.stream().map(JlcpcbSqliteSearch::quote).collect(Collectors.joining(" OR ")) + ")";
+        return term.column() == null ? inner : quote(term.column()) + " : " + inner;
     }
 
     /** FTS5 string literal: wrapped in double quotes, embedded quotes doubled. */

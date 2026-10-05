@@ -141,6 +141,8 @@ class McpToolsIntegrationTest {
         assertThat(mouser.path("fetched").asInt()).isEqualTo(34);   // 50 raw records, every third without stock
         assertThat(mouser.path("returned").asInt()).isEqualTo(5);
         assertThat(mouser.path("error").isNull()).isTrue();
+        assertThat(mouser.path("distributor_query").isNull()).isTrue();   // sent verbatim
+        assertThat(first.path("parsed").path("connector").isMissingNode()).isTrue();
         JsonNode top = mouser.path("parts").get(0);
         assertThat(top.path("rank").asInt()).isEqualTo(1);
         assertThat(top.path("part_number").asString()).isEqualTo("603-CC0805KRX7R4");   // the only 10uF part
@@ -161,6 +163,25 @@ class McpToolsIntegrationTest {
         assertThat(cached.path("cache").asString()).isEqualTo("hit");
         assertThat(cached.path("returned").asInt()).isEqualTo(20);
         assertThat(MOUSER.searches.get() - before).isEqualTo(1);
+    }
+
+    @Test
+    void connectorQueriesReportTheDistributorPhraseAndTheParsedConnector() {
+        JsonNode response = call("search_parts", "{\"query\":\"female header 1x6 right angle 2.54mm\","
+                + "\"distributors\":[\"mouser\"],\"bypass_cache\":true}");
+
+        JsonNode connector = response.path("parsed").path("connector");
+        assertThat(response.path("parsed").path("family").asString()).isEqualTo("connector");
+        assertThat(connector.path("type").asString()).isEqualTo("female header");
+        assertThat(connector.path("gender").asString()).isEqualTo("female");
+        assertThat(connector.path("positions").asInt()).isEqualTo(6);
+        assertThat(connector.path("rows").asInt()).isEqualTo(1);
+        assertThat(connector.path("pitch").asString()).isEqualTo("2.54mm");
+        assertThat(connector.path("orientation").asString()).isEqualTo("right angle");
+        JsonNode mouser = response.path("distributors").get(0);
+        assertThat(mouser.path("distributor_query").asString())
+                .isEqualTo("female header 6 pos 2.54mm right angle");
+        assertThat(mouser.path("fallback_query").isNull()).isTrue();
     }
 
     @Test

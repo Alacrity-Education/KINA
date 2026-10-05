@@ -57,4 +57,33 @@ class JlcpcbQueryTest {
     private static String texts(String query) {
         return String.join(" ", JlcpcbQuery.parse(query).terms().stream().map(Term::text).toList());
     }
+
+    @Test
+    void connectorVocabulary() {
+        assertThat(kinds("\"Female Header\" 1x6P \"Right Angle\" 2.54mm")).isEqualTo(
+                "CATEGORY:Female Header POSITIONS:1x6P ORIENTATION:Right Angle PITCH:2.54mm");
+        assertThat(kinds("female pin header 6 position THT 2.54 mm")).isEqualTo(
+                "CATEGORY:Female Header POSITIONS:6P MOUNTING:Through Hole PITCH:2.54mm");
+        assertThat(kinds("pin headers 2*20 vertical SMD")).isEqualTo(
+                "CATEGORY:Pin Header POSITIONS:2x20P ORIENTATION:Vertical MOUNTING:SMD");
+        // right-angle THT: the mounting term is dropped (JLCPCB does not write both)
+        assertThat(kinds("90 degree dupont style female header THT pins 6P")).isEqualTo(
+                "ORIENTATION:Right Angle CATEGORY:Female Header POSITIONS:6P");
+        assertThat(kinds("6-pin 90° header")).isEqualTo("POSITIONS:6P ORIENTATION:Right Angle FAMILY:header");
+        // a lower-case "22p" stays a capacitance
+        assertThat(kinds("22p 0402")).isEqualTo("VALUE:22p PACKAGE:0402");
+
+        Term tht = JlcpcbQuery.parse("THT").terms().getFirst();
+        assertThat(tht.phrases()).containsExactly("Through Hole", "Plugin", "THT");
+        assertThat(JlcpcbQuery.parse("smt").terms().getFirst().phrases()).containsExactly("SMD", "SMT", "Surface Mount");
+        Term socket = JlcpcbQuery.parse("\"IC Socket\"").terms().getFirst();
+        assertThat(socket.column()).isEqualTo("Second Category");
+        assertThat(socket.phrases()).containsExactly("IC Socket", "Transistor Socket");
+        assertThat(JlcpcbSqliteSearch.matchExpression(socket))
+                .isEqualTo("\"Second Category\" : (\"IC Socket\" OR \"Transistor Socket\")");
+    }
+
+    private static String kinds(String query) {
+        return String.join(" ", JlcpcbQuery.parse(query).terms().stream().map(t -> t.kind() + ":" + t.text()).toList());
+    }
 }
