@@ -1,0 +1,28 @@
+# secrets
+.env
+*.env.local
+
+# build output
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# runtime data
+data/
+*.db
+*.db-journal
+*.sqlite
+*.zip.*
+
+# OS
+.DS_Store

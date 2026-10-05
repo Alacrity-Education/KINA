@@ -1,0 +1,3100 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "TME API",
+  "version": "V2.0 Current Version"
+ },
+ "servers": [
+  {
+   "url": "https://api.tme.eu"
+  }
+ ],
+ "x-tagGroups": [
+  {
+   "name": "General Information",
+   "tags": [
+    "Overview",
+    "Localization and Language"
+   ]
+  },
+  {
+   "name": "Glossaries",
+   "tags": [
+    "Products statuses",
+    "Units"
+   ]
+  },
+  {
+   "name": "API",
+   "tags": [
+    "auth",
+    "products",
+    "utils"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "Overview",
+   "description": "$29"
+  },
+  {
+   "name": "Units",
+   "description": "$2a"
+  },
+  {
+   "name": "Localization and Language",
+   "description": "### Language support in the API\n\nThe API supports localized data for certain fields. The response language can be specified using the `Accept-Language` header. The header value must match one of the languages provided by the `/utils/languages` endpoint.\n\nIf the `Accept-Language` header is missing or the specified language is not supported, responses default to English (`en`). For fields without a translation in the requested language, the API returns the value in English. Endpoints that do not return translated data ignore this header."
+  },
+  {
+   "name": "Products statuses",
+   "description": "$2b"
+  },
+  {
+   "name": "auth",
+   "description": "$2c"
+  },
+  {
+   "name": "products"
+  },
+  {
+   "name": "utils"
+  }
+ ],
+ "paths": {
+  "/auth/token": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "x-visibility": "public",
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "oneOf": [
+         {
+          "type": "object",
+          "required": [
+           "grant_type"
+          ],
+          "properties": {
+           "grant_type": {
+            "type": "string",
+            "enum": [
+             "client_credentials"
+            ],
+            "description": "Type of authorization flow."
+           }
+          }
+         },
+         {
+          "type": "object",
+          "required": [
+           "grant_type",
+           "refresh_token"
+          ],
+          "properties": {
+           "grant_type": {
+            "type": "string",
+            "enum": [
+             "refresh_token"
+            ],
+            "description": "Type of authorization flow."
+           },
+           "refresh_token": {
+            "type": "string",
+            "description": "Refresh token."
+           }
+          }
+         }
+        ],
+        "discriminator": {
+         "propertyName": "grant_type",
+         "mapping": {
+          "client_credentials": "#/components/schemas/ClientCredentialsRef",
+          "refresh_token": "#/components/schemas/RefreshTokenRef"
+         }
+        }
+       },
+       "examples": "$undefined"
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful response containing data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "Token for authorizing API requests."
+          },
+          "token_type": {
+           "type": "string",
+           "description": "Type of the returned token."
+          },
+          "expires_in": {
+           "type": "number",
+           "description": "Token expiry time in seconds."
+          },
+          "refresh_token": {
+           "type": "string",
+           "description": "Token for obtaining a new access token."
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "access_token": "",
+           "token_type": "Bearer",
+           "expires_in": 300,
+           "refresh_token": ""
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-codeSamples": [
+     {
+      "lang": "cURL",
+      "label": "CLI",
+      "source": "curl --location 'https://api.tme.eu/auth/token' \\\n--header 'Content-Type: application/x-www-form-urlencoded' \\\n--header 'Authorization: Basic <base64(token:secret)>' \\\n--data-urlencode 'grant_type=client_credentials'"
+     }
+    ],
+    "parameters": "$undefined"
+   }
+  },
+  "/products": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products",
+    "description": "Action returns basic information about products currently available in our offer. Parameters like description, category name, and unit are translated according to the Accept-Language header set in request (see more here [Localization and Language](#tag/Localization-and-Language)). This endpoint is limited by the maximum number of symbols that can be submitted as input to this action. The maximum number of symbols is equal to 50.\n\nProducts symbols not found in product catalog will be omitted in response. If the request contains only one invalid product symbol, an empty array will be returned.\n\n**Note:** Provide either `symbols` or `mpns`.",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "symbols[]",
+      "in": "query",
+      "description": "List of product symbols.",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1,
+       "maxItems": 50,
+       "example": [
+        "M7-DIO",
+        "AX-100"
+       ]
+      }
+     },
+     {
+      "name": "mpns[]",
+      "in": "query",
+      "description": "List of product MPNs.",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1,
+       "maxItems": 50,
+       "example": [
+        "A76-U10",
+        "SKU 111"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "product_status": {
+                "type": "array",
+                "description": "List of product statuses. For a description of each status, see [Products statuses](#tag/Products-statuses).",
+                "items": {
+                 "type": "string"
+                }
+               },
+               "symbol": {
+                "type": "string",
+                "description": "Unique product identifier."
+               },
+               "ean": {
+                "type": "string",
+                "description": "EAN number. Field can be empty."
+               },
+               "customer_symbol": {
+                "type": "string",
+                "description": "Customer symbol for the product, if provided."
+               },
+               "category": {
+                "type": "object",
+                "description": "Product category details.",
+                "properties": {
+                 "id": {
+                  "type": "number",
+                  "description": "Category identifier."
+                 },
+                 "name": {
+                  "type": "string",
+                  "description": "Category name."
+                 }
+                }
+               },
+               "manufacturer_symbols": {
+                "type": "array",
+                "description": "List of manufacturer symbols for the product.",
+                "items": {
+                 "type": "string"
+                }
+               },
+               "manufacturer": {
+                "type": "object",
+                "description": "Product manufacturer details.",
+                "properties": {
+                 "id": {
+                  "type": "number",
+                  "description": "Manufacturer identifier."
+                 },
+                 "name": {
+                  "type": "string",
+                  "description": "Manufacturer name."
+                 }
+                }
+               },
+               "description": {
+                "type": "string",
+                "description": "Product description."
+               },
+               "multiples": {
+                "type": "number",
+                "description": "Product multiplicity. Product quantity must be a multiple of this value."
+               },
+               "minimal_amount": {
+                "type": "number",
+                "description": "Minimal order quantity."
+               },
+               "weight": {
+                "type": "object",
+                "description": "Product weight details.",
+                "properties": {
+                 "value": {
+                  "type": "number",
+                  "description": "Product weight."
+                 },
+                 "unit": {
+                  "type": "string",
+                  "description": "Unit in which the weight is provided."
+                 }
+                }
+               },
+               "unit": {
+                "type": "object",
+                "description": "Product unit details.",
+                "properties": {
+                 "id": {
+                  "type": "string",
+                  "description": "Unit identifier."
+                 },
+                 "short_name": {
+                  "type": "string",
+                  "description": "Short name of unit type e.g. 'pcs'."
+                 },
+                 "singular_translation": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Name of unit e.g. 'Piece'."
+                 },
+                 "plural_translation": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Plural translation e.g. 'Pieces'."
+                 }
+                }
+               },
+               "packing": {
+                "type": "object",
+                "description": "List of available product packaging options.",
+                "properties": {
+                 "elements": {
+                  "type": "array",
+                  "items": {
+                   "type": "object",
+                   "properties": {
+                    "id": {
+                     "type": "string",
+                     "description": "Packaging type identifier."
+                    },
+                    "translation": {
+                     "type": "string",
+                     "description": "Packaging type name."
+                    },
+                    "amount": {
+                     "type": "number",
+                     "description": "Number of items in package."
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "assets": {
+                "type": "object",
+                "description": "Product image assets.",
+                "properties": {
+                 "primary_photo": {
+                  "nullable": true,
+                  "description": "Primary image with different resolutions.",
+                  "type": "object",
+                  "properties": {
+                   "prime": {
+                    "type": "string",
+                    "description": "Main image URL."
+                   },
+                   "thumbnail": {
+                    "type": "string",
+                    "description": "Thumbnail image URL."
+                   },
+                   "high_resolution": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "High-resolution image URL."
+                   }
+                  }
+                 }
+                }
+               },
+               "notification": {
+                "nullable": true,
+                "type": "object",
+                "description": "Product availability notification settings.",
+                "properties": {
+                 "any_increase": {
+                  "type": "boolean",
+                  "description": "Indicates if notifications are triggered on any stock increase up to the `required_amount`."
+                 },
+                 "created_at": {
+                  "type": "string",
+                  "description": "Timestamp of the notification creation."
+                 },
+                 "required_amount": {
+                  "type": "number",
+                  "description": "Required product quantity."
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             {
+              "product_status": [
+               "AVAILABLE_WHILE_STOCKS_LAST"
+              ],
+              "symbol": "AX-100",
+              "ean": "",
+              "customer_symbol": "",
+              "category": {
+               "id": 112610,
+               "name": "Portable digital multimeters"
+              },
+              "manufacturer_symbols": [],
+              "manufacturer": {
+               "id": 271,
+               "name": "AXIOMET / Transfer Multisort Elektronik Sp. z o.o."
+              },
+              "description": "Digital multimeter; LCD 3,5 digit (1999); 3x/s; 0\u00f740\u00b0C",
+              "multiples": 1,
+              "minimal_amount": 1,
+              "weight": {
+               "value": 239.4,
+               "unit": "g"
+              },
+              "unit": {
+               "id": "ST",
+               "short_name": "pcs",
+               "singular_translation": "Piece",
+               "plural_translation": null
+              },
+              "packing": {
+               "elements": [
+                {
+                 "id": "CT2",
+                 "translation": "Cardboard",
+                 "amount": 2
+                }
+               ]
+              },
+              "assets": {
+               "primary_photo": {
+                "prime": "//ce8dc832c.cloudimg.io/v7/_cdn_/A7/25/90/00/0/610938_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=076bdcd2064eab934dbc198feae0f6966b8b46b2",
+                "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn_/A7/25/90/00/0/610938_1.jpg?width=100&height=75&q=75&ci_sign=085b9ae47f022f053d0a471a419c1610c84d8d6d",
+                "high_resolution": "//ce8dc832c.cloudimg.io/v7/_cdn_/A7/25/90/00/0/610938_1.jpg?width=1440&height=1080&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ec32cbb3f2144578ae9262a384200194e5e33558"
+               }
+              },
+              "notification": {
+               "any_increase": false,
+               "created_at": "2026-05-07T11:36:07+02:00",
+               "required_amount": 800
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/categories/list": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/categories/list",
+    "description": "Endpoint returns list of categories. ",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "root_category_id",
+      "in": "query",
+      "description": "Top-level category identifier. The parameter accepts the ID of the category for which the subcategory list will be returned. The ID can be retrieved using the following endpoints: `/products`, `/products/search`, `/products/categories/list`, and `/products/categories/tree`, without providing the parameter `root_category_id`.",
+      "schema": {
+       "type": "number"
+      }
+     },
+     {
+      "name": "manufacturer_id",
+      "in": "query",
+      "description": "Manufacturer identifier. ID can be found using `/products/manufacturers`, `/products` or `/products/search` endpoint. ",
+      "schema": {
+       "type": "number"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "parent_id": {
+                "type": "number",
+                "description": "Parent category identifier."
+               },
+               "id": {
+                "type": "number",
+                "description": "Category identifier."
+               },
+               "products_count": {
+                "type": "number",
+                "description": "Number of products in the category."
+               },
+               "thumbnail": {
+                "type": "string",
+                "description": "Category thumbnail image URL."
+               },
+               "name": {
+                "type": "string",
+                "description": "Category name."
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             {
+              "parent_id": 100164,
+              "id": 100277,
+              "products_count": 120,
+              "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/160010090.png?width=170&height=128&ci_sign=d0f8e1044ba569ce7e5243bcda5de6057b8ca762",
+              "name": "Laboratory instruments"
+             },
+             {
+              "parent_id": 100277,
+              "id": 112658,
+              "products_count": 58,
+              "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/160010090060.png?width=170&height=128&ci_sign=b5d8503d5f4bbeaf8b615b450e4ba2ab62bce7b9",
+              "name": "Calibrators"
+             },
+             {
+              "parent_id": 100277,
+              "id": 112659,
+              "products_count": 62,
+              "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/160010090070.png?width=170&height=128&ci_sign=2a43806f8ca5d986dd20050168883b8b2a4df2a5",
+              "name": "Calibrators - Accessories"
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/categories/tree": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/categories/tree",
+    "description": "Endpoint returns a structured categories tree.",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "root_category_id",
+      "in": "query",
+      "description": "Top-level category identifier. The parameter accepts the ID of the category for which the subcategory list will be returned. The ID can be retrieved using the following endpoints: `/products`, `/products/search`, `/products/categories/list`, and `/products/categories/tree`, without providing the parameter `root_category_id`.",
+      "schema": {
+       "type": "number"
+      }
+     },
+     {
+      "name": "manufacturer_id",
+      "in": "query",
+      "description": "Manufacturer identifier. ID can be found using `/products/manufacturers`, `/products` or `/products/search` endpoint. ",
+      "schema": {
+       "type": "number"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "object",
+             "allOf": [
+              {
+               "type": "object",
+               "properties": {
+                "parent_id": {
+                 "type": "number",
+                 "description": "Parent category identifier."
+                },
+                "id": {
+                 "type": "number",
+                 "description": "Category identifier."
+                },
+                "products_count": {
+                 "type": "number",
+                 "description": "Number of products in the category."
+                },
+                "thumbnail": {
+                 "type": "string",
+                 "description": "Category thumbnail image URL."
+                },
+                "name": {
+                 "type": "string",
+                 "description": "Category name."
+                }
+               }
+              },
+              {
+               "type": "object",
+               "properties": {
+                "children": {
+                 "type": "array",
+                 "description": "List of child categories.",
+                 "items": {
+                  "allOf": [
+                   {
+                    "type": "object",
+                    "properties": {
+                     "parent_id": {
+                      "type": "number",
+                      "description": "Parent category identifier."
+                     },
+                     "id": {
+                      "type": "number",
+                      "description": "Category identifier."
+                     },
+                     "products_count": {
+                      "type": "number",
+                      "description": "Number of products in the category."
+                     },
+                     "thumbnail": {
+                      "type": "string",
+                      "description": "Category thumbnail image URL."
+                     },
+                     "name": {
+                      "type": "string",
+                      "description": "Category name."
+                     }
+                    }
+                   },
+                   {
+                    "type": "object",
+                    "properties": {
+                     "children": {
+                      "type": "array",
+                      "description": "List of child categories.",
+                      "items": {
+                       "allOf": [
+                        {
+                         "type": "object",
+                         "properties": {
+                          "parent_id": {
+                           "type": "number",
+                           "description": "Parent category identifier."
+                          },
+                          "id": {
+                           "type": "number",
+                           "description": "Category identifier."
+                          },
+                          "products_count": {
+                           "type": "number",
+                           "description": "Number of products in the category."
+                          },
+                          "thumbnail": {
+                           "type": "string",
+                           "description": "Category thumbnail image URL."
+                          },
+                          "name": {
+                           "type": "string",
+                           "description": "Category name."
+                          }
+                         }
+                        },
+                        {
+                         "type": "object",
+                         "properties": {
+                          "children": {
+                           "type": "array",
+                           "description": "Another list of child categories, if present.",
+                           "items": {
+                            "type": "object"
+                           }
+                          }
+                         }
+                        }
+                       ]
+                      }
+                     }
+                    }
+                   }
+                  ]
+                 }
+                }
+               }
+              }
+             ]
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": {
+             "parent_id": 111000,
+             "id": 63,
+             "products_count": 436,
+             "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070.png?width=170&height=128&ci_sign=3ea9609c76bc8739b8e21e463e128c601f006732",
+             "name": "Sound Sources",
+             "children": [
+              {
+               "parent_id": 63,
+               "id": 100207,
+               "products_count": 197,
+               "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070010.png?width=170&height=128&ci_sign=6907243fad9e64f1483cd3d296ddb0d10627b9c8",
+               "name": "Speakers",
+               "children": []
+              },
+              {
+               "parent_id": 63,
+               "id": 100225,
+               "products_count": 16,
+               "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070020.png?width=170&height=128&ci_sign=49e8d0ebcb21d3ce8bc3ec95214120e42a9ca4eb",
+               "name": "Microphones and Headsets",
+               "children": []
+              },
+              {
+               "parent_id": 63,
+               "id": 100208,
+               "products_count": 223,
+               "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030.png?width=170&height=128&ci_sign=16809dca23417f933c9b9608aa97950e91d6f966",
+               "name": "Sounders",
+               "children": [
+                {
+                 "parent_id": 100208,
+                 "id": 112496,
+                 "products_count": 97,
+                 "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030010.png?width=170&height=128&ci_sign=2680167689dd00b629297469d9d9fb1edbfc42b2",
+                 "name": "Electromagnetic Sounders",
+                 "children": [
+                  {
+                   "parent_id": 112496,
+                   "id": 112497,
+                   "products_count": 36,
+                   "children": [],
+                   "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030010010.png?width=170&height=128&ci_sign=5cad7aa19f244382e394f8adf6db196b341f9027",
+                   "name": "Electromagnetic Sounders with Generator"
+                  },
+                  {
+                   "parent_id": 112496,
+                   "id": 112498,
+                   "products_count": 61,
+                   "children": [],
+                   "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030010020.png?width=170&height=128&ci_sign=617f9b0200c0cb69cf95f72f1a7bb1109d6beca9",
+                   "name": "Electromagnetic Sounders w/o Generator"
+                  }
+                 ]
+                },
+                {
+                 "parent_id": 100208,
+                 "id": 112499,
+                 "products_count": 101,
+                 "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030020.png?width=170&height=128&ci_sign=5940b49c3ab34531c3230816e68657a90835c206",
+                 "name": "Piezoelectric signallers",
+                 "children": [
+                  {
+                   "parent_id": 112499,
+                   "id": 112500,
+                   "products_count": 62,
+                   "children": [],
+                   "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030020010.png?width=170&height=128&ci_sign=dfb3b0f1ba4148c4ad4390d5ce9092847ac3ba85",
+                   "name": "Piezo Transducers with Generator"
+                  },
+                  {
+                   "parent_id": 112499,
+                   "id": 112501,
+                   "products_count": 39,
+                   "children": [],
+                   "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030020020.png?width=170&height=128&ci_sign=ac82b4ec657b1adc5e17fa609adf3589e38f227f",
+                   "name": "Piezo Transducers without Generator"
+                  }
+                 ]
+                },
+                {
+                 "parent_id": 100208,
+                 "id": 113633,
+                 "products_count": 24,
+                 "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030030.png?width=170&height=128&ci_sign=7c995d5dfdd89557133933b0c1b536e5a925987d",
+                 "name": "Panel Sound Signalling Devices",
+                 "children": []
+                },
+                {
+                 "parent_id": 100208,
+                 "id": 114290,
+                 "products_count": 1,
+                 "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn-category_/070030990.png?width=170&height=128&ci_sign=bd36b8973d12ec8f4918476e7dd343651b917812",
+                 "name": "Sounders - unclassified",
+                 "children": []
+                }
+               ]
+              }
+             ]
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/data": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/data",
+    "description": "This action returns a list of product prices, stock levels, and delivery details for the TME warehouse. This method is limited by the maximum number of symbols that can be submitted as input to this action. The maximum number of symbols is equal to 50. ",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "currency",
+      "in": "query",
+      "description": "Currency identifier, according to which price values will be returned.",
+      "schema": {
+       "type": "string",
+       "example": "EUR"
+      }
+     },
+     {
+      "name": "scope[]",
+      "in": "query",
+      "description": "Type of data to be returned. At least one value is required.\n- If `scope[]` includes `prices` or `stock`, only `symbols[]` is required.\n- If `scope[]` includes `delivery` or `delivery_confirmed`, both `symbols[]` and `amounts[]` are required.\n - `delivery` and `delivery_confirmed` cannot be used together.",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "enum": [
+         "prices",
+         "stock",
+         "delivery",
+         "delivery_confirmed"
+        ]
+       },
+       "example": [
+        "prices",
+        "delivery"
+       ]
+      }
+     },
+     {
+      "name": "symbols[]",
+      "in": "query",
+      "description": "List of product symbols.",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1,
+       "maxItems": 50,
+       "example": [
+        "M7-DIO",
+        "AX-100"
+       ]
+      }
+     },
+     {
+      "name": "amounts[]",
+      "in": "query",
+      "description": "A list of product quantities used to calculate delivery availability and confirmed delivery dates. This parameter is mandatory when requesting data within the `delivery` or `delivery_confirmed` scope. Delivery information will be returned for each quantity specified in the request.\n\nList of amounts for products given in the `symbols[]` parameter. The order of elements in `amounts[]` must match the order of elements in `symbols[]`.",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "number"
+       },
+       "minItems": 1,
+       "maxItems": 50,
+       "example": [
+        "100",
+        "2"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "stock_quantity": {
+                "type": "number",
+                "nullable": true,
+                "description": "Number of products in stock. Returns null if only `prices` query parameter is selected."
+               },
+               "symbol": {
+                "type": "string",
+                "description": "Unique product identifier."
+               },
+               "unit": {
+                "type": "object",
+                "description": "Product unit details.",
+                "properties": {
+                 "id": {
+                  "type": "string",
+                  "description": "Unit identifier."
+                 },
+                 "short_name": {
+                  "type": "string",
+                  "description": "Short name of unit type e.g. 'pcs'."
+                 },
+                 "singular_translation": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Name of unit e.g. 'Piece'."
+                 },
+                 "plural_translation": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Plural translation e.g. 'Pieces'."
+                 }
+                }
+               },
+               "prices": {
+                "type": "object",
+                "nullable": true,
+                "description": "Product pricing details. Returns null if `prices` query parameter is not selected.",
+                "properties": {
+                 "elements": {
+                  "type": "array",
+                  "description": "List of quantity-based price tiers.",
+                  "items": {
+                   "allOf": [
+                    {
+                     "type": "object",
+                     "properties": {
+                      "amount": {
+                       "type": "number",
+                       "description": "Minimum quantity required for the price tier."
+                      },
+                      "price": {
+                       "type": "number",
+                       "description": "Unit price for the quantity tier."
+                      }
+                     }
+                    },
+                    {
+                     "type": "object",
+                     "properties": {
+                      "special": {
+                       "type": "boolean",
+                       "description": "Indicates if the price is a special customer price."
+                      }
+                     }
+                    }
+                   ]
+                  }
+                 },
+                 "tax": {
+                  "type": "object",
+                  "description": "Product tax details.",
+                  "properties": {
+                   "type": {
+                    "type": "string",
+                    "description": "Tax type."
+                   },
+                   "rate": {
+                    "type": "string",
+                    "description": "Tax percentage rate."
+                   }
+                  }
+                 },
+                 "currency": {
+                  "type": "string",
+                  "description": "Currency of returned prices."
+                 },
+                 "type": {
+                  "type": "string",
+                  "description": "Product price type.",
+                  "enum": [
+                   "NET",
+                   "GROSS"
+                  ]
+                 }
+                }
+               },
+               "deliveries": {
+                "type": "object",
+                "nullable": true,
+                "description": "List of product stock and delivery status details. Returns null if `delivery` or `delivery_confirmed` query parameter is not selected.",
+                "properties": {
+                 "elements": {
+                  "type": "array",
+                  "items": {
+                   "type": "object",
+                   "properties": {
+                    "status": {
+                     "type": "string",
+                     "description": "Information about availability:\n- **DS_AVAILABLE_IN_STOCK** - Product available in stock.\n- **DS_DATE_AS_WEEK** - Product ordered from supplier with confirmed delivery.\n- **DS_SUPPLIER_WAREHOUSE_DATE_AS_WEEK** - Product available from supplier. Minimum purchase quantities may apply. Estimated warehouse delivery is provided (for an order placed today).\n- **DS_WAITING_FOR_CONFIRMATION_FROM_VENDOR** - Product ordered from supplier, awaiting confirmation.\n- **DS_DELIVERY_NEEDS_CONFIRMATION** - Product not yet ordered from supplier. Please contact our sales department.\n\nFor **DS_DATE_AS_WEEK** and **DS_SUPPLIER_WAREHOUSE_DATE_AS_WEEK** statuses, `data` returns `week`, `year`, `range_start`, `range_end` and `supply_date`.\n\nFor **DS_DELIVERY_NEEDS_CONFIRMATION** status, `data` returns `waiting_period` and `supply_date`.\n\nFor all other statuses, `data` is null."
+                    },
+                    "amount": {
+                     "type": "number",
+                     "description": "Number of items available for the status."
+                    },
+                    "data": {
+                     "type": "object",
+                     "nullable": true,
+                     "description": "Estimated delivery date details based on the status.",
+                     "properties": {
+                      "week": {
+                       "type": "string",
+                       "description": "ISO delivery week."
+                      },
+                      "year": {
+                       "type": "string",
+                       "description": "Delivery year."
+                      },
+                      "range_start": {
+                       "type": "string",
+                       "description": "Start of the delivery week."
+                      },
+                      "range_end": {
+                       "type": "string",
+                       "description": "End of the delivery week."
+                      },
+                      "waiting_period": {
+                       "type": "string",
+                       "description": "Standard manufacturer lead time in weeks."
+                      },
+                      "supply_date": {
+                       "type": "string",
+                       "description": "Estimated delivery date."
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             {
+              "stock_quantity": 647,
+              "symbol": "02KR-6H-P",
+              "unit": {
+               "id": "ST",
+               "short_name": "pcs",
+               "singular_translation": "Piece",
+               "plural_translation": null
+              },
+              "prices": {
+               "elements": [
+                {
+                 "amount": 1,
+                 "price": 0.647,
+                 "special": false
+                },
+                {
+                 "amount": 2000,
+                 "price": 0.6052,
+                 "special": false
+                }
+               ],
+               "tax": {
+                "type": "VAT",
+                "rate": 23
+               },
+               "currency": "PLN",
+               "type": "GROSS"
+              },
+              "deliveries": {
+               "elements": [
+                {
+                 "status": "DS_AVAILABLE_IN_STOCK",
+                 "amount": 647,
+                 "data": null
+                },
+                {
+                 "status": "DS_DELIVERY_NEEDS_CONFIRMATION",
+                 "amount": 353,
+                 "data": {
+                  "waiting_period": "P5W",
+                  "supply_date": "2026-06-17"
+                 }
+                }
+               ]
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/files": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/files",
+    "description": "This action returns a list of additional photos and documents correlated with specified products. The method is limited by the maximum number of product symbols that can be submitted as an input to this action. The maximum number of symbols is equal to 50.\n\n Endpoint can return these types of documents:\n\n- **INS** - Manual,\n- **DTE** - Documentation,\n- **KCH** - Safety Data Sheet,\n- **GWA** - Warranty,\n- **INB** - Safety instructions,\n- **MOV** - Video,\n- **YTB** - YouTube video,\n- **PRE** - Presentation,\n- **SFT** - Software.",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "symbols[]",
+      "in": "query",
+      "description": "List of product symbols.",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1,
+       "maxItems": 50,
+       "example": [
+        "M7-DIO",
+        "AX-100"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "symbol": {
+                "type": "string",
+                "description": "Product symbol."
+               },
+               "assets": {
+                "type": "object",
+                "description": "Product image assets.",
+                "properties": {
+                 "primary_photo": {
+                  "nullable": true,
+                  "description": "Primary image with different resolutions.",
+                  "type": "object",
+                  "properties": {
+                   "prime": {
+                    "type": "string",
+                    "description": "Main image URL."
+                   },
+                   "thumbnail": {
+                    "type": "string",
+                    "description": "Thumbnail image URL."
+                   },
+                   "high_resolution": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "High-resolution image URL."
+                   }
+                  }
+                 },
+                 "additional": {
+                  "type": "object",
+                  "description": "List of additional images with different resolutions.",
+                  "properties": {
+                   "elements": {
+                    "type": "array",
+                    "items": {
+                     "type": "object",
+                     "properties": {
+                      "prime": {
+                       "type": "string",
+                       "description": "Main image URL."
+                      },
+                      "thumbnail": {
+                       "type": "string",
+                       "description": "Thumbnail image URL."
+                      },
+                      "high_resolution": {
+                       "type": "string",
+                       "nullable": true,
+                       "description": "High-resolution image URL."
+                      }
+                     }
+                    }
+                   }
+                  }
+                 },
+                 "presentation": {
+                  "type": "object",
+                  "description": "List of images used for 360\u00b0 product presentation.",
+                  "properties": {
+                   "elements": {
+                    "type": "array",
+                    "items": {
+                     "type": "object",
+                     "properties": {
+                      "photo": {
+                       "type": "string",
+                       "description": "Image URL."
+                      },
+                      "position": {
+                       "type": "number",
+                       "description": "Image position number."
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "documents": {
+                "type": "object",
+                "description": "List of product documents.",
+                "properties": {
+                 "elements": {
+                  "type": "array",
+                  "items": {
+                   "type": "object",
+                   "properties": {
+                    "url": {
+                     "type": "string",
+                     "description": "Document URL."
+                    },
+                    "type": {
+                     "type": "string",
+                     "description": "Document type."
+                    },
+                    "size": {
+                     "type": "integer",
+                     "description": "Document size."
+                    },
+                    "file_name": {
+                     "type": "string",
+                     "description": "File name."
+                    },
+                    "language": {
+                     "type": "string",
+                     "description": "Document language identifier."
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "parameter_images": {
+                "type": "object",
+                "properties": {
+                 "elements": {
+                  "type": "array",
+                  "items": {
+                   "type": "object",
+                   "properties": {
+                    "name": {
+                     "type": "string",
+                     "description": "Image name."
+                    },
+                    "url": {
+                     "type": "string",
+                     "description": "Image URL."
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             {
+              "symbol": "ARG-15391",
+              "assets": {
+               "primary_photo": {
+                "prime": "//ce8dc832c.cloudimg.io/v7/_cdn_/2C/F0/C0/00/0/790466_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=43bf7a99130ffc42ba3c75ee8bf9a6da7ed276e3",
+                "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn_/2C/F0/C0/00/0/790466_1.jpg?width=100&height=75&q=75&ci_sign=8f71bfcc8b7ab2a52af5217399936383d1eb42aa",
+                "high_resolution": "//ce8dc832c.cloudimg.io/v7/_cdn_/2C/F0/C0/00/0/790466_1.jpg?width=1440&height=1080&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=37e148a4e696422086281fa455852719bd7b5955"
+               },
+               "additional": {
+                "elements": [
+                 {
+                  "prime": "//ce8dc832c.cloudimg.io/v7/_cdn_/6F/F0/C0/00/0/790518_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0aea75a89c86ead4680674fa0cf63dfb3fa65aad",
+                  "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn_/6F/F0/C0/00/0/790518_1.jpg?width=100&height=75&q=75&ci_sign=6d3df80b2706044723e04cf7bddd5e1ebd00dbd7",
+                  "high_resolution": "//ce8dc832c.cloudimg.io/v7/_cdn_/6F/F0/C0/00/0/790518_1.jpg?width=1440&height=1080&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=08bbf99bc9ee78bb0580bfffa410d2a236e4f04a"
+                 }
+                ]
+               },
+               "presentation": {
+                "elements": [
+                 {
+                  "photo": "//ce8dc832c.cloudimg.io/v7/_cdn_/4A/E0/C0/00/0/790180_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2df1b3b5050823e37ba0e331d628c78c1807c7b5",
+                  "position": 0
+                 },
+                 {
+                  "photo": "//ce8dc832c.cloudimg.io/v7/_cdn_/4A/E0/C0/00/0/790180_2.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c489b0c5cbc99f8684e853d6a007bbe4bba1ff8d",
+                  "position": 1
+                 },
+                 {
+                  "photo": "//ce8dc832c.cloudimg.io/v7/_cdn_/4A/E0/C0/00/0/790180_3.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7698fbe21fd5dfd49294cce35b670eab9a130381",
+                  "position": 2
+                 },
+                 {
+                  "photo": "//ce8dc832c.cloudimg.io/v7/_cdn_/4A/E0/C0/00/0/790180_4.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=44b71a8fc6942c1d2d7bc99eef78215ec448be22",
+                  "position": 3
+                 },
+                 {
+                  "photo": "//ce8dc832c.cloudimg.io/v7/_cdn_/4A/E0/C0/00/0/790180_5.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0d6518e7f446acab3a64c38d37a40246ae2a59d9",
+                  "position": 4
+                 },
+                 {
+                  "photo": "//ce8dc832c.cloudimg.io/v7/_cdn_/4A/E0/C0/00/0/790180_6.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=375e92953fc4619c1bc3c0eee610451d52f650b7",
+                  "position": 5
+                 },
+                 {
+                  "photo": "//ce8dc832c.cloudimg.io/v7/_cdn_/4A/E0/C0/00/0/790180_7.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=405416916e4e8119fe9d827afe3fc842e869c324",
+                  "position": 6
+                 },
+                 {
+                  "photo": "//ce8dc832c.cloudimg.io/v7/_cdn_/4A/E0/C0/00/0/790180_8.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f39f285d7c542fafdc6c6c59124687bcffc7191b",
+                  "position": 7
+                 }
+                ]
+               }
+              },
+              "documents": {
+               "elements": []
+              },
+              "parameter_images": {
+               "elements": []
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/manufacturers": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "category_id",
+      "in": "query",
+      "schema": {
+       "type": "number",
+       "description": "Category identifier."
+      }
+     },
+     {
+      "name": "sort[field]",
+      "in": "query",
+      "description": "Field name to use for sorting results.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "name",
+        "items_count"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "number",
+                "description": "Manufacturer identifier."
+               },
+               "name": {
+                "type": "string",
+                "description": "Manufacturer name."
+               },
+               "products_count": {
+                "type": "number",
+                "description": "Number of products by manufacturer."
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             {
+              "id": 1418,
+              "name": "Aptiv",
+              "products_count": 1
+             },
+             {
+              "id": 317,
+              "name": "BeStar Holding Co., LTD",
+              "products_count": 42
+             },
+             {
+              "id": 1464,
+              "name": "Cre-sound Electronics",
+              "products_count": 34
+             },
+             {
+              "id": 321,
+              "name": "DIGISOUND",
+              "products_count": 7
+             },
+             {
+              "id": 323,
+              "name": "LOUDITY / Transfer Multisort Elektronik Sp. z o.o.",
+              "products_count": 93
+             },
+             {
+              "id": 1356,
+              "name": "MPM",
+              "products_count": 27
+             },
+             {
+              "id": 828,
+              "name": "ONPOW Push Button Manufacture Co.,Ltd.",
+              "products_count": 24
+             },
+             {
+              "id": 322,
+              "name": "VISATON",
+              "products_count": 182
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/parameters": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/parameters",
+    "description": "Action returns a list of product parameters - e.g. voltage, load current, power dissipation etc.",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "symbols[]",
+      "in": "query",
+      "description": "List of product symbols.",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1,
+       "maxItems": 50,
+       "example": [
+        "M7-DIO",
+        "AX-100"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "symbol": {
+                "type": "string",
+                "description": "Product symbol."
+               },
+               "parameters": {
+                "type": "object",
+                "description": "List of product parameters.",
+                "properties": {
+                 "elements": {
+                  "type": "array",
+                  "items": {
+                   "properties": {
+                    "id": {
+                     "type": "number",
+                     "description": "Parameter identifier."
+                    },
+                    "name": {
+                     "type": "string",
+                     "description": "Parameter name."
+                    },
+                    "values": {
+                     "type": "array",
+                     "description": "List of parameter values.",
+                     "items": {
+                      "properties": {
+                       "id": {
+                        "type": "number",
+                        "description": "Value identifier."
+                       },
+                       "value": {
+                        "type": "string",
+                        "description": "Value label."
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             {
+              "symbol": "W10R-4A",
+              "parameters": {
+               "elements": [
+                {
+                 "id": 2,
+                 "name": "Manufacturer",
+                 "values": [
+                  {
+                   "id": 144,
+                   "value": "Zak\u0142ady Podzespo\u0142\u00f3w Radiowych MIFLEX SA"
+                  }
+                 ]
+                },
+                {
+                 "id": 149,
+                 "name": "Type of generator",
+                 "values": [
+                  {
+                   "id": 1518625,
+                   "value": "high voltage"
+                  }
+                 ]
+                },
+                {
+                 "id": 120,
+                 "name": "Operating voltage",
+                 "values": [
+                  {
+                   "id": 1449928,
+                   "value": "230V AC"
+                  }
+                 ]
+                },
+                {
+                 "id": 63,
+                 "name": "Number of outputs",
+                 "values": [
+                  {
+                   "id": 1454201,
+                   "value": "4"
+                  }
+                 ]
+                },
+                {
+                 "id": 32,
+                 "name": "Operating temperature",
+                 "values": [
+                  {
+                   "id": 1820509,
+                   "value": "0...130\u00b0C"
+                  }
+                 ]
+                },
+                {
+                 "id": 157,
+                 "name": "Electrical life",
+                 "values": [
+                  {
+                   "id": 1518623,
+                   "value": "4000000 cycles"
+                  }
+                 ]
+                },
+                {
+                 "id": 364,
+                 "name": "Output voltage",
+                 "values": [
+                  {
+                   "id": 1602215,
+                   "value": "20kV"
+                  }
+                 ]
+                }
+               ]
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/related": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/related",
+    "description": "This endpoint returns products related to the specified product symbol. Related products may include compatible accessories and complementary items. For example, for a battery product, the response may include compatible chargers. Consider that not all of the TME symbols have related products.",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "symbol",
+      "in": "query",
+      "description": "Product symbol.",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "manufacturer_id",
+      "in": "query",
+      "description": "Manufacturer identifier. ID can be found using `/products/manufacturers`, `/products` or `/products/search` endpoint. ",
+      "schema": {
+       "type": "number"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "description": "Symbols array of related products.",
+             "items": {
+              "type": "string"
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             "ACCU-R22/175-EG",
+             "ACCU-6F22/GP-RE",
+             "ACCU-R22/170-GP"
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/search": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/search",
+    "description": "This action is used to search the product database based on specified criteria (e.g. search phrase, category, or product attributes (parameters)).\n\n**Note:** Provide either `phrase` or `category_id`, or both.",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "scope[]",
+      "in": "query",
+      "description": "Type of data to be returned. At least one value is required.",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "enum": [
+         "products",
+         "parameters",
+         "counters"
+        ]
+       },
+       "example": [
+        "products",
+        "counters"
+       ]
+      }
+     },
+     {
+      "name": "phrase",
+      "in": "query",
+      "description": "Search phrase, which may contain multiple words.",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "led diode",
+       "minLength": 2,
+       "maxLength": 40
+      }
+     },
+     {
+      "name": "category_id",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "number",
+       "description": "Category identifier."
+      }
+     },
+     {
+      "name": "manufacturer_id",
+      "in": "query",
+      "description": "Manufacturer identifier. ID can be found using `/products/manufacturers`, `/products` or `/products/search` endpoint. ",
+      "schema": {
+       "type": "number"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "default": 20,
+       "minimum": 1,
+       "maximum": 100,
+       "type": "number",
+       "description": "Number of items per page."
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "schema": {
+       "type": "number",
+       "description": "Page number.",
+       "default": 1
+      }
+     },
+     {
+      "name": "assortment_type",
+      "in": "query",
+      "description": "",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "internal",
+        "external"
+       ]
+      }
+     },
+     {
+      "name": "customer_symbol_filter",
+      "in": "query",
+      "description": "",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "filter",
+      "in": "query",
+      "schema": {
+       "type": "object",
+       "properties": {
+        "new_in_offer": {
+         "type": "boolean",
+         "description": "",
+         "default": false
+        },
+        "in_stock": {
+         "type": "boolean",
+         "description": "",
+         "default": false
+        },
+        "orderable_stock": {
+         "type": "boolean",
+         "description": "",
+         "default": false
+        },
+        "promoted": {
+         "type": "boolean",
+         "description": "",
+         "default": false
+        },
+        "sale": {
+         "type": "boolean",
+         "description": "",
+         "default": false
+        }
+       }
+      }
+     },
+     {
+      "name": "sort",
+      "in": "query",
+      "schema": {
+       "type": "object",
+       "properties": {
+        "property": {
+         "type": "string",
+         "description": "Property to use for sorting results.",
+         "enum": [
+          "SYMBOL",
+          "ACCURACY",
+          "ORIGINAL_SYMBOL",
+          "PRICE_FIRST_QUANTITY",
+          "PRICE_LAST_QUANTITY",
+          "ACCURACY_IN_STOCK_FIRST",
+          "AVAILABLE_IN_STOCK_FIRST"
+         ]
+        },
+        "direction": {
+         "type": "string",
+         "description": "Sorting direction.",
+         "enum": [
+          "asc",
+          "desc"
+         ]
+        }
+       }
+      }
+     },
+     {
+      "name": "parameters[]",
+      "in": "query",
+      "description": "Filter parameters grouped by index. Each group must contain `parameters[n][id]` and one or more `parameters[n][values][]`. Multiple filter groups can be specified.\n\nExample: `parameters[0][id]=2&parameters[0][values][]=156&parameters[0][values][]=179&parameters[1][id]=367&parameters[1][values][]=1443865`",
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "number",
+          "description": "Identifier of the filtering parameter."
+         },
+         "values[]": {
+          "type": "array",
+          "description": "Identifiers of values for the given filtering parameter. At least one value is required when `parameters[n][id]` is provided.",
+          "items": {
+           "type": "number"
+          }
+         }
+        }
+       }
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "products": {
+             "type": "object",
+             "nullable": true,
+             "description": "List of products.",
+             "properties": {
+              "elements": {
+               "type": "array",
+               "items": {
+                "type": "object",
+                "properties": {
+                 "product_status": {
+                  "type": "array",
+                  "description": "List of product statuses. For a description of each status, see [Products statuses](#tag/Products-statuses).",
+                  "items": {
+                   "type": "string"
+                  }
+                 },
+                 "symbol": {
+                  "type": "string",
+                  "description": "Unique product identifier."
+                 },
+                 "ean": {
+                  "type": "string",
+                  "description": "EAN number. Field can be empty."
+                 },
+                 "customer_symbol": {
+                  "type": "string",
+                  "description": "Customer symbol for the product, if provided."
+                 },
+                 "category": {
+                  "type": "object",
+                  "description": "Product category details.",
+                  "properties": {
+                   "id": {
+                    "type": "number",
+                    "description": "Category identifier."
+                   },
+                   "name": {
+                    "type": "string",
+                    "description": "Category name."
+                   }
+                  }
+                 },
+                 "manufacturer_symbols": {
+                  "type": "array",
+                  "description": "List of manufacturer symbols for the product.",
+                  "items": {
+                   "type": "string"
+                  }
+                 },
+                 "manufacturer": {
+                  "type": "object",
+                  "description": "Product manufacturer details.",
+                  "properties": {
+                   "id": {
+                    "type": "number",
+                    "description": "Manufacturer identifier."
+                   },
+                   "name": {
+                    "type": "string",
+                    "description": "Manufacturer name."
+                   }
+                  }
+                 },
+                 "description": {
+                  "type": "string",
+                  "description": "Product description."
+                 },
+                 "multiples": {
+                  "type": "number",
+                  "description": "Product multiplicity. Product quantity must be a multiple of this value."
+                 },
+                 "minimal_amount": {
+                  "type": "number",
+                  "description": "Minimal order quantity."
+                 },
+                 "weight": {
+                  "type": "object",
+                  "description": "Product weight details.",
+                  "properties": {
+                   "value": {
+                    "type": "number",
+                    "description": "Product weight."
+                   },
+                   "unit": {
+                    "type": "string",
+                    "description": "Unit in which the weight is provided."
+                   }
+                  }
+                 },
+                 "unit": {
+                  "type": "object",
+                  "description": "Product unit details.",
+                  "properties": {
+                   "id": {
+                    "type": "string",
+                    "description": "Unit identifier."
+                   },
+                   "short_name": {
+                    "type": "string",
+                    "description": "Short name of unit type e.g. 'pcs'."
+                   },
+                   "singular_translation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name of unit e.g. 'Piece'."
+                   },
+                   "plural_translation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Plural translation e.g. 'Pieces'."
+                   }
+                  }
+                 },
+                 "packing": {
+                  "type": "object",
+                  "description": "List of available product packaging options.",
+                  "properties": {
+                   "elements": {
+                    "type": "array",
+                    "items": {
+                     "type": "object",
+                     "properties": {
+                      "id": {
+                       "type": "string",
+                       "description": "Packaging type identifier."
+                      },
+                      "translation": {
+                       "type": "string",
+                       "description": "Packaging type name."
+                      },
+                      "amount": {
+                       "type": "number",
+                       "description": "Number of items in package."
+                      }
+                     }
+                    }
+                   }
+                  }
+                 },
+                 "assets": {
+                  "type": "object",
+                  "description": "Product image assets.",
+                  "properties": {
+                   "primary_photo": {
+                    "nullable": true,
+                    "description": "Primary image with different resolutions.",
+                    "type": "object",
+                    "properties": {
+                     "prime": {
+                      "type": "string",
+                      "description": "Main image URL."
+                     },
+                     "thumbnail": {
+                      "type": "string",
+                      "description": "Thumbnail image URL."
+                     },
+                     "high_resolution": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "High-resolution image URL."
+                     }
+                    }
+                   }
+                  }
+                 },
+                 "notification": {
+                  "nullable": true,
+                  "type": "object",
+                  "description": "Product availability notification settings.",
+                  "properties": {
+                   "any_increase": {
+                    "type": "boolean",
+                    "description": "Indicates if notifications are triggered on any stock increase up to the `required_amount`."
+                   },
+                   "created_at": {
+                    "type": "string",
+                    "description": "Timestamp of the notification creation."
+                   },
+                   "required_amount": {
+                    "type": "number",
+                    "description": "Required product quantity."
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "parameters": {
+             "type": "object",
+             "nullable": true,
+             "description": "List of related filter parameters.\n\nProduct parameters represent individual product attributes that describe technical specifications or other distinguishing characteristics of a product. They can be used to filter search results and narrow down the product selection according to specific requirements.",
+             "properties": {
+              "elements": {
+               "type": "array",
+               "items": {
+                "type": "object",
+                "properties": {
+                 "id": {
+                  "type": "number",
+                  "description": "Parameter identifier."
+                 },
+                 "name": {
+                  "type": "string",
+                  "description": "Parameter name."
+                 },
+                 "values": {
+                  "type": "array",
+                  "description": "List of parameter values.",
+                  "items": {
+                   "type": "object",
+                   "properties": {
+                    "id": {
+                     "type": "number",
+                     "description": "Value identifier."
+                    },
+                    "value": {
+                     "type": "string",
+                     "description": "Value label."
+                    },
+                    "products_count": {
+                     "type": "number",
+                     "description": "Number of products with this value."
+                    },
+                    "selected": {
+                     "type": "boolean",
+                     "description": "Indicates if the value is selected."
+                    },
+                    "is_active": {
+                     "type": "boolean",
+                     "description": "Indicates if the value is active."
+                    }
+                   }
+                  }
+                 },
+                 "products_count": {
+                  "type": "number",
+                  "description": "Number of products with this parameter."
+                 }
+                }
+               }
+              }
+             }
+            },
+            "counters": {
+             "type": "object",
+             "nullable": true,
+             "description": "Pagination info and category counts.",
+             "properties": {
+              "pages": {
+               "type": "number",
+               "description": "Total number of pages."
+              },
+              "count": {
+               "type": "number",
+               "description": "Total number of products."
+              },
+              "page": {
+               "type": "number",
+               "description": "Current page number."
+              },
+              "categories": {
+               "type": "object",
+               "description": "List of categories for returned products.",
+               "properties": {
+                "elements": {
+                 "type": "array",
+                 "items": {
+                  "type": "object",
+                  "properties": {
+                   "id": {
+                    "type": "number",
+                    "description": "Category identifier."
+                   },
+                   "products_count": {
+                    "type": "number",
+                    "description": "Number of products in the category."
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "products": {
+             "elements": [
+              {
+               "product_status": [
+                "HARDLY_AVAILABLE",
+                "PROMOTED"
+               ],
+               "symbol": "AX-1000",
+               "ean": "",
+               "customer_symbol": "",
+               "category": {
+                "id": 112516,
+                "name": "Current Transformers"
+               },
+               "manufacturer_symbols": [
+                "AX-1000"
+               ],
+               "manufacturer": {
+                "id": 346,
+                "name": "TALEMA / NT Magnetics s.r.o."
+               },
+               "description": "Current transformer; AX; Iin: 10A; 100\u03a9; -40\u00f7120\u00b0C; Trans: 1000: 1",
+               "multiples": 1,
+               "minimal_amount": 1,
+               "weight": {
+                "value": 7.55,
+                "unit": "g"
+               },
+               "unit": {
+                "id": "ST",
+                "short_name": "pcs",
+                "singular_translation": "Piece",
+                "plural_translation": null
+               },
+               "packing": {
+                "elements": []
+               },
+               "assets": {
+                "primary_photo": {
+                 "prime": "//ce8dc832c.cloudimg.io/v7/_cdn_/B8/DB/50/00/0/376203_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b838c94eb9255157e0945a28ec732239bd57ebbf",
+                 "thumbnail": "//ce8dc832c.cloudimg.io/v7/_cdn_/B8/DB/50/00/0/376203_1.jpg?width=100&height=75&q=75&ci_sign=124fff2e1f2563df945535f01c37a04cc9a026ba",
+                 "high_resolution": "//ce8dc832c.cloudimg.io/v7/_cdn_/B8/DB/50/00/0/376203_1.jpg?width=1440&height=1080&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2256d20e29ef14b04066f5b5eeafd74596f9d95a"
+                }
+               },
+               "notification": {
+                "any_increase": false,
+                "created_at": "2026-05-05T10:01:31+02:00",
+                "required_amount": 500
+               }
+              },
+              {
+               "product_status": [],
+               "symbol": "CT-MAX-1000",
+               "ean": "",
+               "customer_symbol": "",
+               "category": {
+                "id": 118107,
+                "name": "Current Transformers"
+               },
+               "manufacturer_symbols": [
+                "2CSG225995R1101"
+               ],
+               "manufacturer": {
+                "id": 689,
+                "name": "ABB Sp. z o.o."
+               },
+               "description": "Current transformer; Iin: 1kA; Iout: 5A; 0.5@max10VA; \u00d8int: 30mm",
+               "multiples": 1,
+               "minimal_amount": 1,
+               "weight": {
+                "value": 300,
+                "unit": "g"
+               },
+               "unit": {
+                "id": "ST",
+                "short_name": "pcs",
+                "singular_translation": "Piece",
+                "plural_translation": null
+               },
+               "packing": {
+                "elements": []
+               },
+               "assets": {
+                "primary_photo": null
+               },
+               "notification": null
+              }
+             ]
+            },
+            "parameters": {
+             "elements": [
+              {
+               "id": 2,
+               "name": "Manufacturer",
+               "values": [
+                {
+                 "id": 689,
+                 "value": "ABB Sp. z o.o.",
+                 "products_count": 1,
+                 "selected": false,
+                 "is_active": true
+                },
+                {
+                 "id": 346,
+                 "value": "TALEMA / NT Magnetics s.r.o.",
+                 "products_count": 1,
+                 "selected": false,
+                 "is_active": true
+                }
+               ],
+               "products_count": 2
+              },
+              {
+               "id": 1314,
+               "name": "Type of test accessories",
+               "values": [
+                {
+                 "id": 1505180,
+                 "value": "current transformer",
+                 "products_count": 1,
+                 "selected": false,
+                 "is_active": true
+                }
+               ],
+               "products_count": 1
+              }
+             ]
+            },
+            "counters": {
+             "pages": 1,
+             "count": 2,
+             "page": 1,
+             "categories": {
+              "elements": [
+               {
+                "id": 118107,
+                "products_count": 1
+               },
+               {
+                "id": 112652,
+                "products_count": 1
+               },
+               {
+                "id": 112650,
+                "products_count": 1
+               },
+               {
+                "id": 112607,
+                "products_count": 1
+               },
+               {
+                "id": 112516,
+                "products_count": 1
+               },
+               {
+                "id": 100440,
+                "products_count": 1
+               },
+               {
+                "id": 100164,
+                "products_count": 1
+               }
+              ]
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/similar": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/similar",
+    "description": "Action returns similar products. Consider that not all of the TME symbols have similar products.",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "symbol",
+      "in": "query",
+      "description": "Product symbol.",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "manufacturer_id",
+      "in": "query",
+      "description": "Manufacturer identifier. ID can be found using `/products/manufacturers`, `/products` or `/products/search` endpoint. ",
+      "schema": {
+       "type": "number"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "description": "Symbols array of similar products.",
+             "items": {
+              "type": "string"
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             "15XP-B",
+             "30XR-A",
+             "33XR-A"
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/products/symbols": {
+   "get": {
+    "tags": [
+     "products"
+    ],
+    "x-visibility": "public",
+    "summary": "/products/symbols",
+    "description": "The endpoint returns symbols for products active in TME.",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     },
+     {
+      "name": "category_id",
+      "in": "query",
+      "schema": {
+       "type": "number",
+       "description": "Category identifier."
+      }
+     },
+     {
+      "name": "manufacturer_id",
+      "in": "query",
+      "description": "Manufacturer identifier. ID can be found using `/products/manufacturers`, `/products` or `/products/search` endpoint. ",
+      "schema": {
+       "type": "number"
+      }
+     },
+     {
+      "name": "paginate",
+      "in": "query",
+      "schema": {
+       "type": "object",
+       "properties": {
+        "page": {
+         "type": "number",
+         "description": "Page number.",
+         "default": 1
+        },
+        "limit": {
+         "default": 50000,
+         "type": "number",
+         "description": "Number of items per page."
+        }
+       }
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "description": "List of product symbols.",
+             "items": {
+              "type": "string"
+             }
+            },
+            "pages": {
+             "type": "number",
+             "description": "Total number of pages."
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             "EX380976-K",
+             "MX655",
+             "CM275",
+             "CM275-NIST",
+             "CA-F405",
+             "CA-F603",
+             "CA-F605",
+             "PKT-P1670",
+             "TA167",
+             "UT216C",
+             "UT207",
+             "UT210E",
+             "UT213C",
+             "UT221",
+             "UT222",
+             "UT256B",
+             "MA1500",
+             "KEW2510",
+             "BM035",
+             "BM037"
+            ],
+            "pages": 9
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/utils/countries": {
+   "get": {
+    "tags": [
+     "utils"
+    ],
+    "x-visibility": "public",
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "elements": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "string",
+                "description": "Country identifier."
+               },
+               "name": {
+                "type": "string",
+                "description": "Country name."
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "elements": [
+             {
+              "id": "AD",
+              "name": "Andorra"
+             },
+             {
+              "id": "AE",
+              "name": "United Arab Emirates"
+             },
+             {
+              "id": "AG",
+              "name": "Antigua and Barbuda"
+             },
+             {
+              "id": "AI",
+              "name": "Anguilla"
+             },
+             {
+              "id": "AL",
+              "name": "Albania"
+             },
+             {
+              "id": "AM",
+              "name": "Armenia"
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "parameters": "$undefined",
+    "requestBody": "$undefined"
+   }
+  },
+  "/utils/currencies": {
+   "get": {
+    "tags": [
+     "utils"
+    ],
+    "x-visibility": "public",
+    "parameters": [
+     {
+      "name": "country",
+      "in": "query",
+      "description": "Country identifier.",
+      "schema": {
+       "type": "string",
+       "example": "GB"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "currencies": {
+             "type": "array",
+             "description": "List of available currencies.",
+             "items": {
+              "type": "string"
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "currencies": [
+             "PLN",
+             "EUR",
+             "GBP",
+             "USD"
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "requestBody": "$undefined"
+   }
+  },
+  "/utils/languages": {
+   "get": {
+    "tags": [
+     "utils"
+    ],
+    "x-visibility": "public",
+    "responses": {
+     "200": {
+      "description": "Successful response containing status and data.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "description": "Response status. \"OK\" indicates that the action was successful."
+          },
+          "data": {
+           "type": "object",
+           "description": "Action response data.",
+           "properties": {
+            "languages": {
+             "type": "array",
+             "description": "List of language codes.",
+             "items": {
+              "type": "string"
+             }
+            }
+           }
+          }
+         }
+        },
+        "examples": {
+         "DataResponse": {
+          "value": {
+           "status": "OK",
+           "data": {
+            "languages": [
+             "bg",
+             "cs",
+             "da",
+             "de",
+             "el",
+             "en",
+             "es",
+             "fi",
+             "fr",
+             "hu",
+             "it",
+             "ja",
+             "ko",
+             "nl",
+             "pl",
+             "pt",
+             "ro",
+             "ru",
+             "sk",
+             "sv",
+             "tr",
+             "uk",
+             "vi",
+             "zh"
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "parameters": "$undefined",
+    "requestBody": "$undefined"
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "ClientCredentialsRef": {
+    "type": "object",
+    "required": [
+     "grant_type"
+    ],
+    "properties": {
+     "grant_type": {
+      "type": "string",
+      "enum": [
+       "client_credentials"
+      ],
+      "description": "Type of authorization flow."
+     }
+    }
+   },
+   "RefreshTokenRef": {
+    "type": "object",
+    "required": [
+     "grant_type",
+     "refresh_token"
+    ],
+    "properties": {
+     "grant_type": {
+      "type": "string",
+      "enum": [
+       "refresh_token"
+      ],
+      "description": "Type of authorization flow."
+     },
+     "refresh_token": {
+      "type": "string",
+      "description": "Refresh token."
+     }
+    }
+   }
+  }
+ }
+}
