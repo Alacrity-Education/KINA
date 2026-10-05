@@ -1,5 +1,6 @@
 package ro.alacrity.kina.oauth;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.oauth.ClientMetadataDocumentResolver.UnresolvableClientException;
 import ro.alacrity.kina.oauth.OAuthClientRepository.OAuthClient;
@@ -11,15 +12,11 @@ import java.util.Optional;
  * ({@link ClientMetadataDocumentResolver}), anything else a dynamically registered client.
  */
 @Component
+@RequiredArgsConstructor
 public class OAuthClientLookup {
 
     private final OAuthClientRepository clients;
     private final ClientMetadataDocumentResolver metadataDocuments;
-
-    public OAuthClientLookup(OAuthClientRepository clients, ClientMetadataDocumentResolver metadataDocuments) {
-        this.clients = clients;
-        this.metadataDocuments = metadataDocuments;
-    }
 
     /** A client that cannot be used; {@code getMessage()} is safe to show. */
     public static final class UnknownClientException extends RuntimeException {

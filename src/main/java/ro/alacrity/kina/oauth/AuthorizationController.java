@@ -1,8 +1,7 @@
 package ro.alacrity.kina.oauth;
 
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -40,6 +39,7 @@ import java.util.Map;
  * an error page is shown (never an open redirect).
  */
 @Controller
+@Slf4j
 public class AuthorizationController {
 
     static final Duration CODE_VALIDITY = Duration.ofMinutes(10);
@@ -48,8 +48,6 @@ public class AuthorizationController {
     /** Request parameters carried from the consent page back to the approval POST. */
     static final List<String> FORWARDED_PARAMETERS = List.of("response_type", "client_id", "redirect_uri",
             "code_challenge", "code_challenge_method", "scope", "state", "resource");
-
-    private static final Logger log = LoggerFactory.getLogger(AuthorizationController.class);
 
     private final OAuthClientLookup clients;
     private final AuthorizationCodeRepository codes;

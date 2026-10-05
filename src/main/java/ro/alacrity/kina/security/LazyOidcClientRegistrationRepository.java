@@ -1,7 +1,6 @@
 package ro.alacrity.kina.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.ClientRegistrations;
@@ -23,13 +22,12 @@ import java.util.function.Function;
  * unreachable. A failed discovery is logged and retried on a later login attempt (at most every 10 seconds); during
  * that time the login request fails with an error instead of hanging. No provider-specific code.
  */
+@Slf4j
 public class LazyOidcClientRegistrationRepository implements ClientRegistrationRepository {
 
     public static final String REGISTRATION_ID = "oidc";
     static final Duration RETRY_AFTER = Duration.ofSeconds(10);
     static final String OFFLINE_ACCESS = "offline_access";
-
-    private static final Logger log = LoggerFactory.getLogger(LazyOidcClientRegistrationRepository.class);
 
     private final KinaProperties.Oidc oidc;
     private final Function<String, ClientRegistration.Builder> discovery;

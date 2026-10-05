@@ -1,5 +1,6 @@
 package ro.alacrity.kina.security;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 /** {@code access_tokens} table. Only SHA-256 hashes of tokens are stored. */
 @Repository
+@RequiredArgsConstructor
 public class AccessTokenRepository {
 
     private static final String COLUMNS = "id, user_id, name, token_prefix, scope, oauth_client_id, created_at, "
@@ -23,10 +25,6 @@ public class AccessTokenRepository {
     private static final RowMapper<AccessToken> MAPPER = AccessTokenRepository::map;
 
     private final JdbcClient jdbc;
-
-    public AccessTokenRepository(JdbcClient jdbc) {
-        this.jdbc = jdbc;
-    }
 
     /** Stored metadata of an access token (never the plaintext, never the hash). */
     public record AccessToken(UUID id, UUID userId, String name, String tokenPrefix, String scope,

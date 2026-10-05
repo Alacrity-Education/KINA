@@ -2,6 +2,7 @@ package ro.alacrity.kina.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,15 +21,12 @@ import java.util.Map;
  * ({@code error="invalid_token"} added when a token was presented). The {@code resource_metadata} parameter is how
  * MCP clients (Claude's connector) discover the authorization server.
  */
+@RequiredArgsConstructor
 public class BearerAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
     private final PublicUrlResolver urls;
-
-    public BearerAuthenticationEntryPoint(PublicUrlResolver urls) {
-        this.urls = urls;
-    }
 
     /** Signals that a bearer token was presented but is unknown, expired or revoked. */
     public static class InvalidBearerTokenException extends AuthenticationException {

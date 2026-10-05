@@ -1,5 +1,6 @@
 package ro.alacrity.kina.oauth;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.oauth.OAuthClientRepository.OAuthClient;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
@@ -22,7 +23,8 @@ import java.util.Set;
  * This class holds the pure rules (URL shape, document validation, redirect URI matching); fetching and trust live in
  * {@link ClientMetadataDocumentResolver}.
  */
-public final class ClientMetadataDocument {
+@UtilityClass
+public class ClientMetadataDocument {
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
     private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]", "::1");
@@ -30,9 +32,6 @@ public final class ClientMetadataDocument {
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("client_secret", "client_secret_expires_at");
     private static final Set<String> COPIED_FIELDS = Set.of("client_uri", "logo_uri", "tos_uri", "policy_uri",
             "software_id", "software_version");
-
-    private ClientMetadataDocument() {
-    }
 
     /** A rejected {@code client_id} URL or document; the message is safe to show. */
     public static final class InvalidDocumentException extends RuntimeException {

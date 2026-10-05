@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,7 @@ import java.util.Optional;
  * ({@link MembershipVerifier}). Not a Spring bean on purpose (it must not be
  * registered as a servlet filter).
  */
+@RequiredArgsConstructor
 public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER = "Bearer ";
@@ -37,15 +39,6 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
     private final AuthenticationEntryPoint entryPoint;
     private final SecurityContextHolderStrategy holder = SecurityContextHolder.getContextHolderStrategy();
     private final SecurityContextRepository contextRepository = new RequestAttributeSecurityContextRepository();
-
-    public BearerTokenAuthenticationFilter(RequestMatcher matcher, AccessTokenService tokens, UserRepository users,
-                                           MembershipVerifier membership, AuthenticationEntryPoint entryPoint) {
-        this.matcher = matcher;
-        this.tokens = tokens;
-        this.users = users;
-        this.membership = membership;
-        this.entryPoint = entryPoint;
-    }
 
     /**
      * The bearer token of the request, or empty when no {@code Bearer} authorization header is present. A header of

@@ -1,7 +1,7 @@
 package ro.alacrity.kina.oauth;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,6 +32,8 @@ import java.util.Set;
  * Validation rules: DESIGN.md section 7.
  */
 @RestController
+@Slf4j
+@RequiredArgsConstructor
 public class ClientRegistrationController extends OAuthEndpointSupport {
 
     public static final String AUTH_NONE = "none";
@@ -51,15 +53,8 @@ public class ClientRegistrationController extends OAuthEndpointSupport {
             "grant_types", "response_types", "scope", "client_id", "client_secret", "client_id_issued_at",
             "client_secret_expires_at");
 
-    private static final Logger log = LoggerFactory.getLogger(ClientRegistrationController.class);
-
     private final OAuthClientRepository clients;
     private final RegistrationRateLimiter rateLimiter;
-
-    public ClientRegistrationController(OAuthClientRepository clients, RegistrationRateLimiter rateLimiter) {
-        this.clients = clients;
-        this.rateLimiter = rateLimiter;
-    }
 
     /** Too many registrations from one client IP: 429 with {@code Retry-After}. */
     static final class RateLimitedException extends RuntimeException {

@@ -1,5 +1,8 @@
 package ro.alacrity.kina.security;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -17,6 +20,7 @@ import java.util.Optional;
  * tag). The associated data binds a ciphertext to its row (the user id), so a value copied to another user's row does
  * not decrypt. When no key is configured the cipher is disabled and upstream refresh tokens are not stored.
  */
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class UpstreamTokenCipher {
 
     static final String VERSION_PREFIX = "v1.";
@@ -26,10 +30,6 @@ public final class UpstreamTokenCipher {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final SecretKeySpec key;
-
-    private UpstreamTokenCipher(SecretKeySpec key) {
-        this.key = key;
-    }
 
     /** A cipher for the configured key, or a disabled one when the key is blank. Throws on a malformed key. */
     public static UpstreamTokenCipher fromBase64Key(String base64Key) {
