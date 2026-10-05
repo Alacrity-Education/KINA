@@ -13,6 +13,7 @@ The distributors are LCSC (served from the JLCPCB parts database, downloaded and
 - `max_results` is per distributor (1 to 50, default 10). Every distributor entry also reports how many matches the distributor found, how many KINA holds, and how many it returned.
 - Cache of 5 days for TME and Mouser. Ask again with a larger `max_results` and the answer comes from the cache; KINA only calls the distributor when the cache holds too few parts.
 - `bypass_cache` skips the cache lookup and still refreshes the cache.
+- Phrase fallback: when Mouser or TME find nothing for the full query, KINA retries once with the parametric core of the query (for example `MOSFET 30V SOT-23` for `SOT-23 N-channel MOSFET 30V`) and reports it in `fallback_query`.
 - Batch search of up to 20 queries in one call.
 - Ranking: deterministic parametric ranker blended with Laya, with an 18 s budget per query and an automatic fallback (`ranking: "fallback"`).
 - OAuth 2.1 authorization server for Claude's remote connector (dynamic client registration, PKCE, consent page).
@@ -25,8 +26,8 @@ The distributors are LCSC (served from the JLCPCB parts database, downloaded and
 ### Prerequisites
 
 - Docker with the Compose plugin.
-- About 10 GB of free disk: the JLCPCB database takes 5.3 GB once unpacked, plus the Laya image (PyTorch) and the Laya checkpoint.
-- RAM: about 4 GB free is a safe minimum (Laya 1.5 to 2 GB, the JVM, PostgreSQL). See [docs/OPERATIONS.md](docs/OPERATIONS.md) for sizing.
+- About 10 GB of free disk: the JLCPCB database takes 5.3 GB once unpacked, the Laya checkpoint 1.5 GB and the Laya image 1.8 GB.
+- RAM: about 4 GB free is a safe minimum. Measured: `laya-serve` about 1.9 GiB, `kina` about 485 MiB, PostgreSQL about 45 MiB. See [Measured numbers](#measured-numbers) and [docs/OPERATIONS.md](docs/OPERATIONS.md).
 - Optional: a Mouser API key and TME API v2 credentials. Without them those distributors report `not_configured` and LCSC still works.
 
 ### Start
@@ -146,7 +147,7 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 | `KINA_LAYA_ENABLED` | `true` | `false` disables Laya; searches use the deterministic ranking (`ranking_note: "laya disabled"`). |
 | `KINA_LAYA_MODEL` | `multilingual` | Checkpoint name sent to laya-serve. It must be loaded by the sidecar (compose sets `LAYA_MODELS=multilingual`). |
 | `KINA_LAYA_MAX_CONCURRENT` | `1` | Ranking requests in flight at once. Also becomes the sidecar's `LAYA_MAX_CONCURRENT`, so both limits stay equal. |
-| `LAYA_THREADS` | `4` | CPU threads for Laya (also `OMP_NUM_THREADS`). Keep it at or below the number of physical cores; more is a large slowdown. |
+| `LAYA_THREADS` | `4` | CPU threads for Laya (also `OMP_NUM_THREADS`). Keep it at or below the physical cores you can dedicate; never count SMT siblings, oversubscribing is about a 10x slowdown. On a host with 8 or more free physical cores, 8 threads were measured about 1.5 to 1.8 times faster than 4. |
 | `LAYA_API_KEY` | empty | Optional shared secret. KINA sends it as a bearer token and laya-serve requires it when set. |
 | `LAYA_GPU_ID` | `0` | GPU index used by `compose.cuda.yaml`. |
 | `LAYA_URL` | `http://laya-serve:8000` in Compose, `http://localhost:8000` otherwise | Base URL of laya-serve. Set by `compose.yaml`. |
@@ -169,6 +170,7 @@ docker compose -f compose.yaml -f compose.cuda.yaml up -d --build
 | Variable | Default | Meaning |
 |---|---|---|
 | `KINA_PORT` | `8080` | Host port published by Compose. |
+| `KINA_MEM_LIMIT` | `2g` | Memory limit of the `kina` container. The JVM heap is 75 percent of it. |
 | `PORT` | `8080` | HTTP port inside the process (outside Compose). |
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/kina` (Compose: `jdbc:postgresql://postgres:5432/kina`) | PostgreSQL connection. |
 | `SPRING_DATASOURCE_USERNAME` | `kina` | Database user. |
@@ -183,6 +185,7 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `kina.tokens.validity` | `30d` | Lifetime of access tokens (web UI and OAuth). |
 | `kina.oauth.refresh-token-validity` | `90d` | Lifetime of OAuth refresh tokens. |
 | `kina.cache.ttl` | `5d` | Freshness of cached TME and Mouser data. |
+| `kina.cache.empty-result-ttl` | `1h` | Freshness of a cached search that found no in-stock part. It goes stale after this time, so a glitch or a new listing does not hide parts for 5 days. |
 | `kina.search.candidate-window` | `40` | Minimum parts fetched per distributor per query. |
 | `kina.search.default-max-results` | `10` | Used when `max_results` is missing. |
 | `kina.search.max-max-results` | `50` | Upper limit for `max_results`. |
@@ -289,9 +292,18 @@ Set `KINA_LAYA_TEST_MODEL` to evaluate another checkpoint (default `multilingual
 
 - Volumes: `kina-data` (JLCPCB SQLite file), `pgdata` (PostgreSQL), `laya-models` (Hugging Face cache).
 - JLCPCB database: checked every hour, downloaded again when older than 5 days. The old file keeps serving while the new one downloads.
-- TME and Mouser cache: 5 days. Rows older than 10 days (2 x TTL) are purged every 6 hours. Empty results get no shorter lifetime than other results.
+- TME and Mouser cache: 5 days. A cached search with zero parts goes stale after 1 hour (`kina.cache.empty-result-ttl`). Rows older than 10 days (2 x TTL) are purged every 6 hours.
 - Rate limits: Mouser allows 1 000 calls per day and 30 per minute. KINA makes one Mouser call per uncached query and does not throttle itself; a refused call shows as `error: "rate_limited"`. Use `bypass_cache` sparingly.
+- Phrase fallback: when the full query returns 0 parts at Mouser or TME, KINA retries once with the parsed core phrase. The distributor entry then has `fallback_query` set. The phrase is stored with the cached search, so a cache hit reports it too.
 - Logs: `docker compose logs -f kina`. Each search logs fetch and rank timings. Tokens and API keys are never logged.
+
+### Measured numbers
+
+From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB host, CPU Laya with `LAYA_THREADS=4`, full JLCPCB database of 7.1 million parts):
+
+- RAM after the end-to-end run: `kina` about 485 MiB (limit 2 GiB), `laya-serve` about 1.9 GiB, `postgres` about 45 MiB.
+- Disk: JLCPCB database 5.33 GB, Laya models 1.5 GB, Laya image 1.76 GB.
+- Search: cold (distributor calls) about 6 s for three distributors; the same query again with a larger `max_results` about 60 ms; Laya ranking 2 to 4 s per search on CPU.
 
 ### Troubleshooting
 
@@ -314,5 +326,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the toolchain and local run. 
 ./mvnw -q verify               # compile and run all tests (needs Docker for Testcontainers)
 ./mvnw -q -DskipTests package  # builds target/kina.jar
 ```
+
+End-to-end checks against a running stack are in `scripts/e2e/` (`python3 scripts/e2e/kina_e2e.py`, and `scripts/e2e/prod_smoke.sh` for a `prod` mode smoke test); see the "End-to-end checks" section of `docs/DEVELOPMENT.md`. They create tokens and OAuth clients in the database and make a couple of Mouser calls on a cold cache.
 
 Tests live in `src/test/java/ro/alacrity/kina/`, one package per main package (`search`, `distributor/{lcsc,mouser,tme}`, `security`, `oauth`, `api`, `mcp`, `cache`, `domain`, `web`). JSON fixtures are in `src/test/resources/fixtures`. Tests start PostgreSQL 17 through Testcontainers and never download the JLCPCB database. Tests that need live services (the Laya evaluation, the Mouser live test) run only when their environment variables are set.

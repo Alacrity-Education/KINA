@@ -8,11 +8,11 @@ This guide covers running KINA for real: HTTPS, secrets, storage, backups, upgra
 
 | Service | Image | Port | Volume | Purpose |
 |---|---|---|---|---|
-| `kina` | built from `Dockerfile` | `${KINA_PORT:-8080}` published on the host | `kina-data` at `/data` | The application. Holds the JLCPCB SQLite file in `/data/jlcpcb`. |
+| `kina` | built from `Dockerfile` (memory limit `KINA_MEM_LIMIT`, default `2g`) | `${KINA_PORT:-8080}` published on the host | `kina-data` at `/data` | The application. Holds the JLCPCB SQLite file in `/data/jlcpcb`. |
 | `postgres` | `postgres:17-alpine` | none published | `pgdata` | Cache, users, tokens, OAuth clients, JLCPCB download timestamp. Schema is managed by Flyway at KINA startup. |
 | `laya-serve` | built from the Laya git repository (tag `v0.3.27`) | none published (internal `laya-serve:8000`) | `laya-models` | Local ranking model. Not a hard dependency of `kina`. |
 
-Compose prefixes volume names with the project name (the directory name by default), for example `kina_pgdata`. Use `docker volume ls` to see them.
+`compose.yaml` sets the project name `name: kina`, so the volumes are `kina_kina-data`, `kina_pgdata` and `kina_laya-models` whatever the directory is called. Use `docker volume ls` to see them.
 
 ## Environment
 
@@ -32,6 +32,7 @@ TME_APPLICATION_SECRET=<secret>
 LAYA_API_KEY=<random string>
 LAYA_THREADS=4
 KINA_PORT=127.0.0.1:8080
+KINA_MEM_LIMIT=2g
 ```
 
 `KINA_PORT=127.0.0.1:8080` works because `compose.yaml` publishes `"${KINA_PORT:-8080}:8080"`; it binds KINA to the loopback interface so only the reverse proxy on the same host can reach it.
@@ -117,9 +118,21 @@ docker compose start kina
 
 What you lose without a backup: users, every token (the 30-day web tokens and the OAuth ones, so Claude connectors must reconnect), registered OAuth clients, and the cache (which refills by itself). The cache is the only part you can ignore.
 
-If the JLCPCB file is missing, KINA downloads it at the next startup or hourly check. If you restore a volume that holds a valid file but the database has no matching row, KINA adopts the file and uses its modification time as the download time.
+If the JLCPCB file is missing, KINA downloads it at the next startup or hourly check. If you restore a `kina-data` volume (or pre-seed the file) and the database has no matching `jlcpcb_database` row, for example after restoring `kina-data` without `pgdata`, KINA adopts the file: it validates it, records a row and uses the file's modification time as the download time. That check took about 19 s in the background on the measured host. An invalid file is downloaded again. A restored file older than 5 days is refreshed in the background while the old one keeps serving.
 
-Disk use: the unpacked JLCPCB database is 5.3 GB. During a refresh the new file is downloaded (about 1 GB zipped) and unpacked next to the old one before it replaces it, so plan for roughly twice the database size plus the zip on the `kina-data` volume at peak (this is an estimate, not a measurement). Choosing `KINA_JLCPCB_LIBRARY=current-parts-fts5.db` or `basic-parts-fts5.db` reduces it.
+Disk use: the unpacked JLCPCB database is 5.33 GB. During a refresh the new file is downloaded (about 1 GB zipped) and unpacked next to the old one before it replaces it, so plan for roughly twice the database size plus the zip on the `kina-data` volume at peak (this is an estimate, not a measurement). Choosing `KINA_JLCPCB_LIBRARY=current-parts-fts5.db` or `basic-parts-fts5.db` reduces it.
+
+## Verifying a deployment
+
+`scripts/e2e/` holds end-to-end checks that drive a running stack through its published port (Python 3.10+, standard library only):
+
+```bash
+python3 scripts/e2e/kina_e2e.py                 # suites ui, mcp, oauth, forwarded, rest against http://localhost:8080
+KINA_URL=http://host:8080 python3 scripts/e2e/kina_e2e.py
+scripts/e2e/prod_smoke.sh                       # prod mode smoke test in a throwaway container on port 18080
+```
+
+Run them against a staging or dev stack. They create tokens and OAuth clients in the database and, on a cold cache, make 2 Mouser calls. Details are in the "End-to-end checks" section of [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Upgrading
 
@@ -128,7 +141,7 @@ git pull
 docker compose up -d --build
 ```
 
-Flyway applies new database migrations when `kina` starts. Take a `pg_dump` first. The `laya-serve` image is pinned to tag `v0.3.27`, so it only rebuilds when `compose.yaml` changes. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
+Flyway applies new database migrations when `kina` starts (the current ones are V1 to V3). Take a `pg_dump` first. The `laya-serve` image is pinned to tag `v0.3.27`, so it only rebuilds when `compose.yaml` changes. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
 
 Roll back by checking out the previous version and running `docker compose up -d --build` again. Migrations are not reversed, so restore the dump if a migration must be undone.
 
@@ -146,12 +159,12 @@ The overlay rebuilds Laya with `TORCH_INDEX=cu128`, sets `LAYA_DEVICE=cuda` and 
 
 | Component | Memory | Notes |
 |---|---|---|
-| Laya (`multilingual`, CPU) | about 1.5 to 2 GB | One loaded checkpoint is about 1.5 GB. Image and checkpoint use several GB of disk. |
-| KINA JVM | up to 75 percent of the memory available to the container | `MaxRAMPercentage=75`. No container limit is set in `compose.yaml`, so it follows the host. Set a memory limit on the `kina` service if you share the host. |
-| PostgreSQL | a few hundred MB | The cache and tokens are small. |
+| Laya (`multilingual`, CPU) | about 1.9 GiB measured | One loaded checkpoint is about 1.5 GB. On disk: checkpoint 1.5 GB, image 1.76 GB. |
+| KINA JVM | about 485 MiB measured | The container limit is `KINA_MEM_LIMIT` (default `2g`) and the heap is 75 percent of it (1.5 GiB). The JVM exits on out-of-memory (`-XX:+ExitOnOutOfMemoryError`) and Compose restarts it. |
+| PostgreSQL | about 45 MiB measured | The cache and tokens are small (`pgdata` about 50 MB after the end-to-end run). |
 | JLCPCB SQLite file | page cache | The file is read through the operating system page cache; free RAM makes LCSC queries faster. |
 
-A host with 4 GB of free RAM is a safe minimum, 8 GB is comfortable. CPU: `LAYA_THREADS` must not exceed the physical core count. Oversubscribing SMT siblings makes Laya many times slower and then rankings time out and fall back. Keep `KINA_LAYA_MAX_CONCURRENT=1` unless you have measured otherwise; a second concurrent pass slows both. Laya was measured at about 3.5 s for 40 candidates on 8 CPU threads; with 4 threads expect longer. Check `ranking_note` in search results for timeouts.
+These numbers come from the measurements in `docs/DEVELOPMENT.md` ("Measured on 2026-10-05"; 24-core, 30 GB host). A host with 4 GB of free RAM is a safe minimum, 8 GB is comfortable. CPU: `LAYA_THREADS` must not exceed the physical core count. Oversubscribing SMT siblings makes Laya many times slower and then rankings time out and fall back. Keep `KINA_LAYA_MAX_CONCURRENT=1` unless you have measured otherwise; a second concurrent pass slows both. Measured Laya cost on CPU: about 90 ms per candidate with 4 threads (40 candidates 3.7 to 4.3 s) and 50 to 60 ms per candidate with 8 threads. A cold search for three distributors took about 6 s, a repeat with a larger `max_results` about 60 ms. Check `ranking_note` in search results for timeouts.
 
 ## Token lifecycle
 
@@ -162,14 +175,14 @@ A host with 4 GB of free RAM is a safe minimum, 8 GB is comfortable. CPU: `LAYA_
 Revoking:
 
 - A web UI token: click Revoke on the token page.
-- An OAuth connector: Revoke on the token page revokes only that access token. The client still holds a refresh token (valid 90 days) and could use it to get a new access token. To cut a client off completely, also revoke its refresh tokens and remove or block the client:
+- An OAuth connector: Revoke on the token page (or `POST /oauth/revoke` by the client) revokes that access token and every refresh token issued with it, so the client cannot get a new access token. The client must go through the consent flow again. To remove a client registration or revoke everything it holds in one go, use SQL:
 
 ```bash
 # list clients and their active tokens
 docker compose exec postgres psql -U kina -d kina -c \
   "SELECT client_id, client_name, created_at FROM oauth_clients ORDER BY created_at DESC;"
 
-# revoke every refresh token and access token of one client
+# revoke every refresh token and access token of one client (all of its sessions)
 docker compose exec postgres psql -U kina -d kina -c \
   "UPDATE oauth_refresh_tokens SET revoked_at = now() WHERE client_id = '<client_id>' AND revoked_at IS NULL;
    UPDATE access_tokens SET revoked_at = now() WHERE oauth_client_id = '<client_id>' AND revoked_at IS NULL;"
@@ -205,6 +218,6 @@ Changing the validity (`KINA_TOKENS_VALIDITY`, `KINA_OAUTH_REFRESH_TOKEN_VALIDIT
 - `GET /actuator/health` is public and returns `{"status":"UP"}`. The Docker `HEALTHCHECK` of the `kina` image uses it. It does not check Laya, the distributors or the JLCPCB database.
 - For those, call `list_distributors` (MCP) or `GET /api/v1/distributors` with a token. Watch `jlcpcb.available`, `jlcpcb.downloading`, `jlcpcb.last_error`, `ranking.laya_healthy`, and `cache.fresh_parts`.
 - `ranking: "fallback"` in search results means Laya was unavailable, slow or disabled; `ranking_note` gives the reason.
-- Logs: `docker compose logs -f kina`. Each search logs how long fetching and ranking took. Cache purges (every 6 hours, rows older than twice the cache TTL) and JLCPCB downloads are logged too.
+- Logs: `docker compose logs -f kina`. Each search logs how long fetching and ranking took. Cache purges (every 6 hours, rows older than twice the cache TTL; a cached search with no parts is already stale after 1 hour) and JLCPCB downloads are logged too.
 - `docker compose ps` shows the health of `postgres` and `laya-serve`. `laya-serve` has a 10 minute start period for the first checkpoint download.
 - Mouser quota: 1 000 calls a day and 30 a minute. KINA does not count calls. Frequent `error: "rate_limited"` means that quota is exhausted; avoid `bypass_cache` for bulk work.
