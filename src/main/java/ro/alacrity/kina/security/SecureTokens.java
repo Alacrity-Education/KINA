@@ -1,5 +1,7 @@
 package ro.alacrity.kina.security;
 
+import lombok.experimental.UtilityClass;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -8,13 +10,11 @@ import java.util.Base64;
 import java.util.HexFormat;
 
 /** Random opaque secrets and their SHA-256 storage form. Plaintext secrets are never stored or logged. */
-public final class SecureTokens {
+@UtilityClass
+public class SecureTokens {
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final Base64.Encoder BASE64URL = Base64.getUrlEncoder().withoutPadding();
-
-    private SecureTokens() {
-    }
 
     /** {@code bytes} random bytes, base64url without padding (32 bytes -> 43 chars). */
     public static String randomBase64Url(int bytes) {

@@ -2,7 +2,7 @@ package ro.alacrity.kina.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,6 +44,7 @@ import java.util.stream.Stream;
  */
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfig {
 
     /** Endpoints protected by bearer tokens. */
@@ -140,7 +141,7 @@ public class SecurityConfig {
             }
         }
         if ("/login-error".equals(target)) {
-            LoggerFactory.getLogger(SecurityConfig.class).warn("OIDC login failed: {}", exception.getMessage());
+            log.warn("OIDC login failed: {}", exception.getMessage());
         }
         response.sendRedirect(request.getContextPath() + target);
     }

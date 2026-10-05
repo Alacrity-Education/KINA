@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -21,17 +22,13 @@ import java.io.IOException;
  * bearer header) is authenticated as the development admin ({@code users} row {@code dev/admin}). Presented bearer
  * tokens are still validated by {@link BearerTokenAuthenticationFilter}. Not a Spring bean on purpose.
  */
+@RequiredArgsConstructor
 public class DevModeAuthenticationFilter extends OncePerRequestFilter {
 
     private final RequestMatcher matcher;
     private final DevAdminProvider admin;
     private final SecurityContextHolderStrategy holder = SecurityContextHolder.getContextHolderStrategy();
     private final SecurityContextRepository contextRepository = new RequestAttributeSecurityContextRepository();
-
-    public DevModeAuthenticationFilter(RequestMatcher matcher, DevAdminProvider admin) {
-        this.matcher = matcher;
-        this.admin = admin;
-    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

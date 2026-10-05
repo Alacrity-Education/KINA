@@ -1,7 +1,6 @@
 package ro.alacrity.kina.distributor.mouser;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -27,12 +26,11 @@ import java.util.function.Supplier;
  * page to {@code min(50, kina.distributors.mouser.max-results-per-search)}.
  */
 @Component
+@Slf4j
 public class MouserClient implements DistributorClient {
 
     /** Mouser rejects {@code records} above 50. */
     static final int MAX_PAGE_SIZE = 50;
-
-    private static final Logger log = LoggerFactory.getLogger(MouserClient.class);
 
     private final KinaProperties.Mouser properties;
     private final MouserApi api;

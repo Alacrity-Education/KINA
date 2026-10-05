@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 
@@ -32,16 +33,14 @@ import java.util.regex.Pattern;
  * {@code "USB Connectors" Type-C 16P/17P/18P "USB 2.0" "Surface Mount"} (an OR group of the configuration and its
  * shell-counted variants), TME {@code USB C socket SMT 2.0}, Mouser {@code USB type C receptacle SMD 2.0}.
  */
-public final class DistributorPhraser {
+@UtilityClass
+public class DistributorPhraser {
 
     /** TME's {@code phrase} limit (DESIGN.md 9.2). */
     public static final int TME_MAX_LENGTH = 40;
     /** Fewest and most tokens of a keyword fallback phrase (DESIGN.md 3.2). */
     static final int MIN_FALLBACK_TOKENS = 3;
     static final int MAX_FALLBACK_TOKENS = 5;
-
-    private DistributorPhraser() {
-    }
 
     /**
      * The phrase to send to {@code distributor} instead of the user's text, or null to send the text verbatim

@@ -1,8 +1,7 @@
 package ro.alacrity.kina.search.ce;
 
 import ai.onnxruntime.OrtException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
@@ -36,9 +35,8 @@ import java.util.function.Supplier;
  * checked between batches and an inference running past it is terminated.
  */
 @Component
+@Slf4j
 public class CrossEncoderPartRanker implements PartRanker {
-
-    private static final Logger log = LoggerFactory.getLogger(CrossEncoderPartRanker.class);
 
     /** Ranker health for {@code list_distributors}. */
     public record Status(boolean enabled, boolean loaded, String variant, String modelDir, String revision,

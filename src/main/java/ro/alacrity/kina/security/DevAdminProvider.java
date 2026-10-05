@@ -1,7 +1,7 @@
 package ro.alacrity.kina.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Conditional;
@@ -13,16 +13,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Conditional(DevModeCondition.class)
+@Slf4j
+@RequiredArgsConstructor
 public class DevAdminProvider implements ApplicationRunner {
-
-    private static final Logger log = LoggerFactory.getLogger(DevAdminProvider.class);
 
     private final UserRepository users;
     private volatile KinaPrincipal principal;
-
-    public DevAdminProvider(UserRepository users) {
-        this.users = users;
-    }
 
     @Override
     public void run(ApplicationArguments args) {

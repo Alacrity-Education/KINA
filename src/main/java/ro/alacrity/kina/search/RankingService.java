@@ -1,7 +1,6 @@
 package ro.alacrity.kina.search;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.config.KinaProperties;
@@ -37,9 +36,8 @@ import java.util.function.Supplier;
  * deterministic order is returned with {@link RankingMode#FALLBACK} and a note.
  */
 @Service
+@Slf4j
 public class RankingService {
-
-    private static final Logger log = LoggerFactory.getLogger(RankingService.class);
 
     /** Minimum number of candidates per distributor that has results. */
     static final int MIN_CANDIDATES_PER_DISTRIBUTOR = 5;

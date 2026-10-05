@@ -1,6 +1,7 @@
 package ro.alacrity.kina.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
@@ -18,15 +19,12 @@ import java.util.Base64;
  * {@code client_id} that is an {@code https} URL is a Client ID Metadata Document client (public, trusted hosts only).
  */
 @Component
+@RequiredArgsConstructor
 public class ClientAuthenticator {
 
     private static final String BASIC = "Basic ";
 
     private final OAuthClientLookup clients;
-
-    public ClientAuthenticator(OAuthClientLookup clients) {
-        this.clients = clients;
-    }
 
     public OAuthClient authenticate(HttpServletRequest request, MultiValueMap<String, String> params) {
         String clientId;

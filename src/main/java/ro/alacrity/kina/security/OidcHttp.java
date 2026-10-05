@@ -1,5 +1,6 @@
 package ro.alacrity.kina.security;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
@@ -18,13 +19,11 @@ import java.time.Duration;
  * re-checks). Spring Security's defaults have none, so a hanging provider would hang the login request.
  * Discovery itself ({@code ClientRegistrations.fromIssuerLocation}) uses Spring's internal client.
  */
-public final class OidcHttp {
+@UtilityClass
+public class OidcHttp {
 
     public static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     public static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
-
-    private OidcHttp() {
-    }
 
     static SimpleClientHttpRequestFactory requestFactory() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();

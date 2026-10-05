@@ -1,5 +1,6 @@
 package ro.alacrity.kina.web;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ro.alacrity.kina.config.KinaProperties;
@@ -11,13 +12,10 @@ import ro.alacrity.kina.config.KinaProperties;
  * Every emitted URL (OAuth metadata, redirects, {@code resource_metadata}) goes through this class.
  */
 @Component
+@RequiredArgsConstructor
 public class PublicUrlResolver {
 
     private final KinaProperties properties;
-
-    public PublicUrlResolver(KinaProperties properties) {
-        this.properties = properties;
-    }
 
     /** Base URL without trailing slash, e.g. {@code https://kina.example.com}. Requires a current request unless configured. */
     public String baseUrl() {

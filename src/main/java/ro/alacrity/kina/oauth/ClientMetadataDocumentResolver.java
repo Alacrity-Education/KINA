@@ -2,8 +2,7 @@ package ro.alacrity.kina.oauth;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
@@ -39,12 +38,11 @@ import java.util.concurrent.TimeoutException;
  * last persisted copy is used so token refreshes keep working through a short outage of the document host.
  */
 @Component
+@Slf4j
 public class ClientMetadataDocumentResolver {
 
     static final Duration TIMEOUT = Duration.ofSeconds(5);
     static final int MAX_BYTES = 1024 * 1024;
-
-    private static final Logger log = LoggerFactory.getLogger(ClientMetadataDocumentResolver.class);
 
     private final OAuthClientRepository clients;
     private final List<String> trustedHosts;

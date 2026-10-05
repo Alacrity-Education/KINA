@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.tme;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -27,13 +28,11 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /** Fixtures and request matchers shared by the TME tests. */
-final class TmeTestSupport {
+@UtilityClass
+class TmeTestSupport {
 
     static final String BASE = "https://api.tme.test";
     static final JsonMapper JSON = JsonMapper.builder().build();
-
-    private TmeTestSupport() {
-    }
 
     static KinaProperties.Tme properties(int maxResultsPerSearch) {
         return new KinaProperties.Tme("test-token", "test-secret", "RO", "EUR", "en", BASE, maxResultsPerSearch, 3,

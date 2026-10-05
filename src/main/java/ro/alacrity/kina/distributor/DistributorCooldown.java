@@ -1,7 +1,7 @@
 package ro.alacrity.kina.distributor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ro.alacrity.kina.domain.Distributor;
 
 /**
@@ -10,9 +10,9 @@ import ro.alacrity.kina.domain.Distributor;
  * then (or fails fast when that does not fit its request deadline), so concurrent requests do not hammer the API.
  * A successful call clears it. In-memory and thread-safe; times are {@link System#nanoTime()}-like ticker values.
  */
+@Slf4j
+@RequiredArgsConstructor
 public final class DistributorCooldown {
-
-    private static final Logger log = LoggerFactory.getLogger(DistributorCooldown.class);
 
     /**
      * Rate limits less than this long after the previous cool-down ended belong to the same window (one WARN per
@@ -25,10 +25,6 @@ public final class DistributorCooldown {
     private long untilNanos;
     /** Increments on every {@link #record}; a success only clears the cool-down it did not race with. */
     private long generation;
-
-    public DistributorCooldown(Distributor distributor) {
-        this.distributor = distributor;
-    }
 
     /**
      * Extends the cool-down to at least {@code untilNanos}. Logs one WARN per cool-down window: a window ends with a

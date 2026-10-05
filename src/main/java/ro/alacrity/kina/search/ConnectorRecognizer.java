@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.text.Normalizer;
@@ -21,10 +22,8 @@ import java.util.regex.Pattern;
  * <p>{@link #analyze} returns what it recognised plus the text with the recognised spans blanked out, so the generic
  * {@link Recognizers} only see what is left (no {@code 90 degree}, {@code style}, {@code pins} noise keywords).
  */
-final class ConnectorRecognizer {
-
-    private ConnectorRecognizer() {
-    }
+@UtilityClass
+class ConnectorRecognizer {
 
     /**
      * What one text says about a connector.
@@ -155,8 +154,7 @@ final class ConnectorRecognizer {
     /** Recognises connector attributes in a query or a part text (see {@link Result}). */
     static Result analyze(String text) {
         if (text == null || text.isBlank()) {
-            return new Result(new ParsedQuery.Connector(null, null, null, null, null, null, false, null), false, null,
-                    text == null ? "" : text);
+            return new Result(ParsedQuery.Connector.builder().build(), false, null, text == null ? "" : text);
         }
         StringBuilder s = new StringBuilder(normalise(text));
 
@@ -370,10 +368,19 @@ final class ConnectorRecognizer {
             features.add(usb.ipRating());
         }
         UsbVocabulary.Standard standard = usb.standard();
-        return new ParsedQuery.Connector(type == null ? UsbVocabulary.connectorType(usbType) : type, null, gender,
-                positions, null, null, false, orientation, usbType, standard == null ? null : standard.name(),
-                standard == null ? null : standard.gbps(), configuration, false, shield,
-                mountingStyle(usb.features()), features);
+        return ParsedQuery.Connector.builder()
+                .type(type == null ? UsbVocabulary.connectorType(usbType) : type)
+                .gender(gender)
+                .positions(positions)
+                .orientation(orientation)
+                .usbType(usbType)
+                .usbStandard(standard == null ? null : standard.name())
+                .usbSpeedGbps(standard == null ? null : standard.gbps())
+                .pinConfiguration(configuration)
+                .shieldPinsCounted(shield)
+                .mountingStyle(mountingStyle(usb.features()))
+                .features(features)
+                .build();
     }
 
     /** mid-mount, else hybrid (also SMD with through-hole shell legs), else top-mount; null when none is said. */

@@ -1,8 +1,8 @@
 package ro.alacrity.kina.search;
 
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.With;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatus;
@@ -60,9 +60,8 @@ import java.util.concurrent.TimeoutException;
  * it; the time they wait does not count against {@code kina.search.distributor-timeout}.
  */
 @Service
+@Slf4j
 public class PartSearchService {
-
-    private static final Logger log = LoggerFactory.getLogger(PartSearchService.class);
 
     /** Pages fetched per search for LCSC (the SQLite query already returns the whole window). */
     static final int LCSC_MAX_PAGES = 1;
@@ -235,7 +234,7 @@ public class PartSearchService {
      * rate limits.
      */
     record Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
-                   String fallbackQuery, long rateLimitWaitedMs, String distributorQuery) {
+                   String fallbackQuery, @With long rateLimitWaitedMs, @With String distributorQuery) {
 
         Fetched {
             parts = parts == null ? List.of() : List.copyOf(parts);
@@ -253,14 +252,6 @@ public class PartSearchService {
 
         Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error) {
             this(distributor, parts, totalResults, cache, error, null);
-        }
-
-        Fetched withRateLimitWaitedMs(long millis) {
-            return new Fetched(distributor, parts, totalResults, cache, error, fallbackQuery, millis, distributorQuery);
-        }
-
-        Fetched withDistributorQuery(String phrase) {
-            return new Fetched(distributor, parts, totalResults, cache, error, fallbackQuery, rateLimitWaitedMs, phrase);
         }
 
         static Fetched failed(Distributor distributor, CacheStatus cache, String error) {
@@ -594,7 +585,8 @@ public class PartSearchService {
                 if (part == null || part.stock() <= 0 || !seen.add(part.distributorPartNumber())) {
                     continue;
                 }
-                Part enriched = extractor.enrich(part.fetchedAt() == null ? withFetchedAt(part, now) : part);
+                Part enriched = extractor.enrich(
+                        part.fetchedAt() == null ? part.toBuilder().fetchedAt(now).build() : part);
                 all.add(enriched);
                 fetched.add(enriched);
             }
@@ -636,13 +628,6 @@ public class PartSearchService {
         return out;
     }
 
-    private static Part withFetchedAt(Part p, Instant fetchedAt) {
-        return new Part(p.distributor(), p.distributorPartNumber(), p.manufacturer(), p.manufacturerPartNumber(),
-                p.description(), p.category(), p.packageName(), p.stock(), p.minimumOrderQuantity(),
-                p.orderMultiple(), p.prices(), p.datasheetUrl(), p.photoUrl(), p.productUrl(), p.attributes(),
-                p.extra(), fetchedAt);
-    }
-
     // ---- assembly -------------------------------------------------------------------------------------------------
 
     /** {@code [MOUSER=hit/50, TME=timeout/0]} for the timing log. */
@@ -674,8 +659,18 @@ public class PartSearchService {
                 RankedPart rp = rankedParts.get(i);
                 parts.add(PartResponse.from(rp.part(), i + 1, roundScore(rp.score())));
             }
-            results.add(new DistributorResult(distributor, f.totalResults(), rankedParts.size(), returned, f.cache(),
-                    f.error(), parts, f.fallbackQuery(), f.rateLimitWaitedMs(), f.distributorQuery()));
+            results.add(DistributorResult.builder()
+                    .distributor(distributor)
+                    .totalResults(f.totalResults())
+                    .fetched(rankedParts.size())
+                    .returned(returned)
+                    .cache(f.cache())
+                    .error(f.error())
+                    .parts(parts)
+                    .fallbackQuery(f.fallbackQuery())
+                    .rateLimitWaitedMs(f.rateLimitWaitedMs())
+                    .distributorQuery(f.distributorQuery())
+                    .build());
         }
         return new SearchResponse(prepared.parsed().originalText(), ParsedQueryResponse.from(prepared.parsed()),
                 ranked.mode(), note, results);

@@ -2,6 +2,7 @@ package ro.alacrity.kina.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 
 import java.time.Instant;
 import java.util.List;
@@ -97,6 +98,7 @@ public record DistributorStatusResponse(
      * @param timeout              ranking budget per query (ISO-8601 duration)
      */
     @JsonInclude(JsonInclude.Include.ALWAYS)
+    @Builder
     public record RankingSummary(
             @JsonProperty("mode") String mode,
             @JsonProperty("cross_encoder_enabled") boolean crossEncoderEnabled,

@@ -1,7 +1,6 @@
 package ro.alacrity.kina.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -24,9 +23,8 @@ import java.util.Set;
  * {@link OidcAccessPolicy#ERROR_GROUP} or {@link OidcAccessPolicy#ERROR_EMAIL_DOMAIN} ends the login on the
  * {@code /login-denied} page, and an existing user row is blocked ({@code access_revoked_at}, all tokens revoked).
  */
+@Slf4j
 public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, OidcUser> {
-
-    private static final Logger log = LoggerFactory.getLogger(OidcUserSynchronizer.class);
 
     private final OAuth2UserService<OidcUserRequest, OidcUser> delegate;
     private final UserRepository users;

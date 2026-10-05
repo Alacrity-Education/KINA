@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
@@ -43,6 +44,7 @@ import java.util.Map;
  * +{@value #W_USB_FEATURE} per requested feature present (waterproof, board lock, power only).
  */
 @Component
+@RequiredArgsConstructor
 public class DeterministicRanker {
 
     static final double W_PRIMARY_VALUE = 0.30;
@@ -91,10 +93,6 @@ public class DeterministicRanker {
             ParsedQuery.POWER);
 
     private final ParametricExtractor extractor;
-
-    public DeterministicRanker(ParametricExtractor extractor) {
-        this.extractor = extractor;
-    }
 
     /** Relevance of {@code part} for {@code query}, clamped to [0,1]. */
     public double score(ParsedQuery query, Part part) {

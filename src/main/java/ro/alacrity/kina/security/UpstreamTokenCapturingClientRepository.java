@@ -2,6 +2,7 @@ package ro.alacrity.kina.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizedClientRepository;
@@ -12,14 +13,11 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepo
  * hands the provider's refresh token to {@link MembershipVerifier}, which stores it encrypted for membership
  * re-checks. Called by Spring's login filter right after a successful login.
  */
+@RequiredArgsConstructor
 public class UpstreamTokenCapturingClientRepository implements OAuth2AuthorizedClientRepository {
 
     private final OAuth2AuthorizedClientRepository delegate = new HttpSessionOAuth2AuthorizedClientRepository();
     private final MembershipVerifier membership;
-
-    public UpstreamTokenCapturingClientRepository(MembershipVerifier membership) {
-        this.membership = membership;
-    }
 
     @Override
     public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId,

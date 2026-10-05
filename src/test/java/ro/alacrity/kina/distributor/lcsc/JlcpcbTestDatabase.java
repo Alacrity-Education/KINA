@@ -1,5 +1,7 @@
 package ro.alacrity.kina.distributor.lcsc;
 
+import lombok.experimental.UtilityClass;
+
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,7 +11,8 @@ import java.sql.Statement;
 import java.util.List;
 
 /** Builds tiny JLCPCB-shaped SQLite databases (same FTS5 trigram schema as kicad-jlcpcb-tools) for tests. */
-final class JlcpcbTestDatabase {
+@UtilityClass
+class JlcpcbTestDatabase {
 
     static final List<JlcpcbRow> SAMPLE = List.of(
             row("C15850", "Capacitors", "Multilayer Ceramic Capacitors MLCC - SMD/SMT", "CL21A106KAYNNNE", "0805",
@@ -104,9 +107,6 @@ final class JlcpcbTestDatabase {
         List<JlcpcbRow> rows = new java.util.ArrayList<>(withConnectors());
         rows.addAll(USB);
         return rows;
-    }
-
-    private JlcpcbTestDatabase() {
     }
 
     static JlcpcbRow row(String lcsc, String first, String second, String mpn, String pkg, String manufacturer,

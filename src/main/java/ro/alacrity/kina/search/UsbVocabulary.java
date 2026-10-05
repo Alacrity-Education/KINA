@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.util.ArrayList;
@@ -53,10 +54,8 @@ import java.util.regex.Pattern;
  *       {@code IP67}/{@code IPX7}/{@code Waterproof}, {@code W/ PEGS}/{@code peg}/{@code with post}.</li>
  * </ul>
  */
-final class UsbVocabulary {
-
-    private UsbVocabulary() {
-    }
+@UtilityClass
+class UsbVocabulary {
 
     private static final int F = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
 

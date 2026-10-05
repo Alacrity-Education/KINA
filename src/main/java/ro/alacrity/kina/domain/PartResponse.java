@@ -2,6 +2,7 @@ package ro.alacrity.kina.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import lombok.Builder;
 
 import java.util.Comparator;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.Map;
 @JsonPropertyOrder({"rank", "score", "distributor", "part_number", "manufacturer", "mpn", "description",
         "category", "package", "stock", "min_order_qty", "order_multiple", "prices", "datasheet_url",
         "photo_url", "product_url", "attributes", "extra"})
+@Builder
 public record PartResponse(
         @JsonProperty("rank") Integer rank,
         @JsonProperty("score") Double score,
@@ -39,11 +41,26 @@ public record PartResponse(
 
     /** Ranked search result entry. */
     public static PartResponse from(Part part, Integer rank, Double score) {
-        return new PartResponse(rank, score, part.distributor(), part.distributorPartNumber(),
-                part.manufacturer(), part.manufacturerPartNumber(), part.description(), part.category(),
-                part.packageName(), part.stock(), part.minimumOrderQuantity(), part.orderMultiple(),
-                trimPrices(part.prices()), part.datasheetUrl(), part.photoUrl(), part.productUrl(),
-                part.attributes(), part.extra());
+        return builder()
+                .rank(rank)
+                .score(score)
+                .distributor(part.distributor())
+                .partNumber(part.distributorPartNumber())
+                .manufacturer(part.manufacturer())
+                .mpn(part.manufacturerPartNumber())
+                .description(part.description())
+                .category(part.category())
+                .packageName(part.packageName())
+                .stock(part.stock())
+                .minOrderQty(part.minimumOrderQuantity())
+                .orderMultiple(part.orderMultiple())
+                .prices(trimPrices(part.prices()))
+                .datasheetUrl(part.datasheetUrl())
+                .photoUrl(part.photoUrl())
+                .productUrl(part.productUrl())
+                .attributes(part.attributes())
+                .extra(part.extra())
+                .build();
     }
 
     /** Unranked entry (get_part). */

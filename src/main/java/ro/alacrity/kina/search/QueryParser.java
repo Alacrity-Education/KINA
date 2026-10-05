@@ -34,8 +34,17 @@ public class QueryParser {
         analysis.values().forEach((kind, v) -> constraints.put(kind,
                 new ParsedQuery.Constraint(kind, v.value(), v.display())));
         String family = connector != null ? "connector" : analysis.family();
-        return new ParsedQuery(original, normalizeKey(original), family, constraints,
-                analysis.dielectric(), analysis.packageName(), analysis.mounting(), analysis.keywords(), connector);
+        return ParsedQuery.builder()
+                .originalText(original)
+                .normalizedKey(normalizeKey(original))
+                .family(family)
+                .constraints(constraints)
+                .dielectric(analysis.dielectric())
+                .packageName(analysis.packageName())
+                .mounting(analysis.mounting())
+                .keywords(analysis.keywords())
+                .connector(connector)
+                .build();
     }
 
     /**
@@ -69,9 +78,7 @@ public class QueryParser {
         if (implied == null) {
             return c;
         }
-        return new ParsedQuery.Connector(c.type(), c.series(), c.gender(), c.positions(), c.rows(), c.pitchMm(),
-                c.pitchImplied(), c.orientation(), c.usbType(), c.usbStandard(), c.usbSpeedGbps(), implied, true,
-                c.shieldPinsCounted(), c.mountingStyle(), c.features());
+        return c.toBuilder().pinConfiguration(implied).pinConfigurationImplied(true).build();
     }
 
     /** Cache key normalisation: trim, collapse whitespace, lower-case, Unicode NFKC, µ-&gt;u, Ω-&gt;ohm. */

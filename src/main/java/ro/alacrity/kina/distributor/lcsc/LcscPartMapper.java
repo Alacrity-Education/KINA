@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.lcsc;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 
@@ -12,13 +13,11 @@ import java.util.Optional;
  * Maps a {@link JlcpcbRow} to a {@link Part} (DESIGN.md 9.3). {@code attributes} stay empty: the search layer
  * enriches them from the description with the shared parametric extractor.
  */
-public final class LcscPartMapper {
+@UtilityClass
+public class LcscPartMapper {
 
     static final String PRODUCT_URL = "https://www.lcsc.com/product-detail/%s.html";
     static final String JLCPCB_URL = "https://jlcpcb.com/partdetail/%s";
-
-    private LcscPartMapper() {
-    }
 
     /** Empty when the row has no LCSC number or no ships-now stock. */
     public static Optional<Part> map(JlcpcbRow row, Instant fetchedAt) {
@@ -32,24 +31,22 @@ public final class LcscPartMapper {
         extra.put("solder_joints", solderJoints(row.solderJoint()));
         extra.put("second_category", blankToNull(row.secondCategory()));
         extra.put("jlcpcb_url", JLCPCB_URL.formatted(lcsc));
-        return Optional.of(new Part(
-                Distributor.LCSC,
-                lcsc,
-                blankToNull(row.manufacturer()),
-                blankToNull(row.mfrPart()),
-                blankToNull(row.description()),
-                category(row.firstCategory(), row.secondCategory()),
-                blankToNull(row.packageName()),
-                stock,
-                null,
-                null,
-                JlcpcbPriceParser.parse(row.price()),
-                blankToNull(row.datasheet()),
-                null,
-                PRODUCT_URL.formatted(lcsc),
-                Map.of(),
-                extra,
-                fetchedAt));
+        return Optional.of(Part.builder()
+                .distributor(Distributor.LCSC)
+                .distributorPartNumber(lcsc)
+                .manufacturer(blankToNull(row.manufacturer()))
+                .manufacturerPartNumber(blankToNull(row.mfrPart()))
+                .description(blankToNull(row.description()))
+                .category(category(row.firstCategory(), row.secondCategory()))
+                .packageName(blankToNull(row.packageName()))
+                .stock(stock)
+                .prices(JlcpcbPriceParser.parse(row.price()))
+                .datasheetUrl(blankToNull(row.datasheet()))
+                .productUrl(PRODUCT_URL.formatted(lcsc))
+                .attributes(Map.of())
+                .extra(extra)
+                .fetchedAt(fetchedAt)
+                .build());
     }
 
     static String category(String first, String second) {

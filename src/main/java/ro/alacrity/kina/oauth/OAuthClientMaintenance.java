@@ -1,7 +1,6 @@
 package ro.alacrity.kina.oauth;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
@@ -17,9 +16,8 @@ import java.time.Instant;
  * identified by a Client ID Metadata Document are not touched (they are re-created from their document on demand).
  */
 @Component
+@Slf4j
 public class OAuthClientMaintenance {
-
-    private static final Logger log = LoggerFactory.getLogger(OAuthClientMaintenance.class);
 
     private final OAuthClientRepository clients;
     private final Duration retention;

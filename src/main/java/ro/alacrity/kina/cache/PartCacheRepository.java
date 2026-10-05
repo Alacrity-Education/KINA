@@ -1,7 +1,6 @@
 package ro.alacrity.kina.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -32,9 +31,8 @@ import java.util.Optional;
  * distributor part number. Rows whose payload cannot be deserialised are logged at WARN and skipped, never thrown.
  */
 @Repository
+@Slf4j
 public class PartCacheRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(PartCacheRepository.class);
 
     private static final String UPSERT = """
             INSERT INTO cached_parts (distributor, part_number, payload, fetched_at)

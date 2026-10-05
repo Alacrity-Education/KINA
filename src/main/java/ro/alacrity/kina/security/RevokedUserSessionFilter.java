@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
@@ -18,14 +19,11 @@ import java.util.Optional;
  * denied login elsewhere set {@code access_revoked_at}). The request is redirected to itself, which starts a new OIDC
  * login and with it a fresh group check. Not a Spring bean on purpose (it must not be registered as a servlet filter).
  */
+@RequiredArgsConstructor
 public class RevokedUserSessionFilter extends OncePerRequestFilter {
 
     private final UserRepository users;
     private final SecurityContextHolderStrategy holder = SecurityContextHolder.getContextHolderStrategy();
-
-    public RevokedUserSessionFilter(UserRepository users) {
-        this.users = users;
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)

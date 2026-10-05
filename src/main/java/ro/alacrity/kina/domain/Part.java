@@ -1,5 +1,7 @@
 package ro.alacrity.kina.domain;
 
+import lombok.Builder;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,7 @@ import java.util.Map;
  * @param extra                  distributor specific details (lifecycle, RoHS, library type, lead time...)
  * @param fetchedAt              when the data was fetched from the distributor
  */
+@Builder(toBuilder = true)
 public record Part(
         Distributor distributor,
         String distributorPartNumber,
