@@ -84,7 +84,8 @@ public class ClientMetadataDocumentResolver {
     }
 
     static HttpClient defaultHttpClient() {
-        return HttpClient.newBuilder().connectTimeout(TIMEOUT).followRedirects(HttpClient.Redirect.NEVER).build();
+        return HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(TIMEOUT)
+                .followRedirects(HttpClient.Redirect.NEVER).build();
     }
 
     /** True when {@code clientId} is a metadata document URL (handled here rather than by registration lookup). */

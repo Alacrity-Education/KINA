@@ -33,9 +33,14 @@ public final class OidcHttp {
         return factory;
     }
 
-    /** {@link java.net.http.HttpClient} for the membership re-check (never follows redirects). */
+    /**
+     * {@link java.net.http.HttpClient} for the membership re-check (never follows redirects). HTTP/1.1 only: on plain
+     * {@code http} the JDK client otherwise attempts an {@code h2c} upgrade, and some providers' servers (verified with
+     * Authentik 2026.8) then drop the POST body of the token request ({@code unsupported_grant_type}).
+     */
     static HttpClient httpClient() {
         return HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(CONNECT_TIMEOUT)
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
