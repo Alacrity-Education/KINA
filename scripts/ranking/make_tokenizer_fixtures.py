@@ -6,7 +6,7 @@ tok(query, document, truncation=True, max_length=N). Documents are rendered with
 candidate_text from docs/research/data/ranking-eval.jsonl plus hand-written edge cases.
 
     docker run --rm -v "$PWD":/repo:ro -v <dir with vocab.txt/tokenizer.json>:/model:ro -w /repo \
-      <python image with transformers, e.g. the research image of scripts/research/docker> \
+      <python image with transformers 5.x, see scripts/ranking/README.md> \
       python scripts/ranking/make_tokenizer_fixtures.py /model > src/test/resources/ce/tokenizer-fixtures.jsonl
 Prints the token-length distribution of the evaluation set to stderr.
 """

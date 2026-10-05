@@ -64,6 +64,7 @@ def fit_pairwise(X, y, g, l2=1e-2, iters=400, lr=0.5):
 def main():
     data = load_dataset()
     det = load_det_features()
+    data = [r for r in data if r["id"] in det]   # det_features.jsonl defines the scored queries
     X, y, g, keys = matrices(data, det)
     out_r, out_p = {}, {}
     for qi, rec in enumerate(data):

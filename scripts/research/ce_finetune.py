@@ -1,7 +1,7 @@
 """Fine-tune a small cross-encoder (default cross-encoder/ms-marco-MiniLM-L6-v2) on CPU with soft labels label/3.
 
     scripts/research/rc.sh -c 8-23 -t 16 python ce_finetune.py <mode> [model-key]
-      real        2-fold by query on the evaluation labels (same folds as laya_finetune.py)   -> <key>_ft_real
+      real        2-fold by query on the evaluation labels (common.folds)                     -> <key>_ft_real
       synth       synthetic rubric labels only (out/synth-train.jsonl), scored on all queries  -> <key>_ft_synth
       synth_real  synthetic + the training fold's real labels, 2-fold                         -> <key>_ft_synth_real
 Loss: BCE-with-logits against label/3, AdamW lr 2e-5, 3 epochs, batch 16, linear warm-up 10%.
@@ -14,8 +14,7 @@ import time
 
 import torch
 
-from common import OUT, candidate_text, load_dataset, load_det_features, write_scores
-from laya_finetune import folds
+from common import OUT, candidate_text, folds, load_dataset, load_det_features, write_scores
 from score_neural import MODELS
 
 

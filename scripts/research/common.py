@@ -43,21 +43,15 @@ def read_scores(method):
         return json.load(f)
 
 
-def production_state(query, part, comparable):
-    """Exactly the LayaPartRanker.state() JSON: request + candidate {manufacturer, mpn, description, package,
-    attributes (comparable keys except Package)}, compact, insertion-ordered."""
-    cand = {}
-    if part.get("manufacturer"):
-        cand["manufacturer"] = part["manufacturer"]
-    if part.get("manufacturerPartNumber"):
-        cand["mpn"] = part["manufacturerPartNumber"]
-    if part.get("description"):
-        cand["description"] = part["description"]
-    pkg = comparable.get("Package", part.get("packageName"))
-    if pkg:
-        cand["package"] = pkg
-    cand["attributes"] = {k: v for k, v in comparable.items() if k != "Package"}
-    return json.dumps({"request": query, "candidate": cand}, ensure_ascii=False, separators=(",", ":"))
+def folds(data):
+    """The study's 2-fold split by query, stratified by category: every other query of each category goes to fold A."""
+    by_cat = {}
+    for rec in data:
+        by_cat.setdefault(rec["category"], []).append(rec["id"])
+    a = set()
+    for ids in by_cat.values():
+        a.update(ids[0::2])
+    return a, {r["id"] for r in data} - a
 
 
 def candidate_text(part, comparable=None, with_category=True):

@@ -10,11 +10,13 @@ from evaluate import order, query_metrics
 
 def main():
     k = int(sys.argv[1]) if len(sys.argv) > 1 else 5
-    methods = sys.argv[2:] or ["det", "msmarco_minilm_ce_ecore", "laya_ml_noul"]
+    methods = sys.argv[2:] or ["det", "msmarco_minilm_ce_ecore", "hyb_rrblend_w0.5_msmarco_minilm_ce_ecore"]
     data = load_dataset()
     sc = {m: read_scores(m)["queries"] for m in methods}
     rows = []
     for rec in data:
+        if any(rec["id"] not in sc[m] for m in methods):   # e.g. queries added after a method was scored
+            continue
         ms = {m: query_metrics(rec, sc[m][rec["id"]]["scores"])["ndcg10"] for m in methods}
         rows.append((rec, ms))
     print("per-query NDCG@10")

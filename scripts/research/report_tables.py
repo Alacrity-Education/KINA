@@ -1,150 +1,251 @@
-"""Builds the report's main tables (markdown) from the score files and their meta blocks.
+"""Builds every table of the report (markdown) from the score files, their meta blocks and out/select_cv.json.
 
     python3 scripts/research/report_tables.py > scripts/research/out/report_tables.md
-Latency: the P-core re-measurement (`*_p8`, `*_p4` score files from latency.py) where it exists, otherwise the latency
-recorded by the scorer itself (marked with the cores it ran on). Fits-20s: worst query (all candidates, up to 40)
-below 20 s at 8 threads.
+    python3 scripts/research/fill_report.py          # copies each table into the report between its markers
+
+Each table is preceded by a line `<!-- TABLE NAME -->`; fill_report.py replaces `<!-- BEGIN NAME -->` ...
+`<!-- END NAME -->` in the report with it. Run select_cv.py first (SELECT_CV_TABLE reads its output).
+Latency: the P-core re-measurement (`*_p8`, `*_p4`, `*_t8`, `*_t4` score files from latency.py) where it exists,
+otherwise the latency recorded by the scorer itself. Fits 20 s: worst query (all candidates, up to 40) below 20 s at
+8 threads.
 """
 import json
 import os
+import re
 
 from common import OUT, SCORES, load_dataset
 from evaluate import CATS, evaluate, fmt
 
+CE = "msmarco_minilm_ce_ecore"
+FT = ["msmarco_minilm_ce_ft_real", "msmarco_minilm_ce_ft_synth", "msmarco_minilm_ce_ft_synth_real"]
+
 ROWS = [
-    # (label, method, latency source p8, latency source p4, ram note)
-    ("Deterministic ranker (production Java)", "det", "det", None, "in-process, < 1 MB"),
-    ("Deterministic ranker, main @ bf1d59b (connector-aware)", "det_main_bf1d59b", None, None, "in-process, < 1 MB"),
-    ("Distributor order", "distributor_order", None, None, "-"),
-    ("BM25 over the candidate set", "bm25", None, None, "-"),
-    ("Learned weights, ridge (LOQO)", "learned_ridge", None, None, "in-process"),
-    ("Learned weights, pairwise logistic (LOQO)", "learned_pairwise", None, None, "in-process"),
-    ("Laya multilingual noul, JSON state (current)", "laya_ml_noul", "laya_ml_noul_p8", "laya_ml_noul_p4", "laya"),
-    ("Laya multilingual score scale", "laya_ml_score", None, None, "laya"),
-    ("Laya multilingual choice (4 contrasting options)", "laya_ml_choice", None, None, "laya"),
-    ("Laya multilingual 4 per-attribute nouls, mean", "laya_ml_decomp_mean", None, None, "laya"),
-    ("Laya multilingual noul, plain-text state", "laya_ml_noul_plain", None, None, "laya"),
-    ("Laya multilingual noul, parsed query attributes in state", "laya_ml_noul_parsed", None, None, "laya"),
-    ("Laya multilingual noul, max_len 192 / head_max_len 64", "laya_ml_noul_len192", None, None, "laya"),
-    ("Laya english noul", "laya_en_noul", None, None, "laya"),
-    ("Laya english choice", "laya_en_choice", None, None, "laya"),
-    ("Laya typed-decisions noul", "laya_td_noul", "laya_td_noul_p8", "laya_td_noul_p4", "laya"),
-    ("Laya typed-decisions choice", "laya_td_choice", None, None, "laya"),
-    ("Laya pairwise, 1 round (n/2 pairs), Bradley-Terry", "laya_ml_pair_k1", None, None, "laya"),
-    ("Laya pairwise, 2 rounds (n pairs)", "laya_ml_pair_k2", None, None, "laya"),
-    ("Laya pairwise, 4 rounds (2n pairs)", "laya_ml_pair_k4", None, None, "laya"),
-    ("Laya pairwise, 8 rounds (4n pairs)", "laya_ml_pair_k8", None, None, "laya"),
-    ("Laya pairwise round robin of det top 10 (45 pairs)", "laya_ml_pair_top10", None, None, "laya"),
-    ("Laya multilingual embeddings, cosine (SDK)", "laya_ml_embed", None, None, "laya"),
-    ("Laya multilingual embeddings vs JSON state (SDK)", "laya_ml_embed_json", None, None, "laya"),
-    ("Laya predict_shortlist k=10 + choice (SDK)", "laya_ml_shortlist", None, None, "laya"),
-    ("Laya multilingual, typed head fine-tuned (2-fold)", "laya_ft_ml_head", None, None, "laya"),
-    ("Laya multilingual, typed head fine-tuned on synthetic labels", "laya_ft_ml_head_synth", None, None, "laya"),
-    ("Laya multilingual, full fine-tune 3 epochs (2-fold)", "laya_ft_ml_full2", None, None, "laya"),
-    ("Hybrid: rank blend 0.7 det / 0.3 Laya full fine-tune", "hyb_rrblend_w0.3_laya_ft_ml_full2", None, None, "laya"),
-    ("Bi-encoder all-MiniLM-L6-v2", "minilm_bi_ecore", "minilm_bi_p8", "minilm_bi_p4", "neural"),
-    ("Bi-encoder bge-small-en-v1.5", "bge_small_bi_ecore", "bge_small_bi_p8", "bge_small_bi_p4", "neural"),
-    ("Cross-encoder ms-marco-MiniLM-L6-v2", "msmarco_minilm_ce_ecore", "msmarco_minilm_ce_p8", "msmarco_minilm_ce_p4",
-     "neural"),
+    # (label, method, latency source 8 threads, latency source 4 threads, peak RSS source)
+    ("Deterministic ranker (production Java)", "det", "det", None, None),
+    ("Deterministic ranker, main @ bf1d59b (connector-aware)", "det_main_bf1d59b", None, None, None),
+    ("Distributor order", "distributor_order", None, None, None),
+    ("BM25 over the candidate set", "bm25", None, None, None),
+    ("Learned weights, ridge (LOQO)", "learned_ridge", None, None, None),
+    ("Learned weights, pairwise logistic (LOQO)", "learned_pairwise", None, None, None),
+    ("Bi-encoder all-MiniLM-L6-v2", "minilm_bi_ecore", "minilm_bi_p8", "minilm_bi_p4", "minilm_bi_p8"),
+    ("Bi-encoder bge-small-en-v1.5", "bge_small_bi_ecore", "bge_small_bi_p8", "bge_small_bi_p4", "bge_small_bi_p8"),
+    ("Cross-encoder ms-marco-MiniLM-L6-v2", CE, "msmarco_minilm_ce_p8", "msmarco_minilm_ce_p4", "msmarco_minilm_ce_p8"),
     ("Cross-encoder ms-marco-MiniLM-L6-v2, ONNX Runtime fp32", "msmarco_minilm_ce_onnx_t8", "msmarco_minilm_ce_onnx_t8",
-     "msmarco_minilm_ce_onnx_t4", "onnx"),
+     "msmarco_minilm_ce_onnx_t4", "msmarco_minilm_ce_onnx_t8"),
     ("Cross-encoder ms-marco-MiniLM-L6-v2, ONNX Runtime int8", "msmarco_minilm_ce_onnx_int8_t8",
-     "msmarco_minilm_ce_onnx_int8_t8", "msmarco_minilm_ce_onnx_int8_t4", "onnx"),
+     "msmarco_minilm_ce_onnx_int8_t8", "msmarco_minilm_ce_onnx_int8_t4", "msmarco_minilm_ce_onnx_int8_t8"),
     ("Cross-encoder ms-marco-MiniLM-L12-v2", "msmarco_minilm12_ce_ecore", "msmarco_minilm12_ce_p8",
-     "msmarco_minilm12_ce_p4", "neural"),
+     "msmarco_minilm12_ce_p4", "msmarco_minilm12_ce_p8"),
     ("Cross-encoder bge-reranker-base", "bge_reranker_base_ce_ecore", "bge_reranker_base_ce_p8",
-     "bge_reranker_base_ce_p4", "neural"),
-    ("MiniLM-L6 CE fine-tuned on real labels (2-fold)", "msmarco_minilm_ce_ft_real", None, None, "neural"),
-    ("MiniLM-L6 CE fine-tuned on synthetic labels", "msmarco_minilm_ce_ft_synth", None, None, "neural"),
-    ("MiniLM-L6 CE fine-tuned on synthetic + real (2-fold)", "msmarco_minilm_ce_ft_synth_real", None, None, "neural"),
-    ("Hybrid: current blend, det + 0.2 x Laya ml noul", "hyb_blend_w0.2_laya_ml_noul", None, None, "laya"),
-    ("Hybrid: Laya ml noul only breaks det ties", "hyb_tie_laya_ml_noul", None, None, "laya"),
-    ("Hybrid: rank blend 0.7 det / 0.3 Laya td noul", "hyb_rrblend_w0.3_laya_td_noul", None, None, "laya"),
-    ("Hybrid: det + 0.2 x MiniLM-L6 CE (production formula)", "hyb_blend_w0.2_msmarco_minilm_ce_ecore", None, None,
-     "neural"),
-    ("Hybrid: rank blend 0.7 det / 0.3 MiniLM-L6 CE", "hyb_rrblend_w0.3_msmarco_minilm_ce_ecore", None, None, "neural"),
-    ("Hybrid: rank blend 0.5 det / 0.5 MiniLM-L6 CE", "hyb_rrblend_w0.5_msmarco_minilm_ce_ecore", None, None, "neural"),
-    ("Hybrid: MiniLM-L6 CE re-orders det top 10", "hyb_top10_msmarco_minilm_ce_ecore", None, None, "neural"),
-    ("Hybrid: MiniLM-L6 CE inside det bands of 0.05", "hyb_band05_msmarco_minilm_ce_ecore", None, None, "neural"),
-    ("Hybrid: MiniLM-L6 CE only breaks det ties", "hyb_tie_msmarco_minilm_ce_ecore", None, None, "neural"),
-    ("Hybrid: MiniLM-L6 CE on candidates with det >= 0.5", "hyb_thr05_msmarco_minilm_ce_ecore", None, None, "neural"),
+     "bge_reranker_base_ce_p4", "bge_reranker_base_ce_p8"),
+    ("MiniLM-L6 CE fine-tuned on real labels (2-fold)", FT[0], None, None, None),
+    ("MiniLM-L6 CE fine-tuned on synthetic labels", FT[1], None, None, None),
+    ("MiniLM-L6 CE fine-tuned on synthetic + real (2-fold)", FT[2], None, None, None),
+    ("Hybrid: det + 0.2 x MiniLM-L6 CE (additive formula)", "hyb_blend_w0.2_" + CE, None, None, None),
+    ("Hybrid: rank blend 0.7 det / 0.3 MiniLM-L6 CE", "hyb_rrblend_w0.3_" + CE, None, None, None),
+    ("Hybrid: rank blend 0.5 det / 0.5 MiniLM-L6 CE (shipped)", "hyb_rrblend_w0.5_" + CE, None, None, None),
+    ("Hybrid: MiniLM-L6 CE re-orders det top 10", "hyb_top10_" + CE, None, None, None),
+    ("Hybrid: MiniLM-L6 CE inside det bands of 0.05", "hyb_band05_" + CE, None, None, None),
+    ("Hybrid: MiniLM-L6 CE only breaks det ties", "hyb_tie_" + CE, None, None, None),
+    ("Hybrid: MiniLM-L6 CE on candidates with det >= 0.5", "hyb_thr05_" + CE, None, None, None),
     ("Hybrid: rank blend 0.5 det / 0.5 bge-reranker-base", "hyb_rrblend_w0.5_bge_reranker_base_ce_ecore", None, None,
-     "neural"),
-    ("Hybrid: rank blend 0.5 det / 0.5 MiniLM-L6 CE fine-tuned synth+real", "hyb_rrblend_w0.5_msmarco_minilm_ce_ft_synth_real",
-     None, None, "neural"),
-    ("Hybrid: rank blend 0.5 det / 0.5 MiniLM-L6 CE fine-tuned synth only", "hyb_rrblend_w0.5_msmarco_minilm_ce_ft_synth",
-     None, None, "neural"),
+     None),
+    ("Hybrid: rank blend 0.5 det / 0.5 MiniLM-L6 CE fine-tuned synth only", "hyb_rrblend_w0.5_" + FT[1], None, None, None),
+    ("Hybrid: rank blend 0.5 det / 0.5 MiniLM-L6 CE fine-tuned synth+real", "hyb_rrblend_w0.5_" + FT[2], None, None, None),
+    ("Hybrid: main det @ bf1d59b, rank blend 0.5 with MiniLM-L6 CE", "hyb_main_bf1d59b_rrblend_w0.5_" + CE, None, None,
+     None),
     ("Hybrid: main det @ bf1d59b, rank blend 0.5 with MiniLM-L6 CE fine-tuned synth+real",
-     "hyb_main_bf1d59b_rrblend_w0.5_msmarco_minilm_ce_ft_synth_real", None, None, "neural"),
+     "hyb_main_bf1d59b_rrblend_w0.5_" + FT[2], None, None, None),
 ]
 
+# model signals for the neural and hybrid tables: (label, alone, latency/RSS source, download/params source)
+SIGNALS = [
+    ("all-MiniLM-L6-v2 (bi-encoder)", "minilm_bi_ecore", "minilm_bi_p8"),
+    ("bge-small-en-v1.5 (bi-encoder)", "bge_small_bi_ecore", "bge_small_bi_p8"),
+    ("ms-marco-MiniLM-L6-v2 (cross-encoder)", CE, "msmarco_minilm_ce_p8"),
+    ("ms-marco-MiniLM-L12-v2 (cross-encoder)", "msmarco_minilm12_ce_ecore", "msmarco_minilm12_ce_p8"),
+    ("bge-reranker-base (cross-encoder)", "bge_reranker_base_ce_ecore", "bge_reranker_base_ce_p8"),
+    ("MiniLM-L6 CE fine-tuned, real labels (2-fold)", FT[0], None),
+    ("MiniLM-L6 CE fine-tuned, synthetic labels only", FT[1], None),
+    ("MiniLM-L6 CE fine-tuned, synthetic + real (2-fold)", FT[2], None),
+]
 
-def meta(m):
-    p = os.path.join(SCORES, m + ".json")
-    if not os.path.exists(p):
-        return None, None
-    with open(p) as f:
-        sf = json.load(f)
-    lat = [v["latency_ms"] for v in sf["queries"].values()]
-    return sf["meta"], lat
+HYBRID_KINDS = [
+    ("additive, w = 0.2: 0.8 det + 0.2 ranknorm(X)", "blend_w0.2"),
+    ("rank blend, w = 0.1", "rrblend_w0.1"),
+    ("rank blend, w = 0.2", "rrblend_w0.2"),
+    ("rank blend, w = 0.3", "rrblend_w0.3"),
+    ("rank blend, w = 0.5", "rrblend_w0.5"),
+    ("X only breaks exact det ties", "tie"),
+    ("X inside det bands of 0.05", "band05"),
+    ("X re-orders the det top 10", "top10"),
+    ("X on candidates with det >= 0.5", "thr05"),
+]
+HYBRID_X = [("MiniLM-L6 CE", CE), ("MiniLM-L12 CE", "msmarco_minilm12_ce_ecore"),
+            ("bge-reranker-base", "bge_reranker_base_ce_ecore"), ("MiniLM-L6 CE ft synth", FT[1]),
+            ("MiniLM-L6 CE ft synth+real", FT[2]), ("all-MiniLM-L6 bi", "minilm_bi_ecore"),
+            ("bge-small bi", "bge_small_bi_ecore")]
+
+LATENCY = [
+    # (label, 8-thread source, 4-thread source, artefact)
+    ("MiniLM-L6 cross-encoder, PyTorch", "msmarco_minilm_ce_p8", "msmarco_minilm_ce_p4", "download"),
+    ("MiniLM-L6 cross-encoder, ONNX Runtime fp32", "msmarco_minilm_ce_onnx_t8", "msmarco_minilm_ce_onnx_t4", "onnx"),
+    ("MiniLM-L6 cross-encoder, ONNX Runtime int8", "msmarco_minilm_ce_onnx_int8_t8", "msmarco_minilm_ce_onnx_int8_t4",
+     "onnx"),
+    ("MiniLM-L12 cross-encoder, PyTorch", "msmarco_minilm12_ce_p8", "msmarco_minilm12_ce_p4", "download"),
+    ("bge-reranker-base, PyTorch", "bge_reranker_base_ce_p8", "bge_reranker_base_ce_p4", "download"),
+    ("all-MiniLM-L6-v2 bi-encoder, PyTorch", "minilm_bi_p8", "minilm_bi_p4", "download"),
+    ("bge-small-en-v1.5 bi-encoder, PyTorch", "bge_small_bi_p8", "bge_small_bi_p4", "download"),
+]
+
+NATIVE = [("Deterministic ranker", "det"), ("Distributor order", "distributor_order"), ("BM25", "bm25"),
+          ("MiniLM-L6 CE alone", CE), ("rank blend 0.5 det / 0.5 MiniLM-L6 CE", "hyb_rrblend_w0.5_" + CE),
+          ("rank blend 0.5 det / 0.5 MiniLM-L6 CE fine-tuned synth+real", "hyb_rrblend_w0.5_" + FT[2])]
 
 
-def lat_str(src):
-    if not src:
-        return "-", "-"
-    mt, lat = meta(src)
-    if lat is None:
-        return "-", "-"
-    lat = sorted(lat)
-    return "%d" % lat[len(lat) // 2], "%d" % lat[-1]
+def exists(m):
+    return bool(m) and os.path.exists(os.path.join(SCORES, m + ".json"))
 
 
-def ram(m, kind):
-    if kind == "laya":
-        p = os.path.join(OUT, "latency_laya.json")
-        if os.path.exists(p):
-            lj = json.load(open(p))
-            if m.startswith("laya_td") or "td_noul" in m:
-                v = lj.get("laya_td_noul_p8", {}).get("mem_after_mib")
-            else:
-                v = lj.get("laya_ml_noul_p8", {}).get("mem_after_mib")
-            if v:
-                return "%.1f GB (server)" % (v / 1024)
-        return "about 2 GB (server)"
-    if kind in ("neural", "onnx"):
-        for cand in (m.replace("_ecore", "_p8"), m):
-            mt, _ = meta(cand)
-            if mt and mt.get("rss_peak_mb"):
-                return "%d MB" % mt["rss_peak_mb"]
-    return kind
+def load(m):
+    with open(os.path.join(SCORES, m + ".json")) as f:
+        return json.load(f)
+
+
+def lat(m):
+    """(median, max) ms of a score file, or None."""
+    if not exists(m):
+        return None
+    xs = sorted(v["latency_ms"] for v in load(m)["queries"].values())
+    return xs[len(xs) // 2], xs[-1]
+
+
+def lat_str(m):
+    v = lat(m)
+    return ("%d / %d" % v) if v else "-"
+
+
+def ci_str(r):
+    ci = r.get("ndcg10_vs_det_ci95")
+    return ("[%+.3f, %+.3f]" % ci) if ci else ""
+
+
+def table(name, header, rows):
+    print("<!-- TABLE %s -->" % name)
+    print("| " + " | ".join(header) + " |")
+    print("|" + "---|" * len(header))
+    for r in rows:
+        print("| " + " | ".join(str(c) for c in r) + " |")
+    print()
 
 
 def main():
     data = load_dataset()
-    methods = [r[1] for r in ROWS if os.path.exists(os.path.join(SCORES, r[1] + ".json"))]
-    res, _ = evaluate(methods, data)
-    print("| method | NDCG@5 | NDCG@10 | P@3 | MRR | Spearman | ms/query 8 thr (median / max) | ms/query 4 thr (median / max) "
-          "| peak RAM | fits 20 s | dNDCG@10 vs det (95% CI) |")
-    print("|---|---|---|---|---|---|---|---|---|---|---|")
-    for label, m, p8, p4, kind in ROWS:
+    allm = sorted(f[:-5] for f in os.listdir(SCORES) if f.endswith(".json"))
+    res, _ = evaluate(allm, data)
+    nq = max(r["queries"] for r in res.values())
+
+    rows = []
+    for label, m, p8, p4, rss in ROWS:
         if m not in res:
             continue
         r = res[m]
-        src8 = p8 if p8 and os.path.exists(os.path.join(SCORES, p8 + ".json")) else m
-        med8, max8 = lat_str(src8)
-        med4, max4 = lat_str(p4) if p4 and os.path.exists(os.path.join(SCORES, p4 + ".json")) else ("-", "-")
-        fits = "yes" if max8 != "-" and float(max8) < 20000 else ("-" if max8 == "-" else "no")
-        ci = r.get("ndcg10_vs_det_ci95")
-        star = "" if src8 != m or kind not in ("neural", "laya") or m.startswith("laya_ml_pair") else ""
-        print("| %s | %s | %s | %s | %s | %s | %s / %s%s | %s / %s | %s | %s | %s |" % (
-            label, fmt(r["ndcg5"]), fmt(r["ndcg10"]), fmt(r["p3"]), fmt(r["mrr"]), fmt(r["spearman"]),
-            med8, max8, star, med4, max4, ram(m, kind), fits, ("[%+.3f, %+.3f]" % ci) if ci else ""))
-    print()
-    print("| method | " + " | ".join(CATS) + " |")
-    print("|---|" + "---|" * len(CATS))
-    for label, m, *_ in ROWS:
-        if m in res:
-            print("| %s | %s |" % (label, " | ".join(fmt(res[m]["ndcg10_" + c]) for c in CATS)))
+        src8 = p8 if exists(p8) else m
+        l8 = lat(src8)
+        mt = load(rss)["meta"] if exists(rss) else {}
+        fits = "-" if not l8 else ("yes" if l8[1] < 20000 else "no")
+        peak = ("%d MB" % mt["rss_peak_mb"]) if mt.get("rss_peak_mb") else ("in-process" if m.startswith(("det", "learned")) else "-")
+        rows.append((label, fmt(r["ndcg5"]), fmt(r["ndcg10"]), fmt(r["p3"]), fmt(r["mrr"]), fmt(r["spearman"]),
+                     lat_str(src8), lat_str(p4) if exists(p4) else "-", peak, fits, ci_str(r)))
+    table("RESULTS_TABLE", ["method", "NDCG@5", "NDCG@10", "P@3", "MRR", "Spearman", "ms/query 8 thr (median / max)",
+                            "ms/query 4 thr (median / max)", "peak RSS", "fits 20 s", "dNDCG@10 vs det (95% CI)"], rows)
+
+    table("CATEGORY_TABLE", ["method"] + CATS,
+          [[label] + [fmt(res[m]["ndcg10_" + c]) for c in CATS] for label, m, *_ in ROWS if m in res])
+
+    # neural models: size, licence, alone, best hybrid
+    base_meta = load(CE)["meta"]
+    rows = []
+    for label, m, p8 in SIGNALS:
+        if m not in res:
+            continue
+        mt = load(p8)["meta"] if exists(p8) else {}
+        hyb = [h for h in res if re.fullmatch(r"hyb_[a-z]+[0-9.w_]*_" + re.escape(m), h) and not h.startswith("hyb_main")]
+        best = max(hyb, key=lambda h: res[h]["ndcg10"]) if hyb else None
+        rows.append((label, mt.get("params_m", base_meta["params_m"]),
+                     ("%d" % round(mt["download_mb"])) if mt.get("download_mb") else "-",
+                     mt.get("licence", base_meta["licence"] + " (base)"), fmt(res[m]["ndcg10"]),
+                     ("%s (%s)" % (fmt(res[best]["ndcg10"]), load(best)["meta"]["kind"])) if best else "-"))
+    table("NEURAL_TABLE", ["model", "params (M)", "HF download (MB, all formats)", "licence", "NDCG@10 alone",
+                           "best hybrid NDCG@10 (kind)"], rows)
+
+    # fine-tuning runs
+    rows = []
+    zs = res[CE]
+    rows.append(("zero-shot (reference)", "-", "-", fmt(zs["ndcg10"]), fmt(zs["spearman"]),
+                 fmt(res["hyb_rrblend_w0.5_" + CE]["ndcg10"]), ci_str(res["hyb_rrblend_w0.5_" + CE])))
+    for label, m, _ in SIGNALS[5:]:
+        if m not in res:
+            continue
+        runs = load(m)["meta"]["runs"]
+        h = "hyb_rrblend_w0.5_" + m
+        rows.append((label, " / ".join(str(v["train_pairs"]) for v in runs.values()),
+                     " / ".join(str(v["train_seconds"]) for v in runs.values()), fmt(res[m]["ndcg10"]),
+                     fmt(res[m]["spearman"]), fmt(res[h]["ndcg10"]) if h in res else "-",
+                     ci_str(res[h]) if h in res else ""))
+    table("FINETUNE_TABLE", ["MiniLM-L6 cross-encoder", "training pairs (per fold)", "training s (per fold, 16 E-cores)",
+                             "NDCG@10 alone", "Spearman alone", "rank blend 0.5 NDCG@10",
+                             "blend dNDCG@10 vs det (95% CI)"], rows)
+
+    # learned weights
+    lm = load("learned_pairwise")["meta"]
+    table("LEARNED_TABLE", ["model", "NDCG@10", "Spearman"],
+          [(label, fmt(res[m]["ndcg10"]), fmt(res[m]["spearman"])) for label, m in
+           (("hand-set weights (production)", "det"), ("ridge (LOQO)", "learned_ridge"),
+            ("pairwise logistic (LOQO)", "learned_pairwise"))])
+    table("WEIGHTS_TABLE", ["feature", "hand-set weight", "pairwise logistic on all queries (sum of abs = 1)"],
+          [(f, "%.2f" % lm["hand_weights"][f], "%.2f" % lm["pairwise_weights_all_l1norm"][f]) for f in lm["features"]])
+
+    # hybrid grid
+    xs = [(l, x) for l, x in HYBRID_X if x in res]
+    rows = [["X alone"] + [fmt(res[x]["ndcg10"]) for _, x in xs]]
+    for label, kind in HYBRID_KINDS:
+        rows.append([label] + [fmt(res["hyb_%s_%s" % (kind, x)]["ndcg10"]) if "hyb_%s_%s" % (kind, x) in res else "-"
+                               for _, x in xs])
+    table("HYBRID_TABLE", ["hybrid (det = %s)" % fmt(res["det"]["ndcg10"])] + [l for l, _ in xs], rows)
+
+    # selection-corrected
+    p = os.path.join(OUT, "select_cv.json")
+    if os.path.exists(p):
+        with open(p) as f:
+            sc = json.load(f)
+        table("SELECT_CV_TABLE", ["family", "configurations", "LOQO NDCG@10", "best in sample (NDCG@10)",
+                                  "chosen (times out of %d)" % nq],
+              [(fam, v["configs"], fmt(v["loqo_ndcg10"]), "%s (%s)" % (v["best_in_sample"], fmt(v["best_in_sample_ndcg10"])),
+                ", ".join("%s (%d)" % (m, n) for m, n in v["picked"])) for fam, v in sc.items()])
+
+    # native candidates only
+    nat, _ = evaluate([m for _, m in NATIVE if exists(m)], data, native_only=True)
+    nn = max(r["queries"] for r in nat.values())
+    table("NATIVE_TABLE", ["method (%d queries, native candidates only)" % nn, "NDCG@10", "dNDCG@10 vs det (95% CI)"],
+          [(label, fmt(nat[m]["ndcg10"]), ci_str(nat[m])) for label, m in NATIVE if m in nat])
+
+    # latency and memory
+    rows = []
+    d = lat("det")
+    rows.append(("deterministic ranker (Java, cold JVM pass)", "%.1f / %.1f" % d, "same (single-threaded)",
+                 "in the KINA JVM", "-", "-", "none"))
+    for label, s8, s4, art in LATENCY:
+        if not exists(s8):
+            continue
+        mt = load(s8)["meta"]
+        size = ("%.0f MB download" % mt["download_mb"]) if art == "download" and mt.get("download_mb") else \
+            ("%.0f MB %s" % (mt["onnx_mb"], mt["onnx"])) if art == "onnx" else "-"
+        rows.append((label, lat_str(s8), lat_str(s4), "%d MB" % mt["rss_peak_mb"],
+                     ("%.1f" % mt["load_s"]) if "load_s" in mt else "-",
+                     ("%.4f" % mt["spearman_vs_torch"]) if "spearman_vs_torch" in mt else "-", size))
+    table("LATENCY_TABLE", ["method", "8 threads, median / max ms", "4 threads, median / max ms",
+                            "peak RSS (8 threads)", "load s", "Spearman vs PyTorch", "artefact"], rows)
 
 
 if __name__ == "__main__":

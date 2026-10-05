@@ -1,6 +1,7 @@
-"""Selection-corrected scores: inside a family of configurations, pick the best one on 31 queries (mean NDCG@10) and
+"""Selection-corrected scores: inside a family of configurations, pick the best one on all other queries (mean NDCG@10) and
 score the held-out query with it; repeat for every query (leave-one-query-out). This removes the optimism of reporting
-the best of many hybrids/variants measured on the same 32 queries.
+the best of many hybrids measured on the same 32 queries (the study's score files cover the 32 original
+queries; queries without scores in every file of a family are skipped).
 
     python3 scripts/research/select_cv.py            # families defined below
 """
@@ -13,8 +14,6 @@ from common import OUT, SCORES, load_dataset
 from evaluate import evaluate
 
 FAMILIES = {
-    "laya zero-shot (all HTTP/SDK variants)": r"^laya_(ml|en|td)_(?!.*(ft|_p[48]$))",
-    "hybrids det + laya_ml_noul": r"^hyb_(?!main).*_laya_ml_noul$",
     "hybrids det + ms-marco MiniLM-L6 CE": r"^hyb_(?!main).*_msmarco_minilm_ce_ecore$",
     "hybrids det + any signal": r"^hyb_(?!main)",
     "hybrids det + fine-tuned MiniLM CE (synth+real)": r"^hyb_(?!main).*_msmarco_minilm_ce_ft_synth_real$",

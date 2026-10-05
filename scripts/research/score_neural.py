@@ -1,6 +1,6 @@
-"""Non-Laya neural scorers (sentence-transformers) in the research container: bi-encoders and cross-encoders.
+"""Neural scorers (sentence-transformers) in the research container: bi-encoders and cross-encoders.
 
-    docker run --rm --cpuset-cpus=0-7 -e THREADS=8 ... kina-laya-research:local python score_neural.py <model-key> [suffix]
+    scripts/research/rc.sh -c 0-7 -t 8 python score_neural.py <model-key> [suffix]
 One model per process so ru_maxrss is that model's peak RAM. Latency per query = scoring every candidate of the query
 from scratch (query + candidate encoding, no embedding cache), batch size 64.
 """

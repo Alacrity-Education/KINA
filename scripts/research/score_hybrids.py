@@ -2,7 +2,7 @@
 
     python3 scripts/research/score_hybrids.py X [X ...]      # default: a fixed list of model signals
 For every X:
-  hyb_blend_w<w>_<X>      (1-w)*det + w*ranknorm(X)          (production formula; X=laya_ml_noul, w=0.2 is current KINA)
+  hyb_blend_w<w>_<X>      (1-w)*det + w*ranknorm(X)          (additive formula on the raw det score)
   hyb_rrblend_w<w>_<X>    (1-w)*ranknorm(det) + w*ranknorm(X)
   hyb_tie_<X>             det first, X only breaks exact det ties
   hyb_band05_<X>          det bands of width 0.05, X orders inside a band
@@ -18,8 +18,9 @@ import sys
 
 from common import SCORES, load_dataset, read_scores, write_scores
 
-DEFAULT_X = ["laya_ml_noul", "laya_ml_score", "msmarco_minilm_ce_ecore", "msmarco_minilm12_ce_ecore",
-             "bge_reranker_base_ce_ecore", "minilm_bi_ecore", "bge_small_bi_ecore", "laya_ml_embed"]
+DEFAULT_X = ["msmarco_minilm_ce_ecore", "msmarco_minilm12_ce_ecore", "bge_reranker_base_ce_ecore", "minilm_bi_ecore",
+             "bge_small_bi_ecore", "msmarco_minilm_ce_ft_real", "msmarco_minilm_ce_ft_synth",
+             "msmarco_minilm_ce_ft_synth_real"]
 WEIGHTS = [0.1, 0.2, 0.3, 0.5]
 
 
@@ -62,6 +63,8 @@ def main():
         xq = read_scores(xname)["queries"]
         res = {}
         for rec in data:
+            if rec["id"] not in det or rec["id"] not in xq:   # e.g. queries added after X was scored
+                continue
             d = det[rec["id"]]
             h = hybrids(d["scores"], xq[rec["id"]]["scores"], d["latency_ms"], xq[rec["id"]]["latency_ms"])
             for name, (sc, ms) in h.items():

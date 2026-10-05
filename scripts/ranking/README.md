@@ -82,12 +82,13 @@ The test asserts blended NDCG@10 >= the deterministic ranker's and >= 0.90.
 
 ## Tokenizer fixtures
 
-The committed fixtures were generated with transformers 5.18 (the version the ranking study scored with, image of
-`scripts/research/docker`). Use a transformers 5.x environment to regenerate them:
+The committed fixtures were generated with transformers 5.18 (the version the ranking study scored with). Use a
+transformers 5.x environment to regenerate them, for example a plain `python:3.11-slim`:
 
 ```bash
-docker run --rm -v "$PWD":/repo:ro -v <dir with vocab.txt and tokenizer.json>:/model:ro -w /repo <image with transformers 5.x> \
-  python scripts/ranking/make_tokenizer_fixtures.py /model > src/test/resources/ce/tokenizer-fixtures.jsonl
+docker run --rm -v "$PWD":/repo:ro -v <dir with vocab.txt and tokenizer.json>:/model:ro -w /repo python:3.11-slim \
+  sh -c 'pip install -q "transformers>=5,<6" tokenizers && python scripts/ranking/make_tokenizer_fixtures.py /model' \
+  > src/test/resources/ce/tokenizer-fixtures.jsonl
 ```
 
 transformers 4.57 (the fine-tuning image) differs in exactly one corner: when both the query and the document are

@@ -1,8 +1,8 @@
 """ONNX Runtime check for the MiniLM cross-encoder (the Java-only deployment path: onnxruntime-java runs the same graph).
 
-    scripts/research/rc.sh -c 0-7 -t 8 ...   but with the ONNX image:
-    docker run ... kina-laya-research:onnx python score_onnx.py <threads> [int8]
-Exports cross-encoder/ms-marco-MiniLM-L6-v2 to ONNX with optimum (fp32; optional dynamic INT8 quantisation), scores
+    scripts/research/rc.sh -c 0-7 -t 8 python score_onnx.py <threads> [int8]
+Exports cross-encoder/ms-marco-MiniLM-L6-v2 to ONNX with torch.onnx (opset 17, dynamic batch/sequence, the same export
+as scripts/ranking/finetune_cross_encoder.py; fp32, optional dynamic INT8 quantisation) into /ft, scores
 every query with onnxruntime (intra_op_num_threads = threads), and records latency, RSS and the agreement with the
 PyTorch scores (Spearman over all candidates). Writes msmarco_minilm_ce_onnx[_int8]_t<threads>.
 """
@@ -17,18 +17,35 @@ import numpy as np
 from common import candidate_text, load_dataset, load_det_features, read_scores, write_scores
 
 
+def export(hf_id, export_dir):
+    import torch
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    tok = AutoTokenizer.from_pretrained(hf_id)
+    model = AutoModelForSequenceClassification.from_pretrained(hf_id).eval()
+    os.makedirs(export_dir, exist_ok=True)
+    enc = tok(["10uF X7R 0805"], ["YAGEO | CC0805KKX7R7BB106 | 10uF 16V X7R"], return_tensors="pt")
+    names = ["input_ids", "attention_mask", "token_type_ids"]
+    axes = {n: {0: "batch", 1: "sequence"} for n in names}
+    axes["logits"] = {0: "batch"}
+    kwargs = dict(input_names=names, output_names=["logits"], dynamic_axes=axes, opset_version=17,
+                  do_constant_folding=True)
+    path = os.path.join(export_dir, "model.onnx")
+    try:
+        torch.onnx.export(model, tuple(enc[n] for n in names), path, dynamo=False, **kwargs)
+    except TypeError:  # torch without the dynamo switch
+        torch.onnx.export(model, tuple(enc[n] for n in names), path, **kwargs)
+    tok.save_pretrained(export_dir)
+
+
 def main():
     threads = int(sys.argv[1]) if len(sys.argv) > 1 else 8
     int8 = len(sys.argv) > 2 and sys.argv[2] == "int8"
     import onnxruntime as ort
-    from optimum.onnxruntime import ORTModelForSequenceClassification
     from transformers import AutoTokenizer
     hf_id = "cross-encoder/ms-marco-MiniLM-L6-v2"
-    export_dir = "/ft/onnx_msmarco_minilm_l6"
+    export_dir = os.environ.get("ONNX_EXPORT_DIR", "/ft/onnx_msmarco_minilm_l6")
     if not os.path.exists(os.path.join(export_dir, "model.onnx")):
-        m = ORTModelForSequenceClassification.from_pretrained(hf_id, export=True)
-        m.save_pretrained(export_dir)
-        AutoTokenizer.from_pretrained(hf_id).save_pretrained(export_dir)
+        export(hf_id, export_dir)
     path = os.path.join(export_dir, "model.onnx")
     if int8:
         from onnxruntime.quantization import QuantType, quantize_dynamic

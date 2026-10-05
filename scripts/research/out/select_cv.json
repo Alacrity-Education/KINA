@@ -1,32 +1,4 @@
 {
- "laya zero-shot (all HTTP/SDK variants)": {
-  "configs": 20,
-  "loqo_ndcg10": 0.864432137134062,
-  "best_in_sample": "laya_ml_pair_top10",
-  "best_in_sample_ndcg10": 0.864432137134062,
-  "picked": [
-   [
-    "laya_ml_pair_top10",
-    32
-   ]
-  ]
- },
- "hybrids det + laya_ml_noul": {
-  "configs": 12,
-  "loqo_ndcg10": 0.8838190019074743,
-  "best_in_sample": "hyb_tie_laya_ml_noul",
-  "best_in_sample_ndcg10": 0.8886473652975734,
-  "picked": [
-   [
-    "hyb_tie_laya_ml_noul",
-    29
-   ],
-   [
-    "hyb_rrblend_w0.1_laya_ml_noul",
-    3
-   ]
-  ]
- },
  "hybrids det + ms-marco MiniLM-L6 CE": {
   "configs": 12,
   "loqo_ndcg10": 0.9128945419963351,
@@ -40,7 +12,7 @@
   ]
  },
  "hybrids det + any signal": {
-  "configs": 168,
+  "configs": 96,
   "loqo_ndcg10": 0.9034495272361136,
   "best_in_sample": "hyb_rrblend_w0.5_msmarco_minilm_ce_ft_synth_real",
   "best_in_sample_ndcg10": 0.9165115421090984,
