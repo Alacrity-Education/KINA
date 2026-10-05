@@ -51,7 +51,7 @@ SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V4). Templates:
 ## Conventions
 
 - Jackson 3: databind is `tools.jackson.*`; annotations stay `com.fasterxml.jackson.annotation.*`. Exceptions are unchecked. DTOs use explicit `@JsonProperty` snake_case names; do not rely on naming strategies.
-- Domain and DTO types are Java records. No Lombok.
+- Domain and DTO types are Java records. Lombok is used where it shortens code: `@Slf4j`, `@RequiredArgsConstructor`, `@Builder(toBuilder = true)` on wide records, `@With`, `@Getter`, `@UtilityClass` (the one experimental exception). Not allowed: `@Data` on identity or security types, `@SneakyThrows`, Lombok `val`/`var`, `@Synchronized`, `@Delegate`. `KinaProperties` stays plain records (Spring binding). Lombok 1.18.48+ is required on JDK 24+; see `docs/DEVELOPMENT.md`.
 - Persistence is `JdbcClient` and plain SQL. No JPA. Cached parts are JSONB (`Part` as camelCase JSON).
 - Group checks must stay at all three points: login (`OidcUserSynchronizer` + `OidcAccessPolicy`), every refresh grant (`MembershipVerifier.checkRefreshGrant`, synchronous) and bearer requests (blocked users get 401; static tokens re-check in the background, never blocking the request). A refusal on refresh is `invalid_grant`. Do not add a path that issues or renews a token without them.
 - Never log e-mail addresses (or names) of refused users. Log the provider subject or the user id only.
