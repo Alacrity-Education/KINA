@@ -60,9 +60,24 @@ public class DistributorStatusService {
         CacheSummary cache = stats == null ? null : new CacheSummary(properties.cache().ttl().toString(),
                 stats.parts(), stats.freshParts(), stats.searches(), stats.oldestFetch());
         RankingService.RankingStatus r = ranking.status();
-        RankingSummary rankingSummary = new RankingSummary(r.layaEnabled(), r.layaHealthy(), r.model(),
+        RankingSummary rankingSummary = new RankingSummary(r.ready() ? "blended" : "fallback",
+                r.crossEncoderEnabled(), r.ready(), modelName(properties.ranking().crossEncoder().modelUrl()),
+                r.modelVariant(), r.modelRevision(), r.modelDir(), r.threads(), r.avgLatencyMs(), r.lastError(),
                 r.maxCandidates(), r.weight(), properties.ranking().timeout().toString());
         return new DistributorStatusResponse(distributors, cache, rankingSummary);
+    }
+
+    /** {@code cross-encoder/ms-marco-MiniLM-L6-v2} for a Hugging Face URL, else the URL or path itself. */
+    static String modelName(String modelUrl) {
+        if (modelUrl == null) {
+            return null;
+        }
+        int host = modelUrl.indexOf("huggingface.co/");
+        int resolve = modelUrl.indexOf("/resolve/");
+        if (host >= 0 && resolve > host) {
+            return modelUrl.substring(host + "huggingface.co/".length(), resolve);
+        }
+        return modelUrl;
     }
 
     private DistributorStatus status(Distributor distributor, CacheStatistics stats) {

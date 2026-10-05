@@ -133,7 +133,7 @@ class McpToolsIntegrationTest {
 
         assertThat(first.path("query").asString()).isEqualTo("10uF X7R 0805");
         assertThat(first.path("parsed").path("dielectric").asString()).isEqualTo("X7R");
-        assertThat(first.path("ranking").asString()).isIn("laya", "fallback");
+        assertThat(first.path("ranking").asString()).isIn("blended", "fallback");
         JsonNode mouser = first.path("distributors").get(0);
         assertThat(mouser.path("distributor").asString()).isEqualTo("MOUSER");
         assertThat(mouser.path("cache").asString()).isEqualTo("miss");
@@ -225,7 +225,11 @@ class McpToolsIntegrationTest {
         assertThat(list.path("distributors").get(2).path("configured").asBoolean()).isTrue();
         assertThat(list.path("distributors").get(1).path("configured").asBoolean()).isFalse();
         assertThat(list.path("cache").path("parts").asLong()).isPositive();
-        assertThat(list.path("ranking").path("model").asString()).isEqualTo("multilingual");
+        assertThat(list.path("ranking").path("model").asString()).isEqualTo("cross-encoder/ms-marco-MiniLM-L6-v2");
+        // Spring tests never download the model (src/test/resources/config/application.yml)
+        assertThat(list.path("ranking").path("ready").asBoolean()).isFalse();
+        assertThat(list.path("ranking").path("mode").asString()).isEqualTo("fallback");
+        assertThat(list.path("ranking").path("cross_encoder_enabled").asBoolean()).isTrue();
     }
 
     @Test

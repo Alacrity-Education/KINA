@@ -18,7 +18,8 @@ requirements; where this document is more specific, follow this document.
 | HTTP clients | Spring `RestClient` on the JDK `HttpClient`, explicit connect/read timeouts everywhere |
 | Concurrency | `spring.threads.virtual.enabled=true`; distributor fetches run in parallel on virtual threads |
 | Tests | JUnit 5, Mockito, `MockRestServiceServer` / recorded JSON fixtures, Testcontainers 2.x PostgreSQL (`org.testcontainers:testcontainers-postgresql`, class `org.testcontainers.postgresql.PostgreSQLContainer`) for repository and context tests |
-| Packaging | Multi-stage `Dockerfile`, `compose.yaml` with services `kina`, `postgres`, `laya-serve`; `compose.cuda.yaml` GPU overlay |
+| Ranking model | In-process cross-encoder `cross-encoder/ms-marco-MiniLM-L6-v2` (Apache-2.0) on ONNX Runtime for Java `com.microsoft.onnxruntime:onnxruntime:1.30.0` (CPU, bundled native library), own BERT WordPiece tokenizer (section 3.5) |
+| Packaging | Multi-stage `Dockerfile`, `compose.yaml` with services `kina`, `postgres` |
 
 Verify every starter artifact name against the Spring Boot 4.1.1 `spring-boot-dependencies` BOM
 before writing the POM (Boot 4 renamed several starters, e.g. `spring-boot-starter-webmvc`,
@@ -37,8 +38,10 @@ ro.alacrity.kina
 │   ├── tme/         TmeClient, TmeTokenManager, TmeProperties, response records, TmePartMapper
 │   └── lcsc/        JlcpcbDatabaseManager (download/refresh), JlcpcbSqliteSearch, LcscClient, JlcpcbPriceParser
 ├── cache/           PartCacheRepository, SearchCacheRepository, CacheProperties
-├── search/          QueryParser, ParametricExtractor, DeterministicRanker, PartRanker, LayaPartRanker,
-│                    RankingService, RankingScoreCache, PartSearchService, PartLookupService, DistributorStatusService
+├── search/          QueryParser, ParametricExtractor, DeterministicRanker, PartRanker, RankingService,
+│   │                RankingScoreCache, PartSearchService, PartLookupService, DistributorStatusService
+│   └── ce/          CrossEncoderPartRanker, CrossEncoderModel (download/load), ModelDownloader, ModelLayout,
+│                    BertTokenizer, ScoringBackend, OnnxScoringBackend
 ├── mcp/             KinaMcpTools (@McpTool methods)
 ├── api/             PartsController, DistributorsController (/api/v1), ApiExceptionHandler (ProblemDetail)
 ├── security/        SecurityConfig, SecurityProperties, DevModeAuthenticationFilter, BearerTokenAuthenticationFilter,
@@ -53,7 +56,7 @@ ro.alacrity.kina
 ```java
 public enum Distributor { LCSC, TME, MOUSER }
 
-public enum RankingMode { LAYA, FALLBACK }
+public enum RankingMode { BLENDED, FALLBACK }   // JSON "blended" / "fallback"
 
 public record PriceBreak(int quantity, BigDecimal unitPrice, String currency) {}
 
@@ -208,38 +211,49 @@ Each distributor entry reports the phrase as `distributor_query` (null when the 
 
 ```java
 public interface PartRanker {
-    /** Scores candidates for one query. Returns a score in [0,1] per candidate key
-     *  (distributor + ":" + distributorPartNumber). Throws on failure/timeout; caller falls back. */
+    /** Scores candidates for one query. Returns a raw score per candidate key (distributor + ":" +
+     *  distributorPartNumber), higher = more relevant; only the order matters. Throws RankingException
+     *  (reason TIMEOUT, UNAVAILABLE, BUSY, FAILED, DISABLED) on failure/timeout; the caller falls back. */
     Map<String, Double> rank(ParsedQuery query, List<Part> candidates, Duration budget) throws RankingException;
-    String name();   // "laya"
+    String name();   // "cross-encoder"
 }
 ```
+
+The only implementation is `CrossEncoderPartRanker` (section 3.5). The decision behind it is
+`docs/research/ranking-evaluation-2026-10-05.md` (section 9): the deterministic ranker stays the primary signal, the
+cross-encoder is a second signal in a 50/50 **rank** blend, the deterministic order is the fallback.
 
 `RankingService.rank(ParsedQuery, Map<Distributor, List<Part>> fetched, Duration budget)`:
 
 1. `DeterministicRanker.score(ParsedQuery, Part)` for every part (section 3.4). Sort per distributor.
-2. Candidate set for Laya: top `kina.ranking.laya.max-candidates` (default 40) across requested
-   distributors, shared proportionally (at least 5 per distributor that has results). Candidates
-   whose score is already cached in `RankingScoreCache` (in-memory, key = query_key + part key,
-   TTL `kina.ranking.score-cache-ttl` default 1h, max 50 000 entries) are not re-sent.
-3. Acquire the Laya semaphore (`kina.ranking.laya.max-concurrent-requests`, default 1) with a
-   bounded wait; the wait counts inside the budget (`kina.ranking.timeout`, default 18s).
-4. Call `PartRanker.rank`. Laya scores are **rank-normalised within the candidate set** (best = 1.0, worst = 0.0,
-   ties share a value) before blending, because the raw probabilities cluster near 1.0. Final score =
-   `(1 - w) * deterministic + w * layaNormalised`, `w = kina.ranking.laya.weight` (default **0.2**). Parts not sent to
-   Laya are ordered after the Laya-ranked ones by deterministic score. Ties: deterministic score, then stock desc, then
-   lowest unit price asc. The deterministic ranker is the primary signal by design: see "Measured zero-shot quality" in 3.5.
-5. On any failure, timeout, or `kina.ranking.laya.enabled=false`: order by deterministic score and
-   report `RankingMode.FALLBACK` with a short `rankingNote` (e.g. `"laya timeout after 18s"`). Exception: an HTTP 503
-   with `Retry-After` (laya-serve busy) is retried after that delay (at least 1 s) when the wait ends within the
-   remaining ranking budget; otherwise, and for 429 or a 503 without the header, the fallback applies at once
-   (`"laya busy: HTTP 503"`). The ranking budget is not extended by rate limiting.
+2. Candidate set: the deterministic top `kina.ranking.cross-encoder.max-candidates` (default 40) across the requested
+   distributors, shared proportionally (at least 5 per distributor that has results). Candidates whose raw model score
+   is already in `RankingScoreCache` (in-memory, key = normalised query key + part key, TTL
+   `kina.ranking.score-cache-ttl` default 1h, max 50 000 entries, cleared when a model is loaded) are not re-scored.
+3. Call `PartRanker.rank` for the rest with the remaining budget (`kina.ranking.timeout`, default **5s**; 40 candidates
+   take about 0.1 to 0.35 s, so the 20 s requirement holds with a wide margin). The ranker itself bounds concurrency
+   (`max-concurrent`, default 2); the wait for a slot counts inside the budget.
+4. **Rank-normalise both signals within the candidate set** (dense rank of the score rounded to 4 decimals; best 1.0,
+   worst 0.0, linear in between; ties share a value; a single distinct value maps to 1.0):
+   `final = (1 - w) * ranknorm(deterministic) + w * ranknorm(crossEncoder)`, `w = kina.ranking.cross-encoder.weight`
+   (default **0.5**). Rank-normalising the deterministic side matters: its good candidates sit in a narrow band
+   (about 0.7 to 0.95), so adding a rank-normalised model score to the raw deterministic score lets the model reshuffle
+   the top (study, section 7). Parts outside the candidate set follow the candidates of their distributor, ordered by
+   deterministic score, with score `lowest candidate score of the distributor * deterministic`. Ties: deterministic
+   score, then stock desc, then lowest unit price asc. Response `ranking: "blended"`.
+5. Whenever the cross-encoder cannot score, order by deterministic score (score = deterministic score) and report
+   `RankingMode.FALLBACK` (`ranking: "fallback"`) with a `rankingNote`:
+   `"cross-encoder disabled"` (`kina.ranking.cross-encoder.enabled=false`), `"cross-encoder model not loaded yet"`
+   (still downloading/loading, or the download failed), `"cross-encoder timeout after 5s"` (names the ranking budget),
+   `"cross-encoder timeout: budget exhausted"` (no budget left before the call), `"cross-encoder busy: no free slot
+   within 5s"`, `"cross-encoder failed: <reason>"`. Fully cached candidate sets are blended even while the model is
+   not loaded.
 
 Batch search fetches the queries in parallel (at most 4 queries at a time, to respect distributor rate limits),
-then ranks each query independently through the same path (sequentially through the semaphore), each with
-`min(kina.ranking.timeout, remaining batch budget)`. The ranking phase has `kina.ranking.batch-timeout` (default
-60s); queries reached after it expired are ranked with a zero budget (fallback ranking, `ranking_note`
-`"batch ranking budget of 60s exhausted"`; Laya scores already in `RankingScoreCache` are still used).
+then ranks each query independently through the same path, each with `min(kina.ranking.timeout, remaining batch
+budget)`. The ranking phase has `kina.ranking.batch-timeout` (default 60s); queries reached after it expired are ranked
+with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 60s exhausted"`; scores already in
+`RankingScoreCache` are still used).
 
 ### 3.4 Deterministic ranking and query parsing
 
@@ -333,41 +347,84 @@ With these weights, for `female header 1x6 right angle 2.54mm`: 1x6 female right
 2x3 female right angle (-0.10) > 1x6 female straight (-0.30) > 1x10 female right angle (-0.60) = 1x6 male right angle
 (-0.60, gender and type) > unrelated parts.
 
-### 3.5 Laya ranker (`LayaPartRanker`)
+### 3.5 Cross-encoder ranker (`search/ce`)
 
-Endpoint `POST {kina.ranking.laya.url}/v1/systemone/batch` (`LAYA_URL`; default `http://localhost:8000`, compose sets
-`http://laya-serve:8000`),
-optional bearer `kina.ranking.laya.api-key`, `model = kina.ranking.laya.model` (default `multilingual`),
-`sort_by_length = true`, connect timeout 2s, read timeout = remaining budget.
+**Model.** `cross-encoder/ms-marco-MiniLM-L6-v2` (BERT, 6 layers, 22.7 M parameters, Apache-2.0), run inside the KINA
+JVM with ONNX Runtime for Java (CPU). No sidecar, no HTTP hop, part data never leaves the process.
 
-One state per candidate, serialised as compact JSON:
+**Measured (study `docs/research/ranking-evaluation-2026-10-05.md`, 32 labelled queries, 1259 candidates, NDCG@10):**
 
-```json
-{"request": "10uF X7R 0805 MLCC", "candidate": {"manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106",
- "description": "...", "package": "0805", "attributes": {"Capacitance": "10uF", "Voltage": "16V", "Dielectric": "X7R", "Tolerance": "20%"}}}
+| method | NDCG@10 | ms per query, 40 candidates (8 threads, median / max) |
+|---|---|---|
+| deterministic ranker alone | 0.892 (0.898 with connector-aware parsing) | < 5 |
+| cross-encoder alone, fp32 / int8 | 0.874 / 0.877 | 165 / 335; int8 85 / 200 |
+| rank blend 0.5 det / 0.5 cross-encoder (shipped) | **0.913** (+0.021, 95% CI +0.003 to +0.041) | |
+| same, cross-encoder fine-tuned on synthetic rubric labels + real labels (2-fold) | 0.917 | |
+| previous production blend (det + 0.2 x rank-normalised decision-model score, removed) | 0.823 | 2400 |
+
+Largest gains on discretes, ICs and connectors (words the parametric parser does not model: RS-485 vs CAN, `1x4P`,
+unidirectional); passives and vague requests are not hurt. The Java implementation reproduces the study exactly
+(`CrossEncoderEvaluationTest`, fp32: cross-encoder alone 0.874 with identical per-category numbers).
+
+**Pair text.** Query = the user's text as received (`ParsedQuery.originalText()`). Document = the study's
+`candidate_text` (`scripts/research/common.py`): non-empty parts joined with `" | "`:
+`manufacturer | mpn | description | category | "package " + packageName | "k: v; k: v"` where the attributes are the
+distributor attributes followed by the comparable attributes `ParametricExtractor.enrich` adds. Example:
+`YAGEO | CC0805KKX7R7BB106 | 10uF 16V X7R ±10% | Capacitors / Multilayer Ceramic Capacitors MLCC - SMD/SMT | package 0805 | Capacitance: 10uF; Voltage: 16V; Tolerance: 10%; Dielectric: X7R; Package: 0805; Mounting: SMD; Family: capacitor`.
+
+**Tokenizer (`BertTokenizer`).** BERT uncased WordPiece in Java, token-for-token equal to the Hugging Face fast
+tokenizer of the model (`BertTokenizerTest`, 143 fixtures from `scripts/ranking/make_tokenizer_fixtures.py` with µ, Ω,
+℃, ±, Chinese LCSC descriptions, `1x6P`, `2.54mm`, accents, full-width forms, control characters, literal special
+tokens): clean text (drop control/format characters, whitespace to space), spaces around CJK ideographs, NFD and
+accent removal, lower-case; split on whitespace and punctuation; greedy longest-match WordPiece with `##`, `[UNK]` for
+unknown or over-long (> 100 characters) words. Pairs are `[CLS] query [SEP] document [SEP]` with `token_type_ids`
+0/1 and an all-ones `attention_mask`, truncated "longest first" (the document loses tokens first) to
+`max-sequence-length` (default 256; the longest pair of the evaluation set is 252 tokens, so this equals the study's
+512).
+
+**Inference (`CrossEncoderPartRanker`, `OnnxScoringBackend`).** One shared `OrtSession` (`run` is thread-safe),
+`intraOpNumThreads = kina.ranking.cross-encoder.threads` (0 = `min(4, availableProcessors)`), inter-op 1, all graph
+optimisations. Pairs are scored in batches of `batch-size` (16), padded to the longest pair of the batch; the single
+logit per pair is the raw score. At most `max-concurrent` (2) calls run at once; callers wait for a slot within their
+budget. The budget is checked between batches and an inference running past it is terminated
+(`RunOptions.setTerminate`). Health: `isReady()`, `status()` (variant, ONNX file, model dir, revision, threads, last
+error, average latency); one warm-up pair runs after loading. Each call logs at DEBUG
+`cross-encoder scored N candidates in M ms (T threads, <file>)`.
+
+**Model files (`CrossEncoderModel`, `ModelDownloader`, `ModelLayout`).** Directory `kina.ranking.cross-encoder.model-dir`
+(env `KINA_CROSS_ENCODER_MODEL_DIR`; default `${KINA_JLCPCB_DATA_DIR}/../cross-encoder`, i.e. `/data/cross-encoder` in
+Docker and `./data/cross-encoder` locally), layout of the Hugging Face repository:
+
+```
+vocab.txt  config.json  tokenizer_config.json  model.json (KINA manifest)
+onnx/model.onnx                     fp32, 91 MB
+onnx/model_qint8_avx512_vnni.onnx   int8 (signed), 23 MB; also used on AVX-VNNI and ARM CPUs
+onnx/model_quint8_avx2.onnx         int8 (unsigned), 23 MB; AVX2 CPUs without VNNI
 ```
 
-Question (identical for every state; a single question halves the CPU time compared with two):
+- Variant `kina.ranking.cross-encoder.variant` = `int8` (default) or `fp32`. int8 tries the file matching the CPU
+  (`/proc/cpuinfo` flags), then the other int8 file, then fp32; a file that is missing at the source (404) or fails to
+  create a session or run the warm-up is skipped. x86 without AVX2 uses fp32. Measured in Java on the reference host
+  (AVX-VNNI, 4 threads, 40 candidates): signed int8 0.878 alone / 0.913 blended, median 125 ms, max 256 ms; unsigned
+  int8 0.867 / 0.911, same speed; fp32 0.874 / 0.913, median 256 ms, max 476 ms.
+- Startup never blocks: after `ApplicationReadyEvent` a virtual thread downloads missing files from
+  `kina.ranking.cross-encoder.model-url` (default `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/`),
+  loads the tokenizer and the session and warms it up. Each file is streamed to `<dir>/tmp/*.part`, its size checked
+  against `X-Linked-Size` or `Content-Length`, its SHA-256 against `X-Linked-Etag` (LFS files), then moved atomically
+  into place. `model.json` records `source`, `repo`, `revision` (`X-Repo-Commit`), `variant`, `onnx_file`,
+  `downloaded_at` and per-file size and SHA-256. Timeouts: connect 10 s, `download-timeout` (10 min) per file.
+- Files already present are used as they are (pre-provisioned or offline directory). `auto-download: false` never
+  downloads (tests).
+- `model-url` may point to any HTTP(S) directory with the same layout, or to a local directory (absolute path or
+  `file:` URI), which is used in place (e.g. a fine-tuned model from `scripts/ranking/finetune_cross_encoder.sh`).
+- A failed attempt is logged once at WARN (again only when the reason changes) and retried every `check-interval`
+  (1h); until then searches report `ranking: "fallback"`, note `"cross-encoder model not loaded yet"`.
+- Memory: the int8 session adds roughly 100 to 200 MB of native memory to the JVM process (fp32 about 150 to 250 MB).
 
-```json
-{
-  "fits": {"type": "noul", "instructions": "The candidate electronic component satisfies every requirement stated in the request: component type, value, tolerance, voltage or current rating, dielectric or technology, package or footprint and mounting type."}
-}
-```
-
-Raw score per candidate = `answers.fits.noul`; `RankingService` rank-normalises it (section 3.3). Make the question text
-and the state field list configurable in code constants so a fine-tuned checkpoint can be swapped in.
-Never send part data anywhere except the configured local Laya URL.
-
-**Measured zero-shot quality (2026-10-05, laya 0.3.27, `multilingual` checkpoint, CPU, 8 threads):** 40 states x 2
-questions took 6.5 s (163 ms/state); 40 x 1 question about 3.5 s. On a 10-candidate labelled set for
-"10uF X7R 0805 MLCC ceramic capacitor" (3 true matches, 7 distractors) the `fits` probability was 0.996 for matches
-and 0.78 on average for distractors, but a 10k resistor scored 0.98 and the X5R variant 0.01; only 2 of the 3 matches
-ranked in the top 3. `score`, `choice` and per-attribute `noul` shapes, plain-text states and the `typed-decisions`
-checkpoint were all worse or equal. Conclusion: zero-shot Laya is a weak secondary signal, hence the low default
-weight, rank normalisation and the deterministic ranker as primary. The labelled set lives in the test fixtures
-(`LayaRankerEvaluationTest`, runs only when `KINA_LAYA_TEST_URL` is set) so a fine-tuned checkpoint can be re-evaluated.
-A warm Laya container for local experiments can be started with the compose file (`laya-serve` service).
+**Evaluation.** `CrossEncoderEvaluationTest` (runs only when `KINA_CROSS_ENCODER_TEST_MODEL_DIR` names a model
+directory; `KINA_CROSS_ENCODER_TEST_VARIANT` = int8|fp32; `KINA_CROSS_ENCODER_TEST_SCORES_DIR` writes score files
+for `scripts/research/evaluate.py`) ranks every query of `docs/research/data/ranking-eval.jsonl` through the
+production `RankingService` and asserts blended NDCG@10 >= the deterministic ranker's and >= 0.90.
 
 ### 3.6 Rate limiting
 
@@ -441,7 +498,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache) | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results}`, 1..20), `distributors`, `bypass_cache` | `{ "results": [SearchResponse...] }` |
 | `get_part` | `distributor` (case-insensitive), `part_number`, `bypass_cache` | `PartLookupResponse` `{found, distributor, part_number, cache, error, part}`; unknown/out-of-stock parts and distributor failures return `found: false` (with `error` for failures) instead of a tool error |
-| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{laya_enabled, laya_healthy, model, max_candidates, weight, timeout}`. Never calls the Mouser/TME APIs |
+| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`. Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 `SearchResponse` JSON (snake_case):
@@ -450,7 +507,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 {
   "query": "10uF X7R 0805",
   "parsed": {"family": "capacitor", "capacitance": "10uF", "dielectric": "X7R", "package": "0805", "keywords": []},
-  "ranking": "laya",
+  "ranking": "blended",
   "ranking_note": null,
   "distributors": [
     {
@@ -814,17 +871,23 @@ kina:
     distributor-timeout: 12s     # active work per distributor fetch; rate-limit waits do not count
     max-request-duration: 2m     # hard cap per request (search, whole batch, get_part) incl. rate-limit waits
   ranking:
-    timeout: 18s
+    timeout: 5s                  # per query (deterministic + cross-encoder)
     batch-timeout: 60s
     score-cache-ttl: 1h
-    laya:
-      enabled: ${KINA_LAYA_ENABLED:true}
-      url: ${LAYA_URL:http://localhost:8000}
-      api-key: ${LAYA_API_KEY:}
-      model: ${KINA_LAYA_MODEL:multilingual}
+    cross-encoder:               # section 3.5
+      enabled: ${KINA_CROSS_ENCODER_ENABLED:true}
+      variant: ${KINA_CROSS_ENCODER_VARIANT:int8}          # int8 | fp32
+      model-dir: "${KINA_CROSS_ENCODER_MODEL_DIR:${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}/../cross-encoder}"
+      model-url: "${KINA_CROSS_ENCODER_MODEL_URL:https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/}"
+      threads: ${KINA_CROSS_ENCODER_THREADS:0}              # 0 = min(4, available processors)
+      max-concurrent: 2
+      batch-size: 16
+      max-sequence-length: 256
       max-candidates: 40
-      max-concurrent-requests: ${KINA_LAYA_MAX_CONCURRENT:1}
-      weight: 0.2
+      weight: 0.5
+      check-interval: 1h
+      download-timeout: 10m
+      auto-download: true        # false in src/test/resources/config/application.yml
   distributors:
     mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
@@ -845,28 +908,25 @@ not break development mode startup.
   then copy `src`, `package -DskipTests`); stage 2 `eclipse-temurin:21-jre`, non-root user `kina` (uid 10001), `/data`
   volume, `HEALTHCHECK` on `/actuator/health` (curl), `ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED",
   "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/kina.jar"]` (native access for sqlite-jdbc;
-  heap sized from the container memory limit; extra flags via `JAVA_TOOL_OPTIONS`).
-- `compose.yaml`: top-level `name: kina` (volumes are `kina_kina-data`, `kina_pgdata`, `kina_laya-models`, network
-  `kina_default`; a pre-seeded JLCPCB file in `kina_kina-data` is adopted at startup, see 9.3). Services:
-  - `kina`: build `.`, ports `${KINA_PORT:-8080}:8080`, `env_file: .env` (optional), environment for datasource/JLCPCB dir and
-    `LAYA_URL=http://laya-serve:8000` (overrides `.env`), volume `kina-data:/data`, `mem_limit: ${KINA_MEM_LIMIT:-2g}` (heap
-    = 75%), `depends_on: postgres (healthy)`; Laya is not a hard dependency (fallback ranking).
+  heap sized from the container memory limit; extra flags via `JAVA_TOOL_OPTIONS`). The ONNX Runtime jar bundles its
+  native library (linux-x64/aarch64), extracted to the temp directory at first use; it loads in `eclipse-temurin:21-jre`
+  as the non-root user.
+- `compose.yaml`: top-level `name: kina` (volumes are `kina_kina-data`, `kina_pgdata`, network `kina_default`; a
+  pre-seeded JLCPCB file in `kina_kina-data` is adopted at startup, see 9.3, and pre-provisioned cross-encoder files in
+  `/data/cross-encoder` are used without download, see 3.5). Services:
+  - `kina`: build `.`, ports `${KINA_PORT:-8080}:8080`, `env_file: .env` (optional), environment for the datasource,
+    `KINA_JLCPCB_DATA_DIR=/data/jlcpcb` and `KINA_CROSS_ENCODER_MODEL_DIR=/data/cross-encoder`, volume `kina-data:/data`,
+    `mem_limit: ${KINA_MEM_LIMIT:-2g}` (heap = 75%; the ONNX Runtime session lives outside the heap),
+    `depends_on: postgres (healthy)`.
   - `postgres`: `postgres:17-alpine`, `POSTGRES_DB/USER/PASSWORD=kina`, volume `pgdata`, healthcheck `pg_isready`.
-  - `laya-serve`: build from the Laya git repository (`context: https://github.com/NandhaKishorM/laya.git#v0.3.27`,
-    args `TORCH_INDEX=cpu`), `command: ["laya-serve"]`, environment `LAYA_DEVICE=cpu`, `LAYA_MODELS=multilingual`,
-    `LAYA_DEFAULT_MODEL=multilingual`, `LAYA_PRELOAD=1`, `LAYA_THREADS=${LAYA_THREADS:-4}`, `OMP_NUM_THREADS=${LAYA_THREADS:-4}`,
-    `LAYA_MAX_CONCURRENT=${KINA_LAYA_MAX_CONCURRENT:-1}`, volume `laya-models:/home/laya/.cache/huggingface`,
-    healthcheck `GET /health` (python urllib; `start_period: 10m` for the first checkpoint download, `start_interval: 5s`);
-    no host port by default (internal only). Raise `LAYA_THREADS` to the physical cores you can dedicate
-    (measured: 8 threads ~1.5-1.8x faster than 4, see docs/DEVELOPMENT.md).
-- `compose.cuda.yaml`: overlay for `laya-serve` with `TORCH_INDEX=cu128`, `LAYA_DEVICE=cuda` and the NVIDIA device reservation.
 - `.env.example` documenting every variable; `.env` is git-ignored.
 
 ## 12. Quality bar
 
 - `./mvnw -q verify` must pass: unit tests for the query parser, parametric extractor, deterministic ranker, Mouser price
   parsing and mapping (JSON fixtures), TME mapping and token refresh (`MockRestServiceServer`), JLCPCB price parsing and
-  SQLite search (build a tiny FTS5 database in the test), Laya request/response mapping and fallback, PKCE, token hashing,
+  SQLite search (build a tiny FTS5 database in the test), the cross-encoder tokenizer (fixtures from the Hugging Face
+  tokenizer), ranker batching/timeouts, model download/verification and the rank blend with its fallbacks, PKCE, token hashing,
   OAuth metadata/register/authorize/token flow (MockMvc), bearer filter; Testcontainers-backed repository tests.
 - No secrets in code, logs or test fixtures. Never log bearer tokens or API keys.
 - Every external call has a timeout. Every distributor error is isolated per distributor.

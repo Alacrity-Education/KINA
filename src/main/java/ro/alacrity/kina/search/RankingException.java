@@ -5,7 +5,7 @@ public class RankingException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
-    public enum Reason { TIMEOUT, UNAVAILABLE, BUSY, BAD_RESPONSE, DISABLED }
+    public enum Reason { TIMEOUT, UNAVAILABLE, BUSY, FAILED, DISABLED }
 
     private final Reason reason;
 

@@ -263,7 +263,7 @@ def suite_mcp(base: str, token: str, rec: Recorder):
     s1 = summarize_search(first)
     rec.data["mcp_search_5"] = {**s1, "ms": round(resp.millis)}
     ok = all(d["returned"] <= 5 for d in s1["distributors"].values()) and set(s1["distributors"]) == {
-        "LCSC", "TME", "MOUSER"}
+        "LCSC", "TME", "MOUSER"} and s1["ranking"] == "blended"
     rec.check(f"mcp: search_parts '{SEARCH_QUERY}' max_results 5", ok,
               f"ranking {s1['ranking']}, " + ", ".join(f"{k}={v['cache']}/{v['returned']}of{v['fetched']}"
                                                        f"(total {v['total_results']}){' ERR ' + v['error'] if v['error'] else ''}"
@@ -311,11 +311,13 @@ def suite_mcp(base: str, token: str, rec: Recorder):
     by = {d["distributor"]: d for d in status.get("distributors", [])}
     lcsc = by.get("LCSC", {}).get("jlcpcb", {}) or {}
     ok = (all(by.get(d, {}).get("available") for d in ("LCSC", "TME", "MOUSER"))
-          and status.get("ranking", {}).get("laya_healthy") is True
+          and status.get("ranking", {}).get("ready") is True
           and (lcsc.get("part_count") or 0) >= JLCPCB_MIN_PARTS)
-    rec.check("mcp: list_distributors (3 available, Laya healthy, JLCPCB >= 7M parts)", ok,
-              f"available {[d for d, v in by.items() if v.get('available')]}, laya_healthy "
-              f"{status.get('ranking', {}).get('laya_healthy')}, jlcpcb parts {lcsc.get('part_count')}", resp.millis)
+    ranking = status.get("ranking", {})
+    rec.check("mcp: list_distributors (3 available, cross-encoder ready, JLCPCB >= 7M parts)", ok,
+              f"available {[d for d, v in by.items() if v.get('available')]}, cross-encoder ready "
+              f"{ranking.get('ready')} ({ranking.get('model_variant')}, revision {ranking.get('model_revision')}, "
+              f"avg {ranking.get('avg_latency_ms')} ms), jlcpcb parts {lcsc.get('part_count')}", resp.millis)
 
     resp, _ = mcp.call("tools/list", token="kina_" + "x" * 43)
     rec.check("mcp: invalid bearer -> 401", resp.status == 401, f"status {resp.status}")

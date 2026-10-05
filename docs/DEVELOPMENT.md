@@ -31,19 +31,21 @@ set -a; . ./.env; set +a
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/kina ./mvnw spring-boot:run   # or java -jar target/kina.jar
 ```
 
-Everything in Docker: `docker compose up -d --build` (project name `kina`, services `kina`, `postgres`, `laya-serve`; the
-Laya image build downloads PyTorch and takes a while the first time). GPU ranking:
-`docker compose -f compose.yaml -f compose.cuda.yaml up -d --build`. Wait for `docker compose ps` to show all three
-services `healthy`; on a fresh volume the JLCPCB database (~5.3 GB) downloads in the background and LCSC reports
-`unavailable` until it is in place (`docker compose logs -f kina`). Laya threads: `LAYA_THREADS` in `.env` (default 4;
-set it to the physical cores you can dedicate, see the measurements below).
+Everything in Docker: `docker compose up -d --build` (project name `kina`, services `kina` and `postgres`). Wait for
+`docker compose ps` to show both services `healthy`; on a fresh volume the JLCPCB database (~5.3 GB) downloads in the
+background and LCSC reports `unavailable` until it is in place, and the cross-encoder model (~25 MB, DESIGN.md 3.5)
+downloads to `/data/cross-encoder`; until it is loaded searches report `ranking: "fallback"` with
+`ranking_note: "cross-encoder model not loaded yet"` (`docker compose logs -f kina`; `list_distributors` shows
+`ranking.ready`). Ranking threads: `KINA_CROSS_ENCODER_THREADS` in `.env` (default `min(4, cores)`).
 Every environment variable is documented in `.env.example`; `.env` is git-ignored and must never be committed.
 
 A second instance next to a running compose stack (e.g. to test ranking changes against the full JLCPCB database without
 touching the stack): start a throwaway Postgres on another port, then run the jar with `PORT=8081`,
-`SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:<port>/kina`, `KINA_LAYA_ENABLED=false` (deterministic ranking
-only) and `KINA_JLCPCB_DATA_DIR` pointing at a directory that already holds `parts-fts5.db` (it is adopted, not
-downloaded). Connector checks: `curl -G localhost:8081/api/v1/parts/search --data-urlencode "q=2x3 female header right
+`SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:<port>/kina`, `KINA_JLCPCB_DATA_DIR` pointing at a directory that
+already holds `parts-fts5.db` (it is adopted, not downloaded) and `KINA_CROSS_ENCODER_MODEL_DIR` pointing at a model
+directory (downloaded once, then reused; `KINA_CROSS_ENCODER_ENABLED=false` for deterministic ranking only). The
+cross-encoder time per query is logged at DEBUG (`LOGGING_LEVEL_RO_ALACRITY_KINA_SEARCH_CE=DEBUG`:
+`cross-encoder scored 40 candidates in N ms (T threads, <file>)`). Connector checks: `curl -G localhost:8081/api/v1/parts/search --data-urlencode "q=2x3 female header right
 angle" --data-urlencode max_results=5`; each distributor entry shows the phrase it was sent as `distributor_query`.
 Mind the Mouser quota (1 000 calls a day): every new query costs one call, plus one when the fallback runs.
 
@@ -65,7 +67,8 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 | `domain` | `Distributor`, `RankingMode`, `PriceBreak`, `Part`, `PartKey`, `ParsedQuery` (+ `Constraint`, `Connector`), `SearchRequest`, `BatchSearchRequest`, response DTOs `SearchResponse`, `BatchSearchResponse`, `DistributorResult`, `PartResponse` (trims prices to 3 brackets), `PriceResponse`, `ParsedQueryResponse` |
 | `distributor` | `DistributorClient`, `DistributorSearchPage`, `DistributorException` (+ `Kind.code()`, `rateLimitWaitedMillis()`), `DistributorRegistry`; rate limiting (DESIGN.md 3.6): `Deadline` (request deadline + rate-limit wait accounting), `RateLimitRetry` (retry policy around every Mouser/TME HTTP call), `DistributorCooldown` (shared per-distributor cool-down) |
 | `distributor.{mouser,tme,lcsc}` | `MouserClient`, `TmeClient` (+ `TmeTokenManager`), `LcscClient` over the JLCPCB SQLite file (`JlcpcbDatabaseManager` downloads/adopts it) |
-| `search` | `PartRanker`, `RankingException` (checked, with `Reason`), `QueryParser` (+ `Recognizers`, `ConnectorRecognizer`), `ParametricExtractor`, `DeterministicRanker`, `DistributorPhraser` (connector phrasing per distributor, fallback phrases), `LayaPartRanker`, `RankingService`, `PartSearchService` (cache, paging, phrase fallback), `PartLookupService`, `DistributorStatusService` |
+| `search/ce` | `CrossEncoderPartRanker` (the `PartRanker`), `CrossEncoderModel` (download, load, retry), `ModelDownloader`, `ModelLayout`, `BertTokenizer`, `ScoringBackend` / `OnnxScoringBackend` (ONNX Runtime) |
+| `search` | `PartRanker`, `RankingException` (checked, with `Reason`), `QueryParser` (+ `Recognizers`, `ConnectorRecognizer`), `ParametricExtractor`, `DeterministicRanker`, `DistributorPhraser` (connector phrasing per distributor, fallback phrases), `RankingService`, `PartSearchService` (cache, paging, phrase fallback), `PartLookupService`, `DistributorStatusService` |
 | `cache` | `CacheStatus`, `PartCacheRepository`, `SearchCacheRepository` (`CachedSearch`), `CacheMaintenance` |
 | `security` | `SecurityConfig` (dev/prod filter chains), `DevModeAuthenticationFilter`, `BearerTokenAuthenticationFilter` + `BearerAuthenticationEntryPoint` (401 with `resource_metadata`), `AccessTokenService`/`AccessTokenRepository` (30-day tokens; revoking one also revokes its OAuth refresh tokens), OIDC login (`OidcLoginConfiguration`, `LazyOidcClientRegistrationRepository`, `OidcUserSynchronizer`) |
 | `oauth` | OAuth 2.1 authorization server for MCP clients: metadata, `/oauth/register`, `/oauth/authorize` (consent page), `/oauth/token`, `/oauth/revoke`, PKCE |
@@ -104,7 +107,7 @@ docker compose -f compose.yaml -f compose.cuda.yaml config -q          # GPU ove
 | Suite | What it checks |
 |---|---|
 | `ui` | dev-mode token page renders; creates two tokens through the form (session cookie + CSRF), reads the plaintext once, sees them listed, revokes one (it gets 401, the other keeps working); POST without CSRF is 403. The first token is used by `mcp` and `rest` (or set `KINA_TOKEN`). |
-| `mcp` | `initialize`, `tools/list` (5 tools), `ping`, `search_parts` `10uF X7R 0805` with `max_results` 5 then 20 (second call must be `cache: hit` for Mouser and TME), `search_parts_batch` (2 queries), `get_part` (TME part from the search, unknown LCSC part -> `found: false`), `list_distributors` (3 available, Laya healthy, JLCPCB >= 7 M parts), invalid bearer -> 401 |
+| `mcp` | `initialize`, `tools/list` (5 tools), `ping`, `search_parts` `10uF X7R 0805` with `max_results` 5 then 20 (second call must be `cache: hit` for Mouser and TME), `search_parts_batch` (2 queries), `get_part` (TME part from the search, unknown LCSC part -> `found: false`), `list_distributors` (3 available, cross-encoder ready, JLCPCB >= 7 M parts); the first `search_parts` must report `ranking: "blended"`, invalid bearer -> 401 |
 | `oauth` | the Claude connector flow: 401 challenge with `resource_metadata`, both metadata documents, dynamic registration, `/oauth/authorize` with PKCE S256 + consent (CSRF) -> code, code exchange, no code replay, `tools/list` with the OAuth token, refresh rotation (old pair dead), `/oauth/revoke` of access and refresh tokens, web-UI revocation of an OAuth token also kills its refresh token |
 | `forwarded` | with `X-Forwarded-Proto: https` + `X-Forwarded-Host: kina.example.com` every URL in both metadata documents and the `resource_metadata` challenge uses `https://kina.example.com` |
 | `rest` | `GET /api/v1/parts/search`, `POST .../search/batch`, TME phrase fallback (`fallback_query`, informational), `GET /api/v1/parts/TME/<symbol>`, 404/400 problem documents, invalid token -> 401, public health |

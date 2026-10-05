@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @param distributors one entry per distributor, in {@link Distributor} order
  * @param cache        Postgres component cache statistics (Mouser and TME); null when the database cannot be read
- * @param ranking      ranking configuration and Laya health
+ * @param ranking      ranking configuration and cross-encoder health
  */
 public record DistributorStatusResponse(
         @JsonProperty("distributors") List<DistributorStatus> distributors,
@@ -78,11 +78,36 @@ public record DistributorStatusResponse(
     ) {
     }
 
-    /** Ranking configuration and Laya health. */
+    /**
+     * Ranking configuration and cross-encoder health (DESIGN.md 3.3, 3.5).
+     *
+     * @param mode                 {@code "blended"} when the cross-encoder is enabled and loaded, else
+     *                             {@code "fallback"} (deterministic only)
+     * @param crossEncoderEnabled  {@code kina.ranking.cross-encoder.enabled}
+     * @param ready                the model is loaded and warmed up
+     * @param model                model repository or source ({@code cross-encoder/ms-marco-MiniLM-L6-v2})
+     * @param modelVariant         {@code int8} or {@code fp32} (the configured one until loaded)
+     * @param modelRevision        source revision (Hugging Face commit) from {@code model.json}; null when unknown
+     * @param modelDir             model directory
+     * @param threads              ONNX Runtime intra-op threads
+     * @param avgLatencyMs         mean cross-encoder time per scored query since start; null before the first one
+     * @param lastError            why the model is not loaded; null when fine
+     * @param maxCandidates        candidates scored by the cross-encoder per query
+     * @param weight               cross-encoder weight in the rank blend
+     * @param timeout              ranking budget per query (ISO-8601 duration)
+     */
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     public record RankingSummary(
-            @JsonProperty("laya_enabled") boolean layaEnabled,
-            @JsonProperty("laya_healthy") boolean layaHealthy,
+            @JsonProperty("mode") String mode,
+            @JsonProperty("cross_encoder_enabled") boolean crossEncoderEnabled,
+            @JsonProperty("ready") boolean ready,
             @JsonProperty("model") String model,
+            @JsonProperty("model_variant") String modelVariant,
+            @JsonProperty("model_revision") String modelRevision,
+            @JsonProperty("model_dir") String modelDir,
+            @JsonProperty("threads") int threads,
+            @JsonProperty("avg_latency_ms") Double avgLatencyMs,
+            @JsonProperty("last_error") String lastError,
             @JsonProperty("max_candidates") int maxCandidates,
             @JsonProperty("weight") double weight,
             @JsonProperty("timeout") String timeout

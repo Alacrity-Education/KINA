@@ -4,3 +4,8 @@ kina:
     # Spring tests must never download the ~1 GB JLCPCB database from the internet.
     auto-download: false
     data-dir: target/test-data/jlcpcb
+  ranking:
+    cross-encoder:
+      # Spring tests must never download the cross-encoder model either; without files the ranking falls back.
+      auto-download: false
+      model-dir: target/test-data/cross-encoder

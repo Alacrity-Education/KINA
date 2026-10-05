@@ -234,9 +234,9 @@ class PartSearchServiceTest {
                 out.put(d, ranked);
             });
             if (Duration.ZERO.equals(budget)) {
-                return new RankedResults(out, RankingMode.FALLBACK, "laya timeout: budget exhausted");
+                return new RankedResults(out, RankingMode.FALLBACK, "cross-encoder timeout: budget exhausted");
             }
-            return new RankedResults(out, RankingMode.LAYA, null);
+            return new RankedResults(out, RankingMode.BLENDED, null);
         });
 
         service = new PartSearchService(props, new DistributorRegistry(List.copyOf(clients)), new QueryParser(),
@@ -762,7 +762,7 @@ class PartSearchServiceTest {
         SearchResponse response = service.search(request(10, Distributor.MOUSER));
 
         assertThat(response.query()).isEqualTo(QUERY);
-        assertThat(response.ranking()).isEqualTo(RankingMode.LAYA);
+        assertThat(response.ranking()).isEqualTo(RankingMode.BLENDED);
         assertThat(response.parsed().dielectric()).isEqualTo("X7R");
         assertThat(response.parsed().packageName()).isEqualTo("0805");
         var part = result(response, Distributor.MOUSER).parts().getFirst();
@@ -808,7 +808,7 @@ class PartSearchServiceTest {
         assertThat(response.results()).hasSize(3);
         assertThat(response.results()).extracting(SearchResponse::query)
                 .containsExactly("10uF X7R 0805", "100nF 0603", "4k7 0603");
-        assertThat(response.results().get(0).ranking()).isEqualTo(RankingMode.LAYA);
+        assertThat(response.results().get(0).ranking()).isEqualTo(RankingMode.BLENDED);
         assertThat(rankBudgets.getFirst()).isLessThanOrEqualTo(Duration.ofMillis(600)).isPositive();
         for (SearchResponse later : response.results().subList(1, 3)) {
             assertThat(later.ranking()).isEqualTo(RankingMode.FALLBACK);
@@ -819,13 +819,13 @@ class PartSearchServiceTest {
     }
 
     @Test
-    void batchWithLayaDisabledKeepsTheLayaDisabledNoteWhenTheBudgetIsUsedUp() {
+    void batchWithTheCrossEncoderDisabledKeepsTheDisabledNoteWhenTheBudgetIsUsedUp() {
         FakeClient lcsc = new FakeClient(Distributor.LCSC).records(5, i -> part(Distributor.LCSC, "C" + i));
         KinaProperties props = RankingFixtures.properties("kina.ranking.batch-timeout", "0s",
-                "kina.ranking.laya.enabled", "false");
+                "kina.ranking.cross-encoder.enabled", "false");
         ParametricExtractor extractor = new ParametricExtractor();
         RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
-                mock(PartRanker.class), () -> true, new RankingScoreCache(Duration.ofHours(1)));
+                mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
         service = new PartSearchService(props, new DistributorRegistry(List.of(lcsc)), new QueryParser(), extractor,
                 ranking, mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
 
@@ -834,7 +834,7 @@ class PartSearchServiceTest {
 
         assertThat(response.results()).allSatisfy(r -> {
             assertThat(r.ranking()).isEqualTo(RankingMode.FALLBACK);
-            assertThat(r.rankingNote()).isEqualTo("laya disabled");
+            assertThat(r.rankingNote()).isEqualTo("cross-encoder disabled");
         });
     }
 
@@ -875,8 +875,8 @@ class PartSearchServiceTest {
             Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
             input.forEach((d, parts) -> out.put(d, parts.stream().map(p -> new RankedPart(p, 0.5)).toList()));
             return Duration.ZERO.equals(budget)
-                    ? new RankedResults(out, RankingMode.FALLBACK, "laya timeout: budget exhausted")
-                    : new RankedResults(out, RankingMode.LAYA, null);
+                    ? new RankedResults(out, RankingMode.FALLBACK, "cross-encoder timeout: budget exhausted")
+                    : new RankedResults(out, RankingMode.BLENDED, null);
         });
         return ranking;
     }

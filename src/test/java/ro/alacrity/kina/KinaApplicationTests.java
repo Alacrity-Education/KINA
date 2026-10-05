@@ -42,7 +42,9 @@ class KinaApplicationTests {
                 .query(Integer.class).single();
         assertThat(tables).isEqualTo(8);
         assertThat(properties.cache().ttl()).isEqualTo(Duration.ofDays(5));
-        assertThat(properties.ranking().laya().maxConcurrentRequests()).isEqualTo(1);
+        assertThat(properties.ranking().crossEncoder().maxConcurrent()).isEqualTo(2);
+        assertThat(properties.ranking().crossEncoder().weight()).isEqualTo(0.5);
+        assertThat(properties.ranking().timeout()).isEqualTo(Duration.ofSeconds(5));
         assertThat(properties.distributors().tme().maxResultsPerSearch()).isEqualTo(60);
         assertThat(registry).isNotNull();
     }

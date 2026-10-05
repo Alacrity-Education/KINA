@@ -60,8 +60,8 @@ public class KinaMcpTools {
             manufacturer, mpn, description, package, stock, min_order_qty, order_multiple, prices (only the 3 \
             smallest quantity brackets: qty, unit_price, currency), datasheet_url, photo_url (when the distributor \
             has one), product_url, parametric attributes and distributor-specific extra fields.
-            ranking = "laya" (deterministic parametric score blended with the Laya model) or "fallback" \
-            (deterministic only; ranking_note says why).
+            ranking = "blended" (deterministic parametric score blended with a cross-encoder relevance model) \
+            or "fallback" (deterministic only; ranking_note says why).
             Results are cached for 5 days: calling again with the same query and a larger max_results is served \
             from the cache, and only fetches more from a distributor when the cache holds too few parts.""";
 
@@ -166,8 +166,8 @@ public class KinaMcpTools {
     @McpTool(name = "list_distributors", description = """
             List the distributors KINA can search with their state: configured (credentials present), available, \
             a human-readable detail (for LCSC: JLCPCB database date and part count, or download progress), cached \
-            part counts, the Postgres cache statistics (5-day freshness) and the ranking configuration (Laya model \
-            health). Does not call the distributor APIs.""",
+            part counts, the Postgres cache statistics (5-day freshness) and the ranking configuration (cross-encoder \
+            model state). Does not call the distributor APIs.""",
             annotations = @McpTool.McpAnnotations(title = "List distributors", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = false))
     public DistributorStatusResponse listDistributors() {

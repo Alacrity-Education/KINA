@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Locale;
 
-/** How a search response was ranked. Serialised lower-case ({@code "laya"}, {@code "fallback"}). */
+/**
+ * How a search response was ranked, serialised lower-case: {@code "blended"} (deterministic score blended with the
+ * cross-encoder, DESIGN.md 3.3) or {@code "fallback"} (deterministic only; {@code ranking_note} says why).
+ */
 public enum RankingMode {
-    LAYA, FALLBACK;
+    BLENDED, FALLBACK;
 
     @JsonValue
     public String jsonValue() {

@@ -164,10 +164,10 @@ public class PartSearchService {
             RankedResults ranked;
             String note;
             if (remaining.compareTo(MIN_BATCH_RANKING_BUDGET) < 0) {
-                // zero budget: Laya is not called; scores already in the score cache may still be used
+                // zero budget: the cross-encoder is not called; scores already in the score cache may still be used
                 ranked = ranking.rank(p.parsed(), parts, Duration.ZERO);
-                // with Laya disabled the fallback has nothing to do with the budget: keep "laya disabled"
-                note = ranked.mode() == RankingMode.FALLBACK && properties.ranking().laya().enabled()
+                // with the cross-encoder disabled the fallback has nothing to do with the budget: keep that note
+                note = ranked.mode() == RankingMode.FALLBACK && properties.ranking().crossEncoder().enabled()
                         ? "batch ranking budget of " + format(batchBudget) + " exhausted"
                         : ranked.note();
             } else {
