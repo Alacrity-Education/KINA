@@ -1,7 +1,7 @@
 package ro.alacrity.kina.search;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatistics;
@@ -26,25 +26,15 @@ import java.util.Optional;
 
 /** Builds the {@code list_distributors} payload. Never calls the Mouser/TME APIs (quota). */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class DistributorStatusService {
-
-    private static final Logger log = LoggerFactory.getLogger(DistributorStatusService.class);
 
     private final KinaProperties properties;
     private final DistributorRegistry registry;
     private final PartCacheRepository partCache;
     private final RankingService ranking;
     private final ObjectProvider<JlcpcbDatabaseManager> jlcpcb;
-
-    public DistributorStatusService(KinaProperties properties, DistributorRegistry registry,
-                                    PartCacheRepository partCache, RankingService ranking,
-                                    ObjectProvider<JlcpcbDatabaseManager> jlcpcb) {
-        this.properties = properties;
-        this.registry = registry;
-        this.partCache = partCache;
-        this.ranking = ranking;
-        this.jlcpcb = jlcpcb;
-    }
 
     public DistributorStatusResponse status() {
         CacheStatistics stats = null;

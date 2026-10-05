@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search.ce;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.config.KinaProperties.CrossEncoder.Variant;
 
 import java.io.IOException;
@@ -21,7 +22,8 @@ import java.util.Set;
  * onnx/model_quint8_avx2.onnx          int8, unsigned activations (AVX2)
  * </pre>
  */
-public final class ModelLayout {
+@UtilityClass
+public class ModelLayout {
 
     public static final String VOCAB = "vocab.txt";
     public static final String CONFIG = "config.json";
@@ -32,9 +34,6 @@ public final class ModelLayout {
     public static final String QUINT8_AVX2 = "onnx/model_quint8_avx2.onnx";
     /** Files every variant needs besides the ONNX graph. */
     public static final List<String> COMMON_FILES = List.of(VOCAB, CONFIG, TOKENIZER_CONFIG);
-
-    private ModelLayout() {
-    }
 
     /**
      * ONNX files to try for {@code variant}, best first. int8: the file matching the CPU (VNNI, i.e. AVX-512 VNNI or

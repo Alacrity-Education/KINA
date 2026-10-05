@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.math.BigDecimal;
@@ -19,10 +20,8 @@ import java.util.regex.Pattern;
  * Text recognisers shared by {@link QueryParser} and {@link ParametricExtractor} (DESIGN.md section 3.4): component
  * families, SI values (incl. RKM notation), tolerance, dielectric, packages and mounting. Stateless and thread-safe.
  */
-final class Recognizers {
-
-    private Recognizers() {
-    }
+@UtilityClass
+class Recognizers {
 
     /** Analysis result of one free text. Values are keyed by the {@link ParsedQuery} kind constants. */
     record Analysis(String family, boolean familyExplicit, Map<String, Value> values, String dielectric,

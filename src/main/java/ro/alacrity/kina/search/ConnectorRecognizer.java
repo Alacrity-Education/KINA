@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search;
 
+import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.text.Normalizer;
@@ -21,10 +22,8 @@ import java.util.regex.Pattern;
  * <p>{@link #analyze} returns what it recognised plus the text with the recognised spans blanked out, so the generic
  * {@link Recognizers} only see what is left (no {@code 90 degree}, {@code style}, {@code pins} noise keywords).
  */
-final class ConnectorRecognizer {
-
-    private ConnectorRecognizer() {
-    }
+@UtilityClass
+class ConnectorRecognizer {
 
     /**
      * What one text says about a connector.

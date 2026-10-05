@@ -1,8 +1,7 @@
 package ro.alacrity.kina.search;
 
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.PartCacheRepository;
@@ -32,9 +31,8 @@ import java.util.concurrent.TimeoutException;
  * unless {@code bypassCache}, else the distributor, caching the result. LCSC: the JLCPCB database.
  */
 @Service
+@Slf4j
 public class PartLookupService {
-
-    private static final Logger log = LoggerFactory.getLogger(PartLookupService.class);
 
     private final KinaProperties properties;
     private final DistributorRegistry registry;

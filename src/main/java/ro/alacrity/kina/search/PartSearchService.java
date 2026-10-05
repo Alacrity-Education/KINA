@@ -2,8 +2,7 @@ package ro.alacrity.kina.search;
 
 import jakarta.annotation.PreDestroy;
 import lombok.With;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatus;
@@ -61,9 +60,8 @@ import java.util.concurrent.TimeoutException;
  * it; the time they wait does not count against {@code kina.search.distributor-timeout}.
  */
 @Service
+@Slf4j
 public class PartSearchService {
-
-    private static final Logger log = LoggerFactory.getLogger(PartSearchService.class);
 
     /** Pages fetched per search for LCSC (the SQLite query already returns the whole window). */
     static final int LCSC_MAX_PAGES = 1;

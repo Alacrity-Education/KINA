@@ -3,8 +3,7 @@ package ro.alacrity.kina.search.ce;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -44,9 +43,8 @@ import java.util.regex.Pattern;
  * <p>Timeouts: connect {@value #CONNECT_TIMEOUT_SECONDS}s, whole file {@code download-timeout}. Redirects (Hugging
  * Face to its CDN) are followed; the headers of the redirect responses are inspected too.
  */
+@Slf4j
 public class ModelDownloader {
-
-    private static final Logger log = LoggerFactory.getLogger(ModelDownloader.class);
 
     static final int CONNECT_TIMEOUT_SECONDS = 10;
     private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
