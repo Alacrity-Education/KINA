@@ -1,6 +1,6 @@
 # KINA operations guide
 
-This guide covers running KINA for real: HTTPS, secrets, storage, backups, upgrades, sizing and hardening. For a first start see the [README](../README.md). For endpoints see [API.md](API.md).
+This guide covers running KINA for real: HTTPS, login and group access (with an Authentik setup guide), secrets, storage, backups, upgrades, sizing and hardening. For a first start see the [README](../README.md). For endpoints see [API.md](API.md).
 
 ## Services and volumes
 
@@ -25,6 +25,9 @@ KINA_PUBLIC_BASE_URL=https://kina.example.com
 OIDC_ISSUER_URI=https://idp.example.com/realms/main
 OIDC_CLIENT_ID=kina
 OIDC_CLIENT_SECRET=<secret>
+OIDC_REQUIRED_GROUPS=ElectronicsEngineer
+OIDC_ALLOWED_EMAIL_DOMAINS=alacrity.ro
+KINA_TOKEN_ENCRYPTION_KEY=<output of: openssl rand -base64 32>
 MOUSER_API_KEY=<key>
 TME_TOKEN=<token>
 TME_APPLICATION_SECRET=<secret>
@@ -37,12 +40,72 @@ KINA_MEM_LIMIT=2g
 
 Register this redirect URI at the OIDC provider: `https://kina.example.com/login/oauth2/code/oidc`. KINA refuses to start in `prod` mode without `OIDC_ISSUER_URI` and `OIDC_CLIENT_ID`. Discovery of the provider happens on the first login, not at startup.
 
+The group settings are:
+
+- `OIDC_REQUIRED_GROUPS`: comma-separated; a user needs at least one. Empty means no group check.
+- `OIDC_ALLOWED_EMAIL_DOMAINS`: optional, for example `alacrity.ro`.
+- `KINA_TOKEN_ENCRYPTION_KEY`: base64 of 32 random bytes. Without it KINA cannot re-check a member in the background, logs a WARN at startup, and users must sign in again every 24 hours. Treat it like a password and never commit it.
+- `OIDC_GROUPS_CLAIM` (default `groups`) and `OIDC_EXTRA_SCOPES` (default empty) only matter if your provider differs from the Authentik example.
+
+The timing settings (`KINA_MEMBERSHIP_RECHECK_INTERVAL` 1h, `KINA_MEMBERSHIP_GRACE` 4h, `KINA_RELOGIN_INTERVAL_WITHOUT_RECHECK` 24h) rarely need a change. Leave unused duration variables unset: an empty value is not a valid duration. The full list is in the [README](../README.md#configuration-reference).
+
+Enabling `OIDC_REQUIRED_GROUPS` on a deployment that already has users: each user must sign in once before their refresh grants and static tokens work again.
+
+## Authentik setup
+
+KINA is the OAuth 2.1 server that Claude talks to. It delegates the login to your OIDC provider and then requires membership of the configured groups. Authentik is the worked example here; the same steps map to any OIDC provider that puts the groups in a claim. This guide uses `https://<authentik>` for Authentik and `https://<kina>` for KINA.
+
+### In Authentik
+
+1. **Source.** Make sure the login source (for example Google) only accepts your organisation. Use an e-mail-domain policy on the source's flows, or set the Google consent screen to Internal.
+2. **Provider.** Create an OAuth2/OpenID provider named `KINA`:
+   - Client type: confidential. Copy the client ID and the client secret.
+   - Grant types: `authorization_code` and `refresh_token`.
+   - Redirect URIs: strict, exactly `https://<kina>/login/oauth2/code/oidc`.
+   - Signing key: the self-signed certificate, so tokens are signed with RS256.
+   - Scopes: `openid`, `email`, `profile` and `offline_access`. The default `profile` scope already carries `groups`. If you use a dedicated `groups` scope mapping, add that scope too and set `OIDC_EXTRA_SCOPES=groups` in KINA.
+   - Authorization flow: implicit consent (`default-provider-authorization-implicit-consent`). KINA has its own consent decision, so one consent screen is enough.
+   - Include claims in id_token: enabled.
+   - Refresh token validity: at least 30 days, so Authentik does not end sessions earlier than KINA does.
+3. **Application.** Create an application with slug `kina` and the provider above.
+4. **Bind the group.** In the application's bindings, bind the group `ElectronicsEngineer`. Without a binding, everyone with an Authentik account can sign in. KINA's group check is a second gate; the binding is the first.
+5. **Note the issuer.** It is `https://<authentik>/application/o/kina/`.
+
+### In KINA
+
+```bash
+KINA_MODE=prod
+KINA_PUBLIC_BASE_URL=https://<kina>
+OIDC_ISSUER_URI=https://<authentik>/application/o/kina/
+OIDC_CLIENT_ID=<from Authentik>
+OIDC_CLIENT_SECRET=<from Authentik>
+OIDC_REQUIRED_GROUPS=ElectronicsEngineer
+OIDC_ALLOWED_EMAIL_DOMAINS=alacrity.ro
+KINA_TOKEN_ENCRYPTION_KEY=<openssl rand -base64 32>
+```
+
+Then `docker compose up -d`. Sign in with a member account: the web UI should open. Sign in with an account outside the group: Authentik or KINA must refuse it (KINA shows the "Access denied" page, HTTP 403).
+
+### In Claude
+
+- claude.ai and Claude Desktop: add a custom connector with exactly `https://<kina>/mcp` and keep the default identity option. Click Connect and sign in.
+- Team and Enterprise: an Owner adds the connector once (Organization settings, Connectors, Add, Custom). Members click Connect and sign in.
+- Claude Code: `claude mcp add --transport http kina https://<kina>/mcp`, then `/mcp` to sign in (one Approve click).
+
+No consent page appears for Claude's published identity. Claude Code always shows the Approve page, because it redirects to a local port.
+
+### What to expect after removing someone
+
+Remove the user from `ElectronicsEngineer` in Authentik. The user keeps working until the current 1-hour access token ends. At the next refresh KINA asks Authentik again, sees that the group is gone, revokes the user and answers `invalid_grant`. Claude then asks the user to reconnect, and the login is refused. Static tokens follow the same rule through a background re-check.
+
+If Authentik is unreachable, access continues for `KINA_MEMBERSHIP_GRACE` (4 hours) after the last successful check. After that, refreshes fail with `invalid_grant` but nothing is revoked, and everything works again when Authentik is back.
+
 ## HTTPS reverse proxy
 
 KINA speaks plain HTTP. Claude's remote connector and OAuth need HTTPS, so terminate TLS in a reverse proxy. Two things matter:
 
 1. The proxy must send `X-Forwarded-Proto` and `X-Forwarded-Host` (and `X-Forwarded-Port` for a non-standard port). KINA honours them (`server.forward-headers-strategy=framework`) and uses them in the OAuth metadata, redirects and the `WWW-Authenticate` header. Or set `KINA_PUBLIC_BASE_URL`, which wins over the headers.
-2. The proxy should overwrite, not append to, any `X-Forwarded-*` headers a client sent, and must be the only way to reach KINA.
+2. The proxy should overwrite, not append to, any `X-Forwarded-*` headers a client sent, and must be the only way to reach KINA. `X-Forwarded-For` matters most: KINA uses it as the client address for the rate limit on `/oauth/register`, so a header a client can forge lets it dodge the limit.
 
 Do not buffer the MCP endpoint, and allow long requests. A search can wait up to 2 minutes for a rate-limited distributor (`kina.search.max-request-duration`) and then rank (5 s per query, 60 s per batch), so set the read timeout above about 2.5 minutes. `spring.ai.mcp.server.request-timeout` is `3m`.
 
@@ -86,6 +149,17 @@ server {
     }
 }
 ```
+
+### Proxy checklist for Claude
+
+- Keep these paths anonymous and free of bot or JavaScript challenges, forward auth, basic auth or an identity-aware proxy: `/.well-known/*`, `/oauth/register`, `/oauth/token`, `/oauth/revoke` and `/mcp`. Claude's servers fetch them and cannot solve a challenge. `/mcp` without a token must answer `401` with `WWW-Authenticate`, not a login page.
+- `/oauth/authorize` and the login redirect are opened by users' browsers.
+- Do not strip the CORS headers KINA sends on those paths, and do not answer `OPTIONS` yourself.
+- Overwrite `X-Forwarded-For` (nginx: `proxy_set_header X-Forwarded-For $remote_addr;`). Caddy replaces an `X-Forwarded-For` that comes from an untrusted client by default.
+- The connector URL must equal the `resource` KINA advertises: `https://<host>/mcp`. Do not mount KINA under a path prefix unless `KINA_PUBLIC_BASE_URL` includes it.
+- Read and send timeouts of at least 180 seconds, and no buffering on `/mcp`.
+- Anthropic's servers call KINA from `160.79.104.0/21`. This range is published by Anthropic; verify it before allowlisting. Do not restrict the whole host to it: browsers must reach `/oauth/authorize`, and Claude Code connects from users' own machines. If you use a WAF, make sure it does not block that range.
+- Optionally rate-limit `/oauth/token` at the proxy as well (for example 60 requests a minute per IP). KINA already limits `/oauth/register` per client IP (`KINA_OAUTH_REGISTER_RATE_LIMIT_PER_MINUTE`, 30 by default).
 
 Verify from outside:
 
@@ -131,7 +205,17 @@ KINA_URL=http://host:8080 python3 scripts/e2e/kina_e2e.py
 scripts/e2e/prod_smoke.sh                       # prod mode smoke test in a throwaway container on port 18080
 ```
 
-Run them against a staging or dev stack. They create tokens and OAuth clients in the database and, on a cold cache, make 2 Mouser calls. Details are in the "End-to-end checks" section of [DEVELOPMENT.md](DEVELOPMENT.md).
+For group access there is a separate test against a real, disposable Authentik (`scripts/e2e/authentik/`; needs Docker and Python 3.10+, about 70 seconds once the images are cached):
+
+```bash
+./mvnw -q -DskipTests package                          # the driver runs target/kina.jar
+python3 scripts/e2e/authentik/kina_authentik_e2e.py   # Authentik 2026.8; removes everything at the end
+python3 scripts/e2e/authentik/kina_authentik_e2e.py --keep   # keep Authentik (localhost:19000) and KINA (18080) running
+```
+
+It starts Authentik, creates the group, users, provider and application, runs KINA in `prod` mode and checks that a member can connect, that a removed member is refused at the next refresh, and that non-members and guests are refused. It does not touch your own stack. Details are in [DEVELOPMENT.md](DEVELOPMENT.md).
+
+Run the other checks against a staging or dev stack. They create tokens and OAuth clients in the database and, on a cold cache, make 2 Mouser calls. Details are in the "End-to-end checks" section of [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Upgrading
 
@@ -140,7 +224,9 @@ git pull
 docker compose up -d --build
 ```
 
-Flyway applies new database migrations when `kina` starts (the current ones are V1 to V3). Take a `pg_dump` first. The ranking model stays in the `kina-data` volume, so an upgrade does not download it again. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
+Flyway applies new database migrations when `kina` starts (the current ones are V1 to V4; V4 adds the group-authorisation columns). Take a `pg_dump` first. The ranking model stays in the `kina-data` volume, so an upgrade does not download it again. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
+
+Upgrading to group access: set the group variables from [Environment](#environment) and restart. Existing users must sign in once. OAuth access tokens now live 1 hour (`expires_in` 3600) and refresh tokens 30 days (they were 30 days and 90 days); clients refresh by themselves. Refresh tokens issued earlier keep their old expiry.
 
 Upgrading to connector-aware search: cached TME and Mouser results from before the upgrade stay in the cache until they expire (5 days by default). Connector queries asked before the upgrade keep returning the old, generic results until then, because the cache key is your own query text. Ask again with `bypass_cache` to refresh one query at once, or wait for the cache TTL. Bypassing costs Mouser calls, so use it only for the queries you care about. No migration is involved.
 
@@ -194,9 +280,11 @@ These numbers come from the measurements in `docs/DEVELOPMENT.md` ("Measured on 
 
 ## Token lifecycle
 
-- Web UI tokens: created by a signed-in user, 30 days, shown once, stored only as a SHA-256 hash. The token list shows prefix, creation, expiry, last use (updated at most once a minute) and status.
-- OAuth access tokens: issued by the OAuth flow, same 30 days, named `MCP: <client name>`, visible in the same list. Refresh tokens last 90 days and rotate on every use.
-- Expired tokens stop working; there is no automatic renewal for web UI tokens. Create a new one and update the client (`claude mcp remove kina`, then `claude mcp add ...` again).
+- Static tokens (web UI): created by a signed-in user, 30 days, shown once, stored only as a SHA-256 hash. They are for scripts and machines without a browser. The token list shows prefix, creation, expiry, last use (updated at most once a minute) and status. Set `KINA_TOKENS_UI_ENABLED=false` to stop users creating them; existing ones keep working until they expire or are revoked.
+- OAuth access tokens: issued by the OAuth flow, 1 hour (`KINA_OAUTH_ACCESS_TOKEN_VALIDITY`), named `MCP: <client name>`, visible in the same list. Refresh tokens last 30 days (`KINA_OAUTH_REFRESH_TOKEN_VALIDITY`) and rotate on every use. Claude renews them by itself.
+- Expired static tokens stop working; there is no automatic renewal. Create a new one and update the client (`claude mcp remove kina`, then `claude mcp add ...` again).
+- A user who loses group membership is blocked: every access and refresh token of that user is revoked. The block is lifted by a later successful login.
+- The provider's refresh tokens (used for the re-checks) are stored encrypted in the `users` table. Rotating `KINA_TOKEN_ENCRYPTION_KEY` makes the stored ones unreadable: KINA cannot re-check those users in the background, so they fall back to the 24-hour rule and must sign in again within 24 hours. Rotate the key at a quiet moment and tell users.
 
 Revoking:
 
@@ -220,25 +308,34 @@ docker compose exec postgres psql -U kina -d kina -c \
 
 - Everything at once, for example after a suspected leak: `UPDATE access_tokens SET revoked_at = now() WHERE revoked_at IS NULL;` and the same for `oauth_refresh_tokens`.
 
-Changing the validity (`KINA_TOKENS_VALIDITY`, `KINA_OAUTH_REFRESH_TOKEN_VALIDITY`) affects only tokens issued afterwards.
+Changing the validity (`kina.tokens.validity`, `KINA_OAUTH_ACCESS_TOKEN_VALIDITY`, `KINA_OAUTH_REFRESH_TOKEN_VALIDITY`) affects only tokens issued afterwards.
 
 ## OAuth client registrations
 
-`POST /oauth/register` is anonymous, as the MCP specification expects. Anyone who can reach KINA can create a client record. A client cannot get a token without a signed-in user approving it on the consent page, which shows the client name and the redirect target. Teach users to check both before approving. Registered clients live in `oauth_clients`; delete entries you do not recognise (see above). Authorization codes live 10 minutes and are single use.
+`POST /oauth/register` is anonymous, as the MCP specification expects. Anyone who can reach KINA can create a client record, but at most `KINA_OAUTH_REGISTER_RATE_LIMIT_PER_MINUTE` (30) per client IP and minute; over that KINA answers 429 with `Retry-After`. A client cannot get a token without a signed-in user (who must be in the required group) approving it on the consent page, which shows the client name and the redirect target. Teach users to check both before approving. Authorization codes live 10 minutes and are single use.
+
+Claude can also use an `https` client id that points to a Client ID Metadata Document. Only hosts in `KINA_OAUTH_TRUSTED_CLIENT_HOSTS` (default `claude.ai, claude.com, *.anthropic.com`) are fetched. The consent page is skipped only for such trusted clients with a non-loopback redirect URI (claude.ai). Claude Code uses a loopback redirect and still shows the page. Set `KINA_OAUTH_AUTO_APPROVE_TRUSTED_CLIENTS=false` if you want the page for everyone.
+
+Registered clients live in `oauth_clients`. A daily job (first run 15 minutes after start) deletes dynamically registered clients that were unused for 90 days (`kina.oauth.unused-client-retention`, based on `last_used_at`, else `created_at`) and hold no live access or refresh token. Their authorization codes and refresh tokens go with them. Clients identified by a metadata document are kept. The job logs how many it deleted. Delete entries you do not recognise by hand (see above).
 
 ## Security hardening
 
-- Run `KINA_MODE=prod` for anything reachable beyond your own machine. In `dev` mode there is no login: API, MCP, token creation and OAuth approval are open to anyone who reaches the port.
+- Run `KINA_MODE=prod` for anything reachable beyond your own machine. In `dev` mode there is no login and no group check: API, MCP, token creation and OAuth approval are open to anyone who reaches the port. Keep dev mode on a private network.
 - Keep KINA behind HTTPS. Tokens travel in headers; plain HTTP exposes them.
 - Bind KINA to loopback (`KINA_PORT=127.0.0.1:8080`) when the proxy runs on the same host, or firewall the port.
 - Set `KINA_PUBLIC_BASE_URL` in production. KINA trusts `X-Forwarded-*` headers from any client (`server.forward-headers-strategy=framework`); with the variable set, the advertised origin cannot be influenced by request headers. Also configure the proxy to overwrite, not append, the forwarded headers.
-- Client registration (`/oauth/register`) is anonymous, as the MCP specification requires. A malformed `/oauth/authorize` request for a registered client is answered with a redirect to that client's registered URI (RFC 6749 behaviour), without user interaction. Approving access always needs a signed-in user and the consent page.
+- Set `KINA_TOKEN_ENCRYPTION_KEY` whenever you use `OIDC_REQUIRED_GROUPS`. Without it, removed members are only noticed at their next login, up to 24 hours later.
+- If every user comes through Claude, set `KINA_TOKENS_UI_ENABLED=false`, so nobody holds a long-lived static token.
+- Keep the `ElectronicsEngineer` binding on the Authentik application, and list `OIDC_ALLOWED_EMAIL_DOMAINS` as well. KINA's check is the second gate.
+- Never log or share e-mail addresses of refused users. KINA logs only the provider's subject id for a refusal; keep it that way.
+- Overwrite `X-Forwarded-For` at the proxy, or the registration rate limit can be bypassed.
+- Client registration (`/oauth/register`) is anonymous, as the MCP specification requires, and rate limited per IP. A malformed `/oauth/authorize` request for a registered client is answered with a redirect to that client's registered URI (RFC 6749 behaviour), without user interaction. Approving access always needs a signed-in user and the consent page.
 - Do not publish the PostgreSQL port. `compose.yaml` does not. If you add a port, set a real password: the compose file uses the database password `kina`, which you can change in the `kina` and `postgres` services (or in a `compose.override.yaml`) together with `SPRING_DATASOURCE_PASSWORD`.
 - The ranking model runs inside the KINA process. There is no ranking service to secure, and nothing leaves the host for ranking. The only outbound call is the one-time model download from Hugging Face (or your own mirror).
 - Never put part data or credentials in logs. KINA logs neither tokens nor API keys; keep it that way when adding debug output.
 - Keep `.env` out of git and readable only by the deploy user. Rotate `MOUSER_API_KEY`, `TME_TOKEN`, `TME_APPLICATION_SECRET` and `OIDC_CLIENT_SECRET` if they leak.
 - CORS for `/mcp`, `/oauth/*` and `/.well-known/*` allows any origin without credentials. This is intended for browser-based MCP clients and is safe because bearer tokens are not cookies.
-- Limit who can sign in at the OIDC provider. Every user the provider lets in can create API tokens and use the distributors' quotas (Mouser: 1 000 calls a day).
+- Limit who can sign in at the OIDC provider and with `OIDC_REQUIRED_GROUPS`. Every user who gets in can use the distributors' quotas (Mouser: 1 000 calls a day).
 - Only the model files are downloaded. If you set `KINA_CROSS_ENCODER_MODEL_URL`, point it at a source you trust, because the files are loaded and executed as a model. KINA checks size and SHA-256 against the source's own headers, which protects against corrupt downloads, not against a malicious source.
 
 ## Monitoring
