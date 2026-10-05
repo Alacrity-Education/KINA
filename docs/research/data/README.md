@@ -115,8 +115,9 @@ relevance.
 
 ## Known limitations
 
-- 32 queries is enough to separate large effects (Laya zero-shot vs deterministic) but not small ones: paired bootstrap
-  confidence intervals in the report are about +-0.02 to +-0.05 NDCG@10.
+- 32 queries is enough to separate large effects (deterministic ranker vs distributor order or BM25) but not small
+  ones: paired bootstrap confidence intervals in the report are about +-0.02 to +-0.05 NDCG@10. The study's score files
+  cover these 32 queries; the USB queries were added afterwards.
 - LCSC dominates (80 % of candidates) because the JLCPCB database is free to mine and Mouser calls were capped at 15.
 - Mouser descriptions often omit the package; such candidates are labelled 2 ("not verifiable") even when the MPN
   encodes the right package. This penalises nothing in particular, but it is a ceiling on how well any ranker can do.

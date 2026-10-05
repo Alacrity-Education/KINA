@@ -101,7 +101,6 @@ python3 scripts/e2e/kina_e2e.py                     # suites ui, mcp, oauth, for
 python3 scripts/e2e/kina_e2e.py mcp rest --report /tmp/kina-e2e.json   # selected suites + JSON report with timings
 KINA_URL=http://host:8080 python3 scripts/e2e/kina_e2e.py               # another instance
 scripts/e2e/prod_smoke.sh                           # prod-mode smoke in a throwaway second container (port 18080)
-docker compose -f compose.yaml -f compose.cuda.yaml config -q          # GPU overlay validates
 ```
 
 | Suite | What it checks |
@@ -129,7 +128,8 @@ Claude Code (verified with Claude Code 2.1.286): `claude mcp add --transport htt
 Host: Intel Core Ultra 9 285K (8 P-cores + 16 E-cores, AVX2 + AVX-VNNI, no AVX-512), 30 GB RAM, Docker 29 / Compose 5;
 full JLCPCB database (7,146,764 parts, source date 2026-09-26).
 
-Compose stack (`docker stats` after the e2e run, before the cross-encoder replaced the previous ranking sidecar):
+Compose stack (`docker stats` after the e2e run, measured before the cross-encoder was added; its native memory is an
+estimate in the notes):
 
 | Service | RAM | Notes |
 |---|---|---|
