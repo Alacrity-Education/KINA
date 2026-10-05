@@ -24,6 +24,8 @@
         <spring-ai.version>2.0.1</spring-ai.version>
         <!-- Boot 4.1.1 manages 3.53.2.1; pin the latest 3.53.x -->
         <sqlite-jdbc.version>3.53.4.0</sqlite-jdbc.version>
+        <!-- Boot 4.1.1 manages 1.18.46, which cannot run inside the JDK 27 compiler; 1.18.48 adds JDK 27 support -->
+        <lombok.version>1.18.48</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -115,6 +117,11 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- Test -->
         <dependency>
@@ -187,6 +194,19 @@
                 <configuration>
                     <release>21</release>
                     <parameters>true</parameters>
+                    <!-- Explicit processor path: JDK 23+ no longer runs processors found on the class path.
+                         Lombok must come first so the configuration processor sees the generated code. -->
+                    <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
                     <compilerArgs>
                         <arg>-Xlint:all,-processing,-serial</arg>
                     </compilerArgs>
@@ -194,4 +214,30 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Lombok 1.18.48 calls sun.misc.Unsafe, which JDK 24+ reports on every compile. Run javac in its own JVM
+             with the access allowed. JDK 21 (the Docker build) does not know the option, hence the profile. -->
+        <profile>
+            <id>jdk24-plus</id>
+            <activation>
+                <jdk>[24,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <fork>true</fork>
+                            <executable>${java.home}/bin/javac</executable>
+                            <compilerArgs combine.children="append">
+                                <arg>-J--sun-misc-unsafe-memory-access=allow</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
