@@ -3,6 +3,7 @@ package ro.alacrity.kina.security;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -89,21 +90,41 @@ public class AccessTokenRepository {
                 .list();
     }
 
-    /** Sets {@code revoked_at} when not yet revoked. Returns true when a row changed. */
+    /**
+     * Sets {@code revoked_at} when not yet revoked and revokes every OAuth refresh token issued together with this
+     * access token, so an OAuth client cannot mint a new access token after the user revoked it. Returns true when
+     * the access token row changed.
+     */
+    @Transactional
     public boolean revoke(UUID id, Instant now) {
-        return jdbc.sql("UPDATE access_tokens SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL")
+        boolean changed = jdbc.sql("UPDATE access_tokens SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL")
                 .param(Timestamp.from(now))
                 .param(id)
                 .update() > 0;
+        revokeLinkedRefreshTokens(id, now);
+        return changed;
     }
 
     /** Like {@link #revoke(UUID, Instant)} but only for a token owned by {@code userId}. */
+    @Transactional
     public boolean revokeForUser(UUID id, UUID userId, Instant now) {
-        return jdbc.sql("UPDATE access_tokens SET revoked_at = ? WHERE id = ? AND user_id = ? AND revoked_at IS NULL")
+        boolean changed = jdbc.sql(
+                        "UPDATE access_tokens SET revoked_at = ? WHERE id = ? AND user_id = ? AND revoked_at IS NULL")
                 .param(Timestamp.from(now))
                 .param(id)
                 .param(userId)
                 .update() > 0;
+        if (changed) {
+            revokeLinkedRefreshTokens(id, now);
+        }
+        return changed;
+    }
+
+    private void revokeLinkedRefreshTokens(UUID accessTokenId, Instant now) {
+        jdbc.sql("UPDATE oauth_refresh_tokens SET revoked_at = ? WHERE access_token_id = ? AND revoked_at IS NULL")
+                .param(Timestamp.from(now))
+                .param(accessTokenId)
+                .update();
     }
 
     /** Records usage unless it was recorded after {@code notAfter} (throttling). Returns true when updated. */

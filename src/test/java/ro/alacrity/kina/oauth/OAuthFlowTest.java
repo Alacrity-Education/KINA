@@ -37,6 +37,9 @@ class OAuthFlowTest {
     @Autowired
     UserRepository users;
 
+    @Autowired
+    ro.alacrity.kina.security.AccessTokenService accessTokens;
+
     // ---- metadata ------------------------------------------------------------------------------------------------
 
     @Test
@@ -318,6 +321,38 @@ class OAuthFlowTest {
 
         // Unknown client -> 401
         assertThat(revoke("nope", access)).isEqualTo(401);
+    }
+
+    @Test
+    void revokingTheAccessTokenInTheWebUiAlsoRevokesItsRefreshToken() throws Exception {
+        String clientId = registerPublicClient("UI revoke");
+        String verifier = SecureTokens.randomBase64Url(48);
+        JsonNode tokens = token(Map.of("grant_type", "authorization_code", "code", approve(clientId, verifier, null),
+                "redirect_uri", REDIRECT_URI, "client_id", clientId, "code_verifier", verifier), 200);
+        String access = tokens.get("access_token").asString();
+        String refresh = tokens.get("refresh_token").asString();
+        java.util.UUID tokenId = accessTokens.find(access).orElseThrow().id();
+
+        assertThat(mvc.perform(post("/tokens/" + tokenId + "/revoke").with(csrf())).andReturn().getResponse()
+                .getStatus()).isEqualTo(302);
+
+        assertThat(echoStatus(access)).isEqualTo(401);
+        assertThat(token(Map.of("grant_type", "refresh_token", "refresh_token", refresh, "client_id", clientId), 400)
+                .get("error").asString()).isEqualTo("invalid_grant");
+    }
+
+    @Test
+    void revokingTheAccessTokenAtTheRevocationEndpointAlsoRevokesItsRefreshToken() throws Exception {
+        String clientId = registerPublicClient("Endpoint revoke");
+        String verifier = SecureTokens.randomBase64Url(48);
+        JsonNode tokens = token(Map.of("grant_type", "authorization_code", "code", approve(clientId, verifier, null),
+                "redirect_uri", REDIRECT_URI, "client_id", clientId, "code_verifier", verifier), 200);
+
+        assertThat(revoke(clientId, tokens.get("access_token").asString())).isEqualTo(200);
+
+        assertThat(token(Map.of("grant_type", "refresh_token", "refresh_token",
+                tokens.get("refresh_token").asString(), "client_id", clientId), 400)
+                .get("error").asString()).isEqualTo("invalid_grant");
     }
 
     @Test
