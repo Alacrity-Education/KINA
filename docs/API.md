@@ -46,6 +46,7 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | `ranking` | string | `blended` (deterministic score blended 50/50 by rank with the in-process cross-encoder) or `fallback` (deterministic order only). |
 | `ranking_note` | string or null | Why the ranking fell back. Always present, null when `ranking` is `blended`. See [Ranking notes](#ranking-notes). |
 | `currencies` | array of strings | The price currencies in this response, sorted, for example `["EUR", "USD"]`. LCSC prices are USD (the JLCPCB database), TME and Mouser prices EUR (the account currency). KINA never converts prices, so compare across distributors with care. |
+| `attributions` | array of strings | The data notice of every distributor whose parts this response returns: TME `Data powered by TME.eu Data – no guarantee of data accuracy` (TME's API terms require it wherever TME data is shown), Mouser `Product data provided by Mouser Electronics`, LCSC `LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)`. Show the TME notice with TME data. |
 | `distributors` | array | One `DistributorResult` per searched distributor. |
 
 ### Ranking notes
@@ -99,7 +100,7 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | `excluded_below_spec` | integer | Parts of `fetched` left out because a known rating is below the request (see [Ratings](#ratings-are-hard-minimums)). 0 with `allow_below_spec`, which returns them flagged instead. |
 | `returned` | integer | The length of `parts`: at most `max_results` and at most `fetched - excluded_by_constraints - excluded_below_spec`. |
 | `out_of_stock_matches` | integer or null | Matches the distributor has but cannot ship now (dropped by the stock rule) on the pages KINA read: the part exists but is not returned. Not part of `fetched`. While every match is out of stock KINA reads up to 2 more pages and then the next relaxation step. Null when unknown (a cached search stored before this field existed). |
-| `cache` | string | `hit`, `partial`, `miss`, `bypassed` or `not_applicable` (LCSC, and distributors that were never looked up). |
+| `cache` | string | `hit`, `partial`, `miss`, `bypassed`, `not_applicable` (LCSC, and distributors that were never looked up) or `stale` (the live search failed, `error` says why, and the parts come from the query's expired cached list; their stock and prices may be marked `stale`). |
 | `fallback_query` | string or null | Set when the first phrase found nothing that meets the request at this distributor and a relaxed phrase produced the parts in the entry. Only Mouser and TME; null otherwise (always present in the JSON). See [Relaxation](#relaxation). |
 | `distributor_query` | string or null | The phrase KINA sent instead of your text: ratings are left out (see [Ratings](#ratings-are-hard-minimums)); at LCSC they are sent as `>=25V` terms that the local database checks; connector requests are rewritten into the distributor's vocabulary. Null when your text went through as written. Always present. If it found nothing that meets the request, `fallback_query` is what was sent after it. |
 | `query_terms_dropped` | array of strings | Informational: the stated terms that were not in the phrase that produced the parts, for example `["voltage"]` (Mouser and TME never get ratings, so a rated request always lists them), `["voltage", "dielectric"]` after a relaxation, and at LCSC the free-text words its database search dropped. The ranker still checks every constraint. Replaces the former `relaxed` field. |
@@ -109,7 +110,7 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | `rate_limit_waited_ms` | integer | Milliseconds this distributor's fetch spent waiting on rate limits, including waiting for a shared cool-down. Always present, 0 when KINA did not wait. |
 | `parts` | array | `PartResponse` entries, best first. |
 
-`PartResponse` has two detail levels (`detail` parameter). `compact` (the default for searches) has `rank`, `score`, `match`, `below_spec`, `mismatches`, `unverified`, `distributor`, `part_number`, `manufacturer`, `manufacturer_id` (TME), `mpn`, `description`, `stock`, `stock_as_of`, `min_order_qty`, `order_multiple`, `prices`, the order fields when `quantity` is above 1, `availability`, `lifecycle`, `datasheet_url`, `product_url` and the canonical `attributes` only. `full` (the default for a single-part lookup) adds `category`, `package`, `photo_url`, every raw distributor attribute (TME `Operating voltage`, `Case - inch`...) and `extra`, and always has the order fields. A field a level leaves out is not in the JSON; null `category`, `package` and `photo_url` are omitted too.
+`PartResponse` has two detail levels (`detail` parameter). `compact` (the default for searches) has `rank`, `score`, `match`, `below_spec`, `mismatches`, `unverified`, `distributor`, `part_number`, `manufacturer`, `manufacturer_id` (TME), `mpn`, `description`, `stock`, `stock_as_of`, `stale`, `min_order_qty`, `order_multiple`, `prices`, the order fields when `quantity` is above 1, `availability`, `lifecycle`, `datasheet_url`, `product_url` and the canonical `attributes` only. `full` (the default for a single-part lookup) adds `category`, `package`, `photo_url`, every raw distributor attribute (TME `Operating voltage`, `Case - inch`...) and `extra`, and always has the order fields. A field a level leaves out is not in the JSON; null `category`, `package` and `photo_url` are omitted too.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -127,13 +128,14 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | `package` | string or null | For example `0805`, `SOT-23`. |
 | `stock` | integer | Quantity that ships now; always above 0. |
 | `stock_as_of` | string | When the stock and prices were fetched from the distributor (ISO 8601, to the second). Cached TME and Mouser figures older than `kina.cache.stock-ttl` (24 h) are refreshed before a part is returned; LCSC figures are the JLCPCB database's. |
+| `stale` | boolean | Only present (and true) when the TME or Mouser stock and prices are older than `kina.cache.ttl` (3 days) and could not be refreshed (the distributor failed or is not configured). `availability.status` is then `stale`, and the part ranks below the fresh parts of its distributor. Treat stock and prices as unconfirmed. Within 3 days a failed refresh returns the cached figures without the flag. |
 | `min_order_qty` | integer or null | Null when unknown (always null for LCSC). |
 | `order_multiple` | integer or null | Null when unknown (always null for LCSC). |
 | `prices` | array | At most 3 entries, the smallest quantity brackets: `{"qty": 1, "unit_price": 1.40, "currency": "EUR"}`. LCSC prices are in USD. |
 | `ordered_quantity` | integer | Pieces you would order for `quantity`: raised to the minimum order quantity (and the first price bracket) and rounded up to the order multiple. |
 | `unit_price_at_quantity` | number | Unit price of the bracket that applies to `ordered_quantity` (from all brackets, not only the 3 returned). Omitted when the part has no prices. |
 | `total_price` | number | `unit_price_at_quantity * ordered_quantity`, in the price currency. |
-| `availability` | object | `{"status": ..., "note": "<plain sentence>"}`. The status is the stock situation only: `in_stock`; `low_stock` (fewer than `kina.search.low-stock-threshold` pieces, default 10, or fewer than twice `quantity`; such a part ranks lower); `limited` (fewer pieces ship now than `quantity`); `last_units` (no restocking: TME `AVAILABLE_WHILE_STOCKS_LAST`, Mouser end of life, obsolete or not recommended for new designs); `special_order` and `external_warehouse` (TME; excluded by default). Supply and lifecycle flags are in `lifecycle`. The note also carries TME `HARDLY_AVAILABLE` ("limited market availability", a supply warning: TME may still hold a large stock), `MOQ_VALID_WHILE_STOCKS_LAST` ("the MOQ may change after the product is sold out"), `DANGEROUS`/`OVERSIZED` (shipping restrictions) and the Mouser maximum order quantity when it is below `quantity`; with `detail=full` also TME `NEW`/`PROMOTED`, the Mouser lifecycle and reel option and the JLCPCB library type (Basic, Preferred, Extended). |
+| `availability` | object | `{"status": ..., "note": "<plain sentence>"}`. The status is the stock situation only: `in_stock`; `low_stock` (fewer than `kina.search.low-stock-threshold` pieces, default 10, or fewer than twice `quantity`; such a part ranks lower); `limited` (fewer pieces ship now than `quantity`); `last_units` (no restocking: TME `AVAILABLE_WHILE_STOCKS_LAST`, Mouser end of life, obsolete or not recommended for new designs); `special_order` and `external_warehouse` (TME; excluded by default); `stale` (stock and prices older than 3 days that could not be refreshed: the note says when they were last confirmed and the last known stock). Supply and lifecycle flags are in `lifecycle`. The note also carries TME `HARDLY_AVAILABLE` ("limited market availability", a supply warning: TME may still hold a large stock), `MOQ_VALID_WHILE_STOCKS_LAST` ("the MOQ may change after the product is sold out"), `DANGEROUS`/`OVERSIZED` (shipping restrictions) and the Mouser maximum order quantity when it is below `quantity`; with `detail=full` also TME `NEW`/`PROMOTED`, the Mouser lifecycle and reel option and the JLCPCB library type (Basic, Preferred, Extended). |
 | `lifecycle` | string | `active`, `new` (TME `NEW`, Mouser "New Product"), `supply_constrained` (TME `HARDLY_AVAILABLE`) or `last_time_buy` (TME `AVAILABLE_WHILE_STOCKS_LAST`, Mouser end of life / obsolete / NRND). `supply_constrained` costs 0.05 and `last_time_buy` 0.1 of score (`kina.search.lifecycle.*`), taken from the deterministic and from the final score. |
 | `mismatches` | array of strings | Search results only, omitted when empty: the stated parameters the part is known not to satisfy, for example `"dielectric: X5R instead of X7R"`, `"package: 1210 instead of 1206"`, `"voltage: 16V below 25V"`, `"dcr: 40mohm above 20mohm"`, `"elements: single instead of array"`. A parameter the part does not state is not listed here but in `unverified`. |
 | `unverified` | array of strings | Search results only, omitted when empty: stated constraints the distributor does not state for this part, for example `["current"]` for an inductor listed without a current rating, or `["package", "dielectric"]`. They are left out of `match`, and such a part ranks below every part whose stated constraints are all verified and met. |
@@ -323,7 +325,7 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/distri
     {"distributor": "MOUSER", "configured": true, "available": true, "detail": "...", "uses_cache": true,
      "cached_parts": 0, "max_results_per_search": 50}
   ],
-  "cache": {"ttl": "PT120H", "parts": 0, "fresh_parts": 0, "searches": 0, "oldest_fetch": null},
+  "cache": {"ttl": "PT72H", "parts": 0, "fresh_parts": 0, "searches": 0, "oldest_fetch": null},
   "ranking": {"mode": "blended", "cross_encoder_enabled": true, "ready": true,
               "model": "cross-encoder/ms-marco-MiniLM-L6-v2", "model_variant": "int8",
               "model_revision": "<hugging face commit>", "model_dir": "/opt/kina/cross-encoder",
@@ -431,7 +433,7 @@ List the tools with `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`. The author
 
 ### `search_parts`
 
-Search electronic components across distributors and return ranked, in-stock offers. Only stock that ships now is returned. Results are cached for 5 days (a search that found nothing, for only 1 hour); calling again with a larger `max_results` is served from the cache.
+Search electronic components across distributors and return ranked, in-stock offers. Only stock that ships now is returned. Results are cached for 3 days (a search that found nothing, for only 1 hour); calling again with a larger `max_results` is served from the cache. Component data stays cached after that; stock and prices older than 24 hours are refreshed before they are returned, and older than 3 days without a refresh they are flagged `stale`. The response lists the distributors' data notices in `attributions`.
 
 ```json
 {
@@ -484,7 +486,7 @@ Returns `{"results": [SearchResponse, ...]}` in request order. An empty or missi
 
 ### `get_part`
 
-Current details of one part by distributor part number (the `part_number` of a search result) or by manufacturer part number. `detail` defaults to `full` here: every attribute the distributor gives (the canonical keys such as `RippleCurrent`, `ESR`, `Impedance`, `Dimensions`, `Qualification`, `Features`, and the raw distributor attributes), `photo_url` and `extra`. Cached TME and Mouser stock and prices older than 24 hours are refreshed first (`stock_as_of`); a part that sold out meanwhile is looked up live and reported as `out_of_stock`.
+Current details of one part by distributor part number (the `part_number` of a search result) or by manufacturer part number. `detail` defaults to `full` here: every attribute the distributor gives (the canonical keys such as `RippleCurrent`, `ESR`, `Impedance`, `Dimensions`, `Qualification`, `Features`, and the raw distributor attributes), `photo_url` and `extra`. Cached TME and Mouser stock and prices older than 24 hours are refreshed first (`stock_as_of`); a part that sold out meanwhile is looked up live and reported as `out_of_stock` (KINA keeps its component data).
 
 ```json
 {
@@ -503,17 +505,19 @@ Current details of one part by distributor part number (the `part_number` of a s
 Returns:
 
 ```json
-{"found": true, "distributor": "LCSC", "part_number": "C15850", "cache": "not_applicable", "error": null, "reason": null, "part": {"...": "PartResponse"}}
+{"found": true, "distributor": "LCSC", "part_number": "C15850", "cache": "not_applicable", "error": null, "reason": null, "part": {"...": "PartResponse"},
+ "attributions": ["LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)"]}
 ```
 
 `found` is false (and `part` null) in three cases. `reason: "not_found"`: the distributor does not know the part. `reason: "out_of_stock"`: it lists the part but has no ships-now stock; `identity` names it:
 
 ```json
 {"found": false, "distributor": "MOUSER", "part_number": "ERA6AEB5361V", "cache": "miss", "error": null, "reason": "out_of_stock",
- "identity": {"part_number": "667-ERA-6AEB5361V", "manufacturer": "Panasonic", "mpn": "ERA-6AEB5361V", "description": "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"}, "part": null}
+ "identity": {"part_number": "667-ERA-6AEB5361V", "manufacturer": "Panasonic", "mpn": "ERA-6AEB5361V", "description": "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"}, "part": null,
+ "attributions": ["Product data provided by Mouser Electronics"]}
 ```
 
-The lookup failed: `error` carries the failure code and `reason` is null. On a rate limit the call waits and retries for up to 2 minutes before it reports `rate_limited`. The response has no waited-time field. `cache` is `hit`, `miss`, `bypassed` or `not_applicable`. An unknown distributor name is a tool error.
+The lookup failed: `error` carries the failure code and `reason` is null. On a rate limit the call waits and retries for up to 2 minutes before it reports `rate_limited`. The response has no waited-time field. `cache` is `hit`, `miss`, `bypassed` or `not_applicable`. `attributions` holds the distributor's data notice when the response carries a part or an identity, else it is empty. A cached TME or Mouser part whose stock and prices are older than 3 days and cannot be refreshed is looked up live; if that fails too (or the distributor is not configured), the cached part is returned with `stale: true`. An unknown distributor name is a tool error.
 
 ### `list_distributors`
 

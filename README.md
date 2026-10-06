@@ -73,9 +73,11 @@ KINA answers (abridged):
 - **Stock you can trust.** Low stock (`low_stock`) and large minimum orders rank lower, every part says how old its stock figure is (`stock_as_of`), and cached figures older than a day are refreshed before they are returned.
 - **Better ranking.** A deterministic parametric ranker is blended 50/50 by rank with a MiniLM cross-encoder (`ms-marco-MiniLM-L6-v2`) on ONNX Runtime. NDCG@10 is 0.913 blended against 0.898 deterministic on our labelled queries. If the model cannot score, you get the deterministic order and `ranking: "fallback"`. Search never fails because of the model.
 - **Small answers by default.** `detail: compact` returns identity, stock, prices, availability, links and key attributes. `full` adds photo, category and raw distributor attributes; it is the default for `get_part`.
-- **Fast on the second ask.** TME and Mouser results are cached in PostgreSQL for 5 days. A cold search takes about 6 s, a cached one about 60 ms, and ranking 40 candidates takes 130 to 300 ms.
+- **Fast on the second ask.** TME and Mouser search results are cached in PostgreSQL for 3 days; component data is kept, and stock and prices older than a day are refreshed before they are returned. A cold search takes about 6 s, a cached one about 60 ms, and ranking 40 candidates takes 130 to 300 ms.
 - **Polite to rate limits.** KINA waits and retries on rate limits, inside a 2-minute deadline per request, instead of failing at once.
 - **Access control.** OAuth 2.1 for Claude, OIDC login, group-gated access that is checked again at every refresh and on bearer requests (a removed member is cut off within about an hour), and static tokens for scripts.
+
+- **Credits its sources.** Every response lists the distributors' data notices in `attributions`, including TME's required "Data powered by TME.eu Data – no guarantee of data accuracy"; see [Distributor terms](docs/OPERATIONS.md#distributor-terms) for TME's deletion rule and the Mouser caching caveat.
 
 Details of every behaviour are in [docs/SEARCH.md](docs/SEARCH.md).
 
@@ -152,7 +154,7 @@ Static tokens are tied to the group too. Set `KINA_TOKENS_UI_ENABLED=false` to s
 ## How it works
 
 1. **Parse.** The query is turned into a typed request: family, value, tolerance, ratings, dielectric, package, mounting, technology, and for connectors the type, gender, positions, rows, pitch and orientation. `parsed` in the response shows the result.
-2. **Fetch.** KINA asks each distributor in its own words (`distributor_query`). LCSC is searched in the local JLCPCB SQLite database. TME and Mouser are served from the PostgreSQL cache when it holds enough fresh parts (5 days, 1 hour for a search that found nothing). Otherwise KINA calls the API, waits out rate limits within the 2-minute deadline, and keeps only parts with stock above zero. When a search finds nothing, KINA relaxes it step by step: no ratings, no tolerance, the minimal core phrase, no dielectric.
+2. **Fetch.** KINA asks each distributor in its own words (`distributor_query`). LCSC is searched in the local JLCPCB SQLite database. TME and Mouser are served from the PostgreSQL cache when it holds enough parts for a search younger than 3 days (1 hour for a search that found nothing). Otherwise KINA calls the API, waits out rate limits within the 2-minute deadline, and keeps only parts with stock above zero. When a search finds nothing, KINA relaxes it step by step: no ratings, no tolerance, the minimal core phrase, no dielectric.
 3. **Rank.** A deterministic ranker scores each part from 0 to 1 and gives it a `match` grade. The best 40 candidates then go to the in-process cross-encoder. The final score is half the deterministic rank and half the model rank.
 4. **Respond.** The three smallest price brackets, `total_price` for the requested quantity, availability, lifecycle, links and attributes, per distributor, with the errors of any distributor that failed.
 
