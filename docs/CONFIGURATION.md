@@ -120,6 +120,8 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 |---|---|---|
 | `KINA_PORT` | `8080` | Host port published by Compose. |
 | `KINA_MEM_LIMIT` | `2g` | Memory limit of the `kina` container. The JVM heap is 75 percent of it. |
+| `KINA_METRICS_PORT` | `9090` | Host port of the Prometheus and health endpoints (management server, no authentication). |
+| `KINA_METRICS_BIND` | `127.0.0.1` | Host address the metrics port is published on. Keep it on localhost or a monitoring network; the endpoint has no authentication. |
 | `PORT` | `8080` | HTTP port inside the process (outside Compose). |
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/kina` (Compose: `jdbc:postgresql://postgres:5432/kina`) | PostgreSQL connection. |
 | `SPRING_DATASOURCE_USERNAME` | `kina` | Database user. |

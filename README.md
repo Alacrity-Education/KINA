@@ -60,6 +60,7 @@ KINA answers (abridged):
 
 - **Only stock that ships now.** Out-of-stock, on-order and factory-stock offers are never ranked, cached or returned.
 - **Three distributors in one call.** LCSC, TME and Mouser, with `search_parts_batch` for up to 20 queries at once.
+- **Prometheus metrics.** Searches, distributor calls and rate limits, cache contents, ranking model runs, tool calls, logins and users, on a separate unauthenticated port (`/actuator/prometheus` on 9090); counters survive restarts.
 - **Prices that fit in a chat.** The three smallest price brackets, plus `total_price` at the `quantity` you ask for (minimum order quantity and multiples included).
 - **Understands components, not only words.** Value, tolerance, package, dielectric, mounting and technology (thin film, wirewound, tantalum, polymer and more) are parsed and rewritten into each distributor's own vocabulary.
 - **Connector and USB aware.** "90 degree dupont style female pin header, THT, 6 position" becomes a typed request. USB-C requests know standards, speed classes, pin configurations and features, and shield pins are normalised (a 17 pin listing is a 16 pin part).

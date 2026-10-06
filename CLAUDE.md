@@ -44,8 +44,9 @@ Optional live tests: `KINA_CROSS_ENCODER_TEST_MODEL_DIR=<model dir> ./mvnw test 
 | `security` | Two filter chains in `SecurityConfig` (machine: bearer tokens; web: session/OIDC), dev-mode admin, `AccessTokenService`, OIDC login. `OidcAccessPolicy` (group and e-mail-domain rules, claim lookup), `MembershipVerifier` (re-checks at the provider, grace and fallback rules), `UpstreamTokenCipher` (AES-GCM for the provider's refresh tokens), `OidcUserSynchronizer` (login gate), `BearerTokenAuthenticationFilter`. |
 | `oauth` | Metadata, dynamic registration, authorize, token, revoke endpoints, PKCE. `ClientMetadataDocumentResolver` (https `client_id` documents on trusted hosts), `RegistrationRateLimiter`, `OAuthClientMaintenance` (daily cleanup of unused clients). |
 | `web` | `TokenPageController` (Thymeleaf token UI; `kina.tokens.ui-enabled=false` turns static tokens off), `LoginErrorController` (`/login-denied`), `PublicUrlResolver` (public origin; all emitted URLs go through it). |
+| `metrics` | `KinaMetrics` facade and `MetricsStore` (in-memory counters, saved to `metrics_counters` every 30 s and restored on startup), gauges from repositories, `/actuator/prometheus` on the management port (`KINA_METRICS_PORT`, no authentication), `/api/v1/metrics/summary`. |
 
-SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V5). Templates: `src/main/resources/templates`.
+SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V6). Templates: `src/main/resources/templates`.
 
 ## Conventions
 
