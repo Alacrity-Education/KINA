@@ -11,6 +11,7 @@ An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search 
 - `docs/API.md`, `docs/OPERATIONS.md`, `README.md`: user-facing docs. Update them when endpoints, variables or defaults change.
 - Connector vocabulary (types, gender, positions, rows, pitch, orientation, and the per-distributor phrases) lives in `ConnectorRecognizer` and `DistributorPhraser`. Add new connector types there and in the labelled tests, and document the wording in `docs/DESIGN.md` 3.2 and 3.4.
 - USB vocabulary (types, standards and speed classes, pin configurations, features, mounting styles) lives in `UsbVocabulary`. Keep the pin-count normalisation rule (17/18 to 16, 25/26 to 24, 7/8 to 6, 14 stays 14; `Positions` as reported, ranking on `PinConfiguration`) and its tests.
+- Form-factor classes (`chip`, `through_hole`, `chassis`, `power_package`, `power_smd`; a hard constraint) live in `FormFactor`; resistor series codes that imply a power rating (Arcol HS, TE THS, Vishay RH, Ohmite TEH, Bourns PWR, Caddock MP9xx, LPS) live in `ResistorSeries`. Add new series there with a labelled test; part numbers only, never datasheets.
 - `.env.example` documents every environment variable. Keep it in sync with `application.yml`.
 - Group authorisation and the Authentik end-to-end test (`scripts/e2e/authentik/`, needs Docker, about 70 s) are described in `docs/DESIGN.md` 6, 7.1 to 7.3 and `docs/DEVELOPMENT.md`; the admin guide is `docs/OPERATIONS.md` (Authentik setup).
 
