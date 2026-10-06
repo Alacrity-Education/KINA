@@ -1,5 +1,6 @@
 package ro.alacrity.kina.security;
 
+import lombok.extern.slf4j.Slf4j;
 import ro.alacrity.kina.config.KinaProperties;
 
 import java.util.ArrayList;
@@ -25,12 +26,14 @@ import java.util.TreeSet;
  *   <li>The user must be in at least one required group. No required groups: no group check.</li>
  *   <li>Allowed e-mail domains (optional): an e-mail address must be present ({@link Reason#EMAIL_MISSING}), its domain
  *   must equal one of them, case-insensitively ({@link Reason#EMAIL_DOMAIN}), and it must not be marked unverified
- *   ({@code email_verified} {@code false} or {@code "false"}, {@link Reason#EMAIL_UNVERIFIED}). The address is the
+ *   ({@code email_verified} {@code false} or {@code "false"}, {@link Reason#EMAIL_UNVERIFIED}) unless
+ *   {@code require-verified-email} is off; then the flag is ignored (DEBUG log) and only the domain counts. The address is the
  *   {@code email} claim (ID token, then userinfo); with {@code email-from-preferred-username} also
  *   {@code preferred_username} or {@code upn} when they contain {@code @}.</li>
  * </ul>
  * Decisions never carry the address itself, only the domain, so they are safe to log.
  */
+@Slf4j
 public final class OidcAccessPolicy {
 
     /** OAuth2 error code of a login rejected for missing group membership. */
@@ -45,9 +48,11 @@ public final class OidcAccessPolicy {
     private final List<String> requiredGroups;
     private final List<String> allowedEmailDomains;
     private final boolean emailFromPreferredUsername;
+    private final boolean requireVerifiedEmail;
 
     public OidcAccessPolicy(KinaProperties.Oidc oidc) {
-        this(oidc.groupsClaim(), oidc.requiredGroups(), oidc.allowedEmailDomains(), oidc.emailFromPreferredUsername());
+        this(oidc.groupsClaim(), oidc.requiredGroups(), oidc.allowedEmailDomains(), oidc.emailFromPreferredUsername(),
+                oidc.requireVerifiedEmail());
     }
 
     public OidcAccessPolicy(String groupsClaim, List<String> requiredGroups, List<String> allowedEmailDomains) {
@@ -56,11 +61,17 @@ public final class OidcAccessPolicy {
 
     public OidcAccessPolicy(String groupsClaim, List<String> requiredGroups, List<String> allowedEmailDomains,
                             boolean emailFromPreferredUsername) {
+        this(groupsClaim, requiredGroups, allowedEmailDomains, emailFromPreferredUsername, true);
+    }
+
+    public OidcAccessPolicy(String groupsClaim, List<String> requiredGroups, List<String> allowedEmailDomains,
+                            boolean emailFromPreferredUsername, boolean requireVerifiedEmail) {
         this.groupsClaim = groupsClaim == null || groupsClaim.isBlank() ? "groups" : groupsClaim;
         this.requiredGroups = requiredGroups == null ? List.of() : List.copyOf(requiredGroups);
         this.allowedEmailDomains = allowedEmailDomains == null ? List.of()
                 : allowedEmailDomains.stream().map(d -> stripAt(d).toLowerCase(Locale.ROOT)).toList();
         this.emailFromPreferredUsername = emailFromPreferredUsername;
+        this.requireVerifiedEmail = requireVerifiedEmail;
     }
 
     /** Why a login was refused. {@link #code()} is the machine-readable form (the {@code /login-denied} reason). */
@@ -136,12 +147,17 @@ public final class OidcAccessPolicy {
         return emailFromPreferredUsername;
     }
 
+    public boolean requireVerifiedEmail() {
+        return requireVerifiedEmail;
+    }
+
     /** The effective policy in one line, for the startup log (no secrets). */
     public String describe() {
         return "groups claim '" + groupsClaim + "', required groups "
                 + (requiredGroups.isEmpty() ? "none (no group check)" : requiredGroups) + ", allowed e-mail domains "
                 + (allowedEmailDomains.isEmpty() ? "any" : allowedEmailDomains)
-                + ", e-mail from preferred_username/upn " + (emailFromPreferredUsername ? "on" : "off");
+                + ", e-mail from preferred_username/upn " + (emailFromPreferredUsername ? "on" : "off")
+                + ", verified e-mail required: " + (requireVerifiedEmail ? "yes" : "no");
     }
 
     /** Full login check: e-mail address (present, domain, verified), then groups. {@code userInfoClaims} may be null. */
@@ -163,7 +179,11 @@ public final class OidcAccessPolicy {
             Object verified = claim(idTokenClaims, userInfoClaims, "email_verified").orElse(null);
             if (Boolean.FALSE.equals(verified)
                     || verified instanceof String text && "false".equalsIgnoreCase(text.strip())) {
-                return Decision.deny(Reason.EMAIL_UNVERIFIED, "e-mail address not verified (email_verified=false)");
+                if (requireVerifiedEmail) {
+                    return Decision.deny(Reason.EMAIL_UNVERIFIED, "e-mail address not verified (email_verified=false)");
+                }
+                log.debug("email_verified=false ignored for subject {} (require-verified-email is off)",
+                        claim(idTokenClaims, userInfoClaims, "sub").orElse("unknown"));
             }
         }
         return evaluateGroups(idTokenClaims, userInfoClaims);

@@ -204,6 +204,49 @@ class OidcAccessPolicyTest {
         assertThat(OidcAccessPolicy.Reason.GROUP.errorCode()).isEqualTo(OidcAccessPolicy.ERROR_GROUP);
         assertThat(new OidcAccessPolicy("groups", List.of("G"), List.of("alacrity.ro"), true).describe())
                 .isEqualTo("groups claim 'groups', required groups [G], allowed e-mail domains [alacrity.ro], "
-                        + "e-mail from preferred_username/upn on");
+                        + "e-mail from preferred_username/upn on, verified e-mail required: yes");
+        assertThat(new OidcAccessPolicy("groups", List.of(), List.of("alacrity.ro"), false, false).describe())
+                .endsWith("verified e-mail required: no");
+    }
+
+    // ---- require-verified-email ----------------------------------------------------------------------------------
+
+    @Test
+    void verifiedEmailRequiredByDefaultDeniesAnUnverifiedAddress() {
+        OidcAccessPolicy required = new OidcAccessPolicy("groups", List.of(), List.of("alacrity.ro"), false, true);
+        assertThat(required.requireVerifiedEmail()).isTrue();
+        assertThat(DOMAIN.requireVerifiedEmail()).as("default").isTrue();
+        assertThat(required.evaluateLogin(Map.of("email", "ana@alacrity.ro", "email_verified", false), null).reason())
+                .isEqualTo(OidcAccessPolicy.Reason.EMAIL_UNVERIFIED);
+    }
+
+    @Test
+    void verifiedEmailNotRequiredAdmitsAnUnverifiedAddressOfAnAllowedDomain() {
+        OidcAccessPolicy relaxed = new OidcAccessPolicy("groups", List.of("G"), List.of("alacrity.ro"), false, false);
+        for (Object flag : List.of(false, "false")) {
+            assertThat(relaxed.evaluateLogin(Map.of("sub", "s1", "email", "ana@alacrity.ro", "email_verified", flag,
+                    "groups", List.of("G")), null).allowed()).as(flag.toString()).isTrue();
+        }
+        // The group check still applies.
+        assertThat(relaxed.evaluateLogin(Map.of("email", "ana@alacrity.ro", "email_verified", false,
+                "groups", List.of("Other")), null).reason()).isEqualTo(OidcAccessPolicy.Reason.GROUP);
+    }
+
+    @Test
+    void verifiedEmailNotRequiredStillDeniesAWrongDomain() {
+        OidcAccessPolicy relaxed = new OidcAccessPolicy("groups", List.of(), List.of("alacrity.ro"), false, false);
+        OidcAccessPolicy.Decision decision = relaxed.evaluateLogin(
+                Map.of("email", "eve@gmail.com", "email_verified", false), null);
+        assertThat(decision.reason()).isEqualTo(OidcAccessPolicy.Reason.EMAIL_DOMAIN);
+        assertThat(decision.domain()).isEqualTo("gmail.com");
+        assertThat(relaxed.evaluateLogin(Map.of("sub", "1", "email_verified", false), null).reason())
+                .isEqualTo(OidcAccessPolicy.Reason.EMAIL_MISSING);
+    }
+
+    @Test
+    void propertiesCarryTheOptionWithTrueAsDefault() {
+        assertThat(new ro.alacrity.kina.config.KinaProperties.Oidc("i", "c", "s").requireVerifiedEmail()).isTrue();
+        assertThat(new OidcAccessPolicy(new ro.alacrity.kina.config.KinaProperties.Oidc("i", "c", "s", null, null,
+                List.of("alacrity.ro"), false, null, null, null, null, null, false)).requireVerifiedEmail()).isFalse();
     }
 }

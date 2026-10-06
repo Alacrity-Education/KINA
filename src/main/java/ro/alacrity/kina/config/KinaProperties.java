@@ -63,6 +63,9 @@ public record KinaProperties(
      * @param allowedEmailDomains            optional: the {@code email} claim must end in one of these domains
      * @param emailFromPreferredUsername     when no {@code email} claim is present, take the address from
      *                                       {@code preferred_username} or {@code upn} if it contains {@code @}
+     * @param requireVerifiedEmail           with allowed e-mail domains: refuse an address the provider marks as
+     *                                       unverified ({@code email_verified=false}); false trusts the provider's
+     *                                       domain-restricted login and only checks the domain
      * @param extraScopes                    scopes requested in addition to {@code openid profile email}
      * @param tokenEncryptionKey             base64 of 32 bytes; AES-GCM key for stored upstream refresh tokens; unset:
      *                                       upstream refresh tokens are not stored (fallback: periodic re-login)
@@ -81,7 +84,8 @@ public record KinaProperties(
                        String tokenEncryptionKey,
                        @DefaultValue("1h") Duration membershipRecheckInterval,
                        @DefaultValue("4h") Duration membershipGrace,
-                       @DefaultValue("24h") Duration reloginIntervalWithoutRecheck) {
+                       @DefaultValue("24h") Duration reloginIntervalWithoutRecheck,
+                       @DefaultValue("true") boolean requireVerifiedEmail) {
 
         @ConstructorBinding
         public Oidc {
@@ -98,7 +102,17 @@ public record KinaProperties(
 
         /** Issuer and client only; every group-authorisation setting at its default (no group check). */
         public Oidc(String issuerUri, String clientId, String clientSecret) {
-            this(issuerUri, clientId, clientSecret, null, null, null, false, null, null, null, null, null);
+            this(issuerUri, clientId, clientSecret, null, null, null, false, null, null, null, null, null, true);
+        }
+
+        /** Every setting except {@code requireVerifiedEmail}, which is on (the default). */
+        public Oidc(String issuerUri, String clientId, String clientSecret, String groupsClaim,
+                    List<String> requiredGroups, List<String> allowedEmailDomains, boolean emailFromPreferredUsername,
+                    List<String> extraScopes, String tokenEncryptionKey, Duration membershipRecheckInterval,
+                    Duration membershipGrace, Duration reloginIntervalWithoutRecheck) {
+            this(issuerUri, clientId, clientSecret, groupsClaim, requiredGroups, allowedEmailDomains,
+                    emailFromPreferredUsername, extraScopes, tokenEncryptionKey, membershipRecheckInterval,
+                    membershipGrace, reloginIntervalWithoutRecheck, true);
         }
 
         public boolean isConfigured() {
@@ -122,7 +136,8 @@ public record KinaProperties(
                     + ", emailFromPreferredUsername=" + emailFromPreferredUsername + ", extraScopes=" + extraScopes
                     + ", tokenEncryptionKey=" + (hasTokenEncryptionKey() ? "***" : "")
                     + ", membershipRecheckInterval=" + membershipRecheckInterval + ", membershipGrace="
-                    + membershipGrace + ", reloginIntervalWithoutRecheck=" + reloginIntervalWithoutRecheck + "]";
+                    + membershipGrace + ", reloginIntervalWithoutRecheck=" + reloginIntervalWithoutRecheck
+                    + ", requireVerifiedEmail=" + requireVerifiedEmail + "]";
         }
     }
 

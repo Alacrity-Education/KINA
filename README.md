@@ -217,6 +217,7 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 | `OIDC_REQUIRED_GROUPS` | empty | Comma-separated groups; a user needs at least one. Empty means no group check. |
 | `OIDC_ALLOWED_EMAIL_DOMAINS` | empty | Comma-separated e-mail domains, for example `alacrity.ro`. Empty means any domain. |
 | `OIDC_EMAIL_FROM_PREFERRED_USERNAME` | `false` | `true`: when the provider sends no `email` claim, use `preferred_username` (then `upn`) as the address if it contains `@`. For providers that put the address there. |
+| `OIDC_REQUIRE_VERIFIED_EMAIL` | `true` | With `OIDC_ALLOWED_EMAIL_DOMAINS`: refuse an address the provider marks as unverified (`email_verified: false`). Set `false` when the provider only admits accounts of your organisation and does not maintain `email_verified` (Authentik's default `email` mapping always sends `false`). The domain is still checked. |
 | `OIDC_GROUPS_CLAIM` | `groups` | Claim that holds the groups (ID token first, then userinfo). Dotted paths and namespaced names work. |
 | `OIDC_EXTRA_SCOPES` | empty | Extra scopes besides `openid profile email`. `offline_access` is added automatically. |
 | `KINA_TOKEN_ENCRYPTION_KEY` | unset | Base64 of 32 bytes (`openssl rand -base64 32`). Encrypts the provider's refresh tokens for re-checks. Unset: no server-side re-checks (24 hour re-login fallback, WARN at startup). |
