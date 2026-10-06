@@ -744,6 +744,14 @@ The checks, in this order (the first conflict names the part's entry in the deta
   description, because JLCPCB lists values unlabelled and sorted as text, `1.1V@(800mA) 15V 1A 3.3V` for an
   AMS1117-3.3; ranges `25.1V~28.9V`, `1.8V - 3.3V` and conditioned values `100nA@0.8V` are left out). A regulator's
   `Output voltage` and a Zener's `Zener voltage` attribute come before any other voltage attribute.
+  **Voltage of transistors and diodes** (`ParametricExtractor.LARGEST_VOLTAGE_FAMILIES`: transistor, MOSFET, diode,
+  Schottky): when no attribute states the voltage, the rating (Vds, Vrrm) is the **largest** single voltage of the
+  description, not the first. JLCPCB lists a MOSFET's gate threshold before its drain-source rating when that sorts
+  first as text (`1.45V 1.4W 30V` for AO3400A, `1 N-channel 1.2V ... 20V` for SI2302, `±20V` after `60V` for 2N7002),
+  and a diode's forward voltage likewise. Conditioned values (`1.25V@150mA`, `500uA@40V`) and ranges are left out. A
+  largest value below 3 V is a threshold or forward voltage: the voltage is then unknown (unverified), never a wrong
+  rating. Before 2026-10-07 the first voltage was used and `SOT-23 N-channel MOSFET 30V` excluded 37 of 40 LCSC parts.
+  Zener, TVS, LED and regulator voltages are specifications and keep the rules above.
 - **load capacitance**: a crystal's capacitance within 1 %.
 - **package**: `Recognizers.samePackage`: the same `packageKey` (`SOT-23-3L` == `SOT-23` == `TO-236AB`), can sizes
   within 0.2 mm in diameter and length; a conflict only when the part's package is recognised.

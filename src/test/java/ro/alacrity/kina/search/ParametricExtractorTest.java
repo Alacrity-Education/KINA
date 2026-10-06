@@ -577,4 +577,71 @@ class ParametricExtractorTest {
                 null, Map.of())))).containsEntry("MountingStyle", "hybrid").containsEntry("PinConfiguration", "16")
                 .containsEntry("UsbStandard", "USB 2.0").containsEntry("Orientation", "vertical");
     }
+
+    private static Part jlcpcb(String code, String mpn, String description, String category, String pkg) {
+        return RankingFixtures.lcsc(code, "ACME", mpn, description, category, pkg, Map.of());
+    }
+
+    /**
+     * JLCPCB descriptions list voltages unlabelled and text-sorted: a MOSFET's gate threshold or a diode's forward voltage
+     * often comes first. Transistors and diodes are rated by the largest voltage (real rows of the JLCPCB database).
+     */
+    @Test
+    void lcscTransistorAndDiodeVoltageIsTheLargestStated() {
+        String mosfets = "Transistors/Thyristors / MOSFETs";
+        assertThat(extractor.extract(jlcpcb("C20917", "AO3400A",
+                "-55℃~+150℃ 1 N-channel 1.45V 1.4W 30V 48mΩ@2.5V 5.7A 50pF 630pF 75pF 7nC@10V N-Channel", mosfets,
+                "SOT-23"))).containsEntry("Voltage", "30V").containsEntry("Package", "SOT-23");
+        assertThat(extractor.extract(jlcpcb("C181087", "SI2302",
+                "-55℃~+150℃ 1 N-channel 1.2V 10nC@4.5V 110mΩ@2.5V 120pF 20V 237pF 3A 400mW 45pF", mosfets,
+                "SOT-23"))).containsEntry("Voltage", "20V");
+        assertThat(extractor.extract(jlcpcb("C8545", "2N7002",
+                "1 N-channel 115mA 2.5V 225mW 25pF 50pF 5pF 5Ω@10V 60V N-Channel ±20V", mosfets, "SOT-23")))
+                .containsEntry("Voltage", "60V");
+        assertThat(extractor.extract(jlcpcb("C15127", "AO3401A",
+                "1 P-Channel 14nC@10V 30V 47mΩ@10V、60mΩ@4.5V、85mΩ@2.5V 4A 55pF 645pF 80pF 900mV", mosfets, "SOT-23")))
+                .containsEntry("Voltage", "30V");
+        assertThat(extractor.extract(jlcpcb("C52895", "BSS138",
+                "-55℃~+150℃ 1 N-channel 1.5V 2.4nC@25V 220mA 27pF 3.5Ω@10V 360mW 50V 6pF", mosfets, "SOT-23")))
+                .containsEntry("Voltage", "50V");
+        assertThat(extractor.extract(jlcpcb("C2099", "1N4148W",
+                "1.25V@150mA 100V 150mA 1uA@75V 2A 4ns 500mW Standalone", "Diodes / Switching Diodes", "SOD-123")))
+                .containsEntry("Voltage", "100V");
+        assertThat(extractor.extract(jlcpcb("C8678", "SS34",
+                "-55℃~+125℃ 3A 40V 500uA@40V 550mV@3A Independent", "Diodes / Schottky Diodes", "SMA(DO-214AC)")))
+                .containsEntry("Voltage", "40V");
+        assertThat(extractor.extract(jlcpcb("C77336", "MBR0530",
+                "1 Independent 30V 5.5A 500mA 550mV@500mA 80uA@30V", "Diodes / Schottky Diodes", "SOD-123")))
+                .containsEntry("Voltage", "30V");
+        // only a threshold voltage: no rating rather than a wrong one
+        assertThat(extractor.extract(jlcpcb("C1", "X", "1 N-channel 1.2V 3A 400mW", mosfets, "SOT-23")))
+                .doesNotContainKey("Voltage");
+    }
+
+    /** Zener and regulator voltages are specifications: the largest-voltage rule does not apply to them. */
+    @Test
+    void lcscZenerAndRegulatorVoltagesUnchanged() {
+        Part zener = jlcpcb("C2117", "BZT52C5V1",
+                "-55℃~+150℃ 1 Independent 2uA 4.8V~5.4V 480Ω 5.1V 500mW 60Ω", "Diodes / Zener Diodes", "SOD-123");
+        assertThat(extractor.features(zener).voltages()).containsExactly(5.1);
+        assertThat(extractor.features(zener).family()).isEqualTo("zener");
+        Part ldo = jlcpcb("C6186", "AMS1117-3.3", "-40℃~+125℃ 0.003%Vout 1 1.1V@(800mA) 15V 1A 3.3V 5mA "
+                        + "72dB@(120Hz) Fixed Over Current Protection、Short Circuit Protection、Thermal shutdown Positive",
+                "Power Management (PMIC) / Voltage Regulators - Linear, Low Drop Out (LDO) Regulators", "SOT-223");
+        assertThat(extractor.features(ldo).voltages()).contains(3.3, 15.0);
+    }
+
+    /** {@code SOT-23 N-channel MOSFET 30V}: JLCPCB's 30 V N-channel parts meet the request (live: 37 of 40 excluded). */
+    @Test
+    void lcscMosfetMeetsThirtyVoltRequest() {
+        ro.alacrity.kina.domain.ParsedQuery query = new QueryParser().parse("SOT-23 N-channel MOSFET 30V");
+        Part ao3400 = jlcpcb("C20917", "AO3400A",
+                "-55℃~+150℃ 1 N-channel 1.45V 1.4W 30V 48mΩ@2.5V 5.7A 50pF 630pF 75pF 7nC@10V N-Channel",
+                "Transistors/Thyristors / MOSFETs", "SOT-23");
+        DeterministicRanker.Assessment a = new DeterministicRanker(extractor).assess(query, ao3400);
+        assertThat(a.mismatches()).isEmpty();
+        assertThat(a.belowSpec()).isEmpty();
+        assertThat(a.unverified()).doesNotContain("voltage");
+        assertThat(ConstraintPolicy.DEFAULTS.check(query, extractor.features(ao3400)).conflicts()).isEmpty();
+    }
 }

@@ -134,6 +134,17 @@ public class ParametricExtractor {
             "reverse voltage (vr)", "vds - drain-source breakdown voltage", "drain source voltage (vdss)",
             "drain to source voltage (vdss)", "vz - zener voltage", "voltage - zener (nom) (vz)",
             "vrwm - reverse standoff voltage", "reverse stand-off voltage (vrwm)", "voltage - reverse standoff (typ)");
+    /**
+     * Families whose unlabelled description voltages are read as the largest one (DESIGN.md 3.4 "Voltage of transistors
+     * and diodes"): JLCPCB lists a MOSFET's gate threshold, gate-source limit and drain-source rating unlabelled and
+     * text-sorted ({@code 1.45V 1.4W 30V} for AO3400A), a diode's forward and reverse voltage likewise, so the first
+     * voltage is often the threshold. Zener, TVS and LED voltages are specifications and keep the first value;
+     * regulators keep "any stated voltage" ({@link Features#voltages()}).
+     */
+    static final Set<String> LARGEST_VOLTAGE_FAMILIES = Set.of("transistor", "mosfet", "diode", "schottky");
+    /** Below this a description voltage is never a transistor's or diode's rating (a threshold or forward voltage). */
+    static final double MIN_PLAUSIBLE_RATING_VOLTS = 3.0;
+
     /** A regulator's output voltage (TME {@code Output voltage}, Mouser {@code Output Voltage}) comes first. */
     private static final List<String> OUTPUT_VOLTAGE_NAMES = List.of("output voltage", "voltage - output",
             "voltage - output (min/fixed)", "output voltage (fixed)", "fixed output voltage");
@@ -410,6 +421,10 @@ public class ParametricExtractor {
         if (Recognizers.inductive(family)) {
             values.remove(ParsedQuery.RESISTANCE);   // an inductor's or ferrite bead's ohm value is DCR or impedance
         }
+        if (family != null && !fromAttributes.contains(ParsedQuery.VOLTAGE)
+                && LARGEST_VOLTAGE_FAMILIES.contains(family)) {
+            ratingFromLargestVoltage(part.description(), family, values);
+        }
         Map<String, String> details = new LinkedHashMap<>();
         if ("capacitor".equals(family)) {
             // a capacitor's current is its ripple current (TME "Operating current" 0.24A on EEEFK1C101P), never Current
@@ -524,6 +539,26 @@ public class ParametricExtractor {
                 Recognizers.normalizeKey(text.toString()), connector, connector != null ? null : technology,
                 connector == null ? PassiveDetails.elements(part, attrs, family) : null, details, polarity, subtype,
                 voltages);
+    }
+
+    /**
+     * The voltage rating of a transistor or diode whose description lists voltages without labels: the largest single
+     * voltage (Vds, Vrrm; words with a condition such as {@code 1.25V@150mA} or {@code 500uA@40V} and ranges are left
+     * out). A largest value below {@value #MIN_PLAUSIBLE_RATING_VOLTS} V is a threshold or forward voltage, not a
+     * rating: the voltage is then unknown (unverified, never a wrong exclusion).
+     */
+    private static void ratingFromLargestVoltage(String description, String family,
+                                                 Map<String, Recognizers.Value> values) {
+        List<Double> voltages = Recognizers.singleValues(description, ParsedQuery.VOLTAGE, family);
+        if (voltages.isEmpty()) {
+            return;
+        }
+        double largest = voltages.stream().mapToDouble(Double::doubleValue).max().orElseThrow();
+        if (largest < MIN_PLAUSIBLE_RATING_VOLTS) {
+            values.remove(ParsedQuery.VOLTAGE);
+        } else {
+            values.put(ParsedQuery.VOLTAGE, Recognizers.of(ParsedQuery.VOLTAGE, largest));
+        }
     }
 
     /**
