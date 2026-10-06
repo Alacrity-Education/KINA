@@ -161,16 +161,16 @@ bounded by `kina.search.distributor-timeout` of active work; time spent waiting 
 budget, but never beyond the request deadline `kina.search.max-request-duration`, section 3.6):
 
 "Meets the request" (`PartSearchService.meetsRequest`, `RankingService.verdict`): no known attribute contradicts a
-strict constraint, no known rating is below the request (section 3.4) and the primary value (capacitance, resistance,
-inductance, impedance at its frequency) is not known to differ (`Verdict.WRONG_VALUE`: such a part is still returned,
-but the ladder goes on; live, TME's `ferrite 120ohm` returned ferrite cores specified at 25 MHz for a 100 MHz bead
-request). A part that does not state a requested rating meets the request but is not **confirmed**
-(`Verdict.UNVERIFIED_RATING`).
+hard constraint (section 3.4 "Hard constraints": the primary value, the package except for inductors, crystals and
+oscillators, mounting, technology, the type...) and no known rating is below the request. A part with a wrong primary
+value is excluded like any other hard conflict (`Verdict.CONSTRAINT`; before 2026-10-07 it was returned; live, TME's
+`ferrite 120ohm` returned ferrite cores specified at 25 MHz for a 100 MHz bead request). A part that does not state a
+requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED_RATING`).
 
 1. `bypassCache == false`: read `cached_searches(distributor, query_key)`. When it is fresh, load its parts from
    `cached_parts` (fresh rows only); if any part is missing or stale, go to step 2 with `offset = 0` (`MISS`).
    - **Safeguard**: when the cached list is not empty but none of its parts could be returned (every one is excluded by
-     a strict constraint or below spec; below-spec parts count as returnable with `allow_below_spec`), the hit is
+     a hard constraint or below spec; below-spec parts count as returnable with `allow_below_spec`), the hit is
      treated as a miss and the live search of step 2 runs (status `MISS`). A cached search never hides a live result.
    - the list is sufficient (`exhausted`, or `part_numbers.size >= window`, or `part_numbers.size >= maxResults`)
      -> status `HIT`, no distributor call. The `>= maxResults` clause keeps a repeat of the same query from
@@ -194,27 +194,36 @@ request). A part that does not state a requested rating meets the request but is
    **Relaxation ladder** (Mouser and TME only; LCSC relaxes inside its database search, section 9.3): while the
    fetch has found **nothing that meets the request** (no in-stock part, or every one excluded) and the deadline has
    not passed, the search is repeated with the next step of `DistributorPhraser.ladder`, stopping at the first one
-   that finds a part that meets the request. The constraints are loosened in a fixed order (user decision
-   2026-10-06): **the dielectric, then the package, then the tolerance; a rating never** (it is not in any phrase and
-   the ranker excludes below-spec parts). Each step carries what it loosens (`DistributorPhraser.Relaxation.relaxed`):
+   that finds a part that meets the request. Only **relaxable** constraints are loosened (`ConstraintPolicy`,
+   section 3.4 "Hard constraints"), in a fixed order (user decisions 2026-10-06 and 2026-10-07): **the dielectric,
+   then the package (only for inductors, crystals and oscillators), then the tolerance; a rating or a hard constraint
+   never** (a rating is not in any phrase and the ranker excludes below-spec parts; a hard constraint stays in every
+   parametric phrase and the ranker excludes parts that contradict it). Each step carries what it loosens
+   (`DistributorPhraser.Relaxation.relaxed`):
    1. the phrase sent without rating values (normally already the case, see "Distributor phrasing"); loosens nothing;
-   2. the minimal core, a rewording that loosens nothing: connector queries the type words with the positions (TME,
-      `pin strips female 6`) or with the written pitch and the orientation (Mouser, `female header right angle`, `male
-      header 2.54mm`); USB the type and gender words; otherwise the parametric core (`PartSearchService.corePhrase`):
+   2. the minimal core, a rewording: connector queries the type words with the positions (TME, `pin strips female
+      6`; it leaves the orientation out and reports `["orientation"]` when the request states one) or with the written
+      pitch and the orientation (Mouser, `female header right angle`, `male header 2.54mm`; loosens nothing); USB the
+      type and gender words (`["orientation"]` when stated); otherwise the parametric core, which loosens nothing (`PartSearchService.corePhrase`):
       the family word as written (`MOSFET`, `MLCC`, `LDO`...), the values that are not ratings (display form; an
       impedance without its test frequency; regulator and Zener voltages stay), the technology in the distributor's
-      spelling, the dielectric, the package and the tolerance, e.g. `"22uF X7R 1206 25V 10% MLCC"` -> `"MLCC 22uF X7R
+      spelling, the dielectric, the package (imperial; a can size is left out of phrases) and the tolerance, e.g. `"22uF X7R 1206 25V 10% MLCC"` -> `"MLCC 22uF X7R
       1206 10%"`, `"SOT-23 N-channel MOSFET 30V"` -> `"MOSFET SOT-23"`; keyword-only queries (no
       value/dielectric/package/technology): the 3 to 5 most informative tokens in query order
       (`DistributorPhraser.keywordCore`): the family word, recognised values and packages, part-number-like tokens with
       letters and digits, then longer words; filler words (`nice`, `cheap`, `module`, `with`...) never, e.g.
       `"ESP32-WROOM-32 wifi bluetooth module with antenna"` -> `"ESP32-WROOM-32 wifi bluetooth antenna"`;
-   3. the parametric core without the dielectric (and the technology, which stays a strict constraint and is not
-      reported): `"MLCC 22uF 1206 10%"`, loosens `["dielectric"]`. Verified 2026-10-06: TME has no 22uF X7R 1206 part
-      rated 25 V or more (only 6.3 to 16 V) while `MLCC 22uF 1206` finds 25 V X5R parts with good stock;
-   4. also without the package (`"MLCC 22uF 10%"`), loosens `["dielectric", "package"]`;
-   5. also without the tolerance (`"MLCC 22uF"`), loosens `["dielectric", "package", "tolerance"]`.
-   Steps 3 to 5 exist only for constraints the request states and only while the core keeps two terms. A step whose
+   3. the parametric core without the dielectric (and the technology, which stays a hard constraint and is not
+      reported): `"MLCC 22uF 1206 10%"`, loosens `["dielectric"]`. Verified 2026-10-06 and 2026-10-07: TME has no
+      22uF X7R 1206 part rated 25 V or more (only 6.3 to 16 V) while `MLCC 22uF 1206` finds 25 V X5R and X6S parts
+      with good stock, all in 1206;
+   4. only for inductors, crystals and oscillators (`ConstraintPolicy.isRelaxable(query, "package")`): also without
+      the package (`"inductor 47uH 20%"`), loosens `["dielectric", "package"]` (live 2026-10-07: TME has no 47uH 0402
+      inductor; `inductor 47uH` returned 1212 and larger parts, reported `["package"]`);
+   5. also without the tolerance: `"MLCC 22uF 1206"`, loosens `["dielectric", "tolerance"]` for a capacitor;
+      `"inductor 47uH"`, `["dielectric", "package", "tolerance"]` for an inductor.
+   A constraint a family configures as hard (`kina.search.hard-constraints`) is never dropped. Steps 3 to 5 exist only
+   for constraints the request states and only while the core keeps two terms. A step whose
    words equal what was sent (for TME after its 40-character cut) or an earlier step, in any order, is skipped. The
    result of the first step that finds a part that meets the request is kept and cached under the original query key,
    with its phrase (`cached_searches.fallback_query`) and what it loosened (`cached_searches.constraints_relaxed`); a
@@ -237,13 +246,24 @@ request). A part that does not state a requested rating meets the request but is
    rewritten, list none), plus the free-text keywords the LCSC relaxation dropped, as written. The ranker still checks
    every constraint. `constraints_relaxed` lists the constraints actually loosened to obtain the parts: of what the
    relaxation loosened (for Mouser and TME the ladder step, stored as `cached_searches.constraints_relaxed`; for LCSC the
-   constraint names of the terms its relaxation dropped, by term kind, every term in `ANY` mode) those **the returned
-   parts really miss** (a mismatch or an unverified constraint of that name, `PartSearchService.actuallyRelaxed`). A
+   constraint names of the terms its relaxation dropped, by term kind, every term in `ANY` mode) those the policy lets
+   relax for the request's family (`PartSearchService.relaxable`: a rating or a hard constraint is never reported, even
+   when the LCSC search dropped its term; the ranker excludes the parts that miss it) and **the returned parts really
+   miss** (a mismatch or an unverified constraint of that name, `PartSearchService.actuallyRelaxed`). A
    step that drops the dielectric and the package may still find parts with the requested dielectric (live: TME
    `10uF 100V X7R 1210 MLCC` relaxed to `MLCC 10uF` and returned a 100 V X7R part in 2220, reported as `["package"]`),
    and the LCSC search drops terms one at a time, so a dropped term is not necessarily the one that failed (the third
    audit saw `voltage` reported when the failing term was a size). Empty when nothing was relaxed or nothing returned
-   misses a loosened constraint; a rating is never loosened.
+   misses a loosened constraint; a rating or a hard constraint is never loosened.
+   **Empty after the hard set** (user decision 2026-10-07): when a distributor has nothing that satisfies the hard
+   constraints after the relaxable steps, its `parts` list is empty, `exact_matches` is 0, `excluded_by_constraints`
+   and `excluded_by_constraints_detail` count what was left out, and the entry carries a `hint`
+   (`ConstraintPolicy.hint`) naming the request (`22uF capacitor in package 1206`), the hard constraints that could not
+   be met (those that excluded parts, by count, then the other stated ones), the parts below a stated rating (with the
+   advice to pass `allow_below_spec` when it is false) and that no substitutes are returned, e.g. `No in-stock 22uF
+   capacitor in package 0201 at TME; capacitance and package are never relaxed. No substitutes are returned; try
+   another package or value.` The response-level `hint` says the same for every distributor that came back empty (only
+   for an understood query; a distributor with an `error` gets no hint).
    TME's 40-character phrase limit is applied by the client as for any query.
    Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is cached or
    ranked (Mouser and LCSC deliver almost no parametric attributes).
@@ -274,7 +294,8 @@ request). A part that does not state a requested rating meets the request but is
    cache hit (a sold-out part is then looked up live and reported `out_of_stock`).
 
 **Counts** of a distributor entry: `fetched` is every in-stock part received from the distributor for the query
-(after deduplication, before any exclusion); `excluded_by_constraints` and `excluded_below_spec` are subsets of it;
+(after deduplication, before any exclusion); `excluded_by_constraints` and `excluded_below_spec` are subsets of it
+(`excluded_by_constraints_detail` splits the first by the constraint each part contradicts first, so it adds up);
 `returned <= fetched - excluded_by_constraints - excluded_below_spec` (and `<= max_results`); `out_of_stock_matches`
 are records without ships-now stock and are not part of `fetched`; `total_results` is what the distributor reported for
 the phrase that produced the parts. The third audit saw `total 55, fetched 6, excluded_by_constraints 40, out_of_stock
@@ -289,7 +310,8 @@ parts that print `25V` and silently misses the 35 V and 50 V parts that satisfy 
 query `DistributorPhraser.withoutRatings` removes these values from the user's text (single words such as `25V`,
 `105°C`, `2000h`; a number and its unit `25 V`; the labelled forms `Isat 8A`, `DCR < 20mΩ`, `low DCR`, `-40~105°C`;
 not when fewer than two words would remain). Regulator and Zener voltages and fuse currents are specifications and
-stay. The phrase is sent to all three distributors; LCSC additionally gets the minimum voltage, current and power as
+stay. A package the user labelled as metric (`2012 metric`, `3216M`) is sent as its imperial code (`0805`, `1206`;
+`Recognizers.imperial`). The phrase is sent to all three distributors; LCSC additionally gets the minimum voltage, current and power as
 rating terms (`22uF X7R 1206 MLCC >=25V`) that its database checks exactly (section 9.3). Ranking then prefers the
 exact rating over higher ones (section 3.4).
 
@@ -380,11 +402,11 @@ cross-encoder is a second signal in a 50/50 **rank** blend, the deterministic or
    not loaded.
 
 **Before ranking** (`RankingService.rank(query, fetched, budget, RankOptions(quantity, allowBelowSpec))`): parts whose
-known attribute contradicts a strict constraint are removed and counted per distributor (`excluded_by_constraints`,
-section 3.4 "Strict constraints"); parts with a known rating below the request are removed and counted
+known attribute contradicts a hard constraint are removed and counted per distributor (`excluded_by_constraints`, per
+constraint `RankedResults.excludedDetail`, section 3.4 "Hard constraints"); parts with a known rating below the request are removed and counted
 (`excluded_below_spec`) unless `allowBelowSpec` (section 3.4 "Below spec"). Every remaining part gets a tier: 0 for a
 **complete** match (no mismatch, nothing unverified), +1 for a part with a mismatch or an unverified constraint
-(including an unstated strict attribute), +4 when its stock is below `quantity`, +8 when it is below spec (only with
+(including an unstated hard attribute), +4 when its stock is below `quantity`, +8 when it is below spec (only with
 `allowBelowSpec`). The quantity, MOQ, low-stock and lifecycle penalties (section 3.4) are subtracted from the
 deterministic score and **again from the final score** (blended or not), so the model cannot hide them. Every ordering
 (deterministic, blended, fallback) sorts by tier first, so a part with an unverified constraint or too little stock
@@ -403,9 +425,11 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
 
 `QueryParser.parse(String) -> ParsedQuery` extracts, case-insensitively:
 
-- component family keywords: capacitor/MLCC/cap, resistor/res, inductor, ferrite, diode, Schottky,
+- component family keywords: capacitor/MLCC/cap, resistor/res, inductor, ferrite, diode/rectifier, Schottky,
   Zener, LED, MOSFET/FET (TME `N-MOSFET`/`P-MOSFET`, kept as keywords), transistor/BJT/NPN/PNP, LDO/regulator,
-  op amp/opamp, comparator, MCU, crystal/oscillator, connector, fuse, TVS/ESD, relay, switch. A part's family comes
+  op amp/opamp, comparator, MCU, crystal/xtal/resonator, oscillator/XO/TCXO/VCXO/OCXO/SPXO and TME's `generator`
+  (two families, never mixed: `crystal oscillator` is an oscillator, priority decides), connector, fuse, TVS/ESD,
+  relay, switch. A part's family comes
   from its category, else its description; when the description names a specialisation of the category's family
   (TME category `SMD N channel transistors`, description `Transistor: N-MOSFET`), the specialisation wins (`mosfet`)
 - value with SI prefix and unit, including RKM notation (`4k7`, `4u7`, `10R`, `2R2`):
@@ -430,10 +454,18 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
   the lowest, which is conservative. A value with a condition that is not a rating is ignored (`902mA@100kHz` ripple
   current, `16mΩ@100kHz` ESR). `low DCR` is a preference (`ParsedQuery.preferences`), not a keyword
 - tolerance (`±5%`, `5%`, `1%`), dielectric (`X7R X5R C0G NP0 Y5V X7S X6S X8R`),
-  package (`0201 0402 0603 0805 1206 1210 1812 2010 2220 2512`, `SOT-23 SOT-23-5 SOT-223 SOT-89 SOD-123 SOD-323 SOD-523
-  TO-220 TO-252 TO-263 DPAK D2PAK SOIC-8 SOP-8 TSSOP-20 MSOP QFN-32 DFN LQFP-48 TQFP-64 BGA ...` via regex),
-  metric case codes (`2012` etc. only when a family keyword says MLCC/resistor), mounting (`SMD SMT THT through-hole`,
-  JLCPCB `插件` = THT, `卧贴` = SMD)
+  package (`01005 0201 0402 0603 0805 1206 1210 1808 1812 1825 2010 2220 2225 2512`, `SOT-23 SOT-23-5 SOT-223 SOT-89
+  SOD-123 SOD-323 SOD-523 TO-220 TO-252 TO-263 DPAK D2PAK SOIC-8 SOP-8 TSSOP-20 MSOP QFN-32 DFN LQFP-48 TQFP-64 BGA
+  ...` via regex), **imperial always** (see "Packages are imperial" below), crystal sizes (`3225`, `2520`, `2016`...)
+  for crystals and oscillators, can sizes (`6.3x5.4mm`, `D6.3xL5.4mm`) of aluminium capacitors, mounting (`SMD SMT
+  THT through-hole`, JLCPCB `插件` = THT, `卧贴` = SMD)
+- transistor polarity (`ComponentTypes.polarity`, `ParsedQuery.polarity`): `N-channel`, `N-CH`, `N-MOSFET`, `NMOS`,
+  `NFET` (and P), `NPN`, `PNP`; both polarities, `N+P` or `complementary` are `complementary` (an N+P pair is a type
+  of its own). A polarity without a family word makes the family `mosfet` (or `transistor` for NPN/PNP)
+- the subtype (`ComponentTypes.subtype`, `ParsedQuery.subtype`): `standard` for a diode request that says
+  `rectifier`, `rectifying`, `switching`, `general purpose`, `fast recovery`, `ultrafast`, `high efficiency`,
+  `universal`, `small signal`, `SBR`; `fixed` or `adjustable` (`ADJ`, `variable`) for a regulator, `fixed` when the
+  request states an output voltage
 - connector attributes (`search.ConnectorRecognizer`, `ParsedQuery.Connector`, see below)
 - the technology of a passive (`search.TechnologyVocabulary`, `ParsedQuery.technology`, see below)
 - remaining tokens are free text keywords.
@@ -513,8 +545,11 @@ values normalised to base units as `double`), the free-text tokens and `elements
 `ParametricExtractor.extract(Part) -> Map<String,String>` applies the same recognisers to the
 part's description and attribute values, so parts from all three distributors expose comparable
 `Capacitance`, `Resistance`, `Inductance`, `Voltage`, `Current`, `Power`, `Tolerance`, `Dielectric`,
-`Package`, `Mounting` keys, `Technology` for resistors, capacitors and inductors, and `Impedance` (ferrite beads,
-`120ohm @100MHz`), `SaturationCurrent`, `DCR`, `MaxTemperature` (`105°C`) and `Lifetime` (`2000h @105°C`). Inductors
+`Package` (imperial, section "Packages are imperial"), `Mounting` keys, `Technology` for resistors, capacitors and
+inductors, `Polarity` for transistors (`N-channel`, `P-channel`, `NPN`, `PNP`, `complementary`), `Subtype` (`standard`
+for a rectifier or switching diode of the generic diode family, `fixed` or `adjustable` for a regulator), and
+`Impedance` (ferrite beads, `120ohm @100MHz`), `SaturationCurrent`, `DCR`, `MaxTemperature` (`105°C`) and `Lifetime`
+(`2000h @105°C`). A crystal's `Capacitance` is its load capacitance (attribute `Load capacitance` too). Inductors
 and ferrite beads report their current as `RatedCurrent` instead of `Current` and never carry `Resistance`. Distributor
 attributes (TME parameters, Mouser ProductAttributes) take precedence over description parsing. Inductor and ferrite
 parameters (verified on TME 2026-10-06): `Resistance` (TME: the DC resistance, BLM31KN121SN1L `9mΩ`), `DC resistance`,
@@ -599,7 +634,9 @@ with the product kind (`Adapter;`, `Cable;`, `Hub USB;`, `Power supply`).
 | Signal | Weight | Rule |
 |---|---|---|
 | primary value (C/R/L; ferrite impedance) | 0.30 | exact match within 1% -> full (an impedance also at the same test frequency when both state one); different -> -0.30 penalty; unknown -> 0 |
-| package | 0.20 | exact match (treat `0805` == `2012` metric); mismatch -> -0.20 |
+| package | 0.20 | `Recognizers.samePackage` (imperial codes; `SOT-23-3L` == `SOT-23` == `TO-236AB`; can sizes within 0.2 mm); mismatch -> -0.20; a package that cannot be read is unverified |
+| polarity (`W_POLARITY`) | 0.10 | the request's polarity: same -> +0.10, different -> -0.10 (excluded anyway), unknown -> unverified |
+| load capacitance (`W_LOAD_CAPACITANCE`) | 0.10 | a crystal request with a capacitance: same within 1 % -> +0.10, different -> -0.10 (excluded), unknown -> unverified |
 | dielectric | 0.15 | exact; `C0G` == `NP0`; mismatch -> -0.15 |
 | technology (`W_TECHNOLOGY`) | 0.15 | the query names a technology: same -> +0.15; a different known technology -> -0.15; unknown -> 0. Compatible (+): a `film` request and a polypropylene/polyester/PPS part, a `tantalum` or `polymer` request and a tantalum polymer part, a `current sense` request and a metal strip/metal foil part. Neutral (0): a polypropylene request and a part that only says `film`, a tantalum polymer request and a `tantalum` part, a `current sense` request and any other construction |
 | ratings: voltage, current (an inductor's rated current), saturation current, power, temperature, lifetime; DCR | 0.10 | shared between the stated ratings. Minimums: part >= requested -> full; lower -> -0.10; a higher rating keeps full credit in the match grade but loses up to `W_RATING_EXCESS` (0.05) of score, `0.05 * min(1, log2(part / requested) / 2)`, so 25 V > 35 V > 50 V > 100 V for a 25 V request. DCR is a maximum (part <= requested). Regulator and Zener voltages and fuse currents must match within 2 %. Saturation current is compared with the part's saturation current only: a part that does not state it scores 0 |
@@ -621,8 +658,8 @@ not influence the order. For `Thin film resistor, 5.36k 0805 0.1%` the Mouser pa
 `RN73C2A5K36BTDF` grade 1.0 (tolerance `.1%`, package from the MPN, technology from the category).
 
 **Unverified constraints** (`Assessment.unverified`, the `unverified` of every search result part): a stated
-constraint the part does not state at all (primary value, package, dielectric, technology, each rating, mounting,
-tolerance, the element count of an array; for connectors positions, gender, orientation, pitch, connector type and
+constraint the part does not state at all (primary value, package (or a package KINA cannot read), polarity, a
+crystal's load capacitance, dielectric, technology, each rating, mounting, tolerance, the element count of an array; for connectors positions, gender, orientation, pitch, connector type and
 mounting; for USB requests type, pin configuration, standard, gender, mounting and orientation) is listed by name
 (`current`, `saturation current`, `package`...) and left out of **both** sides of the grade, so `match` reflects only
 verified constraints. `match` 1.0 with a non-empty `unverified` list is therefore **not** a confirmed fit (the third
@@ -632,8 +669,10 @@ counted as a match). Such a part ranks below every complete part (tier, section 
 keywords stay in the grade (an unknown family earns nothing; a keyword not found earns nothing).
 
 **Mismatches** (`DeterministicRanker.mismatches`, the `mismatches` of every search result part): the stated
-parameters the part is known not to satisfy, in plain words: `capacitance: 10uF instead of 22uF`, `package: 1210
-instead of 1206`, `dielectric: X5R instead of X7R`, `technology: tantalum polymer instead of aluminium polymer`,
+parameters the part is known not to satisfy, in plain words (a part with a hard conflict is excluded, so returned
+parts show relaxable misses, and ratings with `allow_below_spec`): `capacitance: 10uF instead of 22uF`, `package: 1210
+instead of 1206` (an inductor, crystal or oscillator), `polarity: P-channel instead of N-channel`, `load capacitance:
+8pF instead of 18pF`, `dielectric: X5R instead of X7R`, `technology: tantalum polymer instead of aluminium polymer`,
 `voltage: 16V below 25V`, `dcr: 40mohm above 20mohm`, `tolerance: 10% instead of 1%`, `mounting: THT instead of SMD`,
 `family: ...`, `elements: single instead of array` / `elements: array instead of single`, and for non-USB connectors
 positions, gender, pitch and orientation. An attribute the part does not state is not a mismatch (it is unverified).
@@ -647,18 +686,99 @@ counted in `excluded_below_spec` (the third audit saw 22uF X7R 1206 parts at 6.3
 and 10 mA to 3 A beads for a 6 A request). With `allow_below_spec` (MCP and REST parameter, default false) it is
 returned with `below_spec: true` and its `mismatches`, in the last tier, ordered by its distance from the target:
 the sum of `|ln(part / requested)|` over the failed ratings (16 V before 10 V before 6.3 V for 25 V), never by the
-blended score. Regulator and Zener voltages and fuse currents must match (a different value is a mismatch, never below
-spec). An impedance is the primary value of a ferrite bead (matched within 1 %), not a minimum: KINA has no syntax for an
+blended score. Regulator and Zener voltages must match (a different value is a hard conflict, never below spec), and
+so must fuse currents (a mismatch, not excluded: the decision of 2026-10-07 does not name fuses). An impedance is the primary value of a ferrite bead (matched within 1 %), not a minimum: KINA has no syntax for an
 impedance minimum, so it is never treated as below spec. A rating the part does not state is unverified, not below spec.
 
-**Strict constraints** (`kina.search.strict-constraints`, default `mounting, technology, elements`;
-`KINA_STRICT_CONSTRAINTS`): when the request states (or, for `elements`, implies) the attribute and the part's known
-value contradicts it, the part is excluded before ranking and counted in `excluded_by_constraints`
-(`DeterministicRanker.check`). Mounting: SMD vs THT (a hybrid USB part never conflicts). Technology:
-`TechnologyVocabulary.compare` = -1. Elements: a resistor, capacitor or ferrite request that does not ask for an array
-(`ParsedQuery.elements` null) excludes arrays and networks (the part's `Elements`, see "Arrays" below), e.g. the
-4-line bead array `BLA31BD121SN4D` for `120 ohm 100MHz 1206 ferrite bead 6A`. An unknown or not comparable value keeps
-the part, unverified and ranked below complete matches (section 3.3). Technology compatibility: `polymer aluminium` /
+**Hard constraints** (`search.ConstraintPolicy`, user decision 2026-10-07; they replace the former strict
+constraints). A hard constraint is never relaxed: when the request states it and the part's **known** value
+contradicts it, the part is excluded before ranking and counted in `excluded_by_constraints` and, under the first
+constraint it contradicts, in `excluded_by_constraints_detail` (`ConstraintPolicy.check`). A part that does not state
+the attribute stays, unverified and ranked below complete matches (section 3.3); a package string KINA cannot read
+(`Recognizers.isRecognisedPackage` false, e.g. LCSC `SMD,8.5x8mm`) never contradicts. A relaxable constraint is never a
+reason to exclude: the ladder may loosen it (section 3.2), the part lists the miss in `mismatches` and the response the
+constraint in `constraints_relaxed`. The decided table (`ConstraintPolicy.DEFAULT_HARD`). The policy family of a
+request is its family, `diode` for Schottky, Zener, TVS and LED, `transistor` for MOSFETs, `usb` for USB connectors and
+`default` for any other or unknown family:
+
+| Family | Hard (never relaxed) | Relaxable |
+|---|---|---|
+| resistor | type, value (resistance), package, mounting, technology, elements (single) | tolerance (looser), TCR |
+| capacitor | type, value (capacitance), package (a can size within 0.2 mm), mounting, technology, elements | dielectric, tolerance, ESR |
+| inductor | type, value (inductance), mounting, technology | package, tolerance, DCR preference |
+| ferrite | type, value (impedance at its test frequency), package, mounting, elements | tolerance, DCR preference |
+| crystal | type (never an oscillator), value (frequency), load capacitance (exact, 1 %), mounting | package, tolerance |
+| oscillator | type (never a crystal), value (frequency), mounting | package |
+| diode | type (Schottky, standard rectifier or switching, Zener, TVS, LED), voltage (Zener, exact), package, mounting | |
+| transistor | type, polarity (N-channel, P-channel, NPN, PNP, complementary), package, mounting | |
+| regulator | type (fixed or adjustable), voltage (output, exact), package, mounting | |
+| connector | type, connector type, gender, positions, pitch, package, mounting | orientation |
+| usb | type, usb type, pin configuration (stated, normalised), usb standard (a higher one is accepted), gender, mounting | orientation |
+| default | type, value, package, mounting, technology, elements, polarity, voltage | |
+
+Ratings (minimum voltage, current, saturation current, power, temperature, lifetime; maximum DCR) are not in the
+table: they are always hard downward ("Below spec" below) and only `allow_below_spec` returns parts below them.
+
+The checks, in this order (the first conflict names the part's entry in the detail):
+
+- **type**: two known families that are not the same and not a specialisation of one another
+  (`Recognizers.compatibleFamilies`: `schottky` fits a `diode` request and the reverse; `crystal` and `oscillator` do
+  not fit each other; a resistor never fits a capacitor request), a `standard` diode against a Schottky, Zener, TVS or
+  LED (either way), a `fixed` against an `adjustable` regulator. Wording mined on 2026-10-07 (`ComponentTypes`):
+  JLCPCB categories `Crystals` and `Crystal Oscillators` (a JLCPCB crystal's description often says "Crystal
+  Oscillator": the category decides), `Temperature Compensated Crystal Oscillators (TCXO)`, `Switching Diodes`,
+  `Diodes - General Purpose`, `Diodes - Fast Recovery Rectifiers`, descriptions `1 N-channel`, `NPN`, `Fixed`,
+  `Adjustable`; TME `Crystal; 16MHz`, `Generator: quartz` (category `Resonators and Generators` names both kinds,
+  so the description decides), `Transistor: N-MOSFET`, `SMD P channel transistors`, `Diode: Schottky rectifying`,
+  `Diode: rectifying`, `Kind of voltage regulator: fixed, LDO, linear`; Mouser `Crystals`, `MEMS Oscillators`,
+  `Standard Clock Oscillators`, `MOSFETs N-Channel`, `N-CH`, `Schottky Diodes & Rectifiers`, `Rectifiers`. The part
+  side reads the type attributes (`Type of transistor`, `Type of diode`, `Kind of voltage regulator`...), the category
+  and the description, never the MPN.
+- **polarity**: both known and different (an N+P pair is `complementary`, a type of its own).
+- **value**: the primary value (`DeterministicRanker.primaryKind`: the frequency for crystals and oscillators, where a
+  capacitance is the load capacitance; else capacitance, resistance, inductance, impedance; the frequency also when
+  the family is unknown) within 1 %, an impedance also at the same test frequency when both state one. Reported by its
+  kind (`capacitance`, `frequency`...).
+- **voltage**: the exact voltage of a Zener diode or a regulator within 2 %, against the voltages the part states as
+  its specification (`Features.voltages`: the output or Zener voltage attribute, else every single voltage of the
+  description, because JLCPCB lists values unlabelled and sorted as text, `1.1V@(800mA) 15V 1A 3.3V` for an
+  AMS1117-3.3; ranges `25.1V~28.9V`, `1.8V - 3.3V` and conditioned values `100nA@0.8V` are left out). A regulator's
+  `Output voltage` and a Zener's `Zener voltage` attribute come before any other voltage attribute.
+- **load capacitance**: a crystal's capacitance within 1 %.
+- **package**: `Recognizers.samePackage`: the same `packageKey` (`SOT-23-3L` == `SOT-23` == `TO-236AB`), can sizes
+  within 0.2 mm in diameter and length; a conflict only when the part's package is recognised.
+- **mounting**: SMD vs THT (a hybrid USB part never conflicts). **technology**: `TechnologyVocabulary.compare` = -1.
+  **elements**: a resistor, capacitor or ferrite request that does not ask for an array (`ParsedQuery.elements` null)
+  excludes arrays and networks (the part's `Elements`, see "Arrays" below), e.g. the 4-line bead array
+  `BLA31BD121SN4D` for `120 ohm 100MHz 1206 ferrite bead 6A`.
+- **connector type** (`ConnectorRecognizer.typesMatch` false), **positions**, **pitch** (0.03 mm), **gender**: known
+  and different. **usb type**: different USB types, or a non-USB connector; **pin configuration**: a stated (not
+  implied) configuration against the part's canonical one (17P is 16); **usb standard**: a lower class or a
+  power-only part (`UsbVocabulary.compare` <= 0; a higher class is accepted).
+- a family may also make `dielectric`, `tolerance` (looser) or `orientation` hard.
+
+The table is configurable per family (`kina.search.hard-constraints.<family>`: a list replaces the family's default;
+unknown families and names are ignored with a warning). The deprecated `kina.search.strict-constraints`
+(`KINA_STRICT_CONSTRAINTS`) is still read: `mounting`, `technology` or `elements` missing from a non-empty list are
+removed from every family, with a warning; empty or unset means the defaults. Distributor data is taken as given: KINA
+does not decode part numbers to check a distributor's values and does not compare distributors with each other (user
+decision 2026-10-07).
+
+**Packages are imperial** (user decision 2026-10-07). A bare four-digit chip code anywhere (query, description,
+attribute, package field) is the imperial code: `0603` is imperial 0603, never metric 0603 (imperial 0201). A metric
+code is recognised only where the source labels it as millimetres: TME `Case - mm` (the TME mapper labels a bare value
+`1608 mm`, and `ParametricExtractor` reads the `Case - mm` attribute as metric), Mouser `0603 (1608 metric)`, `3216M`,
+`0603mm` (`Recognizers.imperial`, applied when a text is prepared), and it is converted to the imperial code
+(`1005`->`0402`, `1608`->`0603`, `2012`->`0805`, `3216`->`1206`, `3225`->`1210`, `4532`->`1812`, `5025`->`2010`,
+`6332`->`2512`, `0603`->`0201`, `0402`->`01005`; also `4520`->`1808`, `5750`->`2220`, `5764`->`2225`, `2016`->`0806`,
+`2520`->`1008`, `4516`->`1806`). `P=2.54mm` is a pitch, not a case code. The canonical `Package` attribute,
+`parsed.package`, the ranker comparison and the distributor phrases use the imperial code; a bare metric code in a
+query (`10uF 2012 MLCC`) is a free-text keyword, not a package. Crystal and oscillator sizes (`3225`, `2520`,
+`2016`...) are their own codes; when TME states only the body (`Body dimensions: 3.2x2.5x0.8mm`) the size code is
+derived from it for crystals and oscillators. The package of a can capacitor is its size (`D6.3 x 5.8mm`); a request
+states it as `6.3x5.4mm` (aluminium electrolytic or polymer requests) or `D6.3xL5.4mm` / `Ø6.3x5.4mm`, and it matches
+within 0.2 mm in diameter and length. Live 2026-10-07: TME lists the Ferrocore `DLG-1005-470` power inductor with
+`Case - mm: 1005`, which reads as imperial 0402; distributor data is taken as given. Technology compatibility: `polymer aluminium` /
 `aluminium polymer` is aluminium polymer (OS-CON included, THT or SMD); tantalum polymer and plain aluminium
 electrolytic contradict it; a part that says only `polymer` is not comparable; a bare `polymer` request accepts
 aluminium polymer and tantalum polymer; hybrid polymer neither matches nor contradicts an aluminium request.
@@ -1037,6 +1157,7 @@ parameters; descriptions are read by the LLM, keep them precise):
       "rate_limit_waited_ms": 0,
       "distributor_query": null,
       "excluded_by_constraints": 0,
+      "excluded_by_constraints_detail": {},
       "excluded_below_spec": 0,
       "out_of_stock_matches": 0,
       "query_terms_dropped": [],
@@ -1048,7 +1169,9 @@ parameters; descriptions are read by the LLM, keep them precise):
 ```
 
 Response-level fields: `query_understood` (false when nothing typed was recognised, section 3.4 "Keyword-only
-queries"; then `hint` says what to change and is otherwise omitted, every `match` and `exact_matches` is null) and
+queries"; then `hint` says what to change, every `match` and `exact_matches` is null), `hint` (also, for an understood
+query, when distributors returned nothing: which hard constraints could not be met there, section 3.2 "Empty after the
+hard set"; omitted otherwise) and
 `currencies` (the distinct price currencies of the returned parts, sorted; LCSC USD, TME and Mouser EUR; KINA never
 converts prices).
 
@@ -1074,9 +1197,12 @@ Mouser maximum order quantity when it is below the quantity; with `full` also TM
 lifecycle and reel option, the JLCPCB library type Basic/Preferred/Extended). `supply_constrained` is no longer an
 availability status: it is a `lifecycle` (section 3.4).
 
-`fetched`, `excluded_by_constraints`, `excluded_below_spec`, `out_of_stock_matches` (null when unknown),
-`query_terms_dropped`, `constraints_relaxed` (they replace the former `relaxed`) and `exact_matches` (null when the query
-was not understood) are described in sections 3.2 and 3.4.
+`fetched`, `excluded_by_constraints`, `excluded_by_constraints_detail` (per hard constraint, each part under its first
+conflict, `{"capacitance": 12, "package": 3}`; empty object when nothing was excluded), `excluded_below_spec`,
+`out_of_stock_matches` (null when unknown), `query_terms_dropped`, `constraints_relaxed` (they replace the former
+`relaxed`), `exact_matches` (null when the query was not understood) and `hint` (only when the entry has no parts for an
+understood query and no `error`) are described in sections 3.2 and 3.4. `parsed` also carries `polarity` and `subtype`
+when stated or implied (section 3.4).
 
 `score` orders the list: it is the blend of rank-normalised scores (section 3.3), relative to the other candidates, so
 the last of four exact matches can show `0.00`. `match` (0 to 1) says how well the part satisfies the stated parameters
@@ -1711,7 +1837,8 @@ kina:
     max-max-results: 50
     distributor-timeout: 20s     # active work per distributor fetch; rate-limit waits do not count
     max-request-duration: 2m     # hard cap per request (search, whole batch, get_part) incl. rate-limit waits
-    strict-constraints: ${KINA_STRICT_CONSTRAINTS:mounting,technology,elements}   # section 3.4
+    strict-constraints: ${KINA_STRICT_CONSTRAINTS:}   # deprecated, section 3.4; empty = unset
+    # hard-constraints: { inductor: "type,value,package,mounting,technology" }   # section 3.4; unset = the decided table
     low-stock-threshold: ${KINA_LOW_STOCK_THRESHOLD:10}   # low_stock: stock below this or below 2 x quantity
     quantity: { stock-shortfall-penalty: 0.3, moq-penalty: 0.3, low-stock-penalty: 0.3 }   # section 3.4 "Quantity"
     lifecycle: { last-time-buy-penalty: 0.1, supply-constrained-penalty: 0.05 }

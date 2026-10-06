@@ -99,7 +99,8 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `KINA_STRICT_CONSTRAINTS` | `mounting,technology,elements` | Stated attributes that exclude a contradicting part (`excluded_by_constraints`); `elements` excludes arrays and networks for a single-element resistor, capacitor or ferrite request. Empty turns exclusion off. Ratings are not in this list: a part below a stated rating is always excluded (`excluded_below_spec`) unless the request passes `allow_below_spec`. |
+| `KINA_SEARCH_HARDCONSTRAINTS_<FAMILY>` | unset (the decided table) | The hard constraints of one family, comma separated, replacing its whole default list; see `kina.search.hard-constraints` below. |
+| `KINA_STRICT_CONSTRAINTS` | unset | Deprecated, replaced by `kina.search.hard-constraints`. A non-empty list still works: `mounting`, `technology` or `elements` missing from it are removed from every family's hard constraints, and KINA logs a warning at startup. Empty or unset: the decided defaults. |
 | `KINA_LOW_STOCK_THRESHOLD` | `10` | A part with less stock than this, or less than twice the requested quantity, is `low_stock` and ranks lower. |
 | `KINA_CACHE_STOCK_TTL` | `24h` | Cached TME and Mouser stock and prices older than this are refreshed with one cheap call before a part is returned. |
 | `KINA_CROSS_ENCODER_ENABLED` | `true` | `false` disables the model; searches use the deterministic ranking (`ranking: "fallback"`, note `cross-encoder disabled`). |
@@ -145,7 +146,8 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `kina.search.default-max-results` | `10` | Used when `max_results` is missing. |
 | `kina.search.max-max-results` | `50` | Upper limit for `max_results`. |
 | `kina.search.distributor-timeout` | `20s` | Budget for the active work of one distributor fetch. Time spent waiting on a rate limit does not count against it. |
-| `kina.search.strict-constraints` | `mounting,technology,elements` | `KINA_STRICT_CONSTRAINTS`. Stated attributes that exclude a part whose known value contradicts them; `elements` excludes arrays and networks unless the request asks for one. Empty turns exclusion off. |
+| `kina.search.hard-constraints.<family>` | the decided table (below) | Per family, the constraints that are never relaxed: a part whose known value contradicts one is excluded (`excluded_by_constraints`, `excluded_by_constraints_detail`). Setting a family replaces its whole list; other families keep the defaults. Families: `resistor`, `capacitor`, `inductor`, `ferrite`, `crystal`, `oscillator`, `diode`, `transistor`, `regulator`, `connector`, `usb`, `default` (any other part). Names: `value`, `package`, `mounting`, `technology`, `elements`, `type`, `polarity`, `voltage` (exact Zener and regulator voltages), `load capacitance`, `connector type`, `gender`, `positions`, `pitch`, `usb type`, `pin configuration`, `usb standard`, and the normally relaxable `dielectric`, `tolerance`, `orientation`. A name the list leaves out is relaxable: the relaxation ladder may loosen it and it is reported in `constraints_relaxed`. Unknown families and names are ignored with a warning. Ratings are not in these lists: a part below a stated rating is always excluded (`excluded_below_spec`) unless the request passes `allow_below_spec`. |
+| `kina.search.strict-constraints` | unset | `KINA_STRICT_CONSTRAINTS`, deprecated (see above). |
 | `kina.search.low-stock-threshold` | `10` | `KINA_LOW_STOCK_THRESHOLD`. A part with less stock than this, or less than twice `quantity`, is `low_stock`. |
 | `kina.search.quantity.stock-shortfall-penalty` | `0.3` | Score deduction for a part with less stock than `quantity` (it also ranks after every part that has enough). |
 | `kina.search.quantity.low-stock-penalty` | `0.3` | Score deduction for a `low_stock` part that can still supply `quantity`. |
@@ -213,3 +215,31 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 | Claude Code still shows the Approve page | Expected. Claude Code redirects to a local port, so KINA always asks. Claude.ai with Claude's published identity skips the page. |
 | `invalid_client` at `/oauth/token`, or an error page at `/oauth/authorize`, with an `https` `client_id` | The host is not in `KINA_OAUTH_TRUSTED_CLIENT_HOSTS`, the document is invalid or unreachable, or the redirect URI is not listed in it. |
 
+### Hard constraints (`kina.search.hard-constraints`)
+
+The decided defaults (user decision 2026-10-07; `search.ConstraintPolicy.DEFAULT_HARD`, DESIGN.md 3.4):
+
+| Family | Hard constraints |
+|---|---|
+| `resistor`, `capacitor` | type, value, package, mounting, technology, elements |
+| `inductor` | type, value, mounting, technology (the package is relaxable) |
+| `ferrite` | type, value, package, mounting, elements |
+| `crystal` | type, value, load capacitance, mounting (the package is relaxable) |
+| `oscillator` | type, value, mounting (the package is relaxable) |
+| `diode` | type, voltage, package, mounting |
+| `transistor` | type, polarity, package, mounting |
+| `regulator` | type, voltage, package, mounting |
+| `connector` | type, connector type, gender, positions, pitch, package, mounting |
+| `usb` | type, usb type, pin configuration, usb standard, gender, mounting |
+| `default` | type, value, package, mounting, technology, elements, polarity, voltage |
+
+In YAML:
+
+```yaml
+kina:
+  search:
+    hard-constraints:
+      inductor: type,value,package,mounting,technology   # make an inductor's package hard as well
+```
+
+The same as an environment variable: `KINA_SEARCH_HARDCONSTRAINTS_INDUCTOR=type,value,package,mounting,technology`. Write `load-capacitance`, `connector-type` and so on with a hyphen in an environment variable if spaces are a problem; both forms are accepted.
