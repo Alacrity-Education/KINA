@@ -21,7 +21,7 @@ An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search 
 ./mvnw -q verify                 # compile + all tests; needs Docker (Testcontainers, PostgreSQL 17)
 ./mvnw -q -DskipTests package    # target/kina.jar
 ./mvnw test -Dtest=PartsApiTest  # one test class
-docker compose up -d --build     # kina + postgres (the ranking model downloads on first start)
+docker compose up -d --build     # kina + postgres (the ranking model is baked into the image at build time; local runs download it on first start)
 ```
 
 Always use `./mvnw`. The build must stay free of compiler warnings (`-Xlint:all`).
