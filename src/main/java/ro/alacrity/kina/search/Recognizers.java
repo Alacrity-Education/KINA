@@ -138,6 +138,8 @@ class Recognizers {
         family(3, false, "zener", "zener");
         family(3, false, "led", "led", "leds");
         family(3, false, "mosfet", "mosfet", "mosfets", "fet", "fets");
+        // TME writes "Transistor: N-MOSFET" / "P-MOSFET"; the polarity stays a keyword
+        family(3, true, "mosfet", "n-mosfet", "p-mosfet");
         family(1, false, "transistor", "transistor", "transistors");
         family(1, true, "transistor", "bjt", "npn", "pnp");
         family(3, true, "regulator", "ldo");

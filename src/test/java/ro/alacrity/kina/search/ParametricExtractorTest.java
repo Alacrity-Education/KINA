@@ -124,6 +124,9 @@ class ParametricExtractorTest {
         Part mosfet = part("2N7002", "MOSFET N-Channel 60V 300mA", null, "SOT-23-3", Map.of());
         assertThat(extractor.extract(mosfet)).containsEntry("Package", "SOT-23-3")
                 .containsEntry("Voltage", "60V").containsEntry("Current", "300mA");
+        Part tmeMosfet = part("AO3402", "Transistor: N-MOSFET; unipolar; 30V; 3.2A; 0.9W; SOT23",
+                "SMD N channel transistors", null, Map.of());
+        assertThat(extractor.extract(tmeMosfet)).containsEntry("Family", "mosfet");
         assertThat(Recognizers.packageKey("SOT-23-3")).isEqualTo(Recognizers.packageKey("SOT-23"));
         assertThat(Recognizers.packageKey("SOP-8")).isEqualTo(Recognizers.packageKey("SOIC-8"));
         assertThat(Recognizers.packageKey("DPAK")).isEqualTo(Recognizers.packageKey("TO-252"));

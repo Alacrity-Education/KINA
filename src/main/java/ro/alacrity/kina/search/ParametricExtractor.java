@@ -304,6 +304,12 @@ public class ParametricExtractor {
 
         String explicitFamily = category.familyExplicit() ? category.family()
                 : description.familyExplicit() ? description.family() : null;
+        if (category.familyExplicit() && description.familyExplicit() && category.family() != null
+                && category.family().equals(Recognizers.parentFamily(description.family()))) {
+            // the description names a specialisation of the category's family (TME "SMD N channel transistors" with
+            // "Transistor: N-MOSFET"): the more specific family wins
+            explicitFamily = description.family();
+        }
         final String valueFamily = explicitFamily;
 
         Map<String, Recognizers.Value> values = new LinkedHashMap<>();

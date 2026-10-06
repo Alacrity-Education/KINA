@@ -57,6 +57,7 @@ class QueryParserTest {
                 row("100mΩ 2512 shunt", "resistor", "resistance=100mohm", "", "2512", "", ""),
                 row("1MΩ 0402", "resistor", "resistance=1Mohm", "", "0402", "", ""),
                 row("TO-220 MOSFET", "mosfet", "", "", "TO-220", "", ""),
+                row("P-MOSFET 30V SOT-23", "mosfet", "voltage=30V", "", "SOT-23", "", "p-mosfet"),
                 row("ferrite bead 600 ohm 0603", "ferrite", "impedance=600ohm", "", "0603", "", ""),
                 row("op amp SOIC-8", "opamp", "", "", "SOIC-8", "", ""),
                 row("32.768kHz crystal", "crystal", "frequency=32.768kHz", "", "", "", ""),

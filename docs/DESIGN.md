@@ -341,8 +341,10 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
 `QueryParser.parse(String) -> ParsedQuery` extracts, case-insensitively:
 
 - component family keywords: capacitor/MLCC/cap, resistor/res, inductor, ferrite, diode, Schottky,
-  Zener, LED, MOSFET/FET, transistor/BJT/NPN/PNP, LDO/regulator, op amp/opamp, comparator, MCU,
-  crystal/oscillator, connector, fuse, TVS/ESD, relay, switch
+  Zener, LED, MOSFET/FET (TME `N-MOSFET`/`P-MOSFET`, kept as keywords), transistor/BJT/NPN/PNP, LDO/regulator,
+  op amp/opamp, comparator, MCU, crystal/oscillator, connector, fuse, TVS/ESD, relay, switch. A part's family comes
+  from its category, else its description; when the description names a specialisation of the category's family
+  (TME category `SMD N channel transistors`, description `Transistor: N-MOSFET`), the specialisation wins (`mosfet`)
 - value with SI prefix and unit, including RKM notation (`4k7`, `4u7`, `10R`, `2R2`):
   capacitance (`pF nF uF µF mF F`), resistance (`Ω ohm R`, `k`, `M`, `m`), inductance (`nH uH mH H`),
   voltage (`V`, `kV`, `mV`; KEMET's truncated `10Volt`, `10Vol`, `6.3Vo` at Mouser), current (`A`, `mA`, `uA`), power
