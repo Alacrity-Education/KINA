@@ -57,7 +57,7 @@ class PartLookupServiceTest {
     @Test
     void freshCachedPartIsServedWithoutCallingTheDistributor() {
         FakeClient mouser = new FakeClient(Distributor.MOUSER);
-        when(cache.find(Distributor.MOUSER, "M1", NOW.minus(Duration.ofDays(5))))
+        when(cache.find(Distributor.MOUSER, "M1"))
                 .thenReturn(Optional.of(part(Distributor.MOUSER, "M1")));
         service(mouser);
 
@@ -74,7 +74,7 @@ class PartLookupServiceTest {
     @Test
     void cacheMissFetchesEnrichesAndCaches() {
         FakeClient tme = new FakeClient(Distributor.TME).records(2, i -> part(Distributor.TME, "T" + i));
-        when(cache.find(any(), any(), any())).thenReturn(Optional.empty());
+        when(cache.find(any(), any())).thenReturn(Optional.empty());
         service(tme);
 
         Optional<PartResponse> part = service.getPart(Distributor.TME, "T1", false);
@@ -100,7 +100,7 @@ class PartLookupServiceTest {
         PartLookupResponse response = service.lookup(Distributor.TME, "T0", true);
 
         assertThat(response.cache()).isEqualTo(CacheStatus.BYPASSED);
-        verify(cache, never()).find(any(), any(), any());
+        verify(cache, never()).find(any(), any());
         verify(cache).upsertAll(anyCollection());
     }
 
@@ -113,14 +113,14 @@ class PartLookupServiceTest {
 
         assertThat(response.found()).isTrue();
         assertThat(response.cache()).isEqualTo(CacheStatus.NOT_APPLICABLE);
-        verify(cache, never()).find(any(), any(), any());
+        verify(cache, never()).find(any(), any());
         verify(cache, never()).upsertAll(anyCollection());
     }
 
     @Test
     void unknownPartIsNotFound() {
         FakeClient tme = new FakeClient(Distributor.TME);
-        when(cache.find(any(), any(), any())).thenReturn(Optional.empty());
+        when(cache.find(any(), any())).thenReturn(Optional.empty());
         service(tme);
 
         PartLookupResponse response = service.lookup(Distributor.TME, "NOPE", false);
@@ -143,7 +143,7 @@ class PartLookupServiceTest {
                         "ERA-6AEB5361V", "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"));
             }
         };
-        when(cache.find(any(), any(), any())).thenReturn(Optional.empty());
+        when(cache.find(any(), any())).thenReturn(Optional.empty());
         service(mouser);
 
         PartLookupResponse response = service.lookup(Distributor.MOUSER, "ERA6AEB5361V", false);
@@ -179,7 +179,7 @@ class PartLookupServiceTest {
                 throw new DistributorException(Distributor.LCSC, DistributorException.Kind.UNAVAILABLE, "no db");
             }
         };
-        when(cache.find(any(), any(), any())).thenReturn(Optional.empty());
+        when(cache.find(any(), any())).thenReturn(Optional.empty());
         service(mouser, slow, limited);
 
         assertThatThrownBy(() -> service.lookup(Distributor.MOUSER, "M1", false))
@@ -195,7 +195,7 @@ class PartLookupServiceTest {
                         e -> assertThat(e.errorCode()).isEqualTo("unavailable"));
         assertThatThrownBy(() -> service.lookup(Distributor.LCSC, " ", false))
                 .isInstanceOf(IllegalArgumentException.class);
-        verify(cache, never()).find(eq(Distributor.LCSC), any(), any());
+        verify(cache, never()).find(eq(Distributor.LCSC), any());
     }
 
     @Test
@@ -203,7 +203,7 @@ class PartLookupServiceTest {
         Instant old = NOW.minus(Duration.ofDays(2));
         Part cached = part(Distributor.MOUSER, "M9");
         Part aged = cached.toBuilder().fetchedAt(old).build();
-        when(cache.find(any(), any(), any())).thenReturn(Optional.of(aged));
+        when(cache.find(any(), any())).thenReturn(Optional.of(aged));
         service(new FakeClient(Distributor.MOUSER));
 
         assertThat(service.lookup(Distributor.MOUSER, "M9", false).cache()).isEqualTo(CacheStatus.HIT);
@@ -226,14 +226,14 @@ class PartLookupServiceTest {
                 return super.getPart(partNumber);
             }
         }.records(1, i -> part(Distributor.TME, "T0"));
-        when(cache.find(any(), any(), any())).thenReturn(Optional.empty());
+        when(cache.find(any(), any())).thenReturn(Optional.empty());
         service(tme);
 
         assertThat(service.getPart(Distributor.TME, "T0", false)).isPresent();
     }
 
     /** A Mouser client whose stock refresh answers from a map (DESIGN.md 3.2 "Stock refresh"). */
-    static final class RefreshingClient extends FakeClient {
+    static class RefreshingClient extends FakeClient {
         final java.util.Map<String, ro.alacrity.kina.distributor.StockUpdate> stock = new java.util.HashMap<>();
         final List<List<String>> refreshed = new java.util.concurrent.CopyOnWriteArrayList<>();
 
@@ -256,8 +256,8 @@ class PartLookupServiceTest {
         RefreshingClient mouser = new RefreshingClient();
         Part stale = part(Distributor.MOUSER, "M1").toBuilder().fetchedAt(NOW.minus(Duration.ofHours(30))).build();
         Part fresh = part(Distributor.MOUSER, "M2").toBuilder().fetchedAt(NOW.minus(Duration.ofHours(2))).build();
-        when(cache.find(eq(Distributor.MOUSER), eq("M1"), any())).thenReturn(Optional.of(stale));
-        when(cache.find(eq(Distributor.MOUSER), eq("M2"), any())).thenReturn(Optional.of(fresh));
+        when(cache.find(Distributor.MOUSER, "M1")).thenReturn(Optional.of(stale));
+        when(cache.find(Distributor.MOUSER, "M2")).thenReturn(Optional.of(fresh));
         mouser.stock.put("M1", new ro.alacrity.kina.distributor.StockUpdate(3, List.of()));
         service(mouser);
 
@@ -273,21 +273,91 @@ class PartLookupServiceTest {
         assertThat(refreshed.part().extra()).isNotNull();
         assertThat(young.part().stockAsOf()).isEqualTo(NOW.minus(Duration.ofHours(2)));
         assertThat(mouser.refreshed).containsExactly(List.of("M1"));   // a part younger than 24 h is not refreshed
-        verify(cache).upsertAll(List.of(stale.toBuilder().stock(3).fetchedAt(NOW).build()));
+        verify(cache).updateStock(List.of(stale.toBuilder().stock(3).fetchedAt(NOW).build()));
+        verify(cache, never()).upsertAll(anyCollection());
     }
 
     @Test
     void cachedPartThatSoldOutIsLookedUpLive() {
         RefreshingClient mouser = new RefreshingClient();
         Part stale = part(Distributor.MOUSER, "M1").toBuilder().fetchedAt(NOW.minus(Duration.ofDays(3))).build();
-        when(cache.find(eq(Distributor.MOUSER), eq("M1"), any())).thenReturn(Optional.of(stale));
+        when(cache.find(Distributor.MOUSER, "M1")).thenReturn(Optional.of(stale));
         mouser.stock.put("M1", new ro.alacrity.kina.distributor.StockUpdate(0, List.of()));
         service(mouser);
 
         PartLookupResponse response = service.lookup(Distributor.MOUSER, "M1", false);
 
-        verify(cache).delete(Distributor.MOUSER, "M1");
+        verify(cache).markSoldOut(Distributor.MOUSER, "M1");   // the metadata stays, the row is no longer served
+        verify(cache, never()).delete(any(), any());
         assertThat(response.cache()).isEqualTo(CacheStatus.MISS);
         assertThat(response.found()).isFalse();
+    }
+
+    /** A Mouser client whose stock refresh and lookup both fail (rate limited, quota gone). */
+    static final class DownClient extends RefreshingClient {
+        @Override
+        public java.util.Map<String, ro.alacrity.kina.distributor.StockUpdate> refreshStock(List<String> numbers,
+                                                                                           Deadline deadline) {
+            refreshed.add(List.copyOf(numbers));
+            throw new DistributorException(Distributor.MOUSER, DistributorException.Kind.RATE_LIMITED, "quota");
+        }
+
+        @Override
+        public ro.alacrity.kina.distributor.PartLookupResult lookup(String partNumber, Deadline deadline) {
+            calls.add(new int[] {0, 0});
+            throw new DistributorException(Distributor.MOUSER, DistributorException.Kind.RATE_LIMITED, "quota");
+        }
+    }
+
+    @Test
+    void failedRefreshWithinTheTtlServesTheCachedFigures() {
+        DownClient mouser = new DownClient();
+        Part aged = part(Distributor.MOUSER, "M1").toBuilder().fetchedAt(NOW.minus(Duration.ofDays(2))).build();
+        when(cache.find(Distributor.MOUSER, "M1")).thenReturn(Optional.of(aged));
+        service(mouser);
+
+        PartLookupResponse response = service.lookup(Distributor.MOUSER, "M1", false);
+
+        assertThat(response.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(response.part().stale()).isNull();
+        assertThat(response.part().availability().status()).isNotEqualTo("stale");
+        assertThat(mouser.calls).isEmpty();   // no live lookup within the ttl
+        assertThat(response.attributions()).containsExactly("Product data provided by Mouser Electronics");
+    }
+
+    @Test
+    void failedRefreshAndLookupBeyondTheTtlServeThePartMarkedStale() {
+        DownClient mouser = new DownClient();
+        Part old = part(Distributor.MOUSER, "M1").toBuilder().fetchedAt(NOW.minus(Duration.ofDays(4))).build();
+        when(cache.find(Distributor.MOUSER, "M1")).thenReturn(Optional.of(old));
+        service(mouser);
+
+        PartLookupResponse response = service.lookup(Distributor.MOUSER, "M1", false);
+
+        assertThat(response.found()).isTrue();
+        assertThat(response.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(response.part().stale()).isTrue();
+        assertThat(response.part().availability().status()).isEqualTo("stale");
+        assertThat(response.part().stockAsOf()).isEqualTo(NOW.minus(Duration.ofDays(4)));
+        assertThat(mouser.refreshed).hasSize(1);
+        assertThat(mouser.calls).hasSize(1);   // the live lookup was tried first
+    }
+
+    @Test
+    void notConfiguredDistributorServesCachedMetadataMarkedStaleBeyondTheTtl() {
+        FakeClient tme = new FakeClient(Distributor.TME);
+        tme.configured = false;
+        Part old = part(Distributor.TME, "T1").toBuilder().fetchedAt(NOW.minus(Duration.ofDays(10))).build();
+        when(cache.find(Distributor.TME, "T1")).thenReturn(Optional.of(old));
+        service(tme);
+
+        PartLookupResponse response = service.lookup(Distributor.TME, "T1", false);
+
+        assertThat(response.part().stale()).isTrue();
+        assertThat(response.attributions())
+                .containsExactly("Data powered by TME.eu Data – no guarantee of data accuracy");
+        assertThatThrownBy(() -> service.lookup(Distributor.TME, "unknown", false))
+                .isInstanceOfSatisfying(DistributorException.class,
+                        e -> assertThat(e.errorCode()).isEqualTo("not_configured"));
     }
 }

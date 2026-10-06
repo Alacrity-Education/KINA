@@ -41,7 +41,10 @@ class KinaApplicationTests {
                            'oauth_refresh_tokens','cached_parts','cached_searches','jlcpcb_database')""")
                 .query(Integer.class).single();
         assertThat(tables).isEqualTo(8);
-        assertThat(properties.cache().ttl()).isEqualTo(Duration.ofDays(5));
+        assertThat(properties.cache().ttl()).isEqualTo(Duration.ofDays(3));
+        assertThat(properties.cache().metadataRetention("TME")).isEmpty();      // forever
+        assertThat(properties.cache().metadataRetention("MOUSER")).isEmpty();   // forever
+        assertThat(properties.cache().staleRankPenalty()).isEqualTo(1.0);
         assertThat(properties.ranking().crossEncoder().maxConcurrent()).isEqualTo(2);
         assertThat(properties.ranking().crossEncoder().weight()).isEqualTo(0.5);
         assertThat(properties.ranking().timeout()).isEqualTo(Duration.ofSeconds(5));

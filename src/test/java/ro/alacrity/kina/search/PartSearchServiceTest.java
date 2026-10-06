@@ -59,6 +59,7 @@ class PartSearchServiceTest {
 
     final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     final Map<String, Part> cachedParts = new ConcurrentHashMap<>();
+    final Set<String> soldOut = ConcurrentHashMap.newKeySet();
     final Map<String, CachedSearch> cachedSearches = new ConcurrentHashMap<>();
     final List<Map<Distributor, List<Part>>> rankedInputs = new CopyOnWriteArrayList<>();
     final List<Duration> rankBudgets = new CopyOnWriteArrayList<>();
@@ -213,6 +214,27 @@ class PartSearchServiceTest {
             }
             return out;
         });
+        when(partCache.findInStock(any(), anyCollection())).thenAnswer(inv -> {
+            Distributor d = inv.getArgument(0);
+            Collection<String> numbers = inv.getArgument(1);
+            Map<String, Part> out = new java.util.HashMap<>();
+            for (String n : numbers) {
+                Part p = cachedParts.get(PartKey.of(d, n));
+                if (p != null && !soldOut.contains(p.key())) {
+                    out.put(n, p);
+                }
+            }
+            return out;
+        });
+        doAnswer(inv -> {
+            Collection<Part> parts = inv.getArgument(0);
+            parts.forEach(p -> cachedParts.put(p.key(), p));
+            return null;
+        }).when(partCache).updateStock(anyCollection());
+        doAnswer(inv -> {
+            soldOut.add(PartKey.of(inv.getArgument(0), inv.getArgument(1)));
+            return null;
+        }).when(partCache).markSoldOut(any(), anyString());
         SearchCacheRepository searchCache = mock(SearchCacheRepository.class);
         when(searchCache.find(any(), anyString())).thenAnswer(inv ->
                 Optional.ofNullable(cachedSearches.get(inv.getArgument(0) + "|" + inv.getArgument(1))));

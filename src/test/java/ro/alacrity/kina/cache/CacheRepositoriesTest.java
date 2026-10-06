@@ -6,12 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 import ro.alacrity.kina.TestcontainersConfiguration;
+import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PriceBreak;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -58,9 +63,8 @@ class CacheRepositoriesTest {
         parts.upsertAll(List.of(second));
 
         assertThat(parts.find(Distributor.TME, "CL21A106KOQNNNE", NOW)).contains(second);
-        Instant column = jdbc.sql("SELECT fetched_at FROM cached_parts WHERE part_number = 'CL21A106KOQNNNE'")
-                .query((rs, n) -> rs.getObject(1, java.time.OffsetDateTime.class).toInstant()).single();
-        assertThat(column).isEqualTo(NOW);
+        assertThat(column("stock_fetched_at", "CL21A106KOQNNNE")).isEqualTo(NOW);
+        assertThat(column("metadata_fetched_at", "CL21A106KOQNNNE")).isEqualTo(NOW);
         assertThat(count("cached_parts")).isEqualTo(1);
         // the payload is the plain camelCase Part JSON
         String payload = jdbc.sql("SELECT payload->>'distributorPartNumber' FROM cached_parts")
@@ -168,33 +172,86 @@ class CacheRepositoriesTest {
     }
 
     @Test
-    void deleteOlderThan() {
+    void deleteMetadataOlderThanIsPerDistributor() {
         parts.upsertAll(List.of(
-                part(Distributor.TME, "old", 1, NOW.minus(Duration.ofDays(20))),
-                part(Distributor.TME, "new", 1, NOW)));
-        searches.upsert(new CachedSearch(Distributor.TME, "old", null, List.of(), false, NOW.minus(Duration.ofDays(20))));
-        searches.upsert(new CachedSearch(Distributor.TME, "new", null, List.of(), false, NOW));
+                part(Distributor.MOUSER, "old", 1, NOW.minus(Duration.ofDays(20))),
+                part(Distributor.MOUSER, "new", 1, NOW),
+                part(Distributor.TME, "old", 1, NOW.minus(Duration.ofDays(20)))));
 
-        assertThat(parts.deleteOlderThan(NOW.minus(Duration.ofDays(10)))).isEqualTo(1);
-        assertThat(searches.deleteOlderThan(NOW.minus(Duration.ofDays(10)))).isEqualTo(1);
-        assertThat(parts.find(Distributor.TME, "new", NOW.minus(Duration.ofDays(30)))).isPresent();
-        assertThat(searches.find(Distributor.TME, "old")).isEmpty();
-        assertThat(searches.find(Distributor.TME, "new")).isPresent();
+        assertThat(parts.deleteMetadataOlderThan(Distributor.MOUSER, NOW.minus(Duration.ofDays(10)))).isEqualTo(1);
+        assertThat(parts.find(Distributor.MOUSER, "new")).isPresent();
+        assertThat(parts.find(Distributor.MOUSER, "old")).isEmpty();
+        assertThat(parts.find(Distributor.TME, "old")).isPresent();
     }
 
     @Test
-    void maintenancePurgesRowsOlderThanTwiceTtl() {
+    void maintenanceKeepsMetadataForeverByDefaultAndPurgesSearchListsAfterTwiceTtl() {
         parts.upsertAll(List.of(
-                part(Distributor.TME, "11d", 1, NOW.minus(Duration.ofDays(11))),
-                part(Distributor.TME, "9d", 1, NOW.minus(Duration.ofDays(9)))));
-        searches.upsert(new CachedSearch(Distributor.MOUSER, "q11", 0, List.of(), true, NOW.minus(Duration.ofDays(11))));
-        searches.upsert(new CachedSearch(Distributor.MOUSER, "q9", 0, List.of(), true, NOW.minus(Duration.ofDays(9))));
+                part(Distributor.TME, "400d", 1, NOW.minus(Duration.ofDays(400))),
+                part(Distributor.MOUSER, "400d", 1, NOW.minus(Duration.ofDays(400)))));
+        searches.upsert(new CachedSearch(Distributor.MOUSER, "q7", 0, List.of(), true, NOW.minus(Duration.ofDays(7))));
+        searches.upsert(new CachedSearch(Distributor.MOUSER, "q5", 0, List.of(), true, NOW.minus(Duration.ofDays(5))));
 
         CacheMaintenance.PurgeResult result = maintenance.purge();
 
-        assertThat(result).isEqualTo(new CacheMaintenance.PurgeResult(1, 1));
+        // default ttl 3d: lists older than 6 days go; metadata retention defaults to forever for every distributor
+        assertThat(result).isEqualTo(new CacheMaintenance.PurgeResult(0, 1));
+        assertThat(count("cached_parts")).isEqualTo(2);
+        assertThat(searches.find(Distributor.MOUSER, "q5")).isPresent();
+        assertThat(searches.find(Distributor.MOUSER, "q7")).isEmpty();
+    }
+
+    /** {@code kina.cache.metadata-retention.MOUSER=3d}: Mouser metadata is purged after 3 days, TME's survives. */
+    @Test
+    void mouserMetadataPurgedAfterItsRetentionWhileTmeMetadataSurvives() {
+        KinaProperties props = new Binder(new MapConfigurationPropertySource(Map.of(
+                "kina.cache.metadata-retention.MOUSER", "3d", "kina.cache.metadata-retention.TME", "forever")))
+                .bindOrCreate("kina", Bindable.of(KinaProperties.class));
+        CacheMaintenance mouser3d = new CacheMaintenance(parts, searches, Clock.fixed(NOW, ZoneOffset.UTC), props);
+        parts.upsertAll(List.of(
+                part(Distributor.MOUSER, "M-4d", 1, NOW.minus(Duration.ofDays(4))),
+                part(Distributor.MOUSER, "M-2d", 1, NOW.minus(Duration.ofDays(2))),
+                part(Distributor.TME, "T-400d", 1, NOW.minus(Duration.ofDays(400)))));
+        // a stock refresh does not extend the metadata's life
+        parts.updateStock(List.of(part(Distributor.MOUSER, "M-4d", 9, NOW)));
+
+        assertThat(mouser3d.purge().parts()).isEqualTo(1);
+        assertThat(parts.find(Distributor.MOUSER, "M-4d")).isEmpty();
+        assertThat(parts.find(Distributor.MOUSER, "M-2d")).isPresent();
+        assertThat(parts.find(Distributor.TME, "T-400d")).isPresent();
+    }
+
+    @Test
+    void updateStockKeepsTheMetadataTimestampAndOnlyTouchesExistingRows() {
+        Instant old = NOW.minus(Duration.ofDays(5));
+        parts.upsertAll(List.of(part(Distributor.TME, "A", 5, old)));
+        parts.updateStock(List.of(part(Distributor.TME, "A", 77, NOW), part(Distributor.TME, "absent", 1, NOW)));
+
+        assertThat(parts.find(Distributor.TME, "A").orElseThrow().stock()).isEqualTo(77);
+        assertThat(column("stock_fetched_at", "A")).isEqualTo(NOW);
+        assertThat(column("metadata_fetched_at", "A")).isEqualTo(old);
         assertThat(count("cached_parts")).isEqualTo(1);
-        assertThat(searches.find(Distributor.MOUSER, "q9")).isPresent();
+    }
+
+    @Test
+    void soldOutRowKeepsItsMetadataButIsNotServedUntilFetchedAgain() {
+        parts.upsertAll(List.of(part(Distributor.MOUSER, "S", 5, NOW.minus(Duration.ofDays(1)))));
+        parts.markSoldOut(Distributor.MOUSER, "S");
+
+        assertThat(count("cached_parts")).isEqualTo(1);
+        assertThat(parts.find(Distributor.MOUSER, "S")).isEmpty();
+        assertThat(parts.findInStock(Distributor.MOUSER, List.of("S"))).isEmpty();
+        assertThat(parts.stats().freshParts()).isZero();
+
+        parts.upsertAll(List.of(part(Distributor.MOUSER, "S", 3, NOW)));
+        assertThat(parts.find(Distributor.MOUSER, "S").orElseThrow().stock()).isEqualTo(3);
+    }
+
+    @Test
+    void findInStockIgnoresTheStockAge() {
+        parts.upsertAll(List.of(part(Distributor.TME, "ancient", 2, NOW.minus(Duration.ofDays(300)))));
+        assertThat(parts.findInStock(Distributor.TME, List.of("ancient"))).containsOnlyKeys("ancient");
+        assertThat(parts.find(Distributor.TME, "ancient")).isPresent();
     }
 
     @Test
@@ -234,9 +291,16 @@ class CacheRepositoriesTest {
     }
 
     private void insertRaw(String distributor, String partNumber, String json) {
-        jdbc.sql("INSERT INTO cached_parts (distributor, part_number, payload, fetched_at) VALUES (?, ?, ?::jsonb, ?)")
-                .params(distributor, partNumber, json, NOW.atOffset(ZoneOffset.UTC))
+        jdbc.sql("""
+                        INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at, metadata_fetched_at)
+                        VALUES (?, ?, ?::jsonb, ?, ?)""")
+                .params(distributor, partNumber, json, NOW.atOffset(ZoneOffset.UTC), NOW.atOffset(ZoneOffset.UTC))
                 .update();
+    }
+
+    private Instant column(String name, String partNumber) {
+        return jdbc.sql("SELECT " + name + " FROM cached_parts WHERE part_number = ?").param(partNumber)
+                .query((rs, n) -> rs.getObject(1, java.time.OffsetDateTime.class).toInstant()).single();
     }
 
     private long count(String table) {

@@ -41,7 +41,10 @@ class TokenPageControllerTest {
                 .contains("Access tokens")
                 .contains("Signed in as Development Admin")
                 .contains("name=\"_csrf\"")
-                .contains("http://localhost/mcp");
+                .contains("http://localhost/mcp")
+                // TME API terms 8.7: the notice wherever TME data is shown (DESIGN.md 3.2 "Attributions")
+                .contains("Data powered by TME.eu Data – no guarantee of data accuracy")
+                .contains("Product data provided by Mouser Electronics");
     }
 
     @Test

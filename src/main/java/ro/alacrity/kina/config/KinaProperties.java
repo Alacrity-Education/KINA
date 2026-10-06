@@ -3,11 +3,15 @@ package ro.alacrity.kina.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.ConstructorBinding;
 import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.boot.convert.DurationStyle;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 /**
  * Every {@code kina.*} setting (DESIGN.md section 10). Defaults here mirror {@code application.yml} so tests
@@ -203,26 +207,78 @@ public record KinaProperties(
     }
 
     /**
-     * {@code kina.cache.*}.
+     * {@code kina.cache.*} (DESIGN.md 3.2 "Cache model").
      *
-     * @param ttl            freshness of cached Mouser/TME searches and parts
-     * @param emptyResultTtl freshness of a cached search that found no in-stock part (a transient distributor glitch
-     *                       or a new listing should not hide parts for the whole {@code ttl})
-     * @param stockTtl       age after which the stock and prices of a cached part about to be returned are refreshed
-     *                       with a cheap distributor call (TME {@code /products/data}, Mouser part-number search;
-     *                       DESIGN.md 3.2 "Stock refresh")
+     * @param ttl               freshness of cached Mouser/TME search lists and of a cached part's stock and prices
+     *                          (default 3 days): a list older than this is searched again; a part whose stock and prices
+     *                          are older and cannot be refreshed is returned with {@code stale: true}. Search lists are
+     *                          purged after {@code 2 x ttl}
+     * @param emptyResultTtl    freshness of a cached search that found no in-stock part (a transient distributor glitch
+     *                          or a new listing should not hide parts for the whole {@code ttl})
+     * @param stockTtl          age after which the stock and prices of a cached part about to be returned are refreshed
+     *                          with a cheap distributor call (TME {@code /products/data}, Mouser part-number search;
+     *                          DESIGN.md 3.2 "Stock refresh")
+     * @param metadataRetention per distributor ({@code TME}, {@code MOUSER}) how long a cached part's metadata (everything
+     *                          but stock, prices and availability) is kept after it was last fetched: {@code forever}
+     *                          (the default for every distributor) or a duration ({@code 3d}); the purge deletes rows
+     *                          older than a finite retention. The switch exists to honour a distributor's notice
+     * @param staleRankPenalty  subtracted from the score of a part whose stock and prices are stale (older than
+     *                          {@code ttl}) before the list is re-sorted; the default 1.0 puts every stale part below every
+     *                          fresh one (scores are in [0, 1])
      */
-    public record Cache(@DefaultValue("5d") Duration ttl, @DefaultValue("1h") Duration emptyResultTtl,
-                        @DefaultValue("24h") Duration stockTtl) {
+    public record Cache(@DefaultValue("3d") Duration ttl, @DefaultValue("1h") Duration emptyResultTtl,
+                        @DefaultValue("24h") Duration stockTtl, Map<String, String> metadataRetention,
+                        @DefaultValue("1.0") double staleRankPenalty) {
+
+        /** The value of {@code metadataRetention} that keeps metadata without a time limit. */
+        public static final String FOREVER = "forever";
 
         @ConstructorBinding
         public Cache {
+            ttl = ttl == null ? Duration.ofDays(3) : ttl;
+            emptyResultTtl = emptyResultTtl == null ? Duration.ofHours(1) : emptyResultTtl;
             stockTtl = stockTtl == null ? Duration.ofHours(24) : stockTtl;
+            Map<String, String> retention = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            if (metadataRetention != null) {
+                metadataRetention.forEach((k, v) -> {
+                    if (k != null && v != null && !v.isBlank()) {
+                        retention.put(k.strip(), v.strip());
+                        parseRetention(k, v);   // a malformed value fails startup
+                    }
+                });
+            }
+            metadataRetention = Collections.unmodifiableMap(retention);
         }
 
         /** Without {@code stockTtl} (tests): 24 hours. */
         public Cache(Duration ttl, Duration emptyResultTtl) {
-            this(ttl, emptyResultTtl, null);
+            this(ttl, emptyResultTtl, null, null, 1.0);
+        }
+
+        /**
+         * How long the metadata of {@code distributor}'s cached parts is kept; empty for {@code forever} (the default
+         * when nothing is configured).
+         */
+        public Optional<Duration> metadataRetention(String distributor) {
+            String value = metadataRetention.get(distributor);
+            return value == null ? Optional.empty() : parseRetention(distributor, value);
+        }
+
+        private static Optional<Duration> parseRetention(String distributor, String value) {
+            String v = value.strip();
+            if (FOREVER.equalsIgnoreCase(v)) {
+                return Optional.empty();
+            }
+            try {
+                Duration d = DurationStyle.detectAndParse(v);
+                if (d.isNegative() || d.isZero()) {
+                    throw new IllegalArgumentException("must be positive");
+                }
+                return Optional.of(d);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("kina.cache.metadata-retention." + distributor
+                        + " must be 'forever' or a positive duration such as 3d, not '" + value + "'", e);
+            }
         }
     }
 
@@ -285,7 +341,7 @@ public record KinaProperties(
                     }
                 });
             }
-            hardConstraints = java.util.Collections.unmodifiableMap(hard);
+            hardConstraints = Collections.unmodifiableMap(hard);
             quantity = quantity == null ? Quantity.DEFAULTS : quantity;
             lifecycle = lifecycle == null ? Lifecycle.DEFAULTS : lifecycle;
             lowStockThreshold = lowStockThreshold <= 0 ? DEFAULT_LOW_STOCK_THRESHOLD : lowStockThreshold;

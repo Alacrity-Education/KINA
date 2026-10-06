@@ -39,7 +39,8 @@ class ResponseJsonTest {
 
         assertThat(json).contains("\"query_understood\":true", "\"currencies\":[\"EUR\"]", "\"excluded_below_spec\":0",
                 "\"query_terms_dropped\":[]", "\"constraints_relaxed\":[]", "\"stock_as_of\":\"2026-10-05T00:00:00Z\"")
-                .doesNotContain("\"relaxed\"", "\"hint\"", "\"below_spec\"", "\"unverified\"");
+                .doesNotContain("\"relaxed\"", "\"hint\"", "\"below_spec\"", "\"unverified\"", "\"stale\"");
+        assertThat(json).contains("\"attributions\":[\"Product data provided by Mouser Electronics\"]");
         assertThat(json).contains("\"ranking\":\"blended\"", "\"ranking_note\":null", "\"total_results\":113",
                 "\"cache\":\"hit\"", "\"part_number\":\"603-CC0805\"", "\"mpn\":\"CC0805MKX7R7BB106\"",
                 "\"package\":\"0805\"", "\"min_order_qty\":1", "\"order_multiple\":1", "\"datasheet_url\":",
@@ -50,6 +51,25 @@ class ResponseJsonTest {
                 "\"excluded_by_constraints\":0", "\"out_of_stock_matches\":null",
                 "\"exact_matches\":0", "\"availability\":{\"status\":\"in_stock\"", "\"lifecycle\":\"active\"");
         assertThat(json).doesNotContain("\"qty\":100", "mismatches", "mounting", "\"constraints\"", "packageName", "\"connector\"");
+    }
+
+    @Test
+    void stalePartIsFlaggedNextToItsStockTimestamp() {
+        Part part = new Part(Distributor.TME, "CL21B106KAYQNNE", "SAMSUNG", "CL21B106KAYQNNE", "MLCC 10uF", null, null,
+                500, 1, 1, List.of(), null, null, null, Map.of(), Map.of(), Instant.parse("2026-10-01T08:00:00Z"));
+
+        String json = mapper.writeValueAsString(PartResponse.of(part, PartResponse.Ranking.NONE, 1,
+                ResponseDetail.COMPACT, Map.of(), 10, true, Instant.parse("2026-10-05T09:00:00Z")));
+
+        assertThat(json).contains("\"stock_as_of\":\"2026-10-01T08:00:00Z\",\"stale\":true",
+                "\"availability\":{\"status\":\"stale\",\"note\":\"Stock and price were last confirmed on 2026-10-01 "
+                        + "(4 days ago) and could not be refreshed; check them at the distributor before ordering. "
+                        + "Last known stock: 500.\"}");
+        PartLookupResponse lookup = PartLookupResponse.found(Distributor.TME, "CL21B106KAYQNNE", CacheStatus.HIT,
+                PartResponse.from(part));
+        assertThat(mapper.writeValueAsString(lookup))
+                .contains("\"attributions\":[\"Data powered by TME.eu Data – no guarantee of data accuracy\"]");
+        assertThat(PartLookupResponse.notFound(Distributor.TME, "X", CacheStatus.MISS, null).attributions()).isEmpty();
     }
 
     @Test

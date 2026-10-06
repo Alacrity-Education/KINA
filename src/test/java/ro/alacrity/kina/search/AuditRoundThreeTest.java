@@ -67,6 +67,7 @@ class AuditRoundThreeTest {
     final ParametricExtractor extractor = new ParametricExtractor();
     final DeterministicRanker deterministic = new DeterministicRanker(extractor);
     final Map<String, Part> cachedParts = new ConcurrentHashMap<>();
+    final Set<String> soldOut = ConcurrentHashMap.newKeySet();
     final Map<String, CachedSearch> cachedSearches = new ConcurrentHashMap<>();
     PartSearchService service;
 
@@ -88,6 +89,10 @@ class AuditRoundThreeTest {
         final List<List<String>> refreshed = new CopyOnWriteArrayList<>();
         final Map<String, StockUpdate> stock = new HashMap<>();
         int pageSize = 50;
+        /** Thrown by every search call when set (the distributor is down). */
+        RuntimeException searchFailure;
+        /** Thrown by every stock refresh when set. */
+        RuntimeException refreshFailure;
 
         PhraseClient(Distributor distributor) {
             this.distributor = distributor;
@@ -117,6 +122,9 @@ class AuditRoundThreeTest {
         public DistributorSearchPage search(String query, int offset, int limit) {
             queries.add(query);
             offsets.add(offset);
+            if (searchFailure != null) {
+                throw searchFailure;
+            }
             List<Part> raw = byPhrase.getOrDefault(query, List.of());
             int to = Math.min(raw.size(), offset + limit);
             List<Part> page = offset >= raw.size() ? List.of() : raw.subList(offset, to);
@@ -132,6 +140,9 @@ class AuditRoundThreeTest {
         @Override
         public Map<String, StockUpdate> refreshStock(List<String> partNumbers, Deadline deadline) {
             refreshed.add(List.copyOf(partNumbers));
+            if (refreshFailure != null) {
+                throw refreshFailure;
+            }
             Map<String, StockUpdate> out = new HashMap<>();
             partNumbers.forEach(n -> {
                 if (stock.containsKey(n)) {
@@ -168,6 +179,27 @@ class AuditRoundThreeTest {
             cachedParts.remove(PartKey.of(inv.getArgument(0), inv.getArgument(1)));
             return null;
         }).when(partCache).delete(any(), anyString());
+        doAnswer(inv -> {
+            Collection<Part> parts = inv.getArgument(0);
+            parts.forEach(p -> cachedParts.put(p.key(), p));
+            return null;
+        }).when(partCache).updateStock(anyCollection());
+        doAnswer(inv -> {
+            soldOut.add(PartKey.of(inv.getArgument(0), inv.getArgument(1)));
+            return null;
+        }).when(partCache).markSoldOut(any(), anyString());
+        when(partCache.findInStock(any(), anyCollection())).thenAnswer(inv -> {
+            Distributor d = inv.getArgument(0);
+            Collection<String> numbers = inv.getArgument(1);
+            Map<String, Part> out = new HashMap<>();
+            for (String n : numbers) {
+                Part p = cachedParts.get(PartKey.of(d, n));
+                if (p != null && !soldOut.contains(p.key())) {
+                    out.put(n, p);
+                }
+            }
+            return out;
+        });
         when(partCache.findFresh(any(), anyCollection(), any())).thenAnswer(inv -> {
             Distributor d = inv.getArgument(0);
             Collection<String> numbers = inv.getArgument(1);
@@ -703,7 +735,10 @@ class AuditRoundThreeTest {
         assertThat(m.parts().getFirst().stockAsOf()).isEqualTo(NOW);
         assertThat(m.parts().getFirst().prices().getFirst().unitPrice()).isEqualByComparingTo("0.20");
         assertThat(m.parts().get(1).availability().status()).isEqualTo(Availability.LOW_STOCK);
-        assertThat(cachedParts).doesNotContainKey(PartKey.of(Distributor.MOUSER, "M0"));
+        // the sold-out part keeps its metadata in the cache, marked sold out (never served)
+        assertThat(cachedParts).containsKey(PartKey.of(Distributor.MOUSER, "M0"));
+        assertThat(soldOut).containsExactly(PartKey.of(Distributor.MOUSER, "M0"));
+        assertThat(m.parts()).allSatisfy(p -> assertThat(p.stale()).isNull());
         assertThat(cachedParts.get(PartKey.of(Distributor.MOUSER, "M1")).fetchedAt()).isEqualTo(NOW);
         assertThat(cachedParts.get(PartKey.of(Distributor.MOUSER, "M3")).fetchedAt()).isEqualTo(old);
     }
@@ -767,5 +802,172 @@ class AuditRoundThreeTest {
         assertThat(response.currencies()).containsExactly("EUR", "USD");
         assertThat(response.distributors()).allSatisfy(d -> assertThat(d.parts()).allSatisfy(p ->
                 assertThat(p.stockAsOf()).isEqualTo(NOW)));
+    }
+
+    // ---- 13. cache model: metadata kept, stock and prices expire (DESIGN.md 3.2 "Cache model") -----------------------
+
+    static final String MLCC_QUERY = "10uF X7R 0805 MLCC";
+
+    /** Caches {@code count} Mouser MLCCs whose stock was fetched at {@code stockAge} in a list fetched at {@code listAt}. */
+    private List<String> cacheMouserList(int count, Instant stockAt, Instant listAt) {
+        String key = QueryParser.normalizeKey(MLCC_QUERY);
+        List<String> numbers = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Part p = part(Distributor.MOUSER, "M" + i, "Multilayer Ceramic Capacitors MLCC 10uF 25V X7R 0805",
+                    "MLCC", 1000 - i, Map.of(), Map.of(), stockAt);
+            cachedParts.put(p.key(), p);
+            numbers.add(p.distributorPartNumber());
+        }
+        cachedSearches.put(Distributor.MOUSER + "|" + key, new CachedSearch(Distributor.MOUSER, key, count, numbers,
+                true, listAt, count, null, 0, List.of()));
+        return numbers;
+    }
+
+    @Test
+    void refreshFailingWithinTheTtlServesTheCachedFiguresUnmarked() {
+        Instant twoDays = NOW.minus(Duration.ofDays(2));   // older than stock-ttl (24h), within ttl (3d)
+        cacheMouserList(3, twoDays, twoDays);
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        mouser.refreshFailure = new ro.alacrity.kina.distributor.DistributorException(Distributor.MOUSER,
+                ro.alacrity.kina.distributor.DistributorException.Kind.RATE_LIMITED, "quota");
+        service(List.of(mouser));
+
+        DistributorResult m = result(service.search(request(MLCC_QUERY, 3, false, Distributor.MOUSER)),
+                Distributor.MOUSER);
+
+        assertThat(m.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(mouser.refreshed).hasSize(1);
+        assertThat(m.parts()).hasSize(3).allSatisfy(p -> {
+            assertThat(p.stale()).isNull();
+            assertThat(p.stockAsOf()).isEqualTo(twoDays);
+            assertThat(p.availability().status()).isNotEqualTo(Availability.STALE);
+        });
+        assertThat(cachedParts.get(PartKey.of(Distributor.MOUSER, "M0")).fetchedAt()).isEqualTo(twoDays);
+    }
+
+    @Test
+    void refreshFailingBeyondTheTtlMarksThePartsStaleAndRanksThemBelowFreshOnes() {
+        Instant oneDay = NOW.minus(Duration.ofHours(20));
+        Instant fourDays = NOW.minus(Duration.ofDays(4));
+        cacheMouserList(4, oneDay, oneDay);
+        // M0 and M1 (the distributor's best two) still carry stock figures from four days ago
+        for (String n : List.of("M0", "M1")) {
+            String k = PartKey.of(Distributor.MOUSER, n);
+            cachedParts.put(k, cachedParts.get(k).toBuilder().fetchedAt(fourDays).build());
+        }
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        mouser.refreshFailure = new ro.alacrity.kina.distributor.DistributorException(Distributor.MOUSER,
+                ro.alacrity.kina.distributor.DistributorException.Kind.UNAVAILABLE, "down");
+        service(List.of(mouser));
+
+        DistributorResult m = result(service.search(request(MLCC_QUERY, 4, false, Distributor.MOUSER)),
+                Distributor.MOUSER);
+
+        assertThat(mouser.refreshed).containsExactly(List.of("M0", "M1"));
+        assertThat(m.parts()).extracting(PartResponse::partNumber).containsExactly("M2", "M3", "M0", "M1");
+        assertThat(m.parts()).extracting(PartResponse::stale).containsExactly(null, null, true, true);
+        PartResponse stale = m.parts().get(2);
+        assertThat(stale.availability().status()).isEqualTo(Availability.STALE);
+        assertThat(stale.availability().note()).startsWith("Stock and price were last confirmed on "
+                + fourDays.toString().substring(0, 10) + " (4 days ago) and could not be refreshed").contains(
+                "Last known stock: ").doesNotContain("Ships now");
+        assertThat(stale.stockAsOf()).isEqualTo(fourDays);
+        assertThat(stale.score()).isLessThanOrEqualTo(m.parts().get(1).score());
+        assertThat(stale.rank()).isEqualTo(3);
+    }
+
+    @Test
+    void staleRankPenaltyIsConfigurable() {
+        Instant fourDays = NOW.minus(Duration.ofDays(4));
+        cacheMouserList(3, NOW.minus(Duration.ofHours(1)), NOW.minus(Duration.ofHours(1)));
+        String k = PartKey.of(Distributor.MOUSER, "M0");
+        cachedParts.put(k, cachedParts.get(k).toBuilder().fetchedAt(fourDays).build());
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        mouser.refreshFailure = new ro.alacrity.kina.distributor.DistributorException(Distributor.MOUSER,
+                ro.alacrity.kina.distributor.DistributorException.Kind.UNAVAILABLE, "down");
+        service(List.of(mouser), "kina.cache.stale-rank-penalty", "0");
+
+        DistributorResult m = result(service.search(request(MLCC_QUERY, 3, false, Distributor.MOUSER)),
+                Distributor.MOUSER);
+
+        // no penalty: the stale part keeps its place, still flagged
+        assertThat(m.parts().getFirst().partNumber()).isEqualTo("M0");
+        assertThat(m.parts().getFirst().stale()).isTrue();
+    }
+
+    @Test
+    void refreshSucceedingUpdatesStockPricesAndTheStockTimestamp() {
+        Instant fourDays = NOW.minus(Duration.ofDays(4));
+        cacheMouserList(2, fourDays, NOW.minus(Duration.ofHours(1)));
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        mouser.stock.put("M0", new StockUpdate(55, List.of(new PriceBreak(1, new BigDecimal("0.30"), "EUR"))));
+        mouser.stock.put("M1", new StockUpdate(66, List.of()));
+        service(List.of(mouser));
+
+        DistributorResult m = result(service.search(request(MLCC_QUERY, 2, false, Distributor.MOUSER)),
+                Distributor.MOUSER);
+
+        assertThat(m.parts()).extracting(PartResponse::stock).containsExactly(55, 66);
+        assertThat(m.parts()).allSatisfy(p -> {
+            assertThat(p.stale()).isNull();
+            assertThat(p.stockAsOf()).isEqualTo(NOW);
+        });
+        assertThat(m.parts().getFirst().prices().getFirst().unitPrice()).isEqualByComparingTo("0.30");
+        assertThat(cachedParts.get(PartKey.of(Distributor.MOUSER, "M1")).fetchedAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    void liveSearchFailureServesTheExpiredListMarkedStale() {
+        Instant fiveDays = NOW.minus(Duration.ofDays(5));
+        cacheMouserList(2, fiveDays, fiveDays);   // list and stock older than the 3 day ttl
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        mouser.searchFailure = new ro.alacrity.kina.distributor.DistributorException(Distributor.MOUSER,
+                ro.alacrity.kina.distributor.DistributorException.Kind.RATE_LIMITED, "quota exhausted");
+        mouser.refreshFailure = mouser.searchFailure;
+        service(List.of(mouser));
+
+        SearchResponse response = service.search(request(MLCC_QUERY, 2, false, Distributor.MOUSER));
+        DistributorResult m = result(response, Distributor.MOUSER);
+
+        assertThat(m.cache()).isEqualTo(CacheStatus.STALE);
+        assertThat(m.error()).isEqualTo("rate_limited");
+        assertThat(m.parts()).hasSize(2).allSatisfy(p -> {
+            assertThat(p.stale()).isTrue();
+            assertThat(p.availability().status()).isEqualTo(Availability.STALE);
+        });
+        assertThat(response.attributions()).containsExactly("Product data provided by Mouser Electronics");
+    }
+
+    @Test
+    void expiredListWithKnownMetadataIsSearchedAgainAndTheRowsUpdated() {
+        Instant fiveDays = NOW.minus(Duration.ofDays(5));
+        cacheMouserList(2, fiveDays, fiveDays);
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        Part again = part(Distributor.MOUSER, "M0", "Multilayer Ceramic Capacitors MLCC 10uF 25V X7R 0805 updated",
+                "MLCC", 500, Map.of(), Map.of(), null);
+        mouser.byPhrase.put(MLCC_QUERY, List.of(again));
+        service(List.of(mouser));
+
+        DistributorResult m = result(service.search(request(MLCC_QUERY, 2, false, Distributor.MOUSER)),
+                Distributor.MOUSER);
+
+        assertThat(m.cache()).isEqualTo(CacheStatus.MISS);
+        assertThat(mouser.queries).isNotEmpty();
+        assertThat(m.parts()).extracting(PartResponse::partNumber).containsExactly("M0");
+        Part row = cachedParts.get(PartKey.of(Distributor.MOUSER, "M0"));
+        assertThat(row.description()).endsWith("updated");
+        assertThat(row.fetchedAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    void lcscPartsAreNeverStale() {
+        Part old = part(Distributor.LCSC, "C1", "25V 10uF X7R ±10% 0805 Multilayer Ceramic Capacitors MLCC",
+                "Capacitors/MLCC", 1000, Map.of(), Map.of(), NOW.minus(Duration.ofDays(30)));
+        PhraseClient lcsc = new PhraseClient(Distributor.LCSC).on(MLCC_QUERY, old);
+        service(List.of(lcsc));
+        assertThat(service.isStale(old, NOW)).isFalse();
+        SearchResponse response = service.search(request(MLCC_QUERY, 2, false, Distributor.LCSC));
+        assertThat(response.attributions())
+                .containsExactly("LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)");
     }
 }

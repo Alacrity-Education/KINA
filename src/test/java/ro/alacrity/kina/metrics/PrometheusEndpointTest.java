@@ -54,6 +54,7 @@ class PrometheusEndpointTest {
     void scrapeWorksOnTheManagementPortWithoutAuthentication() throws Exception {
         metrics.toolCall("ping", () -> "ok");
         metrics.distributorPage(Distributor.LCSC, 1_000_000, 3);
+        metrics.stockRefreshed(Distributor.MOUSER, "out_of_stock", 2);
         assertThat(managementPort).isPositive().isNotEqualTo(serverPort);
 
         HttpResponse<String> scrape = get(managementPort, "/actuator/prometheus");
@@ -67,6 +68,8 @@ class PrometheusEndpointTest {
                 .contains("kina_distributor_duration_seconds_count{distributor=\"LCSC\"}")
                 .contains("kina_cache_parts{distributor=\"MOUSER\"}")
                 .contains("kina_cache_parts_stale{distributor=\"TME\"}")
+                .contains("kina_cache_parts_stale_stock{distributor=\"MOUSER\"}")
+                .contains("kina_cache_stock_refreshes_total{distributor=\"MOUSER\",outcome=\"out_of_stock\"}")
                 .contains("kina_users_known ")
                 .contains("kina_tokens_active ")
                 .contains("kina_jlcpcb_database_age_seconds ")

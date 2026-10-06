@@ -3,6 +3,10 @@ package ro.alacrity.kina.domain;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +38,8 @@ import java.util.stream.Collectors;
  *               {@code AVAILABLE_WHILE_STOCKS_LAST}, Mouser end of life / obsolete / not recommended for new
  *               designs), {@value #SPECIAL_ORDER} (TME {@code ONLY_FOR_SPECIAL_ORDER}, {@code CANNOT_BE_ORDERED}) or
  *               {@value #EXTERNAL_WAREHOUSE} (TME {@code EXTERNAL_WAREHOUSE}); the last two are excluded from
- *               results by default
+ *               results by default; {@value #STALE} when the stock and prices are older than {@code kina.cache.ttl}
+ *               and could not be refreshed ({@link #stale})
  * @param note   one or more plain sentences
  */
 @JsonPropertyOrder({"status", "note"})
@@ -48,12 +53,18 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
     public static final String SUPPLY_CONSTRAINED = "supply_constrained";
     public static final String SPECIAL_ORDER = "special_order";
     public static final String EXTERNAL_WAREHOUSE = "external_warehouse";
+    /**
+     * Stock and prices older than {@code kina.cache.ttl} that could not be refreshed (DESIGN.md 3.2 "Cache model"); the
+     * part's {@code stale} flag is true.
+     */
+    public static final String STALE = "stale";
 
     /** {@code lifecycle} values ({@link #lifecycleOf}). */
     public static final String ACTIVE = "active";
     public static final String LAST_TIME_BUY = "last_time_buy";
     public static final String NEW = "new";
 
+    private static final String SHIPS_NOW = "Ships now from stock.";
     /** Status precedence, most severe first. */
     private static final List<String> SEVERITY = List.of(SPECIAL_ORDER, EXTERNAL_WAREHOUSE, LAST_UNITS, LIMITED,
             LOW_STOCK, IN_STOCK);
@@ -165,9 +176,34 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
             notes.addFirst("Only " + part.stock() + " in stock" + (quantity > 1 ? ", less than twice the " + quantity
                     + " requested." : "."));
         } else if (IN_STOCK.equals(status)) {
-            notes.addFirst("Ships now from stock.");
+            notes.addFirst(SHIPS_NOW);
         }
         return new Availability(status, String.join(" ", notes));
+    }
+
+    /**
+     * {@code availability} of a part whose stock and prices are stale: status {@value #STALE}, a note saying when they
+     * were last confirmed and the last known stock, then the other notes of {@code current} (the availability the stale
+     * figures would give).
+     */
+    public static Availability stale(Part part, Availability current, Instant now) {
+        StringBuilder note = new StringBuilder("Stock and price were last confirmed");
+        if (part.fetchedAt() != null) {
+            long days = Duration.between(part.fetchedAt(), now).toDays();
+            note.append(" on ").append(DateTimeFormatter.ISO_LOCAL_DATE
+                    .format(part.fetchedAt().atOffset(ZoneOffset.UTC)))
+                    .append(" (").append(days).append(days == 1 ? " day" : " days").append(" ago)");
+        }
+        note.append(" and could not be refreshed; check them at the distributor before ordering. Last known stock: ")
+                .append(part.stock()).append('.');
+        String rest = current == null || current.note() == null ? "" : current.note().strip();
+        if (rest.startsWith(SHIPS_NOW)) {
+            rest = rest.substring(SHIPS_NOW.length()).strip();   // not known to ship now any more
+        }
+        if (!rest.isEmpty()) {
+            note.append(' ').append(rest);
+        }
+        return new Availability(STALE, note.toString());
     }
 
     private static String mouserLifecycle(Part part) {

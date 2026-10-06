@@ -84,7 +84,8 @@ public class KinaMcpTools {
             any exclusion; excluded_by_constraints and excluded_below_spec = parts of fetched left out; returned = \
             parts in this response (at most max_results and fetched minus the exclusions); out_of_stock_matches = \
             matches the distributor has but cannot ship now (not part of fetched); cache = hit | partial | miss | \
-            bypassed | not_applicable (LCSC is a local database); error = null or rate_limited | unavailable | \
+            bypassed | not_applicable (LCSC is a local database) | stale (the live search failed, error is set, and \
+            the parts come from the expired cached list); error = null or rate_limited | unavailable | \
             not_configured | timeout | bad_response (a failing distributor never fails the whole search, its list is \
             just empty); distributor_query = null when your text was sent as written, else the phrase KINA sent \
             (ratings left out; connector queries rewritten into the distributor's wording); fallback_query = null, \
@@ -100,11 +101,13 @@ public class KinaMcpTools {
             Parts (detail "compact", the default) carry rank (1 = best within the distributor), score (0..1), match \
             (0..1), below_spec (only when true), distributor, part_number (the distributor's number, for get_part), \
             manufacturer, manufacturer_id (TME's own id), mpn, description, stock, stock_as_of (when stock and \
-            prices were fetched; cached figures older than a day are refreshed before they are returned), \
+            prices were fetched; cached figures older than a day are refreshed before they are returned), stale \
+            (only when true: stock and prices are older than 3 days and could not be refreshed; treat them as \
+            unconfirmed, availability.status is "stale", and such parts rank below fresh ones), \
             min_order_qty, order_multiple, prices (the 3 smallest quantity brackets), with quantity > 1 also \
             ordered_quantity, unit_price_at_quantity and total_price, availability {status: in_stock | low_stock \
             (fewer than 10 pieces, or fewer than twice the quantity) | limited (fewer than the quantity) | \
-            last_units, note}, lifecycle (active | new | supply_constrained | last_time_buy; the last two rank \
+            last_units | stale, note}, lifecycle (active | new | supply_constrained | last_time_buy; the last two rank \
             lower), mismatches, unverified, datasheet_url, product_url and the canonical attributes (Capacitance, \
             Resistance, Inductance, Impedance, Voltage, Current or RatedCurrent, SaturationCurrent, DCR, \
             RippleCurrent, ESR, Power, MaxTemperature, Lifetime, Tolerance, Dielectric, Package, Dimensions, \
@@ -118,8 +121,11 @@ public class KinaMcpTools {
             match, mismatches and unverified, not by score.
             ranking = "blended" (deterministic parametric score blended with a cross-encoder relevance model) \
             or "fallback" (deterministic only; ranking_note says why).
-            Results are cached for 5 days: calling again with the same query and a larger max_results is served \
-            from the cache, and only fetches more from a distributor when the cache holds too few parts.""";
+            Results are cached for 3 days: calling again with the same query and a larger max_results is served \
+            from the cache, and only fetches more from a distributor when the cache holds too few parts.
+            attributions lists the data notice of every distributor whose parts the response contains, e.g. "Data \
+            powered by TME.eu Data – no guarantee of data accuracy"; when you show TME data to the user, show the \
+            TME notice with it.""";
 
     static final String BATCH_DESCRIPTION = """
             Run several component searches at once (1-20 queries, e.g. every line of a BOM: give each its quantity). \
@@ -245,7 +251,7 @@ public class KinaMcpTools {
             search_parts result: LCSC "C15850", TME symbol, Mouser part number such as "603-CC0805KRX7R9BB104"). \
             A manufacturer part number also works (compared ignoring case, spaces and hyphens, so ERA6AEB5361V \
             finds Mouser's ERA-6AEB5361V); part.part_number is then the distributor's own number. \
-            Returns {found, distributor, part_number, cache, error, reason, part}; part has every attribute the \
+            Returns {found, distributor, part_number, cache, error, reason, part, attributions}; part has every attribute the \
             distributor gives (detail "full" is the default here: canonical keys such as RippleCurrent, ESR, \
             Impedance, Dimensions, Qualification and Features plus the raw distributor attributes, photo_url and \
             the extra fields; pass detail "compact" for the canonical attributes only) and stock_as_of. found is \
@@ -254,8 +260,11 @@ public class KinaMcpTools {
             distributor does not know the part; reason "out_of_stock" = the distributor lists it but has no stock \
             that ships now, and identity {part_number, manufacturer, mpn, description} tells which part it is (no \
             stock or prices). Prices are the 3 smallest quantity brackets; with quantity the part also gets \
-            ordered_quantity, unit_price_at_quantity and total_price. Mouser/TME data comes from the 5-day cache \
-            unless bypass_cache is true; stock and prices older than a day are refreshed first.""",
+            ordered_quantity, unit_price_at_quantity and total_price. Mouser/TME data comes from the cache unless \
+            bypass_cache is true; stock and prices older than a day are refreshed first, and when they are older \
+            than 3 days and neither a refresh nor a live lookup succeeds the part carries stale: true and \
+            availability.status "stale". attributions holds the distributor's data notice (show TME's with TME \
+            data).""",
             annotations = @McpTool.McpAnnotations(title = "Get one part", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = true))
     public PartLookupResponse getPart(

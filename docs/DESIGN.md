@@ -148,9 +148,43 @@ BatchSearchRequest(List<SearchRequest> queries /*1..20, each with its own maxRes
 ### 3.2 Per-distributor fetch with cache
 
 Normalised query key: trim, collapse whitespace, lower-case, Unicode NFKC, `µ` -> `u`, `Ω` -> `ohm`.
-Freshness: `kina.cache.ttl` default `5d`; anything younger is fresh. Exception: a cached search whose part list is
-**empty** is fresh only for `kina.cache.empty-result-ttl` (default `1h`, the shorter of the two applies), so a transient
-distributor glitch or a newly stocked part is not hidden for five days.
+
+**Cache model** (user decisions 2026-10-07). KINA is a search engine and aggregator: what a distributor says about a
+component is kept, what it says about stock and price expires.
+
+- **Metadata** of a cached part (everything except `stock`, `prices` and `availability`: identity, description,
+  category, package, order rules, links, attributes, extra) is kept for the distributor's
+  `kina.cache.metadata-retention` after it was last fetched in full (`cached_parts.metadata_fetched_at`). The default
+  is `forever` for every distributor. The per-distributor value is the compliance switch: an operator who receives a
+  notice from a distributor sets a duration (`MOUSER=3d`) and the purge applies it from then on. The research report
+  `docs/research/cache-fill-2026-10-07.md` quotes an excerpt of Mouser's terms that restricts storing its content;
+  the operator has decided to store until notified. TME's attribution notice and its rule that stored data is deleted
+  when API access ends still apply (OPERATIONS.md "Distributor terms").
+- **Search lists** (`cached_searches`) are fresh for `kina.cache.ttl` (default `3d`, was `5d` before 2026-10-07);
+  anything younger is fresh. Exception: a list that is **empty** is fresh only for `kina.cache.empty-result-ttl`
+  (default `1h`, the shorter of the two applies), so a transient distributor glitch or a newly stocked part is not
+  hidden for days. An expired list is searched again normally; the parts it finds are upserted, which replaces the
+  payload of a known part (the refetched metadata is current; attributes are not merged, so a value the extractor no
+  longer derives cannot survive) and keeps `metadata_fetched_at` current.
+- **Stock and prices** carry their own age, `cached_parts.stock_fetched_at` (= `Part.fetchedAt`, reported as
+  `stock_as_of`). Older than `kina.cache.stock-ttl` (default `24h`): refreshed before the part is returned (step 5).
+  When the refresh fails or the distributor is not configured, the part is returned as it is while its figures are at
+  most `kina.cache.ttl` (3 days) old; beyond that it is returned with **`stale: true`** (covers stock and prices),
+  `availability.status: "stale"` with a note (`Stock and price were last confirmed on 2026-10-01 (4 days ago) and could
+  not be refreshed; check them at the distributor before ordering. Last known stock: 500.`), and it ranks below the
+  fresh parts (`PartSearchService.demoteStale`: its score is lowered by `kina.cache.stale-rank-penalty`, default 1.0,
+  reported at least 0, and it is placed before the first fresh part of its group, meeting the request or below spec,
+  that scores lower; with 1.0 every stale part ends up after every fresh part of its group). A stale part that a
+  refresh shows as sold out is dropped from the results; its row keeps the metadata with `in_stock = false` and is not
+  served until a live fetch finds it in stock again (the stock rule: a part without ships-now stock is never returned).
+  LCSC parts are never stale (the local JLCPCB database is the cache).
+- **Expired list as a last resort**: when the live search of a query fails (first page, any `DistributorException`)
+  and the query has an expired, non-empty cached list, its parts that are still cached in stock are served with cache
+  status **`stale`** and the distributor's `error`; their stock is refreshed or marked stale like any cached part. A
+  failing distributor without an expired list still reports an empty list with its `error`.
+- **Purge** (`CacheMaintenance`, every 6 hours): search lists older than `2 x kina.cache.ttl`, and the parts of a
+  distributor whose finite metadata retention expired (by `metadata_fetched_at`). With the default retention parts are
+  never purged.
 
 Fetch window per distributor: `window = max(maxResults, kina.search.candidate-window /*default 40*/)`
 capped by `kina.distributors.<name>.max-results-per-search` (Mouser default 50 = one API call,
@@ -168,7 +202,8 @@ value is excluded like any other hard conflict (`Verdict.CONSTRAINT`; before 202
 requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED_RATING`).
 
 1. `bypassCache == false`: read `cached_searches(distributor, query_key)`. When it is fresh, load its parts from
-   `cached_parts` (fresh rows only); if any part is missing or stale, go to step 2 with `offset = 0` (`MISS`).
+   `cached_parts` (in-stock rows of any stock age: old figures are refreshed or marked in step 5); if any part is
+   missing or sold out, go to step 2 with `offset = 0` (`MISS`).
    - **Safeguard**: when the cached list is not empty but none of its parts could be returned (every one is excluded by
      a hard constraint or below spec; below-spec parts count as returnable with `allow_below_spec`), the hit is
      treated as a miss and the live search of step 2 runs (status `MISS`). A cached search never hides a live result.
@@ -180,7 +215,8 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    - fresh but shorter than `maxResults` and not exhausted ("further querying is needed"): keep the cached list and
      fetch more pages starting at `offset = next_offset` (the raw distributor record offset stored with the list;
      the part count when unknown), append -> status `PARTIAL`.
-   - missing or stale -> step 2 with `offset = 0`, status `MISS`.
+   - missing or expired -> step 2 with `offset = 0`, status `MISS` (an expired list is kept as the last resort of
+     the "Cache model" when the live search fails: status `stale`).
 2. Call `DistributorClient.search(query, offset, limit)` page by page with `limit = maxPageSize()` (the first page is
    shortened so pages end on a page boundary) and `offset += limit`, until `window` in-stock parts are collected
    **and at least one of them is confirmed** (meets the request with every requested rating stated: a rating is never
@@ -267,7 +303,8 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    TME's 40-character phrase limit is applied by the client as for any query.
    Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is cached or
    ranked (Mouser and LCSC deliver almost no parametric attributes).
-3. Upsert the newly fetched parts into `cached_parts` (payload = JSON of `Part`, `fetched_at = part.fetchedAt`) and
+3. Upsert the newly fetched parts into `cached_parts` (payload = JSON of `Part`, `stock_fetched_at =
+   metadata_fetched_at = part.fetchedAt`, `in_stock = true`; an existing row's `metadata_fetched_at` never moves back) and
    the ordered part-number list + `total_results` + `exhausted` + `next_offset` + `fallback_query` +
    `out_of_stock_matches` + `constraints_relaxed` into `cached_searches` (`fetched_at = now`; a `PARTIAL` extension
    keeps the list's original `fetched_at`). A list whose parts **all** fail the request is never stored as a reusable
@@ -282,16 +319,23 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    `rate_limited` is reported only when the next retry would end after the request deadline. Every distributor entry
    reports `rate_limit_waited_ms` (0 when it did not wait, also on a cache hit). A requested distributor without a configured client reports `not_configured` with
    cache status `not_applicable`; with no `distributors` given only configured ones are searched.
-5. **Stock refresh** (`PartSearchService.refreshStock`, after ranking): cached stock and prices can be up to
-   `kina.cache.ttl` (5 days) old. For Mouser and TME, the parts about to be returned (the top `max_results` of the
-   ranked list) whose `fetchedAt` is older than `kina.cache.stock-ttl` (default `24h`) are refreshed with one cheap
-   call per batch (`DistributorClient.refreshStock`: TME `/products/data` with up to 50 symbols, Mouser
-   `/search/partnumber` with up to 10 part numbers joined by `|`, verified live 2026-10-06; quota-aware: only those
-   parts). A refreshed part gets the new stock and prices and `fetchedAt = now` and is written back to `cached_parts`; a
-   part that sold out is dropped from the list and deleted from `cached_parts`, which pulls the next part into the top
-   (at most `STOCK_REFRESH_ROUNDS` = 2 rounds). A failed refresh keeps the cached figures. LCSC reads its local
-   database anyway. Every part reports `stock_as_of` (its `fetchedAt`, to the second). `get_part` does the same for a
-   cache hit (a sold-out part is then looked up live and reported `out_of_stock`).
+5. **Stock refresh** (`PartSearchService.refreshStock`, after ranking): cached stock and prices can be older than a
+   day (a fresh list holds parts of any stock age). For Mouser and TME, the parts about to be returned (the top
+   `max_results` of the ranked list) whose `fetchedAt` is older than `kina.cache.stock-ttl` (default `24h`) are
+   refreshed with one cheap call per batch (`DistributorClient.refreshStock`: TME `/products/data` with up to 50
+   symbols, Mouser `/search/partnumber` with up to 10 part numbers joined by `|`, verified live 2026-10-06;
+   quota-aware: only those parts). A refreshed part gets the new stock and prices and `fetchedAt = now` and is written
+   back (`PartCacheRepository.updateStock`: payload and `stock_fetched_at`, never `metadata_fetched_at`); a part that
+   sold out is dropped from the list and marked sold out (`markSoldOut`: `in_stock = false`, metadata kept), which pulls
+   the next part into the top (at most `STOCK_REFRESH_ROUNDS` = 2 rounds). A failed refresh, or a part number missing
+   from the answer, keeps the cached figures. Then the stale parts (figures older than `kina.cache.ttl`) are flagged and
+   moved below the fresh ones ("Cache model"). LCSC reads its local database anyway. Every part reports `stock_as_of`
+   (its `fetchedAt`, to the second). Each refreshed part counts in `kina_cache_stock_refreshes_total` (`ok`,
+   `out_of_stock`, `failed`). `get_part` (`PartLookupService`) does the same for a cache hit: a sold-out part is marked
+   and looked up live (reported `out_of_stock`); a part whose refresh failed is served as it is within the TTL; beyond
+   the TTL it is looked up live and served with `stale: true` only when that lookup fails; with the distributor not
+   configured a cached part is served without a refresh (stale beyond the TTL), an uncached one reports
+   `not_configured`.
 
 **Counts** of a distributor entry: `fetched` is every in-stock part received from the distributor for the query
 (after deduplication, before any exclusion); `excluded_by_constraints` and `excluded_below_spec` are subsets of it
@@ -303,6 +347,12 @@ the phrase that produced the parts. The third audit saw `total 55, fetched 6, ex
 
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
+
+**Attributions**: every search response lists in `attributions` the notice of each distributor whose parts it returns
+(`Distributor.attribution()`, enum order), `get_part` the notice of the distributor when it returns a part or an
+identity: TME `Data powered by TME.eu Data – no guarantee of data accuracy` (exact text, required by TME's API terms
+wherever TME data is shown), Mouser `Product data provided by Mouser Electronics`, LCSC `LCSC parts from the JLCPCB
+parts database (kicad-jlcpcb-tools)`. The web UI shows all three in the footer of every page.
 
 **Ratings are never part of a keyword phrase.** A voltage, current, saturation current, power, temperature or
 lifetime in a request is a minimum rating (section 3.4) and a DCR limit a maximum: a keyword search for `25V` only finds
@@ -1065,12 +1115,14 @@ numbers, only counts with the bounded tags below.
 | `kina_parts_returned_total` | counter | `distributor` | parts in search responses |
 | `kina_distributor_rate_limited_responses_total` | counter | `distributor` | HTTP calls answered with a rate limit (429, 502/503/504 with `Retry-After`, Mouser `TooManyRequests`), retried or not |
 | `kina_distributor_rate_limit_waits_total` | counter | `distributor` | waits before a retry (backoff, `Retry-After` or shared cool-down) |
-| `kina_cache_search_lookups_total` | counter | `distributor`, `status` | Postgres cache use per distributor fetch: `hit`, `miss`, `partial`, `bypassed` |
+| `kina_cache_search_lookups_total` | counter | `distributor`, `status` | Postgres cache use per distributor fetch: `hit`, `miss`, `partial`, `bypassed`, `stale` |
 | `kina_cache_parts_added_total` | counter | `distributor` | new `cached_parts` rows |
-| `kina_cache_parts_refreshed_total` | counter | `distributor` | existing `cached_parts` rows fetched again and overwritten |
+| `kina_cache_parts_refreshed_total` | counter | `distributor` | existing `cached_parts` rows fetched again in full and overwritten |
+| `kina_cache_stock_refreshes_total` | counter | `distributor`, `outcome` | cached parts whose stock and prices a refresh asked for (section 3.2 step 5, `get_part`): `ok`, `out_of_stock` (marked sold out), `failed` (the call failed or did not answer for the part) |
 | `kina_cache_parts` | gauge | `distributor` | `cached_parts` rows (Mouser, TME) |
-| `kina_cache_parts_fresh` | gauge | `distributor` | rows younger than `kina.cache.ttl` |
-| `kina_cache_parts_stale` | gauge | `distributor` | rows older than `kina.cache.ttl` |
+| `kina_cache_parts_fresh` | gauge | `distributor` | rows in stock whose stock and prices are younger than `kina.cache.ttl` |
+| `kina_cache_parts_stale` | gauge | `distributor` | the other rows, kept for their metadata (stock and prices older than `kina.cache.ttl`, or sold out) |
+| `kina_cache_parts_stale_stock` | gauge | `distributor` | rows in stock whose stock and prices are older than `kina.cache.ttl` (returned with `stale: true` unless a refresh succeeds) |
 | `kina_cache_searches` | gauge | `distributor` | `cached_searches` rows |
 | `kina_cross_encoder_executions_total` | counter | | cross-encoder (MiniLM) model runs |
 | `kina_cross_encoder_candidates_total` | counter | | candidates scored by the model |
@@ -1130,7 +1182,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 |---|---|---|
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`), `allow_below_spec` (bool, default false, section 3.4 "Below spec") | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | `{ "results": [SearchResponse...] }` |
-| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown) or `out_of_stock` (listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, no stock or prices), or with `error` (and `reason` null) when the lookup failed. Out-of-stock parts are never returned as a part and never cached. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
+| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part, attributions}`; `found: false` instead of a tool error with `reason` `not_found` (unknown) or `out_of_stock` (listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, no stock or prices), or with `error` (and `reason` null) when the lookup failed. Out-of-stock parts are never returned as a part and never cached. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
 | `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions}` (section 3.7). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
@@ -1144,6 +1196,7 @@ parameters; descriptions are read by the LLM, keep them precise):
   "ranking": "blended",
   "ranking_note": null,
   "currencies": ["EUR"],
+  "attributions": ["Product data provided by Mouser Electronics"],
   "distributors": [
     {
       "distributor": "MOUSER",
@@ -1179,15 +1232,18 @@ parameters; descriptions are read by the LLM, keep them precise):
 Response-level fields: `query_understood` (false when nothing typed was recognised, section 3.4 "Keyword-only
 queries"; then `hint` says what to change, every `match` and `exact_matches` is null), `hint` (also, for an understood
 query, when distributors returned nothing: which hard constraints could not be met there, section 3.2 "Empty after the
-hard set"; omitted otherwise) and
+hard set"; omitted otherwise),
 `currencies` (the distinct price currencies of the returned parts, sorted; LCSC USD, TME and Mouser EUR; KINA never
-converts prices).
+converts prices) and `attributions` (the notice of every distributor whose parts the response returns, enum order,
+section 3.2 "Attributions"; `get_part` carries the same field with the distributor's notice when it returns a part or
+an identity, else an empty list).
 
 **Detail** (`ResponseDetail`, `detail`): `compact` (default for the searches; `get_part` and its REST endpoint default
 to `full`) returns per part `rank`, `score`, `match`, `below_spec` (only when true), `mismatches` and `unverified`
 (omitted when empty), `distributor`, `part_number` (the distributor's number), `manufacturer`, `manufacturer_id` (the
 distributor's own manufacturer id as it provides it: TME only, omitted when absent), `mpn`, `description`, `stock`,
-`stock_as_of` (the part's `fetchedAt` to the second, both levels), `min_order_qty`,
+`stock_as_of` (the part's `fetchedAt` to the second, both levels), `stale` (only when true: stock and prices older
+than `kina.cache.ttl` that could not be refreshed, section 3.2 "Cache model"), `min_order_qty`,
 `order_multiple`, `prices` (3 brackets), with `quantity` > 1 `ordered_quantity`, `unit_price_at_quantity` and
 `total_price`, `availability`, `lifecycle`, `datasheet_url`, `product_url` and only the canonical attributes
 (`ParametricExtractor.CANONICAL_KEYS`, computed with `extract`, so raw duplicates such as TME `Operating voltage`,
@@ -1199,12 +1255,16 @@ fields; LCSC library type), and always the order fields. Fields a level leaves o
 **Availability** (every part): `{"status", "note"}`, the stock situation only: status `in_stock`, `low_stock` (stock
 below `kina.search.low-stock-threshold`, default 10, or below twice the quantity), `limited` (stock below `quantity`),
 `last_units` (no restocking: TME `AVAILABLE_WHILE_STOCKS_LAST`, Mouser end of life / obsolete / NRND),
-`special_order` (TME `ONLY_FOR_SPECIAL_ORDER`, `CANNOT_BE_ORDERED`) or `external_warehouse` (TME); the note is plain
+`special_order` (TME `ONLY_FOR_SPECIAL_ORDER`, `CANNOT_BE_ORDERED`), `external_warehouse` (TME) or `stale` (stock and
+prices older than `kina.cache.ttl`, the part's `stale` flag; the note says when they were last confirmed and the last
+known stock, then the other notes); the note is plain
 sentences (TME `HARDLY_AVAILABLE` as a supply warning, `MOQ_VALID_WHILE_STOCKS_LAST`, `DANGEROUS`/`OVERSIZED`, the
 Mouser maximum order quantity when it is below the quantity; with `full` also TME `NEW`/`PROMOTED`, the Mouser
 lifecycle and reel option, the JLCPCB library type Basic/Preferred/Extended). `supply_constrained` is no longer an
 availability status: it is a `lifecycle` (section 3.4).
 
+`cache` is `hit`, `partial`, `miss`, `bypassed`, `not_applicable` or `stale` (the live search failed, `error` is set,
+and the parts come from the query's expired cached list, section 3.2 "Cache model").
 `fetched`, `excluded_by_constraints`, `excluded_by_constraints_detail` (per hard constraint, each part under its first
 conflict, `{"capacitance": 12, "package": 3}`; empty object when nothing was excluded), `excluded_below_spec`,
 `out_of_stock_matches` (null when unknown), `query_terms_dropped`, `constraints_relaxed` (they replace the former
@@ -1434,7 +1494,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V7__cached_search_constraints_relaxed.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V8__cached_parts_metadata_and_stock.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -1509,6 +1569,13 @@ CREATE TABLE cached_parts (
   PRIMARY KEY (distributor, part_number)
 );
 CREATE INDEX cached_parts_fetched_idx ON cached_parts (fetched_at);
+-- V8__cached_parts_metadata_and_stock.sql (section 3.2 "Cache model"): metadata is kept, stock and prices expire
+ALTER TABLE cached_parts RENAME COLUMN fetched_at TO stock_fetched_at;          -- = Part.fetchedAt (stock_as_of)
+ALTER INDEX cached_parts_fetched_idx RENAME TO cached_parts_stock_fetched_idx;
+ALTER TABLE cached_parts ADD COLUMN metadata_fetched_at TIMESTAMPTZ NOT NULL;   -- last full fetch (retention)
+ALTER TABLE cached_parts ADD COLUMN in_stock BOOLEAN NOT NULL DEFAULT true;     -- false: sold out, metadata only
+CREATE INDEX cached_parts_metadata_fetched_idx ON cached_parts (distributor, metadata_fetched_at);
+CREATE INDEX cached_searches_fetched_idx ON cached_searches (fetched_at);
 
 CREATE TABLE cached_searches (
   distributor   TEXT NOT NULL,
@@ -1835,10 +1902,14 @@ kina:
     auto-approve-trusted-clients: ${KINA_OAUTH_AUTO_APPROVE_TRUSTED_CLIENTS:true}
     unused-client-retention: 90d
     register-rate-limit-per-minute: ${KINA_OAUTH_REGISTER_RATE_LIMIT_PER_MINUTE:30}   # very high in src/test/resources
-  cache:
-    ttl: 5d
+  cache:                       # section 3.2 "Cache model"
+    ttl: ${KINA_CACHE_TTL:3d}  # search lists; stock/prices older than this that cannot be refreshed are stale
     empty-result-ttl: 1h       # cached searches with no in-stock part
     stock-ttl: ${KINA_CACHE_STOCK_TTL:24h}   # older cached stock/prices of returned parts are refreshed (section 3.2)
+    metadata-retention:        # per distributor: forever (default) or a duration; purge by metadata_fetched_at
+      TME: ${KINA_CACHE_METADATA_RETENTION_TME:forever}
+      MOUSER: ${KINA_CACHE_METADATA_RETENTION_MOUSER:forever}
+    stale-rank-penalty: ${KINA_CACHE_STALE_RANK_PENALTY:1.0}   # 1.0: every stale part ranks below every fresh one
   search:
     candidate-window: 40
     default-max-results: 10

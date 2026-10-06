@@ -23,6 +23,7 @@ public final class MetricNames {
     public static final String CACHE_PARTS_ADDED = "kina.cache.parts.added";
     public static final String CACHE_PARTS_REFRESHED = "kina.cache.parts.refreshed";
     public static final String CACHE_SEARCH_LOOKUPS = "kina.cache.search.lookups";
+    public static final String CACHE_STOCK_REFRESHES = "kina.cache.stock.refreshes";
     public static final String CROSS_ENCODER_EXECUTIONS = "kina.cross.encoder.executions";
     public static final String CROSS_ENCODER_CANDIDATES = "kina.cross.encoder.candidates";
     public static final String RANKING_FALLBACK = "kina.ranking.fallback";
@@ -44,6 +45,7 @@ public final class MetricNames {
     public static final String CACHE_PARTS = "kina.cache.parts";
     public static final String CACHE_PARTS_FRESH = "kina.cache.parts.fresh";
     public static final String CACHE_PARTS_STALE = "kina.cache.parts.stale";
+    public static final String CACHE_PARTS_STALE_STOCK = "kina.cache.parts.stale.stock";
     public static final String CACHE_SEARCHES = "kina.cache.searches";
     public static final String USERS_KNOWN = "kina.users.known";
     public static final String USERS_REVOKED = "kina.users.revoked";
@@ -63,6 +65,8 @@ public final class MetricNames {
             Map.entry(CACHE_PARTS_ADDED, "New rows written to cached_parts"),
             Map.entry(CACHE_PARTS_REFRESHED, "Existing cached_parts rows re-fetched and overwritten"),
             Map.entry(CACHE_SEARCH_LOOKUPS, "Search cache use per distributor fetch by status"),
+            Map.entry(CACHE_STOCK_REFRESHES, "Cached parts whose stock and prices were refreshed, by outcome (ok, "
+                    + "failed, out_of_stock)"),
             Map.entry(CROSS_ENCODER_EXECUTIONS, "Cross-encoder (MiniLM) model runs"),
             Map.entry(CROSS_ENCODER_CANDIDATES, "Candidates scored by the cross-encoder"),
             Map.entry(RANKING_FALLBACK, "Search queries ranked with the deterministic fallback, by reason"),
@@ -78,8 +82,11 @@ public final class MetricNames {
             Map.entry(DISTRIBUTOR_DURATION, "Time of one distributor search page, rate-limit waits included"),
             Map.entry(CROSS_ENCODER_DURATION, "Time of one cross-encoder run"),
             Map.entry(CACHE_PARTS, "Rows in cached_parts"),
-            Map.entry(CACHE_PARTS_FRESH, "Rows in cached_parts younger than kina.cache.ttl"),
-            Map.entry(CACHE_PARTS_STALE, "Rows in cached_parts older than kina.cache.ttl"),
+            Map.entry(CACHE_PARTS_FRESH, "Rows in cached_parts in stock with stock and prices younger than kina.cache.ttl"),
+            Map.entry(CACHE_PARTS_STALE, "Rows in cached_parts kept for their metadata only (stock and prices older than "
+                    + "kina.cache.ttl, or sold out)"),
+            Map.entry(CACHE_PARTS_STALE_STOCK, "Rows in cached_parts in stock whose stock and prices are older than "
+                    + "kina.cache.ttl (returned with stale: true unless a refresh succeeds)"),
             Map.entry(CACHE_SEARCHES, "Rows in cached_searches"),
             Map.entry(USERS_KNOWN, "Users that are not blocked"),
             Map.entry(USERS_REVOKED, "Users blocked by a failed group check"),

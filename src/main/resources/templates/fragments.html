@@ -48,6 +48,8 @@
             .status-revoked, .status-expired { color: var(--muted); }
             .warn { border-left: 4px solid var(--accent); padding: 4px 12px; }
             a { color: var(--accent); }
+            footer { max-width: 960px; margin: 0 auto 24px; padding: 0 16px; font-size: 12px; color: var(--muted); }
+            footer p { margin: 2px 0; }
         </style>
     </th:block>
 </head>
@@ -56,5 +58,9 @@
     <strong>KINA</strong>
     <span class="muted" th:if="${user != null}" th:text="'Signed in as ' + ${user}">Signed in as user</span>
 </header>
+<footer th:fragment="pageFooter">
+    <p>Data powered by TME.eu Data – no guarantee of data accuracy.</p>
+    <p>Product data provided by Mouser Electronics. LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools).</p>
+</footer>
 </body>
 </html>

@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS;
 import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_FRESH;
 import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_STALE;
+import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_STALE_STOCK;
 import static ro.alacrity.kina.metrics.MetricNames.CACHE_SEARCHES;
 import static ro.alacrity.kina.metrics.MetricNames.JLCPCB_DATABASE_AGE;
 import static ro.alacrity.kina.metrics.MetricNames.JLCPCB_DATABASE_PARTS;
@@ -31,8 +32,9 @@ import static ro.alacrity.kina.metrics.MetricNames.USERS_KNOWN;
 import static ro.alacrity.kina.metrics.MetricNames.USERS_REVOKED;
 
 /**
- * Gauges of what the database holds (DESIGN.md 3.7), not persisted: cache rows per distributor (all, fresh, stale;
- * searches), users and active tokens, recomputed every {@code kina.metrics.save-interval} with a few {@code count(*)}
+ * Gauges of what the database holds (DESIGN.md 3.7), not persisted: cache rows per distributor (all; fresh: in stock
+ * with stock and prices younger than {@code kina.cache.ttl}; stale: the rest, kept for their metadata; stale stock: in
+ * stock with stock and prices older than the TTL; searches), users and active tokens, recomputed every {@code kina.metrics.save-interval} with a few {@code count(*)}
  * queries (a failed refresh keeps the previous values and is logged once at WARN); the JLCPCB database part count and
  * age, read from memory on every scrape.
  */
@@ -50,6 +52,7 @@ public class MetricsGauges {
     private final Map<Distributor, AtomicLong> parts = new EnumMap<>(Distributor.class);
     private final Map<Distributor, AtomicLong> fresh = new EnumMap<>(Distributor.class);
     private final Map<Distributor, AtomicLong> stale = new EnumMap<>(Distributor.class);
+    private final Map<Distributor, AtomicLong> staleStock = new EnumMap<>(Distributor.class);
     private final Map<Distributor, AtomicLong> searches = new EnumMap<>(Distributor.class);
     private final AtomicLong usersKnown = new AtomicLong();
     private final AtomicLong usersRevoked = new AtomicLong();
@@ -66,6 +69,7 @@ public class MetricsGauges {
             register(registry, CACHE_PARTS, parts, d);
             register(registry, CACHE_PARTS_FRESH, fresh, d);
             register(registry, CACHE_PARTS_STALE, stale, d);
+            register(registry, CACHE_PARTS_STALE_STOCK, staleStock, d);
             register(registry, CACHE_SEARCHES, searches, d);
         }
         gauge(registry, USERS_KNOWN, usersKnown, null);
@@ -119,13 +123,15 @@ public class MetricsGauges {
         OffsetDateTime freshSince = clock.instant().minus(ttl).atOffset(ZoneOffset.UTC);
         Map<Distributor, long[]> counts = new EnumMap<>(Distributor.class);
         jdbc.sql("""
-                        SELECT distributor, count(*) AS total, count(*) FILTER (WHERE fetched_at >= ?) AS fresh
+                        SELECT distributor, count(*) AS total,
+                               count(*) FILTER (WHERE in_stock AND stock_fetched_at >= ?) AS fresh,
+                               count(*) FILTER (WHERE in_stock AND stock_fetched_at < ?) AS stale_stock
                         FROM cached_parts GROUP BY distributor""")
-                .param(freshSince)
+                .params(freshSince, freshSince)
                 .query(rs -> {
                     Distributor d = distributor(rs.getString("distributor"));
                     if (d != null) {
-                        counts.put(d, new long[] {rs.getLong("total"), rs.getLong("fresh")});
+                        counts.put(d, new long[] {rs.getLong("total"), rs.getLong("fresh"), rs.getLong("stale_stock")});
                     }
                 });
         Map<Distributor, Long> searchCounts = new EnumMap<>(Distributor.class);
@@ -137,10 +143,11 @@ public class MetricsGauges {
                     }
                 });
         for (Distributor d : CACHED) {
-            long[] c = counts.getOrDefault(d, new long[2]);
+            long[] c = counts.getOrDefault(d, new long[3]);
             parts.get(d).set(c[0]);
             fresh.get(d).set(c[1]);
             stale.get(d).set(c[0] - c[1]);
+            staleStock.get(d).set(c[2]);
             searches.get(d).set(searchCounts.getOrDefault(d, 0L));
         }
         jdbc.sql("""

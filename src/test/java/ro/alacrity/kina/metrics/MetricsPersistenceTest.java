@@ -112,6 +112,20 @@ class MetricsPersistenceTest {
         assertThat(registry.get(MetricNames.CACHE_PARTS_FRESH).tag("distributor", "TME").gauge().value())
                 .isEqualTo(rows);
         assertThat(registry.get(MetricNames.CACHE_PARTS_STALE).tag("distributor", "TME").gauge().value()).isZero();
+        assertThat(registry.get(MetricNames.CACHE_PARTS_STALE_STOCK).tag("distributor", "TME").gauge().value())
+                .isZero();
+
+        // stock older than the ttl: still in stock, stale stock; a sold-out row is kept for its metadata only
+        jdbc.sql("UPDATE cached_parts SET stock_fetched_at = now() - interval '4 days' WHERE part_number = ?")
+                .param(a).update();
+        partCache.markSoldOut(Distributor.TME, b);
+        gauges.refresh();
+        assertThat(registry.get(MetricNames.CACHE_PARTS_FRESH).tag("distributor", "TME").gauge().value())
+                .isEqualTo(rows - 2);
+        assertThat(registry.get(MetricNames.CACHE_PARTS_STALE).tag("distributor", "TME").gauge().value())
+                .isEqualTo(2);
+        assertThat(registry.get(MetricNames.CACHE_PARTS_STALE_STOCK).tag("distributor", "TME").gauge().value())
+                .isEqualTo(1);
         assertThat(registry.get(MetricNames.USERS_KNOWN).gauge().value()).isPositive(); // the development admin
     }
 

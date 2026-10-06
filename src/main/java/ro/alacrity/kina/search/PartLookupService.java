@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.PartCacheRepository;
@@ -17,6 +18,7 @@ import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartLookupResponse;
 import ro.alacrity.kina.domain.PartResponse;
 import ro.alacrity.kina.domain.ResponseDetail;
+import ro.alacrity.kina.metrics.KinaMetrics;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -32,8 +34,10 @@ import java.util.concurrent.TimeoutException;
 /**
  * Looks up one part by distributor part number ({@code get_part}; the clients also accept a manufacturer part number
  * where a retry is cheap, see {@link DistributorClient#lookup}). A part the distributor lists without ships-now stock is
- * reported as {@code out_of_stock} with its identity, never returned as a part and never cached. Mouser/TME: a fresh
- * {@code cached_parts} row unless {@code bypassCache}, else the distributor, caching the result. LCSC: the JLCPCB
+ * reported as {@code out_of_stock} with its identity, never returned as a part and never cached. Mouser/TME: the
+ * {@code cached_parts} row unless {@code bypassCache} (its stock refreshed when older than {@code kina.cache.stock-ttl};
+ * beyond {@code kina.cache.ttl} without a refresh the part is looked up live and served with {@code stale: true} only
+ * when that fails or the distributor is not configured), else the distributor, caching the result. LCSC: the JLCPCB
  * database.
  */
 @Service
@@ -46,6 +50,7 @@ public class PartLookupService {
     private final PartCacheRepository partCache;
     private final Clock clock;
     private final ExecutorService executor;
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     public PartLookupService(KinaProperties properties, DistributorRegistry registry, ParametricExtractor extractor,
                              PartCacheRepository partCache, Clock clock) {
@@ -55,6 +60,11 @@ public class PartLookupService {
         this.partCache = partCache;
         this.clock = clock;
         this.executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("kina-lookup-", 0).factory());
+    }
+
+    @Autowired
+    void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
     }
 
     @PreDestroy
@@ -98,22 +108,50 @@ public class PartLookupService {
             throw new IllegalArgumentException("part_number must not be blank");
         }
         String number = partNumber.strip();
-        DistributorClient client = registry.find(distributor)
-                .filter(DistributorClient::isConfigured)
-                .orElseThrow(() -> DistributorException.notConfigured(distributor));
+        Optional<DistributorClient> configured = registry.find(distributor).filter(DistributorClient::isConfigured);
         boolean cached = PartSearchService.usesPostgresCache(distributor);
-
-        if (cached && !bypassCache) {
-            Optional<Part> hit = readCache(distributor, number).flatMap(p -> refreshed(client, p));
+        if (configured.isEmpty() && !cached) {
+            throw DistributorException.notConfigured(distributor);
+        }
+        Part stale = null;
+        if (cached && (!bypassCache || configured.isEmpty())) {
+            Optional<Part> hit = readCache(distributor, number);
             if (hit.isPresent()) {
-                return PartLookupResponse.found(distributor, number, CacheStatus.HIT,
-                        response(extractor.enrich(hit.get()), quantity, detail));
+                Cached c = refreshed(configured.orElse(null), hit.get());
+                if (c.part() != null && !c.stale()) {
+                    return PartLookupResponse.found(distributor, number, CacheStatus.HIT,
+                            response(extractor.enrich(c.part()), quantity, detail, false));
+                }
+                stale = c.part() == null ? null : extractor.enrich(c.part());   // null when sold out: looked up live
             }
         }
+        if (configured.isEmpty()) {
+            // the distributor is not configured: cached metadata is still served, its stock and prices marked stale
+            if (stale != null) {
+                return PartLookupResponse.found(distributor, number, CacheStatus.HIT,
+                        response(stale, quantity, detail, true));
+            }
+            throw DistributorException.notConfigured(distributor);
+        }
+        DistributorClient client = configured.get();
         CacheStatus status = !cached ? CacheStatus.NOT_APPLICABLE
                 : bypassCache ? CacheStatus.BYPASSED : CacheStatus.MISS;
-        PartLookupResult result = fetch(client, number);
+        PartLookupResult result;
+        try {
+            result = fetch(client, number);
+        } catch (DistributorException e) {
+            if (stale != null) {
+                log.info("{} lookup of {} failed ({}); serving the cached part with stale stock", distributor, number,
+                        e.errorCode());
+                return PartLookupResponse.found(distributor, number, CacheStatus.HIT,
+                        response(stale, quantity, detail, true));
+            }
+            throw e;
+        }
         if (result.status() == PartLookupResult.Status.OUT_OF_STOCK && result.identity() != null) {
+            if (stale != null) {
+                markSoldOut(distributor, stale.distributorPartNumber());
+            }
             PartLookupResult.Identity id = result.identity();
             return PartLookupResponse.outOfStock(distributor, number, status, new PartLookupResponse.Identity(
                     id.partNumber(), id.manufacturer(), id.mpn(), id.description()));
@@ -129,50 +167,73 @@ public class PartLookupService {
                 log.warn("Caching {} part {} failed: {}", distributor, number, e.toString());
             }
         }
-        return PartLookupResponse.found(distributor, number, status, response(part.get(), quantity, detail));
+        return PartLookupResponse.found(distributor, number, status, response(part.get(), quantity, detail, false));
     }
 
-    private PartResponse response(Part part, int quantity, ResponseDetail detail) {
+    private PartResponse response(Part part, int quantity, ResponseDetail detail, boolean stale) {
         ResponseDetail d = detail == null ? ResponseDetail.FULL : detail;
         return PartResponse.of(part, PartResponse.Ranking.NONE, quantity, d,
-                d == ResponseDetail.FULL ? null : extractor.extract(part), properties.search().lowStockThreshold());
+                d == ResponseDetail.FULL ? null : extractor.extract(part), properties.search().lowStockThreshold(),
+                stale, clock.instant());
+    }
+
+    /**
+     * A cached part after its stock refresh: {@code part} null when the refresh found it sold out; {@code stale} when its
+     * stock and prices are older than {@code kina.cache.ttl} and could not be refreshed.
+     */
+    private record Cached(Part part, boolean stale) {
     }
 
     /**
      * The cached part, with its stock and prices refreshed when they are older than {@code kina.cache.stock-ttl}
-     * (DESIGN.md 3.2 "Stock refresh"); empty when the refresh finds it sold out (it is then looked up live, which
-     * reports {@code out_of_stock} with its identity). A failed refresh keeps the cached figures.
+     * (DESIGN.md 3.2 "Stock refresh"; {@code client} null when the distributor is not configured: no refresh). Sold out:
+     * the row keeps its metadata, is marked sold out, and the part is looked up live (which reports
+     * {@code out_of_stock} with its identity). A failed refresh keeps the cached figures; beyond {@code kina.cache.ttl}
+     * they are stale (the part is then looked up live, and served stale if that fails too).
      */
-    private Optional<Part> refreshed(DistributorClient client, Part part) {
+    private Cached refreshed(DistributorClient client, Part part) {
         Instant now = clock.instant();
         if (part.fetchedAt() != null && !part.fetchedAt().isBefore(now.minus(properties.cache().stockTtl()))) {
-            return Optional.of(part);
+            return new Cached(part, false);
         }
+        if (client != null) {
+            try {
+                StockUpdate update = client.refreshStock(List.of(part.distributorPartNumber()),
+                        Deadline.after(properties.search().distributorTimeout())).get(part.distributorPartNumber());
+                if (update != null && update.stock() <= 0) {
+                    metrics.stockRefreshed(part.distributor(), "out_of_stock", 1);
+                    markSoldOut(part.distributor(), part.distributorPartNumber());
+                    return new Cached(null, false);
+                }
+                if (update != null) {
+                    metrics.stockRefreshed(part.distributor(), "ok", 1);
+                    Part fresh = part.toBuilder().stock(update.stock())
+                            .prices(update.prices().isEmpty() ? part.prices() : update.prices()).fetchedAt(now).build();
+                    partCache.updateStock(List.of(fresh));
+                    return new Cached(fresh, false);
+                }
+                metrics.stockRefreshed(part.distributor(), "failed", 1);
+            } catch (RuntimeException e) {
+                metrics.stockRefreshed(part.distributor(), "failed", 1);
+                log.info("{} stock refresh of {} failed, keeping the cached figures: {}", part.distributor(),
+                        part.distributorPartNumber(), e.toString());
+            }
+        }
+        boolean stale = part.fetchedAt() != null && part.fetchedAt().isBefore(now.minus(properties.cache().ttl()));
+        return new Cached(part, stale);
+    }
+
+    private void markSoldOut(Distributor distributor, String partNumber) {
         try {
-            StockUpdate update = client.refreshStock(List.of(part.distributorPartNumber()),
-                    Deadline.after(properties.search().distributorTimeout())).get(part.distributorPartNumber());
-            if (update == null) {
-                return Optional.of(part);
-            }
-            if (update.stock() <= 0) {
-                partCache.delete(part.distributor(), part.distributorPartNumber());
-                return Optional.empty();
-            }
-            Part fresh = part.toBuilder().stock(update.stock())
-                    .prices(update.prices().isEmpty() ? part.prices() : update.prices()).fetchedAt(now).build();
-            partCache.upsertAll(List.of(fresh));
-            return Optional.of(fresh);
+            partCache.markSoldOut(distributor, partNumber);
         } catch (RuntimeException e) {
-            log.info("{} stock refresh of {} failed, keeping the cached figures: {}", part.distributor(),
-                    part.distributorPartNumber(), e.toString());
-            return Optional.of(part);
+            log.warn("Marking {} part {} sold out failed: {}", distributor, partNumber, e.toString());
         }
     }
 
     private Optional<Part> readCache(Distributor distributor, String partNumber) {
         try {
-            Instant freshSince = clock.instant().minus(properties.cache().ttl());
-            return partCache.find(distributor, partNumber, freshSince);
+            return partCache.find(distributor, partNumber);
         } catch (RuntimeException e) {
             log.warn("Reading cached {} part {} failed: {}", distributor, partNumber, e.toString());
             return Optional.empty();

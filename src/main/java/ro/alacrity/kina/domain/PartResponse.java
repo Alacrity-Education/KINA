@@ -42,9 +42,12 @@ import java.util.Map;
  * @param manufacturerId      the distributor's own manufacturer id (TME only), omitted when absent
  * @param stockAsOf           when the stock and prices were fetched from the distributor ({@code Part.fetchedAt}), to
  *                            the second
+ * @param stale               true (else omitted) when the stock and prices are older than {@code kina.cache.ttl} and
+ *                            could not be refreshed (DESIGN.md 3.2 "Cache model"); {@code availability.status} is then
+ *                            {@code stale} and the part ranks below the fresh ones
  */
 @JsonPropertyOrder({"rank", "score", "match", "below_spec", "distributor", "part_number", "manufacturer",
-        "manufacturer_id", "mpn", "description", "category", "package", "stock", "stock_as_of", "min_order_qty",
+        "manufacturer_id", "mpn", "description", "category", "package", "stock", "stock_as_of", "stale", "min_order_qty",
         "order_multiple", "prices", "ordered_quantity", "unit_price_at_quantity", "total_price", "availability",
         "lifecycle", "mismatches", "unverified", "datasheet_url", "photo_url", "product_url", "attributes", "extra"})
 @Builder
@@ -63,6 +66,7 @@ public record PartResponse(
         @JsonProperty("package") @JsonInclude(JsonInclude.Include.NON_NULL) String packageName,
         @JsonProperty("stock") int stock,
         @JsonProperty("stock_as_of") Instant stockAsOf,
+        @JsonProperty("stale") @JsonInclude(JsonInclude.Include.NON_NULL) Boolean stale,
         @JsonProperty("min_order_qty") Integer minOrderQty,
         @JsonProperty("order_multiple") Integer orderMultiple,
         @JsonProperty("prices") List<PriceResponse> prices,
@@ -136,6 +140,15 @@ public record PartResponse(
      */
     public static PartResponse of(Part part, Ranking ranking, int quantity, ResponseDetail detail,
                                   Map<String, String> canonical, int lowStockThreshold) {
+        return of(part, ranking, quantity, detail, canonical, lowStockThreshold, false, null);
+    }
+
+    /**
+     * As {@link #of(Part, Ranking, int, ResponseDetail, Map, int)}; {@code stale} marks stock and prices older than
+     * {@code kina.cache.ttl} that could not be refreshed ({@code now} dates the availability note).
+     */
+    public static PartResponse of(Part part, Ranking ranking, int quantity, ResponseDetail detail,
+                                  Map<String, String> canonical, int lowStockThreshold, boolean stale, Instant now) {
         Ranking r = ranking == null ? Ranking.NONE : ranking;
         Integer rank = r.rank();
         Double score = r.score();
@@ -160,13 +173,17 @@ public record PartResponse(
                 .packageName(full ? part.packageName() : null)
                 .stock(part.stock())
                 .stockAsOf(part.fetchedAt() == null ? null : part.fetchedAt().truncatedTo(ChronoUnit.SECONDS))
+                .stale(stale ? Boolean.TRUE : null)
                 .minOrderQty(part.minimumOrderQuantity())
                 .orderMultiple(part.orderMultiple())
                 .prices(trimPrices(part.prices()))
                 .orderedQuantity(order == null ? null : order.quantity())
                 .unitPriceAtQuantity(order == null ? null : order.unitPrice())
                 .totalPrice(order == null ? null : order.total())
-                .availability(Availability.of(part, qty, full, lowStockThreshold))
+                .availability(stale
+                        ? Availability.stale(part, Availability.of(part, qty, full, lowStockThreshold),
+                        now != null ? now : Instant.now())
+                        : Availability.of(part, qty, full, lowStockThreshold))
                 .lifecycle(Availability.lifecycleOf(part))
                 .mismatches(mismatches == null ? List.of() : List.copyOf(mismatches))
                 .unverified(r.unverified() == null ? List.of() : List.copyOf(r.unverified()))

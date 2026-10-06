@@ -49,9 +49,13 @@ kina:
     unused-client-retention: 90d
     register-rate-limit-per-minute: ${KINA_OAUTH_REGISTER_RATE_LIMIT_PER_MINUTE:30}
   cache:
-    ttl: 5d
+    ttl: ${KINA_CACHE_TTL:3d}                # DESIGN.md 3.2: search lists, and stock/prices before they are marked stale
     empty-result-ttl: 1h
     stock-ttl: ${KINA_CACHE_STOCK_TTL:24h}   # DESIGN.md 3.2: older cached stock/prices are refreshed before they are returned
+    metadata-retention:                      # per distributor: forever (default) or a duration, e.g. 3d (OPERATIONS.md)
+      TME: ${KINA_CACHE_METADATA_RETENTION_TME:forever}
+      MOUSER: ${KINA_CACHE_METADATA_RETENTION_MOUSER:forever}
+    stale-rank-penalty: ${KINA_CACHE_STALE_RANK_PENALTY:1.0}   # 1.0 ranks every stale part below every fresh one
   search:
     candidate-window: 40
     default-max-results: 10

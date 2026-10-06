@@ -446,15 +446,19 @@ public class PartSearchService {
         Instant freshSince = now.minus(properties.cache().ttl());
         Instant emptyFreshSince = now.minus(properties.cache().emptyResultTtl());
 
+        Optional<CachedSearch> expired = Optional.empty();
         if (!prepared.request().bypassCache()) {
-            Optional<CachedSearch> cached = readCachedSearch(distributor, queryKey)
-                    .filter(c -> isFresh(c, freshSince, emptyFreshSince));
+            Optional<CachedSearch> stored = readCachedSearch(distributor, queryKey);
+            Optional<CachedSearch> cached = stored.filter(c -> isFresh(c, freshSince, emptyFreshSince));
+            expired = stored.filter(c -> cached.isEmpty() && !c.partNumbers().isEmpty());
             if (cached.isPresent()) {
                 CachedSearch search = cached.get();
                 String fallbackQuery = search.fallbackQuery();
                 List<String> relaxed = search.constraintsRelaxed() != null ? search.constraintsRelaxed()
                         : relaxedBy(distributor, parsed, query, fallbackQuery, policy());
-                Optional<List<Part>> parts = readCachedParts(distributor, search.partNumbers(), freshSince);
+                // metadata is kept and stock ages on its own: a part of any stock age is used (refreshed or marked
+                // stale after ranking, DESIGN.md 3.2 "Cache model"); a part missing or sold out is a miss
+                Optional<List<Part>> parts = readCachedParts(distributor, search.partNumbers(), false);
                 if (parts.isPresent()) {
                     List<Part> cachedParts = parts.get().stream().map(extractor::enrich).toList();
                     boolean nothingReturnable = !cachedParts.isEmpty() && cachedParts.stream()
@@ -472,11 +476,20 @@ public class PartSearchService {
                                 window, maxPages, meets);
                     }
                 }
-                // some cached parts are missing or stale: refetch from the start
+                // some cached parts are missing or sold out: refetch from the start
             }
         }
         CacheStatus status = prepared.request().bypassCache() ? CacheStatus.BYPASSED : CacheStatus.MISS;
-        Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets);
+        Collected collected;
+        try {
+            collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets);
+        } catch (DistributorException e) {
+            Optional<Fetched> served = expired.flatMap(search -> servedStale(distributor, parsed, query, search, e));
+            if (served.isPresent()) {
+                return served.get();
+            }
+            throw e;
+        }
         String fallbackQuery = null;
         List<String> relaxed = List.of();
         Attempt firstWithParts = collected.all().isEmpty() ? null : new Attempt(collected, null, List.of());
@@ -705,17 +718,17 @@ public class PartSearchService {
     }
 
     /**
-     * The parts in list order, or empty when any of them is missing from {@code cached_parts} or stale (the whole
-     * search is then refetched).
+     * The parts in list order whatever the age of their stock, or empty when any of them is missing from
+     * {@code cached_parts} or sold out (the whole search is then refetched); with {@code partial} the parts that are
+     * there.
      */
-    private Optional<List<Part>> readCachedParts(Distributor distributor, List<String> partNumbers,
-                                                 Instant freshSince) {
+    private Optional<List<Part>> readCachedParts(Distributor distributor, List<String> partNumbers, boolean partial) {
         if (partNumbers.isEmpty()) {
             return Optional.of(List.of());
         }
         Map<String, Part> found;
         try {
-            found = partCache.findFresh(distributor, partNumbers, freshSince);
+            found = partCache.findInStock(distributor, partNumbers);
         } catch (RuntimeException e) {
             log.warn("Reading cached {} parts failed, fetching from the distributor: {}", distributor, e.toString());
             return Optional.empty();
@@ -724,11 +737,44 @@ public class PartSearchService {
         for (String partNumber : partNumbers) {
             Part part = found.get(partNumber);
             if (part == null) {
+                if (partial) {
+                    continue;
+                }
                 return Optional.empty();
             }
             ordered.add(part);
         }
         return Optional.of(ordered);
+    }
+
+    /**
+     * The live search failed and the query has an expired cached list: its parts are served (cache status
+     * {@code stale}, the entry keeps the {@code error}) rather than nothing; their stock and prices are refreshed or
+     * marked stale after ranking like any cached part (DESIGN.md 3.2 "Cache model"). Empty when none of the parts is
+     * still cached in stock.
+     */
+    private Optional<Fetched> servedStale(Distributor distributor, ParsedQuery parsed, String query,
+                                          CachedSearch search, DistributorException error) {
+        List<Part> parts = readCachedParts(distributor, search.partNumbers(), true).orElse(List.of());
+        if (parts.isEmpty()) {
+            return Optional.empty();
+        }
+        log.info("{} search '{}' failed ({}); serving the expired cached list of {} parts", distributor,
+                search.queryKey(), error.errorCode(), parts.size());
+        List<String> relaxed = search.constraintsRelaxed() != null ? search.constraintsRelaxed()
+                : relaxedBy(distributor, parsed, query, search.fallbackQuery(), policy());
+        return Optional.of(new Fetched(distributor, parts.stream().map(extractor::enrich).toList(),
+                search.totalResults(), CacheStatus.STALE, error.errorCode(), search.fallbackQuery())
+                .withOutOfStockMatches(search.outOfStockMatches()).withConstraintsRelaxed(relaxed));
+    }
+
+    /**
+     * True when the part's stock and prices are older than {@code kina.cache.ttl} (Mouser and TME only: LCSC is read
+     * from its local database).
+     */
+    boolean isStale(Part part, Instant now) {
+        return usesPostgresCache(part.distributor()) && part.fetchedAt() != null
+                && part.fetchedAt().isBefore(now.minus(properties.cache().ttl()));
     }
 
     private Optional<CachedSearch> readCachedSearch(Distributor distributor, String queryKey) {
@@ -920,8 +966,10 @@ public class PartSearchService {
      * {@code kina.cache.stock-ttl} (DESIGN.md 3.2 "Stock refresh"): one cheap distributor call per batch of part numbers
      * (TME {@code /products/data}, Mouser part-number search), only for Mouser and TME and only for the top
      * {@code max_results} parts. Refreshed parts get the new figures and {@code fetchedAt = now} and are written back to
-     * the cache; a part that sold out is removed from the list and from the cache. A failed refresh keeps the cached
-     * figures.
+     * the cache; a part that sold out is removed from the list and marked sold out in the cache (its metadata stays). A
+     * failed refresh keeps the cached figures. Then parts whose figures are older than {@code kina.cache.ttl} (refresh
+     * failed, not attempted, or the distributor is not configured) are stale: they rank below the fresh ones
+     * ({@link #demoteStale}) and are returned with {@code stale: true}.
      */
     private RankedResults refreshStock(Prepared prepared, RankedResults ranked, Deadline deadline) {
         Instant now = clock.instant();
@@ -931,40 +979,42 @@ public class PartSearchService {
         for (Map.Entry<Distributor, List<RankedPart>> entry : ranked.byDistributor().entrySet()) {
             Distributor distributor = entry.getKey();
             List<RankedPart> list = entry.getValue();
-            Optional<DistributorClient> client = usesPostgresCache(distributor)
-                    ? registry.find(distributor).filter(DistributorClient::isConfigured) : Optional.empty();
-            if (client.isEmpty() || list.isEmpty()) {
+            if (!usesPostgresCache(distributor) || list.isEmpty()) {
                 out.put(distributor, list);
                 continue;
             }
+            Optional<DistributorClient> client = registry.find(distributor).filter(DistributorClient::isConfigured);
             List<RankedPart> kept = new ArrayList<>(list);
             Set<String> attempted = new HashSet<>();
-            for (int round = 0; round < STOCK_REFRESH_ROUNDS && deadline.remainingNanos() > 0; round++) {
-                List<String> stale = kept.subList(0, Math.min(prepared.maxResults(), kept.size())).stream()
+            for (int round = 0; client.isPresent() && round < STOCK_REFRESH_ROUNDS && deadline.remainingNanos() > 0;
+                 round++) {
+                List<String> due = kept.subList(0, Math.min(prepared.maxResults(), kept.size())).stream()
                         .map(RankedPart::part)
                         .filter(p -> p.fetchedAt() == null || p.fetchedAt().isBefore(staleBefore))
                         .map(Part::distributorPartNumber)
                         .filter(attempted::add)
                         .toList();
-                if (stale.isEmpty()) {
+                if (due.isEmpty()) {
                     break;
                 }
                 Map<String, StockUpdate> updates;
                 try {
-                    updates = client.get().refreshStock(stale, deadline);
+                    updates = client.get().refreshStock(due, deadline);
                 } catch (DistributorException e) {
                     log.info("{} stock refresh of {} parts failed, keeping the cached figures: {}", distributor,
-                            stale.size(), e.getMessage());
+                            due.size(), e.getMessage());
+                    metrics.stockRefreshed(distributor, "failed", due.size());
                     break;
                 } catch (RuntimeException e) {
                     log.warn("{} stock refresh failed unexpectedly", distributor, e);
+                    metrics.stockRefreshed(distributor, "failed", due.size());
                     break;
                 }
                 List<Part> refreshed = new ArrayList<>();
                 List<String> soldOut = new ArrayList<>();
                 List<RankedPart> next = new ArrayList<>(kept.size());
                 for (RankedPart r : kept) {
-                    StockUpdate update = updates.get(r.part().distributorPartNumber());
+                    StockUpdate update = updates == null ? null : updates.get(r.part().distributorPartNumber());
                     if (update == null) {
                         next.add(r);
                     } else if (update.stock() <= 0) {
@@ -982,21 +1032,61 @@ public class PartSearchService {
                 changed = true;
                 log.info("{} stock refresh: {} parts updated, {} sold out", distributor, refreshed.size(),
                         soldOut.size());
+                metrics.stockRefreshed(distributor, "ok", refreshed.size());
+                metrics.stockRefreshed(distributor, "out_of_stock", soldOut.size());
+                metrics.stockRefreshed(distributor, "failed", due.size() - refreshed.size() - soldOut.size());
                 writeBack(distributor, refreshed, soldOut);
                 if (soldOut.isEmpty()) {
                     break;
                 }
             }
-            out.put(distributor, List.copyOf(kept));
+            List<RankedPart> ordered = demoteStale(kept, now);
+            changed |= ordered != kept;
+            out.put(distributor, List.copyOf(ordered));
         }
         return changed ? new RankedResults(out, ranked.mode(), ranked.note(), ranked.excluded(),
                 ranked.excludedBelowSpec(), ranked.excludedDetail()) : ranked;
     }
 
+    /**
+     * Moves the parts whose stock and prices are stale ({@link #isStale}) below the fresh ones: each stale part's score
+     * is lowered by {@code kina.cache.stale-rank-penalty} (reported at least 0) and it is placed before the first fresh
+     * part of its group (meeting the request, then below spec) that scores lower; stale parts keep their relative
+     * order. With the default penalty of 1.0 every stale part ends up after every fresh part of its group. Returns
+     * {@code list} itself when nothing is stale.
+     */
+    List<RankedPart> demoteStale(List<RankedPart> list, Instant now) {
+        if (list.stream().noneMatch(r -> isStale(r.part(), now))) {
+            return list;
+        }
+        double penalty = properties.cache().staleRankPenalty();
+        List<RankedPart> out = new ArrayList<>(list.size());
+        List<RankedPart> stale = new ArrayList<>();
+        for (RankedPart r : list) {
+            (isStale(r.part(), now) ? stale : out).add(r);
+        }
+        for (RankedPart r : stale) {
+            double adjusted = r.score() - penalty;
+            int at = out.size();
+            for (int i = 0; i < out.size(); i++) {
+                RankedPart other = out.get(i);
+                boolean laterGroup = !r.belowSpec() && other.belowSpec();
+                boolean sameGroupLower = r.belowSpec() == other.belowSpec() && !isStale(other.part(), now)
+                        && other.score() < adjusted;
+                if (laterGroup || sameGroupLower) {
+                    at = i;
+                    break;
+                }
+            }
+            out.add(at, r.withScore(Math.max(0, adjusted)));
+        }
+        return out;
+    }
+
     private void writeBack(Distributor distributor, List<Part> refreshed, List<String> soldOut) {
         try {
-            partCache.upsertAll(refreshed);
-            soldOut.forEach(number -> partCache.delete(distributor, number));
+            partCache.updateStock(refreshed);
+            soldOut.forEach(number -> partCache.markSoldOut(distributor, number));
         } catch (RuntimeException e) {
             log.warn("Writing refreshed {} stock to the cache failed: {}", distributor, e.toString());
         }
@@ -1025,6 +1115,7 @@ public class PartSearchService {
         ConstraintPolicy policy = policy();
         boolean understood = parsed.understood();
         int lowStockThreshold = properties.search().lowStockThreshold();
+        Instant now = clock.instant();
         List<DistributorResult> results = new ArrayList<>();
         List<String> empty = new ArrayList<>();
         Map<String, Integer> emptyExcluded = new java.util.LinkedHashMap<>();
@@ -1044,7 +1135,8 @@ public class PartSearchService {
                         : extractor.extract(rp.part());
                 parts.add(PartResponse.of(rp.part(), new PartResponse.Ranking(i + 1, roundScore(rp.score()),
                                 rp.match(), rp.mismatches(), rp.unverified(), rp.belowSpec()),
-                        request.quantity(), request.detail(), canonical, lowStockThreshold));
+                        request.quantity(), request.detail(), canonical, lowStockThreshold, isStale(rp.part(), now),
+                        now));
             }
             Integer exact = understood ? (int) top.stream().filter(RankedPart::exact).count() : null;
             Map<String, Integer> detail = ranked.excludedDetailBy(distributor);

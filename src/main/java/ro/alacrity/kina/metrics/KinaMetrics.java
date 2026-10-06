@@ -19,6 +19,7 @@ import static ro.alacrity.kina.metrics.MetricNames.API_REQUESTS;
 import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_ADDED;
 import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_REFRESHED;
 import static ro.alacrity.kina.metrics.MetricNames.CACHE_SEARCH_LOOKUPS;
+import static ro.alacrity.kina.metrics.MetricNames.CACHE_STOCK_REFRESHES;
 import static ro.alacrity.kina.metrics.MetricNames.CROSS_ENCODER_CANDIDATES;
 import static ro.alacrity.kina.metrics.MetricNames.CROSS_ENCODER_DURATION;
 import static ro.alacrity.kina.metrics.MetricNames.CROSS_ENCODER_EXECUTIONS;
@@ -172,6 +173,15 @@ public class KinaMetrics implements RateLimitRetry.Listener {
             store.add(MetricKey.of(CACHE_PARTS_ADDED, "distributor", distributor.name()), added);
             store.add(MetricKey.of(CACHE_PARTS_REFRESHED, "distributor", distributor.name()), refreshed);
         });
+    }
+
+    /** Stock outcome of a refresh of {@code parts} cached parts: {@code ok}, {@code failed} or {@code out_of_stock}. */
+    public void stockRefreshed(Distributor distributor, String outcome, long parts) {
+        if (parts <= 0) {
+            return;
+        }
+        safely(() -> store.add(MetricKey.of(CACHE_STOCK_REFRESHES, "distributor", distributor.name(), "outcome",
+                outcome), parts));
     }
 
     // ---- ranking --------------------------------------------------------------------------------------------------
