@@ -259,7 +259,8 @@ def suite_mcp(base: str, token: str, rec: Recorder):
     resp, ping = mcp.tool("ping")
     rec.check("mcp: ping", ping.get("status") == "ok", json.dumps(ping), resp.millis)
 
-    resp, first = mcp.tool("search_parts", {"query": SEARCH_QUERY, "max_results": 5})
+    # detail "full": photo_url and the raw distributor fields are only in the full detail level (DESIGN.md 4)
+    resp, first = mcp.tool("search_parts", {"query": SEARCH_QUERY, "max_results": 5, "detail": "full"})
     s1 = summarize_search(first)
     rec.data["mcp_search_5"] = {**s1, "ms": round(resp.millis)}
     ok = all(d["returned"] <= 5 for d in s1["distributors"].values()) and set(s1["distributors"]) == {

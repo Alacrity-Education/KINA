@@ -236,7 +236,7 @@ git pull
 docker compose up -d --build
 ```
 
-Flyway applies new database migrations when `kina` starts (the current ones are V1 to V4; V4 adds the group-authorisation columns). Take a `pg_dump` first. The ranking model comes with the image, so an upgrade never downloads it. A `/data/cross-encoder` directory left in `kina-data` by an older version is no longer used; delete it if you want the space back: `docker compose exec kina rm -rf /data/cross-encoder`. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
+Flyway applies new database migrations when `kina` starts (the current ones are V1 to V5; V4 adds the group-authorisation columns, V5 the `out_of_stock_matches` column of `cached_searches`). Take a `pg_dump` first. The ranking model comes with the image, so an upgrade never downloads it. A `/data/cross-encoder` directory left in `kina-data` by an older version is no longer used; delete it if you want the space back: `docker compose exec kina rm -rf /data/cross-encoder`. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
 
 Upgrading to group access: set the group variables from [Environment](#environment) and restart. Existing users must sign in once. OAuth access tokens now live 1 hour (`expires_in` 3600) and refresh tokens 30 days (they were 30 days and 90 days); clients refresh by themselves. Refresh tokens issued earlier keep their old expiry.
 

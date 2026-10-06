@@ -111,7 +111,10 @@ public record PartLookupResult(Status status, Part part, Identity identity) {
     public record Identity(String partNumber, String manufacturer, String mpn, String description) {}
 }
 
-public record DistributorSearchPage(List<Part> parts, int totalResults, boolean hasMore) {}
+/** outOfStock: records of the page dropped for having no ships-now stock (out_of_stock_matches);
+ *  relaxed: constraints the distributor's own search dropped (LCSC relaxation), else empty. */
+public record DistributorSearchPage(List<Part> parts, int totalResults, boolean hasMore, int outOfStock,
+                                    List<String> relaxed) {}
 
 public class DistributorException extends RuntimeException {
     public enum Kind { NOT_CONFIGURED, UNAVAILABLE, RATE_LIMITED, BAD_RESPONSE, TIMEOUT }
@@ -129,8 +132,10 @@ returned, cached or ranked.
 ### 3.1 Request
 
 ```
-SearchRequest(String query, int maxResults /*1..50, default 10*/, Set<Distributor> distributors /*default: all configured*/, boolean bypassCache)
-BatchSearchRequest(List<SearchRequest> queries /*1..20*/, Set<Distributor> distributors, boolean bypassCache)
+SearchRequest(String query, int maxResults /*1..50, default 10*/, Set<Distributor> distributors /*default: all configured*/, boolean bypassCache,
+              int quantity /*pieces to order, default 1*/, ResponseDetail detail /*compact (default) | full*/)
+BatchSearchRequest(List<SearchRequest> queries /*1..20, each with its own maxResults and quantity*/, Set<Distributor> distributors,
+                   boolean bypassCache, ResponseDetail detail)
 ```
 
 ### 3.2 Per-distributor fetch with cache
@@ -165,23 +170,43 @@ budget, but never beyond the request deadline `kina.search.max-request-duration`
    not by the number of parts kept: distributors drop records without ships-now stock (live: TME reported 32 in-stock
    matches for "10uF X7R 0805" of which 26 were kept), so `part_numbers.size` is not a valid resume offset.
    LCSC is queried once with `limit = window`.
-   **Phrase fallback** (Mouser and TME only, not LCSC): when the first fetch of the sent query (the user's text, or the
-   distributor phrase below) succeeds with **zero** in-stock parts and the deadline has not passed, the search is
-   retried once with a shorter phrase (`DistributorPhraser.fallback`):
-   - connector queries: TME the type words with the positions (`pin strips female 6`), Mouser the type words with the
-     written pitch and the orientation (`female header right angle`, `male header 2.54mm`);
-   - otherwise the query's parametric core (`PartSearchService.corePhrase`): the family word as written in the query
-     (`MOSFET`, `MLCC`, `LDO`...), the parsed values except tolerance (display form, e.g. `30V`, `10uF`), the dielectric
-     and the package, in that order, e.g. `"SOT-23 N-channel MOSFET 30V"` -> `"MOSFET 30V SOT-23"`;
-   - keyword-only queries (no value/dielectric/package): the 3 to 5 most informative tokens in query order
-     (`DistributorPhraser.keywordCore`): the family word, recognised values and packages, part-number-like tokens with
-     letters and digits, then longer words; filler words (`nice`, `cheap`, `module`, `with`...) never, e.g.
-     `"ESP32-WROOM-32 wifi bluetooth module with antenna"` -> `"ESP32-WROOM-32 wifi bluetooth antenna"`.
-   No retry when there is no shorter phrase: the core would be a single term or is not shorter than the query, a
-   keyword-only query has 3 or fewer tokens, or the phrase equals what was sent. The retry's result (even if also
-   empty) is what gets cached, under the original query key, together with the phrase (`cached_searches.fallback_query`);
-   a `PARTIAL` extension pages on with that phrase. The distributor entry reports it as `fallback_query` (null when the
-   sent query found parts). A failure of the retry is reported as the distributor's `error` and nothing is cached.
+   **Relaxation ladder** (Mouser and TME only; LCSC relaxes inside its database search, section 9.3): while the
+   fetch has found **no in-stock part** and the deadline has not passed, the search is repeated with the next phrase
+   of `DistributorPhraser.relaxations`, stopping at the first phrase that finds an in-stock part:
+   1. the phrase sent without rating values (normally already the case, see "Distributor phrasing");
+   2. also without the tolerance (`±5%`, `1%`, `.1%`);
+   3. the minimal core: connector queries the type words with the positions (TME, `pin strips female 6`) or with the
+      written pitch and the orientation (Mouser, `female header right angle`, `male header 2.54mm`); USB the type and
+      gender words; otherwise the parametric core (`PartSearchService.corePhrase`): the family word as written
+      (`MOSFET`, `MLCC`, `LDO`...), the values that are not ratings or tolerances (display form; an impedance without its
+      test frequency; regulator and Zener voltages stay), the technology in the distributor's spelling, the dielectric
+      and the package, e.g. `"22uF X7R 1206 25V MLCC"` -> `"MLCC 22uF X7R 1206"`, `"SOT-23 N-channel MOSFET 30V"` ->
+      `"MOSFET SOT-23"`; keyword-only queries (no value/dielectric/package/technology): the 3 to 5 most informative
+      tokens in query order (`DistributorPhraser.keywordCore`): the family word, recognised values and packages,
+      part-number-like tokens with letters and digits, then longer words; filler words (`nice`, `cheap`, `module`,
+      `with`...) never, e.g. `"ESP32-WROOM-32 wifi bluetooth module with antenna"` -> `"ESP32-WROOM-32 wifi bluetooth
+      antenna"`;
+   4. the parametric core without the dielectric and the technology (`"MLCC 22uF 1206"`): verified 2026-10-06, TME has no
+      22uF X7R 1206 25V part at all (even the Murata symbol returns nothing) while `22uF 25V 1206 ceramic` finds X5R
+      parts with good stock.
+   A step equal to what was sent (for TME after its 40-character cut) or to an earlier step is skipped, so the core is
+   tried even when it equals the user's text minus nothing but ratings. The last phrase tried (even if it also found
+   nothing) is what gets cached, under the original query key, together with the phrase
+   (`cached_searches.fallback_query`); a `PARTIAL` extension pages on with that phrase. The distributor entry reports it
+   as `fallback_query` (null when the first phrase found parts). A failure of a relaxed search is reported as the
+   distributor's `error` and nothing is cached.
+   **Out-of-stock matches**: distributors drop records without ships-now stock (TME stock 0 or an excluded status,
+   Mouser `AvailabilityInStock` 0; LCSC counts the rows that match every term but have no stock when that step found
+   nothing in stock). `collect` adds them up (`out_of_stock_matches`, stored in `cached_searches.out_of_stock_matches`
+   and reported again on a cache hit). While every match so far is out of stock, up to
+   `PartSearchService.EXTRA_OUT_OF_STOCK_PAGES` (2) pages beyond `max-pages-per-search` are read, then the next
+   relaxation step is tried.
+   **Relaxed constraints**: the entry's `relaxed` lists the stated constraints that were not part of the search that
+   produced the parts: those the phrase used (the fallback phrase, else the distributor phrase, else the user's text)
+   does not state when parsed again (`voltage`, `current`, `tolerance`, `dielectric`, `package`, `technology`,
+   `mounting`...; Mouser and TME never get ratings, so a rated request always lists them there), plus the constraints
+   the LCSC relaxation dropped (by term kind; every term in `ANY` mode). Empty for connector queries, whose phrases are
+   rewritten.
    TME's 40-character phrase limit is applied by the client as for any query.
    Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is cached or
    ranked (Mouser and LCSC deliver almost no parametric attributes).
@@ -201,16 +226,29 @@ budget, but never beyond the request deadline `kina.search.max-request-duration`
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
 
+**Ratings are never part of a keyword phrase.** A voltage, current, saturation current, power, temperature or
+lifetime in a request is a minimum rating (section 3.4) and a DCR limit a maximum: a keyword search for `25V` only finds
+parts that print `25V` and silently misses the 35 V and 50 V parts that satisfy the request. For every non-connector
+query `DistributorPhraser.withoutRatings` removes these values from the user's text (single words such as `25V`,
+`105°C`, `2000h`; a number and its unit `25 V`; the labelled forms `Isat 8A`, `DCR < 20mΩ`, `low DCR`, `-40~105°C`;
+not when fewer than two words would remain). Regulator and Zener voltages and fuse currents are specifications and
+stay. The phrase is sent to all three distributors; LCSC additionally gets the minimum voltage, current and power as
+rating terms (`22uF X7R 1206 MLCC >=25V`) that its database checks exactly (section 9.3). Ranking then prefers the
+exact rating over higher ones (section 3.4).
+
 **Distributor phrasing** (`search.DistributorPhraser`). A query that `QueryParser` recognises as a connector request
 (section 3.4) is not sent verbatim: each distributor gets the wording its search understands, as the primary query of
 step 2 (and of a `PARTIAL` extension). A passive request that names a technology (section 3.4) keeps the user's text
 but gets the technology words in the distributor's spelling where it has its own: LCSC a quoted JLCPCB phrase
 (`"Thin Film"`, `"Thick Film"`, `"Metal Film"`, `"Carbon Film"`, `"Metal Oxide"`, `"Metal Foil"`, `"Current Sense"`,
-`"Aluminum Electrolytic"`; FTS5 phrase, a free-text term for the relaxation), TME `wirewound` and `electrolytic`
+`"Aluminum Electrolytic"`, `"Polymer Aluminum"`; FTS5 phrase, a free-text term for the relaxation), TME `wirewound`,
+`electrolytic` and `polymer` (aluminium polymer), Mouser `aluminum organic polymer` and
 (verified live: `wirewound resistor 5W` finds TME's "wire-wound" resistors, `wire-wound resistor 5W` needed the
 fallback, `aluminium electrolytic 100uF` found nothing), Mouser `wirewound`, `thin film`, `thick film` (its category
 words). E.g. `Thin film resistor, 5.36k 0805 0.1%` -> LCSC `"Thin Film" resistor, 5.36k 0805 0.1%`, TME and Mouser
-verbatim. Every other query is sent as written. The cache key stays
+verbatim; `100uF 16V polymer aluminium capacitor SMD` -> LCSC `100uF "Polymer Aluminum" capacitor SMD >=16V`, TME
+`100uF polymer capacitor SMD`, Mouser `100uF aluminum organic polymer capacitor SMD`. Every other query is sent as
+written, minus its ratings. The cache key stays
 the user's normalised query; the phrase is a pure function of the parsed query, so a cache hit reports it again.
 
 | Distributor | Rules | Example for `90 degree dupont style female pin header 90 degree THT pins 6 position` |
@@ -239,7 +277,7 @@ USB fallback (TME, Mouser): the type and gender words only (`USB C socket`, `USB
 phrases could not be sent verbatim through the stack (it runs the previous phraser) and are not verified live.
 
 Each distributor entry reports the phrase as `distributor_query` (null when the user's text was sent verbatim);
-`fallback_query` keeps its meaning (the shorter phrase sent after the first one found nothing).
+`fallback_query` is the relaxed phrase that produced the parts after the first one found no in-stock part.
 
 ### 3.3 Ranking
 
@@ -283,6 +321,15 @@ cross-encoder is a second signal in a 50/50 **rank** blend, the deterministic or
    within 5s"`, `"cross-encoder failed: <reason>"`. Fully cached candidate sets are blended even while the model is
    not loaded.
 
+**Before ranking** (`RankingService.rank(query, fetched, budget, quantity)`): parts whose known attribute contradicts
+a strict constraint are removed and counted per distributor (`excluded_by_constraints`, section 3.4 "Strict
+constraints"). Every remaining part gets a tier: 0, +1 when a strict attribute the request states is unknown for the
+part, +2 when its stock is below `quantity`. The deterministic score is lowered by the quantity and lifecycle penalties
+(section 3.4). Every ordering (deterministic, blended, fallback) sorts by tier first, so a part without a stated
+mounting or with too little stock never ranks above a part without that flaw, whatever the model says; `score` is
+then made non-increasing down the list. The match grade and the `mismatches` of every part (section 3.4) come from the
+same assessment.
+
 Batch search fetches the queries in parallel (at most 4 queries at a time, to respect distributor rate limits),
 then ranks each query independently through the same path, each with `min(kina.ranking.timeout, remaining batch
 budget)`. The ranking phase has `kina.ranking.batch-timeout` (default 60s); queries reached after it expired are ranked
@@ -298,7 +345,25 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
   crystal/oscillator, connector, fuse, TVS/ESD, relay, switch
 - value with SI prefix and unit, including RKM notation (`4k7`, `4u7`, `10R`, `2R2`):
   capacitance (`pF nF uF µF mF F`), resistance (`Ω ohm R`, `k`, `M`, `m`), inductance (`nH uH mH H`),
-  voltage (`V`, `kV`, `mV`), current (`A`, `mA`, `uA`), power (`W`, `mW`), frequency (`Hz kHz MHz`)
+  voltage (`V`, `kV`, `mV`; KEMET's truncated `10Volt`, `10Vol`, `6.3Vo` at Mouser), current (`A`, `mA`, `uA`), power
+  (`W`, `mW`), frequency (`Hz kHz MHz`), maximum operating temperature (`105°C`, `℃`, Mouser `105C` for 70..200, the
+  upper end of a range `-55℃~+105℃`, `-55...105°C`, `-55÷125°C`), lifetime in hours (`2000h`, `2000hrs`, `5000 hours`,
+  `2000hrs@105℃` with its test temperature)
+- units are read case-sensitively where the case carries meaning: the prefix `m` is milli and `M` mega for every unit
+  (`10mA` and `10MA` differ; `meg` is mega too), with one tolerated spelling, `mhz` = MHz (millihertz never occurs in
+  component data); a lower-case `h` after a bare number is hours and an upper-case `H` henry, except in the text of a
+  part or query whose family is known and not inductive, where `3000H` (at least 100) is a lifetime (Mouser
+  `100UF 63V 105C 3000H`); with an SI prefix (`uH`, `uh`, `mH`) it is always henry. Units whose case means nothing
+  (`v`/`V`, `a`/`A`, `w`/`W`, `uf`/`uF`, `hz`/`Hz`) are accepted either way
+- values tied to their meaning: for an inductor or ferrite bead an ohm value is never a resistance: a ferrite bead's
+  first value of at least 1 Ω (or one written with a test frequency, `120Ω@100MHz`) is its **impedance** (with the
+  test frequency taken from the `@` or from a separate frequency, `120 ohm 100MHz` -> `120ohm @100MHz`), a smaller one
+  its **DCR**; an inductor's ohm value is its DCR. Labelled forms: `Isat 8A`, `8A Isat`, `saturation current 8A` =
+  **saturation current**; `Irated`, `Irms`, `Ioper:` (TME), `rated current` = rated current; `DCR 20mΩ`, `DCR=17.2mOhms`,
+  `DCR < 20mΩ`, `DCR 20mΩ max`, `DC resistance` = **DCR** (a maximum). For an inductor an unlabelled current is the rated
+  current; of several unlabelled ones (JLCPCB lists rated and saturation current without labels, in no fixed order)
+  the lowest, which is conservative. A value with a condition that is not a rating is ignored (`902mA@100kHz` ripple
+  current, `16mΩ@100kHz` ESR). `low DCR` is a preference (`ParsedQuery.preferences`), not a keyword
 - tolerance (`±5%`, `5%`, `1%`), dielectric (`X7R X5R C0G NP0 Y5V X7S X6S X8R`),
   package (`0201 0402 0603 0805 1206 1210 1812 2010 2220 2512`, `SOT-23 SOT-23-5 SOT-223 SOT-89 SOD-123 SOD-323 SOD-523
   TO-220 TO-252 TO-263 DPAK D2PAK SOIC-8 SOP-8 TSSOP-20 MSOP QFN-32 DFN LQFP-48 TQFP-64 BGA ...` via regex),
@@ -323,7 +388,9 @@ JLCPCB database, live TME parameters and Mouser categories):
 | resistor | `current sense` | `current sense`, `current sensing`, `current shunt`, `shunt` (JLCPCB `Current Sense Resistor`, TME `Kind of resistor: current shunt, sensing`, Mouser `Current Sense Resistors`). An application rather than a construction: a construction named anywhere in the same part wins |
 | capacitor | `ceramic` | `ceramic`, `multilayer ceramic`, `MLCC` (parts only: in a query `MLCC` is the family word, scored lexically); JLCPCB category `Multilayer Ceramic Capacitors MLCC`, TME `Type of capacitor: ceramic` |
 | capacitor | `tantalum`, `tantalum polymer` | `tantalum`; `tantalum-polymer`, `polymer tantalum`, Mouser `Tantalum Capacitors - Polymer` |
-| capacitor | `polymer` | `polymer` (JLCPCB `Polarized Polymer`, `Polymer Aluminum Capacitors`, Mouser `Aluminium Organic Polymer Capacitors`) |
+| capacitor | `aluminium polymer` | `polymer aluminium`, `aluminium polymer`, `aluminum organic polymer`, `conductive polymer aluminum`, `OS-CON`, `solid polymer`, `solid capacitor` (JLCPCB category `Polymer Aluminum Capacitors`, `Solid Capacitors`, Mouser `Aluminium Organic Polymer Capacitors`); a part that says only `polymer` is aluminium polymer when another of its texts names aluminium or OS-CON (TME `Capacitor: polymer; ... OS-CON SVF`) and tantalum polymer when one names tantalum |
+| capacitor | `hybrid polymer` | `hybrid`, `polymer hybrid` (JLCPCB `Hybrid Aluminum Electrolytic Capacitors`) |
+| capacitor | `polymer` | `polymer` alone (JLCPCB `Polarized Polymer`, TME `Type of capacitor: polymer`) |
 | capacitor | `aluminium electrolytic` | `aluminium electrolytic`, `aluminum electrolytic`, `electrolytic` (TME `Capacitor: electrolytic`) |
 | capacitor | `film`, `polypropylene`, `polyester`, `PPS` | `film`; `polypropylene`, `MKP`, `CBB`; `polyester`, `PET`, `polyethylene terephthalate`, `mylar`, `MKT`; `PPS` |
 | capacitor | `supercapacitor` | `supercapacitor`, `super capacitor`, `ultracapacitor`, `supercap`, `EDLC` |
@@ -379,8 +446,18 @@ values normalised to base units as `double`), and the free-text tokens.
 `ParametricExtractor.extract(Part) -> Map<String,String>` applies the same recognisers to the
 part's description and attribute values, so parts from all three distributors expose comparable
 `Capacitance`, `Resistance`, `Inductance`, `Voltage`, `Current`, `Power`, `Tolerance`, `Dielectric`,
-`Package`, `Mounting` keys, and `Technology` for resistors, capacitors and inductors. Distributor attributes (TME
-parameters, Mouser ProductAttributes) take precedence over description parsing. `Technology` comes from the TME
+`Package`, `Mounting` keys, `Technology` for resistors, capacitors and inductors, and `Impedance` (ferrite beads,
+`120ohm @100MHz`), `SaturationCurrent`, `DCR`, `MaxTemperature` (`105°C`) and `Lifetime` (`2000h @105°C`). Inductors
+and ferrite beads report their current as `RatedCurrent` instead of `Current` and never carry `Resistance`. Distributor
+attributes (TME parameters, Mouser ProductAttributes) take precedence over description parsing. Inductor and ferrite
+parameters (verified on TME 2026-10-06): `Resistance` (TME: the DC resistance, BLM31KN121SN1L `9mΩ`), `DC resistance`,
+Mouser `Maximum DC Resistance` -> `DCR`; `Impedance at 100MHz` (the frequency from the name), `Impedance` + `Test
+Frequency` -> `Impedance`; `Operating current`, `Rated current`, `Maximum DC Current` -> `RatedCurrent`; `Saturation
+current` (may be empty: IHLP2525CZER2R2M01), `Isat` -> `SaturationCurrent`. A lifetime attribute (`Service life`,
+`Lifetime`, `Load Life`, `Endurance`) is read in hours whatever the case of its `h`, never as inductance (the Samwha
+`RC1C107M6L006VR` "1000h" bug); an operating temperature attribute gives its largest number. Mounting also comes from
+the package field (LCSC `SMD,D8xL10mm`, `插件,D6.3xL8mm`) and the category (`... - SMD`, `Radial Leaded`, `Leaded`;
+`radial`, `axial`, `leaded` mean THT). Extracting again from an enriched (cached) part gives the same values. `Technology` comes from the TME
 parameters `Type of resistor`/`Type of capacitor`/`Type of inductor`/`Kind of capacitor`/`Kind of resistor` (or a
 `Technology`/`Composition`/`Construction` attribute), then the description, then the category (JLCPCB capacitors say
 it only in the category: `Capacitors / Tantalum Capacitors`).
@@ -437,11 +514,13 @@ with the product kind (`Adapter;`, `Cable;`, `Hub USB;`, `Power supply`).
 
 | Signal | Weight | Rule |
 |---|---|---|
-| primary value (C/R/L) | 0.30 | exact match within 1% -> full; different -> -0.30 penalty; unknown -> 0 |
+| primary value (C/R/L; ferrite impedance) | 0.30 | exact match within 1% -> full (an impedance also at the same test frequency when both state one); different -> -0.30 penalty; unknown -> 0 |
 | package | 0.20 | exact match (treat `0805` == `2012` metric); mismatch -> -0.20 |
 | dielectric | 0.15 | exact; `C0G` == `NP0`; mismatch -> -0.15 |
 | technology (`W_TECHNOLOGY`) | 0.15 | the query names a technology: same -> +0.15; a different known technology -> -0.15; unknown -> 0. Compatible (+): a `film` request and a polypropylene/polyester/PPS part, a `tantalum` or `polymer` request and a tantalum polymer part, a `current sense` request and a metal strip/metal foil part. Neutral (0): a polypropylene request and a part that only says `film`, a tantalum polymer request and a `tantalum` part, a `current sense` request and any other construction |
-| voltage / current / power rating | 0.10 | part rating >= requested -> full; lower -> -0.10 |
+| ratings: voltage, current (an inductor's rated current), saturation current, power, temperature, lifetime; DCR | 0.10 | shared between the stated ratings. Minimums: part >= requested -> full; lower -> -0.10; a higher rating keeps full credit in the match grade but loses up to `W_RATING_EXCESS` (0.05) of score, `0.05 * min(1, log2(part / requested) / 2)`, so 25 V > 35 V > 50 V > 100 V for a 25 V request. DCR is a maximum (part <= requested). Regulator and Zener voltages and fuse currents must match within 2 %. Saturation current is compared with the part's saturation current only: a part that does not state it scores 0 |
+| mounting (non-connector requests, `W_MOUNTING`) | 0.05 | SMD/THT same +0.05, different -0.05 |
+| low DCR preference (`W_LOW_DCR`) | up to 0.04 | `0.04 / (1 + DCR / 10 mΩ)`, score only: lower DCR ranks higher among otherwise equal parts |
 | tolerance | 0.10 | part tolerance <= requested -> full; looser -> -0.10 |
 | family keyword present in description/category | 0.05 | |
 | lexical: share of free-text tokens found in mpn/description/attributes | 0.10 | |
@@ -457,6 +536,35 @@ part does not state earns nothing, so `1.0` means every stated parameter is know
 the blend, is absolute (not rank-normalised) and does not influence the order. For `Thin film resistor, 5.36k 0805
 0.1%` the Mouser parts `TNPW08055K36BEEA` and `RN73C2A5K36BTDF` grade 1.0 (tolerance `.1%`, package from the MPN,
 technology from the category).
+
+**Mismatches** (`DeterministicRanker.mismatches`, the `mismatches` of every search result part): the stated
+parameters the part is known not to satisfy, in plain words: `capacitance: 10uF instead of 22uF`, `package: 1210
+instead of 1206`, `dielectric: X5R instead of X7R`, `technology: tantalum polymer instead of aluminium polymer`,
+`voltage: 16V below 25V`, `dcr: 40mohm above 20mohm`, `tolerance: 10% instead of 1%`, `mounting: THT instead of SMD`,
+`family: ...`, and for non-USB connectors positions, gender, pitch and orientation. An attribute the part does not state
+is not a mismatch (it lowers `match`). The distributor entry's `exact_matches` counts the returned parts with `match`
+1.0.
+
+**Strict constraints** (`kina.search.strict-constraints`, default `mounting, technology`; `KINA_STRICT_CONSTRAINTS`):
+when the request states the attribute and the part's known value contradicts it, the part is excluded before ranking
+and counted in `excluded_by_constraints` (`DeterministicRanker.check`). Mounting: SMD vs THT (a hybrid USB part never
+conflicts). Technology: `TechnologyVocabulary.compare` = -1. An unknown or not comparable value keeps the part, ranked
+below known matches (section 3.3). Technology compatibility: `polymer aluminium` / `aluminium polymer` is aluminium
+polymer (OS-CON included, THT or SMD); tantalum polymer and plain aluminium electrolytic contradict it; a part that says
+only `polymer` is not comparable; a bare `polymer` request accepts aluminium polymer and tantalum polymer; hybrid
+polymer neither matches nor contradicts an aluminium request.
+
+**Quantity** (`quantity`, default 1): with a quantity above 1 a part with less stock loses
+`kina.search.quantity.stock-shortfall-penalty` (0.3) and ranks after every part with enough stock (tier, section
+3.3), and a minimum order quantity above the quantity loses up to `kina.search.quantity.moq-penalty` (0.15):
+`0.15 * min(1, log10(moq / quantity) / 2)`. With quantity 1 nothing changes. Every part gets
+`ordered_quantity` (the quantity raised to the minimum order quantity and to the smallest price bracket, rounded up to
+the order multiple), `unit_price_at_quantity` (the bracket that applies, from all brackets) and `total_price`.
+
+**Lifecycle** (`Availability.lifecycleOf`, the part's `lifecycle`): `last_time_buy` (TME `AVAILABLE_WHILE_STOCKS_LAST`,
+Mouser end of life / obsolete / not recommended for new designs) loses `kina.search.lifecycle.last-time-buy-penalty`
+(0.1), `supply_constrained` (TME `HARDLY_AVAILABLE`) `kina.search.lifecycle.supply-constrained-penalty` (0.03); `new`
+and `active` nothing.
 
 For connector queries (`ParsedQuery.isConnector()`) the primary value signal is replaced by connector signals
 (`DeterministicRanker.connectorScore`; constants next to the others). Each applies only when both the query and the
@@ -666,9 +774,9 @@ parameters; descriptions are read by the LLM, keep them precise):
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache) | `SearchResponse` |
-| `search_parts_batch` | `queries` (array of `{query, max_results}`, 1..20), `distributors`, `bypass_cache` | `{ "results": [SearchResponse...] }` |
-| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN), `bypass_cache` | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown) or `out_of_stock` (listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, no stock or prices), or with `error` (and `reason` null) when the lookup failed. Out-of-stock parts are never returned as a part and never cached. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
+| `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`) | `SearchResponse` |
+| `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail` | `{ "results": [SearchResponse...] }` |
+| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`compact` default) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown) or `out_of_stock` (listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, no stock or prices), or with `error` (and `reason` null) when the lookup failed. Out-of-stock parts are never returned as a part and never cached. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
 | `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`. Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
@@ -691,18 +799,44 @@ parameters; descriptions are read by the LLM, keep them precise):
       "fallback_query": null,
       "rate_limit_waited_ms": 0,
       "distributor_query": null,
+      "excluded_by_constraints": 0,
+      "out_of_stock_matches": 0,
+      "relaxed": [],
+      "exact_matches": 7,
       "parts": [
         {"rank": 1, "score": 0.93, "match": 1.0, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
-         "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106", "description": "...", "category": "...",
-         "package": "0805", "stock": 76689, "min_order_qty": 1, "order_multiple": 1,
+         "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106", "description": "...",
+         "stock": 76689, "min_order_qty": 1, "order_multiple": 1,
          "prices": [{"qty": 1, "unit_price": 1.40, "currency": "EUR"}, {"qty": 10, "unit_price": 0.853, "currency": "EUR"}, {"qty": 50, "unit_price": 0.631, "currency": "EUR"}],
-         "datasheet_url": "...", "photo_url": "...", "product_url": "...",
-         "attributes": {"Capacitance": "10uF", "...": "..."}, "extra": {"lifecycle_status": null, "rohs": "RoHS Compliant"}}
+         "availability": {"status": "in_stock", "note": "Ships now from stock."}, "lifecycle": "active",
+         "datasheet_url": "...", "product_url": "...",
+         "attributes": {"Capacitance": "10uF", "Dielectric": "X7R", "Package": "0805", "...": "..."}}
       ]
     }
   ]
 }
 ```
+
+**Detail** (`ResponseDetail`, `detail`): `compact` (default for every tool and endpoint) returns per part `rank`,
+`score`, `match`, `mismatches` (omitted when empty), `distributor`, `part_number` (the distributor's number),
+`manufacturer`, `manufacturer_id` (TME, omitted when absent), `mpn`, `description`, `stock`, `min_order_qty`,
+`order_multiple`, `prices` (3 brackets), with `quantity` > 1 `ordered_quantity`, `unit_price_at_quantity` and
+`total_price`, `availability`, `lifecycle`, `datasheet_url`, `product_url` and only the canonical attributes
+(`ParametricExtractor.CANONICAL_KEYS`, computed with `extract`, so raw duplicates such as TME `Operating voltage`,
+`Case - inch`, `Case - mm` are left out). `full` adds `category`, `package`, `photo_url`, every distributor attribute
+and `extra` (TME `product_status`, `category_id`, `packing`, `price_type`, `tax_rate`; Mouser compliance and lifecycle
+fields; LCSC library type), and always the order fields. Fields a level leaves out are omitted from the JSON (null
+`category`, `package` and `photo_url` are omitted in `full` as well).
+
+**Availability** (every part): `{"status", "note"}`, status `in_stock`, `limited` (stock below `quantity`),
+`last_units` (no restocking: TME `AVAILABLE_WHILE_STOCKS_LAST`, Mouser end of life / obsolete / NRND),
+`supply_constrained` (TME `HARDLY_AVAILABLE`), `special_order` (TME `ONLY_FOR_SPECIAL_ORDER`, `CANNOT_BE_ORDERED`) or
+`external_warehouse` (TME); the note is plain sentences (TME `MOQ_VALID_WHILE_STOCKS_LAST`, `DANGEROUS`/`OVERSIZED`,
+the Mouser maximum order quantity when it is below the quantity; with `full` also TME `NEW`/`PROMOTED`, the Mouser
+lifecycle and reel option, the JLCPCB library type Basic/Preferred/Extended). `lifecycle`: section 3.4.
+
+`excluded_by_constraints`, `out_of_stock_matches` (null when unknown), `relaxed` and `exact_matches` are described in
+sections 3.2 and 3.4.
 
 `score` orders the list: it is the blend of rank-normalised scores (section 3.3), relative to the other candidates, so
 the last of four exact matches can show `0.00`. `match` (0 to 1) says how well the part satisfies the stated parameters
@@ -725,9 +859,9 @@ Tool parameter names are the Java parameter names (`-parameters`), so the tool m
 
 | Method & path | Notes |
 |---|---|
-| `GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=` | `SearchResponse` |
-| `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case), returns `{results: [...]}` |
-| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; an MPN works as for `get_part`; 404 problem with `reason` `not_found` or `out_of_stock` (then also `identity`) |
+| `GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=` | `SearchResponse`; `quantity` 1..10 000 000 (default 1), `detail` `compact` (default) or `full` |
+| `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case: `queries[{query, max_results, quantity}]`, `distributors`, `bypass_cache`, `detail`), returns `{results: [...]}` |
+| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; an MPN works as for `get_part`; 404 problem with `reason` `not_found` or `out_of_stock` (then also `identity`) |
 | `GET /api/v1/distributors` | same as `list_distributors` |
 | `GET /actuator/health`, `GET /actuator/info` | public |
 
@@ -923,7 +1057,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V4__group_authorisation.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V5__cached_search_out_of_stock.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -1012,6 +1146,8 @@ CREATE TABLE cached_searches (
 ALTER TABLE cached_searches ADD COLUMN next_offset INTEGER;
 -- V3__cached_search_fallback_query.sql: core phrase searched instead of the query (phrase fallback), NULL otherwise
 ALTER TABLE cached_searches ADD COLUMN fallback_query TEXT;
+-- V5__cached_search_out_of_stock.sql: matches without ships-now stock seen while building the list (NULL = unknown)
+ALTER TABLE cached_searches ADD COLUMN out_of_stock_matches INTEGER;
 
 -- V4__group_authorisation.sql (section 7.1 to 7.3)
 ALTER TABLE users
@@ -1047,7 +1183,8 @@ CREATE TABLE jlcpcb_database (
   `{"SearchByKeywordRequest":{"keyword":q,"records":n (<=50),"startingRecord":offset + 1,"searchOptions":"InStock","searchWithYourSignUpLanguage":"false"}}`
   (`startingRecord` is **1-based**, verified live: 1 returns results #1.., 3 returns #3..).
   Response `{"Errors":[...],"SearchResults":{"NumberOfResult":113,"Parts":[...]}}`.
-- Part lookup: `POST {base}/search/partnumber` with `{"SearchByPartRequest":{"mouserPartNumber":pn,"partSearchOptions":"Exact"}}`;
+- Part lookup: `POST {base}/search/partnumber` with `{"SearchByPartRequest":{"mouserPartNumber":pn,"partSearchOptions":"Exact"}}`
+  (a number with spaces is sent with hyphens, then without spaces, until the answer matches);
   the answer is matched by `MouserPartNumber`, then `ManufacturerPartNumber`, both normalised (upper case, letters and
   digits only). Verified live 2026-10-05: `Exact` and `None` both answer `ERA6AEB5361V` (TME's spelling) with
   `667-ERA-6AEB5361V` / `ERA-6AEB5361V`, so no keyword retry is needed. A matching part with `AvailabilityInStock` 0 or
@@ -1066,7 +1203,8 @@ CREATE TABLE jlcpcb_database (
   `Manufacturer`, `ManufacturerPartNumber`, `Min`, `Mult`, `MouserPartNumber`, `ProductAttributes[{AttributeName,AttributeValue}]`,
   `PriceBreaks[{Quantity, Price:"1,40 €", Currency:"EUR"}]`, `ProductDetailUrl`, `ROHSStatus`, `SuggestedReplacement`,
   `SalesMaximumOrderQty`, `ProductCompliance`, `TradeCompliance`.
-- Stock = integer parsed from `AvailabilityInStock` (digits only); drop the part when <= 0.
+- Stock = integer parsed from `AvailabilityInStock` (digits only); drop the part when <= 0 and count it in the page's
+  `outOfStock` (`out_of_stock_matches`).
 - Prices are locale formatted (`"1,40 €"`, `"0,853 €"`, `"$0.10"`): strip everything except digits, `,` and `.`;
   when both separators appear the last one is the decimal separator; a lone `,` is a decimal separator
   when followed by 1-3 digits at the end. Currency from `Currency`.
@@ -1114,9 +1252,24 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 - `productUrl = https://www.tme.eu/en/details/<symbol>/`, `datasheetUrl` = first `/products/files` document with
   `type == "DTE"` (prefer PDF; one call per page, <= 50 symbols), `photoUrl = https:` + `assets.primary_photo.prime`.
 - Extra: `product_status`, `category_id`, `manufacturer_id`, `unit`, `packing`, `price_type`, `tax_rate`.
+- `product_status` meanings (TME API documentation): `HARDLY_AVAILABLE` "limited market availability" (a supply-side
+  flag: TME may still hold a large stock, 150k+ pieces seen; never read as low stock; availability
+  `supply_constrained`, lifecycle `supply_constrained`); `AVAILABLE_WHILE_STOCKS_LAST` "available for sale while stocks
+  last" (no restocking: availability `last_units`, lifecycle `last_time_buy`); `MOQ_VALID_WHILE_STOCKS_LAST` "the MOQ
+  may change after the product is sold out" (a note); `NEW` (new in the catalogue, lifecycle `new`); `PROMOTED`
+  (promotional, no availability meaning); `DANGEROUS`, `OVERSIZED` (shipping restrictions, a note);
+  `CANNOT_BE_ORDERED` (not for sale in your country); `ONLY_FOR_SPECIAL_ORDER`; `EXTERNAL_WAREHOUSE`; `NOT_IN_OFFER`
+  (not in the offer any more, no stock or prices); `PRODUCT_BLOCKED` (blocked for sale); `INVALID`;
+  `BLOCKED_FOR_ZBL_*` (observed, undocumented; treated as not orderable).
 - Products whose `product_status` contains one of `kina.distributors.tme.excluded-statuses` (default
-  `CANNOT_BE_ORDERED`, `ONLY_FOR_SPECIAL_ORDER`, `EXTERNAL_WAREHOUSE`, compared case-insensitively) do not ship now
-  and are dropped by `TmePartMapper`. `product_status` stays in `extra`.
+  `CANNOT_BE_ORDERED`, `ONLY_FOR_SPECIAL_ORDER`, `EXTERNAL_WAREHOUSE`, `NOT_IN_OFFER`, `PRODUCT_BLOCKED`, `INVALID`,
+  `BLOCKED_FOR_ZBL_*`; compared case-insensitively, a trailing `*` is a prefix) do not ship now and are dropped by
+  `TmePartMapper` (counted as out-of-stock matches). `product_status` stays in `extra`.
+- Part lookup with spaces: TME answers HTTP 400 `E_INPUT_PARAMS_VALIDATION_ERROR` ("Some characters are not permitted
+  in symbols[0]") for `HCMA0703 2R2 R` (verified 2026-10-06), `HCMA0703-2R2-R` resolves and `HCMA07032R2R` finds
+  nothing. `TmeClient.lookup` tries `PartLookupResult.variants` (whitespace runs as `-`, then removed; characters outside
+  letters, digits and `-_./+#,()` dropped) as symbols, then all of them and the normalised form as `mpns[]`; a
+  validation error on these calls counts as "not found", never `bad_response`.
 - USB connectors (category `USB & IEEE1394 connectors`, verified 2026-10-05): description
   `Connector: USB C; socket; SMT; PIN: 16; horizontal; USB 2.0; 5A`; parameters `Type of connector` (`USB C`,
   `USB B micro`, `USB A`, `USB B`), `Connector` (`socket`/`plug`), `Number of pins` (4, 5, 6, 9, 10, 16, 24 seen;
@@ -1193,10 +1346,18 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   "with Post" OR "Board Lock")`. A positions group `16P/17P/18P` is one `POSITIONS` term matched as an OR of its
   alternatives, each checked at a number boundary (`6P/7P/8P` never matches `16P`). `24P` is a positions token as before;
   the hyphen in `Type-C` is kept (trigram phrase).
+- Minimum ratings (`JlcpcbQuery.Kind.RATING`, DESIGN 3.2): a query token `>=25V`, `>=6A`, `>=125mW` (units V, A, W with
+  an optional `m`/`k` prefix) is not matched as text but checked by the SQLite function
+  `kina_at_least("Description", unit, minimum)`: the description must state a value of that unit (at a number
+  boundary, `m` milli, `M` mega, `k` kilo, `u` micro) at least that high, so `>=25V` matches `25V`, `35V` and `50V`
+  parts. A rating is the first term the relaxation drops; a rating alone is no query.
+- Out-of-stock count: when `ALL` finds nothing in stock, the same predicate without the stock filter is counted
+  (`Result.outOfStock`, reported as `out_of_stock_matches`). The terms the relaxation dropped are reported as
+  `relaxed` constraint names by term kind (`LcscClient.relaxed`).
 - Relaxation (`JlcpcbSqliteSearch`): `ALL` (every term) first. When it has no in-stock match, `RELAXED`: (1) remove
   the dead terms, i.e. terms that occur nowhere in the database (one `MATCH ... LIMIT 1` probe per matchable term,
   stock ignored, so it stops at the first hit; e.g. `dupont`, misspellings), and retry; (2) drop the least informative
-  remaining term and retry, one term at a time, while at least 2 terms remain. Drop order by kind: free-text keyword,
+  remaining term and retry, one term at a time, while at least 2 terms remain. Drop order by kind: rating, free-text keyword,
   mounting, orientation, pitch, package, dielectric, value, positions, family word, category; within a kind the last
   term of the query first. A step whose predicate has no MATCH (LIKE-only, a full scan) is skipped. A step whose
   terms are exactly the parametric terms is reported as `PARAMETRIC`. Then `PARAMETRIC` (values, packages,
@@ -1269,6 +1430,9 @@ kina:
     max-max-results: 50
     distributor-timeout: 12s     # active work per distributor fetch; rate-limit waits do not count
     max-request-duration: 2m     # hard cap per request (search, whole batch, get_part) incl. rate-limit waits
+    strict-constraints: ${KINA_STRICT_CONSTRAINTS:mounting,technology}   # section 3.4
+    quantity: { stock-shortfall-penalty: 0.3, moq-penalty: 0.15 }        # section 3.4 "Quantity"
+    lifecycle: { last-time-buy-penalty: 0.1, supply-constrained-penalty: 0.03 }
   ranking:
     timeout: 5s                  # per query (deterministic + cross-encoder)
     batch-timeout: 60s
@@ -1290,7 +1454,8 @@ kina:
   distributors:
     mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
-              excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE] }
+              excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE, NOT_IN_OFFER, PRODUCT_BLOCKED,
+                                  INVALID, "BLOCKED_FOR_ZBL_*"] }
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
             auto-download: true }   # false in src/test/resources/config/application.yml
 ```

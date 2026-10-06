@@ -253,7 +253,7 @@ libraries for Linux x64/aarch64, macOS and Windows; `kina.jar` is now 115 MB); m
 model: the model layer is 138 MB (two int8 files of 23 MB, fp32 91 MB), `docker image inspect` size 695 MB before and
 962 MB after (containerd image store), `docker save` archive 231 MB before and 360 MB after.
 
-Startup: Spring context ~2 s; Flyway V1-V4 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
+Startup: Spring context ~2 s; Flyway V1-V5 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
 (validation `count(*)`) ~19 s in the background; cross-encoder load from the bundled directory (session creation,
 warm-up) ~0.2 s in the background. A local run's first start (download of vocab, configs and the 23 MB int8 file from
 Hugging Face) took 3.6 s.

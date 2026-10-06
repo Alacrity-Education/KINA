@@ -40,7 +40,7 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | Field | Type | Meaning |
 |---|---|---|
 | `query` | string | The query as sent. |
-| `parsed` | object | What KINA understood: `family`, value fields such as `capacitance` or `resistance` (display form, for example `"10uF"`), `tolerance` (`.1%` and `0.1%` both work), `dielectric`, `package`, `mounting`, `technology` (resistors, capacitors, inductors: `thin film`, `thick film`, `metal film`, `carbon film`, `metal oxide`, `wirewound`, `metal foil`, `metal strip`, `current sense`; `ceramic`, `tantalum`, `tantalum polymer`, `polymer`, `aluminium electrolytic`, `film`, `polypropylene`, `polyester`, `PPS`, `supercapacitor`; `multilayer`), `keywords`, and for connectors `connector` (see [`parsed.connector`](#parsedconnector)). Absent values are omitted. |
+| `parsed` | object | What KINA understood: `family`, value fields such as `capacitance`, `resistance`, `inductance`, `impedance` (ferrite beads, with the test frequency: `"120ohm @100MHz"`), `voltage`, `current` (an inductor's rated current), `saturation_current`, `dcr` (a maximum), `power`, `temperature` (maximum operating temperature, `"105°C"`), `lifetime` (`"2000h"`) (display form, for example `"10uF"`), `tolerance` (`.1%` and `0.1%` both work), `dielectric`, `package`, `mounting`, `technology` (resistors, capacitors, inductors: `thin film`, `thick film`, `metal film`, `carbon film`, `metal oxide`, `wirewound`, `metal foil`, `metal strip`, `current sense`; `ceramic`, `tantalum`, `tantalum polymer`, `aluminium polymer`, `hybrid polymer`, `polymer`, `aluminium electrolytic`, `film`, `polypropylene`, `polyester`, `PPS`, `supercapacitor`; `multilayer`), `keywords`, and for connectors `connector` (see [`parsed.connector`](#parsedconnector)). Absent values are omitted. Units are case-sensitive where the case matters: `m` is milli and `M` mega (`mhz` is still read as MHz), `2000h` is hours and `1H` henry. |
 | `ranking` | string | `blended` (deterministic score blended 50/50 by rank with the in-process cross-encoder) or `fallback` (deterministic order only). |
 | `ranking_note` | string or null | Why the ranking fell back. Always present, null when `ranking` is `blended`. See [Ranking notes](#ranking-notes). |
 | `distributors` | array | One `DistributorResult` per searched distributor. |
@@ -92,13 +92,17 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | `fetched` | integer | In-stock parts KINA holds for the query and ranked. |
 | `returned` | integer | `min(max_results, fetched)`; the length of `parts`. |
 | `cache` | string | `hit`, `partial`, `miss`, `bypassed` or `not_applicable` (LCSC, and distributors that were never looked up). |
-| `fallback_query` | string or null | Set when the full query found nothing at this distributor and KINA retried with a shorter parametric core phrase, for example `"MOSFET 30V SOT-23"` for `"SOT-23 N-channel MOSFET 30V"`. Only Mouser and TME; null otherwise (always present in the JSON). The parts in the entry come from that phrase. The fallback rules: connector requests fall back to the type words plus the positions (TME) or plus pitch and orientation (Mouser); other requests fall back to the parametric core; a query with only keywords falls back to its 3 to 5 most informative tokens. No fallback is tried when the shorter phrase equals what was already sent. |
-| `distributor_query` | string or null | The phrase KINA sent when it rewrote your request into this distributor's vocabulary (connector requests). Null when your text went through as written. Always present. If it found nothing, `fallback_query` is what was sent after it. |
+| `fallback_query` | string or null | Set when the first phrase found no in-stock part at this distributor and a relaxed phrase found the parts in the entry. Only Mouser and TME; null otherwise (always present in the JSON). The relaxation ladder, stopping at the first phrase with in-stock parts: (1) without ratings, (2) without the tolerance, (3) the minimal core (family word, values, technology, dielectric, package; for connectors the type words plus the positions (TME) or plus pitch and orientation (Mouser); for keyword-only queries the 3 to 5 most informative tokens), (4) the core without dielectric and technology. For example `22uF X7R 1206 25V MLCC` at TME: `22uF X7R 1206 MLCC`, `MLCC 22uF X7R 1206`, `MLCC 22uF 1206`. A step equal to what was already sent is skipped. |
+| `distributor_query` | string or null | The phrase KINA sent instead of your text: ratings are left out (they are minimums, see [Ratings](#ratings-are-minimums)); at LCSC they are sent as `>=25V` terms that the local database checks; connector requests are rewritten into the distributor's vocabulary. Null when your text went through as written. Always present. If it found nothing, `fallback_query` is what was sent after it. |
+| `relaxed` | array of strings | Stated constraints that were not part of the search that produced the parts, for example `["voltage"]` (Mouser and TME never get ratings), `["voltage", "dielectric"]` after the last ladder step, or what the LCSC database search dropped. The ranker still checks them; see `mismatches`. Empty when nothing was relaxed. |
+| `exact_matches` | integer | Returned parts that satisfy every stated parameter (`match` 1.0). |
+| `excluded_by_constraints` | integer | Parts left out because a known attribute contradicts a strict constraint of the request: mounting (`SMD`/`THT`) and technology by default (`KINA_STRICT_CONSTRAINTS`). A part that does not state the attribute stays but ranks below known matches. |
+| `out_of_stock_matches` | integer or null | Matches the distributor has but cannot ship now (dropped by the stock rule) on the pages KINA read: the part exists but is not returned. While every match is out of stock KINA reads up to 2 more pages and then the next relaxation step. Null when unknown (a cached search stored before this field existed). |
 | `error` | string or null | `rate_limited`, `unavailable`, `not_configured`, `timeout` or `bad_response`. A failing distributor has an empty `parts` list, except that parts already in hand are kept. `rate_limited` means the rate limit outlasted the request deadline (see [Rate limits and timing](#rate-limits-and-timing)). |
 | `rate_limit_waited_ms` | integer | Milliseconds this distributor's fetch spent waiting on rate limits, including waiting for a shared cool-down. Always present, 0 when KINA did not wait. |
 | `parts` | array | `PartResponse` entries, best first. |
 
-`PartResponse`:
+`PartResponse` has two detail levels (`detail` parameter). `compact` (the default) has `rank`, `score`, `match`, `mismatches`, `distributor`, `part_number`, `manufacturer`, `manufacturer_id` (TME), `mpn`, `description`, `stock`, `min_order_qty`, `order_multiple`, `prices`, the order fields when `quantity` is above 1, `availability`, `lifecycle`, `datasheet_url`, `product_url` and the canonical `attributes` only. `full` adds `category`, `package`, `photo_url`, every raw distributor attribute (TME `Operating voltage`, `Case - inch`...) and `extra`, and always has the order fields. A field a level leaves out is not in the JSON; null `category`, `package` and `photo_url` are omitted too.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -108,6 +112,7 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | `distributor` | string | `LCSC`, `TME`, `MOUSER`. |
 | `part_number` | string | Distributor part number (LCSC `Cxxxxx`, TME symbol, Mouser number). |
 | `manufacturer` | string | |
+| `manufacturer_id` | string | The distributor's manufacturer id (TME). Omitted when the distributor has none. |
 | `mpn` | string | Manufacturer part number. |
 | `description` | string | |
 | `category` | string or null | |
@@ -116,11 +121,25 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | `min_order_qty` | integer or null | Null when unknown (always null for LCSC). |
 | `order_multiple` | integer or null | Null when unknown (always null for LCSC). |
 | `prices` | array | At most 3 entries, the smallest quantity brackets: `{"qty": 1, "unit_price": 1.40, "currency": "EUR"}`. LCSC prices are in USD. |
+| `ordered_quantity` | integer | Pieces you would order for `quantity`: raised to the minimum order quantity (and the first price bracket) and rounded up to the order multiple. |
+| `unit_price_at_quantity` | number | Unit price of the bracket that applies to `ordered_quantity` (from all brackets, not only the 3 returned). Omitted when the part has no prices. |
+| `total_price` | number | `unit_price_at_quantity * ordered_quantity`, in the price currency. |
+| `availability` | object | `{"status": ..., "note": "<plain sentence>"}`. `status`: `in_stock`; `limited` (fewer pieces ship now than `quantity`); `last_units` (no restocking: TME `AVAILABLE_WHILE_STOCKS_LAST`, Mouser end of life, obsolete or not recommended for new designs); `supply_constrained` (TME `HARDLY_AVAILABLE`, "limited market availability": a supply warning, TME may still hold a large stock); `special_order` and `external_warehouse` (TME; excluded by default). The note also carries TME `MOQ_VALID_WHILE_STOCKS_LAST` ("the MOQ may change after the product is sold out"), `DANGEROUS`/`OVERSIZED` (shipping restrictions) and the Mouser maximum order quantity when it is below `quantity`; with `detail=full` also TME `NEW`/`PROMOTED`, the Mouser lifecycle and reel option and the JLCPCB library type (Basic, Preferred, Extended). |
+| `lifecycle` | string | `active`, `last_time_buy` (TME `AVAILABLE_WHILE_STOCKS_LAST`, Mouser end of life / obsolete / NRND), `supply_constrained` (TME `HARDLY_AVAILABLE`) or `new` (TME `NEW`, Mouser "New Product"). `last_time_buy` and `supply_constrained` parts rank a little lower. |
+| `mismatches` | array of strings | Search results only, omitted when empty: the stated parameters the part is known not to satisfy, for example `"dielectric: X5R instead of X7R"`, `"package: 1210 instead of 1206"`, `"voltage: 16V below 25V"`, `"dcr: 40mohm above 20mohm"`. A parameter the part does not state is not listed (it lowers `match`). |
 | `datasheet_url` | string or null | |
 | `photo_url` | string or null | Null when the distributor gives none (LCSC). |
 | `product_url` | string or null | |
-| `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. Resistors, capacitors and inductors carry `Technology` (same values as `parsed.technology`) when the distributor data names it. A chip resistor or capacitor without a stated package gets `Package` from a known MPN series (`TNPW0805...`, `RC0805...`, TE `RN73C2A...`). Connector parts also carry `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`, `Orientation` and `Mounting` when the distributor data allows it. USB connector parts add `UsbType`, `UsbStandard`, `UsbSpeedGbps`, `PinConfiguration`, `ShieldPinsCounted`, `MountingStyle`, `Waterproof` (the IP rating, or `yes`) and `Features` (comma separated). `Positions` stays as the distributor reported it; `PinConfiguration` is the canonical count. |
-| `extra` | object | Distributor-specific details (lifecycle, RoHS, library type, lead time, and so on). |
+| `attributes` | object | Parametric attributes, for example `{"Capacitance": "10uF"}`. Canonical keys: `Capacitance`, `Resistance`, `Inductance`, `Impedance` (ferrite beads, `"120ohm @100MHz"`), `Frequency`, `Voltage`, `Current` (`RatedCurrent` for inductors and ferrite beads), `SaturationCurrent`, `DCR`, `Power`, `MaxTemperature`, `Lifetime` (`"2000h @105°C"`), `Tolerance`, `Dielectric`, `Package`, `Mounting`, `Family`, `Technology` and the connector keys below. A ferrite bead or inductor never has `Resistance`: its ohm values are `Impedance` and `DCR`. Resistors, capacitors and inductors carry `Technology` (same values as `parsed.technology`) when the distributor data names it. A chip resistor or capacitor without a stated package gets `Package` from a known MPN series (`TNPW0805...`, `RC0805...`, TE `RN73C2A...`). Connector parts also carry `ConnectorType`, `Series`, `Gender`, `Positions`, `Rows`, `Pitch`, `Orientation` and `Mounting` when the distributor data allows it. USB connector parts add `UsbType`, `UsbStandard`, `UsbSpeedGbps`, `PinConfiguration`, `ShieldPinsCounted`, `MountingStyle`, `Waterproof` (the IP rating, or `yes`) and `Features` (comma separated). `Positions` stays as the distributor reported it; `PinConfiguration` is the canonical count. |
+| `extra` | object | `detail=full` only. Distributor-specific details (TME `product_status`, `category_id`, `packing`, `price_type`; Mouser lifecycle, RoHS, compliance, lead time; LCSC library type, and so on). |
+
+### Ratings are minimums
+
+Voltage, current, power, maximum temperature and lifetime in a query are minimum ratings: `25V` accepts 35 V and 50 V parts, `6A` accepts 8 A. An equal rating ranks a little above a higher one (25 V, then 35 V, 50 V, 100 V); a lower one is a mismatch. For an inductor `6A` is the rated current; write `Isat 8A` or `saturation current 8A` for the saturation current. `DCR < 20mOhm` or `DCR 20mOhm max` is a maximum; `low DCR` is a preference (lower DCR ranks higher). A regulator or Zener voltage and a fuse current must match. Ratings are not sent to the Mouser and TME keyword searches (a phrase with `25V` only finds parts that print `25V`); LCSC checks them in its local database (`>=25V`).
+
+### Quantity
+
+`quantity` (default 1) is the number of pieces you want. Parts with less stock rank below every part that can supply it, a minimum order quantity above it lowers the rank (`kina.search.quantity.*`), and each part gets `ordered_quantity`, `unit_price_at_quantity` and `total_price`. With `quantity` 1 the order does not change.
 
 ### Connector queries
 
@@ -202,6 +221,8 @@ Search one query.
 | `max_results` | no | Parts per distributor, 1 to 50. Default 10. Out of range gives 400. |
 | `distributors` | no | `LCSC`, `TME`, `MOUSER`. Repeat the parameter or separate with commas. Default: all configured distributors. |
 | `bypass_cache` | no | `true` skips the cache lookup; the cache is still refreshed. Default `false`. |
+| `quantity` | no | Pieces to order, 1 to 10 000 000. Default 1. See [Quantity](#quantity). |
+| `detail` | no | `compact` (default) or `full`. See `PartResponse`. |
 
 ```bash
 curl -s -H "Authorization: Bearer $TOKEN" \
@@ -212,17 +233,18 @@ Returns a `SearchResponse` (see the example in the [README](../README.md#example
 
 ### `POST /api/v1/parts/search/batch`
 
-Search 1 to 20 queries. `distributors` and `bypass_cache` apply to every query; `max_results` is per query.
+Search 1 to 20 queries. `distributors`, `bypass_cache` and `detail` apply to every query; `max_results` and `quantity` are per query.
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   https://kina.example.com/api/v1/parts/search/batch -d '{
     "queries": [
-      {"query": "10uF X7R 0805", "max_results": 5},
+      {"query": "10uF X7R 0805", "max_results": 5, "quantity": 100},
       {"query": "4k7 1% 0603 resistor"}
     ],
     "distributors": ["LCSC", "MOUSER"],
-    "bypass_cache": false
+    "bypass_cache": false,
+    "detail": "compact"
   }'
 ```
 
@@ -235,12 +257,14 @@ Get one part by distributor part number. The part number is the rest of the path
 | Parameter | Meaning |
 |---|---|
 | `bypass_cache` | Query the distributor live. Default `false`. |
+| `quantity` | Pieces to order, for `ordered_quantity`, `unit_price_at_quantity` and `total_price`. Default 1. |
+| `detail` | `compact` (default) or `full`. |
 
 ```bash
 curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/parts/lcsc/C15850
 ```
 
-Returns one `PartResponse` (without `rank`, `score` and `match`, prices trimmed to 3 brackets). The part number can also be the manufacturer part number; spelling differences in hyphens and spaces are ignored (`ERA6AEB5361V` finds Mouser `667-ERA-6AEB5361V`). It returns 404 when the part is not available: the problem has `reason` `not_found` (the distributor does not know it) or `out_of_stock` (listed, but no ships-now stock; `identity` then gives `part_number`, `manufacturer`, `mpn` and `description`). Lookup failures return 503, 429, 504 or 502 (see below). On a rate limit the call waits and retries for up to 2 minutes; 429 means the limit outlasted that. The response has no `rate_limit_waited_ms`.
+Returns one `PartResponse` (without `rank`, `score` and `match`, prices trimmed to 3 brackets). The part number can also be the manufacturer part number; spelling differences in hyphens and spaces are ignored (`ERA6AEB5361V` finds Mouser `667-ERA-6AEB5361V`; `HCMA0703 2R2 R` is sent as `HCMA0703-2R2-R`, then `HCMA07032R2R`, and a part number TME refuses as invalid input is `not_found`). It returns 404 when the part is not available: the problem has `reason` `not_found` (the distributor does not know it) or `out_of_stock` (listed, but no ships-now stock; `identity` then gives `part_number`, `manufacturer`, `mpn` and `description`). Lookup failures return 503, 429, 504 or 502 (see below). On a rate limit the call waits and retries for up to 2 minutes; 429 means the limit outlasted that. The response has no `rate_limit_waited_ms`.
 
 ### `GET /api/v1/distributors`
 
@@ -343,7 +367,9 @@ Search electronic components across distributors and return ranked, in-stock off
     "query": {"type": "string", "description": "Component description or part number, e.g. \"10uF X7R 0805\", \"100nF 50V C0G 0603\", \"2N7002 SOT-23\"."},
     "max_results": {"type": "integer", "description": "Maximum number of parts returned PER DISTRIBUTOR (1-50, default 10). With 3 distributors up to 3 x max_results parts come back. Asking again with a larger value is served from the cache."},
     "distributors": {"type": "array", "items": {"type": "string"}, "description": "Distributors to search: any of \"LCSC\", \"TME\", \"MOUSER\" (case-insensitive). Default: all configured distributors. A listed distributor that is not configured reports error \"not_configured\"."},
-    "bypass_cache": {"type": "boolean", "description": "Default false. true skips the cache lookup and queries the distributors live (fresh stock and prices); the results still refresh the cache. Mouser has a small daily API quota, so use it only when fresh data matters. No effect on LCSC (served from a local JLCPCB database)."}
+    "bypass_cache": {"type": "boolean", "description": "Default false. true skips the cache lookup and queries the distributors live (fresh stock and prices); the results still refresh the cache. Mouser has a small daily API quota, so use it only when fresh data matters. No effect on LCSC (served from a local JLCPCB database)."},
+    "quantity": {"type": "integer", "description": "Pieces to order (default 1). Parts with less stock rank below parts that can supply it, a minimum order quantity far above it lowers the rank, and each part gets ordered_quantity, unit_price_at_quantity and total_price."},
+    "detail": {"type": "string", "description": "\"compact\" (default): identity, stock, order rules, prices, availability, links, match/score and the canonical attributes. \"full\": additionally category, package, photo_url, raw distributor attributes and distributor-specific extra fields (larger responses)."}
   },
   "required": ["query"]
 }
@@ -353,7 +379,7 @@ Returns a `SearchResponse`. If a distributor is rate limited the call can take u
 
 ### `search_parts_batch`
 
-Run 1 to 20 searches at once, for example every line of a BOM. Same semantics and result shape as `search_parts`. `distributors` and `bypass_cache` apply to every query; each query has its own `max_results`.
+Run 1 to 20 searches at once, for example every line of a BOM. Same semantics and result shape as `search_parts`. `distributors`, `bypass_cache` and `detail` apply to every query; each query has its own `max_results` and `quantity`.
 
 ```json
 {
@@ -361,17 +387,19 @@ Run 1 to 20 searches at once, for example every line of a BOM. Same semantics an
   "properties": {
     "queries": {
       "type": "array",
-      "description": "1-20 searches, each {\"query\": \"...\", \"max_results\": 10}; max_results is per distributor (1-50, default 10).",
+      "description": "1-20 searches, each {\"query\": \"...\", \"max_results\": 10, \"quantity\": 1}; max_results is per distributor (1-50, default 10), quantity the pieces to order (default 1).",
       "items": {
         "type": "object",
         "properties": {
           "query": {"type": "string", "description": "Component description or part number."},
-          "max_results": {"type": "integer", "description": "Parts per distributor, 1-50, default 10."}
+          "max_results": {"type": "integer", "description": "Parts per distributor, 1-50, default 10."},
+          "quantity": {"type": "integer", "description": "Pieces to order, default 1."}
         }
       }
     },
     "distributors": {"type": "array", "items": {"type": "string"}},
-    "bypass_cache": {"type": "boolean"}
+    "bypass_cache": {"type": "boolean"},
+    "detail": {"type": "string"}
   },
   "required": ["queries"]
 }
@@ -389,7 +417,9 @@ Current details of one part by distributor part number (the `part_number` of a s
   "properties": {
     "distributor": {"type": "string", "description": "\"LCSC\", \"TME\" or \"MOUSER\" (case-insensitive)."},
     "part_number": {"type": "string", "description": "Distributor part number, or the manufacturer part number."},
-    "bypass_cache": {"type": "boolean"}
+    "bypass_cache": {"type": "boolean"},
+    "quantity": {"type": "integer"},
+    "detail": {"type": "string"}
   },
   "required": ["distributor", "part_number"]
 }
