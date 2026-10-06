@@ -52,7 +52,7 @@ Ranking is the deterministic parametric score blended 50/50 by rank with a cross
 | `ranking_note` | Meaning |
 |---|---|
 | `cross-encoder disabled` | `KINA_CROSS_ENCODER_ENABLED=false`. |
-| `cross-encoder model not loaded yet` | The model is still downloading or loading (first start), or the download failed and is retried hourly. |
+| `cross-encoder model not loaded yet` | The model is still loading (first seconds after startup), or its files are missing or unusable (checked again hourly). Outside Docker it may still be downloading. |
 | `cross-encoder timeout after 5s` | Scoring did not finish within the ranking budget (`kina.ranking.timeout`). |
 | `cross-encoder timeout: budget exhausted` | No ranking time was left before the model was called. |
 | `cross-encoder busy: no free slot within 5s` | Other searches were using all scoring slots for the whole budget. |
@@ -267,7 +267,7 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/distri
   "cache": {"ttl": "PT120H", "parts": 0, "fresh_parts": 0, "searches": 0, "oldest_fetch": null},
   "ranking": {"mode": "blended", "cross_encoder_enabled": true, "ready": true,
               "model": "cross-encoder/ms-marco-MiniLM-L6-v2", "model_variant": "int8",
-              "model_revision": "<hugging face commit>", "model_dir": "/data/cross-encoder",
+              "model_revision": "<hugging face commit>", "model_dir": "/opt/kina/cross-encoder",
               "threads": 4, "avg_latency_ms": 180.0, "last_error": null,
               "max_candidates": 40, "weight": 0.5, "timeout": "PT5S"}
 }
@@ -280,7 +280,7 @@ The `ranking` object:
 | `mode` | `blended` when the cross-encoder is enabled and loaded, else `fallback`. |
 | `cross_encoder_enabled` | `kina.ranking.cross-encoder.enabled`. |
 | `ready` | The model is loaded and warmed up. |
-| `model`, `model_variant`, `model_revision`, `model_dir` | Model name, `int8` or `fp32`, source revision (Hugging Face commit, null when unknown) and directory. |
+| `model`, `model_variant`, `model_revision`, `model_dir` | Model name (the Hugging Face repository, also for the model bundled in the image; else the configured URL or path), `int8` or `fp32`, source revision (Hugging Face commit, null when unknown) and directory (`/opt/kina/cross-encoder` in Docker). |
 | `threads` | ONNX Runtime threads used for scoring. |
 | `avg_latency_ms` | Mean scoring time per query since start. Null before the first scored query. |
 | `last_error` | Why the model is not loaded. Null when fine. |

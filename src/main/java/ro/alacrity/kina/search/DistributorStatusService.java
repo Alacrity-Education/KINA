@@ -17,7 +17,10 @@ import ro.alacrity.kina.domain.DistributorStatusResponse.CacheSummary;
 import ro.alacrity.kina.domain.DistributorStatusResponse.DistributorStatus;
 import ro.alacrity.kina.domain.DistributorStatusResponse.JlcpcbSummary;
 import ro.alacrity.kina.domain.DistributorStatusResponse.RankingSummary;
+import ro.alacrity.kina.search.ce.CrossEncoderModel;
+import ro.alacrity.kina.search.ce.ModelDownloader;
 
+import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +71,10 @@ public class DistributorStatusService {
         return new DistributorStatusResponse(distributors, cache, rankingSummary);
     }
 
-    /** {@code cross-encoder/ms-marco-MiniLM-L6-v2} for a Hugging Face URL, else the URL or path itself. */
+    /**
+     * {@code cross-encoder/ms-marco-MiniLM-L6-v2} for a Hugging Face URL or for a local directory whose
+     * {@code model.json} names that repository (the model bundled in the image), else the URL or path itself.
+     */
     static String modelName(String modelUrl) {
         if (modelUrl == null) {
             return null;
@@ -77,6 +83,17 @@ public class DistributorStatusService {
         int resolve = modelUrl.indexOf("/resolve/");
         if (host >= 0 && resolve > host) {
             return modelUrl.substring(host + "huggingface.co/".length(), resolve);
+        }
+        try {
+            Path local = CrossEncoderModel.localSource(modelUrl);
+            if (local != null) {
+                String repo = ModelDownloader.readManifest(local).map(ModelDownloader.Manifest::repo).orElse(null);
+                if (repo != null && !repo.isBlank()) {
+                    return repo;
+                }
+            }
+        } catch (RuntimeException e) {
+            // not a usable path: report the configured value
         }
         return modelUrl;
     }

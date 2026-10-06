@@ -539,9 +539,16 @@ budget. The budget is checked between batches and an inference running past it i
 error, average latency); one warm-up pair runs after loading. Each call logs at DEBUG
 `cross-encoder scored N candidates in M ms (T threads, <file>)`.
 
-**Model files (`CrossEncoderModel`, `ModelDownloader`, `ModelLayout`).** Directory `kina.ranking.cross-encoder.model-dir`
-(env `KINA_CROSS_ENCODER_MODEL_DIR`; default `${KINA_JLCPCB_DATA_DIR}/../cross-encoder`, i.e. `/data/cross-encoder` in
-Docker and `./data/cross-encoder` locally), layout of the Hugging Face repository:
+**Model files (`CrossEncoderModel`, `ModelDownloader`, `ModelLayout`).** Two modes:
+
+- **Bundled (Docker image, the default deployment).** The image build fetches and verifies the model (section 11) into
+  `/opt/kina/cross-encoder` and sets `KINA_CROSS_ENCODER_MODEL_URL=/opt/kina/cross-encoder` and
+  `KINA_CROSS_ENCODER_AUTO_DOWNLOAD=false`. The running container never contacts Hugging Face or any other host for
+  the model.
+- **Download (local runs).** Directory `kina.ranking.cross-encoder.model-dir` (env `KINA_CROSS_ENCODER_MODEL_DIR`;
+  default `${KINA_JLCPCB_DATA_DIR}/../cross-encoder`, i.e. `./data/cross-encoder`), filled from `model-url`.
+
+Layout of the Hugging Face repository (both modes):
 
 ```
 vocab.txt  config.json  tokenizer_config.json  model.json (KINA manifest)
@@ -555,18 +562,27 @@ onnx/model_quint8_avx2.onnx         int8 (unsigned), 23 MB; AVX2 CPUs without VN
   create a session or run the warm-up is skipped. x86 without AVX2 uses fp32. Measured in Java on the reference host
   (AVX-VNNI, 4 threads, 40 candidates): signed int8 0.878 alone / 0.913 blended, median 125 ms, max 256 ms; unsigned
   int8 0.867 / 0.911, same speed; fp32 0.874 / 0.913, median 256 ms, max 476 ms.
-- Startup never blocks: after `ApplicationReadyEvent` a virtual thread downloads missing files from
+- Startup never blocks: after `ApplicationReadyEvent` KINA logs the model source once
+  (`Cross-encoder model: local directory <dir> used in place (read only, no download)`, or the download directory and
+  source), then a virtual thread downloads missing files (download mode only) from
   `kina.ranking.cross-encoder.model-url` (default `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/`),
   loads the tokenizer and the session and warms it up. Each file is streamed to `<dir>/tmp/*.part`, its size checked
   against `X-Linked-Size` or `Content-Length`, its SHA-256 against `X-Linked-Etag` (LFS files), then moved atomically
   into place. `model.json` records `source`, `repo`, `revision` (`X-Repo-Commit`), `variant`, `onnx_file`,
   `downloaded_at` and per-file size and SHA-256. Timeouts: connect 10 s, `download-timeout` (10 min) per file.
-- Files already present are used as they are (pre-provisioned or offline directory). `auto-download: false` never
-  downloads (tests).
+- Files already present are used as they are (pre-provisioned or offline directory). `auto-download: false`
+  (env `KINA_CROSS_ENCODER_AUTO_DOWNLOAD`; false in the image and in the tests) never downloads.
 - `model-url` may point to any HTTP(S) directory with the same layout, or to a local directory (absolute path or
-  `file:` URI), which is used in place (e.g. a fine-tuned model from `scripts/ranking/finetune_cross_encoder.sh`).
-- A failed attempt is logged once at WARN (again only when the reason changes) and retried every `check-interval`
-  (1h); until then searches report `ranking: "fallback"`, note `"cross-encoder model not loaded yet"`.
+  `file:` URI), which is used in place and read only: no `tmp/`, no manifest update, nothing written, so a read-only
+  directory works (the bundled one is mode 0555/0444). The int8 choice by CPU flags and the fp32 fallback apply to a
+  local directory exactly as to a downloaded one; a file that is not there is skipped.
+- Precedence: `KINA_CROSS_ENCODER_MODEL_URL` set by the operator (`.env` or compose `environment`) overrides the image
+  default `/opt/kina/cross-encoder`. A local path is used in place. An HTTP(S) URL is downloaded into `model-dir` only
+  when the operator also sets `KINA_CROSS_ENCODER_AUTO_DOWNLOAD=true`; otherwise the load fails without a network call.
+- A failed attempt is logged once (again only when the reason changes) and retried every `check-interval` (1h): at
+  ERROR when no network source is involved (local directory or `auto-download: false`; the files are missing or
+  unusable, e.g. `model directory /opt/kina/cross-encoder does not exist (vocab.txt missing)`), at WARN for a failed
+  download. Until a model loads, searches report `ranking: "fallback"`, note `"cross-encoder model not loaded yet"`.
 - Memory: the int8 session adds roughly 100 to 200 MB of native memory to the JVM process (fp32 about 150 to 250 MB).
 
 **Evaluation.** `CrossEncoderEvaluationTest` (runs only when `KINA_CROSS_ENCODER_TEST_MODEL_DIR` names a model
@@ -576,7 +592,8 @@ production `RankingService` and asserts blended NDCG@10 >= the deterministic ran
 
 **Fine-tuned model (optional).** `scripts/ranking/finetune_cross_encoder.sh` (see its README) fine-tunes the model on
 the study's rubric labels in a CPU container (about 4 minutes on 16 cores), exports fp32 and both int8 files and
-writes `model.json`; point `KINA_CROSS_ENCODER_MODEL_URL` at the resulting directory. Trained on synthetic labels only
+writes `model.json`; point `KINA_CROSS_ENCODER_MODEL_URL` at the resulting directory, or bake it into the image with
+the `CROSS_ENCODER_SOURCE` build argument (section 11). Trained on synthetic labels only
 (evaluation set unseen): cross-encoder alone 0.890 (int8) / 0.893 (fp32), blend 0.918 / 0.914, against 0.878 / 0.874
 and 0.913 zero-shot.
 
@@ -1269,7 +1286,7 @@ kina:
       weight: 0.5
       check-interval: 1h
       download-timeout: 10m
-      auto-download: true        # false in src/test/resources/config/application.yml
+      auto-download: ${KINA_CROSS_ENCODER_AUTO_DOWNLOAD:true}   # false in the image and in src/test/resources/config/application.yml
   distributors:
     mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
@@ -1288,18 +1305,37 @@ empty value is not a valid duration or boolean).
 
 ## 11. Docker
 
-- `Dockerfile`: stage 1 `maven:3.9-eclipse-temurin-21` (copy `pom.xml`, `./mvnw`, `.mvn`, run `dependency:go-offline`,
-  then copy `src`, `package -DskipTests`); stage 2 `eclipse-temurin:21-jre`, non-root user `kina` (uid 10001), `/data`
-  volume, `HEALTHCHECK` on `/actuator/health` (curl), `ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED",
+- `Dockerfile`: stage `build` `maven:3.9-eclipse-temurin-21` (copy `pom.xml`, `./mvnw`, `.mvn`, run
+  `dependency:go-offline`, then copy `src`, `package -DskipTests`); stage `model` `alpine:3.22` with `curl` runs
+  `docker/model/fetch-model.sh` (the only build-time dependency on Hugging Face); stage `runtime` `eclipse-temurin:21-jre`,
+  non-root user `kina` (uid 10001), the model copied to `/opt/kina/cross-encoder` (owned by uid 10001, directories
+  0555, files 0444), `ENV KINA_JLCPCB_DATA_DIR=/data/jlcpcb KINA_CROSS_ENCODER_MODEL_URL=/opt/kina/cross-encoder
+  KINA_CROSS_ENCODER_AUTO_DOWNLOAD=false`, `/data` volume (JLCPCB database only), `HEALTHCHECK` on `/actuator/health` (curl), `ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED",
   "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/kina.jar"]` (native access for sqlite-jdbc;
   heap sized from the container memory limit; extra flags via `JAVA_TOOL_OPTIONS`). The ONNX Runtime jar bundles its
   native library (linux-x64/aarch64), extracted to the temp directory at first use; it loads in `eclipse-temurin:21-jre`
   as the non-root user.
+- Model stage (`docker/model/fetch-model.sh`): downloads `config.json`, `tokenizer_config.json`, `vocab.txt` and the
+  ONNX files of the requested variants from `CROSS_ENCODER_SOURCE`, checks each against the committed sha256sum file
+  (`docker/model/ms-marco-MiniLM-L6-v2.sha256`; ONNX values equal the Hugging Face LFS ids) and fails the build on a
+  mismatch, then writes `model.json` (`source`, `repo`, `revision`, `variant` = first requested, `variants`,
+  `provisioned_by`, `downloaded_at`, per-file `size` and `sha256`; unknown fields are ignored by
+  `ModelDownloader.Manifest`). Build arguments:
+  - `CROSS_ENCODER_SOURCE`: default
+    `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/233902d25c440f23af6f7d6e94d2946bac0bee0a/`
+    (pinned revision); any HTTP(S) directory with the same layout, e.g. a fine-tuned model served during the build.
+  - `CROSS_ENCODER_VARIANTS`: `int8,fp32` (default, 138 MB layer) or `int8` (both int8 files, 46 MB) or `fp32`.
+  - `CROSS_ENCODER_SHA256_FILE`: hash file name in `docker/model/`; a custom source needs its own.
+  - `CROSS_ENCODER_SKIP_VERIFY=1`: skip the hash check (custom sources only; logged as a warning in the build).
+  - `CROSS_ENCODER_REVISION`: revision for `model.json`; default taken from a Hugging Face `resolve/<rev>/` URL.
+  The same script pre-fetches the pinned files for local runs (`docs/DEVELOPMENT.md`).
+- Offline guarantee: with the image defaults, no code path downloads the model at runtime. A missing or invalid
+  bundled directory logs one ERROR and ranking falls back to the deterministic order (3.5).
 - `compose.yaml`: top-level `name: kina` (volumes are `kina_kina-data`, `kina_pgdata`, network `kina_default`; a
-  pre-seeded JLCPCB file in `kina_kina-data` is adopted at startup, see 9.3, and pre-provisioned cross-encoder files in
-  `/data/cross-encoder` are used without download, see 3.5). Services:
-  - `kina`: build `.`, ports `${KINA_PORT:-8080}:8080`, `env_file: .env` (optional), environment for the datasource,
-    `KINA_JLCPCB_DATA_DIR=/data/jlcpcb` and `KINA_CROSS_ENCODER_MODEL_DIR=/data/cross-encoder`, volume `kina-data:/data`,
+  pre-seeded JLCPCB file in `kina_kina-data` is adopted at startup, see 9.3; the volume no longer holds the model).
+  Services:
+  - `kina`: build `.`, ports `${KINA_PORT:-8080}:8080`, `env_file: .env` (optional), environment for the datasource
+    and `KINA_JLCPCB_DATA_DIR=/data/jlcpcb`, volume `kina-data:/data`,
     `mem_limit: ${KINA_MEM_LIMIT:-2g}` (heap = 75%; the ONNX Runtime session lives outside the heap),
     `depends_on: postgres (healthy)`.
   - `postgres`: `postgres:17-alpine`, `POSTGRES_DB/USER/PASSWORD=kina`, volume `pgdata`, healthcheck `pg_isready`.

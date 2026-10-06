@@ -32,8 +32,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>Variant: {@code int8} tries the int8 file matching the CPU, then the other int8 file, then fp32; a file that is
  * missing at the source (404) or fails to create a session or to run the warm-up is skipped.
  *
- * <p>{@code model-url} may be a local directory (absolute path or {@code file:} URI): it is used in place, nothing is
- * downloaded.
+ * <p>{@code model-url} may be a local directory (absolute path or {@code file:} URI): it is used in place and read
+ * only, nothing is downloaded or written (the Docker image bundles the model this way at {@code /opt/kina/cross-encoder}).
+ * When no network source is involved (local directory or {@code auto-download=false}), a failure means the files are
+ * missing or unusable and is logged at ERROR; download failures are logged at WARN.
  */
 @Component
 @Slf4j
@@ -85,6 +87,16 @@ public class CrossEncoderModel {
             log.info("Cross-encoder ranking disabled (kina.ranking.cross-encoder.enabled=false)");
             return;
         }
+        Path local = localSource(config.modelUrl());
+        if (local != null) {
+            log.info("Cross-encoder model: local directory {} used in place (read only, no download)",
+                    local.toAbsolutePath().normalize());
+        } else if (config.autoDownload()) {
+            log.info("Cross-encoder model: {}, downloaded on demand from {}", config.resolvedModelDir(),
+                    safeUrl(config.modelUrl()));
+        } else {
+            log.info("Cross-encoder model: {} (auto-download disabled)", config.resolvedModelDir());
+        }
         Thread.ofVirtual().name("cross-encoder-load").start(this::check);
     }
 
@@ -132,8 +144,14 @@ public class CrossEncoderModel {
         lastError = message;
         if (!Objects.equals(message, lastLoggedError)) {
             lastLoggedError = message;
-            log.warn("Cross-encoder model not available, ranking falls back to the deterministic order "
-                    + "(retrying every {}): {}", config.checkInterval(), message);
+            if (localSource(config.modelUrl()) != null || !config.autoDownload()) {
+                log.error("Cross-encoder model files in {} are missing or unusable, ranking falls back to the "
+                        + "deterministic order (checking again every {}): {}", modelDir(), config.checkInterval(),
+                        message);
+            } else {
+                log.warn("Cross-encoder model not available, ranking falls back to the deterministic order "
+                        + "(retrying every {}): {}", config.checkInterval(), message);
+            }
         } else {
             log.debug("Cross-encoder model still not available: {}", message);
         }
@@ -150,7 +168,8 @@ public class CrossEncoderModel {
         for (String file : ModelLayout.COMMON_FILES) {
             if (!Files.isRegularFile(dir.resolve(file))) {
                 if (!download) {
-                    throw new IOException("model files not found in " + dir + " (" + file + " missing"
+                    throw new IOException((Files.isDirectory(dir) ? "model files not found in " + dir + " ("
+                            : "model directory " + dir + " does not exist (") + file + " missing"
                             + (local == null ? ", auto-download disabled)" : ")"));
                 }
                 downloader.ensure(config.modelUrl(), dir, file, variantName(config.variant()), null);
@@ -187,7 +206,7 @@ public class CrossEncoderModel {
                 continue;
             }
             Variant variant = ModelLayout.variantOf(onnx);
-            if (local == null) {
+            if (download) {   // a local or not-managed directory is never written (it may be read only)
                 try {
                     downloader.updateVariant(dir, variantName(variant), onnx);
                 } catch (IOException e) {
@@ -227,7 +246,7 @@ public class CrossEncoderModel {
     }
 
     /** A local directory named by {@code model-url} (absolute path or {@code file:} URI), else null. */
-    static Path localSource(String modelUrl) {
+    public static Path localSource(String modelUrl) {
         if (modelUrl == null || modelUrl.isBlank()) {
             return null;
         }
@@ -239,6 +258,14 @@ public class CrossEncoderModel {
             return null;
         }
         return Path.of(url);
+    }
+
+    private static String safeUrl(String url) {
+        try {
+            return ModelDownloader.safe(URI.create(url.trim()));
+        } catch (IllegalArgumentException e) {
+            return "(invalid URL)";
+        }
     }
 
     private static String variantName(Variant v) {

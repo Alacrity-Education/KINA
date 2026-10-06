@@ -217,6 +217,90 @@ class CrossEncoderModelTest {
     }
 
     @Test
+    void bundledReadOnlyDirectoryIsUsedInPlaceWithoutWrites() throws Exception {
+        // the layout docker/model/fetch-model.sh writes into the image (/opt/kina/cross-encoder)
+        Path bundled = tmp.resolve("opt/kina/cross-encoder");
+        for (String f : List.of(ModelLayout.VOCAB, ModelLayout.CONFIG, ModelLayout.TOKENIZER_CONFIG, ModelLayout.FP32,
+                ModelLayout.QINT8_AVX512_VNNI, ModelLayout.QUINT8_AVX2)) {
+            Files.createDirectories(bundled.resolve(f).getParent());
+            Files.write(bundled.resolve(f), files.get(f));
+        }
+        String manifest = """
+                {
+                  "source" : "https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/%s/",
+                  "repo" : "cross-encoder/ms-marco-MiniLM-L6-v2",
+                  "revision" : "%s",
+                  "variant" : "int8",
+                  "variants" : [ "int8", "fp32" ],
+                  "provisioned_by" : "docker/model/fetch-model.sh",
+                  "downloaded_at" : "2026-10-06T00:00:00Z",
+                  "files" : { "vocab.txt" : { "size" : 1, "sha256" : "00" } }
+                }
+                """.formatted(REVISION, REVISION);
+        Files.writeString(bundled.resolve(ModelLayout.MANIFEST), manifest);
+        Set<java.nio.file.attribute.PosixFilePermission> readOnly =
+                java.nio.file.attribute.PosixFilePermissions.fromString("r-xr-xr-x");
+        Set<java.nio.file.attribute.PosixFilePermission> writable =
+                java.nio.file.attribute.PosixFilePermissions.fromString("rwxr-xr-x");
+        Files.setPosixFilePermissions(bundled.resolve("onnx"), readOnly);
+        Files.setPosixFilePermissions(bundled, readOnly);
+        try {
+            CrossEncoderModel vnni = model(config("model-url", bundled.toString(), "auto-download", "false"),
+                    Set.of("avx2", "avx_vnni"));
+            assertThat(vnni.check()).as(vnni.lastError()).isTrue();
+            assertThat(vnni.loaded().dir()).isEqualTo(bundled);
+            assertThat(vnni.loaded().onnxFile()).isEqualTo(ModelLayout.QINT8_AVX512_VNNI);
+            assertThat(vnni.loaded().revision()).isEqualTo(REVISION);
+            assertThat(vnni.modelDir()).isEqualTo(bundled);
+
+            CrossEncoderModel avx2 = model(config("model-url", bundled.toString()), Set.of("avx2"));
+            assertThat(avx2.check()).isTrue();
+            assertThat(avx2.loaded().onnxFile()).isEqualTo(ModelLayout.QUINT8_AVX2);
+
+            CrossEncoderModel fp32 = model(config("model-url", bundled.toString(), "variant", "fp32"),
+                    Set.of("avx_vnni"));
+            assertThat(fp32.check()).isTrue();
+            assertThat(fp32.loaded().onnxFile()).isEqualTo(ModelLayout.FP32);
+            assertThat(fp32.loaded().variant()).isEqualTo(Variant.FP32);
+
+            assertThat(requests.get()).isZero();
+            assertThat(bundled.resolve("tmp")).doesNotExist();
+            assertThat(bundled.resolve(ModelLayout.MANIFEST)).hasContent(manifest);   // never rewritten
+            assertThat(tmp.resolve("data/cross-encoder")).doesNotExist();            // model-dir untouched
+        } finally {
+            Files.setPosixFilePermissions(bundled, writable);
+            Files.setPosixFilePermissions(bundled.resolve("onnx"), writable);
+        }
+    }
+
+    @Test
+    void missingLocalDirectoryStaysNotReadyWithoutNetwork() {
+        Path absent = tmp.resolve("opt/kina/cross-encoder");
+        CrossEncoderModel model = model(config("model-url", absent.toString(), "auto-download", "false"),
+                Set.of("avx2"));
+        assertThat(model.check()).isFalse();
+        assertThat(model.isReady()).isFalse();
+        assertThat(model.lastError()).contains("does not exist").contains(absent.toString());
+        assertThat(model.modelDir()).isEqualTo(absent);
+        assertThat(requests.get()).isZero();
+        assertThat(absent).doesNotExist();
+    }
+
+    @Test
+    void bundledInt8OnlyDirectoryCannotServeFp32() throws Exception {
+        Path bundled = tmp.resolve("int8-only");
+        for (String f : List.of(ModelLayout.VOCAB, ModelLayout.CONFIG, ModelLayout.TOKENIZER_CONFIG,
+                ModelLayout.QINT8_AVX512_VNNI, ModelLayout.QUINT8_AVX2)) {
+            Files.createDirectories(bundled.resolve(f).getParent());
+            Files.write(bundled.resolve(f), files.get(f));
+        }
+        CrossEncoderModel model = model(config("model-url", bundled.toString(), "variant", "fp32"), Set.of("avx2"));
+        assertThat(model.check()).isFalse();
+        assertThat(model.lastError()).contains(ModelLayout.FP32 + " missing");
+        assertThat(requests.get()).isZero();
+    }
+
+    @Test
     void filesFromAnotherSourceAreReplaced() throws Exception {
         Path dir = tmp.resolve("data/cross-encoder");
         assertThat(model(config(), Set.of("avx_vnni")).check()).isTrue();
