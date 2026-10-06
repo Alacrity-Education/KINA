@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.domain.Availability;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
@@ -49,7 +50,15 @@ public class RankingService {
      * A part with its final score in [0,1] and its deterministic match grade ({@link DeterministicRanker.Assessment},
      * null when unknown).
      */
-    public record RankedPart(Part part, double score, Double match) {
+    public record RankedPart(Part part, double score, Double match, List<String> mismatches) {
+
+        public RankedPart {
+            mismatches = mismatches == null ? List.of() : List.copyOf(mismatches);
+        }
+
+        public RankedPart(Part part, double score, Double match) {
+            this(part, score, match, List.of());
+        }
 
         public RankedPart(Part part, double score) {
             this(part, score, null);
@@ -60,7 +69,25 @@ public class RankingService {
      * Ranked parts per distributor (best first, same distributors as the input), the ranking mode and an optional
      * note explaining a fallback (null when the blend succeeded).
      */
-    public record RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note) {
+    public record RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note,
+                                Map<Distributor, Integer> excluded) {
+
+        public RankedResults {
+            excluded = excluded == null ? Map.of() : Map.copyOf(excluded);
+        }
+
+        public RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note) {
+            this(byDistributor, mode, note, null);
+        }
+
+        /** Parts of {@code distributor} removed because a known attribute contradicts a strict constraint. */
+        public int excludedBy(Distributor distributor) {
+            return excluded.getOrDefault(distributor, 0);
+        }
+
+        RankedResults withExcluded(Map<Distributor, Integer> counts) {
+            return new RankedResults(byDistributor, mode, note, counts);
+        }
     }
 
     /**
@@ -83,6 +110,7 @@ public class RankingService {
     }
 
     private final KinaProperties.Ranking config;
+    private final KinaProperties.Search search;
     private final DeterministicRanker deterministic;
     private final PartRanker ranker;
     private final Supplier<CrossEncoderPartRanker.Status> modelStatus;
@@ -97,6 +125,7 @@ public class RankingService {
     RankingService(KinaProperties properties, DeterministicRanker deterministic, PartRanker ranker,
                    Supplier<CrossEncoderPartRanker.Status> modelStatus, RankingScoreCache cache) {
         this.config = properties.ranking();
+        this.search = properties.search();
         this.deterministic = deterministic;
         this.ranker = ranker;
         this.modelStatus = modelStatus;
@@ -125,51 +154,84 @@ public class RankingService {
      * The returned parts are the input parts (not enriched).
      */
     public RankedResults rank(ParsedQuery query, Map<Distributor, List<Part>> fetched, Duration budget) {
+        return rank(query, fetched, budget, 1);
+    }
+
+    /**
+     * As {@link #rank(ParsedQuery, Map, Duration)} for an order of {@code quantity} pieces (DESIGN.md 3.4): parts whose
+     * known mounting or technology contradicts the request ({@code kina.search.strict-constraints}) are removed and
+     * counted ({@link RankedResults#excludedBy}); parts that do not state such an attribute, and parts with less stock
+     * than {@code quantity}, keep their score but rank after the parts without that flaw (stock shortfall first); a
+     * stock shortfall and a minimum order quantity above {@code quantity} also lower the deterministic score
+     * ({@code kina.search.quantity.*}).
+     */
+    public RankedResults rank(ParsedQuery query, Map<Distributor, List<Part>> fetched, Duration budget,
+                              int quantity) {
         Duration effective = budget == null ? config.timeout() : budget;
         long deadline = System.nanoTime() + effective.toNanos();
         Map<Distributor, List<Part>> input = fetched == null ? Map.of() : fetched;
         Map<String, Double> det = new HashMap<>();
         Map<String, Double> match = new HashMap<>();
+        Map<String, Integer> tiers = new HashMap<>();
+        Map<String, List<String>> mismatches = new HashMap<>();
+        Map<Distributor, Integer> excluded = new EnumMap<>(Distributor.class);
         Map<Distributor, List<Part>> sorted = new EnumMap<>(Distributor.class);
+        int qty = Math.max(1, quantity);
         try {
             input.forEach((distributor, parts) -> {
-                List<Part> unique = dedupe(parts);
-                unique.forEach(p -> {
+                List<Part> kept = new ArrayList<>();
+                for (Part p : dedupe(parts)) {
+                    DeterministicRanker.ConstraintCheck check = safeCheck(query, p);
+                    if (check == DeterministicRanker.ConstraintCheck.CONFLICT) {
+                        excluded.merge(distributor, 1, Integer::sum);
+                        continue;
+                    }
+                    kept.add(p);
                     DeterministicRanker.Assessment a = safeAssess(query, p);
-                    det.put(PartKey.of(p), a.score());
+                    double penalty = DeterministicRanker.quantityPenalty(p, qty,
+                            search.quantity().stockShortfallPenalty(), search.quantity().moqPenalty())
+                            + lifecyclePenalty(p);
+                    mismatches.put(PartKey.of(p), a.mismatches());
+                    det.put(PartKey.of(p), Math.clamp(a.score() - penalty, 0.0, 1.0));
                     match.put(PartKey.of(p), a.match());
-                });
-                List<Part> ordered = new ArrayList<>(unique);
-                ordered.sort(byScore(det, det));
-                sorted.put(distributor, ordered);
+                    tiers.put(PartKey.of(p), (p.stock() < qty ? 2 : 0)
+                            + (check == DeterministicRanker.ConstraintCheck.UNKNOWN ? 1 : 0));
+                }
+                kept.sort(byScore(tiers, det, det));
+                sorted.put(distributor, kept);
             });
         } catch (RuntimeException e) {
             log.warn("deterministic ranking failed", e);
             sorted.clear();
+            tiers.clear();
             input.forEach((distributor, parts) -> sorted.put(distributor, dedupe(parts)));
-            return fallback(sorted, det, match, "ranking failed: " + e.getClass().getSimpleName());
+            return withMismatches(fallback(sorted, det, match, "ranking failed: " + e.getClass().getSimpleName())
+                    .withExcluded(excluded), mismatches);
         }
 
         if (!config.crossEncoder().enabled()) {
-            return fallback(sorted, det, match, "cross-encoder disabled");
+            return withMismatches(fallback(sorted, det, match, "cross-encoder disabled").withExcluded(excluded),
+                    mismatches);
         }
         if (sorted.values().stream().allMatch(List::isEmpty)) {
-            return new RankedResults(emptyLists(sorted), RankingMode.BLENDED, null);
+            return new RankedResults(emptyLists(sorted), RankingMode.BLENDED, null, excluded);
         }
         try {
-            return blendedRanking(query, sorted, det, match, deadline, effective);
+            return withMismatches(blendedRanking(query, sorted, det, match, tiers, deadline, effective)
+                    .withExcluded(excluded), mismatches);
         } catch (RankingException e) {
             log.info("ranking fallback for '{}': {}", query.normalizedKey(), e.getMessage());
-            return fallback(sorted, det, match, e.getMessage());
+            return withMismatches(fallback(sorted, det, match, e.getMessage()).withExcluded(excluded), mismatches);
         } catch (RuntimeException e) {
             log.warn("ranking fallback after unexpected error", e);
-            return fallback(sorted, det, match, "cross-encoder failed: " + e.getClass().getSimpleName());
+            return withMismatches(fallback(sorted, det, match, "cross-encoder failed: " + e.getClass().getSimpleName())
+                    .withExcluded(excluded), mismatches);
         }
     }
 
     private RankedResults blendedRanking(ParsedQuery query, Map<Distributor, List<Part>> sorted,
-                                         Map<String, Double> det, Map<String, Double> match, long deadline,
-                                         Duration budget)
+                                         Map<String, Double> det, Map<String, Double> match,
+                                         Map<String, Integer> tiers, long deadline, Duration budget)
             throws RankingException {
         Map<Distributor, Integer> quotas = quotas(sorted, config.crossEncoder().maxCandidates());
         List<Part> candidates = new ArrayList<>();
@@ -216,7 +278,7 @@ public class RankingService {
         }
         Map<String, Double> detCandidates = new HashMap<>();
         raw.keySet().forEach(k -> detCandidates.put(k, det.getOrDefault(k, 0.0)));
-        return blended(sorted, det, match, normalise(detCandidates), normalise(raw));
+        return blended(sorted, det, match, tiers, normalise(detCandidates), normalise(raw));
     }
 
     /**
@@ -307,7 +369,7 @@ public class RankingService {
      * in [0,1] and descending.
      */
     private RankedResults blended(Map<Distributor, List<Part>> sorted, Map<String, Double> det,
-                                  Map<String, Double> match, Map<String, Double> detNorm,
+                                  Map<String, Double> match, Map<String, Integer> tiers, Map<String, Double> detNorm,
                                   Map<String, Double> modelNorm) {
         double w = Math.clamp(config.crossEncoder().weight(), 0.0, 1.0);
         Map<String, Double> finalScores = new HashMap<>();
@@ -317,15 +379,16 @@ public class RankingService {
             List<Part> candidates = new ArrayList<>();
             List<Part> others = new ArrayList<>();
             parts.forEach(p -> (modelNorm.containsKey(PartKey.of(p)) ? candidates : others).add(p));
-            candidates.sort(byScore(finalScores, det));
-            others.sort(byScore(det, det));
+            candidates.sort(byScore(tiers, finalScores, det));
+            others.sort(byScore(tiers, det, det));
             List<RankedPart> ranked = new ArrayList<>(parts.size());
             candidates.forEach(p -> ranked.add(new RankedPart(p, finalScores.get(PartKey.of(p)),
                     match.get(PartKey.of(p)))));
-            double floor = candidates.isEmpty() ? 1.0 : ranked.getLast().score();
+            double floor = candidates.isEmpty() ? 1.0 : ranked.stream().mapToDouble(RankedPart::score).min()
+                    .orElse(1.0);
             others.forEach(p -> ranked.add(new RankedPart(p, floor * det.getOrDefault(PartKey.of(p), 0.0),
                     match.get(PartKey.of(p)))));
-            out.put(distributor, List.copyOf(ranked));
+            out.put(distributor, descending(ranked, tiers));
         });
         return new RankedResults(out, RankingMode.BLENDED, null);
     }
@@ -336,18 +399,67 @@ public class RankingService {
         return out;
     }
 
+    private static RankedResults withMismatches(RankedResults results, Map<String, List<String>> mismatches) {
+        if (mismatches.isEmpty()) {
+            return results;
+        }
+        Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
+        results.byDistributor().forEach((d, parts) -> out.put(d, parts.stream()
+                .map(r -> new RankedPart(r.part(), r.score(), r.match(),
+                        mismatches.getOrDefault(PartKey.of(r.part()), List.of())))
+                .toList()));
+        return new RankedResults(out, results.mode(), results.note(), results.excluded());
+    }
+
+    /**
+     * Deterministic-score deduction for the part's lifecycle ({@code kina.search.lifecycle.*}): a last-time-buy part
+     * (TME {@code AVAILABLE_WHILE_STOCKS_LAST}, Mouser end of life / obsolete / NRND) and, smaller, a supply-constrained
+     * one (TME {@code HARDLY_AVAILABLE}).
+     */
+    private double lifecyclePenalty(Part part) {
+        return switch (Availability.lifecycleOf(part)) {
+            case Availability.LAST_TIME_BUY -> search.lifecycle().lastTimeBuyPenalty();
+            case Availability.SUPPLY_CONSTRAINED -> search.lifecycle().supplyConstrainedPenalty();
+            default -> 0.0;
+        };
+    }
+
+    /**
+     * Keeps {@code score} non-increasing down the list: a part ranked after better-tier parts (missing strict
+     * attribute, stock shortfall) never shows a higher score than the parts above it; candidates of a lower tier also
+     * move behind the non-candidates of a better tier.
+     */
+    private static List<RankedPart> descending(List<RankedPart> ranked, Map<String, Integer> tiers) {
+        List<RankedPart> ordered = new ArrayList<>(ranked);
+        ordered.sort(Comparator.comparingInt(r -> tiers.getOrDefault(PartKey.of(r.part()), 0)));
+        List<RankedPart> out = new ArrayList<>(ordered.size());
+        double previous = Double.MAX_VALUE;
+        for (RankedPart r : ordered) {
+            double score = Math.min(r.score(), previous);
+            out.add(score == r.score() ? r : new RankedPart(r.part(), score, r.match(), r.mismatches()));
+            previous = score;
+        }
+        return List.copyOf(out);
+    }
+
     private static RankedResults fallback(Map<Distributor, List<Part>> sorted, Map<String, Double> det,
                                           Map<String, Double> match, String note) {
         Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
-        sorted.forEach((distributor, parts) -> out.put(distributor, parts.stream()
+        // the parts are already in tier order: only keep the scores non-increasing
+        sorted.forEach((distributor, parts) -> out.put(distributor, descending(parts.stream()
                 .map(p -> new RankedPart(p, det.getOrDefault(PartKey.of(p), 0.0), match.get(PartKey.of(p))))
-                .toList()));
+                .toList(), Map.of())));
         return new RankedResults(out, RankingMode.FALLBACK, note);
     }
 
-    /** Primary score desc, deterministic score desc, stock desc, unit price (smallest price break) asc. */
-    private static Comparator<Part> byScore(Map<String, Double> primary, Map<String, Double> det) {
-        Comparator<Part> c = Comparator.comparingDouble(p -> -primary.getOrDefault(PartKey.of(p), 0.0));
+    /**
+     * Tier asc (0 = no flaw, 1 = a strict attribute not stated, 2 = stock below the quantity, 3 = both), primary score
+     * desc, deterministic score desc, stock desc, unit price (smallest price break) asc.
+     */
+    private static Comparator<Part> byScore(Map<String, Integer> tiers, Map<String, Double> primary,
+                                            Map<String, Double> det) {
+        Comparator<Part> c = Comparator.<Part>comparingInt(p -> tiers.getOrDefault(PartKey.of(p), 0))
+                .thenComparingDouble(p -> -primary.getOrDefault(PartKey.of(p), 0.0));
         return c.thenComparingDouble(p -> -det.getOrDefault(PartKey.of(p), 0.0))
                 .thenComparingInt(p -> -p.stock())
                 .thenComparing(RankingService::unitPrice, Comparator.nullsLast(Comparator.naturalOrder()));
@@ -358,6 +470,15 @@ public class RankingService {
                 .min(Comparator.comparingInt(PriceBreak::quantity))
                 .map(PriceBreak::unitPrice)
                 .orElse(null);
+    }
+
+    private DeterministicRanker.ConstraintCheck safeCheck(ParsedQuery query, Part part) {
+        try {
+            return deterministic.check(query, part, search.strictConstraints());
+        } catch (RuntimeException e) {
+            log.warn("constraint check failed for {}", PartKey.of(part), e);
+            return DeterministicRanker.ConstraintCheck.MATCH;
+        }
     }
 
     private DeterministicRanker.Assessment safeAssess(ParsedQuery query, Part part) {

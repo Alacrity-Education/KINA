@@ -148,7 +148,10 @@ class McpToolsIntegrationTest {
         assertThat(top.path("part_number").asString()).isEqualTo("603-CC0805KRX7R4");   // the only 10uF part
         assertThat(top.path("prices")).hasSize(3);
         assertThat(top.path("attributes").path("Capacitance").asString()).isEqualTo("10uF");
-        assertThat(top.path("photo_url").asString()).isEqualTo("https://example.invalid/p.jpg");
+        // detail "compact" (default): no photo, no raw extra; availability is always there
+        assertThat(top.path("photo_url").isMissingNode()).isTrue();
+        assertThat(top.path("extra").isMissingNode()).isTrue();
+        assertThat(top.path("availability").path("status").asString()).isEqualTo("in_stock");
         assertThat(MOUSER.searches.get() - before).isEqualTo(1);
 
         Integer cachedRows = jdbc.sql("SELECT count(*) FROM cached_parts WHERE distributor = 'MOUSER'")

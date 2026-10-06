@@ -67,7 +67,12 @@ public record JlcpcbQuery(List<Term> terms) {
         /** Mounting ({@code Through Hole} / {@code Surface Mount}). */
         MOUNTING,
         /** A USB standard or connector feature ({@code "USB 2.0"}, {@code mid-mount}, {@code waterproof}). */
-        FEATURE
+        FEATURE,
+        /**
+         * A minimum rating written {@code >=25V}, {@code >=6A}, {@code >=125mW} (DESIGN.md 3.2): the description must
+         * state a value of that unit at least that high ({@code 35V} and {@code 50V} parts satisfy {@code >=25V}).
+         */
+        RATING
     }
 
     /**
@@ -90,14 +95,34 @@ public record JlcpcbQuery(List<Term> terms) {
             return kind != Kind.KEYWORD;
         }
 
+        /** For {@link Kind#RATING}: the minimum in the unit's base (volt, ampere, watt). */
+        public double ratingMinimum() {
+            Matcher m = RATING_TEXT.matcher(text);
+            if (!m.matches()) {
+                return Double.NaN;
+            }
+            double multiplier = switch (m.group(2)) {
+                case "m" -> 1e-3;
+                case "k" -> 1e3;
+                default -> 1.0;
+            };
+            return Double.parseDouble(m.group(1)) * multiplier;
+        }
+
+        /** For {@link Kind#RATING}: "V", "A" or "W". */
+        public String ratingUnit() {
+            Matcher m = RATING_TEXT.matcher(text);
+            return m.matches() ? m.group(3).toUpperCase(Locale.ROOT) : null;
+        }
+
         /** The phrases to MATCH: the alternatives, or the text itself. */
         public List<String> phrases() {
             return alternatives.isEmpty() ? List.of(text) : alternatives;
         }
 
-        /** Trigram MATCH needs at least 3 characters (in every alternative). */
+        /** Trigram MATCH needs at least 3 characters (in every alternative); a rating is checked by a function. */
         public boolean matchable() {
-            return phrases().stream().allMatch(p -> p.codePointCount(0, p.length()) >= 3);
+            return kind != Kind.RATING && phrases().stream().allMatch(p -> p.codePointCount(0, p.length()) >= 3);
         }
 
         /** Checked with the value-boundary function ({@code 6P} must not match {@code 16P}). */
@@ -219,12 +244,25 @@ public record JlcpcbQuery(List<Term> terms) {
     private static final Pattern OHM_WORD = Pattern.compile("(?iu)ohms?|Ω");
     private static final String STRIP = "\"'`()[]{}*^:;,+<>=!?";
 
+    /** A rating term as written in the query ({@code >=25V}). */
+    private static final Pattern RATING_TERM = Pattern.compile("(?<!\\S)>=(\\d+(?:\\.\\d+)?)([mk]?)([VvAaWw])(?!\\S)");
+    /** A rating term's text ({@code 25V}, {@code 125mW}). */
+    static final Pattern RATING_TEXT = Pattern.compile("^(\\d+(?:\\.\\d+)?)([mk]?)([VvAaWw])$");
+
     public static JlcpcbQuery parse(String query) {
         if (query == null || query.isBlank()) {
             return new JlcpcbQuery(List.of());
         }
         String text = Normalizer.normalize(query, Normalizer.Form.NFKC)
                 .replace('µ', 'u').replace('μ', 'u').replace("+/-", "±");
+        // minimum ratings (">=25V") are checked by a function, never matched as text
+        List<Term> ratings = new ArrayList<>();
+        Matcher rating = RATING_TERM.matcher(text);
+        while (rating.find()) {
+            ratings.add(new Term(rating.group(1) + rating.group(2) + rating.group(3).toUpperCase(Locale.ROOT),
+                    Kind.RATING));
+        }
+        text = RATING_TERM.matcher(text).replaceAll(" ");
         // double-quoted phrases at token boundaries are single terms ("Female Header", "Right Angle")
         List<String> raw = new ArrayList<>();
         Matcher quoted = QUOTED.matcher(text);
@@ -294,6 +332,9 @@ public record JlcpcbQuery(List<Term> terms) {
         boolean rightAngle = terms.stream().anyMatch(t -> t.kind() == Kind.ORIENTATION && t.text().equals("Right Angle"));
         if (rightAngle) {
             terms.removeIf(t -> t.kind() == Kind.MOUNTING && t.alternatives().equals(THT));
+        }
+        if (!terms.isEmpty()) {
+            terms.addAll(ratings);   // a rating alone is no query
         }
         return new JlcpcbQuery(terms);
     }

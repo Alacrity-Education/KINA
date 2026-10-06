@@ -24,13 +24,29 @@ import java.util.regex.Pattern;
 @UtilityClass
 class Recognizers {
 
-    /** Analysis result of one free text. Values are keyed by the {@link ParsedQuery} kind constants. */
+    /**
+     * Analysis result of one free text. Values are keyed by the {@link ParsedQuery} kind constants; {@code preferences}
+     * holds soft preferences such as {@link ParsedQuery#LOW_DCR}.
+     */
     record Analysis(String family, boolean familyExplicit, Map<String, Value> values, String dielectric,
-                    String packageName, String mounting, List<String> keywords, String technology) {
+                    String packageName, String mounting, List<String> keywords, String technology,
+                    List<String> preferences) {
+
+        Analysis {
+            preferences = preferences == null ? List.of() : List.copyOf(preferences);
+        }
     }
 
-    /** A numeric value in SI base units (tolerance: percent) with its compact display form. */
-    record Value(String kind, double value, String display) {
+    /**
+     * A numeric value in SI base units (tolerance: percent, temperature: degrees Celsius, lifetime: hours) with its
+     * compact display form. {@code condition} is the test frequency (Hz) of an impedance or the temperature (degrees
+     * Celsius) of a lifetime when stated, else null.
+     */
+    record Value(String kind, double value, String display, Double condition) {
+
+        Value(String kind, double value, String display) {
+            this(kind, value, display, null);
+        }
     }
 
     // ------------------------------------------------------------------ normalisation
@@ -41,7 +57,7 @@ class Recognizers {
     private static final Pattern DECIMAL_COMMA = Pattern.compile("(?<=\\d),(?=\\d)");
     private static final Pattern NUMBER_UNIT_GAP = Pattern.compile(
             "(?i)(\\d)\\s+(?=(?:pf|nf|uf|mf|f|ohms?|kohms?|mohms?|megohms?|r|k|meg|nh|uh|mh|h|v|kv|mv|vdc|vac|a|ma|ua"
-                    + "|w|mw|kw|hz|khz|mhz|ghz)(?![\\p{L}\\d]))");
+                    + "|w|mw|kw|hz|khz|mhz|ghz|hrs?|hours?|volts?|vol|vo)(?![\\p{L}\\d])|°)");
     private static final Pattern TOKEN_SPLIT = Pattern.compile("[\\s,;:()\\[\\]{}|\"<>=~*]+|/(?!\\d)|(?<!\\d)/");
 
     private static final List<Map.Entry<Pattern, String>> PHRASES = List.of(
@@ -201,10 +217,16 @@ class Recognizers {
             Map.entry("x6s", "X6S"), Map.entry("x8r", "X8R"), Map.entry("x5s", "X5S"), Map.entry("x7t", "X7T"),
             Map.entry("x8l", "X8L"), Map.entry("z5u", "Z5U"), Map.entry("x6t", "X6T"), Map.entry("x8g", "X8G"));
 
-    /** Mounting words; {@code 插件} (plug-in) and {@code 卧贴} (horizontal SMD) are JLCPCB description wording. */
-    private static final Map<String, String> MOUNTINGS = Map.of(
-            "smd", "SMD", "smt", "SMD", "tht", "THT", "through-hole", "THT", "pth", "THT", "插件", "THT", "卧贴", "SMD",
-            "立贴", "SMD");
+    /**
+     * Mounting words; {@code 插件} (plug-in) and {@code 卧贴} (horizontal SMD) are JLCPCB description wording,
+     * {@code radial}, {@code axial} and {@code leaded} name through-hole bodies (Mouser "Radial Leaded", LCSC
+     * "Aluminum Electrolytic Capacitors - Leaded").
+     */
+    private static final Map<String, String> MOUNTINGS = Map.ofEntries(
+            Map.entry("smd", "SMD"), Map.entry("smt", "SMD"), Map.entry("tht", "THT"), Map.entry("through-hole", "THT"),
+            Map.entry("pth", "THT"), Map.entry("插件", "THT"), Map.entry("卧贴", "SMD"), Map.entry("立贴", "SMD"),
+            // Mouser/LCSC capacitor categories and descriptions: "Radial Leaded", "Leaded", "Axial"
+            Map.entry("radial", "THT"), Map.entry("axial", "THT"), Map.entry("leaded", "THT"));
 
     /** "X7R", "C0G" (NP0/NPO/COG are normalised to C0G), or null. */
     static String dielectric(String token) {
@@ -373,8 +395,23 @@ class Recognizers {
 
     // ------------------------------------------------------------------ values
 
+    /**
+     * {@code <number><prefix><unit>}. The match ignores case, but the prefix is then read case-sensitively where the
+     * case carries meaning: {@code m} is milli and {@code M} is mega for every unit (so {@code 10mA} and {@code 10MA}
+     * differ); the single exception is {@code mhz}, read as MHz because millihertz never occurs in component data.
+     * Units whose case carries no meaning ({@code v}/{@code V}, {@code a}/{@code A}, {@code w}/{@code W},
+     * {@code uf}/{@code uF}, {@code hz}/{@code Hz}) are accepted in either case. Hours ({@code h}) and henry
+     * ({@code H}) are told apart by case, see {@link #value}.
+     */
     private static final Pattern P_UNIT_VALUE = Pattern.compile(
-            "^(\\d+(?:\\.\\d+)?|\\.\\d+)(meg|[pnumkgPNUMKG]?)(f|ohms?|r|h|v|vdc|vac|a|w|hz)$", Pattern.CASE_INSENSITIVE);
+            "^(\\d+(?:\\.\\d+)?|\\.\\d+)(meg|[pnumkgPNUMKG]?)(f|ohms?|r|h|v|vdc|vac|volts?|vol|vo|a|w|hz)$",
+            Pattern.CASE_INSENSITIVE);
+    /** Hours: {@code 2000h} (lower-case h only), {@code 2000hrs}, {@code 1000 hours}, {@code 5000Hrs}. */
+    private static final Pattern P_HOURS = Pattern.compile("^(\\d+(?:\\.\\d+)?)(h|[hH](?:rs?|RS?|ours?|OURS?))$");
+    /** Degrees Celsius: {@code 105°C}, {@code +125°C}, {@code 85°} (NFKC turns {@code ℃} into {@code °C}). */
+    private static final Pattern P_DEGREES = Pattern.compile("^\\+?(\\d{1,3}(?:\\.\\d+)?)°[cC]?$");
+    /** Mouser writes {@code 105C}: a bare upper-case C after 70..200 is a temperature. */
+    private static final Pattern P_BARE_CELSIUS = Pattern.compile("^(\\d{2,3})C$");
     private static final Pattern P_RKM = Pattern.compile("^(\\d{1,3})([pnuPNUkKMRr])(\\d{1,3})(f|h|ohms?)?$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern P_R_LEADING = Pattern.compile("^[rR](\\d{1,3})$");
@@ -382,6 +419,8 @@ class Recognizers {
     private static final Pattern P_FRACTION_POWER = Pattern.compile("^(\\d{1,2})/(\\d{1,3})[wW]$");
     /** {@code 5%}, {@code ±0.1%}, and the leading-dot form Mouser writes ({@code .1%}, {@code ±.5%}). */
     private static final Pattern P_TOLERANCE = Pattern.compile("^±?(\\d+(?:\\.\\d+)?|\\.\\d+)%$");
+    /** Below this many hours an upper-case {@code H} without prefix stays a henry value even for a capacitor. */
+    private static final double MIN_LIFETIME_HOURS = 100;
 
     /** Parses a tolerance token ("±5%", "1%", ".1%") to percent, or null. */
     static Double tolerance(String token) {
@@ -390,14 +429,33 @@ class Recognizers {
     }
 
     /**
-     * Parses one value token ("10uF", "4k7", "2R2", "1/8W", "12MHz"). Ambiguous unit-less forms use the family
-     * ({@code 4u7} is an inductance for inductors, a capacitance otherwise). Returns null when not a value.
+     * Parses one value token ("10uF", "4k7", "2R2", "1/8W", "12MHz", "2000h", "105°C"). Ambiguous unit-less forms use
+     * the family ({@code 4u7} is an inductance for inductors, a capacitance otherwise). Returns null when not a value.
+     *
+     * <p>Hours and henry: a lower-case {@code h} (and {@code hrs}, {@code hours}) after a bare number is a lifetime in
+     * hours ({@code 2000h}); an upper-case {@code H} is a henry value, except in the text of a part or query whose
+     * family is known and not inductive (a capacitor), where {@code 3000H} of at least {@value #MIN_LIFETIME_HOURS}
+     * is a lifetime (Mouser "100UF 63V 105C 3000H"). With an SI prefix ({@code uH}, {@code uh}, {@code mH}) it is
+     * always henry: hours never carry one.
      */
     static Value value(String token, String family) {
         Matcher m = P_FRACTION_POWER.matcher(token);
         if (m.matches()) {
             double den = Double.parseDouble(m.group(2));
             return den == 0 ? null : of(ParsedQuery.POWER, Double.parseDouble(m.group(1)) / den);
+        }
+        m = P_HOURS.matcher(token);
+        if (m.matches()) {
+            return of(ParsedQuery.LIFETIME, Double.parseDouble(m.group(1)));
+        }
+        m = P_DEGREES.matcher(token);
+        if (m.matches()) {
+            return of(ParsedQuery.TEMPERATURE, Double.parseDouble(m.group(1)));
+        }
+        m = P_BARE_CELSIUS.matcher(token);
+        if (m.matches()) {
+            int degrees = Integer.parseInt(m.group(1));
+            return degrees >= 70 && degrees <= 200 ? of(ParsedQuery.TEMPERATURE, degrees) : null;
         }
         m = P_UNIT_VALUE.matcher(token);
         if (m.matches()) {
@@ -407,11 +465,15 @@ class Recognizers {
             if (unit.equals("r") && !prefix.isEmpty()) {
                 return null;
             }
+            if (unit.equals("h") && prefix.isEmpty() && family != null && !inductive(family)
+                    && number >= MIN_LIFETIME_HOURS) {
+                return of(ParsedQuery.LIFETIME, number);   // Mouser "105C 3000H" on a capacitor
+            }
             String kind = switch (unit) {
                 case "f" -> ParsedQuery.CAPACITANCE;
                 case "ohm", "ohms", "r" -> ParsedQuery.RESISTANCE;
                 case "h" -> ParsedQuery.INDUCTANCE;
-                case "v", "vdc", "vac" -> ParsedQuery.VOLTAGE;
+                case "v", "vdc", "vac", "volt", "volts", "vol", "vo" -> ParsedQuery.VOLTAGE;   // KEMET "10Vol", "6.3Vo"
                 case "a" -> ParsedQuery.CURRENT;
                 case "w" -> ParsedQuery.POWER;
                 default -> ParsedQuery.FREQUENCY;
@@ -470,10 +532,15 @@ class Recognizers {
         }
     }
 
-    private static boolean inductive(String family) {
+    /** Inductors and ferrite beads (an ohm value is impedance or DC resistance there, never a nominal resistance). */
+    static boolean inductive(String family) {
         return "inductor".equals(family) || "ferrite".equals(family);
     }
 
+    /**
+     * SI prefix multiplier, case-sensitive where the case carries meaning: {@code m} milli, {@code M} mega (also
+     * {@code meg}); {@code mhz} is the one tolerated spelling of MHz. Other prefixes are accepted in either case.
+     */
     private static Double multiplier(String prefix, String kind) {
         if (prefix.isEmpty()) {
             return 1.0;
@@ -488,13 +555,23 @@ class Recognizers {
             case "k", "K" -> 1e3;
             case "g", "G" -> 1e9;
             case "m" -> kind.equals(ParsedQuery.FREQUENCY) ? 1e6 : 1e-3;
-            case "M" -> kind.equals(ParsedQuery.RESISTANCE) || kind.equals(ParsedQuery.FREQUENCY) ? 1e6 : 1e-3;
+            case "M" -> 1e6;
             default -> null;
         };
     }
 
     static Value of(String kind, double value) {
         return new Value(kind, value, display(kind, value));
+    }
+
+    /** A value with its test condition (impedance: frequency in Hz; lifetime: temperature in degrees Celsius). */
+    static Value of(String kind, double value, Double condition) {
+        if (condition == null) {
+            return of(kind, value);
+        }
+        String suffix = ParsedQuery.LIFETIME.equals(kind) ? " @" + format(condition) + "°C"
+                : " @" + display(ParsedQuery.FREQUENCY, condition);
+        return new Value(kind, value, display(kind, value) + suffix, condition);
     }
 
     private record Prefix(String symbol, double multiplier) {
@@ -510,8 +587,9 @@ class Recognizers {
             new Prefix("", 1), new Prefix("k", 1e3));
     private static final List<Prefix> FREQ_PREFIXES = List.of(new Prefix("", 1), new Prefix("k", 1e3),
             new Prefix("M", 1e6), new Prefix("G", 1e9));
+    private static final List<Prefix> NO_PREFIXES = List.of(new Prefix("", 1));
 
-    /** Compact human form: "10uF", "4.7kohm", "16V", "125mW", "12MHz", "5%". */
+    /** Compact human form: "10uF", "4.7kohm", "16V", "125mW", "12MHz", "5%", "105°C", "2000h". */
     static String display(String kind, double value) {
         if (kind.equals(ParsedQuery.TOLERANCE)) {
             return format(value) + "%";
@@ -523,7 +601,7 @@ class Recognizers {
                 prefixes = CAP_PREFIXES;
                 unit = "F";
             }
-            case ParsedQuery.RESISTANCE -> {
+            case ParsedQuery.RESISTANCE, ParsedQuery.IMPEDANCE, ParsedQuery.DCR -> {
                 prefixes = RES_PREFIXES;
                 unit = "ohm";
             }
@@ -535,13 +613,21 @@ class Recognizers {
                 prefixes = SMALL_PREFIXES;
                 unit = "V";
             }
-            case ParsedQuery.CURRENT -> {
+            case ParsedQuery.CURRENT, ParsedQuery.SATURATION_CURRENT -> {
                 prefixes = SMALL_PREFIXES;
                 unit = "A";
             }
             case ParsedQuery.POWER -> {
                 prefixes = SMALL_PREFIXES;
                 unit = "W";
+            }
+            case ParsedQuery.TEMPERATURE -> {
+                prefixes = NO_PREFIXES;
+                unit = "°C";
+            }
+            case ParsedQuery.LIFETIME -> {
+                prefixes = NO_PREFIXES;
+                unit = "h";
             }
             default -> {
                 prefixes = FREQ_PREFIXES;
@@ -564,18 +650,240 @@ class Recognizers {
         return new BigDecimal(v).round(new MathContext(6)).stripTrailingZeros().toPlainString();
     }
 
+    // ------------------------------------------------------------------ labelled values (spans)
+
+    private static final String NUMBER = "(\\d+(?:\\.\\d+)?)";
+    /**
+     * Operating temperature ranges: TME {@code -55...105°C}, {@code -55÷125°C}, LCSC {@code -55℃~+105℃} (NFKC:
+     * {@code °C}), {@code -40°C to +85°C}; the upper end is the maximum operating temperature.
+     */
+    private static final Pattern TEMPERATURE_RANGE = Pattern.compile(
+            "(?<![\\d.])[-−]\\s?\\d{1,3}(?:\\.\\d+)?\\s?(?:°C?|℃)?\\s?(?:~|\\.{2,3}|…|÷|to)\\s?\\+?(\\d{1,3}(?:\\.\\d+)?)"
+                    + "\\s?(?:°C?|℃|C(?![\\p{L}\\d]))");
+    /** Saturation current: {@code Isat 8A}, {@code Isat: 8A}, {@code saturation current 8A}, {@code Isat>=8A}. */
+    private static final Pattern ISAT = Pattern.compile(
+            "(?<![\\p{L}\\d])(?i:i\\s?sat|saturation(?:\\s+current)?)\\s*(?:[:=]|>=?|≥|min\\.?)?\\s*" + NUMBER
+                    + "\\s?(m?)[aA](?![\\p{L}\\d])");
+    /** {@code 8A Isat}, {@code 8A saturation current}, {@code 8A (Isat)}. */
+    private static final Pattern ISAT_AFTER = Pattern.compile(
+            "(?<![\\p{L}\\d.])" + NUMBER + "\\s?(m?)[aA]\\s*\\(?(?i:i\\s?sat|saturation(?:\\s+current)?)\\)?"
+                    + "(?![\\p{L}\\d])");
+    /** Labelled rated current: {@code Irated 6A}, {@code Ir: 6A}, TME {@code Ioper: 6A}, {@code rated current 6A}. */
+    private static final Pattern RATED_CURRENT = Pattern.compile(
+            "(?<![\\p{L}\\d])(?i:i\\s?rated|i\\s?rms|i\\s?oper|ir|rated\\s+current|operating\\s+current)\\s*"
+                    + "(?:[:=]|>=?|≥)?\\s*" + NUMBER + "\\s?(m?)[aA](?![\\p{L}\\d])");
+    /**
+     * DC resistance: {@code DCR 20mohm}, {@code DCR=17.2mOhms}, {@code DCR < 20mohm}, {@code DCR<=20mohm},
+     * {@code DCR 20mohm max}, {@code max DCR 20mohm}, {@code DC resistance: 28mohm} (Ω is already "ohm").
+     */
+    private static final Pattern DCR = Pattern.compile(
+            "(?<![\\p{L}\\d])(?i:(?:max\\.?\\s+)?(?:dcr|dc\\s+resistance|r\\s?dc))\\s*(?:[:=]|<=?|≤|(?i:max)\\.?)?\\s*"
+                    + "(?:(?i:max)\\.?\\s*)?" + NUMBER + "\\s?([mkM]?)(?:(?i:ohms?|r)|[ΩΩ])(?![\\p{L}\\d])(?:\\s*(?i:max)\\b\\.?)?");
+    /** {@code 20mohm DCR}, {@code 20mohm max DCR}. */
+    private static final Pattern DCR_AFTER = Pattern.compile(
+            "(?<![\\p{L}\\d.])" + NUMBER + "\\s?([mkM]?)(?:(?i:ohms?)|[ΩΩ])\\s*(?:(?i:max)\\.?\\s*)?(?i:dcr)(?![\\p{L}\\d])");
+    /** "low DCR" is a preference, not a keyword: lower DC resistance ranks higher among otherwise equal parts. */
+    private static final Pattern LOW_DCR = Pattern.compile(
+            "(?i)(?<![\\p{L}\\d])(?:low(?:est|er)?|ultra[- ]low|very\\s+low)[- ]?dcr(?![\\p{L}\\d])");
+    /** Words that only label a lifetime ("2000h lifetime", "endurance 5000h"): not free-text keywords then. */
+    private static final Set<String> LIFETIME_WORDS = Set.of("lifetime", "life", "endurance", "service", "load");
+
+    /** Values found by the labelled-span recognisers and the text with those spans blanked out. */
+    private record Labelled(Map<String, Value> values, String residual, List<String> preferences) {
+    }
+
+    /**
+     * Recognises labelled values that a token-by-token reading gets wrong: the maximum of an operating temperature
+     * range, saturation and labelled rated currents, DC resistance (a maximum) and the "low DCR" preference. The
+     * recognised spans are blanked out of the text.
+     */
+    private static Labelled labelled(String prepared) {
+        Map<String, Value> values = new LinkedHashMap<>();
+        List<String> preferences = new ArrayList<>();
+        StringBuilder text = new StringBuilder(prepared);
+        Matcher m = TEMPERATURE_RANGE.matcher(prepared);
+        while (m.find()) {
+            values.putIfAbsent(ParsedQuery.TEMPERATURE, of(ParsedQuery.TEMPERATURE, Double.parseDouble(m.group(1))));
+            blank(text, m.start(), m.end());
+        }
+        for (Pattern p : List.of(ISAT, ISAT_AFTER)) {
+            m = p.matcher(text);
+            while (m.find()) {
+                double amps = Double.parseDouble(m.group(1)) * (m.group(2).isEmpty() ? 1 : 1e-3);
+                values.putIfAbsent(ParsedQuery.SATURATION_CURRENT, of(ParsedQuery.SATURATION_CURRENT, amps));
+                blank(text, m.start(), m.end());
+            }
+        }
+        m = RATED_CURRENT.matcher(text);
+        while (m.find()) {
+            double amps = Double.parseDouble(m.group(1)) * (m.group(2).isEmpty() ? 1 : 1e-3);
+            values.putIfAbsent(ParsedQuery.CURRENT, of(ParsedQuery.CURRENT, amps));
+            blank(text, m.start(), m.end());
+        }
+        for (Pattern p : List.of(DCR, DCR_AFTER)) {
+            m = p.matcher(text);
+            while (m.find()) {
+                double ohms = Double.parseDouble(m.group(1)) * switch (m.group(2)) {
+                    case "m" -> 1e-3;
+                    case "k" -> 1e3;
+                    case "M" -> 1e6;
+                    default -> 1.0;
+                };
+                values.putIfAbsent(ParsedQuery.DCR, of(ParsedQuery.DCR, ohms));
+                blank(text, m.start(), m.end());
+            }
+        }
+        m = LOW_DCR.matcher(text);
+        while (m.find()) {
+            if (!preferences.contains(ParsedQuery.LOW_DCR)) {
+                preferences.add(ParsedQuery.LOW_DCR);
+            }
+            blank(text, m.start(), m.end());
+        }
+        return new Labelled(values, text.toString(), preferences);
+    }
+
+    /** Characters stripped around a word before it is read as a value ({@code (16V,} -&gt; {@code 16V}). */
+    private static final String WORD_PUNCTUATION = "([{,;:)]}";
+    private static final Pattern WORD = Pattern.compile("\\S+");
+    private static final Pattern NUMBER_WORD = Pattern.compile("^[+±]?\\d+(?:[.,]\\d+)?$");
+    /** A unit on its own ({@code V}, {@code mA}, {@code °C}, {@code hours}): no digits. */
+    private static final Pattern UNIT_WORD = Pattern.compile("^[\\p{L}°℃µΩ]+$");
+    private static final Map<String, Pattern> LABELLED_KINDS = labelledKinds();
+
+    private static Map<String, Pattern> labelledKinds() {
+        Map<String, Pattern> m = new LinkedHashMap<>();
+        m.put("temperature-range", TEMPERATURE_RANGE);
+        m.put("isat", ISAT);
+        m.put("isat-after", ISAT_AFTER);
+        m.put("rated-current", RATED_CURRENT);
+        m.put("dcr", DCR);
+        m.put("dcr-after", DCR_AFTER);
+        m.put("low-dcr", LOW_DCR);
+        return m;
+    }
+
+    private static String labelledKind(String name) {
+        return switch (name) {
+            case "temperature-range" -> ParsedQuery.TEMPERATURE;
+            case "isat", "isat-after" -> ParsedQuery.SATURATION_CURRENT;
+            case "rated-current" -> ParsedQuery.CURRENT;
+            default -> ParsedQuery.DCR;
+        };
+    }
+
+    /**
+     * Character ranges {@code [start, end)} of the original {@code text} that state a value of one of {@code kinds}:
+     * single words ({@code 25V}, {@code 6A}, {@code 105°C}, {@code 2000h}), a number followed by its unit
+     * ({@code 25 V}), and the labelled forms ({@code Isat 8A}, {@code DCR < 20mΩ}, {@code low DCR},
+     * {@code -40~105°C}). Used to keep minimum ratings out of distributor phrases.
+     */
+    static List<int[]> valueSpans(String text, String family, Set<String> kinds) {
+        List<int[]> spans = new ArrayList<>();
+        if (text == null || text.isBlank() || kinds.isEmpty()) {
+            return spans;
+        }
+        LABELLED_KINDS.forEach((name, pattern) -> {
+            if (kinds.contains(labelledKind(name))) {
+                Matcher m = pattern.matcher(text);
+                while (m.find()) {
+                    spans.add(new int[] {m.start(), m.end()});
+                }
+            }
+        });
+        List<int[]> words = new ArrayList<>();
+        Matcher w = WORD.matcher(text);
+        while (w.find()) {
+            int start = w.start();
+            int end = w.end();
+            while (start < end && WORD_PUNCTUATION.indexOf(text.charAt(start)) >= 0) {
+                start++;
+            }
+            while (end > start && (WORD_PUNCTUATION + ".").indexOf(text.charAt(end - 1)) >= 0) {
+                end--;
+            }
+            if (start < end) {
+                words.add(new int[] {start, end});
+            }
+        }
+        for (int i = 0; i < words.size(); i++) {
+            int[] word = words.get(i);
+            if (overlaps(spans, word[0], word[1])) {
+                continue;
+            }
+            String core = text.substring(word[0], word[1]);
+            Value v = wordValue(core, family);
+            if (v != null && kinds.contains(v.kind())) {
+                spans.add(word);
+                continue;
+            }
+            if (v == null && i + 1 < words.size() && NUMBER_WORD.matcher(core).matches()
+                    && UNIT_WORD.matcher(text.substring(words.get(i + 1)[0], words.get(i + 1)[1])).matches()) {
+                int[] next = words.get(i + 1);
+                Value pair = wordValue(core + text.substring(next[0], next[1]), family);
+                if (pair != null && kinds.contains(pair.kind()) && !overlaps(spans, next[0], next[1])) {
+                    spans.add(new int[] {word[0], next[1]});
+                    i++;
+                }
+            }
+        }
+        return spans;
+    }
+
+    /** The value one word states ({@code 2000h@105°C} counts as its lifetime), or null. */
+    private static Value wordValue(String word, String family) {
+        List<String> tokens = tokenize(prepare(word));
+        if (tokens.size() != 1) {
+            return null;
+        }
+        String token = tokens.getFirst();
+        int at = token.indexOf('@');
+        return value(at > 0 ? token.substring(0, at) : token, family);
+    }
+
+    private static boolean overlaps(List<int[]> spans, int start, int end) {
+        for (int[] s : spans) {
+            if (start < s[1] && s[0] < end) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void blank(StringBuilder text, int start, int end) {
+        for (int i = start; i < end; i++) {
+            text.setCharAt(i, ' ');
+        }
+    }
+
     // ------------------------------------------------------------------ analysis
 
     private static final Set<String> STOPWORDS = Set.of("a", "an", "the", "for", "with", "and", "or", "of", "in",
             "on", "to", "pcs", "pc", "type", "rohs", "new");
 
     private static final List<String> VALUE_ORDER = List.of(ParsedQuery.CAPACITANCE, ParsedQuery.RESISTANCE,
-            ParsedQuery.INDUCTANCE, ParsedQuery.FREQUENCY, ParsedQuery.VOLTAGE, ParsedQuery.CURRENT, ParsedQuery.POWER,
-            ParsedQuery.TOLERANCE);
+            ParsedQuery.INDUCTANCE, ParsedQuery.IMPEDANCE, ParsedQuery.FREQUENCY, ParsedQuery.VOLTAGE,
+            ParsedQuery.CURRENT, ParsedQuery.SATURATION_CURRENT, ParsedQuery.DCR, ParsedQuery.POWER,
+            ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME, ParsedQuery.TOLERANCE);
+
+    /** A value with the token it was read from. */
+    private record Read(Value value, String token) {
+    }
 
     /** Extracts every recognisable feature from a free text (query or part description). */
     static Analysis analyze(String text) {
-        List<String> tokens = text == null ? List.of() : tokenize(prepare(text));
+        return analyze(text, null);
+    }
+
+    /**
+     * As {@link #analyze(String)}; when the text names no family itself, {@code familyHint} (e.g. the family of the
+     * part's category: an LCSC ferrite bead description says only {@code 120Ω@100MHz 30mΩ 3A}) decides how values are
+     * read. The hint is not reported as an explicit family.
+     */
+    static Analysis analyze(String text, String familyHint) {
+        String prepared = text == null ? "" : prepare(text);
+        Labelled labelled = labelled(prepared);
+        List<String> tokens = text == null ? List.of() : tokenize(labelled.residual());
 
         // pass 1: explicit family (highest priority wins, first on ties)
         String family = null;
@@ -592,9 +900,14 @@ class Recognizers {
             }
         }
         boolean explicit = family != null;
+        if (family == null) {
+            family = familyHint;
+        }
 
         // pass 2: everything else
         Map<String, Value> values = new LinkedHashMap<>();
+        List<Read> ohms = new ArrayList<>();       // resolved after the family is final (impedance / DCR / resistance)
+        List<Read> currents = new ArrayList<>();   // inductors: several unlabelled currents (JLCPCB lists two)
         String dielectric = null;
         String packageName = null;
         String mounting = null;
@@ -651,9 +964,16 @@ class Recognizers {
                 }
                 continue;
             }
+            if (conditioned(token, family, values, ohms)) {
+                continue;
+            }
             Value v = value(token, family);
             if (v != null) {
-                if (!values.containsKey(v.kind())) {
+                if (v.kind().equals(ParsedQuery.RESISTANCE)) {
+                    ohms.add(new Read(v, t));
+                } else if (v.kind().equals(ParsedQuery.CURRENT) && inductive(family)) {
+                    currents.add(new Read(v, t));
+                } else if (!values.containsKey(v.kind())) {
                     values.put(v.kind(), v);
                 } else {
                     keywords.add(t);
@@ -668,11 +988,17 @@ class Recognizers {
         if (family == null) {
             if (values.containsKey(ParsedQuery.CAPACITANCE) || dielectric != null) {
                 family = "capacitor";
-            } else if (values.containsKey(ParsedQuery.RESISTANCE)) {
+            } else if (!ohms.isEmpty() && ohms.getFirst().value().condition() == null) {
                 family = "resistor";
             } else if (values.containsKey(ParsedQuery.INDUCTANCE)) {
                 family = "inductor";
             }
+        }
+        resolveOhms(family, values, ohms, keywords);
+        resolveCurrents(family, values, currents, labelled.values());
+        labelled.values().forEach(values::putIfAbsent);
+        if (values.containsKey(ParsedQuery.LIFETIME)) {
+            keywords.removeAll(LIFETIME_WORDS);
         }
         for (String t : deferredSizes) {
             String resolved = null;
@@ -689,15 +1015,15 @@ class Recognizers {
         }
 
         String technology = null;
-        TechnologyVocabulary.Match tech = text == null ? null : TechnologyVocabulary.find(prepare(text), family);
-        if (tech != null && FAMILY_WORDS.containsKey(prepare(text).substring(tech.start(), tech.end())
+        TechnologyVocabulary.Match tech = text == null ? null : TechnologyVocabulary.find(prepared, family);
+        if (tech != null && FAMILY_WORDS.containsKey(prepared.substring(tech.start(), tech.end())
                 .toLowerCase(Locale.ROOT))) {
             tech = null;   // "MLCC" alone is the family word (scored lexically), not a technology request
         }
         if (tech != null) {
             technology = tech.technology();
             // the technology words are a typed attribute now, not free text ("mlcc" stays: it is a family word)
-            for (String word : tokenize(prepare(text).substring(tech.start(), tech.end()))) {
+            for (String word : tokenize(prepared.substring(tech.start(), tech.end()))) {
                 String w = word.toLowerCase(Locale.ROOT);
                 if (!FAMILY_WORDS.containsKey(w)) {
                     keywords.remove(w);
@@ -714,7 +1040,95 @@ class Recognizers {
         }
         List<String> normalizedKeywords = keywords.stream().map(Recognizers::normalizeKey).distinct().toList();
         return new Analysis(family, explicit, ordered, dielectric, packageName, mounting, normalizedKeywords,
-                technology);
+                technology, labelled.preferences());
+    }
+
+    /**
+     * A token with a test condition, {@code <value>@<condition>}: LCSC {@code 120Ω@100MHz} (impedance of a ferrite
+     * bead; for a capacitor the ESR, ignored), {@code 2000hrs@105℃} (lifetime at a temperature), {@code 4.1A@100kHz}
+     * (ripple current, ignored: not a current rating). True when the token was consumed.
+     */
+    private static boolean conditioned(String token, String family, Map<String, Value> values, List<Read> ohms) {
+        int at = token.indexOf('@');
+        if (at <= 0 || at >= token.length() - 1) {
+            return false;
+        }
+        Value left = value(token.substring(0, at), family);
+        if (left == null) {
+            return false;
+        }
+        Value right = value(token.substring(at + 1).replaceAll("^[(]|[)]$", ""), family);
+        if (left.kind().equals(ParsedQuery.LIFETIME)) {
+            Double temperature = right != null && right.kind().equals(ParsedQuery.TEMPERATURE) ? right.value() : null;
+            values.putIfAbsent(ParsedQuery.LIFETIME, of(ParsedQuery.LIFETIME, left.value(), temperature));
+        } else if (left.kind().equals(ParsedQuery.RESISTANCE) && right != null
+                && right.kind().equals(ParsedQuery.FREQUENCY)) {
+            ohms.add(new Read(new Value(ParsedQuery.RESISTANCE, left.value(), left.display(), right.value()),
+                    token.toLowerCase(Locale.ROOT)));
+        }
+        return true;
+    }
+
+    /**
+     * Ohm values by family: a ferrite bead's first value of at least 1 ohm (or one with a test frequency) is its
+     * impedance and a smaller one its DC resistance; an inductor's ohm value is its DC resistance; neither has a
+     * nominal resistance. Other families keep the first plain value as the resistance (an ohm value with a test
+     * frequency, a capacitor's ESR, is ignored) and further ones are keywords.
+     */
+    private static void resolveOhms(String family, Map<String, Value> values, List<Read> ohms, List<String> keywords) {
+        if (inductive(family)) {
+            for (Read r : ohms) {
+                Value v = r.value();
+                if ("ferrite".equals(family) && !values.containsKey(ParsedQuery.IMPEDANCE)
+                        && (v.condition() != null || v.value() >= 1)) {
+                    values.put(ParsedQuery.IMPEDANCE, of(ParsedQuery.IMPEDANCE, v.value(), v.condition()));
+                } else if (v.condition() == null) {
+                    values.putIfAbsent(ParsedQuery.DCR, of(ParsedQuery.DCR, v.value()));
+                }
+            }
+            Value impedance = values.get(ParsedQuery.IMPEDANCE);
+            Value frequency = values.get(ParsedQuery.FREQUENCY);
+            if (impedance != null && frequency != null) {
+                // "120 ohm 100MHz ferrite bead", TME "Imp.@ 100MHz: 120Ω": the frequency is the test frequency
+                if (impedance.condition() == null) {
+                    values.put(ParsedQuery.IMPEDANCE, of(ParsedQuery.IMPEDANCE, impedance.value(), frequency.value()));
+                }
+                values.remove(ParsedQuery.FREQUENCY);
+            }
+            return;
+        }
+        for (Read r : ohms) {
+            if (r.value().condition() != null) {
+                continue;
+            }
+            if (!values.containsKey(ParsedQuery.RESISTANCE)) {
+                values.put(ParsedQuery.RESISTANCE, r.value());
+            } else {
+                keywords.add(r.token());
+            }
+        }
+    }
+
+    /**
+     * Currents of an inductor or ferrite bead: a labelled rated current ({@code Ioper: 6A}) wins; otherwise one
+     * unlabelled current is the rated current, and of several unlabelled ones (JLCPCB lists rated and saturation
+     * current without labels, in no fixed order) the lowest is used as the rated current, which is conservative.
+     */
+    private static void resolveCurrents(String family, Map<String, Value> values, List<Read> currents,
+                                        Map<String, Value> labelled) {
+        if (currents.isEmpty() || labelled.containsKey(ParsedQuery.CURRENT)) {
+            return;
+        }
+        Value lowest = currents.stream().map(Read::value).min(java.util.Comparator.comparingDouble(Value::value))
+                .orElseThrow();
+        Value saturation = labelled.get(ParsedQuery.SATURATION_CURRENT);
+        if (saturation != null && currents.size() > 1) {
+            // the labelled saturation current is one of them: the rated one is the other
+            lowest = currents.stream().map(Read::value)
+                    .filter(v -> Math.abs(v.value() - saturation.value()) > 1e-9)
+                    .min(java.util.Comparator.comparingDouble(Value::value)).orElse(lowest);
+        }
+        values.putIfAbsent(ParsedQuery.CURRENT, lowest);
     }
 
     /** First value of the given kind found in a short text (e.g. an attribute value), or null. */

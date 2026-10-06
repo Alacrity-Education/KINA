@@ -52,7 +52,7 @@ class DistributorPhraserTest {
 
     @Test
     void otherQueriesAreSentVerbatim() {
-        for (String query : new String[]{"10uF X7R 0805", "SOT-23 N-channel MOSFET 30V", "LM358 SOIC-8",
+        for (String query : new String[]{"10uF X7R 0805", "LDO 3.3V SOT-23-5", "LM358 SOIC-8",
                 "8 pin SOIC op amp", "ESP32-WROOM-32"}) {
             ParsedQuery parsed = parser.parse(query);
             for (Distributor d : Distributor.values()) {
@@ -96,11 +96,13 @@ class DistributorPhraserTest {
                 DistributorPhraser.MAX_FALLBACK_TOKENS).contains("ATmega328P", "mcu").doesNotContain("nice", "cheap", "small");
         // the parametric core keeps precedence
         assertThat(DistributorPhraser.fallback(Distributor.MOUSER, parser.parse("SOT-23 N-channel MOSFET 30V"),
-                "SOT-23 N-channel MOSFET 30V")).isEqualTo("MOSFET 30V SOT-23");
+                "SOT-23 N-channel MOSFET")).isEqualTo("MOSFET SOT-23");
         // short queries have nothing to drop
         assertThat(DistributorPhraser.keywordCore(parser.parse("ESP32 module wifi"))).isNull();
+        // the last relaxation step drops the dielectric
         assertThat(DistributorPhraser.fallback(Distributor.TME, parser.parse("10uF X7R 0805"), "10uF X7R 0805"))
-                .isNull();
+                .isEqualTo("10uF 0805");
+        assertThat(DistributorPhraser.fallback(Distributor.TME, parser.parse("10uF 0805"), "10uF 0805")).isNull();
     }
 
     /**

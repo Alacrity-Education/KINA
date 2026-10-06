@@ -11,8 +11,9 @@ import java.util.Map;
  * (incl. RKM notation such as {@code 4k7}, {@code 4u7}, {@code 10R}, {@code 2R2}), tolerance, dielectric, package
  * (imperial chip codes; metric chip codes only when the family is a passive; IC/discrete packages by pattern),
  * mounting, connector attributes ({@link ConnectorRecognizer}: type, gender, positions, rows, pitch, orientation), the
- * technology of a passive ({@link TechnologyVocabulary}: thin film, tantalum, multilayer...) and the remaining free-text
- * keywords. Stateless and thread-safe.
+ * technology of a passive ({@link TechnologyVocabulary}: thin film, tantalum, multilayer...), labelled values
+ * (saturation current, DC resistance, lifetime, operating temperature, the impedance of a ferrite bead), preferences
+ * ("low DCR") and the remaining free-text keywords. Stateless and thread-safe.
  *
  * <p>When no family keyword is present the family is inferred from the value kind (capacitance or dielectric -&gt;
  * capacitor, resistance -&gt; resistor, inductance -&gt; inductor).
@@ -33,7 +34,7 @@ public class QueryParser {
         }
         Map<String, ParsedQuery.Constraint> constraints = new LinkedHashMap<>();
         analysis.values().forEach((kind, v) -> constraints.put(kind,
-                new ParsedQuery.Constraint(kind, v.value(), v.display())));
+                new ParsedQuery.Constraint(kind, v.value(), v.display(), v.condition())));
         String family = connector != null ? "connector" : analysis.family();
         return ParsedQuery.builder()
                 .originalText(original)
@@ -46,6 +47,7 @@ public class QueryParser {
                 .keywords(analysis.keywords())
                 .connector(connector)
                 .technology(connector != null ? null : analysis.technology())
+                .preferences(analysis.preferences())
                 .build();
     }
 

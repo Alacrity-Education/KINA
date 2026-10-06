@@ -30,7 +30,7 @@ public class SearchCacheRepository {
     public Optional<CachedSearch> find(Distributor distributor, String queryKey) {
         List<Optional<CachedSearch>> rows = jdbc.sql("""
                         SELECT total_results, part_numbers::text AS part_numbers, exhausted, fetched_at, next_offset,
-                               fallback_query
+                               fallback_query, out_of_stock_matches
                         FROM cached_searches WHERE distributor = ? AND query_key = ?""")
                 .params(distributor.name(), queryKey)
                 .query((rs, n) -> {
@@ -38,12 +38,14 @@ public class SearchCacheRepository {
                     Integer totalResults = rs.wasNull() ? null : total;
                     int offset = rs.getInt("next_offset");
                     Integer nextOffset = rs.wasNull() ? null : offset;
+                    int outOfStock = rs.getInt("out_of_stock_matches");
+                    Integer outOfStockMatches = rs.wasNull() ? null : outOfStock;
                     try {
                         String[] partNumbers = jsonMapper.readValue(rs.getString("part_numbers"), String[].class);
                         return Optional.of(new CachedSearch(distributor, queryKey, totalResults,
                                 List.of(partNumbers), rs.getBoolean("exhausted"),
                                 rs.getObject("fetched_at", OffsetDateTime.class).toInstant(), nextOffset,
-                                rs.getString("fallback_query")));
+                                rs.getString("fallback_query"), outOfStockMatches));
                     } catch (RuntimeException e) {
                         log.warn("Skipping unreadable cached_searches row for {} '{}': {}", distributor, queryKey,
                                 e.getMessage());
@@ -59,15 +61,17 @@ public class SearchCacheRepository {
         jdbc.sql("""
                         INSERT INTO cached_searches
                           (distributor, query_key, total_results, part_numbers, exhausted, fetched_at, next_offset,
-                           fallback_query)
-                        VALUES (?, ?, ?, ?::jsonb, ?, ?, ?, ?)
+                           fallback_query, out_of_stock_matches)
+                        VALUES (?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?)
                         ON CONFLICT (distributor, query_key) DO UPDATE SET
                           total_results = EXCLUDED.total_results, part_numbers = EXCLUDED.part_numbers,
                           exhausted = EXCLUDED.exhausted, fetched_at = EXCLUDED.fetched_at,
-                          next_offset = EXCLUDED.next_offset, fallback_query = EXCLUDED.fallback_query""")
+                          next_offset = EXCLUDED.next_offset, fallback_query = EXCLUDED.fallback_query,
+                          out_of_stock_matches = EXCLUDED.out_of_stock_matches""")
                 .params(search.distributor().name(), search.queryKey(), search.totalResults(),
                         jsonMapper.writeValueAsString(search.partNumbers()), search.exhausted(),
-                        utc(search.fetchedAt()), search.nextOffset(), search.fallbackQuery())
+                        utc(search.fetchedAt()), search.nextOffset(), search.fallbackQuery(),
+                        search.outOfStockMatches())
                 .update();
     }
 

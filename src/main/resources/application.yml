@@ -54,6 +54,13 @@ kina:
     max-max-results: 50
     distributor-timeout: 12s
     max-request-duration: 2m     # hard cap per request, including rate-limit waits (DESIGN.md 3.6)
+    strict-constraints: ${KINA_STRICT_CONSTRAINTS:mounting,technology}   # DESIGN.md 3.4: contradicting parts are excluded
+    quantity:                    # DESIGN.md 3.4 "Quantity": penalties when quantity > 1
+      stock-shortfall-penalty: 0.3
+      moq-penalty: 0.15
+    lifecycle:                   # DESIGN.md 3.4: penalties by the part's lifecycle
+      last-time-buy-penalty: 0.1
+      supply-constrained-penalty: 0.03
   ranking:
     timeout: 5s                  # per query; the cross-encoder needs about 0.1-0.35 s for 40 candidates
     batch-timeout: 60s
@@ -75,6 +82,7 @@ kina:
   distributors:
     mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
-            excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE] }
+            excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE, NOT_IN_OFFER,
+                                PRODUCT_BLOCKED, INVALID, "BLOCKED_FOR_ZBL_*"] }
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
             auto-download: true }

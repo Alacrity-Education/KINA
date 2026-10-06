@@ -21,8 +21,13 @@ import java.util.Map;
  *   <tr><td>dielectric</td><td>{@value #W_DIELECTRIC}</td><td>exact, C0G == NP0</td></tr>
  *   <tr><td>technology</td><td>{@value #W_TECHNOLOGY}</td><td>same (or compatible) technology +, a different known
  *       one -, unknown 0 ({@link TechnologyVocabulary#compare})</td></tr>
- *   <tr><td>voltage / current / power rating</td><td>{@value #W_RATING}</td><td>part &gt;= requested (shared
- *       between the requested ratings); regulators and Zeners: equal within 2 %</td></tr>
+ *   <tr><td>ratings: voltage, (rated) current, saturation current, power, temperature, lifetime; DCR</td>
+ *       <td>{@value #W_RATING}</td><td>minimum ratings: part &gt;= requested (shared between the requested ratings);
+ *       a higher rating earns the same, minus a small preference for the closest one in the score only (up to
+ *       {@value #W_RATING_EXCESS}, so 25 V &gt; 35 V &gt; 50 V for a 25 V request); DCR is a maximum (part &lt;=
+ *       requested); regulator and Zener voltages and fuse currents: equal within 2 %</td></tr>
+ *   <tr><td>mounting (non-connector requests)</td><td>{@value #W_MOUNTING}</td><td>SMD/THT same +, different -</td></tr>
+ *   <tr><td>low DCR preference</td><td>up to {@value #W_LOW_DCR}</td><td>lower DCR scores higher (score only)</td></tr>
  *   <tr><td>tolerance</td><td>{@value #W_TOLERANCE}</td><td>part &lt;= requested</td></tr>
  *   <tr><td>family</td><td>{@value #W_FAMILY}</td><td>same (or more specific) family; a different known family is
  *       penalised by the same amount</td></tr>
@@ -63,6 +68,15 @@ public class DeterministicRanker {
     static final double W_FAMILY = 0.05;
     static final double W_LEXICAL = 0.10;
     static final double W_TIE_BREAK = 0.05;
+    /** Largest score deduction for a rating above the requested one (closest rating preferred; score only). */
+    static final double W_RATING_EXCESS = 0.05;
+    /** Rating ratio (in octaves) at which the excess deduction is complete: 4x the requested rating. */
+    static final double RATING_EXCESS_OCTAVES = 2.0;
+    /** SMD/THT of a non-connector request (connector and USB requests have their own mounting signals). */
+    static final double W_MOUNTING = 0.05;
+    /** "low DCR" preference: {@code W_LOW_DCR / (1 + DCR / LOW_DCR_REFERENCE_OHM)} (score only). */
+    static final double W_LOW_DCR = 0.04;
+    static final double LOW_DCR_REFERENCE_OHM = 0.01;
     // connector signals (replace W_PRIMARY_VALUE for connector queries)
     static final double W_POSITIONS = 0.30;
     static final double W_ROWS = 0.10;
@@ -96,9 +110,14 @@ public class DeterministicRanker {
     static final double EXACT_VOLTAGE_TOLERANCE = 0.02;
 
     private static final List<String> PRIMARY_KINDS = List.of(ParsedQuery.CAPACITANCE, ParsedQuery.RESISTANCE,
-            ParsedQuery.INDUCTANCE);
-    private static final List<String> RATING_KINDS = List.of(ParsedQuery.VOLTAGE, ParsedQuery.CURRENT,
-            ParsedQuery.POWER);
+            ParsedQuery.INDUCTANCE, ParsedQuery.IMPEDANCE);
+    /** Ratings: minimums, except {@link ParsedQuery#DCR} (a maximum). */
+    static final List<String> RATING_KINDS = List.of(ParsedQuery.VOLTAGE, ParsedQuery.CURRENT,
+            ParsedQuery.SATURATION_CURRENT, ParsedQuery.POWER, ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME,
+            ParsedQuery.DCR);
+    /** Strict constraint names ({@code kina.search.strict-constraints}). */
+    public static final String STRICT_MOUNTING = "mounting";
+    public static final String STRICT_TECHNOLOGY = "technology";
 
     private final ParametricExtractor extractor;
 
@@ -108,7 +127,157 @@ public class DeterministicRanker {
      * @param score relevance in [0,1] (the ranking signal)
      * @param match share of the stated parameters the part satisfies, in [0,1] (class comment)
      */
-    public record Assessment(double score, double match) {
+    public record Assessment(double score, double match, List<String> mismatches) {
+
+        public Assessment {
+            mismatches = mismatches == null ? List.of() : List.copyOf(mismatches);
+        }
+
+        public Assessment(double score, double match) {
+            this(score, match, List.of());
+        }
+    }
+
+    /**
+     * The stated parameters the part is known not to satisfy, in plain words ({@code "dielectric: X5R instead of
+     * X7R"}, {@code "package: 1210 instead of 1206"}, {@code "voltage: 16V below 25V"}); an attribute the part does not
+     * state is not a mismatch. Reported per part as {@code mismatches} (DESIGN.md 4).
+     */
+    static List<String> mismatches(ParsedQuery query, ParametricExtractor.Features f) {
+        List<String> out = new java.util.ArrayList<>();
+        String primary = query.isConnector() ? null : primaryKind(query);
+        if (primary != null) {
+            ParsedQuery.Constraint wanted = query.constraint(primary);
+            Recognizers.Value actual = f.values().get(primary);
+            if (actual != null && !(sameValue(wanted.value(), actual.value(), VALUE_MATCH_TOLERANCE)
+                    && (wanted.condition() == null || actual.condition() == null
+                    || sameValue(wanted.condition(), actual.condition(), VALUE_MATCH_TOLERANCE)))) {
+                out.add(label(primary) + ": " + actual.display() + " instead of " + wanted.display());
+            }
+        }
+        String wantedPackage = Recognizers.packageKey(query.packageName());
+        String partPackage = Recognizers.packageKey(f.packageName());
+        if (wantedPackage != null && partPackage != null && !wantedPackage.equals(partPackage)) {
+            out.add("package: " + f.packageName() + " instead of " + query.packageName());
+        }
+        if (query.dielectric() != null && f.dielectric() != null
+                && !query.dielectric().equalsIgnoreCase(f.dielectric())) {
+            out.add("dielectric: " + f.dielectric() + " instead of " + query.dielectric());
+        }
+        if (query.technology() != null && TechnologyVocabulary.compare(query.technology(), f.technology()) < 0) {
+            out.add("technology: " + f.technology() + " instead of " + query.technology());
+        }
+        for (String kind : RATING_KINDS) {
+            ParsedQuery.Constraint wanted = query.constraint(kind);
+            Recognizers.Value actual = f.values().get(kind);
+            if (wanted == null || actual == null) {
+                continue;
+            }
+            if (ParsedQuery.DCR.equals(kind)) {
+                if (actual.value() > wanted.value() * (1 + 1e-9)) {
+                    out.add("dcr: " + actual.display() + " above " + wanted.display());
+                }
+            } else if (isExactRating(kind, query.family())) {
+                if (!sameValue(wanted.value(), actual.value(), EXACT_VOLTAGE_TOLERANCE)) {
+                    out.add(label(kind) + ": " + actual.display() + " instead of " + wanted.display());
+                }
+            } else if (actual.value() < wanted.value() * (1 - 1e-9)) {
+                out.add(label(kind) + ": " + actual.display() + " below " + wanted.display());
+            }
+        }
+        ParsedQuery.Constraint tolerance = query.constraint(ParsedQuery.TOLERANCE);
+        Recognizers.Value partTolerance = f.values().get(ParsedQuery.TOLERANCE);
+        if (tolerance != null && partTolerance != null && partTolerance.value() > tolerance.value() + 1e-9) {
+            out.add("tolerance: " + partTolerance.display() + " instead of " + tolerance.display());
+        }
+        if (query.mounting() != null && f.mounting() != null && !query.mounting().equals(f.mounting())
+                && !(f.connector() != null && UsbVocabulary.HYBRID.equals(f.connector().mountingStyle()))) {
+            out.add("mounting: " + f.mounting() + " instead of " + query.mounting());
+        }
+        if (query.family() != null && familyScore(query.family(), f) < 0) {
+            out.add("family: " + f.family() + " instead of " + query.family());
+        }
+        ParsedQuery.Connector wanted = query.connector();
+        ParsedQuery.Connector actual = f.connector();
+        if (wanted != null && actual != null && !wanted.isUsb()) {
+            if (wanted.positions() != null && actual.positions() != null && !wanted.positions().equals(actual.positions())) {
+                out.add("positions: " + actual.positions() + " instead of " + wanted.positions());
+            }
+            if (wanted.gender() != null && actual.gender() != null && !wanted.gender().equals(actual.gender())) {
+                out.add("gender: " + actual.gender() + " instead of " + wanted.gender());
+            }
+            if (wanted.pitchMm() != null && actual.pitchMm() != null
+                    && Math.abs(wanted.pitchMm() - actual.pitchMm()) > PITCH_TOLERANCE_MM) {
+                out.add("pitch: " + actual.pitchDisplay() + " instead of " + wanted.pitchDisplay());
+            }
+            if (wanted.orientation() != null && actual.orientation() != null
+                    && !wanted.orientation().equals(actual.orientation())) {
+                out.add("orientation: " + actual.orientation() + " instead of " + wanted.orientation());
+            }
+        }
+        return out;
+    }
+
+    private static String label(String kind) {
+        return kind.replace('_', ' ');
+    }
+
+    /**
+     * How a part relates to the request's strict constraints ({@code kina.search.strict-constraints}): a known
+     * contradiction ({@link #CONFLICT}, the part is excluded), an attribute the part does not state
+     * ({@link #UNKNOWN}, the part stays but ranks below known matches), or nothing against it ({@link #MATCH}).
+     */
+    public enum ConstraintCheck { MATCH, UNKNOWN, CONFLICT }
+
+    /**
+     * Checks the strict constraints the request states (mounting SMD/THT, the technology of a passive) against the
+     * part. Mounting: a known different mounting conflicts (a hybrid USB part never does). Technology: a different
+     * known technology conflicts ({@link TechnologyVocabulary#compare} = -1); an unknown or not comparable one is
+     * {@link ConstraintCheck#UNKNOWN}.
+     */
+    public ConstraintCheck check(ParsedQuery query, Part part, java.util.Collection<String> strict) {
+        return check(query, extractor.features(part), strict);
+    }
+
+    static ConstraintCheck check(ParsedQuery query, ParametricExtractor.Features f, java.util.Collection<String> strict) {
+        if (strict == null || strict.isEmpty()) {
+            return ConstraintCheck.MATCH;
+        }
+        boolean unknown = false;
+        if (strict.contains(STRICT_MOUNTING) && query.mounting() != null) {
+            boolean hybrid = f.connector() != null && UsbVocabulary.HYBRID.equals(f.connector().mountingStyle());
+            if (f.mounting() == null || hybrid) {
+                unknown = true;
+            } else if (!query.mounting().equals(f.mounting())) {
+                return ConstraintCheck.CONFLICT;
+            }
+        }
+        if (strict.contains(STRICT_TECHNOLOGY) && query.technology() != null) {
+            int cmp = TechnologyVocabulary.compare(query.technology(), f.technology());
+            if (cmp < 0) {
+                return ConstraintCheck.CONFLICT;
+            }
+            unknown |= cmp == 0;
+        }
+        return unknown ? ConstraintCheck.UNKNOWN : ConstraintCheck.MATCH;
+    }
+
+    /**
+     * Score deduction for an order of {@code quantity} pieces (DESIGN.md 3.4 "Quantity"): {@code stockWeight} when the
+     * part has fewer pieces in stock than requested, and up to {@code moqWeight} when its minimum order quantity
+     * exceeds the quantity ({@code moqWeight * min(1, log10(moq / quantity) / 2)}, complete at 100x). Nothing for a
+     * quantity of 1.
+     */
+    public static double quantityPenalty(Part part, int quantity, double stockWeight, double moqWeight) {
+        if (quantity <= 1) {
+            return 0;
+        }
+        double penalty = part.stock() < quantity ? stockWeight : 0;
+        Integer moq = part.minimumOrderQuantity();
+        if (moq != null && moq > quantity) {
+            penalty += moqWeight * Math.min(1.0, Math.log10((double) moq / quantity) / 2);
+        }
+        return penalty;
     }
 
     /** Relevance of {@code part} for {@code query}, clamped to [0,1]. */
@@ -137,10 +306,14 @@ public class DeterministicRanker {
         }
         if (primary != null) {
             possible += W_PRIMARY_VALUE;
-            Double partValue = f.value(primary);
+            Recognizers.Value partValue = f.values().get(primary);
             if (partValue != null) {
-                score += sameValue(query.constraint(primary).value(), partValue, VALUE_MATCH_TOLERANCE)
-                        ? W_PRIMARY_VALUE : -W_PRIMARY_VALUE;
+                ParsedQuery.Constraint wanted = query.constraint(primary);
+                boolean same = sameValue(wanted.value(), partValue.value(), VALUE_MATCH_TOLERANCE)
+                        // an impedance is compared at its test frequency when both sides state one
+                        && (wanted.condition() == null || partValue.condition() == null
+                        || sameValue(wanted.condition(), partValue.condition(), VALUE_MATCH_TOLERANCE));
+                score += same ? W_PRIMARY_VALUE : -W_PRIMARY_VALUE;
             }
         }
 
@@ -168,21 +341,46 @@ public class DeterministicRanker {
             score += W_TECHNOLOGY * TechnologyVocabulary.compare(query.technology(), f.technology());
         }
 
-        // ratings
+        // ratings: minimums (a higher rating satisfies them), DCR a maximum
         List<String> requested = RATING_KINDS.stream().filter(k -> query.constraint(k) != null).toList();
         if (!requested.isEmpty()) {
             possible += W_RATING;
         }
+        double preference = 0;   // score-only adjustments, not part of the match grade
         for (String kind : requested) {
             Double partValue = f.value(kind);
             if (partValue == null) {
                 continue;
             }
             double wanted = query.constraint(kind).value();
-            boolean ok = kind.equals(ParsedQuery.VOLTAGE) && exactVoltageFamily(query.family())
-                    ? sameValue(wanted, partValue, EXACT_VOLTAGE_TOLERANCE)
-                    : partValue >= wanted * (1 - 1e-9);
+            boolean exact = isExactRating(kind, query.family());
+            boolean ok;
+            if (ParsedQuery.DCR.equals(kind)) {
+                ok = partValue <= wanted * (1 + 1e-9);
+            } else if (exact) {
+                ok = sameValue(wanted, partValue, EXACT_VOLTAGE_TOLERANCE);
+            } else {
+                ok = partValue >= wanted * (1 - 1e-9);
+            }
             score += (ok ? W_RATING : -W_RATING) / requested.size();
+            if (ok && !exact && !ParsedQuery.DCR.equals(kind) && wanted > 0 && partValue > wanted * (1 + 1e-9)) {
+                double octaves = Math.log(partValue / wanted) / Math.log(2);
+                preference -= W_RATING_EXCESS * Math.min(1.0, octaves / RATING_EXCESS_OCTAVES) / requested.size();
+            }
+        }
+
+        // mounting of a non-connector request (connector requests score it among the connector signals)
+        if (!query.isConnector() && query.mounting() != null) {
+            possible += W_MOUNTING;
+            if (f.mounting() != null) {
+                score += query.mounting().equals(f.mounting()) ? W_MOUNTING : -W_MOUNTING;
+            }
+        }
+
+        // "low DCR": lower DC resistance ranks higher among otherwise equal parts
+        Double dcr = f.value(ParsedQuery.DCR);
+        if (query.prefers(ParsedQuery.LOW_DCR) && dcr != null && dcr >= 0) {
+            preference += W_LOW_DCR / (1 + dcr / LOW_DCR_REFERENCE_OHM);
         }
 
         // tolerance
@@ -209,7 +407,7 @@ public class DeterministicRanker {
         }
 
         double match = possible <= 0 ? 1.0 : Math.clamp(score / possible, 0.0, 1.0);
-        return new Assessment(Math.clamp(score + tieBreak(part), 0.0, 1.0), match);
+        return new Assessment(Math.clamp(score + preference + tieBreak(part), 0.0, 1.0), match, mismatches(query, f));
     }
 
     /** What a connector part matching every stated connector attribute earns ({@link #connectorScore}). */
@@ -412,6 +610,16 @@ public class DeterministicRanker {
 
     private static boolean exactVoltageFamily(String family) {
         return "regulator".equals(family) || "zener".equals(family);
+    }
+
+    /**
+     * True when a rating of {@code kind} must match rather than be exceeded: the output voltage of a regulator, the
+     * Zener voltage, the current of a fuse. Every other voltage, current, power, temperature and lifetime in a request
+     * is a minimum rating, which {@link DistributorPhraser} leaves out of distributor phrases.
+     */
+    static boolean isExactRating(String kind, String family) {
+        return ParsedQuery.VOLTAGE.equals(kind) && exactVoltageFamily(family)
+                || ParsedQuery.CURRENT.equals(kind) && "fuse".equals(family);
     }
 
     private static double familyScore(String wanted, ParametricExtractor.Features f) {

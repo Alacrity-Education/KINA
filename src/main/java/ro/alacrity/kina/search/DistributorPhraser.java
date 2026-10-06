@@ -48,10 +48,23 @@ public class DistributorPhraser {
      * (every non-connector query, and connector queries without any recognised attribute).
      */
     public static String phrase(Distributor distributor, ParsedQuery query) {
-        if (query != null && !query.isConnector() && query.technology() != null) {
-            return technologyPhrase(distributor, query);
+        if (query == null) {
+            return null;
         }
-        if (query == null || !query.isConnector() || query.connector().isEmpty()) {
+        if (!query.isConnector()) {
+            // minimum ratings never go into a phrase: "25V" would only match parts that print 25V (DESIGN.md 3.2)
+            String text = withoutRatings(query.originalText(), query);
+            String phrase = query.technology() != null ? technologyPhrase(distributor, query, text) : null;
+            if (phrase == null) {
+                phrase = text;
+            }
+            if (distributor == Distributor.LCSC && phrase != null && !phrase.equals(query.originalText())) {
+                phrase = (phrase + " " + lcscRatings(query)).strip();
+            }
+            return phrase == null || phrase.isBlank()
+                    || QueryParser.normalizeKey(phrase).equals(query.normalizedKey()) ? null : phrase;
+        }
+        if (query.connector().isEmpty()) {
             return null;
         }
         String phrase = query.connector().isUsb() ? usbPhrase(distributor, query) : switch (distributor) {
@@ -74,29 +87,138 @@ public class DistributorPhraser {
      * there is nothing shorter to try or it equals {@code sent}.
      */
     public static String fallback(Distributor distributor, ParsedQuery query, String sent) {
+        List<String> ladder = relaxations(distributor, query, sent);
+        return ladder.isEmpty() ? null : ladder.getLast();
+    }
+
+    /**
+     * The relaxation ladder tried, in order, at Mouser and TME while the search has found no in-stock part (DESIGN.md
+     * 3.2 "Relaxation ladder"): (1) {@code sent} without rating values, (2) also without the tolerance, (3) the
+     * minimal core, (4) the core without the dielectric and the technology: for connector queries the type words with the positions (TME) or with the pitch and orientation
+     * (Mouser), otherwise the parametric core ({@link PartSearchService#corePhrase}: family word, values, technology,
+     * dielectric, package) or, for keyword-only queries, the {@value #MIN_FALLBACK_TOKENS} to
+     * {@value #MAX_FALLBACK_TOKENS} most informative tokens. Steps that equal {@code sent} or an earlier step are left
+     * out, so the core is tried even when it equals the user's text minus nothing but filler; empty for LCSC (its
+     * database search relaxes by itself).
+     */
+    public static List<String> relaxations(Distributor distributor, ParsedQuery query, String sent) {
         if (query == null || distributor == Distributor.LCSC) {
-            return null;
+            return List.of();
         }
-        String candidate = null;
+        String base = sent == null ? query.originalText() : sent;
+        List<String> steps = new ArrayList<>();
+        String noRatings = withoutRatings(base, query);
+        steps.add(noRatings);
+        steps.add(withoutTolerance(noRatings));
+        String core = null;
         if (query.isConnector() && query.connector().isUsb()) {
-            candidate = usbFallback(distributor, query.connector());
+            core = usbFallback(distributor, query.connector());
         } else if (query.isConnector() && !query.connector().isEmpty()) {
-            candidate = distributor == Distributor.TME ? tmeFallback(query) : mouserFallback(query);
+            core = distributor == Distributor.TME ? tmeFallback(query) : mouserFallback(query);
         }
-        if (candidate == null) {
-            candidate = PartSearchService.corePhrase(query);
+        String bare = null;
+        if (core == null) {
+            core = PartSearchService.corePhrase(query, distributor);
+            // (4) also without the dielectric and the technology: TME has no 22uF X7R 1206 25V part, but X5R ones
+            bare = core == null ? null : PartSearchService.corePhrase(query, distributor, false);
         }
-        if (candidate == null) {
-            candidate = keywordCore(query);
+        if (core == null) {
+            core = keywordCore(query);
         }
-        if (candidate == null || candidate.isBlank()) {
+        steps.add(core);
+        steps.add(bare);
+        Set<String> seen = new LinkedHashSet<>();
+        seen.add(QueryParser.normalizeKey(base));
+        if (distributor == Distributor.TME && base != null) {
+            seen.add(QueryParser.normalizeKey(limit(base, TME_MAX_LENGTH)));   // what TME really received
+        }
+        List<String> out = new ArrayList<>();
+        for (String step : steps) {
+            if (step == null || step.isBlank()) {
+                continue;
+            }
+            String candidate = distributor == Distributor.TME ? limit(step, TME_MAX_LENGTH) : step;
+            if (candidate != null && !candidate.isBlank() && seen.add(QueryParser.normalizeKey(candidate))) {
+                out.add(candidate);
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    // ---------------------------------------------------------------- ratings and tolerance
+
+    /** Rating kinds a request states as minimums (and DCR, a maximum): never part of a distributor phrase. */
+    private static final List<String> RATING_KINDS = List.of(ParsedQuery.VOLTAGE, ParsedQuery.CURRENT,
+            ParsedQuery.SATURATION_CURRENT, ParsedQuery.POWER, ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME,
+            ParsedQuery.DCR);
+    private static final Pattern TOLERANCE = Pattern.compile(
+            "(?<![\\p{L}\\d.])(?:\\+/-|\\+-|±)?\\s?(?:\\d+(?:[.,]\\d+)?|\\.\\d+)\\s?%");
+    private static final Pattern LOOSE_SEPARATORS = Pattern.compile("\\s*([,;])(?:\\s*[,;])+");
+
+    /**
+     * {@code text} without the minimum ratings of the request (voltage, current, saturation current, power,
+     * temperature, lifetime) and its DCR limit and "low DCR" preference: a distributor's keyword search only finds
+     * parts that print the same value, so {@code 22uF X7R 1206 25V} would miss the 35 V and 50 V parts that satisfy
+     * it. Regulator and Zener voltages and fuse currents are specifications, not ratings, and stay. Returns
+     * {@code text} unchanged when nothing is removed or fewer than two words would remain.
+     */
+    static String withoutRatings(String text, ParsedQuery query) {
+        if (text == null || text.isBlank()) {
+            return text;
+        }
+        Set<String> kinds = new LinkedHashSet<>();
+        for (String kind : RATING_KINDS) {
+            if (!DeterministicRanker.isExactRating(kind, query.family())) {
+                kinds.add(kind);
+            }
+        }
+        List<int[]> spans = Recognizers.valueSpans(text, query.family(), kinds);
+        if (spans.isEmpty()) {
+            return text;
+        }
+        StringBuilder out = new StringBuilder(text);
+        spans.sort(Comparator.comparingInt((int[] span) -> span[0]).reversed());
+        for (int[] span : spans) {
+            out.replace(span[0], span[1], " ");
+        }
+        String cleaned = tidy(out.toString());
+        // keep at least two words, or one value ("2.2uH" for "2.2uH saturation current 10A"); "MOSFET" alone is too vague
+        String[] words = cleaned.isBlank() ? new String[0] : cleaned.split(" ");
+        boolean enough = words.length >= 2 || words.length == 1 && words[0].chars().anyMatch(Character::isDigit);
+        return enough ? cleaned : text;
+    }
+
+    /**
+     * The minimum voltage, current and power ratings as JLCPCB rating terms ({@code >=25V >=6A}): the local database
+     * checks them exactly ({@code JlcpcbQuery} kind {@code RATING}), so higher-rated parts match too.
+     */
+    static String lcscRatings(ParsedQuery query) {
+        List<String> terms = new ArrayList<>();
+        for (String kind : List.of(ParsedQuery.VOLTAGE, ParsedQuery.CURRENT, ParsedQuery.POWER)) {
+            ParsedQuery.Constraint c = query.constraint(kind);
+            if (c != null && !DeterministicRanker.isExactRating(kind, query.family())
+                    && RATING_TERM.matcher(c.display()).matches()) {
+                terms.add(">=" + c.display());
+            }
+        }
+        return String.join(" ", terms);
+    }
+
+    private static final Pattern RATING_TERM = Pattern.compile("^\\d+(?:\\.\\d+)?[mk]?[VAW]$");
+
+    /** {@code text} without tolerances ({@code ±5%}, {@code 1%}, {@code .1%}). */
+    static String withoutTolerance(String text) {
+        if (text == null) {
             return null;
         }
-        if (distributor == Distributor.TME) {
-            candidate = limit(candidate, TME_MAX_LENGTH);
-        }
-        String sentKey = QueryParser.normalizeKey(sent == null ? query.originalText() : sent);
-        return QueryParser.normalizeKey(candidate).equals(sentKey) ? null : candidate;
+        String cleaned = tidy(TOLERANCE.matcher(text).replaceAll(" "));
+        return cleaned.isBlank() || cleaned.split(" ").length < 2 ? text : cleaned;
+    }
+
+    private static String tidy(String text) {
+        String s = LOOSE_SEPARATORS.matcher(text).replaceAll("$1");
+        s = s.replaceAll("\\s+", " ").replaceAll("\\s+([,;])", "$1").strip();
+        return s.replaceAll("^[,;]\\s*|\\s*[,;]$", "").strip();
     }
 
     // ---------------------------------------------------------------- technology (passives)
@@ -108,8 +230,12 @@ public class DistributorPhraser {
      * when the distributor has no spelling of its own or the text already uses it.
      */
     static String technologyPhrase(Distributor distributor, ParsedQuery q) {
+        return technologyPhrase(distributor, q, q.originalText());
+    }
+
+    /** As {@link #technologyPhrase(Distributor, ParsedQuery)} on {@code text} (the user's text without ratings). */
+    static String technologyPhrase(Distributor distributor, ParsedQuery q, String text) {
         String spelling = TechnologyVocabulary.spelling(distributor, q.technology());
-        String text = q.originalText();
         TechnologyVocabulary.Match m = spelling == null ? null : TechnologyVocabulary.find(text, q.family());
         if (m == null || !q.technology().equals(m.technology())) {
             return null;

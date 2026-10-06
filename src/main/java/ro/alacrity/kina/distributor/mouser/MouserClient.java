@@ -103,7 +103,10 @@ public class MouserClient implements DistributorClient {
         boolean hasMore = !results.parts().isEmpty() && start + results.parts().size() < total;
         log.debug("Mouser search offset={} records={}: {} parts ({} in stock) of {}",
                 start, records, results.parts().size(), parts.size(), total);
-        return new DistributorSearchPage(parts, total, hasMore);
+        int outOfStock = (int) results.parts().stream()
+                .filter(p -> p != null && p.mouserPartNumber() != null && !p.mouserPartNumber().isBlank())
+                .count() - parts.size();
+        return new DistributorSearchPage(parts, total, hasMore, outOfStock);
     }
 
     @Override
@@ -138,7 +141,15 @@ public class MouserClient implements DistributorClient {
         if (partNumber.contains("|")) {
             return PartLookupResult.notFound(); // '|' separates several part numbers in a Mouser part-number search
         }
-        List<MouserPart> found = requireResults(mouser.searchByPartNumber(partNumber, deadline)).parts();
+        // spellings with spaces ("HCMA0703 2R2 R") are tried as HCMA0703-2R2-R, then HCMA07032R2R
+        List<MouserPart> found = List.of();
+        for (String variant : PartLookupResult.variants(partNumber)) {
+            found = requireResults(mouser.searchByPartNumber(variant, deadline)).parts();
+            if (found.stream().anyMatch(p -> PartLookupResult.samePartNumber(partNumber, p.mouserPartNumber())
+                    || PartLookupResult.samePartNumber(partNumber, p.manufacturerPartNumber()))) {
+                break;
+            }
+        }
         List<MouserPart> matches = new ArrayList<>();
         found.stream().filter(p -> PartLookupResult.samePartNumber(partNumber, p.mouserPartNumber()))
                 .forEach(matches::add);

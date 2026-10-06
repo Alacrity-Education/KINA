@@ -180,8 +180,48 @@ class JlcpcbSqliteSearchTest {
     }
 
     @Test
+    void droppedTermsAreReportedAsRelaxedConstraints() throws SQLException {
+        JlcpcbSqliteSearch.Result relaxed = search.search("10uF 0805 >=100V", 0, 50);
+        assertThat(LcscClient.relaxed("10uF 0805 >=100V", relaxed)).containsExactly("voltage");
+        assertThat(LcscClient.relaxed("10uF 0805", search.search("10uF 0805", 0, 50))).isEmpty();
+    }
+
+    @Test
+    void manufacturerPartNumbersIgnoreSpacesAndHyphens() throws SQLException {
+        assertThat(search.findByMpn("CL21A106 KAYNNNE")).extracting(JlcpcbRow::lcscPart).containsExactly("C15850");
+        assertThat(search.findByMpn("CL21A106-KAYNNNE")).extracting(JlcpcbRow::lcscPart).containsExactly("C15850");
+    }
+
+    @Test
+    void minimumRatingsAcceptHigherRatedParts() throws SQLException {
+        // C15850 is 10uF 25V, C15851 10uF 16V
+        assertThat(search.search("10uF 0805 >=20V", 0, 50).rows()).extracting(JlcpcbRow::lcscPart)
+                .containsExactly("C15850");
+        assertThat(search.search("10uF 0805 >=16V", 0, 50).rows()).extracting(JlcpcbRow::lcscPart)
+                .contains("C15850", "C15851");
+        // nothing rated high enough: the rating is the first term the relaxation drops
+        JlcpcbSqliteSearch.Result relaxed = search.search("10uF 0805 >=100V", 0, 50);
+        assertThat(relaxed.mode()).isEqualTo(JlcpcbSqliteSearch.MatchMode.RELAXED);
+        assertThat(relaxed.rows()).extracting(JlcpcbRow::lcscPart).contains("C15850", "C15851");
+        assertThat(JlcpcbSqliteSearch.atLeast("-55℃~+155℃ 10kΩ 125mW 150V", "W", 0.1)).isTrue();
+        assertThat(JlcpcbSqliteSearch.atLeast("-55℃~+155℃ 10kΩ 125mW 150V", "W", 0.25)).isFalse();
+        assertThat(JlcpcbSqliteSearch.atLeast("12A 24mΩ 3.3uH 6A", "A", 8)).isTrue();
+        assertThat(JlcpcbSqliteSearch.atLeast("1.5kV 100pF", "V", 1000)).isTrue();
+        assertThat(JlcpcbSqliteSearch.atLeast("10uF 16V", "V", 25)).isFalse();
+        JlcpcbQuery.Term rating = JlcpcbQuery.parse("10uF >=125mW").terms().getLast();
+        assertThat(rating.kind()).isEqualTo(JlcpcbQuery.Kind.RATING);
+        assertThat(rating.ratingUnit()).isEqualTo("W");
+        assertThat(rating.ratingMinimum()).isEqualTo(0.125);
+        assertThat(rating.matchable()).isFalse();
+        assertThat(JlcpcbQuery.parse(">=25V").terms()).isEmpty();
+    }
+
+    @Test
     void noMatchAndEmptyQueries() throws SQLException {
-        assertThat(search.search("GRM21BR71C106KE11L", 0, 50).rows()).isEmpty();   // only out-of-stock match
+        JlcpcbSqliteSearch.Result outOfStock = search.search("GRM21BR71C106KE11L", 0, 50);
+        assertThat(outOfStock.rows()).isEmpty();   // only out-of-stock match
+        assertThat(outOfStock.outOfStock()).isEqualTo(1);   // reported as out_of_stock_matches
+        assertThat(search.search("10uF X5R 0805", 0, 50).outOfStock()).isZero();
         assertThat(search.search("", 0, 50).total()).isZero();
         assertThat(search.search("the and or", 0, 50).total()).isZero();
     }

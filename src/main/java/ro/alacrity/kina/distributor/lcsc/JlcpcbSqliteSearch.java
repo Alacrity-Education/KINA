@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,11 @@ import java.util.stream.Collectors;
 public class JlcpcbSqliteSearch {
 
     static final String VALUE_FUNCTION = "kina_value";
+    /** {@code kina_at_least(text, unit, minimum)}: the text states a value of the unit (V, A, W) of at least minimum. */
+    static final String RATING_FUNCTION = "kina_at_least";
+    /** A value with an SI prefix and a rating unit at a number boundary: {@code 25V}, {@code 1.5kV}, {@code 125mW}. */
+    private static final Pattern RATED_VALUE = Pattern.compile(
+            "(?<![\\d.\\p{L}])(\\d+(?:\\.\\d+)?)\\s?([umkM]?)([VAW])(?![a-zA-Z])");
 
     private static final String COLUMNS = """
             "LCSC Part", "First Category", "Second Category", "MFR.Part", "Package", "Solder Joint", \
@@ -61,7 +68,8 @@ public class JlcpcbSqliteSearch {
     public enum MatchMode { ALL, RELAXED, PARAMETRIC, ANY }
 
     /** Relaxation drops terms in this order of kinds (first = least informative). */
-    static final List<JlcpcbQuery.Kind> DROP_ORDER = List.of(JlcpcbQuery.Kind.KEYWORD, JlcpcbQuery.Kind.FEATURE,
+    static final List<JlcpcbQuery.Kind> DROP_ORDER = List.of(JlcpcbQuery.Kind.RATING, JlcpcbQuery.Kind.KEYWORD,
+            JlcpcbQuery.Kind.FEATURE,
             JlcpcbQuery.Kind.MOUNTING,
             JlcpcbQuery.Kind.ORIENTATION, JlcpcbQuery.Kind.PITCH, JlcpcbQuery.Kind.PACKAGE, JlcpcbQuery.Kind.DIELECTRIC,
             JlcpcbQuery.Kind.VALUE, JlcpcbQuery.Kind.POSITIONS, JlcpcbQuery.Kind.FAMILY, JlcpcbQuery.Kind.CATEGORY);
@@ -74,7 +82,16 @@ public class JlcpcbSqliteSearch {
      * @param mode    the relaxation step that produced the rows ({@code null} when the query had no usable terms)
      * @param dropped the terms the relaxation removed (empty for {@link MatchMode#ALL})
      */
-    public record Result(List<JlcpcbRow> rows, int total, MatchMode mode, List<String> dropped) {
+    public record Result(List<JlcpcbRow> rows, int total, MatchMode mode, List<String> dropped, int outOfStock) {
+
+        public Result(List<JlcpcbRow> rows, int total, MatchMode mode, List<String> dropped) {
+            this(rows, total, mode, dropped, 0);
+        }
+
+        /** The same result with the number of rows that match every term but have no stock. */
+        Result withOutOfStock(int count) {
+            return new Result(rows, total, mode, dropped, count);
+        }
 
         public Result {
             rows = List.copyOf(rows);
@@ -195,46 +212,64 @@ public class JlcpcbSqliteSearch {
             if (total > 0) {
                 return found(c, query, all, total, offset, limit, MatchMode.ALL, List.of());
             }
-            // RELAXED: remove dead terms, then drop the least informative term one at a time
-            List<JlcpcbQuery.Term> remaining = new ArrayList<>(parsed.terms());
-            List<String> dropped = new ArrayList<>();
-            List<JlcpcbQuery.Term> dead = remaining.stream().filter(t -> t.matchable() && !occurs(c, t)).toList();
-            Set<List<JlcpcbQuery.Term>> tried = new HashSet<>();
-            tried.add(List.copyOf(remaining));
-            if (!dead.isEmpty() && dead.size() < remaining.size()) {
-                remaining.removeAll(dead);
-                dead.forEach(t -> dropped.add(t.text()));
-                Result r = attempt(c, query, parsed, remaining, dropped, tried, offset, limit);
-                if (r != null) {
-                    return r;
-                }
-            }
-            while (remaining.size() > MIN_RELAXED_TERMS) {
-                JlcpcbQuery.Term next = leastInformative(remaining);
-                remaining.remove(next);
-                dropped.add(next.text());
-                Result r = attempt(c, query, parsed, remaining, dropped, tried, offset, limit);
-                if (r != null) {
-                    return r;
-                }
-            }
-            for (MatchMode mode : List.of(MatchMode.PARAMETRIC, MatchMode.ANY)) {
-                if (mode == MatchMode.PARAMETRIC && tried.contains(parsed.parametricTerms())) {
-                    continue;
-                }
-                Predicate predicate = predicate(parsed, mode);
-                if (predicate == null) {
-                    continue;
-                }
-                total = count(c, predicate);
-                if (total > 0) {
-                    return found(c, query, predicate, total, offset, limit, mode, List.of());
-                }
-            }
-            return Result.empty();
+            // every term matched, but nothing in stock: count those rows (out_of_stock_matches, DESIGN.md 3.2)
+            int outOfStock = all == null ? 0 : countIgnoringStock(c, all);
+            Result relaxed = relax(c, query, parsed, offset, limit);
+            return relaxed.withOutOfStock(outOfStock);
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    /** RELAXED, then PARAMETRIC and ANY (class comment), after ALL found nothing in stock. */
+    private Result relax(Connection c, String query, JlcpcbQuery parsed, int offset, int limit) throws SQLException {
+        // RELAXED: remove dead terms, then drop the least informative term one at a time
+        List<JlcpcbQuery.Term> remaining = new ArrayList<>(parsed.terms());
+        List<String> dropped = new ArrayList<>();
+        List<JlcpcbQuery.Term> dead = remaining.stream().filter(t -> t.matchable() && !occurs(c, t)).toList();
+        Set<List<JlcpcbQuery.Term>> tried = new HashSet<>();
+        tried.add(List.copyOf(remaining));
+        if (!dead.isEmpty() && dead.size() < remaining.size()) {
+            remaining.removeAll(dead);
+            dead.forEach(t -> dropped.add(t.text()));
+            Result r = attempt(c, query, parsed, remaining, dropped, tried, offset, limit);
+            if (r != null) {
+                return r;
+            }
+        }
+        while (remaining.size() > MIN_RELAXED_TERMS) {
+            JlcpcbQuery.Term next = leastInformative(remaining);
+            remaining.remove(next);
+            dropped.add(next.text());
+            Result r = attempt(c, query, parsed, remaining, dropped, tried, offset, limit);
+            if (r != null) {
+                return r;
+            }
+        }
+        for (MatchMode mode : List.of(MatchMode.PARAMETRIC, MatchMode.ANY)) {
+            if (mode == MatchMode.PARAMETRIC && tried.contains(parsed.parametricTerms())) {
+                continue;
+            }
+            Predicate predicate = predicate(parsed, mode);
+            if (predicate == null) {
+                continue;
+            }
+            int total = count(c, predicate);
+            if (total > 0) {
+                return found(c, query, predicate, total, offset, limit, mode, List.of());
+            }
+        }
+        return Result.empty();
+    }
+
+    /** Rows matching the predicate regardless of stock (0 when the predicate has nothing but the stock filter). */
+    private static int countIgnoringStock(Connection c, Predicate p) throws SQLException {
+        String suffix = " AND " + IN_STOCK;
+        if (!p.where().endsWith(suffix)) {
+            return 0;
+        }
+        return count(c, new Predicate(p.where().substring(0, p.where().length() - suffix.length()), p.params(),
+                p.hasMatch()));
     }
 
     /** One relaxation step: the conjunction of {@code terms}, unless that set was tried before. */
@@ -423,6 +458,12 @@ public class JlcpcbSqliteSearch {
             params.add(match);
         }
         for (JlcpcbQuery.Term term : terms) {
+            if (term.kind() == JlcpcbQuery.Kind.RATING) {
+                clauses.add(RATING_FUNCTION + "(\"Description\", ?, ?)");
+                params.add(term.ratingUnit());
+                params.add(term.ratingMinimum());
+                continue;
+            }
             if (!term.matchable()) {
                 List<String> likes = new ArrayList<>();
                 for (String phrase : term.phrases()) {
@@ -585,7 +626,41 @@ public class JlcpcbSqliteSearch {
                 .replace("%", "%25").replace(" ", "%20").replace("?", "%3f").replace("#", "%23");
     }
 
+    /**
+     * True when {@code text} states a value of {@code unit} ({@code V}, {@code A}, {@code W}) of at least
+     * {@code minimum}: {@code 50V} satisfies a 25 V minimum; {@code 125mW}, {@code 1.5kV} and {@code 6A} are read
+     * with their prefix ({@code m} milli, {@code M} mega).
+     */
+    static boolean atLeast(String text, String unit, double minimum) {
+        if (text == null || unit == null) {
+            return false;
+        }
+        Matcher m = RATED_VALUE.matcher(text);
+        while (m.find()) {
+            if (!m.group(3).equals(unit)) {
+                continue;
+            }
+            double multiplier = switch (m.group(2)) {
+                case "u" -> 1e-6;
+                case "m" -> 1e-3;
+                case "k" -> 1e3;
+                case "M" -> 1e6;
+                default -> 1.0;
+            };
+            if (Double.parseDouble(m.group(1)) * multiplier >= minimum * (1 - 1e-9)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void registerFunctions(Connection c) throws SQLException {
+        Function.create(c, RATING_FUNCTION, new Function() {
+            @Override
+            protected void xFunc() throws SQLException {
+                result(atLeast(value_text(0), value_text(1), value_double(2)) ? 1 : 0);
+            }
+        }, 3, Function.FLAG_DETERMINISTIC);
         Function.create(c, VALUE_FUNCTION, new Function() {
             @Override
             protected void xFunc() throws SQLException {

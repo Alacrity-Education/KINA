@@ -16,8 +16,10 @@ import java.util.regex.Pattern;
  * {@link QueryParser}. Distributor-provided values (package field, Mouser ProductAttributes, TME parameters, LCSC
  * attributes) take precedence over description parsing. Stateless and thread-safe.
  *
- * <p>Comparable keys: {@value #CAPACITANCE}, {@value #RESISTANCE}, {@value #INDUCTANCE}, {@value #FREQUENCY},
- * {@value #VOLTAGE}, {@value #CURRENT}, {@value #POWER}, {@value #TOLERANCE}, {@value #DIELECTRIC},
+ * <p>Comparable keys: {@value #CAPACITANCE}, {@value #RESISTANCE}, {@value #INDUCTANCE}, {@value #IMPEDANCE},
+ * {@value #FREQUENCY}, {@value #VOLTAGE}, {@value #CURRENT} ({@value #RATED_CURRENT} for inductors and ferrite beads),
+ * {@value #SATURATION_CURRENT}, {@value #DCR}, {@value #POWER}, {@value #MAX_TEMPERATURE}, {@value #LIFETIME},
+ * {@value #TOLERANCE}, {@value #DIELECTRIC},
  * {@value #PACKAGE}, {@value #MOUNTING}, {@value #FAMILY}, {@value #TECHNOLOGY}; for connectors also {@value #CONNECTOR_TYPE},
  * {@value #GENDER}, {@value #POSITIONS}, {@value #ROWS}, {@value #PITCH}, {@value #ORIENTATION} and {@value #SERIES}.
  * Values are compact human-readable strings ("10uF", "25V", "10%", "X7R", "0805", "SMD", "capacitor",
@@ -33,6 +35,18 @@ public class ParametricExtractor {
     public static final String VOLTAGE = "Voltage";
     public static final String CURRENT = "Current";
     public static final String POWER = "Power";
+    /** Impedance of a ferrite bead with its test frequency ("120ohm @100MHz"). */
+    public static final String IMPEDANCE = "Impedance";
+    /** Rated current of an inductor or ferrite bead (I_rated; "Current" for other families). */
+    public static final String RATED_CURRENT = "RatedCurrent";
+    /** Saturation current of an inductor (I_sat). */
+    public static final String SATURATION_CURRENT = "SaturationCurrent";
+    /** Maximum DC resistance of an inductor or ferrite bead ("28mohm"). */
+    public static final String DCR = "DCR";
+    /** Maximum operating temperature ("105°C"). */
+    public static final String MAX_TEMPERATURE = "MaxTemperature";
+    /** Rated lifetime (endurance) in hours, with the test temperature when stated ("2000h @105°C"). */
+    public static final String LIFETIME = "Lifetime";
     public static final String TOLERANCE = "Tolerance";
     public static final String DIELECTRIC = "Dielectric";
     public static final String PACKAGE = "Package";
@@ -65,13 +79,28 @@ public class ParametricExtractor {
         m.put(ParsedQuery.CAPACITANCE, CAPACITANCE);
         m.put(ParsedQuery.RESISTANCE, RESISTANCE);
         m.put(ParsedQuery.INDUCTANCE, INDUCTANCE);
+        m.put(ParsedQuery.IMPEDANCE, IMPEDANCE);
         m.put(ParsedQuery.FREQUENCY, FREQUENCY);
         m.put(ParsedQuery.VOLTAGE, VOLTAGE);
         m.put(ParsedQuery.CURRENT, CURRENT);
+        m.put(ParsedQuery.SATURATION_CURRENT, SATURATION_CURRENT);
+        m.put(ParsedQuery.DCR, DCR);
         m.put(ParsedQuery.POWER, POWER);
+        m.put(ParsedQuery.TEMPERATURE, MAX_TEMPERATURE);
+        m.put(ParsedQuery.LIFETIME, LIFETIME);
         m.put(ParsedQuery.TOLERANCE, TOLERANCE);
         return m;
     }
+
+    /**
+     * Every canonical key {@link #extract} can produce: the {@code compact} response detail returns only these and
+     * leaves the raw distributor attributes (TME "Operating voltage", "Case - inch"...) to {@code full}.
+     */
+    public static final Set<String> CANONICAL_KEYS = Set.of(CAPACITANCE, RESISTANCE, INDUCTANCE, IMPEDANCE, FREQUENCY,
+            VOLTAGE, CURRENT, RATED_CURRENT, SATURATION_CURRENT, DCR, POWER, MAX_TEMPERATURE, LIFETIME, TOLERANCE,
+            "Dielectric", "Package", "Mounting", "Family", "Technology", "ConnectorType", "Gender", "Positions", "Rows",
+            "Pitch", "Orientation", "Series", "UsbType", "UsbStandard", "UsbSpeedGbps", "PinConfiguration",
+            "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features");
 
     // ---------------------------------------------------------------- distributor attribute names (lower-case)
 
@@ -94,6 +123,28 @@ public class ParametricExtractor {
             "ic - continuous collector current", "collector current (ic)", "current rating (amps)");
     private static final Pattern CURRENT_EXCLUDED = Pattern.compile(
             "leakage|reverse current|surge|quiescent|supply|peak|bias|offset|standby|pulse|trip|saturation");
+    /** Inductors and ferrite beads: the rated current (TME "Operating current", Mouser "Maximum DC Current"). */
+    private static final List<String> RATED_CURRENT_NAMES = List.of("rated current", "current rating",
+            "operating current", "maximum dc current", "max. dc current", "dc current", "current - max",
+            "current rating (amps)", "irms", "i rms", "rated current (irms)", "current");
+    private static final List<String> SATURATION_NAMES = List.of("saturation current", "isat", "current - saturation",
+            "current - saturation (isat)", "saturation current (isat)", "isat (max)", "saturation current max.");
+    /** Inductors and ferrite beads: DC resistance (TME "Resistance", Mouser "Maximum DC Resistance"). */
+    private static final List<String> DCR_NAMES = List.of("dc resistance", "dc resistance (dcr)", "dcr",
+            "maximum dc resistance", "max. dc resistance", "dc resistance max", "dc resistance (dcr) (max)",
+            "resistance - dc", "resistance", "dc resistance (max)");
+    private static final List<String> TEST_FREQUENCY_NAMES = List.of("test frequency", "impedance test frequency",
+            "frequency", "measuring frequency");
+    /** Lifetime (TME "Service life" = 2000h, Mouser "Lifetime" / "Load Life", DigiKey "Lifetime @ Temp."). */
+    private static final List<String> LIFETIME_NAMES = List.of("service life", "lifetime", "life time", "load life",
+            "endurance", "useful life", "lifetime @ temp.", "life", "operating life");
+    /** Operating temperature (TME "-55...105°C", Mouser "Maximum Operating Temperature" = "+ 105 C"). */
+    private static final List<String> TEMPERATURE_NAMES = List.of("maximum operating temperature",
+            "operating temperature", "operating temperature range", "temperature range", "max. operating temperature");
+    private static final Pattern HOURS = Pattern.compile(
+            "(?i)(\\d+(?:[.,]\\d+)?)\\s*(?:h|hrs?|hours?)(?![a-z])(?:\\s*@\\s*\\+?(\\d{2,3})\\s*°?\\s*C)?");
+    private static final Pattern SIGNED_NUMBER = Pattern.compile("[-+−]?\\s?\\d+(?:\\.\\d+)?");
+    private static final Pattern KEY_FREQUENCY = Pattern.compile("(?i)(\\d+(?:\\.\\d+)?)\\s*([kmg]?)hz");
     private static final List<String> POWER_NAMES = List.of("power rating", "power", "power(watts)", "power (watts)",
             "pd - power dissipation", "power dissipation (pd)", "power dissipation");
     private static final List<String> TOLERANCE_NAMES = List.of("tolerance", "resistance tolerance", "capacitance tolerance",
@@ -186,10 +237,11 @@ public class ParametricExtractor {
     public Map<String, String> extract(Part part) {
         Features f = features(part);
         Map<String, String> out = new LinkedHashMap<>();
+        boolean inductive = Recognizers.inductive(f.family());
         KIND_KEYS.forEach((kind, key) -> {
             Recognizers.Value v = f.values().get(kind);
             if (v != null) {
-                out.put(key, v.display());
+                out.put(inductive && ParsedQuery.CURRENT.equals(kind) ? RATED_CURRENT : key, v.display());
             }
         });
         putIfNotNull(out, DIELECTRIC, f.dielectric());
@@ -238,8 +290,10 @@ public class ParametricExtractor {
 
     /** Typed features used by {@link DeterministicRanker}. */
     Features features(Part part) {
-        Recognizers.Analysis description = Recognizers.analyze(part.description());
         Recognizers.Analysis category = categoryAnalysis(part.category());
+        // the category's family decides how a description without a family word is read (LCSC ferrite beads)
+        Recognizers.Analysis description = Recognizers.analyze(part.description(),
+                category.familyExplicit() ? category.family() : null);
 
         Map<String, String> attrs = new LinkedHashMap<>();
         part.attributes().forEach((k, v) -> {
@@ -253,8 +307,13 @@ public class ParametricExtractor {
         final String valueFamily = explicitFamily;
 
         Map<String, Recognizers.Value> values = new LinkedHashMap<>();
+        boolean inductive = Recognizers.inductive(valueFamily);
         attributeValue(attrs, CAPACITANCE_NAMES, ParsedQuery.CAPACITANCE, valueFamily, values);
-        attributeValue(attrs, RESISTANCE_NAMES, ParsedQuery.RESISTANCE, valueFamily, values);
+        if (inductive) {
+            inductiveAttributes(attrs, valueFamily, values);
+        } else {
+            attributeValue(attrs, RESISTANCE_NAMES, ParsedQuery.RESISTANCE, valueFamily, values);
+        }
         attributeValue(attrs, INDUCTANCE_NAMES, ParsedQuery.INDUCTANCE, valueFamily, values);
         attributeValue(attrs, FREQUENCY_NAMES, ParsedQuery.FREQUENCY, valueFamily, values);
         attributeValue(attrs, VOLTAGE_NAMES, ParsedQuery.VOLTAGE, valueFamily, values);
@@ -275,6 +334,8 @@ public class ParametricExtractor {
         }
         attributeValue(attrs, POWER_NAMES, ParsedQuery.POWER, valueFamily, values);
         attributeValue(attrs, TOLERANCE_NAMES, ParsedQuery.TOLERANCE, valueFamily, values);
+        lifetimeAttribute(attrs, values);
+        temperatureAttribute(attrs, values);
         Set<String> fromAttributes = Set.copyOf(values.keySet());
         description.values().forEach(values::putIfAbsent);
 
@@ -284,6 +345,9 @@ public class ParametricExtractor {
                     : values.containsKey(ParsedQuery.RESISTANCE) ? "resistor"
                     : values.containsKey(ParsedQuery.INDUCTANCE) ? "inductor"
                     : description.family();
+        }
+        if (Recognizers.inductive(family)) {
+            values.remove(ParsedQuery.RESISTANCE);   // an inductor's or ferrite bead's ohm value is DCR or impedance
         }
 
         String dielectric = null;
@@ -309,6 +373,15 @@ public class ParametricExtractor {
         }
         if (mounting == null) {
             mounting = description.mounting();
+        }
+        if (mounting == null && part.packageName() != null) {
+            // LCSC package fields "SMD,D8xL10mm", "插件,D6.3xL8mm"
+            mounting = Recognizers.tokenize(Recognizers.prepare(part.packageName())).stream()
+                    .map(Recognizers::mounting).filter(m -> m != null).findFirst().orElse(null);
+        }
+        if (mounting == null && part.category() != null) {
+            // Mouser "Aluminium Electrolytic Capacitors - Radial Leaded", "... - SMD"; LCSC "... - Leaded"
+            mounting = Recognizers.analyze(part.category()).mounting();
         }
         if (mounting == null) {
             mounting = mountingFromPackage(packageName);
@@ -368,6 +441,22 @@ public class ParametricExtractor {
         String fromCategory = TechnologyVocabulary.of(part.category(), family);
         if (fromCategory != null) {
             found.add(fromCategory);
+        }
+        // "polymer" alone is refined by another source: JLCPCB "Polarized Polymer" in the category "Polymer Aluminum
+        // Capacitors" is aluminium polymer, "polymer" next to "tantalum" is tantalum polymer
+        // (TME "Capacitor: polymer; ...; OS-CON SVF" is aluminium polymer too)
+        if (found.contains(TechnologyVocabulary.POLYMER)) {
+            Set<String> mentioned = new java.util.HashSet<>(found);
+            mentioned.addAll(TechnologyVocabulary.mentions(part.description(), family));
+            mentioned.addAll(TechnologyVocabulary.mentions(part.category(), family));
+            if (mentioned.contains(TechnologyVocabulary.TANTALUM)
+                    || mentioned.contains(TechnologyVocabulary.TANTALUM_POLYMER)) {
+                return TechnologyVocabulary.TANTALUM_POLYMER;
+            }
+            if (mentioned.contains(TechnologyVocabulary.ALUMINIUM_POLYMER)
+                    || mentioned.contains(TechnologyVocabulary.ALUMINIUM_ELECTROLYTIC)) {
+                return TechnologyVocabulary.ALUMINIUM_POLYMER;
+            }
         }
         return found.stream().filter(t -> !TechnologyVocabulary.CURRENT_SENSE.equals(t)).findFirst()
                 .orElse(found.isEmpty() ? null : found.getFirst());
@@ -880,6 +969,106 @@ public class ParametricExtractor {
             }
         }
         return null;
+    }
+
+    /**
+     * Inductor and ferrite bead parameters: rated current, saturation current, DC resistance and (ferrite beads) the
+     * impedance with its test frequency, from TME ({@code Operating current}, {@code Saturation current},
+     * {@code Resistance}, {@code Impedance at 100MHz}) and Mouser ({@code Maximum DC Current}, {@code Saturation
+     * Current}, {@code Maximum DC Resistance}, {@code Impedance} + {@code Test Frequency}) attributes. A plain
+     * {@code Resistance} attribute of such a part is its DC resistance, never a nominal resistance.
+     */
+    private static void inductiveAttributes(Map<String, String> attrs, String family,
+                                            Map<String, Recognizers.Value> values) {
+        attributeValue(attrs, RATED_CURRENT_NAMES, ParsedQuery.CURRENT, family, values);
+        for (String name : SATURATION_NAMES) {
+            Recognizers.Value v = Recognizers.firstValue(attrs.get(name), ParsedQuery.CURRENT, family);
+            if (v != null) {
+                values.putIfAbsent(ParsedQuery.SATURATION_CURRENT, Recognizers.of(ParsedQuery.SATURATION_CURRENT,
+                        v.value()));
+                break;
+            }
+        }
+        for (String name : DCR_NAMES) {
+            Recognizers.Value v = Recognizers.firstValue(attrs.get(name), ParsedQuery.RESISTANCE, null);
+            if (v != null) {
+                values.putIfAbsent(ParsedQuery.DCR, Recognizers.of(ParsedQuery.DCR, v.value()));
+                break;
+            }
+        }
+        if (!"ferrite".equals(family)) {
+            return;
+        }
+        for (Map.Entry<String, String> e : attrs.entrySet()) {
+            if (!e.getKey().startsWith("impedance")) {
+                continue;
+            }
+            Recognizers.Value v = Recognizers.firstValue(e.getValue(), ParsedQuery.RESISTANCE, null);
+            if (v == null) {
+                continue;
+            }
+            Double frequency = null;
+            // "Impedance at 100MHz" (TME), or the value itself ("120ohm @100MHz", the canonical form)
+            java.util.regex.Matcher m = KEY_FREQUENCY.matcher(e.getKey());
+            if (!m.find()) {
+                m = KEY_FREQUENCY.matcher(e.getValue());
+                m = m.find() ? m : null;
+            }
+            if (m != null) {
+                frequency = Double.parseDouble(m.group(1)) * switch (m.group(2).toLowerCase(Locale.ROOT)) {
+                    case "k" -> 1e3;
+                    case "m" -> 1e6;   // the key is lower-case: "impedance at 100mhz"
+                    case "g" -> 1e9;
+                    default -> 1.0;
+                };
+            }
+            for (String name : TEST_FREQUENCY_NAMES) {
+                Recognizers.Value f = frequency != null ? null
+                        : Recognizers.firstValue(attrs.get(name), ParsedQuery.FREQUENCY, family);
+                if (f != null) {
+                    frequency = f.value();
+                }
+            }
+            values.put(ParsedQuery.IMPEDANCE, Recognizers.of(ParsedQuery.IMPEDANCE, v.value(), frequency));
+            return;
+        }
+    }
+
+    /** Lifetime in hours from a lifetime attribute ("2000h", "5000 Hours", "2000 Hrs @ 105°C"): never inductance. */
+    private static void lifetimeAttribute(Map<String, String> attrs, Map<String, Recognizers.Value> values) {
+        for (String name : LIFETIME_NAMES) {
+            String v = attrs.get(name);
+            if (v == null) {
+                continue;
+            }
+            java.util.regex.Matcher m = HOURS.matcher(v);
+            if (m.find()) {
+                double hours = Double.parseDouble(m.group(1).replace(',', '.'));
+                Double temperature = m.group(2) == null ? null : Double.parseDouble(m.group(2));
+                values.putIfAbsent(ParsedQuery.LIFETIME, Recognizers.of(ParsedQuery.LIFETIME, hours, temperature));
+                return;
+            }
+        }
+    }
+
+    /** The maximum operating temperature: the largest number of an operating temperature attribute. */
+    private static void temperatureAttribute(Map<String, String> attrs, Map<String, Recognizers.Value> values) {
+        for (String name : TEMPERATURE_NAMES) {
+            String v = attrs.get(name);
+            if (v == null) {
+                continue;
+            }
+            java.util.regex.Matcher m = SIGNED_NUMBER.matcher(v);
+            Double max = null;
+            while (m.find()) {
+                double n = Double.parseDouble(m.group().replace("−", "-").replace(" ", ""));
+                max = max == null ? n : Math.max(max, n);
+            }
+            if (max != null && max > 0) {
+                values.putIfAbsent(ParsedQuery.TEMPERATURE, Recognizers.of(ParsedQuery.TEMPERATURE, max));
+                return;
+            }
+        }
     }
 
     private static void attributeValue(Map<String, String> attrs, Iterable<String> names, String kind, String family,

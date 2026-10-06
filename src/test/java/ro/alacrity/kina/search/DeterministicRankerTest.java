@@ -51,8 +51,18 @@ class DeterministicRankerTest {
         double exact = score(q, mlcc("A", "10uF", "25V", "X7R", "±10%", "0805"));
         double higher = score(q, mlcc("B", "10uF", "50V", "X7R", "±10%", "0805"));
         double lower = score(q, mlcc("C", "10uF", "16V", "X7R", "±10%", "0805"));
-        assertThat(higher).isCloseTo(exact, within(1e-9));
+        double sixtyThree = score(q, mlcc("D", "10uF", "63V", "X7R", "±10%", "0805"));
+        double hundred = score(q, mlcc("E", "10uF", "100V", "X7R", "±10%", "0805"));
+        // a higher rating satisfies the minimum; the closest rating is preferred by a small margin (score only)
+        assertThat(higher).isCloseTo(exact - DeterministicRanker.W_RATING_EXCESS / 2, within(1e-9));
+        assertThat(exact).isGreaterThan(higher);
+        assertThat(higher).isGreaterThan(sixtyThree);
+        assertThat(sixtyThree).isGreaterThan(hundred);
+        assertThat(hundred).isGreaterThan(lower);
         assertThat(lower).isCloseTo(exact - 2 * DeterministicRanker.W_RATING, within(1e-9));
+        // the match grade does not prefer: every part at or above the rating matches fully
+        assertThat(ranker.assess(parser.parse(q), mlcc("B", "10uF", "50V", "X7R", "±10%", "0805")).match())
+                .isEqualTo(1.0);
     }
 
     @Test

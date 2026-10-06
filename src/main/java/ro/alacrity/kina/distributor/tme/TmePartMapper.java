@@ -87,7 +87,10 @@ class TmePartMapper {
                 .build());
     }
 
-    /** True when one of the product's {@code product_status} values is in {@code excludedStatuses} (ignoring case). */
+    /**
+     * True when one of the product's {@code product_status} values is in {@code excludedStatuses} (ignoring case; an
+     * entry ending in {@code *} is a prefix, e.g. {@code BLOCKED_FOR_ZBL_*}).
+     */
     static boolean hasExcludedStatus(TmeResponses.Product product, Collection<String> excludedStatuses) {
         if (product == null || product.productStatus() == null || excludedStatuses == null
                 || excludedStatuses.isEmpty()) {
@@ -98,7 +101,14 @@ class TmePartMapper {
                 continue;
             }
             for (String excluded : excludedStatuses) {
-                if (excluded != null && excluded.strip().equalsIgnoreCase(status.strip())) {
+                if (excluded == null) {
+                    continue;
+                }
+                String e = excluded.strip();
+                boolean prefix = e.endsWith("*");
+                if (prefix ? status.strip().toUpperCase(Locale.ROOT)
+                        .startsWith(e.substring(0, e.length() - 1).toUpperCase(Locale.ROOT))
+                        : e.equalsIgnoreCase(status.strip())) {
                     return true;
                 }
             }

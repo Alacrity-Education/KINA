@@ -19,6 +19,7 @@ import ro.alacrity.kina.domain.BatchSearchResponse;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.PartLookupResponse;
 import ro.alacrity.kina.domain.PartResponse;
+import ro.alacrity.kina.domain.ResponseDetail;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
 import ro.alacrity.kina.search.PartLookupService;
@@ -39,7 +40,7 @@ public class PartsController {
     private final PartSearchService searchService;
     private final PartLookupService lookupService;
 
-    /** {@code GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=}. */
+    /** {@code GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=}. */
     @GetMapping("/search")
     public SearchResponse search(
             @RequestParam("q") @NotBlank String q,
@@ -47,10 +48,14 @@ public class PartsController {
             Integer maxResults,
             @RequestParam(name = "distributors", required = false) List<String> distributors,
             @RequestParam(name = "bypass_cache", defaultValue = "false") boolean bypassCache,
+            @RequestParam(name = "quantity", required = false) @Min(1) @Max(SearchRequest.MAX_QUANTITY)
+            Integer quantity,
+            @RequestParam(name = "detail", required = false) String detail,
             Authentication authentication) {
         Set<Distributor> selected = parseDistributors(distributors);
         log.debug("search '{}' by {}", q, user(authentication));
-        return searchService.search(SearchRequest.of(q, maxResults, selected, bypassCache));
+        return searchService.search(SearchRequest.of(q, maxResults, selected, bypassCache, quantity,
+                ResponseDetail.parse(detail)));
     }
 
     /** {@code POST /api/v1/parts/search/batch} with a snake_case {@link BatchSearchRequest} body. */
@@ -62,13 +67,16 @@ public class PartsController {
     }
 
     /**
-     * {@code GET /api/v1/parts/{distributor}/{partNumber}?bypass_cache=}. The part number is the rest of the path,
-     * so TME symbols containing {@code /} work unencoded.
+     * {@code GET /api/v1/parts/{distributor}/{partNumber}?bypass_cache=&quantity=&detail=} ({@code detail} defaults to
+     * {@code compact}). The part number is the rest of the path, so TME symbols containing {@code /} work unencoded.
      */
     @GetMapping("/{distributor}/{*partNumber}")
     public PartResponse getPart(@PathVariable("distributor") String distributor,
                                 @PathVariable("partNumber") String partNumber,
                                 @RequestParam(name = "bypass_cache", defaultValue = "false") boolean bypassCache,
+                                @RequestParam(name = "quantity", required = false) @Min(1)
+                                @Max(SearchRequest.MAX_QUANTITY) Integer quantity,
+                                @RequestParam(name = "detail", required = false) String detail,
                                 Authentication authentication) {
         Distributor d = Distributor.parse(distributor);
         String number = partNumber.startsWith("/") ? partNumber.substring(1) : partNumber;
@@ -76,7 +84,8 @@ public class PartsController {
             throw new IllegalArgumentException("part number must not be blank");
         }
         log.debug("get {} {} by {}", d, number, user(authentication));
-        PartLookupResponse result = lookupService.lookup(d, number, bypassCache);
+        PartLookupResponse result = lookupService.lookup(d, number, bypassCache, quantity == null ? 1 : quantity,
+                ResponseDetail.parse(detail));
         if (!result.found() || result.part() == null) {
             throw new PartNotFoundException(d, number.strip(), result.reason(), result.identity());
         }

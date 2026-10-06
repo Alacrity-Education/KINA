@@ -10,8 +10,10 @@ import java.util.Map;
  *
  * <p>Typed constraints are keyed by the constants below. {@link Constraint#value()} is normalised to
  * the SI base unit: farad, ohm, henry, volt, ampere, watt, hertz; tolerance is in percent
- * (e.g. {@code 5.0} for {@code ±5%}). {@link Constraint#display()} is a compact human form
- * ("10uF", "4.7kohm", "16V", "5%") used in responses.
+ * (e.g. {@code 5.0} for {@code ±5%}), {@link #TEMPERATURE} in degrees Celsius, {@link #LIFETIME} in hours.
+ * {@link Constraint#display()} is a compact human form ("10uF", "4.7kohm", "16V", "5%", "120ohm @100MHz") used in
+ * responses. Voltage, current, saturation current, power, temperature and lifetime are minimum ratings (a part with a
+ * higher rating satisfies them); {@link #DCR} is a maximum.
  *
  * @param originalText the query as received
  * @param normalizedKey normalised cache key (trim, collapse whitespace, lower-case, NFKC, µ-&gt;u, Ω-&gt;ohm)
@@ -24,8 +26,10 @@ import java.util.Map;
  * @param connector    connector attributes when the query asks for a connector (family {@code "connector"}), else null
  * @param technology   construction technology of a passive ("thin film", "tantalum", "multilayer"...; see
  *                     {@code search.TechnologyVocabulary}), null when the query names none
+ * @param preferences  soft preferences that are not constraints, e.g. {@link #LOW_DCR} ("low DCR": lower DC
+ *                     resistance ranks higher among otherwise equal parts)
  */
-@Builder
+@Builder(toBuilder = true)
 public record ParsedQuery(
         String originalText,
         String normalizedKey,
@@ -36,7 +40,8 @@ public record ParsedQuery(
         String mounting,
         List<String> keywords,
         Connector connector,
-        String technology
+        String technology,
+        List<String> preferences
 ) {
 
     public static final String CAPACITANCE = "capacitance";
@@ -47,6 +52,19 @@ public record ParsedQuery(
     public static final String POWER = "power";
     public static final String FREQUENCY = "frequency";
     public static final String TOLERANCE = "tolerance";
+    /** Impedance of a ferrite bead at its test frequency ({@link Constraint#condition()}, Hz), in ohm. */
+    public static final String IMPEDANCE = "impedance";
+    /** Saturation current of an inductor (I_sat), in ampere; a minimum. */
+    public static final String SATURATION_CURRENT = "saturation_current";
+    /** Maximum DC resistance of an inductor or ferrite bead, in ohm; a maximum. */
+    public static final String DCR = "dcr";
+    /** Maximum operating temperature, in degrees Celsius; a minimum. */
+    public static final String TEMPERATURE = "temperature";
+    /** Rated lifetime (endurance) in hours, at the temperature in {@link Constraint#condition()} when stated. */
+    public static final String LIFETIME = "lifetime";
+
+    /** Preference: lower DC resistance ranks higher ("low DCR"). */
+    public static final String LOW_DCR = "low dcr";
 
     /** Connector types ({@link Connector#type()}). */
     public static final String PIN_HEADER = "pin header";
@@ -86,12 +104,19 @@ public record ParsedQuery(
     public ParsedQuery {
         constraints = constraints == null ? Map.of() : constraints;
         keywords = keywords == null ? List.of() : List.copyOf(keywords);
+        preferences = preferences == null ? List.of() : List.copyOf(preferences);
     }
 
     /** A query without connector attributes. */
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
-        this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null);
+        this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null,
+                null);
+    }
+
+    /** True when the query states the preference ({@link #LOW_DCR}). */
+    public boolean prefers(String preference) {
+        return preferences.contains(preference);
     }
 
     /** True when the query asks for a connector (connector words were recognised). */
@@ -170,11 +195,17 @@ public record ParsedQuery(
     /**
      * One numeric constraint.
      *
-     * @param kind    one of the {@link ParsedQuery} constants (same as the map key)
-     * @param value   value in SI base units (tolerance: percent)
-     * @param display compact human form, e.g. "10uF"
+     * @param kind      one of the {@link ParsedQuery} constants (same as the map key)
+     * @param value     value in SI base units (tolerance: percent, temperature: degrees Celsius, lifetime: hours)
+     * @param display   compact human form, e.g. "10uF", "120ohm @100MHz", "2000h @105°C"
+     * @param condition the test condition when stated: the test frequency in Hz of an {@link #IMPEDANCE}, the
+     *                  temperature in degrees Celsius of a {@link #LIFETIME}; else null
      */
-    public record Constraint(String kind, double value, String display) {
+    public record Constraint(String kind, double value, String display, Double condition) {
+
+        public Constraint(String kind, double value, String display) {
+            this(kind, value, display, null);
+        }
     }
 
     public Constraint constraint(String kind) {

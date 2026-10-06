@@ -17,8 +17,17 @@ import java.util.List;
  *                      query found nothing (e.g. "MOSFET 30V SOT-23" for "SOT-23 N-channel MOSFET 30V")
  * @param rateLimitWaitedMs milliseconds this distributor's fetch spent waiting on rate limits (0 when none)
  * @param distributorQuery null when the user's text was sent verbatim, else the distributor-specific phrase KINA sent
- *                      instead (connector queries, e.g. {@code pin strips female 6 angled} for TME); a
- *                      {@code fallbackQuery} is what was sent after this phrase found nothing
+ *                      instead (connector queries, e.g. {@code pin strips female 6 angled} for TME; queries with
+ *                      ratings, which are left out); a {@code fallbackQuery} is what was sent after this phrase found
+ *                      nothing
+ * @param excludedByConstraints parts left out because a known attribute contradicts a strict constraint of the request
+ *                      (mounting, technology; {@code kina.search.strict-constraints})
+ * @param outOfStockMatches records the distributor matched without ships-now stock (dropped by the stock rule) on the
+ *                      pages KINA read; null when unknown (a cached search stored before this was counted)
+ * @param relaxed       stated constraints that were not part of the search that produced the parts (ratings, which
+ *                      are never sent to Mouser/TME, the tolerance, the dielectric...); the ranker still checks them
+ *                      and each part lists what it misses in {@code mismatches}
+ * @param exactMatches  returned parts that satisfy every stated parameter ({@code match} 1.0)
  */
 @Builder
 public record DistributorResult(
@@ -31,11 +40,16 @@ public record DistributorResult(
         @JsonProperty("parts") List<PartResponse> parts,
         @JsonProperty("fallback_query") String fallbackQuery,
         @JsonProperty("rate_limit_waited_ms") long rateLimitWaitedMs,
-        @JsonProperty("distributor_query") String distributorQuery
+        @JsonProperty("distributor_query") String distributorQuery,
+        @JsonProperty("excluded_by_constraints") int excludedByConstraints,
+        @JsonProperty("out_of_stock_matches") Integer outOfStockMatches,
+        @JsonProperty("relaxed") List<String> relaxed,
+        @JsonProperty("exact_matches") int exactMatches
 ) {
 
     public DistributorResult {
         parts = parts == null ? List.of() : List.copyOf(parts);
+        relaxed = relaxed == null ? List.of() : List.copyOf(relaxed);
     }
 
     /** An entry for a distributor that failed; carries an empty part list. */

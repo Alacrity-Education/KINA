@@ -42,8 +42,10 @@ class ResponseJsonTest {
                 "\"photo_url\":", "\"product_url\":", "\"distributor\":\"MOUSER\"",
                 "\"parsed\":{\"family\":\"capacitor\"", "\"capacitance\":\"10uF\"", "\"dielectric\":\"X7R\"",
                 "\"keywords\":[]", "{\"qty\":1,\"unit_price\":1.40,\"currency\":\"EUR\"}",
-                "\"fallback_query\":null", "\"rate_limit_waited_ms\":0", "\"distributor_query\":null");
-        assertThat(json).doesNotContain("\"qty\":100", "mounting", "constraints", "packageName", "\"connector\"");
+                "\"fallback_query\":null", "\"rate_limit_waited_ms\":0", "\"distributor_query\":null",
+                "\"excluded_by_constraints\":0", "\"out_of_stock_matches\":null", "\"relaxed\":[]",
+                "\"exact_matches\":0", "\"availability\":{\"status\":\"in_stock\"", "\"lifecycle\":\"active\"");
+        assertThat(json).doesNotContain("\"qty\":100", "mismatches", "mounting", "\"constraints\"", "packageName", "\"connector\"");
     }
 
     @Test

@@ -206,13 +206,60 @@ public record KinaProperties(
      *                           not count (DESIGN.md 3.6)
      * @param maxRequestDuration hard cap on one incoming request ({@code search_parts}, a whole batch, {@code get_part})
      *                           within which rate-limited distributor calls may wait and retry
+     * @param strictConstraints  stated request attributes that exclude a part whose known value contradicts them
+     *                           ({@code mounting}, {@code technology}; DESIGN.md 3.4 "Strict constraints"); a part that
+     *                           does not state the attribute stays but ranks below known matches
+     * @param quantity           ranking penalties for an order quantity above 1
+     * @param lifecycle          ranking penalties for last-time-buy and supply-constrained parts
      */
     public record Search(
             @DefaultValue("40") int candidateWindow,
             @DefaultValue("10") int defaultMaxResults,
             @DefaultValue("50") int maxMaxResults,
             @DefaultValue("12s") Duration distributorTimeout,
-            @DefaultValue("2m") Duration maxRequestDuration) {
+            @DefaultValue("2m") Duration maxRequestDuration,
+            @DefaultValue({"mounting", "technology"}) List<String> strictConstraints,
+            @DefaultValue Quantity quantity,
+            @DefaultValue Lifecycle lifecycle) {
+
+        @ConstructorBinding
+        public Search {
+            strictConstraints = strictConstraints == null ? List.of() : strictConstraints.stream()
+                    .filter(c -> c != null && !c.isBlank())
+                    .map(c -> c.strip().toLowerCase(java.util.Locale.ROOT)).toList();
+            quantity = quantity == null ? new Quantity(0.3, 0.15) : quantity;
+            lifecycle = lifecycle == null ? new Lifecycle(0.1, 0.03) : lifecycle;
+        }
+
+        /** Without strict constraints and with the default quantity penalties (tests). */
+        public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
+                      Duration maxRequestDuration) {
+            this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration,
+                    List.of("mounting", "technology"), null, null);
+        }
+    }
+
+    /**
+     * {@code kina.search.quantity.*}: deterministic-score deductions for an order of more than one piece (DESIGN.md 3.4
+     * "Quantity"); a quantity of 1 changes nothing.
+     *
+     * @param stockShortfallPenalty deduction for a part with fewer pieces in stock than the quantity (such a part also
+     *                              ranks below every part that has enough)
+     * @param moqPenalty            largest deduction for a minimum order quantity above the quantity
+     *                              ({@code moqPenalty * min(1, log10(moq / quantity) / 2)})
+     */
+    public record Quantity(@DefaultValue("0.3") double stockShortfallPenalty, @DefaultValue("0.15") double moqPenalty) {
+    }
+
+    /**
+     * {@code kina.search.lifecycle.*}: deterministic-score deductions by the part's {@code lifecycle} (DESIGN.md 3.4).
+     *
+     * @param lastTimeBuyPenalty       {@code last_time_buy}: TME {@code AVAILABLE_WHILE_STOCKS_LAST}, Mouser end of
+     *                                 life, obsolete, not recommended for new designs
+     * @param supplyConstrainedPenalty {@code supply_constrained}: TME {@code HARDLY_AVAILABLE}
+     */
+    public record Lifecycle(@DefaultValue("0.1") double lastTimeBuyPenalty,
+                            @DefaultValue("0.03") double supplyConstrainedPenalty) {
     }
 
     /**
@@ -309,12 +356,14 @@ public record KinaProperties(
             @DefaultValue("https://api.tme.eu") String baseUrl,
             @DefaultValue("60") int maxResultsPerSearch,
             @DefaultValue("3") int maxPagesPerSearch,
-            @DefaultValue({"CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE"})
+            @DefaultValue({"CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE", "NOT_IN_OFFER",
+                    "PRODUCT_BLOCKED", "INVALID", "BLOCKED_FOR_ZBL_*"})
             List<String> excludedStatuses) {
 
         /** {@code product_status} values that mean the part does not ship now; such parts are dropped. */
         public static final List<String> DEFAULT_EXCLUDED_STATUSES =
-                List.of("CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE");
+                List.of("CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE", "NOT_IN_OFFER",
+                        "PRODUCT_BLOCKED", "INVALID", "BLOCKED_FOR_ZBL_*");
 
         public Tme {
             excludedStatuses = excludedStatuses == null ? DEFAULT_EXCLUDED_STATUSES : List.copyOf(excludedStatuses);

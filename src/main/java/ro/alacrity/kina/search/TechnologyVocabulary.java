@@ -51,6 +51,10 @@ public class TechnologyVocabulary {
     public static final String TANTALUM = "tantalum";
     public static final String TANTALUM_POLYMER = "tantalum polymer";
     public static final String POLYMER = "polymer";
+    /** Aluminium (organic) polymer capacitors, OS-CON style included; a different technology from tantalum polymer. */
+    public static final String ALUMINIUM_POLYMER = "aluminium polymer";
+    /** Hybrid polymer aluminium electrolytic capacitors (polymer plus liquid electrolyte). */
+    public static final String HYBRID_POLYMER = "hybrid polymer";
     public static final String ALUMINIUM_ELECTROLYTIC = "aluminium electrolytic";
     public static final String FILM = "film";
     public static final String POLYPROPYLENE = "polypropylene";
@@ -84,9 +88,17 @@ public class TechnologyVocabulary {
             rule("wire[- ]?wound", WIREWOUND),
             rule("current[- ]?sens(?:e|ing)|current shunt|shunt", CURRENT_SENSE));
 
-    /** Capacitor rules, most specific first ("tantalum polymer" before "polymer" and "tantalum"). */
+    /**
+     * Capacitor rules, most specific first ("tantalum polymer" before "polymer" and "tantalum", "aluminium polymer"
+     * before "polymer" and "aluminium electrolytic").
+     */
     private static final List<Rule> CAPACITOR = List.of(
             rule("tantalum[- ]polymer|polymer[- ]tantalum|tantalum capacitors?\\s*-\\s*polymer", TANTALUM_POLYMER),
+            rule("hybrid(?:[- ]polymer)?(?:[- ]alumin(?:i)?um)?(?:[- ]electrolytic)?|polymer[- ]hybrid",
+                    HYBRID_POLYMER),
+            rule("alumin(?:i)?um[- ](?:organic[- ])?(?:conductive[- ])?polymer|polymer[- ]alumin(?:i)?um"
+                    + "|(?:conductive|organic)[- ]polymer[- ]alumin(?:i)?um|os-?con|solid[- ]polymer(?: electrolytic)?"
+                    + "|solid capacitors?|alumin(?:i)?um solid", ALUMINIUM_POLYMER),
             rule("polymer", POLYMER),
             rule("tantalum", TANTALUM),
             rule("super[- ]?capacitors?|ultra[- ]?capacitors?|supercaps?|edlc", SUPERCAPACITOR),
@@ -104,6 +116,10 @@ public class TechnologyVocabulary {
             rule("multi[- ]?layer", MULTILAYER));
 
     private static final Set<String> FILM_KINDS = Set.of(POLYPROPYLENE, POLYESTER, PPS);
+    /** Polymer kinds a bare "polymer" request accepts. */
+    private static final Set<String> POLYMER_KINDS = Set.of(ALUMINIUM_POLYMER, TANTALUM_POLYMER);
+    /** Kinds a hybrid polymer part neither matches nor contradicts. */
+    private static final Set<String> HYBRID_NEUTRAL = Set.of(ALUMINIUM_POLYMER, POLYMER, ALUMINIUM_ELECTROLYTIC);
     private static final Set<String> SENSE_CONSTRUCTIONS = Set.of(METAL_STRIP, METAL_FOIL);
 
     /** The rules of a family, empty for families without technologies. */
@@ -157,6 +173,26 @@ public class TechnologyVocabulary {
         return best != null ? best : sense;
     }
 
+    /** Every technology a text mentions for {@code family} (non-overlapping, most specific rule first). */
+    public static Set<String> mentions(String text, String family) {
+        List<Rule> rules = rules(family);
+        if (text == null || text.isBlank() || rules.isEmpty()) {
+            return Set.of();
+        }
+        Set<String> out = new java.util.LinkedHashSet<>();
+        int[] taken = new int[text.length() + 1];
+        for (Rule r : rules) {
+            Matcher m = r.pattern().matcher(text);
+            while (m.find()) {
+                if (!overlaps(taken, m.start(), m.end())) {
+                    mark(taken, m.start(), m.end());
+                    out.add(r.technology());
+                }
+            }
+        }
+        return out;
+    }
+
     /** The technology of a text, or null (see {@link #find}). */
     public static String of(String text, String family) {
         Match m = find(text, family);
@@ -195,10 +231,13 @@ public class TechnologyVocabulary {
 
     /**
      * Compares a requested technology with a part's: 1 = same (or compatible: a {@code film} request accepts
-     * polypropylene/polyester/PPS, a {@code tantalum} or {@code polymer} request accepts tantalum polymer, a
-     * {@code current sense} request accepts metal strip and metal foil), -1 = a different known technology, 0 = unknown
-     * on either side or not comparable (a polypropylene request against a part that only says "film"; a current-sense
-     * request against a thick-film part, which may well be a sense resistor).
+     * polypropylene/polyester/PPS, a {@code tantalum} request accepts tantalum polymer, a bare {@code polymer} request
+     * accepts aluminium polymer and tantalum polymer, a {@code current sense} request accepts metal strip and metal
+     * foil), -1 = a different known technology (an aluminium polymer request against a tantalum polymer or a plain
+     * aluminium electrolytic part), 0 = unknown on either side or not comparable (a polypropylene request against a
+     * part that only says "film"; an aluminium polymer request against a part that only says "polymer"; a hybrid
+     * polymer part against any aluminium request; a current-sense request against a thick-film part, which may well be
+     * a sense resistor).
      */
     public static int compare(String wanted, String actual) {
         if (wanted == null || actual == null) {
@@ -213,10 +252,20 @@ public class TechnologyVocabulary {
         if (FILM.equals(actual) && FILM_KINDS.contains(wanted)) {
             return 0;
         }
-        if (TANTALUM_POLYMER.equals(actual) && (TANTALUM.equals(wanted) || POLYMER.equals(wanted))) {
+        if (POLYMER.equals(wanted) && POLYMER_KINDS.contains(actual)) {
+            return 1;   // a bare "polymer" request accepts aluminium and tantalum polymer
+        }
+        if (TANTALUM_POLYMER.equals(actual) && TANTALUM.equals(wanted)) {
             return 1;
         }
         if (TANTALUM_POLYMER.equals(wanted) && (TANTALUM.equals(actual) || POLYMER.equals(actual))) {
+            return 0;
+        }
+        if (ALUMINIUM_POLYMER.equals(wanted) && POLYMER.equals(actual)) {
+            return 0;   // "polymer" alone does not say aluminium or tantalum
+        }
+        if (HYBRID_POLYMER.equals(actual) && HYBRID_NEUTRAL.contains(wanted)
+                || HYBRID_POLYMER.equals(wanted) && HYBRID_NEUTRAL.contains(actual)) {
             return 0;
         }
         if (CURRENT_SENSE.equals(wanted)) {
@@ -236,12 +285,14 @@ public class TechnologyVocabulary {
                     Map.entry(METAL_FILM, "\"Metal Film\""), Map.entry(CARBON_FILM, "\"Carbon Film\""),
                     Map.entry(METAL_OXIDE, "\"Metal Oxide\""), Map.entry(METAL_FOIL, "\"Metal Foil\""),
                     Map.entry(CURRENT_SENSE, "\"Current Sense\""), Map.entry(ALUMINIUM_ELECTROLYTIC,
-                            "\"Aluminum Electrolytic\"")),
+                            "\"Aluminum Electrolytic\""), Map.entry(ALUMINIUM_POLYMER, "\"Polymer Aluminum\"")),
             // TME (verified live 2026-10-05): "wirewound resistor 5W" finds the "wire-wound" resistors, "wire-wound
             // resistor 5W" needs the fallback; "aluminium electrolytic 100uF" finds nothing, TME says "electrolytic"
-            Distributor.TME, Map.of(WIREWOUND, "wirewound", ALUMINIUM_ELECTROLYTIC, "electrolytic"),
+            Distributor.TME, Map.of(WIREWOUND, "wirewound", ALUMINIUM_ELECTROLYTIC, "electrolytic",
+                    ALUMINIUM_POLYMER, "polymer"),
             // Mouser categories: "Wirewound Resistors", "Thin Film Resistors", "Thick Film Resistors"
-            Distributor.MOUSER, Map.of(WIREWOUND, "wirewound", THIN_FILM, "thin film", THICK_FILM, "thick film"));
+            Distributor.MOUSER, Map.of(WIREWOUND, "wirewound", THIN_FILM, "thin film", THICK_FILM, "thick film",
+                    ALUMINIUM_POLYMER, "aluminum organic polymer"));
 
     /** The distributor's spelling of a technology, or null when it has none of its own. */
     public static String spelling(Distributor distributor, String technology) {

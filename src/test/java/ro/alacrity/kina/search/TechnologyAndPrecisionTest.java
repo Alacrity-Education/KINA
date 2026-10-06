@@ -180,7 +180,7 @@ class TechnologyAndPrecisionTest {
                 "Wirewound Resistors - SMD", null, Map.of());
         assertThat(extractor.extract(solid)).containsEntry("Technology", "tantalum");
         assertThat(extractor.extract(polymer)).containsEntry("Technology", "tantalum polymer");
-        assertThat(extractor.extract(aluPolymer)).containsEntry("Technology", "polymer");
+        assertThat(extractor.extract(aluPolymer)).containsEntry("Technology", "aluminium polymer");
         assertThat(extractor.extract(film)).containsEntry("Technology", "film");
         assertThat(extractor.extract(wirewound)).containsEntry("Technology", "wirewound");
     }
@@ -320,13 +320,17 @@ class TechnologyAndPrecisionTest {
         assertThat(DistributorPhraser.phrase(Distributor.TME, live)).isNull();
 
         ParsedQuery wire = parser.parse("wire-wound resistor 5W 10R");
-        assertThat(DistributorPhraser.phrase(Distributor.TME, wire)).isEqualTo("wirewound resistor 5W 10R");
-        assertThat(DistributorPhraser.phrase(Distributor.MOUSER, wire)).isEqualTo("wirewound resistor 5W 10R");
+        // the power rating is a minimum and stays out of the phrase
+        assertThat(DistributorPhraser.phrase(Distributor.TME, wire)).isEqualTo("wirewound resistor 10R");
+        assertThat(DistributorPhraser.phrase(Distributor.MOUSER, wire)).isEqualTo("wirewound resistor 10R");
         ParsedQuery alu = parser.parse("aluminium electrolytic 100uF 25V");
-        assertThat(DistributorPhraser.phrase(Distributor.TME, alu)).isEqualTo("electrolytic 100uF 25V");
-        assertThat(DistributorPhraser.phrase(Distributor.LCSC, alu)).isEqualTo("\"Aluminum Electrolytic\" 100uF 25V");
-        // no own spelling: verbatim
-        assertThat(DistributorPhraser.phrase(Distributor.MOUSER, parser.parse("tantalum 10uF 16V"))).isNull();
+        assertThat(DistributorPhraser.phrase(Distributor.TME, alu)).isEqualTo("electrolytic 100uF");
+        // LCSC checks the minimum itself (a local database): 35V and 50V parts match ">=25V"
+        assertThat(DistributorPhraser.phrase(Distributor.LCSC, alu)).isEqualTo("\"Aluminum Electrolytic\" 100uF >=25V");
+        // no own spelling: verbatim except the rating
+        assertThat(DistributorPhraser.phrase(Distributor.MOUSER, parser.parse("tantalum 10uF 16V")))
+                .isEqualTo("tantalum 10uF");
+        assertThat(DistributorPhraser.phrase(Distributor.MOUSER, parser.parse("tantalum 10uF"))).isNull();
         assertThat(DistributorPhraser.phrase(Distributor.LCSC, parser.parse("4.7k 1% 0603 resistor"))).isNull();
     }
 }

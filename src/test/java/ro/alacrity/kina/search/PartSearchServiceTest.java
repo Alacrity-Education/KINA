@@ -46,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -62,6 +63,7 @@ class PartSearchServiceTest {
     final Map<String, CachedSearch> cachedSearches = new ConcurrentHashMap<>();
     final List<Map<Distributor, List<Part>>> rankedInputs = new CopyOnWriteArrayList<>();
     final List<Duration> rankBudgets = new CopyOnWriteArrayList<>();
+    final List<Integer> rankQuantities = new CopyOnWriteArrayList<>();
     PartSearchService service;
 
     // ---- fakes ----------------------------------------------------------------------------------------------------
@@ -127,7 +129,8 @@ class PartSearchServiceTest {
             int to = Math.min(raw.size(), offset + limit);
             List<Part> parts = offset >= raw.size() ? List.of()
                     : raw.subList(offset, to).stream().filter(p -> p != null).toList();
-            return new DistributorSearchPage(parts, raw.size(), to < raw.size());
+            int outOfStock = offset >= raw.size() ? 0 : (to - offset) - parts.size();
+            return new DistributorSearchPage(parts, raw.size(), to < raw.size(), outOfStock);
         }
 
         @Override
@@ -220,9 +223,10 @@ class PartSearchServiceTest {
         }).when(searchCache).upsert(any());
 
         RankingService ranking = mock(RankingService.class);
-        when(ranking.rank(any(), anyMap(), any())).thenAnswer(inv -> {
+        when(ranking.rank(any(), anyMap(), any(), anyInt())).thenAnswer(inv -> {
             Map<Distributor, List<Part>> input = inv.getArgument(1);
             Duration budget = inv.getArgument(2);
+            rankQuantities.add(inv.getArgument(3));
             rankedInputs.add(input);
             rankBudgets.add(budget == null ? Duration.ofSeconds(-1) : budget);
             Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
@@ -422,15 +426,28 @@ class PartSearchServiceTest {
     // ---- phrase fallback ------------------------------------------------------------------------------------------
 
     static final String MOSFET_QUERY = "SOT-23 N-channel MOSFET 30V";
+    /** The phrase every distributor gets: the 30V minimum rating is never sent (DESIGN.md 3.2). */
+    static final String MOSFET_PHRASE = "SOT-23 N-channel MOSFET";
+    /** The minimal core, the last step of the relaxation ladder. */
+    static final String MOSFET_CORE = "MOSFET SOT-23";
 
     @Test
     void corePhraseKeepsFamilyValuesDielectricAndPackage() {
         QueryParser parser = new QueryParser();
-        assertThat(PartSearchService.corePhrase(parser.parse(MOSFET_QUERY))).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(PartSearchService.corePhrase(parser.parse(MOSFET_QUERY))).isEqualTo(MOSFET_CORE);
+        // ratings and tolerances are never part of the core
         assertThat(PartSearchService.corePhrase(parser.parse("MLCC 10uF 25V X7R 0805 ceramic low ESR")))
-                .isEqualTo("MLCC 10uF 25V X7R 0805");
-        // nothing to drop, no parametric core, single term
-        assertThat(PartSearchService.corePhrase(parser.parse(QUERY))).isNull();
+                .isEqualTo("MLCC 10uF X7R 0805");
+        // the technology is, in the distributor's spelling
+        assertThat(PartSearchService.corePhrase(parser.parse("100uF 16V polymer aluminium capacitor SMD"),
+                Distributor.TME)).isEqualTo("capacitor 100uF polymer");
+        assertThat(PartSearchService.corePhrase(parser.parse("22uF X7R 1206 25V MLCC 10%")))
+                .isEqualTo("MLCC 22uF X7R 1206");
+        // a regulator's voltage is a specification, not a rating
+        assertThat(PartSearchService.corePhrase(parser.parse("LDO 3.3V SOT-23-5"))).isEqualTo("LDO 3.3V SOT-23-5");
+        // the core may equal the query: the ladder skips a step equal to what was sent
+        assertThat(PartSearchService.corePhrase(parser.parse(QUERY))).isEqualTo(QUERY);
+        // no parametric core, single term
         assertThat(PartSearchService.corePhrase(parser.parse("USB type C receptacle"))).isNull();
         assertThat(PartSearchService.corePhrase(parser.parse("0805 something exotic"))).isNull();
     }
@@ -438,32 +455,32 @@ class PartSearchServiceTest {
     @Test
     void apiDistributorWithNoResultsIsRetriedOnceWithTheCorePhrase() {
         FakeClient tme = new FakeClient(Distributor.TME).records(8, i -> part(Distributor.TME, "T" + i));
-        tme.emptyFor.add(MOSFET_QUERY);
+        tme.emptyFor.add(MOSFET_PHRASE);
         FakeClient mouser = new FakeClient(Distributor.MOUSER).records(3, i -> part(Distributor.MOUSER, "M" + i));
         service(List.of(tme, mouser));
 
         SearchResponse response = service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(), false));
 
         DistributorResult t = result(response, Distributor.TME);
-        assertThat(tme.queries).containsExactly(MOSFET_QUERY, "MOSFET 30V SOT-23");
-        assertThat(t.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(tme.queries).containsExactly(MOSFET_PHRASE, MOSFET_CORE);
+        assertThat(t.fallbackQuery()).isEqualTo(MOSFET_CORE);
         assertThat(t.fetched()).isEqualTo(8);
         assertThat(t.returned()).isEqualTo(5);
         assertThat(t.cache()).isEqualTo(CacheStatus.MISS);
         // a distributor that answered the full query is not retried
         DistributorResult m = result(response, Distributor.MOUSER);
-        assertThat(mouser.queries).containsExactly(MOSFET_QUERY);
+        assertThat(mouser.queries).containsExactly(MOSFET_PHRASE);
         assertThat(m.fallbackQuery()).isNull();
 
         // cached under the original query key, with the phrase that was searched
         CachedSearch stored = cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(MOSFET_QUERY));
-        assertThat(stored.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(stored.fallbackQuery()).isEqualTo(MOSFET_CORE);
         assertThat(stored.partNumbers()).hasSize(8);
 
         DistributorResult again = result(service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(Distributor.TME),
                 false)), Distributor.TME);
         assertThat(again.cache()).isEqualTo(CacheStatus.HIT);
-        assertThat(again.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(again.fallbackQuery()).isEqualTo(MOSFET_CORE);
         assertThat(tme.queries).hasSize(2);
     }
 
@@ -471,7 +488,7 @@ class PartSearchServiceTest {
     void partialExtensionOfAFallbackListUsesTheFallbackPhrase() {
         FakeClient mouser = new FakeClient(Distributor.MOUSER)
                 .records(150, i -> i < 50 && i % 5 != 0 ? null : part(Distributor.MOUSER, "M" + i));
-        mouser.emptyFor.add(MOSFET_QUERY);
+        mouser.emptyFor.add(MOSFET_PHRASE);
         service(List.of(mouser));
 
         service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(Distributor.MOUSER), false));
@@ -479,8 +496,8 @@ class PartSearchServiceTest {
                 Set.of(Distributor.MOUSER), false)), Distributor.MOUSER);
 
         assertThat(partial.cache()).isEqualTo(CacheStatus.PARTIAL);
-        assertThat(partial.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
-        assertThat(mouser.queries).containsExactly(MOSFET_QUERY, "MOSFET 30V SOT-23", "MOSFET 30V SOT-23");
+        assertThat(partial.fallbackQuery()).isEqualTo(MOSFET_CORE);
+        assertThat(mouser.queries).containsExactly(MOSFET_PHRASE, MOSFET_CORE, MOSFET_CORE);
         assertThat(mouser.offsets()).containsExactly(0, 0, 50);
     }
 
@@ -488,19 +505,20 @@ class PartSearchServiceTest {
     void noFallbackForLcscOrWhenTheFallbackAlsoFindsNothing() {
         FakeClient lcsc = new FakeClient(Distributor.LCSC).records(3, i -> part(Distributor.LCSC, "C" + i));
         lcsc.pageSize = 200;
-        lcsc.emptyFor.add(MOSFET_QUERY);
+        lcsc.emptyFor.add(MOSFET_PHRASE + " >=30V");
         FakeClient tme = new FakeClient(Distributor.TME);   // finds nothing for anything
         service(List.of(lcsc, tme));
 
         SearchResponse response = service.search(new SearchRequest(MOSFET_QUERY, 5, Set.of(), false));
 
-        assertThat(lcsc.queries).containsExactly(MOSFET_QUERY);
+        // LCSC checks the minimum rating itself (a local database)
+        assertThat(lcsc.queries).containsExactly(MOSFET_PHRASE + " >=30V");
         assertThat(result(response, Distributor.LCSC).fallbackQuery()).isNull();
         assertThat(result(response, Distributor.LCSC).fetched()).isZero();
-        assertThat(tme.queries).containsExactly(MOSFET_QUERY, "MOSFET 30V SOT-23");
+        assertThat(tme.queries).containsExactly(MOSFET_PHRASE, MOSFET_CORE);
         DistributorResult t = result(response, Distributor.TME);
         assertThat(t.fetched()).isZero();
-        assertThat(t.fallbackQuery()).isEqualTo("MOSFET 30V SOT-23");
+        assertThat(t.fallbackQuery()).isEqualTo(MOSFET_CORE);
         // the empty result is cached (and expires after kina.cache.empty-result-ttl)
         assertThat(cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(MOSFET_QUERY)).partNumbers())
                 .isEmpty();
@@ -517,7 +535,87 @@ class PartSearchServiceTest {
 
         assertThat(t.error()).isEqualTo("rate_limited");
         assertThat(t.fallbackQuery()).isNull();
-        assertThat(tme.queries).containsExactly(MOSFET_QUERY);
+        assertThat(tme.queries).containsExactly(MOSFET_PHRASE);
+    }
+
+    // ---- relaxation ladder, out-of-stock matches, quantity and detail --------------------------------------------
+
+    @Test
+    void relaxationLadderStopsAtTheFirstPhraseWithInStockParts() {
+        String query = "22uF X7R 1206 25V 10% MLCC";
+        FakeClient tme = new FakeClient(Distributor.TME).records(6, i -> part(Distributor.TME, "T" + i));
+        tme.emptyFor.add("22uF X7R 1206 10% MLCC");
+        tme.emptyFor.add("22uF X7R 1206 MLCC");
+        service(List.of(tme));
+
+        DistributorResult t = result(service.search(new SearchRequest(query, 5, Set.of(), false)), Distributor.TME);
+
+        // the rating never reaches TME; then the tolerance goes, then everything but the core
+        assertThat(tme.queries).containsExactly("22uF X7R 1206 10% MLCC", "22uF X7R 1206 MLCC", "MLCC 22uF X7R 1206");
+        assertThat(t.distributorQuery()).isEqualTo("22uF X7R 1206 10% MLCC");
+        assertThat(t.fallbackQuery()).isEqualTo("MLCC 22uF X7R 1206");
+        assertThat(t.fetched()).isEqualTo(6);
+        assertThat(cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(query)).fallbackQuery())
+                .isEqualTo("MLCC 22uF X7R 1206");
+    }
+
+    @Test
+    void pagesOnWhileEveryMatchIsOutOfStockAndReportsTheCount() {
+        // Mouser reads one page per search; the first 50 records have no ships-now stock
+        FakeClient mouser = new FakeClient(Distributor.MOUSER)
+                .records(100, i -> i < 50 ? null : part(Distributor.MOUSER, "M" + i));
+        service(List.of(mouser));
+
+        DistributorResult m = result(service.search(request(5, Distributor.MOUSER)), Distributor.MOUSER);
+
+        assertThat(mouser.offsets()).containsExactly(0, 50);
+        assertThat(m.fetched()).isEqualTo(50);
+        assertThat(m.outOfStockMatches()).isEqualTo(50);
+        assertThat(cachedSearches.get(Distributor.MOUSER + "|" + QueryParser.normalizeKey(QUERY)).outOfStockMatches())
+                .isEqualTo(50);
+        // a cache hit reports the stored count
+        assertThat(result(service.search(request(5, Distributor.MOUSER)), Distributor.MOUSER).outOfStockMatches())
+                .isEqualTo(50);
+    }
+
+    @Test
+    void outOfStockOnlyResultsStopAfterTheExtraPages() {
+        FakeClient mouser = new FakeClient(Distributor.MOUSER).records(400, i -> null);
+        service(List.of(mouser));
+
+        DistributorResult m = result(service.search(request(5, Distributor.MOUSER)), Distributor.MOUSER);
+
+        // 1 page + EXTRA_OUT_OF_STOCK_PAGES, then the same for the last relaxation step (dielectric dropped)
+        assertThat(mouser.offsets()).containsExactly(0, 50, 100, 0, 50, 100);
+        assertThat(mouser.queries).containsExactly(QUERY, QUERY, QUERY, "10uF 0805", "10uF 0805", "10uF 0805");
+        assertThat(m.fetched()).isZero();
+        assertThat(m.outOfStockMatches()).isEqualTo(300);
+        assertThat(m.relaxed()).containsExactly("dielectric");
+    }
+
+    @Test
+    void quantityReachesTheRankingAndDetailShapesTheParts() {
+        FakeClient tme = new FakeClient(Distributor.TME).records(2, i -> part(Distributor.TME, "T" + i)
+                .toBuilder().attributes(Map.of("Operating voltage", "25V DC")).extra(Map.of("manufacturer_id", 7))
+                .build());
+        service(List.of(tme));
+
+        SearchResponse compact = service.search(new SearchRequest(QUERY, 5, Set.of(), false, 25,
+                ro.alacrity.kina.domain.ResponseDetail.COMPACT));
+        SearchResponse full = service.search(new SearchRequest(QUERY, 5, Set.of(), false, 1,
+                ro.alacrity.kina.domain.ResponseDetail.FULL));
+
+        assertThat(rankQuantities).containsExactly(25, 1);
+        var c = result(compact, Distributor.TME).parts().getFirst();
+        assertThat(c.attributes()).containsEntry("Voltage", "25V").doesNotContainKey("Operating voltage");
+        assertThat(c.extra()).isNull();
+        assertThat(c.manufacturerId()).isEqualTo("7");
+        assertThat(c.orderedQuantity()).isEqualTo(25);
+        assertThat(c.totalPrice()).isEqualByComparingTo("1.75");   // 25 x 0.07 (the 10-piece bracket)
+        assertThat(c.availability().status()).isEqualTo("in_stock");
+        var f = result(full, Distributor.TME).parts().getFirst();
+        assertThat(f.attributes()).containsEntry("Operating voltage", "25V DC").containsEntry("Voltage", "25V");
+        assertThat(f.extra()).containsEntry("manufacturer_id", 7);
     }
 
     // ---- distributor phrasing (connector queries) -----------------------------------------------------------------
@@ -865,7 +963,7 @@ class PartSearchServiceTest {
 
     private RankingService rankingThatSleepsOnFirstCall(Duration sleep) {
         RankingService ranking = mock(RankingService.class);
-        when(ranking.rank(any(ParsedQuery.class), anyMap(), any())).thenAnswer(inv -> {
+        when(ranking.rank(any(ParsedQuery.class), anyMap(), any(), anyInt())).thenAnswer(inv -> {
             Map<Distributor, List<Part>> input = inv.getArgument(1);
             Duration budget = inv.getArgument(2);
             rankBudgets.add(budget);

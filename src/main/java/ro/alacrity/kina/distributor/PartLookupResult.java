@@ -2,6 +2,7 @@ package ro.alacrity.kina.distributor;
 
 import ro.alacrity.kina.domain.Part;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -70,6 +71,26 @@ public record PartLookupResult(Status status, Part part, Identity identity) {
     }
 
     /** True when both part numbers are non-blank and equal after {@link #normalize}. */
+    /** Characters a part number may keep when sent to a distributor (TME refuses spaces and some others). */
+    private static final java.util.regex.Pattern NOT_PART_NUMBER = java.util.regex.Pattern.compile("[^A-Za-z0-9\\-_./+#,()]");
+
+    /**
+     * The spellings of a typed part number to try, in order (DESIGN.md 4 {@code get_part}): trimmed, with runs of
+     * whitespace as {@code -} ({@code HCMA0703 2R2 R} -&gt; {@code HCMA0703-2R2-R}), then without whitespace; characters
+     * a distributor may refuse are dropped. A part number without whitespace has one variant.
+     */
+    public static List<String> variants(String partNumber) {
+        if (partNumber == null || partNumber.isBlank()) {
+            return List.of();
+        }
+        String trimmed = partNumber.strip();
+        java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
+        out.add(NOT_PART_NUMBER.matcher(trimmed.replaceAll("\\s+", "-")).replaceAll(""));
+        out.add(NOT_PART_NUMBER.matcher(trimmed.replaceAll("\\s+", "")).replaceAll(""));
+        out.removeIf(String::isBlank);
+        return List.copyOf(out);
+    }
+
     public static boolean samePartNumber(String a, String b) {
         String na = normalize(a);
         return na != null && !na.isEmpty() && na.equals(normalize(b));

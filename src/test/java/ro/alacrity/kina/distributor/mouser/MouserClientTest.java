@@ -134,6 +134,7 @@ class MouserClientTest {
         assertThat(page.parts()).hasSize(4).extracting(Part::distributorPartNumber)
                 .doesNotContain("603-AC0805KKX7R5BB16");
         assertThat(page.totalResults()).isEqualTo(10);
+        assertThat(page.outOfStock()).isEqualTo(1);   // reported as out_of_stock_matches
         assertThat(page.hasMore()).as("5 + 5 raw parts reach the reported total").isFalse();
     }
 
@@ -347,6 +348,19 @@ class MouserClientTest {
             assertThat(p.manufacturerPartNumber()).isEqualTo("CC0805MKX7R7BB106");
             assertThat(p.stock()).isEqualTo(76689);
         });
+    }
+
+    @Test
+    void getPartWithSpacesSendsTheHyphenatedSpelling() {
+        server.expect(requestTo(PART_URL))
+                .andExpect(content().json("""
+                        {"SearchByPartRequest":{"mouserPartNumber":"CC0805-MKX7R7BB106","partSearchOptions":"Exact"}}
+                        """, JsonCompareMode.STRICT))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.PART_NUMBER), MediaType.APPLICATION_JSON));
+
+        assertThat(client.getPart(" CC0805 MKX7R7BB106 ")).map(Part::distributorPartNumber)
+                .contains("603-CC0805MKX77BB106");
+        server.verify();
     }
 
     @Test

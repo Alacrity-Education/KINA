@@ -15,6 +15,7 @@ import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartLookupResponse;
 import ro.alacrity.kina.domain.PartResponse;
+import ro.alacrity.kina.domain.ResponseDetail;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -77,6 +78,18 @@ public class PartLookupService {
      * @throws IllegalArgumentException when the part number is blank
      */
     public PartLookupResponse lookup(Distributor distributor, String partNumber, boolean bypassCache) {
+        return lookup(distributor, partNumber, bypassCache, 1, ResponseDetail.FULL);
+    }
+
+    /**
+     * Like {@link #lookup(Distributor, String, boolean)} at the given detail level, priced for an order of
+     * {@code quantity} pieces (DESIGN.md 4).
+     *
+     * @throws DistributorException     when the distributor is not configured or the lookup failed
+     * @throws IllegalArgumentException when the part number is blank
+     */
+    public PartLookupResponse lookup(Distributor distributor, String partNumber, boolean bypassCache, int quantity,
+                                     ResponseDetail detail) {
         if (distributor == null) {
             throw new IllegalArgumentException("distributor is required");
         }
@@ -93,7 +106,7 @@ public class PartLookupService {
             Optional<Part> hit = readCache(distributor, number);
             if (hit.isPresent()) {
                 return PartLookupResponse.found(distributor, number, CacheStatus.HIT,
-                        PartResponse.from(extractor.enrich(hit.get())));
+                        response(extractor.enrich(hit.get()), quantity, detail));
             }
         }
         CacheStatus status = !cached ? CacheStatus.NOT_APPLICABLE
@@ -115,7 +128,13 @@ public class PartLookupService {
                 log.warn("Caching {} part {} failed: {}", distributor, number, e.toString());
             }
         }
-        return PartLookupResponse.found(distributor, number, status, PartResponse.from(part.get()));
+        return PartLookupResponse.found(distributor, number, status, response(part.get(), quantity, detail));
+    }
+
+    private PartResponse response(Part part, int quantity, ResponseDetail detail) {
+        ResponseDetail d = detail == null ? ResponseDetail.FULL : detail;
+        return PartResponse.of(part, null, null, null, quantity, d,
+                d == ResponseDetail.FULL ? null : extractor.extract(part));
     }
 
     private Optional<Part> readCache(Distributor distributor, String partNumber) {

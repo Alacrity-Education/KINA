@@ -59,10 +59,61 @@ public class LcscClient implements DistributorClient {
                     .flatMap(row -> LcscPartMapper.map(row, now).stream())
                     .toList();
             boolean hasMore = start + result.rows().size() < result.total();
-            return new DistributorSearchPage(parts, result.total(), hasMore);
+            return new DistributorSearchPage(parts, result.total(), hasMore, result.outOfStock(),
+                    relaxed(query, result));
         } catch (SQLException | IllegalStateException e) {
             throw failure(e);
         }
+    }
+
+    /**
+     * The constraints the JLCPCB relaxation dropped ({@code relaxed}, DESIGN.md 3.2), by term kind: a rating by its
+     * unit (voltage, current, power), a value by its unit (capacitance, resistance, inductance), dielectric, package,
+     * mounting...; free-text keywords are not constraints. In {@code ANY} mode no term was required: every one counts.
+     */
+    static List<String> relaxed(String query, JlcpcbSqliteSearch.Result result) {
+        if (result.mode() == null || result.mode() == JlcpcbSqliteSearch.MatchMode.ALL) {
+            return List.of();
+        }
+        List<JlcpcbQuery.Term> terms = JlcpcbQuery.parse(query).terms();
+        java.util.Set<String> dropped = new java.util.HashSet<>(result.dropped());
+        java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
+        for (JlcpcbQuery.Term term : terms) {
+            boolean gone = result.mode() == JlcpcbSqliteSearch.MatchMode.ANY
+                    || result.mode() == JlcpcbSqliteSearch.MatchMode.PARAMETRIC && !term.parametric()
+                    || dropped.contains(term.text());
+            String name = gone ? constraintName(term) : null;
+            if (name != null) {
+                out.add(name);
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    private static String constraintName(JlcpcbQuery.Term term) {
+        return switch (term.kind()) {
+            case RATING -> switch (term.ratingUnit() == null ? "" : term.ratingUnit()) {
+                case "V" -> "voltage";
+                case "A" -> "current";
+                case "W" -> "power";
+                default -> "rating";
+            };
+            case VALUE -> {
+                String t = term.text().toLowerCase(java.util.Locale.ROOT);
+                yield t.endsWith("f") ? "capacitance" : t.endsWith("ω") || t.endsWith("k") ? "resistance"
+                        : t.endsWith("h") ? "inductance" : t.endsWith("%") ? "tolerance" : "value";
+            }
+            case DIELECTRIC -> "dielectric";
+            case PACKAGE -> "package";
+            case MOUNTING -> "mounting";
+            case FAMILY -> "family";
+            case CATEGORY -> "category";
+            case POSITIONS -> "positions";
+            case PITCH -> "pitch";
+            case ORIENTATION -> "orientation";
+            case FEATURE -> "feature";
+            case KEYWORD -> null;
+        };
     }
 
     @Override
@@ -82,7 +133,7 @@ public class LcscClient implements DistributorClient {
             return PartLookupResult.notFound();
         }
         try {
-            Optional<JlcpcbRow> row = search.findByLcsc(partNumber);
+            Optional<JlcpcbRow> row = search.findByLcsc(partNumber.strip().replaceAll("\\s+", ""));
             if (row.isEmpty()) {
                 row = search.findByMpn(partNumber).stream().findFirst();
             }

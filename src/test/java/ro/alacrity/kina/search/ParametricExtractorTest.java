@@ -74,7 +74,10 @@ class ParametricExtractorTest {
         Map<String, String> expected = RankingFixtures.attrs("Resistance", "10kohm", "Power", "125mW",
                 "Tolerance", "1%", "Package", "0805", "Mounting", "SMD", "Family", "resistor", "Technology", "thick film");
         assertThat(extractor.extract(mouser)).containsExactlyEntriesOf(expected);
-        assertThat(extractor.extract(tme)).containsExactlyEntriesOf(expected);
+        // TME's description also states the operating temperature range (-55÷155°C)
+        Map<String, String> tmeExpected = new java.util.LinkedHashMap<>(expected);
+        tmeExpected.put("MaxTemperature", "155°C");
+        assertThat(extractor.extract(tme)).containsExactlyInAnyOrderEntriesOf(tmeExpected);
         // LCSC description also carries the 150V working voltage
         assertThat(extractor.extract(lcsc)).containsAllEntriesOf(expected).containsEntry("Voltage", "150V");
     }

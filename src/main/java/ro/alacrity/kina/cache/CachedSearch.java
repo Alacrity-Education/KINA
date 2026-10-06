@@ -20,6 +20,8 @@ import java.util.Objects;
  *                     dropped for having no ships-now stock); null when unknown (rows written before V2)
  * @param fallbackQuery the shorter core phrase that was sent to the distributor instead of the query (phrase
  *                      fallback), null when the query itself was searched
+ * @param outOfStockMatches records matched without ships-now stock while building the list; null when unknown
+ *                      (rows written before V5)
  */
 public record CachedSearch(
         Distributor distributor,
@@ -29,19 +31,26 @@ public record CachedSearch(
         boolean exhausted,
         Instant fetchedAt,
         Integer nextOffset,
-        String fallbackQuery
+        String fallbackQuery,
+        Integer outOfStockMatches
 ) {
+
+    /** A row without an out-of-stock count. */
+    public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
+                        boolean exhausted, Instant fetchedAt, Integer nextOffset, String fallbackQuery) {
+        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, nextOffset, fallbackQuery, null);
+    }
 
     /** A row without a known next offset. */
     public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
                         boolean exhausted, Instant fetchedAt) {
-        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, null, null);
+        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, null, null, null);
     }
 
     /** A row for a search of the query itself (no phrase fallback). */
     public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
                         boolean exhausted, Instant fetchedAt, Integer nextOffset) {
-        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, nextOffset, null);
+        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, nextOffset, null, null);
     }
 
     public CachedSearch {

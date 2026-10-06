@@ -138,7 +138,8 @@ public class TmeClient implements DistributorClient {
         int to = (int) Math.min((long) skip + limit, elements.size());
         List<Part> parts = enrich(elements.subList(from, to), deadline);
         boolean hasMore = to < elements.size() || page < pages;
-        return new DistributorSearchPage(parts, total, hasMore);
+        // matched records without ships-now stock (stock 0 despite filter[in_stock], or a status that does not ship)
+        return new DistributorSearchPage(parts, total, hasMore, (to - from) - parts.size());
     }
 
     @Override
@@ -165,15 +166,25 @@ public class TmeClient implements DistributorClient {
             return PartLookupResult.notFound();
         }
         String symbol = partNumber.strip();
-        List<TmeResponses.Product> products = api.products(List.of(symbol), properties.country(), deadline).stream()
-                .filter(p -> p.symbol() != null && p.symbol().equalsIgnoreCase(symbol))
-                .limit(1)
-                .toList();
+        List<String> variants = PartLookupResult.variants(symbol);
+        List<TmeResponses.Product> products = List.of();
+        for (String variant : variants) {
+            products = refusedAsMissing(() -> api.products(List.of(variant), properties.country(), deadline)).stream()
+                    .filter(p -> p.symbol() != null && (p.symbol().equalsIgnoreCase(variant)
+                            || PartLookupResult.samePartNumber(symbol, p.symbol())))
+                    .limit(1)
+                    .toList();
+            if (!products.isEmpty()) {
+                break;
+            }
+        }
         if (products.isEmpty()) {
-            List<String> mpns = new ArrayList<>(new LinkedHashSet<>(List.of(symbol,
-                    PartLookupResult.normalize(symbol))));
+            List<String> mpns = new ArrayList<>(new LinkedHashSet<>(variants));
+            mpns.add(PartLookupResult.normalize(symbol));
+            mpns = new ArrayList<>(new LinkedHashSet<>(mpns));
             mpns.removeIf(String::isBlank);
-            products = api.productsByMpn(mpns, properties.country(), deadline).stream()
+            List<String> candidates = mpns;
+            products = refusedAsMissing(() -> api.productsByMpn(candidates, properties.country(), deadline)).stream()
                     .filter(p -> PartLookupResult.samePartNumber(symbol, p.symbol())
                             || p.manufacturerSymbols() != null && p.manufacturerSymbols().stream()
                             .anyMatch(m -> PartLookupResult.samePartNumber(symbol, m)))
@@ -192,6 +203,23 @@ public class TmeClient implements DistributorClient {
                 p.manufacturerSymbols() == null ? null : p.manufacturerSymbols().stream()
                         .filter(m -> m != null && !m.isBlank()).findFirst().orElse(null),
                 p.description()));
+    }
+
+    /**
+     * A lookup TME refuses as invalid input ({@code E_INPUT_PARAMS_VALIDATION_ERROR}, e.g. "Some characters are not
+     * permitted in symbols[0]") found nothing: an empty list, not {@code bad_response}.
+     */
+    private static List<TmeResponses.Product> refusedAsMissing(Supplier<List<TmeResponses.Product>> call) {
+        try {
+            return call.get();
+        } catch (DistributorException e) {
+            if (e.kind() == Kind.BAD_RESPONSE && e.getMessage() != null
+                    && e.getMessage().contains("E_INPUT_PARAMS_VALIDATION_ERROR")) {
+                log.debug("TME refused a part number as invalid input: {}", e.getMessage());
+                return List.of();
+            }
+            throw e;
+        }
     }
 
     /** Fetches stock/prices, parameters and datasheets for the products and maps the in-stock ones, keeping order. */

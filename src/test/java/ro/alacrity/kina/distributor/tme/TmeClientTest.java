@@ -170,6 +170,7 @@ class TmeClientTest {
         assertThat(page.totalResults()).isEqualTo(111);
         assertThat(page.hasMore()).isTrue();
         assertThat(page.parts()).hasSize(18);
+        assertThat(page.outOfStock()).isEqualTo(2);   // reported as out_of_stock_matches
         assertThat(page.parts()).extracting(Part::distributorPartNumber)
                 .doesNotContain("GRM21BR71A106KE51L", "C0805C106K8RAC")
                 .startsWith("CL21B106KPQNNNE", "CS2012X7R106K160NR", "GCM21BR71A106KE22L");
@@ -417,6 +418,56 @@ class TmeClientTest {
         assertThat(result.status()).isEqualTo(PartLookupResult.Status.FOUND);
         assertThat(result.part().distributorPartNumber()).isEqualTo("ERA6AEB5361V");
         assertThat(result.part().stock()).isEqualTo(120);
+    }
+
+    @Test
+    void lookupWithSpacesTriesTheHyphenatedAndTheJoinedSpelling() {
+        // live 2026-10-06: TME refuses "HCMA0703 2R2 R" (HTTP 400, characters not permitted in symbols[0]);
+        // HCMA0703-2R2-R is the symbol
+        String product = fixture("products.json").replace("\"symbol\":\"CL21B106KPQNNNE\"", "\"symbol\":\"HCMA0703-2R2-R\"")
+                .replace("\"manufacturer_symbols\":[\"CL21B106KPQNNNE\"]", "\"manufacturer_symbols\":[\"HCMA0703-2R2-R\"]");
+        TmeClient client = client(TmeTestSupport.properties(60));
+        expectToken(server, "t");
+        server.expect(get("/products")).andExpect(query("symbols[]", "HCMA0703-2R2-R"))
+                .andRespond(withSuccess(product, jsonType()));
+        server.expect(get("/products/data"))
+                .andRespond(withSuccess(dataJson(List.of("HCMA0703-2R2-R"), 300), jsonType()));
+        server.expect(get("/products/parameters")).andRespond(withSuccess(fixture("parameters.json"), jsonType()));
+        server.expect(get("/products/files")).andRespond(withSuccess(fixture("files.json"), jsonType()));
+
+        PartLookupResult result = client.lookup("  HCMA0703 2R2 R ", Deadline.immediate());
+
+        server.verify();
+        assertThat(result.status()).isEqualTo(PartLookupResult.Status.FOUND);
+        assertThat(result.part().distributorPartNumber()).isEqualTo("HCMA0703-2R2-R");
+    }
+
+    @Test
+    void refusedPartNumberIsNotFoundNotBadResponse() {
+        TmeClient client = client(TmeTestSupport.properties(60));
+        expectToken(server, "t");
+        for (int i = 0; i < 3; i++) {   // both symbol spellings, then the manufacturer part numbers
+            server.expect(get("/products")).andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON).body(fixture("error-validation.json")));
+        }
+
+        assertThat(client.lookup("ABC 123", Deadline.immediate()).status())
+                .isEqualTo(PartLookupResult.Status.NOT_FOUND);
+        server.verify();
+        assertThat(PartLookupResult.variants("HCMA0703 2R2 R")).containsExactly("HCMA0703-2R2-R", "HCMA07032R2R");
+        assertThat(PartLookupResult.variants("ERA-6AEB5361V")).containsExactly("ERA-6AEB5361V");
+        assertThat(PartLookupResult.variants("A\tB<C>")).containsExactly("A-BC", "ABC");
+    }
+
+    @Test
+    void excludedStatusesAcceptAPrefix() {
+        TmeResponses.Product blocked = JSON.readValue(fixture("products.json"), TmeResponses.ProductsResponse.class)
+                .data().elements().getFirst();
+        TmeResponses.Product zbl = new TmeResponses.Product(List.of("BLOCKED_FOR_ZBL_PL"), blocked.symbol(),
+                blocked.category(), blocked.manufacturerSymbols(), blocked.manufacturer(), blocked.description(),
+                blocked.multiples(), blocked.minimalAmount(), blocked.unit(), blocked.packing(), blocked.assets());
+        assertThat(TmePartMapper.hasExcludedStatus(zbl, KinaProperties.Tme.DEFAULT_EXCLUDED_STATUSES)).isTrue();
+        assertThat(TmePartMapper.hasExcludedStatus(zbl, List.of("BLOCKED_FOR_ZBL"))).isFalse();
     }
 
     @Test
