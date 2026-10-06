@@ -217,6 +217,16 @@ It starts Authentik, creates the group, users, provider and application, runs KI
 
 Run the other checks against a staging or dev stack. They create tokens and OAuth clients in the database and, on a cold cache, make 2 Mouser calls. Details are in the "End-to-end checks" section of [DEVELOPMENT.md](DEVELOPMENT.md).
 
+## Deploying to a server with deploy-push
+
+`deploy-push/deploy-push.sh` builds the image `alacrity-education/kina`, loads it into the Docker daemon of a server that you reach over SSH, and writes `compose.yaml` (using that image, no `build:`) and `.env` into a directory under the remote home. It starts nothing.
+
+```bash
+deploy-push/deploy-push.sh kina-prod:apps/kina    # <ssh alias>:<path relative to the remote home>
+```
+
+`.env` is copied from `.env.example` on the first deploy only. Later deploys keep it and list variables of `.env.example` that it does not set. Then fill in `.env` on the server and run `docker compose up -d` there. Options, prerequisites, rollback and the test are in [deploy-push/README.md](../deploy-push/README.md).
+
 ## Upgrading
 
 ```bash

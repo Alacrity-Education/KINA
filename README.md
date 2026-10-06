@@ -450,6 +450,7 @@ Part data is never sent to a third-party service for ranking.
 
 ## Operations
 
+- Deployment to a server over SSH: `deploy-push/deploy-push.sh <sshhost>:<path>` builds the image, loads it into the server's Docker daemon and writes `compose.yaml` and `.env` there without starting anything (see [deploy-push/README.md](deploy-push/README.md)).
 - Volumes: `kina-data` (JLCPCB SQLite file), `pgdata` (PostgreSQL). The ranking model is in `kina-data` too, under `/data/cross-encoder`.
 - JLCPCB database: checked every hour, downloaded again when older than 5 days. The old file keeps serving while the new one downloads.
 - TME and Mouser cache: 5 days. A cached search with zero parts goes stale after 1 hour (`kina.cache.empty-result-ttl`). Rows older than 10 days (2 x TTL) are purged every 6 hours.
