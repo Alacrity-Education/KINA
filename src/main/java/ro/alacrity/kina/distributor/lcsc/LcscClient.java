@@ -60,7 +60,7 @@ public class LcscClient implements DistributorClient {
                     .toList();
             boolean hasMore = start + result.rows().size() < result.total();
             return new DistributorSearchPage(parts, result.total(), hasMore, result.outOfStock(),
-                    relaxed(query, result));
+                    relaxed(query, result), droppedKeywords(query, result));
         } catch (SQLException | IllegalStateException e) {
             throw failure(e);
         }
@@ -72,22 +72,33 @@ public class LcscClient implements DistributorClient {
      * mounting...; free-text keywords are not constraints. In {@code ANY} mode no term was required: every one counts.
      */
     static List<String> relaxed(String query, JlcpcbSqliteSearch.Result result) {
-        if (result.mode() == null || result.mode() == JlcpcbSqliteSearch.MatchMode.ALL) {
-            return List.of();
-        }
-        List<JlcpcbQuery.Term> terms = JlcpcbQuery.parse(query).terms();
-        java.util.Set<String> dropped = new java.util.HashSet<>(result.dropped());
         java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
-        for (JlcpcbQuery.Term term : terms) {
-            boolean gone = result.mode() == JlcpcbSqliteSearch.MatchMode.ANY
-                    || result.mode() == JlcpcbSqliteSearch.MatchMode.PARAMETRIC && !term.parametric()
-                    || dropped.contains(term.text());
-            String name = gone ? constraintName(term) : null;
+        for (JlcpcbQuery.Term term : dropped(query, result)) {
+            String name = constraintName(term);
             if (name != null) {
                 out.add(name);
             }
         }
         return List.copyOf(out);
+    }
+
+    /** The free-text keywords the JLCPCB relaxation dropped, as written (part of {@code query_terms_dropped}). */
+    static List<String> droppedKeywords(String query, JlcpcbSqliteSearch.Result result) {
+        return dropped(query, result).stream().filter(t -> t.kind() == JlcpcbQuery.Kind.KEYWORD)
+                .map(JlcpcbQuery.Term::text).distinct().toList();
+    }
+
+    /** Every term the relaxation removed; in {@code ANY} mode no term was required, so every one. */
+    private static List<JlcpcbQuery.Term> dropped(String query, JlcpcbSqliteSearch.Result result) {
+        if (result.mode() == null || result.mode() == JlcpcbSqliteSearch.MatchMode.ALL) {
+            return List.of();
+        }
+        java.util.Set<String> dropped = new java.util.HashSet<>(result.dropped());
+        return JlcpcbQuery.parse(query).terms().stream()
+                .filter(term -> result.mode() == JlcpcbSqliteSearch.MatchMode.ANY
+                        || result.mode() == JlcpcbSqliteSearch.MatchMode.PARAMETRIC && !term.parametric()
+                        || dropped.contains(term.text()))
+                .toList();
     }
 
     private static String constraintName(JlcpcbQuery.Term term) {

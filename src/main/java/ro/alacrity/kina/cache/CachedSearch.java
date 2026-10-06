@@ -22,6 +22,8 @@ import java.util.Objects;
  *                      fallback), null when the query itself was searched
  * @param outOfStockMatches records matched without ships-now stock while building the list; null when unknown
  *                      (rows written before V5)
+ * @param constraintsRelaxed the constraints the relaxation ladder loosened to build the list ({@code dielectric},
+ *                      {@code package}, {@code tolerance}); null when unknown (rows written before V7)
  */
 public record CachedSearch(
         Distributor distributor,
@@ -32,8 +34,17 @@ public record CachedSearch(
         Instant fetchedAt,
         Integer nextOffset,
         String fallbackQuery,
-        Integer outOfStockMatches
+        Integer outOfStockMatches,
+        List<String> constraintsRelaxed
 ) {
+
+    /** A row without the loosened constraints (unknown). */
+    public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
+                        boolean exhausted, Instant fetchedAt, Integer nextOffset, String fallbackQuery,
+                        Integer outOfStockMatches) {
+        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, nextOffset, fallbackQuery,
+                outOfStockMatches, null);
+    }
 
     /** A row without an out-of-stock count. */
     public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
@@ -58,5 +69,6 @@ public record CachedSearch(
         Objects.requireNonNull(queryKey, "queryKey");
         Objects.requireNonNull(fetchedAt, "fetchedAt");
         partNumbers = partNumbers == null ? List.of() : List.copyOf(partNumbers);
+        constraintsRelaxed = constraintsRelaxed == null ? null : List.copyOf(constraintsRelaxed);
     }
 }

@@ -11,6 +11,7 @@ import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.PartLookupResult;
+import ro.alacrity.kina.distributor.StockUpdate;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartLookupResponse;
@@ -103,7 +104,7 @@ public class PartLookupService {
         boolean cached = PartSearchService.usesPostgresCache(distributor);
 
         if (cached && !bypassCache) {
-            Optional<Part> hit = readCache(distributor, number);
+            Optional<Part> hit = readCache(distributor, number).flatMap(p -> refreshed(client, p));
             if (hit.isPresent()) {
                 return PartLookupResponse.found(distributor, number, CacheStatus.HIT,
                         response(extractor.enrich(hit.get()), quantity, detail));
@@ -133,8 +134,39 @@ public class PartLookupService {
 
     private PartResponse response(Part part, int quantity, ResponseDetail detail) {
         ResponseDetail d = detail == null ? ResponseDetail.FULL : detail;
-        return PartResponse.of(part, null, null, null, quantity, d,
-                d == ResponseDetail.FULL ? null : extractor.extract(part));
+        return PartResponse.of(part, PartResponse.Ranking.NONE, quantity, d,
+                d == ResponseDetail.FULL ? null : extractor.extract(part), properties.search().lowStockThreshold());
+    }
+
+    /**
+     * The cached part, with its stock and prices refreshed when they are older than {@code kina.cache.stock-ttl}
+     * (DESIGN.md 3.2 "Stock refresh"); empty when the refresh finds it sold out (it is then looked up live, which
+     * reports {@code out_of_stock} with its identity). A failed refresh keeps the cached figures.
+     */
+    private Optional<Part> refreshed(DistributorClient client, Part part) {
+        Instant now = clock.instant();
+        if (part.fetchedAt() != null && !part.fetchedAt().isBefore(now.minus(properties.cache().stockTtl()))) {
+            return Optional.of(part);
+        }
+        try {
+            StockUpdate update = client.refreshStock(List.of(part.distributorPartNumber()),
+                    Deadline.after(properties.search().distributorTimeout())).get(part.distributorPartNumber());
+            if (update == null) {
+                return Optional.of(part);
+            }
+            if (update.stock() <= 0) {
+                partCache.delete(part.distributor(), part.distributorPartNumber());
+                return Optional.empty();
+            }
+            Part fresh = part.toBuilder().stock(update.stock())
+                    .prices(update.prices().isEmpty() ? part.prices() : update.prices()).fetchedAt(now).build();
+            partCache.upsertAll(List.of(fresh));
+            return Optional.of(fresh);
+        } catch (RuntimeException e) {
+            log.info("{} stock refresh of {} failed, keeping the cached figures: {}", part.distributor(),
+                    part.distributorPartNumber(), e.toString());
+            return Optional.of(part);
+        }
     }
 
     private Optional<Part> readCache(Distributor distributor, String partNumber) {

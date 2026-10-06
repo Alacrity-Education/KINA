@@ -15,6 +15,7 @@ import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.StockUpdate;
 import ro.alacrity.kina.domain.BatchSearchRequest;
 import ro.alacrity.kina.domain.BatchSearchResponse;
 import ro.alacrity.kina.domain.Distributor;
@@ -124,8 +125,8 @@ public class PartSearchService {
         long started = System.nanoTime();
         Map<Distributor, Fetched> fetched = fetchAll(prepared, deadline);
         long fetchedAt = System.nanoTime();
-        RankedResults ranked = ranking.rank(prepared.parsed(), partsByDistributor(fetched), null,
-                prepared.request().quantity());
+        RankedResults ranked = refreshStock(prepared, ranking.rank(prepared.parsed(), partsByDistributor(fetched),
+                null, rankOptions(prepared)), deadline);
         if (log.isInfoEnabled()) {
             log.info("search '{}': fetch {} ms {}, rank {} ms ({})", prepared.parsed().normalizedKey(),
                     (fetchedAt - started) / 1_000_000, summary(fetched), (System.nanoTime() - fetchedAt) / 1_000_000,
@@ -181,7 +182,7 @@ public class PartSearchService {
             String note;
             if (remaining.compareTo(MIN_BATCH_RANKING_BUDGET) < 0) {
                 // zero budget: the cross-encoder is not called; scores already in the score cache may still be used
-                ranked = ranking.rank(p.parsed(), parts, Duration.ZERO, p.request().quantity());
+                ranked = ranking.rank(p.parsed(), parts, Duration.ZERO, rankOptions(p));
                 // with the cross-encoder disabled the fallback has nothing to do with the budget: keep that note
                 note = ranked.mode() == RankingMode.FALLBACK && properties.ranking().crossEncoder().enabled()
                         ? "batch ranking budget of " + format(batchBudget) + " exhausted"
@@ -189,14 +190,18 @@ public class PartSearchService {
             } else {
                 Duration perQuery = properties.ranking().timeout();
                 ranked = ranking.rank(p.parsed(), parts, remaining.compareTo(perQuery) < 0 ? remaining : perQuery,
-                        p.request().quantity());
+                        rankOptions(p));
                 note = ranked.note();
             }
-            results.add(assemble(p, fetched.get(i), ranked, note));
+            results.add(assemble(p, fetched.get(i), refreshStock(p, ranked, requestDeadline), note));
         }
         BatchSearchResponse response = new BatchSearchResponse(results);
         metrics.batchCompleted(response, System.nanoTime() - started);
         return response;
+    }
+
+    private static RankingService.RankOptions rankOptions(Prepared prepared) {
+        return new RankingService.RankOptions(prepared.request().quantity(), prepared.request().allowBelowSpec());
     }
 
     /** {@code now + kina.search.max-request-duration}. */
@@ -250,21 +255,26 @@ public class PartSearchService {
 
     /**
      * What one distributor contributed: in-stock parts (enriched, distributor order, deduplicated), the
-     * distributor-reported total, the cache status, an error code (null on success) and the time spent waiting on
-     * rate limits.
+     * distributor-reported total, the cache status, an error code (null on success), the time spent waiting on
+     * rate limits, the constraints the relaxation loosened ({@code constraints_relaxed}), the free-text terms LCSC's
+     * database search dropped and the request terms not sent in the phrase ({@code query_terms_dropped}).
      */
     record Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
                    String fallbackQuery, @With long rateLimitWaitedMs, @With String distributorQuery,
-                   @With Integer outOfStockMatches, @With List<String> relaxed) {
+                   @With Integer outOfStockMatches, @With List<String> constraintsRelaxed,
+                   @With List<String> droppedKeywords, @With List<String> queryTermsDropped) {
 
         Fetched {
             parts = parts == null ? List.of() : List.copyOf(parts);
-            relaxed = relaxed == null ? List.of() : List.copyOf(relaxed);
+            constraintsRelaxed = constraintsRelaxed == null ? List.of() : List.copyOf(constraintsRelaxed);
+            droppedKeywords = droppedKeywords == null ? List.of() : List.copyOf(droppedKeywords);
+            queryTermsDropped = queryTermsDropped == null ? List.of() : List.copyOf(queryTermsDropped);
         }
 
         Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
                 String fallbackQuery, long rateLimitWaitedMs) {
-            this(distributor, parts, totalResults, cache, error, fallbackQuery, rateLimitWaitedMs, null, null, null);
+            this(distributor, parts, totalResults, cache, error, fallbackQuery, rateLimitWaitedMs, null, null, null,
+                    null, null);
         }
 
         Fetched(Distributor distributor, List<Part> parts, Integer totalResults, CacheStatus cache, String error,
@@ -287,6 +297,7 @@ public class PartSearchService {
         volatile List<Part> parts = List.of();
         volatile Integer totalResults;
         volatile String fallbackQuery;
+        volatile List<String> constraintsRelaxed = List.of();
         /** Matches without ships-now stock seen on the pages read so far (every phrase of the ladder). */
         volatile int outOfStock;
 
@@ -332,7 +343,8 @@ public class PartSearchService {
                         format(timeout), budget.rateLimitWaitedNanos() > 0
                                 ? " (+ " + budget.rateLimitWaitedMillis() + " ms rate-limit wait)" : "");
                 fetched = new Fetched(distributor, p.parts, p.totalResults, p.cache,
-                        DistributorException.Kind.TIMEOUT.code(), p.fallbackQuery).withOutOfStockMatches(p.outOfStock);
+                        DistributorException.Kind.TIMEOUT.code(), p.fallbackQuery).withOutOfStockMatches(p.outOfStock)
+                        .withConstraintsRelaxed(p.constraintsRelaxed);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 future.cancel(true);
@@ -340,14 +352,15 @@ public class PartSearchService {
             } catch (ExecutionException | CancellationException e) {
                 Throwable cause = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
                 fetched = new Fetched(distributor, p.parts, p.totalResults, p.cache,
-                        errorCode(distributor, cause), p.fallbackQuery).withOutOfStockMatches(p.outOfStock);
+                        errorCode(distributor, cause), p.fallbackQuery).withOutOfStockMatches(p.outOfStock)
+                        .withConstraintsRelaxed(p.constraintsRelaxed);
             }
             String phrase = DistributorPhraser.phrase(distributor, prepared.parsed());
             String used = fetched.fallbackQuery() != null ? fetched.fallbackQuery()
                     : phrase != null ? phrase : prepared.parsed().originalText();
             results.put(distributor, fetched.withRateLimitWaitedMs(budget.rateLimitWaitedMillis())
                     .withDistributorQuery(phrase)
-                    .withRelaxed(relaxed(prepared.parsed(), used, fetched.relaxed())));
+                    .withQueryTermsDropped(queryTermsDropped(prepared.parsed(), used, fetched.droppedKeywords())));
         });
         return results;
     }
@@ -369,24 +382,60 @@ public class PartSearchService {
     }
 
     /**
+     * True when the part meets the request (DESIGN.md 3.2): no known attribute contradicts a strict constraint and no
+     * known rating is below the request. Paging and the relaxation ladder go on until a part meets it.
+     */
+    boolean meetsRequest(ParsedQuery parsed, Part part) {
+        RankingService.Verdict v = verdict(parsed, part);
+        return v == RankingService.Verdict.MEETS || v == RankingService.Verdict.UNVERIFIED_RATING;
+    }
+
+    /** True when the part meets the request with every requested rating stated: paging stops only for such parts. */
+    boolean confirmed(ParsedQuery parsed, Part part) {
+        return verdict(parsed, part) == RankingService.Verdict.MEETS;
+    }
+
+    private RankingService.Verdict verdict(ParsedQuery parsed, Part part) {
+        try {
+            RankingService.Verdict v = ranking.verdict(parsed, part);
+            return v == null ? RankingService.Verdict.MEETS : v;
+        } catch (RuntimeException e) {
+            log.warn("checking {} against '{}' failed", part.key(), parsed.normalizedKey(), e);
+            return RankingService.Verdict.MEETS;
+        }
+    }
+
+    /** True when the part would be returned: it meets the request, or it is only below spec and that is allowed. */
+    private boolean returnable(ParsedQuery parsed, Part part, boolean allowBelowSpec) {
+        RankingService.Verdict v = verdict(parsed, part);
+        return v != RankingService.Verdict.CONSTRAINT && (allowBelowSpec || v != RankingService.Verdict.BELOW_SPEC);
+    }
+
+    /** One rung of the relaxation ladder that produced parts: its result, its phrase and what it loosened. */
+    private record Attempt(Collected collected, String phrase, List<String> relaxed) {
+    }
+
+    /**
      * DESIGN.md 3.2 for one distributor. Runs on a virtual thread; no further page is requested once {@code budget}
      * has run out.
      */
     Fetched fetchDistributor(DistributorClient client, Prepared prepared, Progress progress, DistributorBudget deadline) {
         Distributor distributor = client.distributor();
+        ParsedQuery parsed = prepared.parsed();
         // connector queries are sent in the distributor's own wording; the cache key stays the user's query
-        String phrase = DistributorPhraser.phrase(distributor, prepared.parsed());
-        String query = phrase != null ? phrase : prepared.parsed().originalText();
+        String phrase = DistributorPhraser.phrase(distributor, parsed);
+        String query = phrase != null ? phrase : parsed.originalText();
         int window = window(distributor, prepared.maxResults());
         int maxPages = maxPages(distributor);
+        Check meets = new Check(p -> meetsRequest(parsed, p), p -> confirmed(parsed, p));
 
         if (!usesPostgresCache(distributor)) {
-            Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline);
+            Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets);
             return collected.toFetched(distributor, CacheStatus.NOT_APPLICABLE)
                     .withOutOfStockMatches(progress.outOfStock);
         }
 
-        String queryKey = prepared.parsed().normalizedKey();
+        String queryKey = parsed.normalizedKey();
         Instant now = clock.instant();
         Instant freshSince = now.minus(properties.cache().ttl());
         Instant emptyFreshSince = now.minus(properties.cache().emptyResultTtl());
@@ -397,71 +446,128 @@ public class PartSearchService {
             if (cached.isPresent()) {
                 CachedSearch search = cached.get();
                 String fallbackQuery = search.fallbackQuery();
+                List<String> relaxed = search.constraintsRelaxed() != null ? search.constraintsRelaxed()
+                        : relaxedBy(distributor, parsed, query, fallbackQuery);
                 Optional<List<Part>> parts = readCachedParts(distributor, search.partNumbers(), freshSince);
                 if (parts.isPresent()) {
                     List<Part> cachedParts = parts.get().stream().map(extractor::enrich).toList();
-                    if (isSufficient(search, prepared.maxResults(), window)) {
+                    boolean nothingReturnable = !cachedParts.isEmpty() && cachedParts.stream()
+                            .noneMatch(p -> returnable(parsed, p, prepared.request().allowBelowSpec()));
+                    if (nothingReturnable) {
+                        // a hit that would return nothing (every part excluded) never hides a live result
+                        log.info("{} cached search '{}' has no part that can be returned; searching live",
+                                distributor, queryKey);
+                    } else if (isSufficient(search, prepared.maxResults(), window)) {
                         return new Fetched(distributor, cachedParts, search.totalResults(), CacheStatus.HIT, null,
-                                fallbackQuery).withOutOfStockMatches(search.outOfStockMatches());
+                                fallbackQuery).withOutOfStockMatches(search.outOfStockMatches())
+                                .withConstraintsRelaxed(relaxed);
+                    } else {
+                        return extend(client, prepared, progress, deadline, search, cachedParts, relaxed, query,
+                                window, maxPages, meets);
                     }
-                    // fresh but short and not exhausted: further querying is needed (with the phrase the list
-                    // was built from, so the raw offsets stay valid)
-                    progress.cache = CacheStatus.PARTIAL;
-                    progress.parts = cachedParts;
-                    progress.totalResults = search.totalResults();
-                    progress.fallbackQuery = fallbackQuery;
-                    progress.outOfStock = search.outOfStockMatches() == null ? 0 : search.outOfStockMatches();
-                    int offset = search.nextOffset() != null ? search.nextOffset() : cachedParts.size();
-                    Collected collected;
-                    try {
-                        collected = collect(client, fallbackQuery != null ? fallbackQuery : query, offset, window,
-                                maxPages, cachedParts, progress, deadline);
-                    } catch (DistributorException e) {
-                        // serve what the cache holds, flagged with the error
-                        log.info("{} could not extend cached search '{}': {}", distributor, queryKey, e.getMessage());
-                        return new Fetched(distributor, cachedParts, search.totalResults(), CacheStatus.PARTIAL,
-                                e.errorCode(), fallbackQuery).withOutOfStockMatches(search.outOfStockMatches());
-                    }
-                    store(distributor, queryKey, collected, search.fetchedAt(), fallbackQuery, progress.outOfStock);
-                    return collected.toFetched(distributor, CacheStatus.PARTIAL, fallbackQuery)
-                            .withOutOfStockMatches(progress.outOfStock);
                 }
                 // some cached parts are missing or stale: refetch from the start
             }
         }
         CacheStatus status = prepared.request().bypassCache() ? CacheStatus.BYPASSED : CacheStatus.MISS;
-        Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline);
+        Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets);
         String fallbackQuery = null;
-        // relaxation ladder (DESIGN.md 3.2): until a phrase finds an in-stock part
-        for (String step : DistributorPhraser.relaxations(distributor, prepared.parsed(), query)) {
-            if (!collected.all().isEmpty() || collected.error() != null || deadline.remainingNanos() <= 0) {
+        List<String> relaxed = List.of();
+        Attempt firstWithParts = collected.all().isEmpty() ? null : new Attempt(collected, null, List.of());
+        // relaxation ladder (DESIGN.md 3.2): until a phrase finds a part that meets the request
+        for (DistributorPhraser.Relaxation step : DistributorPhraser.ladder(distributor, parsed, query)) {
+            if (collected.meeting() > 0 || collected.error() != null || deadline.remainingNanos() <= 0) {
                 break;
             }
-            log.info("{} found no in-stock part for '{}', relaxing to '{}'", distributor,
-                    fallbackQuery != null ? fallbackQuery : query, step);
-            progress.fallbackQuery = step;
+            log.info("{} found nothing that meets '{}' with '{}', relaxing to '{}'{}", distributor, queryKey,
+                    fallbackQuery != null ? fallbackQuery : query, step.phrase(),
+                    step.relaxed().isEmpty() ? "" : " (loosens " + step.relaxed() + ")");
+            progress.fallbackQuery = step.phrase();
+            progress.constraintsRelaxed = step.relaxed();
             Collected previous = collected;
             try {
-                collected = collect(client, step, 0, window, maxPages, List.of(), progress, deadline);
+                collected = collect(client, step.phrase(), 0, window, maxPages, List.of(), progress, deadline, meets);
             } catch (DistributorException e) {
-                // an earlier phrase did answer (with nothing): report the failure, cache nothing
-                log.info("{} relaxed search '{}' failed: {}", distributor, step, e.getMessage());
-                return new Fetched(distributor, List.of(), previous.totalResults(), status, e.errorCode(), step)
-                        .withOutOfStockMatches(progress.outOfStock);
+                // an earlier phrase did answer: report the failure, cache nothing
+                log.info("{} relaxed search '{}' failed: {}", distributor, step.phrase(), e.getMessage());
+                Attempt kept = firstWithParts;
+                return new Fetched(distributor, kept == null ? List.of() : kept.collected().all(),
+                        previous.totalResults(), status, e.errorCode(), kept == null ? step.phrase() : kept.phrase())
+                        .withOutOfStockMatches(progress.outOfStock)
+                        .withConstraintsRelaxed(kept == null ? step.relaxed() : kept.relaxed());
             }
-            fallbackQuery = step;
+            fallbackQuery = step.phrase();
+            relaxed = step.relaxed();
+            if (firstWithParts == null && !collected.all().isEmpty()) {
+                firstWithParts = new Attempt(collected, fallbackQuery, relaxed);
+            }
         }
-        store(distributor, queryKey, collected, now, fallbackQuery, progress.outOfStock);
-        return collected.toFetched(distributor, status, fallbackQuery).withOutOfStockMatches(progress.outOfStock);
+        if (collected.meeting() == 0 && firstWithParts != null && firstWithParts.collected() != collected) {
+            // no rung found a part that meets the request: keep the least relaxed result that found parts
+            collected = firstWithParts.collected();
+            fallbackQuery = firstWithParts.phrase();
+            relaxed = firstWithParts.relaxed();
+        }
+        store(distributor, queryKey, collected, now, fallbackQuery, progress.outOfStock, relaxed);
+        return collected.toFetched(distributor, status, fallbackQuery).withOutOfStockMatches(progress.outOfStock)
+                .withConstraintsRelaxed(relaxed);
     }
 
     /**
-     * The stated constraints that were not part of the search that produced the parts ({@code relaxed}, DESIGN.md
-     * 3.2): those the phrase actually sent ({@code used}: the relaxed phrase, the distributor phrase or the user's
-     * text) does not state, plus what the distributor's own relaxation dropped ({@code dropped}, LCSC). Empty for
-     * connector queries, whose phrases are rewritten into distributor wording.
+     * A fresh cached list shorter than {@code max_results} and not exhausted: further querying is needed, with the
+     * phrase the list was built from so the raw offsets stay valid ({@code PARTIAL}).
      */
-    List<String> relaxed(ParsedQuery parsed, String used, List<String> dropped) {
+    private Fetched extend(DistributorClient client, Prepared prepared, Progress progress, DistributorBudget deadline,
+                           CachedSearch search, List<Part> cachedParts, List<String> relaxed, String query, int window,
+                           int maxPages, Check meets) {
+        Distributor distributor = client.distributor();
+        String fallbackQuery = search.fallbackQuery();
+        progress.cache = CacheStatus.PARTIAL;
+        progress.parts = cachedParts;
+        progress.totalResults = search.totalResults();
+        progress.fallbackQuery = fallbackQuery;
+        progress.constraintsRelaxed = relaxed;
+        progress.outOfStock = search.outOfStockMatches() == null ? 0 : search.outOfStockMatches();
+        int offset = search.nextOffset() != null ? search.nextOffset() : cachedParts.size();
+        Collected collected;
+        try {
+            collected = collect(client, fallbackQuery != null ? fallbackQuery : query, offset, window, maxPages,
+                    cachedParts, progress, deadline, meets);
+        } catch (DistributorException e) {
+            // serve what the cache holds, flagged with the error
+            log.info("{} could not extend cached search '{}': {}", distributor, search.queryKey(), e.getMessage());
+            return new Fetched(distributor, cachedParts, search.totalResults(), CacheStatus.PARTIAL,
+                    e.errorCode(), fallbackQuery).withOutOfStockMatches(search.outOfStockMatches())
+                    .withConstraintsRelaxed(relaxed);
+        }
+        store(distributor, search.queryKey(), collected, search.fetchedAt(), fallbackQuery, progress.outOfStock,
+                relaxed);
+        return collected.toFetched(distributor, CacheStatus.PARTIAL, fallbackQuery)
+                .withOutOfStockMatches(progress.outOfStock).withConstraintsRelaxed(relaxed);
+    }
+
+    /**
+     * What the ladder rung {@code fallbackQuery} loosened, for a cached search stored before
+     * {@code cached_searches.constraints_relaxed} existed (the ladder is a pure function of the parsed query).
+     */
+    static List<String> relaxedBy(Distributor distributor, ParsedQuery parsed, String query, String fallbackQuery) {
+        if (fallbackQuery == null) {
+            return List.of();
+        }
+        return DistributorPhraser.ladder(distributor, parsed, query).stream()
+                .filter(step -> step.phrase().equals(fallbackQuery))
+                .map(DistributorPhraser.Relaxation::relaxed)
+                .findFirst().orElse(List.of());
+    }
+
+    /**
+     * The stated terms that were not part of the phrase that produced the parts ({@code query_terms_dropped},
+     * DESIGN.md 3.2): the constraints the phrase actually sent ({@code used}: the relaxed phrase, the distributor
+     * phrase or the user's text) does not state (ratings are never sent to Mouser and TME), plus the free-text keywords
+     * LCSC's database search dropped. Informational: the ranker still checks every constraint. Connector queries,
+     * whose phrases are rewritten into distributor wording, report only dropped keywords.
+     */
+    List<String> queryTermsDropped(ParsedQuery parsed, String used, List<String> droppedKeywords) {
         java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
         if (!parsed.isConnector() && used != null) {
             ParsedQuery sent = parser.parse(used);
@@ -483,8 +589,8 @@ public class PartSearchService {
                 out.add("mounting");
             }
         }
-        if (dropped != null) {
-            out.addAll(dropped);
+        if (droppedKeywords != null) {
+            out.addAll(droppedKeywords);
         }
         return List.copyOf(out);
     }
@@ -518,20 +624,35 @@ public class PartSearchService {
 
     /**
      * As {@link #corePhrase(ParsedQuery, Distributor)}; without {@code qualifiers} the dielectric and the technology
-     * are left out too (the last relaxation step); null when that leaves nothing to drop.
+     * are left out too; null when that leaves nothing to drop.
      */
     static String corePhrase(ParsedQuery parsed, Distributor distributor, boolean qualifiers) {
         if (!qualifiers && parsed.dielectric() == null && parsed.technology() == null) {
             return null;
         }
+        return corePhrase(parsed, distributor, qualifiers ? Set.of() : Set.of("dielectric"));
+    }
+
+    /**
+     * The parametric core without the constraints in {@code drop} ({@code dielectric}, which also drops the
+     * technology, {@code package}, {@code tolerance}; the relaxation ladder, DESIGN.md 3.2). Null when the query has
+     * no parametric term left or the core would be a single term.
+     */
+    static String corePhrase(ParsedQuery parsed, Distributor distributor, Set<String> drop) {
+        boolean qualifiers = !drop.contains("dielectric");
         List<String> terms = new ArrayList<>();
         String familyWord = Recognizers.familyToken(parsed.originalText(), parsed.family());
         if (familyWord != null) {
             terms.add(familyWord);
         }
         int parametric = 0;
+        ParsedQuery.Constraint tolerance = null;
         for (ParsedQuery.Constraint constraint : parsed.constraints().values()) {
-            if (ParsedQuery.TOLERANCE.equals(constraint.kind()) || constraint.display() == null
+            if (ParsedQuery.TOLERANCE.equals(constraint.kind())) {
+                tolerance = constraint;
+                continue;
+            }
+            if (constraint.display() == null
                     || constraint.display().isBlank()
                     || DeterministicRanker.RATING_KINDS.contains(constraint.kind())
                     && !DeterministicRanker.isExactRating(constraint.kind(), parsed.family())) {
@@ -552,9 +673,12 @@ public class PartSearchService {
             terms.add(parsed.dielectric());
             parametric++;
         }
-        if (parsed.packageName() != null) {
+        if (parsed.packageName() != null && !drop.contains("package")) {
             terms.add(parsed.packageName());
             parametric++;
+        }
+        if (tolerance != null && tolerance.display() != null && !drop.contains("tolerance")) {
+            terms.add(tolerance.display());
         }
         if (parametric == 0 || terms.size() < 2) {
             return null;
@@ -609,13 +733,17 @@ public class PartSearchService {
         }
     }
 
-    /** Parts collected for one query plus the paging state to store in {@code cached_searches}. */
+    /**
+     * Parts collected for one query plus the paging state to store in {@code cached_searches}, how many of them meet
+     * the request ({@link #meetsRequest}), and what LCSC's database search dropped (constraint names, free-text
+     * keywords).
+     */
     record Collected(List<Part> all, List<Part> fetched, Integer totalResults, boolean exhausted, int nextOffset,
-                     String error, List<String> relaxed) {
+                     String error, List<String> relaxed, List<String> droppedKeywords, int meeting) {
 
         Collected(List<Part> all, List<Part> fetched, Integer totalResults, boolean exhausted, int nextOffset,
                   String error) {
-            this(all, fetched, totalResults, exhausted, nextOffset, error, List.of());
+            this(all, fetched, totalResults, exhausted, nextOffset, error, List.of(), List.of(), all.size());
         }
 
         Fetched toFetched(Distributor distributor, CacheStatus cache) {
@@ -623,29 +751,50 @@ public class PartSearchService {
         }
 
         Fetched toFetched(Distributor distributor, CacheStatus cache, String fallbackQuery) {
-            return new Fetched(distributor, all, totalResults, cache, error, fallbackQuery).withRelaxed(relaxed);
+            return new Fetched(distributor, all, totalResults, cache, error, fallbackQuery)
+                    .withConstraintsRelaxed(relaxed).withDroppedKeywords(droppedKeywords);
         }
     }
 
     /**
-     * Pages through {@link DistributorClient#search} from {@code offset} until {@code window} parts are held, the
-     * distributor reports no more results, {@code maxPages} pages were requested or the next page would not fit
-     * within {@code deadline}. Pages have the distributor's {@link DistributorClient#maxPageSize()} (the first one is
-     * shortened to end on a page boundary) because distributors drop parts without ships-now stock: paging is driven
-     * by raw record offsets, not by the number of parts kept. A failure on the first page propagates; a failure on a
-     * later page keeps what was collected and reports the error code.
+     * Which collected parts meet the request ({@link #meetsRequest}) and which of those have every requested rating
+     * verified ({@link #confirmed}).
      */
+    record Check(java.util.function.Predicate<Part> meets, java.util.function.Predicate<Part> confirmed) {
+
+        static final Check ALL = new Check(p -> true, p -> true);
+    }
+
+    /** As {@link #collect(DistributorClient, String, int, int, int, List, Progress, DistributorBudget, Check)}, every part meeting the request. */
     Collected collect(DistributorClient client, String query, int offset, int window, int maxPages,
                       List<Part> existing, Progress progress, DistributorBudget deadline) {
+        return collect(client, query, offset, window, maxPages, existing, progress, deadline, Check.ALL);
+    }
+
+    /**
+     * Pages through {@link DistributorClient#search} from {@code offset} until {@code window} parts are held and at
+     * least one of them meets the request with its ratings verified ({@code meets}; DESIGN.md 3.2: a rating is never
+     * in the phrase, so the parts that satisfy it may sit on later pages), the distributor reports no more results, {@code maxPages} pages were
+     * requested or the next page would not fit within {@code deadline}. Pages have the distributor's
+     * {@link DistributorClient#maxPageSize()} (the first one is shortened to end on a page boundary) because
+     * distributors drop parts without ships-now stock: paging is driven by raw record offsets, not by the number of
+     * parts kept. A failure on the first page propagates; a failure on a later page keeps what was collected and
+     * reports the error code.
+     */
+    Collected collect(DistributorClient client, String query, int offset, int window, int maxPages,
+                      List<Part> existing, Progress progress, DistributorBudget deadline, Check meets) {
         Distributor distributor = client.distributor();
         boolean pagedByRecords = usesPostgresCache(distributor);
         int outOfStock = 0;
         List<String> relaxed = List.of();
+        List<String> droppedKeywords = List.of();
         int pageSize = Math.max(1, client.maxPageSize());
         List<Part> all = new ArrayList<>(existing);
         List<Part> fetched = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         existing.forEach(p -> seen.add(p.distributorPartNumber()));
+        int meeting = (int) existing.stream().filter(meets.meets()).count();
+        int confirmed = (int) existing.stream().filter(meets.confirmed()).count();
         Integer total = progress.totalResults;
         boolean hasMore = true;
         int next = Math.max(0, offset);
@@ -654,7 +803,7 @@ public class PartSearchService {
         String error = null;
         // while every match so far is out of stock, up to EXTRA_OUT_OF_STOCK_PAGES more pages (DESIGN.md 3.2)
         while ((pages < maxPages || all.isEmpty() && outOfStock > 0 && pages < maxPages + EXTRA_OUT_OF_STOCK_PAGES)
-                && hasMore && all.size() < window) {
+                && hasMore && (all.size() < window || confirmed == 0)) {
             if (pages > 0 && deadline.remainingNanos() < lastPageNanos) {
                 log.debug("{}: no time for another page of '{}'", distributor, query);
                 break;
@@ -685,6 +834,9 @@ public class PartSearchService {
             if (!page.relaxed().isEmpty()) {
                 relaxed = page.relaxed();
             }
+            if (!page.droppedKeywords().isEmpty()) {
+                droppedKeywords = page.droppedKeywords();
+            }
             progress.outOfStock += page.outOfStock();
             Instant now = clock.instant();
             for (Part part : page.parts()) {
@@ -695,21 +847,37 @@ public class PartSearchService {
                         part.fetchedAt() == null ? part.toBuilder().fetchedAt(now).build() : part);
                 all.add(enriched);
                 fetched.add(enriched);
+                if (meets.meets().test(enriched)) {
+                    meeting++;
+                    if (meets.confirmed().test(enriched)) {
+                        confirmed++;
+                    }
+                }
             }
             progress.parts = List.copyOf(all);
             progress.totalResults = total;
         }
-        return new Collected(all, fetched, total, !hasMore, next, error, relaxed);
+        return new Collected(all, fetched, total, !hasMore, next, error, relaxed, droppedKeywords, meeting);
     }
 
-    /** Writes the new parts and the search list. Cache failures are logged, never propagated. */
+    /**
+     * Writes the new parts and the search list. A list whose parts all fail the request (strict constraints, below
+     * spec) is never stored as a reusable search: only its parts are cached. Cache failures are logged, never
+     * propagated.
+     */
     private void store(Distributor distributor, String queryKey, Collected collected, Instant listFetchedAt,
-                       String fallbackQuery, int outOfStockMatches) {
+                       String fallbackQuery, int outOfStockMatches, List<String> constraintsRelaxed) {
         try {
             partCache.upsertAll(collected.fetched());
+            if (!collected.all().isEmpty() && collected.meeting() == 0) {
+                log.info("{} search '{}': none of its {} parts meets the request; not cached as a search",
+                        distributor, queryKey, collected.all().size());
+                searchCache.delete(distributor, queryKey);
+                return;
+            }
             searchCache.upsert(new CachedSearch(distributor, queryKey, collected.totalResults(),
                     collected.all().stream().map(Part::distributorPartNumber).toList(), collected.exhausted(),
-                    listFetchedAt, collected.nextOffset(), fallbackQuery, outOfStockMatches));
+                    listFetchedAt, collected.nextOffset(), fallbackQuery, outOfStockMatches, constraintsRelaxed));
         } catch (RuntimeException e) {
             log.warn("Caching {} results for '{}' failed: {}", distributor, queryKey, e.toString());
         }
@@ -734,6 +902,98 @@ public class PartSearchService {
         return out;
     }
 
+    // ---- stock refresh --------------------------------------------------------------------------------------------
+
+    /** Rounds of refreshing the parts about to be returned (a sold-out part pulls the next one into the top). */
+    static final int STOCK_REFRESH_ROUNDS = 2;
+
+    /**
+     * Refreshes the stock and prices of the parts about to be returned whose cached figures are older than
+     * {@code kina.cache.stock-ttl} (DESIGN.md 3.2 "Stock refresh"): one cheap distributor call per batch of part numbers
+     * (TME {@code /products/data}, Mouser part-number search), only for Mouser and TME and only for the top
+     * {@code max_results} parts. Refreshed parts get the new figures and {@code fetchedAt = now} and are written back to
+     * the cache; a part that sold out is removed from the list and from the cache. A failed refresh keeps the cached
+     * figures.
+     */
+    private RankedResults refreshStock(Prepared prepared, RankedResults ranked, Deadline deadline) {
+        Instant now = clock.instant();
+        Instant staleBefore = now.minus(properties.cache().stockTtl());
+        Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
+        boolean changed = false;
+        for (Map.Entry<Distributor, List<RankedPart>> entry : ranked.byDistributor().entrySet()) {
+            Distributor distributor = entry.getKey();
+            List<RankedPart> list = entry.getValue();
+            Optional<DistributorClient> client = usesPostgresCache(distributor)
+                    ? registry.find(distributor).filter(DistributorClient::isConfigured) : Optional.empty();
+            if (client.isEmpty() || list.isEmpty()) {
+                out.put(distributor, list);
+                continue;
+            }
+            List<RankedPart> kept = new ArrayList<>(list);
+            Set<String> attempted = new HashSet<>();
+            for (int round = 0; round < STOCK_REFRESH_ROUNDS && deadline.remainingNanos() > 0; round++) {
+                List<String> stale = kept.subList(0, Math.min(prepared.maxResults(), kept.size())).stream()
+                        .map(RankedPart::part)
+                        .filter(p -> p.fetchedAt() == null || p.fetchedAt().isBefore(staleBefore))
+                        .map(Part::distributorPartNumber)
+                        .filter(attempted::add)
+                        .toList();
+                if (stale.isEmpty()) {
+                    break;
+                }
+                Map<String, StockUpdate> updates;
+                try {
+                    updates = client.get().refreshStock(stale, deadline);
+                } catch (DistributorException e) {
+                    log.info("{} stock refresh of {} parts failed, keeping the cached figures: {}", distributor,
+                            stale.size(), e.getMessage());
+                    break;
+                } catch (RuntimeException e) {
+                    log.warn("{} stock refresh failed unexpectedly", distributor, e);
+                    break;
+                }
+                List<Part> refreshed = new ArrayList<>();
+                List<String> soldOut = new ArrayList<>();
+                List<RankedPart> next = new ArrayList<>(kept.size());
+                for (RankedPart r : kept) {
+                    StockUpdate update = updates.get(r.part().distributorPartNumber());
+                    if (update == null) {
+                        next.add(r);
+                    } else if (update.stock() <= 0) {
+                        soldOut.add(r.part().distributorPartNumber());
+                    } else {
+                        Part p = r.part().toBuilder().stock(update.stock())
+                                .prices(update.prices().isEmpty() ? r.part().prices() : update.prices())
+                                .fetchedAt(now).build();
+                        refreshed.add(p);
+                        next.add(new RankedPart(p, r.score(), r.match(), r.mismatches(), r.unverified(),
+                                r.belowSpec()));
+                    }
+                }
+                kept = next;
+                changed = true;
+                log.info("{} stock refresh: {} parts updated, {} sold out", distributor, refreshed.size(),
+                        soldOut.size());
+                writeBack(distributor, refreshed, soldOut);
+                if (soldOut.isEmpty()) {
+                    break;
+                }
+            }
+            out.put(distributor, List.copyOf(kept));
+        }
+        return changed ? new RankedResults(out, ranked.mode(), ranked.note(), ranked.excluded(),
+                ranked.excludedBelowSpec()) : ranked;
+    }
+
+    private void writeBack(Distributor distributor, List<Part> refreshed, List<String> soldOut) {
+        try {
+            partCache.upsertAll(refreshed);
+            soldOut.forEach(number -> partCache.delete(distributor, number));
+        } catch (RuntimeException e) {
+            log.warn("Writing refreshed {} stock to the cache failed: {}", distributor, e.toString());
+        }
+    }
+
     // ---- assembly -------------------------------------------------------------------------------------------------
 
     /** {@code [MOUSER=hit/50, TME=timeout/0]} for the timing log. */
@@ -753,6 +1013,8 @@ public class PartSearchService {
     private SearchResponse assemble(Prepared prepared, Map<Distributor, Fetched> fetched, RankedResults ranked,
                                     String note) {
         SearchRequest request = prepared.request();
+        boolean understood = prepared.parsed().understood();
+        int lowStockThreshold = properties.search().lowStockThreshold();
         List<DistributorResult> results = new ArrayList<>();
         for (Distributor distributor : prepared.distributors()) {
             Fetched f = fetched.get(distributor);
@@ -761,19 +1023,21 @@ public class PartSearchService {
             }
             List<RankedPart> rankedParts = ranked.byDistributor().getOrDefault(distributor, List.of());
             int returned = Math.min(prepared.maxResults(), rankedParts.size());
+            List<RankedPart> top = rankedParts.subList(0, returned);
             List<PartResponse> parts = new ArrayList<>(returned);
             for (int i = 0; i < returned; i++) {
-                RankedPart rp = rankedParts.get(i);
+                RankedPart rp = top.get(i);
                 Map<String, String> canonical = request.detail() == ResponseDetail.FULL ? null
                         : extractor.extract(rp.part());
-                parts.add(PartResponse.of(rp.part(), i + 1, roundScore(rp.score()), rp.match(), rp.mismatches(),
-                        request.quantity(), request.detail(), canonical));
+                parts.add(PartResponse.of(rp.part(), new PartResponse.Ranking(i + 1, roundScore(rp.score()),
+                                rp.match(), rp.mismatches(), rp.unverified(), rp.belowSpec()),
+                        request.quantity(), request.detail(), canonical, lowStockThreshold));
             }
-            int exact = (int) parts.stream().filter(p -> p.match() != null && p.match() >= 0.995).count();
+            Integer exact = understood ? (int) top.stream().filter(RankedPart::exact).count() : null;
             results.add(DistributorResult.builder()
                     .distributor(distributor)
                     .totalResults(f.totalResults())
-                    .fetched(rankedParts.size())
+                    .fetched(f.parts().size())
                     .returned(returned)
                     .cache(f.cache())
                     .error(f.error())
@@ -782,13 +1046,32 @@ public class PartSearchService {
                     .rateLimitWaitedMs(f.rateLimitWaitedMs())
                     .distributorQuery(f.distributorQuery())
                     .excludedByConstraints(ranked.excludedBy(distributor))
+                    .excludedBelowSpec(ranked.excludedBelowSpecBy(distributor))
                     .outOfStockMatches(f.outOfStockMatches())
-                    .relaxed(f.relaxed())
+                    .queryTermsDropped(f.queryTermsDropped())
+                    .constraintsRelaxed(distributor == Distributor.LCSC
+                            ? actuallyRelaxed(f.constraintsRelaxed(), top) : f.constraintsRelaxed())
                     .exactMatches(exact)
                     .build());
         }
         return new SearchResponse(prepared.parsed().originalText(), ParsedQueryResponse.from(prepared.parsed()),
-                ranked.mode(), note, results);
+                ranked.mode(), note, results, understood, understood ? null : SearchResponse.NOT_UNDERSTOOD_HINT,
+                SearchResponse.currenciesOf(results));
+    }
+
+    /**
+     * Of the constraints LCSC's database search dropped, those the returned parts really miss (a mismatch or an
+     * unverified constraint of that name): its relaxation drops terms one at a time, so a dropped term is not
+     * necessarily the one that failed (DESIGN.md 3.2).
+     */
+    static List<String> actuallyRelaxed(List<String> dropped, List<RankedPart> returned) {
+        if (dropped == null || dropped.isEmpty()) {
+            return List.of();
+        }
+        return dropped.stream()
+                .filter(name -> returned.stream().anyMatch(r -> r.unverified().contains(name)
+                        || r.mismatches().stream().anyMatch(m -> m.startsWith(name + ":"))))
+                .toList();
     }
 
     static double roundScore(double score) {

@@ -32,10 +32,14 @@ class ResponseJsonTest {
                 null, List.of());
         SearchResponse response = new SearchResponse("10uF X7R 0805", ParsedQueryResponse.from(parsed), RankingMode.BLENDED,
                 null, List.of(DistributorResult.builder().distributor(Distributor.MOUSER).totalResults(113).fetched(50)
-                        .returned(1).cache(CacheStatus.HIT).parts(List.of(PartResponse.from(part, 1, 0.93))).build()));
+                        .returned(1).cache(CacheStatus.HIT).parts(List.of(PartResponse.from(part, 1, 0.93)))
+                        .exactMatches(0).build()));
 
         String json = mapper.writeValueAsString(response);
 
+        assertThat(json).contains("\"query_understood\":true", "\"currencies\":[\"EUR\"]", "\"excluded_below_spec\":0",
+                "\"query_terms_dropped\":[]", "\"constraints_relaxed\":[]", "\"stock_as_of\":\"2026-10-05T00:00:00Z\"")
+                .doesNotContain("\"relaxed\"", "\"hint\"", "\"below_spec\"", "\"unverified\"");
         assertThat(json).contains("\"ranking\":\"blended\"", "\"ranking_note\":null", "\"total_results\":113",
                 "\"cache\":\"hit\"", "\"part_number\":\"603-CC0805\"", "\"mpn\":\"CC0805MKX7R7BB106\"",
                 "\"package\":\"0805\"", "\"min_order_qty\":1", "\"order_multiple\":1", "\"datasheet_url\":",
@@ -43,7 +47,7 @@ class ResponseJsonTest {
                 "\"parsed\":{\"family\":\"capacitor\"", "\"capacitance\":\"10uF\"", "\"dielectric\":\"X7R\"",
                 "\"keywords\":[]", "{\"qty\":1,\"unit_price\":1.40,\"currency\":\"EUR\"}",
                 "\"fallback_query\":null", "\"rate_limit_waited_ms\":0", "\"distributor_query\":null",
-                "\"excluded_by_constraints\":0", "\"out_of_stock_matches\":null", "\"relaxed\":[]",
+                "\"excluded_by_constraints\":0", "\"out_of_stock_matches\":null",
                 "\"exact_matches\":0", "\"availability\":{\"status\":\"in_stock\"", "\"lifecycle\":\"active\"");
         assertThat(json).doesNotContain("\"qty\":100", "mismatches", "mounting", "\"constraints\"", "packageName", "\"connector\"");
     }

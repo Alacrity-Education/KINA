@@ -180,6 +180,19 @@ class JlcpcbSqliteSearchTest {
     }
 
     @Test
+    void relaxationDropsTheDielectricThenThePackageThenTheToleranceBeforeAnyRating() {
+        java.util.List<JlcpcbQuery.Term> terms = JlcpcbQuery.parse("22uF X7R 1206 10% MLCC >=25V").terms();
+        java.util.List<String> order = new java.util.ArrayList<>();
+        java.util.List<JlcpcbQuery.Term> remaining = new java.util.ArrayList<>(terms);
+        while (remaining.size() > 1) {
+            JlcpcbQuery.Term next = JlcpcbSqliteSearch.leastInformative(remaining);
+            order.add(next.text());
+            remaining.remove(next);
+        }
+        assertThat(order).startsWith("X7R", "1206", "10%", "25V");
+    }
+
+    @Test
     void droppedTermsAreReportedAsRelaxedConstraints() throws SQLException {
         JlcpcbSqliteSearch.Result relaxed = search.search("10uF 0805 >=100V", 0, 50);
         assertThat(LcscClient.relaxed("10uF 0805 >=100V", relaxed)).containsExactly("voltage");

@@ -51,9 +51,12 @@ import java.util.Map;
  * +{@value #W_USB_FEATURE} per requested feature present (waterproof, board lock, power only).
  *
  * <p>{@link #assess} also reports the <b>match grade</b>: the signals the part earned (tie-break excluded) divided by
- * what a part matching every stated parameter would earn, clamped to [0,1]. An attribute the part does not state
- * earns nothing, so 1.0 means every stated parameter is known and matches. It is absolute (not rank-normalised) and
- * does not influence the order.
+ * what a part matching every stated and <i>verified</i> parameter would earn, clamped to [0,1]. A stated constraint the
+ * part does not state at all is <b>unverified</b>: it is listed ({@link Assessment#unverified()}) and left out of both
+ * sides of the grade, so 1.0 means every verified parameter matches; with a non-empty unverified list it is not a
+ * confirmed fit. It is absolute (not rank-normalised) and does not influence the order. A known rating below the
+ * request (or a DCR above its maximum) is <b>below spec</b> ({@link Assessment#belowSpec()}, with its distance from
+ * the target).
  */
 @Component
 @RequiredArgsConstructor
@@ -118,23 +121,49 @@ public class DeterministicRanker {
     /** Strict constraint names ({@code kina.search.strict-constraints}). */
     public static final String STRICT_MOUNTING = "mounting";
     public static final String STRICT_TECHNOLOGY = "technology";
+    /** An array or network for a request that does not ask for one (resistors, capacitors, ferrite beads). */
+    public static final String STRICT_ELEMENTS = "elements";
+    /** A minimum order quantity this many decades above the quantity loses the whole MOQ penalty. */
+    static final double MOQ_PENALTY_DECADES = 3.0;
 
     private final ParametricExtractor extractor;
 
     /**
      * Deterministic score and match grade of one part.
      *
-     * @param score relevance in [0,1] (the ranking signal)
-     * @param match share of the stated parameters the part satisfies, in [0,1] (class comment)
+     * @param score             relevance in [0,1] (the ranking signal)
+     * @param match             share of the stated and verified parameters the part satisfies, in [0,1] (class
+     *                          comment); null when the part states none of the stated constraints
+     * @param mismatches        stated parameters the part is known not to satisfy
+     * @param unverified        stated constraints the part does not state ({@code "current"}, {@code "package"}...)
+     * @param belowSpec         rating kinds whose known value is below the request (a DCR above its maximum)
+     * @param belowSpecDistance how far below: the sum of {@code |ln(part / requested)|} over {@code belowSpec}
      */
-    public record Assessment(double score, double match, List<String> mismatches) {
+    public record Assessment(double score, Double match, List<String> mismatches, List<String> unverified,
+                             List<String> belowSpec, double belowSpecDistance) {
 
         public Assessment {
             mismatches = mismatches == null ? List.of() : List.copyOf(mismatches);
+            unverified = unverified == null ? List.of() : List.copyOf(unverified);
+            belowSpec = belowSpec == null ? List.of() : List.copyOf(belowSpec);
+        }
+
+        public Assessment(double score, double match, List<String> mismatches) {
+            this(score, match, mismatches, List.of(), List.of(), 0);
         }
 
         public Assessment(double score, double match) {
             this(score, match, List.of());
+        }
+
+        /** A known rating is below the request. */
+        public boolean isBelowSpec() {
+            return !belowSpec.isEmpty();
+        }
+
+        /** Every stated constraint is verified and met: no mismatch and nothing unverified. */
+        public boolean complete() {
+            return mismatches.isEmpty() && unverified.isEmpty();
         }
     }
 
@@ -197,6 +226,18 @@ public class DeterministicRanker {
         if (query.family() != null && familyScore(query.family(), f) < 0) {
             out.add("family: " + f.family() + " instead of " + query.family());
         }
+        if (query.elements() == null && f.elements() != null && query.family() != null
+                && PassiveDetails.ARRAY_FAMILIES.contains(query.family())) {
+            out.add("elements: " + PassiveDetails.elementsDisplay(f.elements()) + " instead of single");
+        } else if (query.elements() != null) {
+            String wantedElements = PassiveDetails.elementsDisplay(query.elements());
+            if (f.elements() == null) {
+                out.add("elements: single instead of " + wantedElements);
+            } else if (query.elements() != ParsedQuery.ANY_ELEMENTS && f.elements() != ParsedQuery.ANY_ELEMENTS
+                    && !query.elements().equals(f.elements())) {
+                out.add("elements: " + f.elements() + " instead of " + wantedElements);
+            }
+        }
         ParsedQuery.Connector wanted = query.connector();
         ParsedQuery.Connector actual = f.connector();
         if (wanted != null && actual != null && !wanted.isUsb()) {
@@ -244,6 +285,10 @@ public class DeterministicRanker {
             return ConstraintCheck.MATCH;
         }
         boolean unknown = false;
+        if (strict.contains(STRICT_ELEMENTS) && query.elements() == null && f.elements() != null
+                && query.family() != null && PassiveDetails.ARRAY_FAMILIES.contains(query.family())) {
+            return ConstraintCheck.CONFLICT;   // a bead array or resistor network for a single-element request
+        }
         if (strict.contains(STRICT_MOUNTING) && query.mounting() != null) {
             boolean hybrid = f.connector() != null && UsbVocabulary.HYBRID.equals(f.connector().mountingStyle());
             if (f.mounting() == null || hybrid) {
@@ -265,17 +310,15 @@ public class DeterministicRanker {
     /**
      * Score deduction for an order of {@code quantity} pieces (DESIGN.md 3.4 "Quantity"): {@code stockWeight} when the
      * part has fewer pieces in stock than requested, and up to {@code moqWeight} when its minimum order quantity
-     * exceeds the quantity ({@code moqWeight * min(1, log10(moq / quantity) / 2)}, complete at 100x). Nothing for a
-     * quantity of 1.
+     * exceeds the quantity, also for a quantity of 1 ({@code moqWeight * min(1, log10(moq / quantity) / 3)}, complete
+     * at 1000x: a 2000-piece MOQ for one piece loses all of it, an MOQ of 10 a third).
      */
     public static double quantityPenalty(Part part, int quantity, double stockWeight, double moqWeight) {
-        if (quantity <= 1) {
-            return 0;
-        }
-        double penalty = part.stock() < quantity ? stockWeight : 0;
+        int qty = Math.max(1, quantity);
+        double penalty = part.stock() < qty ? stockWeight : 0;
         Integer moq = part.minimumOrderQuantity();
-        if (moq != null && moq > quantity) {
-            penalty += moqWeight * Math.min(1.0, Math.log10((double) moq / quantity) / 2);
+        if (moq != null && moq > qty) {
+            penalty += moqWeight * Math.min(1.0, Math.log10((double) moq / qty) / MOQ_PENALTY_DECADES);
         }
         return penalty;
     }
@@ -297,17 +340,20 @@ public class DeterministicRanker {
     Assessment assess(ParsedQuery query, Part part, ParametricExtractor.Features f) {
         double score = 0;
         double possible = 0;
+        List<String> unverified = new java.util.ArrayList<>();
 
         // primary value; connector queries use the connector signals instead
         String primary = query.isConnector() ? null : primaryKind(query);
         if (query.isConnector()) {
             score += connectorScore(query, f);
-            possible += connectorPossible(query);
+            possible += connectorPossible(query, f, unverified);
         }
         if (primary != null) {
-            possible += W_PRIMARY_VALUE;
             Recognizers.Value partValue = f.values().get(primary);
-            if (partValue != null) {
+            if (partValue == null) {
+                unverified.add(label(primary));
+            } else {
+                possible += W_PRIMARY_VALUE;
                 ParsedQuery.Constraint wanted = query.constraint(primary);
                 boolean same = sameValue(wanted.value(), partValue.value(), VALUE_MATCH_TOLERANCE)
                         // an impedance is compared at its test frequency when both sides state one
@@ -321,37 +367,47 @@ public class DeterministicRanker {
         String wantedPackage = Recognizers.packageKey(query.packageName());
         String partPackage = Recognizers.packageKey(f.packageName());
         if (wantedPackage != null) {
-            possible += W_PACKAGE;
-        }
-        if (wantedPackage != null && partPackage != null) {
-            score += wantedPackage.equals(partPackage) ? W_PACKAGE : -W_PACKAGE;
+            if (partPackage == null) {
+                unverified.add("package");
+            } else {
+                possible += W_PACKAGE;
+                score += wantedPackage.equals(partPackage) ? W_PACKAGE : -W_PACKAGE;
+            }
         }
 
         // dielectric
         if (query.dielectric() != null) {
-            possible += W_DIELECTRIC;
-        }
-        if (query.dielectric() != null && f.dielectric() != null) {
-            score += query.dielectric().equalsIgnoreCase(f.dielectric()) ? W_DIELECTRIC : -W_DIELECTRIC;
+            if (f.dielectric() == null) {
+                unverified.add("dielectric");
+            } else {
+                possible += W_DIELECTRIC;
+                score += query.dielectric().equalsIgnoreCase(f.dielectric()) ? W_DIELECTRIC : -W_DIELECTRIC;
+            }
         }
 
-        // technology (thin film vs thick film, tantalum vs ceramic...)
+        // technology (thin film vs thick film, tantalum vs ceramic...); a known but not comparable one earns nothing
         if (query.technology() != null) {
-            possible += W_TECHNOLOGY;
-            score += W_TECHNOLOGY * TechnologyVocabulary.compare(query.technology(), f.technology());
+            if (f.technology() == null) {
+                unverified.add("technology");
+            } else {
+                possible += W_TECHNOLOGY;
+                score += W_TECHNOLOGY * TechnologyVocabulary.compare(query.technology(), f.technology());
+            }
         }
 
-        // ratings: minimums (a higher rating satisfies them), DCR a maximum
+        // ratings: minimums (a higher rating satisfies them), DCR a maximum; each stated rating has an equal share
         List<String> requested = RATING_KINDS.stream().filter(k -> query.constraint(k) != null).toList();
-        if (!requested.isEmpty()) {
-            possible += W_RATING;
-        }
         double preference = 0;   // score-only adjustments, not part of the match grade
+        List<String> belowSpec = new java.util.ArrayList<>();
+        double belowSpecDistance = 0;
         for (String kind : requested) {
             Double partValue = f.value(kind);
             if (partValue == null) {
+                unverified.add(label(kind));
                 continue;
             }
+            double share = W_RATING / requested.size();
+            possible += share;
             double wanted = query.constraint(kind).value();
             boolean exact = isExactRating(kind, query.family());
             boolean ok;
@@ -362,7 +418,11 @@ public class DeterministicRanker {
             } else {
                 ok = partValue >= wanted * (1 - 1e-9);
             }
-            score += (ok ? W_RATING : -W_RATING) / requested.size();
+            score += ok ? share : -share;
+            if (!ok && !exact && wanted > 0 && partValue > 0) {
+                belowSpec.add(label(kind));
+                belowSpecDistance += Math.abs(Math.log(partValue / wanted));
+            }
             if (ok && !exact && !ParsedQuery.DCR.equals(kind) && wanted > 0 && partValue > wanted * (1 + 1e-9)) {
                 double octaves = Math.log(partValue / wanted) / Math.log(2);
                 preference -= W_RATING_EXCESS * Math.min(1.0, octaves / RATING_EXCESS_OCTAVES) / requested.size();
@@ -371,8 +431,10 @@ public class DeterministicRanker {
 
         // mounting of a non-connector request (connector requests score it among the connector signals)
         if (!query.isConnector() && query.mounting() != null) {
-            possible += W_MOUNTING;
-            if (f.mounting() != null) {
+            if (f.mounting() == null) {
+                unverified.add("mounting");
+            } else {
+                possible += W_MOUNTING;
                 score += query.mounting().equals(f.mounting()) ? W_MOUNTING : -W_MOUNTING;
             }
         }
@@ -387,10 +449,18 @@ public class DeterministicRanker {
         ParsedQuery.Constraint tolerance = query.constraint(ParsedQuery.TOLERANCE);
         Double partTolerance = f.value(ParsedQuery.TOLERANCE);
         if (tolerance != null) {
-            possible += W_TOLERANCE;
+            if (partTolerance == null) {
+                unverified.add("tolerance");
+            } else {
+                possible += W_TOLERANCE;
+                score += partTolerance <= tolerance.value() + 1e-9 ? W_TOLERANCE : -W_TOLERANCE;
+            }
         }
-        if (tolerance != null && partTolerance != null) {
-            score += partTolerance <= tolerance.value() + 1e-9 ? W_TOLERANCE : -W_TOLERANCE;
+
+        // an element count of an array the part does not state
+        if (query.elements() != null && query.elements() != ParsedQuery.ANY_ELEMENTS
+                && f.elements() != null && f.elements() == ParsedQuery.ANY_ELEMENTS) {
+            unverified.add("elements");
         }
 
         // family
@@ -406,36 +476,57 @@ public class DeterministicRanker {
             score += W_LEXICAL * found / query.keywords().size();
         }
 
-        double match = possible <= 0 ? 1.0 : Math.clamp(score / possible, 0.0, 1.0);
-        return new Assessment(Math.clamp(score + preference + tieBreak(part), 0.0, 1.0), match, mismatches(query, f));
+        Double match = possible <= 0 ? (unverified.isEmpty() ? Double.valueOf(1.0) : null)
+                : Double.valueOf(Math.clamp(score / possible, 0.0, 1.0));
+        return new Assessment(Math.clamp(score + preference + tieBreak(part), 0.0, 1.0), match, mismatches(query, f),
+                unverified, belowSpec, belowSpecDistance);
     }
 
-    /** What a connector part matching every stated connector attribute earns ({@link #connectorScore}). */
-    static double connectorPossible(ParsedQuery query) {
+    /**
+     * What a connector part matching every stated and verified connector attribute earns ({@link #connectorScore});
+     * attributes the request states but the part does not are added to {@code unverified} instead.
+     */
+    static double connectorPossible(ParsedQuery query, ParametricExtractor.Features f, List<String> unverified) {
         ParsedQuery.Connector wanted = query.connector();
         if (wanted == null) {
             return 0;
         }
+        ParsedQuery.Connector actual = f.connector();
         double possible = 0;
         if (wanted.isUsb()) {
             String wantedType = wanted.usbType() != null ? wanted.usbType() : UsbVocabulary.usbTypeOf(wanted.type());
+            String actualType = actual == null ? null
+                    : actual.usbType() != null ? actual.usbType() : UsbVocabulary.usbTypeOf(actual.type());
+            boolean otherConnector = actual != null && !actual.isUsb() && actual.type() != null
+                    && !ParsedQuery.CONNECTOR.equals(actual.type());
             if (wantedType != null) {
-                possible += W_USB_TYPE;
+                possible += verified(actualType != null || otherConnector, W_USB_TYPE, "usb type", unverified);
             }
             if (wanted.pinConfiguration() != null || wanted.positions() != null) {
-                possible += wanted.pinConfigurationImplied() ? W_USB_PINS / 2 : W_USB_PINS;
+                Integer actualPins = actual == null ? null : actual.pinConfiguration() != null
+                        ? actual.pinConfiguration() : UsbVocabulary.configuration(wantedType, actual.positions());
+                possible += verified(actualPins != null,
+                        wanted.pinConfigurationImplied() ? W_USB_PINS / 2 : W_USB_PINS, "pin configuration",
+                        unverified);
             }
-            if (UsbVocabulary.standard(wanted.usbStandard()) != null) {
-                possible += W_USB_STANDARD;
+            UsbVocabulary.Standard wantedStandard = UsbVocabulary.standard(wanted.usbStandard());
+            if (wantedStandard != null) {
+                boolean known = actual != null && (actual.hasFeature(UsbVocabulary.POWER_ONLY)
+                        && actual.usbStandard() == null
+                        || UsbVocabulary.compare(wantedStandard, UsbVocabulary.standard(actual.usbStandard())) != null);
+                possible += verified(known, W_USB_STANDARD, "usb standard", unverified);
             }
             if (wanted.gender() != null) {
-                possible += W_USB_GENDER;
+                possible += verified(actual != null && actual.gender() != null, W_USB_GENDER, "gender", unverified);
             }
             if (wanted.mountingStyle() != null || query.mounting() != null) {
-                possible += W_USB_MOUNTING;
+                boolean known = actual != null
+                        && usbMounting(wanted.mountingStyle(), query.mounting(), actual, f.mounting()) != null;
+                possible += verified(known, W_USB_MOUNTING, "mounting", unverified);
             }
             if (wanted.orientation() != null) {
-                possible += W_USB_ORIENTATION;
+                possible += verified(actual != null && actual.orientation() != null, W_USB_ORIENTATION,
+                        "orientation", unverified);
             }
             for (String feature : USB_BONUS_FEATURES) {
                 if (wanted.hasFeature(feature)) {
@@ -445,25 +536,36 @@ public class DeterministicRanker {
             return possible;
         }
         if (wanted.positions() != null) {
-            possible += W_POSITIONS;
+            possible += verified(actual != null && actual.positions() != null, W_POSITIONS, "positions", unverified);
         }
         if (wanted.gender() != null) {
-            possible += W_GENDER;
+            possible += verified(actual != null && actual.gender() != null, W_GENDER, "gender", unverified);
         }
         if (wanted.orientation() != null) {
-            possible += W_ORIENTATION;
+            possible += verified(actual != null && actual.orientation() != null, W_ORIENTATION, "orientation",
+                    unverified);
         }
         if (wanted.pitchMm() != null) {
-            possible += W_PITCH;
+            possible += verified(actual != null && actual.pitchMm() != null, W_PITCH, "pitch", unverified);
         }
         if (wanted.type() != null && !ParsedQuery.CONNECTOR.equals(wanted.type())
                 && !ParsedQuery.HEADER.equals(wanted.type()) && !ParsedQuery.USB.equals(wanted.type())) {
-            possible += W_CONNECTOR_TYPE;
+            possible += verified(actual != null && ConnectorRecognizer.typesMatch(wanted.type(), actual.type()) != null,
+                    W_CONNECTOR_TYPE, "connector type", unverified);
         }
         if (query.mounting() != null) {
-            possible += W_CONNECTOR_MOUNTING;
+            possible += verified(f.mounting() != null, W_CONNECTOR_MOUNTING, "mounting", unverified);
         }
         return possible;
+    }
+
+    /** {@code weight} when the part states the attribute; else 0 and the attribute is unverified. */
+    private static double verified(boolean known, double weight, String name, List<String> unverified) {
+        if (known) {
+            return weight;
+        }
+        unverified.add(name);
+        return 0;
     }
 
     /** Connector signals (class comment); 0 for every attribute unknown on either side. */

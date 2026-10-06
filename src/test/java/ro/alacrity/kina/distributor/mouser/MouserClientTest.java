@@ -499,4 +499,33 @@ class MouserClientTest {
             assertThat(String.valueOf(t.getMessage())).doesNotContain(API_KEY);
         }
     }
+
+    @Test
+    void refreshStockJoinsUpToTenPartNumbersPerCall() {
+        java.util.List<String> numbers = new java.util.ArrayList<>(java.util.List.of("603-CC0805MKX77BB106"));
+        for (int i = 1; i <= 10; i++) {
+            numbers.add("X-" + i);
+        }
+        server.expect(requestTo(PART_URL))
+                .andExpect(content().json("""
+                        {"SearchByPartRequest":{"mouserPartNumber":"603-CC0805MKX77BB106|X-1|X-2|X-3|X-4|X-5|X-6|X-7|X-8|X-9",
+                         "partSearchOptions":"Exact"}}
+                        """, JsonCompareMode.STRICT))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.PART_NUMBER), MediaType.APPLICATION_JSON));
+        server.expect(requestTo(PART_URL))
+                .andExpect(content().json("""
+                        {"SearchByPartRequest":{"mouserPartNumber":"X-10","partSearchOptions":"Exact"}}
+                        """, JsonCompareMode.STRICT))
+                .andRespond(withSuccess("{\"Errors\":[],\"SearchResults\":{\"NumberOfResult\":0,\"Parts\":[]}}",
+                        MediaType.APPLICATION_JSON));
+
+        java.util.Map<String, ro.alacrity.kina.distributor.StockUpdate> updates = client.refreshStock(numbers,
+                time.deadline(Duration.ofMinutes(2)));
+
+        server.verify();
+        // only the number Mouser answered for; the others stay unknown (cached figures kept)
+        assertThat(updates).containsOnlyKeys("603-CC0805MKX77BB106");
+        assertThat(updates.get("603-CC0805MKX77BB106").stock()).isEqualTo(76689);
+        assertThat(updates.get("603-CC0805MKX77BB106").prices()).isNotEmpty();
+    }
 }

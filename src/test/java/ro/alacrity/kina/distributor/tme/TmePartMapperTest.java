@@ -99,12 +99,29 @@ class TmePartMapperTest {
 
     @Test
     void datasheetIgnoresLinkAndVideoDocuments() {
-        // GRM21BR71A106KE51L only has LNK (link .txt) and YTB documents
+        // GRM21BR71A106KE51L only has LNK (link .txt) and YTB documents: the TME product page stands in
         assertThat(TmePartMapper.datasheetUrl(files.get("GRM21BR71A106KE51L"))).isNull();
-        assertThat(map("GRM21BR71A106KE51L").orElseThrow().datasheetUrl()).isNull();
+        Part noSheet = map("GRM21BR71A106KE51L").orElseThrow();
+        assertThat(noSheet.datasheetUrl()).isEqualTo("https://www.tme.eu/en/details/GRM21BR71A106KE51L/");
+        assertThat(noSheet.extra()).containsEntry("datasheet_source", "product_page");
         assertThat(TmePartMapper.datasheetUrl(files.get("CS2012X7R106K160NR")))
                 .isEqualTo("https://www.tme.eu/Document/15a3409220a9cd1969199d6f4e29e942/CS.pdf");
+        assertThat(map("CS2012X7R106K160NR").orElseThrow().extra()).containsEntry("datasheet_source", "dte");
         assertThat(TmePartMapper.datasheetUrl(null)).isNull();
+    }
+
+    @Test
+    void datasheetFallsBackToADocumentNamedDatasheet() {
+        TmeResponses.ProductFiles productFiles = new TmeResponses.ProductFiles("X", new TmeResponses.Documents(List.of(
+                new TmeResponses.Document("//www.tme.eu/Document/a/Eaton_22-LNK.txt", "LNK", 163L,
+                        "Eaton_22-LNK.txt", "EN"),
+                new TmeResponses.Document("//www.tme.eu/Document/b/hcma-data-sheet.pdf", "INS", 10L,
+                        "hcma-data-sheet.pdf", "EN"))));
+
+        assertThat(TmePartMapper.datasheet(productFiles)).isEqualTo(new TmePartMapper.Datasheet(
+                "https://www.tme.eu/Document/b/hcma-data-sheet.pdf", TmePartMapper.SOURCE_DOCUMENT));
+        // only the DTE document counts as "the" datasheet when one exists
+        assertThat(TmePartMapper.datasheetUrl(productFiles)).isNull();
     }
 
     @Test
@@ -131,7 +148,7 @@ class TmePartMapperTest {
         assertThat(part.manufacturerPartNumber()).isEqualTo("BC847B");
         assertThat(part.extra()).containsEntry("product_status", List.of());
         assertThat(part.prices()).isEmpty();
-        assertThat(part.datasheetUrl()).isNull();
+        assertThat(part.datasheetUrl()).isEqualTo("https://www.tme.eu/en/details/BC847B-DIO/");
     }
 
     @Test
@@ -170,17 +187,17 @@ class TmePartMapperTest {
         for (String status : excluded) {
             TmeResponses.Product product = new TmeResponses.Product(List.of("NEW", status.toLowerCase()), "EXT-0",
                     null, List.of(), null, "desc", null, null, null, null, null);
-            assertThat(TmePartMapper.toPart(product, stock, null, null, NOW, excluded)).as(status).isEmpty();
+            assertThat(TmePartMapper.toPart(product, stock, null, (String) null, NOW, excluded)).as(status).isEmpty();
             // without an exclusion list the same product maps (legacy overload)
             assertThat(TmePartMapper.toPart(product, stock, null, null, NOW)).isPresent();
         }
 
         TmeResponses.Product hardly = new TmeResponses.Product(List.of("HARDLY_AVAILABLE"), "EXT-0", null,
                 List.of(), null, "desc", null, null, null, null, null);
-        Part part = TmePartMapper.toPart(hardly, stock, null, null, NOW, excluded).orElseThrow();
+        Part part = TmePartMapper.toPart(hardly, stock, null, (String) null, NOW, excluded).orElseThrow();
         assertThat(part.extra()).containsEntry("product_status", List.of("HARDLY_AVAILABLE"));
         assertThat(TmePartMapper.toPart(new TmeResponses.Product(null, "EXT-0", null, List.of(), null, "desc",
-                null, null, null, null, null), stock, null, null, NOW, excluded)).isPresent();
+                null, null, null, null, null), stock, null, (String) null, NOW, excluded)).isPresent();
     }
 
     @Test

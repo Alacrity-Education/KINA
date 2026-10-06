@@ -14,14 +14,21 @@ import java.util.List;
  *                     a TME status that does not ship now)
  * @param relaxed      constraints the distributor's own search dropped to find this page (LCSC relaxation:
  *                     "voltage", "dielectric", "package"...); empty when every term matched
+ * @param droppedKeywords free-text terms the distributor's own search dropped (LCSC relaxation), as written
  */
 public record DistributorSearchPage(List<Part> parts, int totalResults, boolean hasMore, int outOfStock,
-                                    List<String> relaxed) {
+                                    List<String> relaxed, List<String> droppedKeywords) {
 
     public DistributorSearchPage {
         parts = parts == null ? List.of() : List.copyOf(parts);
         outOfStock = Math.max(0, outOfStock);
         relaxed = relaxed == null ? List.of() : List.copyOf(relaxed);
+        droppedKeywords = droppedKeywords == null ? List.of() : List.copyOf(droppedKeywords);
+    }
+
+    public DistributorSearchPage(List<Part> parts, int totalResults, boolean hasMore, int outOfStock,
+                                 List<String> relaxed) {
+        this(parts, totalResults, hasMore, outOfStock, relaxed, List.of());
     }
 
     public DistributorSearchPage(List<Part> parts, int totalResults, boolean hasMore, int outOfStock) {

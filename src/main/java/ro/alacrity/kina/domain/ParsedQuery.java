@@ -28,6 +28,9 @@ import java.util.Map;
  *                     {@code search.TechnologyVocabulary}), null when the query names none
  * @param preferences  soft preferences that are not constraints, e.g. {@link #LOW_DCR} ("low DCR": lower DC
  *                     resistance ranks higher among otherwise equal parts)
+ * @param elements     null when the request does not ask for an array or network (a single resistor, capacitor or
+ *                     ferrite bead is wanted); {@link #ANY_ELEMENTS} for "array"/"network" without a count; else the
+ *                     requested number of elements ("4 lines", "4 elements", "x4")
  */
 @Builder(toBuilder = true)
 public record ParsedQuery(
@@ -41,8 +44,12 @@ public record ParsedQuery(
         List<String> keywords,
         Connector connector,
         String technology,
-        List<String> preferences
+        List<String> preferences,
+        Integer elements
 ) {
+
+    /** {@link #elements()} of a request for an array or network whose element count is not stated. */
+    public static final int ANY_ELEMENTS = 0;
 
     public static final String CAPACITANCE = "capacitance";
     public static final String RESISTANCE = "resistance";
@@ -111,7 +118,17 @@ public record ParsedQuery(
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
         this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null,
-                null);
+                null, null);
+    }
+
+    /**
+     * True when the parser recognised something typed: a family, a value or rating, the dielectric, package, mounting,
+     * technology, connector attributes or an element count. False for keyword-only text ({@code asdfqwerty zz9}, a bare
+     * part number): the search then has no parametric understanding and reports no {@code match}.
+     */
+    public boolean understood() {
+        return family != null || !constraints.isEmpty() || dielectric != null || packageName != null
+                || mounting != null || technology != null || connector != null || elements != null;
     }
 
     /** True when the query states the preference ({@link #LOW_DCR}). */

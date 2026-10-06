@@ -3,6 +3,8 @@ package ro.alacrity.kina.distributor;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -52,5 +54,16 @@ public interface DistributorClient {
      */
     default PartLookupResult lookup(String partNumber, Deadline deadline) throws DistributorException {
         return PartLookupResult.of(getPart(partNumber, deadline));
+    }
+
+    /**
+     * Current stock and prices of cached parts by distributor part number, with as few calls as the API allows (TME
+     * {@code /products/data}, 50 symbols per call; Mouser part-number search, 10 numbers per call), waiting for rate
+     * limits within {@code deadline}. A part number missing from the result is unknown (the cached figures stay). The
+     * default (LCSC: its local database is current anyway) knows nothing.
+     */
+    default Map<String, StockUpdate> refreshStock(List<String> partNumbers, Deadline deadline)
+            throws DistributorException {
+        return Map.of();
     }
 }

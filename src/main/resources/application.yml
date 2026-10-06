@@ -51,19 +51,22 @@ kina:
   cache:
     ttl: 5d
     empty-result-ttl: 1h
+    stock-ttl: ${KINA_CACHE_STOCK_TTL:24h}   # DESIGN.md 3.2: older cached stock/prices are refreshed before they are returned
   search:
     candidate-window: 40
     default-max-results: 10
     max-max-results: 50
     distributor-timeout: 12s
     max-request-duration: 2m     # hard cap per request, including rate-limit waits (DESIGN.md 3.6)
-    strict-constraints: ${KINA_STRICT_CONSTRAINTS:mounting,technology}   # DESIGN.md 3.4: contradicting parts are excluded
-    quantity:                    # DESIGN.md 3.4 "Quantity": penalties when quantity > 1
+    strict-constraints: ${KINA_STRICT_CONSTRAINTS:mounting,technology,elements}   # DESIGN.md 3.4: contradicting parts are excluded
+    low-stock-threshold: ${KINA_LOW_STOCK_THRESHOLD:10}   # stock below this (or below 2 x quantity) is low_stock
+    quantity:                    # DESIGN.md 3.4 "Quantity": score penalties for the order quantity and stock
       stock-shortfall-penalty: 0.3
-      moq-penalty: 0.15
+      moq-penalty: 0.3           # x min(1, log10(moq / quantity) / 3), also for quantity 1
+      low-stock-penalty: 0.3
     lifecycle:                   # DESIGN.md 3.4: penalties by the part's lifecycle
       last-time-buy-penalty: 0.1
-      supply-constrained-penalty: 0.03
+      supply-constrained-penalty: 0.05
   ranking:
     timeout: 5s                  # per query; the cross-encoder needs about 0.1-0.35 s for 40 candidates
     batch-timeout: 60s

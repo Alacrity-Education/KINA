@@ -312,7 +312,11 @@ class TmeClientTest {
         DistributorSearchPage second = client.search("diode", 0, 20);
 
         server.verify();
-        assertThat(first.parts()).hasSize(2).allSatisfy(p -> assertThat(p.datasheetUrl()).isNull());
+        // without /products/files the product page stands in for the datasheet
+        assertThat(first.parts()).hasSize(2).allSatisfy(p -> {
+            assertThat(p.datasheetUrl()).isEqualTo(p.productUrl());
+            assertThat(p.extra()).containsEntry("datasheet_source", "product_page");
+        });
         assertThat(second.parts()).hasSize(2);
     }
 
@@ -646,5 +650,31 @@ class TmeClientTest {
 
         server.verify();
         assertThat(deadline.rateLimitWaitedMillis()).isEqualTo(1_000);
+    }
+
+    @Test
+    void refreshStockReadsProductsDataInBatchesOfFifty() {
+        TmeClient client = client(TmeTestSupport.properties(20));
+        List<String> symbols = symbols(51);
+        Map<String, Integer> first = new LinkedHashMap<>();
+        symbols.subList(0, 50).forEach(s -> first.put(s, 7));
+        first.put(symbols.get(1), 0);   // sold out since it was cached
+        expectToken(server, "t");
+        server.expect(get("/products/data"))
+                .andExpect(request -> assertThat(request.getURI().getRawQuery()).contains("scope%5B%5D=stock")
+                        .contains("symbols%5B%5D=" + symbols.get(49)).doesNotContain(symbols.get(50)))
+                .andRespond(withSuccess(dataJson(first), jsonType()));
+        server.expect(get("/products/data")).andRespond(withSuccess(dataJson(Map.of(symbols.get(50), 3)), jsonType()));
+
+        Map<String, ro.alacrity.kina.distributor.StockUpdate> updates = client.refreshStock(symbols,
+                time.deadline(Duration.ofMinutes(2)));
+
+        server.verify();
+        assertThat(updates).hasSize(51);
+        assertThat(updates.get(symbols.getFirst()).stock()).isEqualTo(7);
+        assertThat(updates.get(symbols.getFirst()).prices()).hasSize(1);
+        assertThat(updates.get(symbols.get(1)).stock()).isZero();
+        assertThat(updates.get(symbols.get(50)).stock()).isEqualTo(3);
+        assertThat(client.refreshStock(List.of(), time.deadline(Duration.ofMinutes(2)))).isEmpty();
     }
 }

@@ -7,6 +7,8 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -32,17 +34,25 @@ import java.util.Map;
  *                            ({@link Availability#lifecycleOf})
  * @param mismatches          stated parameters the part is known not to satisfy, e.g. {@code "dielectric: X5R instead
  *                            of X7R"}; omitted when empty (search results only)
+ * @param unverified          stated constraints the part does not state at all (e.g. {@code "current"}); they are left
+ *                            out of {@code match}, so {@code match} 1.0 with a non-empty list is not a confirmed fit;
+ *                            omitted when empty (search results only)
+ * @param belowSpec           true (else omitted) when a known rating is below the request; returned only with
+ *                            {@code allow_below_spec}, after every part that meets the request, closest first
+ * @param manufacturerId      the distributor's own manufacturer id (TME only), omitted when absent
+ * @param stockAsOf           when the stock and prices were fetched from the distributor ({@code Part.fetchedAt}), to
+ *                            the second
  */
-@JsonPropertyOrder({"rank", "score", "match", "distributor", "part_number", "manufacturer", "manufacturer_id", "mpn",
-        "description", "category", "package", "stock", "min_order_qty", "order_multiple", "prices",
-        "ordered_quantity", "unit_price_at_quantity", "total_price", "availability", "lifecycle", "mismatches",
-        "datasheet_url", "photo_url",
-        "product_url", "attributes", "extra"})
+@JsonPropertyOrder({"rank", "score", "match", "below_spec", "distributor", "part_number", "manufacturer",
+        "manufacturer_id", "mpn", "description", "category", "package", "stock", "stock_as_of", "min_order_qty",
+        "order_multiple", "prices", "ordered_quantity", "unit_price_at_quantity", "total_price", "availability",
+        "lifecycle", "mismatches", "unverified", "datasheet_url", "photo_url", "product_url", "attributes", "extra"})
 @Builder
 public record PartResponse(
         @JsonProperty("rank") Integer rank,
         @JsonProperty("score") Double score,
         @JsonProperty("match") Double match,
+        @JsonProperty("below_spec") @JsonInclude(JsonInclude.Include.NON_NULL) Boolean belowSpec,
         @JsonProperty("distributor") Distributor distributor,
         @JsonProperty("part_number") String partNumber,
         @JsonProperty("manufacturer") String manufacturer,
@@ -52,6 +62,7 @@ public record PartResponse(
         @JsonProperty("category") @JsonInclude(JsonInclude.Include.NON_NULL) String category,
         @JsonProperty("package") @JsonInclude(JsonInclude.Include.NON_NULL) String packageName,
         @JsonProperty("stock") int stock,
+        @JsonProperty("stock_as_of") Instant stockAsOf,
         @JsonProperty("min_order_qty") Integer minOrderQty,
         @JsonProperty("order_multiple") Integer orderMultiple,
         @JsonProperty("prices") List<PriceResponse> prices,
@@ -62,6 +73,7 @@ public record PartResponse(
         @JsonProperty("availability") Availability availability,
         @JsonProperty("lifecycle") String lifecycle,
         @JsonProperty("mismatches") @JsonInclude(JsonInclude.Include.NON_EMPTY) List<String> mismatches,
+        @JsonProperty("unverified") @JsonInclude(JsonInclude.Include.NON_EMPTY) List<String> unverified,
         @JsonProperty("datasheet_url") String datasheetUrl,
         @JsonProperty("photo_url") @JsonInclude(JsonInclude.Include.NON_NULL) String photoUrl,
         @JsonProperty("product_url") String productUrl,
@@ -100,6 +112,35 @@ public record PartResponse(
     /** As {@link #of(Part, Integer, Double, Double, int, ResponseDetail, Map)} with the part's mismatches. */
     public static PartResponse of(Part part, Integer rank, Double score, Double match, List<String> mismatches,
                                   int quantity, ResponseDetail detail, Map<String, String> canonical) {
+        return of(part, Ranking.of(rank, score, match, mismatches), quantity, detail, canonical,
+                Availability.DEFAULT_LOW_STOCK_THRESHOLD);
+    }
+
+    /**
+     * The search-result fields of a part: rank, score, match grade, mismatches, unverified constraints and the
+     * below-spec flag (all null/empty for {@code get_part}).
+     */
+    public record Ranking(Integer rank, Double score, Double match, List<String> mismatches, List<String> unverified,
+                          boolean belowSpec) {
+
+        public static final Ranking NONE = new Ranking(null, null, null, List.of(), List.of(), false);
+
+        public static Ranking of(Integer rank, Double score, Double match, List<String> mismatches) {
+            return new Ranking(rank, score, match, mismatches, List.of(), false);
+        }
+    }
+
+    /**
+     * A part at the given detail level for an order of {@code quantity} pieces, with its search-result fields and the
+     * {@code kina.search.low-stock-threshold} for {@code availability}.
+     */
+    public static PartResponse of(Part part, Ranking ranking, int quantity, ResponseDetail detail,
+                                  Map<String, String> canonical, int lowStockThreshold) {
+        Ranking r = ranking == null ? Ranking.NONE : ranking;
+        Integer rank = r.rank();
+        Double score = r.score();
+        Double match = r.match();
+        List<String> mismatches = r.mismatches();
         boolean full = detail == ResponseDetail.FULL;
         int qty = Math.max(1, quantity);
         Order order = full || qty > 1 ? order(part, qty) : null;
@@ -108,6 +149,7 @@ public record PartResponse(
                 .rank(rank)
                 .score(score)
                 .match(match == null ? null : Math.round(match * 100) / 100.0)
+                .belowSpec(r.belowSpec() ? Boolean.TRUE : null)
                 .distributor(part.distributor())
                 .partNumber(part.distributorPartNumber())
                 .manufacturer(part.manufacturer())
@@ -117,15 +159,17 @@ public record PartResponse(
                 .category(full ? part.category() : null)
                 .packageName(full ? part.packageName() : null)
                 .stock(part.stock())
+                .stockAsOf(part.fetchedAt() == null ? null : part.fetchedAt().truncatedTo(ChronoUnit.SECONDS))
                 .minOrderQty(part.minimumOrderQuantity())
                 .orderMultiple(part.orderMultiple())
                 .prices(trimPrices(part.prices()))
                 .orderedQuantity(order == null ? null : order.quantity())
                 .unitPriceAtQuantity(order == null ? null : order.unitPrice())
                 .totalPrice(order == null ? null : order.total())
-                .availability(Availability.of(part, qty, full))
+                .availability(Availability.of(part, qty, full, lowStockThreshold))
                 .lifecycle(Availability.lifecycleOf(part))
                 .mismatches(mismatches == null ? List.of() : List.copyOf(mismatches))
+                .unverified(r.unverified() == null ? List.of() : List.copyOf(r.unverified()))
                 .datasheetUrl(part.datasheetUrl())
                 .photoUrl(full ? part.photoUrl() : null)
                 .productUrl(part.productUrl())

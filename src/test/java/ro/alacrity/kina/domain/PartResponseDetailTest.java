@@ -61,7 +61,8 @@ class PartResponseDetailTest {
         assertThat(compact).contains("\"part_number\":\"PN-1\"", "\"manufacturer\":\"SAMSUNG\"",
                 "\"manufacturer_id\":\"451\"", "\"mpn\":\"CL10B104KB8NNNC\"", "\"description\":", "\"stock\":4000",
                 "\"min_order_qty\":10", "\"order_multiple\":10", "\"prices\":", "\"datasheet_url\":\"https://ds\"",
-                "\"product_url\":\"https://prod\"", "\"availability\":{\"status\":\"supply_constrained\"",
+                "\"product_url\":\"https://prod\"", "\"availability\":{\"status\":\"in_stock\"",
+                "\"lifecycle\":\"supply_constrained\"", "\"stock_as_of\":\"2026-10-05T00:00:00Z\"",
                 "\"Voltage\":\"50V\"", "\"match\":1.0", "\"score\":0.9");
         assertThat(compact).doesNotContain("photo_url", "\"extra\"", "Operating voltage", "Case - inch", "packing",
                 "product_status", "\"category\"", "\"package\"", "total_price", "ordered_quantity");
@@ -83,6 +84,15 @@ class PartResponseDetailTest {
                 .isEqualTo(new Availability(Availability.LIMITED, "Only 2 ship now, fewer than the 10 requested."));
         assertThat(Availability.of(part(Distributor.MOUSER, 20, 1, 1, Map.of()), 10, false).status())
                 .isEqualTo(Availability.IN_STOCK);
+        // low stock: below the threshold (default 10), or below twice the quantity
+        assertThat(Availability.of(part(Distributor.TME, 2, 1, 1, Map.of()), 1, false))
+                .isEqualTo(new Availability(Availability.LOW_STOCK, "Only 2 in stock."));
+        assertThat(Availability.of(part(Distributor.TME, 15, 1, 1, Map.of()), 10, false))
+                .isEqualTo(new Availability(Availability.LOW_STOCK, "Only 15 in stock, less than twice the 10 requested."));
+        assertThat(Availability.of(part(Distributor.TME, 15, 1, 1, Map.of()), 1, false, 20).status())
+                .isEqualTo(Availability.LOW_STOCK);
+        assertThat(Availability.of(part(Distributor.TME, 10, 1, 1, Map.of()), 1, false).status())
+                .isEqualTo(Availability.IN_STOCK);
         Part lastBuy = part(Distributor.TME, 20, 1, 1,
                 Map.of("product_status", List.of("AVAILABLE_WHILE_STOCKS_LAST", "MOQ_VALID_WHILE_STOCKS_LAST", "NEW")));
         assertThat(Availability.of(lastBuy, 1, false)).satisfies(a -> {
@@ -91,9 +101,9 @@ class PartResponseDetailTest {
                     .doesNotContain("recently");
         });
         assertThat(Availability.lifecycleOf(lastBuy)).isEqualTo(Availability.LAST_TIME_BUY);
-        // HARDLY_AVAILABLE is a supply flag, not low stock
+        // HARDLY_AVAILABLE is a supply flag, not low stock: lifecycle only, the availability stays the stock
         Part hardly = part(Distributor.TME, 150_000, 1, 1, Map.of("product_status", List.of("HARDLY_AVAILABLE")));
-        assertThat(Availability.of(hardly, 1, false).status()).isEqualTo(Availability.SUPPLY_CONSTRAINED);
+        assertThat(Availability.of(hardly, 1, false).status()).isEqualTo(Availability.IN_STOCK);
         assertThat(Availability.of(hardly, 1, false).note()).contains("Ships now from stock.", "limited market");
         assertThat(Availability.lifecycleOf(hardly)).isEqualTo(Availability.SUPPLY_CONSTRAINED);
         assertThat(Availability.lifecycleOf(part(Distributor.TME, 20, 1, 1, Map.of("product_status", List.of("NEW")))))

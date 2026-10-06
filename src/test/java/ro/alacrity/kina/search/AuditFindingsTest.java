@@ -168,9 +168,11 @@ class AuditFindingsTest {
         assertThat(extractor.extract(ihlp)).containsEntry("RatedCurrent", "8A").containsEntry("DCR", "18mohm")
                 .doesNotContainKeys("SaturationCurrent", "Resistance");
         ParsedQuery isat = parser.parse("2.2uH saturation current 10A");
-        // I_sat is compared with I_sat only: unknown scores 0, the 8A rated current is not a mismatch
+        // I_sat is compared with I_sat only: unknown is unverified (not in match), the 8A rated current is no mismatch
         assertThat(ranker.assess(isat, hcma).match()).isEqualTo(1.0);
-        assertThat(ranker.assess(isat, ihlp).match()).isLessThan(1.0);
+        assertThat(ranker.assess(isat, ihlp).unverified()).containsExactly("saturation current");
+        assertThat(ranker.assess(isat, ihlp).complete()).isFalse();
+        assertThat(ranker.assess(isat, hcma).complete()).isTrue();
         assertThat(ranker.score(isat, hcma)).isGreaterThan(ranker.score(isat, ihlp));
         assertThat(DeterministicRanker.mismatches(isat, extractor.features(ihlp))).isEmpty();
     }
@@ -343,11 +345,14 @@ class AuditFindingsTest {
 
         assertThat(service.rank(q, fetched, null, 25).byDistributor().get(Distributor.TME))
                 .extracting(r -> r.part().distributorPartNumber()).containsExactly("OK", "REEL", "TWO");
-        // one piece: no penalty, the stock tie-break prefers the reel
+        // one piece: the 10 000-piece minimum order costs the reel its full MOQ penalty, the 2-piece part the
+        // low-stock penalty (before, a quantity of 1 changed nothing and the reel ranked first)
         assertThat(service.rank(q, fetched, null, 1).byDistributor().get(Distributor.TME).getFirst().part()
-                .distributorPartNumber()).isEqualTo("REEL");
-        assertThat(DeterministicRanker.quantityPenalty(reel, 1, 0.3, 0.15)).isZero();
-        assertThat(DeterministicRanker.quantityPenalty(reel, 100, 0.3, 0.15)).isCloseTo(0.15, within(1e-9));
+                .distributorPartNumber()).isEqualTo("OK");
+        // moqWeight * min(1, log10(moq / quantity) / 3): complete at 1000x, also for one piece
+        assertThat(DeterministicRanker.quantityPenalty(reel, 1, 0.3, 0.15)).isCloseTo(0.15, within(1e-9));
+        assertThat(DeterministicRanker.quantityPenalty(reel, 100, 0.3, 0.15)).isCloseTo(0.10, within(1e-9));
+        assertThat(DeterministicRanker.quantityPenalty(plenty, 1, 0.3, 0.15)).isZero();
         assertThat(DeterministicRanker.quantityPenalty(twoInStock, 25, 0.3, 0.15)).isCloseTo(0.3, within(1e-9));
     }
 
@@ -388,17 +393,24 @@ class AuditFindingsTest {
         Part ihlp = RankingFixtures.part(Distributor.TME, "IHLP2525CZER2R2M01", "VISHAY", "IHLP2525CZER2R2M01",
                 "Inductor: wire; SMD; 2.2uH; 8A; R: 18mΩ; shielded", "SMD power inductors", null, 2, "1.20",
                 Map.of(), Map.of());
-        Part hcma = RankingFixtures.part(Distributor.TME, "HCMA0703-2R2-R", "EATON", "HCMA0703-2R2-R",
+        Part hcma = RankingFixtures.part(Distributor.TME, "HCMA1104-2R2-R", "EATON", "HCMA1104-2R2-R",
+                "Inductor: wire; SMD; 2.2uH; 11A; R: 7mΩ", "SMD power inductors", null, 300, "0.90", Map.of(),
+                Map.of());
+        Part weak = RankingFixtures.part(Distributor.TME, "HCMA0703-2R2-R", "EATON", "HCMA0703-2R2-R",
                 "Inductor: wire; SMD; 2.2uH; 6A; R: 25mΩ", "SMD power inductors", null, 300, "0.90", Map.of(),
                 Map.of());
         Map<Distributor, List<Part>> fetched = new EnumMap<>(Distributor.class);
-        fetched.put(Distributor.TME, List.of(ihlp, hcma));
+        fetched.put(Distributor.TME, List.of(ihlp, weak, hcma));
         for (RankingService service : List.of(rankingService(),
                 rankingService("kina.ranking.cross-encoder.enabled", "false"))) {
-            assertThat(service.rank(q, fetched, Duration.ofSeconds(5), 10).byDistributor().get(Distributor.TME)
-                    .getFirst().part().distributorPartNumber()).isEqualTo("HCMA0703-2R2-R");
-            assertThat(service.rank(q, fetched, Duration.ofSeconds(5), 1).byDistributor().get(Distributor.TME)
-                    .getFirst().part().distributorPartNumber()).isEqualTo("IHLP2525CZER2R2M01");
+            for (int quantity : new int[]{10, 1}) {
+                // two pieces cannot supply ten (tier) and are low stock for one (penalty): the 11 A part ranks first;
+                // the 6 A part is below the 8 A request and left out
+                RankingService.RankedResults r = service.rank(q, fetched, Duration.ofSeconds(5), quantity);
+                assertThat(r.byDistributor().get(Distributor.TME)).extracting(p -> p.part().distributorPartNumber())
+                        .containsExactly("HCMA1104-2R2-R", "IHLP2525CZER2R2M01");
+                assertThat(r.excludedBelowSpecBy(Distributor.TME)).isEqualTo(1);
+            }
         }
     }
 
@@ -434,18 +446,24 @@ class AuditFindingsTest {
     }
 
     @Test
-    void relaxationLadderDropsRatingsThenToleranceThenEverythingButTheCore() {
+    void relaxationLadderDropsRatingsThenDielectricThenPackageThenTolerance() {
         ParsedQuery q = parser.parse("22uF X7R 1206 25V 10% MLCC");
-        assertThat(DistributorPhraser.relaxations(Distributor.TME, q, q.originalText())).containsExactly(
-                "22uF X7R 1206 10% MLCC", "22uF X7R 1206 MLCC", "MLCC 22uF X7R 1206", "MLCC 22uF 1206");
-        // from the rating-free phrase the ladder starts at the tolerance; the core is tried although the user's text
-        // has nothing else to drop
+        // the core "MLCC 22uF X7R 1206 10%" has the words of the rating-free phrase and is skipped
+        assertThat(DistributorPhraser.ladder(Distributor.TME, q, q.originalText())).containsExactly(
+                new DistributorPhraser.Relaxation("22uF X7R 1206 10% MLCC", List.of()),
+                new DistributorPhraser.Relaxation("MLCC 22uF 1206 10%", List.of("dielectric")),
+                new DistributorPhraser.Relaxation("MLCC 22uF 10%", List.of("dielectric", "package")),
+                new DistributorPhraser.Relaxation("MLCC 22uF", List.of("dielectric", "package", "tolerance")));
         String sent = DistributorPhraser.phrase(Distributor.MOUSER, q);
         assertThat(DistributorPhraser.relaxations(Distributor.MOUSER, q, sent)).containsExactly(
-                "22uF X7R 1206 MLCC", "MLCC 22uF X7R 1206", "MLCC 22uF 1206");
+                "MLCC 22uF 1206 10%", "MLCC 22uF 10%", "MLCC 22uF");
         ParsedQuery same = parser.parse("22uF X7R 1206 25V MLCC");
         assertThat(DistributorPhraser.relaxations(Distributor.TME, same, DistributorPhraser.phrase(Distributor.TME, same)))
-                .containsExactly("MLCC 22uF X7R 1206", "MLCC 22uF 1206");
+                .containsExactly("MLCC 22uF 1206", "MLCC 22uF");
+        // a reworded core with the same constraints loosens nothing
+        ParsedQuery mosfet = parser.parse("SOT-23 N-channel MOSFET 30V");
+        assertThat(DistributorPhraser.ladder(Distributor.TME, mosfet, "SOT-23 N-channel MOSFET")).containsExactly(
+                new DistributorPhraser.Relaxation("MOSFET SOT-23", List.of()));
         assertThat(DistributorPhraser.relaxations(Distributor.LCSC, q, q.originalText())).isEmpty();
     }
 }

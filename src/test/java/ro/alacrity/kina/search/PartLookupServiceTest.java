@@ -231,4 +231,63 @@ class PartLookupServiceTest {
 
         assertThat(service.getPart(Distributor.TME, "T0", false)).isPresent();
     }
+
+    /** A Mouser client whose stock refresh answers from a map (DESIGN.md 3.2 "Stock refresh"). */
+    static final class RefreshingClient extends FakeClient {
+        final java.util.Map<String, ro.alacrity.kina.distributor.StockUpdate> stock = new java.util.HashMap<>();
+        final List<List<String>> refreshed = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+        RefreshingClient() {
+            super(Distributor.MOUSER);
+        }
+
+        @Override
+        public java.util.Map<String, ro.alacrity.kina.distributor.StockUpdate> refreshStock(List<String> numbers,
+                                                                                           Deadline deadline) {
+            refreshed.add(List.copyOf(numbers));
+            java.util.Map<String, ro.alacrity.kina.distributor.StockUpdate> out = new java.util.HashMap<>();
+            numbers.stream().filter(stock::containsKey).forEach(n -> out.put(n, stock.get(n)));
+            return out;
+        }
+    }
+
+    @Test
+    void staleCachedPartIsRefreshedBeforeItIsReturned() {
+        RefreshingClient mouser = new RefreshingClient();
+        Part stale = part(Distributor.MOUSER, "M1").toBuilder().fetchedAt(NOW.minus(Duration.ofHours(30))).build();
+        Part fresh = part(Distributor.MOUSER, "M2").toBuilder().fetchedAt(NOW.minus(Duration.ofHours(2))).build();
+        when(cache.find(eq(Distributor.MOUSER), eq("M1"), any())).thenReturn(Optional.of(stale));
+        when(cache.find(eq(Distributor.MOUSER), eq("M2"), any())).thenReturn(Optional.of(fresh));
+        mouser.stock.put("M1", new ro.alacrity.kina.distributor.StockUpdate(3, List.of()));
+        service(mouser);
+
+        PartLookupResponse refreshed = service.lookup(Distributor.MOUSER, "M1", false);
+        PartLookupResponse young = service.lookup(Distributor.MOUSER, "M2", false);
+
+        assertThat(refreshed.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(refreshed.part().stock()).isEqualTo(3);
+        assertThat(refreshed.part().stockAsOf()).isEqualTo(NOW);
+        assertThat(refreshed.part().availability().status()).isEqualTo("low_stock");
+        assertThat(refreshed.part().prices()).hasSize(3);   // no new prices: the cached ones stay
+        // get_part defaults to the full attribute set
+        assertThat(refreshed.part().extra()).isNotNull();
+        assertThat(young.part().stockAsOf()).isEqualTo(NOW.minus(Duration.ofHours(2)));
+        assertThat(mouser.refreshed).containsExactly(List.of("M1"));   // a part younger than 24 h is not refreshed
+        verify(cache).upsertAll(List.of(stale.toBuilder().stock(3).fetchedAt(NOW).build()));
+    }
+
+    @Test
+    void cachedPartThatSoldOutIsLookedUpLive() {
+        RefreshingClient mouser = new RefreshingClient();
+        Part stale = part(Distributor.MOUSER, "M1").toBuilder().fetchedAt(NOW.minus(Duration.ofDays(3))).build();
+        when(cache.find(eq(Distributor.MOUSER), eq("M1"), any())).thenReturn(Optional.of(stale));
+        mouser.stock.put("M1", new ro.alacrity.kina.distributor.StockUpdate(0, List.of()));
+        service(mouser);
+
+        PartLookupResponse response = service.lookup(Distributor.MOUSER, "M1", false);
+
+        verify(cache).delete(Distributor.MOUSER, "M1");
+        assertThat(response.cache()).isEqualTo(CacheStatus.MISS);
+        assertThat(response.found()).isFalse();
+    }
 }

@@ -29,6 +29,18 @@ class TmePartMapper {
     /** Document type of datasheets ("DTE - Documentation" in the OpenAPI document). */
     static final String DATASHEET_TYPE = "DTE";
 
+    /** {@code extra.datasheet_source}: where {@code datasheetUrl} comes from. */
+    static final String SOURCE_DTE = "dte";
+    static final String SOURCE_DOCUMENT = "document";
+    static final String SOURCE_PRODUCT_PAGE = "product_page";
+
+    /**
+     * A datasheet link and its source: {@value #SOURCE_DTE} (a {@code DTE} document) or {@value #SOURCE_DOCUMENT} (another
+     * document whose name says datasheet).
+     */
+    record Datasheet(String url, String source) {
+    }
+
     /**
      * Builds the part; empty when there is no stock record or {@code stock_quantity <= 0} (stock rule).
      *
@@ -50,6 +62,19 @@ class TmePartMapper {
     static Optional<Part> toPart(TmeResponses.Product product, TmeResponses.ProductData data,
                                  TmeResponses.ProductParameters parameters, String datasheetUrl, Instant fetchedAt,
                                  Collection<String> excludedStatuses) {
+        return toPart(product, data, parameters,
+                datasheetUrl == null ? null : new Datasheet(datasheetUrl, SOURCE_DTE), fetchedAt, excludedStatuses);
+    }
+
+    /**
+     * As above with the datasheet's source. Without a datasheet document (TME lists none for many Eaton and Murata
+     * parts, only an {@code LNK} file pointing at the manufacturer) the datasheet link is the TME product page, whose
+     * documentation section links the manufacturer's files; {@code extra.datasheet_source} says which it is
+     * ({@value #SOURCE_DTE}, {@value #SOURCE_DOCUMENT}, {@value #SOURCE_PRODUCT_PAGE}).
+     */
+    static Optional<Part> toPart(TmeResponses.Product product, TmeResponses.ProductData data,
+                                 TmeResponses.ProductParameters parameters, Datasheet datasheet, Instant fetchedAt,
+                                 Collection<String> excludedStatuses) {
         if (product == null || product.symbol() == null || data == null || data.stockQuantity() == null) {
             return Optional.empty();
         }
@@ -65,6 +90,10 @@ class TmePartMapper {
                 || parameters.parameters().elements() == null ? List.of() : parameters.parameters().elements();
 
         TmeResponses.Prices prices = data.prices();
+        Datasheet sheet = datasheet != null && datasheet.url() != null ? datasheet
+                : new Datasheet(productUrl(symbol), SOURCE_PRODUCT_PAGE);
+        Map<String, Object> extra = extra(product, data);
+        extra.put("datasheet_source", sheet.source());
         return Optional.of(Part.builder()
                 .distributor(Distributor.TME)
                 .distributorPartNumber(symbol)
@@ -77,12 +106,12 @@ class TmePartMapper {
                 .minimumOrderQuantity(toIntCeil(product.minimalAmount()))
                 .orderMultiple(toIntCeil(product.multiples()))
                 .prices(priceBreaks(prices))
-                .datasheetUrl(datasheetUrl)
+                .datasheetUrl(sheet.url())
                 .photoUrl(absoluteUrl(product.assets() == null || product.assets().primaryPhoto() == null
                         ? null : product.assets().primaryPhoto().prime()))
                 .productUrl(productUrl(symbol))
                 .attributes(attributes(params))
-                .extra(extra(product, data))
+                .extra(extra)
                 .fetchedAt(fetchedAt)
                 .build());
     }
@@ -114,6 +143,15 @@ class TmePartMapper {
             }
         }
         return false;
+    }
+
+    /** Stock and prices of one {@code /products/data} element, or null when it has no stock record. */
+    static ro.alacrity.kina.distributor.StockUpdate stockUpdate(TmeResponses.ProductData data) {
+        if (data == null || data.symbol() == null || data.stockQuantity() == null) {
+            return null;
+        }
+        return new ro.alacrity.kina.distributor.StockUpdate(toIntFloor(data.stockQuantity()),
+                priceBreaks(data.prices()));
     }
 
     static String productUrl(String symbol) {
@@ -209,22 +247,45 @@ class TmePartMapper {
      * Returns an absolute {@code https:} URL or null.
      */
     static String datasheetUrl(TmeResponses.ProductFiles files) {
+        Datasheet d = datasheet(files);
+        return d == null || !SOURCE_DTE.equals(d.source()) ? null : d.url();
+    }
+
+    private static final java.util.regex.Pattern DATASHEET_NAME =
+            java.util.regex.Pattern.compile("(?i)data[ _-]?sheet");
+
+    /**
+     * The datasheet among a product's documents: the first {@code DTE} document (a PDF preferred), else the first
+     * document whose file name or URL says "datasheet" / "data sheet"; null when neither exists.
+     */
+    static Datasheet datasheet(TmeResponses.ProductFiles files) {
         if (files == null || files.documents() == null || files.documents().elements() == null) {
             return null;
         }
         TmeResponses.Document firstDte = null;
+        TmeResponses.Document named = null;
         for (TmeResponses.Document document : files.documents().elements()) {
-            if (document == null || document.url() == null || !DATASHEET_TYPE.equalsIgnoreCase(document.type())) {
+            if (document == null || document.url() == null) {
+                continue;
+            }
+            if (!DATASHEET_TYPE.equalsIgnoreCase(document.type())) {
+                String name = document.fileName() != null ? document.fileName() : document.url();
+                if (named == null && DATASHEET_NAME.matcher(name).find()) {
+                    named = document;
+                }
                 continue;
             }
             if (isPdf(document)) {
-                return absoluteUrl(document.url());
+                return new Datasheet(absoluteUrl(document.url()), SOURCE_DTE);
             }
             if (firstDte == null) {
                 firstDte = document;
             }
         }
-        return firstDte == null ? null : absoluteUrl(firstDte.url());
+        if (firstDte != null) {
+            return new Datasheet(absoluteUrl(firstDte.url()), SOURCE_DTE);
+        }
+        return named == null ? null : new Datasheet(absoluteUrl(named.url()), SOURCE_DOCUMENT);
     }
 
     private static boolean isPdf(TmeResponses.Document document) {

@@ -143,7 +143,8 @@ class RankingServiceTest {
     void weightIsConfigurable() {
         ParsedQuery q = parser.parse("10uF X7R 0805");
         Part exact = mlcc(Distributor.TME, "EXACT", "10uF 25V X7R 0805", 1000, "0.10");
-        Part big = mlcc(Distributor.TME, "BIG", "10uF 25V X7R 1206", 1000, "0.10");
+        // both complete matches (a mismatch would put BIG in a lower tier whatever the weight)
+        Part big = mlcc(Distributor.TME, "BIG", "10uF 50V X7R 0805", 100, "0.10");
         FakeRanker ce = new FakeRanker();
         ce.scores.put(exact.key(), -1.0);
         ce.scores.put(big.key(), 5.0);

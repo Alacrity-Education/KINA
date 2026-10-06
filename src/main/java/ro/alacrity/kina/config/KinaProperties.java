@@ -207,8 +207,22 @@ public record KinaProperties(
      * @param ttl            freshness of cached Mouser/TME searches and parts
      * @param emptyResultTtl freshness of a cached search that found no in-stock part (a transient distributor glitch
      *                       or a new listing should not hide parts for the whole {@code ttl})
+     * @param stockTtl       age after which the stock and prices of a cached part about to be returned are refreshed
+     *                       with a cheap distributor call (TME {@code /products/data}, Mouser part-number search;
+     *                       DESIGN.md 3.2 "Stock refresh")
      */
-    public record Cache(@DefaultValue("5d") Duration ttl, @DefaultValue("1h") Duration emptyResultTtl) {
+    public record Cache(@DefaultValue("5d") Duration ttl, @DefaultValue("1h") Duration emptyResultTtl,
+                        @DefaultValue("24h") Duration stockTtl) {
+
+        @ConstructorBinding
+        public Cache {
+            stockTtl = stockTtl == null ? Duration.ofHours(24) : stockTtl;
+        }
+
+        /** Without {@code stockTtl} (tests): 24 hours. */
+        public Cache(Duration ttl, Duration emptyResultTtl) {
+            this(ttl, emptyResultTtl, null);
+        }
     }
 
     /**
@@ -228,10 +242,13 @@ public record KinaProperties(
      * @param maxRequestDuration hard cap on one incoming request ({@code search_parts}, a whole batch, {@code get_part})
      *                           within which rate-limited distributor calls may wait and retry
      * @param strictConstraints  stated request attributes that exclude a part whose known value contradicts them
-     *                           ({@code mounting}, {@code technology}; DESIGN.md 3.4 "Strict constraints"); a part that
-     *                           does not state the attribute stays but ranks below known matches
-     * @param quantity           ranking penalties for an order quantity above 1
+     *                           ({@code mounting}, {@code technology}, {@code elements}: an array or network for a
+     *                           single-element request; DESIGN.md 3.4 "Strict constraints"); a part that does not state
+     *                           the attribute stays but ranks below verified matches
+     * @param quantity           ranking penalties for the order quantity, low stock and the minimum order quantity
      * @param lifecycle          ranking penalties for last-time-buy and supply-constrained parts
+     * @param lowStockThreshold  a part with less stock than this (or less than twice the quantity) is
+     *                           {@code low_stock} (DESIGN.md 3.4 "Quantity")
      */
     public record Search(
             @DefaultValue("40") int candidateWindow,
@@ -239,48 +256,79 @@ public record KinaProperties(
             @DefaultValue("50") int maxMaxResults,
             @DefaultValue("12s") Duration distributorTimeout,
             @DefaultValue("2m") Duration maxRequestDuration,
-            @DefaultValue({"mounting", "technology"}) List<String> strictConstraints,
+            @DefaultValue({"mounting", "technology", "elements"}) List<String> strictConstraints,
             @DefaultValue Quantity quantity,
-            @DefaultValue Lifecycle lifecycle) {
+            @DefaultValue Lifecycle lifecycle,
+            @DefaultValue("10") int lowStockThreshold) {
+
+        /** Default {@code kina.search.strict-constraints}. */
+        public static final List<String> DEFAULT_STRICT_CONSTRAINTS = List.of("mounting", "technology", "elements");
+        public static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
 
         @ConstructorBinding
         public Search {
             strictConstraints = strictConstraints == null ? List.of() : strictConstraints.stream()
                     .filter(c -> c != null && !c.isBlank())
                     .map(c -> c.strip().toLowerCase(java.util.Locale.ROOT)).toList();
-            quantity = quantity == null ? new Quantity(0.3, 0.15) : quantity;
-            lifecycle = lifecycle == null ? new Lifecycle(0.1, 0.03) : lifecycle;
+            quantity = quantity == null ? Quantity.DEFAULTS : quantity;
+            lifecycle = lifecycle == null ? Lifecycle.DEFAULTS : lifecycle;
+            lowStockThreshold = lowStockThreshold <= 0 ? DEFAULT_LOW_STOCK_THRESHOLD : lowStockThreshold;
         }
 
-        /** Without strict constraints and with the default quantity penalties (tests). */
+        /** With the default low-stock threshold (tests that build the tree by hand). */
+        public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
+                      Duration maxRequestDuration, List<String> strictConstraints, Quantity quantity,
+                      Lifecycle lifecycle) {
+            this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration,
+                    strictConstraints, quantity, lifecycle, DEFAULT_LOW_STOCK_THRESHOLD);
+        }
+
+        /** With the default strict constraints and penalties (tests). */
         public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
                       Duration maxRequestDuration) {
             this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration,
-                    List.of("mounting", "technology"), null, null);
+                    DEFAULT_STRICT_CONSTRAINTS, null, null);
         }
     }
 
     /**
-     * {@code kina.search.quantity.*}: deterministic-score deductions for an order of more than one piece (DESIGN.md 3.4
-     * "Quantity"); a quantity of 1 changes nothing.
+     * {@code kina.search.quantity.*}: deterministic-score deductions for the order quantity (DESIGN.md 3.4
+     * "Quantity"). They are subtracted from the deterministic score and again from the final (blended) score.
      *
      * @param stockShortfallPenalty deduction for a part with fewer pieces in stock than the quantity (such a part also
      *                              ranks below every part that has enough)
-     * @param moqPenalty            largest deduction for a minimum order quantity above the quantity
-     *                              ({@code moqPenalty * min(1, log10(moq / quantity) / 2)})
+     * @param moqPenalty            largest deduction for a minimum order quantity above the quantity, also for a
+     *                              quantity of 1 ({@code moqPenalty * min(1, log10(moq / quantity) / 3)}: complete at
+     *                              1000x, so a 2000-piece MOQ for a 1-piece request loses all of it)
+     * @param lowStockPenalty       deduction for a {@code low_stock} part that can still supply the quantity
      */
-    public record Quantity(@DefaultValue("0.3") double stockShortfallPenalty, @DefaultValue("0.15") double moqPenalty) {
+    public record Quantity(@DefaultValue("0.3") double stockShortfallPenalty, @DefaultValue("0.3") double moqPenalty,
+                           @DefaultValue("0.3") double lowStockPenalty) {
+
+        public static final Quantity DEFAULTS = new Quantity(0.3, 0.3, 0.3);
+
+        @ConstructorBinding
+        public Quantity {
+        }
+
+        /** Without the low-stock penalty (tests): 0.3. */
+        public Quantity(double stockShortfallPenalty, double moqPenalty) {
+            this(stockShortfallPenalty, moqPenalty, 0.3);
+        }
     }
 
     /**
-     * {@code kina.search.lifecycle.*}: deterministic-score deductions by the part's {@code lifecycle} (DESIGN.md 3.4).
+     * {@code kina.search.lifecycle.*}: deductions by the part's {@code lifecycle} (DESIGN.md 3.4), subtracted from the
+     * deterministic score and again from the final (blended) score.
      *
      * @param lastTimeBuyPenalty       {@code last_time_buy}: TME {@code AVAILABLE_WHILE_STOCKS_LAST}, Mouser end of
      *                                 life, obsolete, not recommended for new designs
      * @param supplyConstrainedPenalty {@code supply_constrained}: TME {@code HARDLY_AVAILABLE}
      */
     public record Lifecycle(@DefaultValue("0.1") double lastTimeBuyPenalty,
-                            @DefaultValue("0.03") double supplyConstrainedPenalty) {
+                            @DefaultValue("0.05") double supplyConstrainedPenalty) {
+
+        public static final Lifecycle DEFAULTS = new Lifecycle(0.1, 0.05);
     }
 
     /**

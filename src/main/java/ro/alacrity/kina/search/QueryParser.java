@@ -48,7 +48,32 @@ public class QueryParser {
                 .connector(connector)
                 .technology(connector != null ? null : analysis.technology())
                 .preferences(analysis.preferences())
+                .elements(connector != null ? null : requestedElements(original))
                 .build();
+    }
+
+    private static final java.util.regex.Pattern ARRAY_WORDS = java.util.regex.Pattern.compile(
+            "(?i)(?<![\\p{L}\\d])(?:arrays?|networks?)(?![\\p{L}\\d])");
+    private static final java.util.regex.Pattern ELEMENT_COUNT = java.util.regex.Pattern.compile(
+            "(?i)(?<![\\p{L}\\d.])(\\d{1,2})\\s?-?\\s?(?:lines?|elements?)(?![\\p{L}\\d])");
+
+    /**
+     * The array or network a request asks for ({@link ParsedQuery#elements()}): {@code 4 lines} / {@code 2 elements}
+     * give the count, {@code array} / {@code network} alone {@link ParsedQuery#ANY_ELEMENTS}; null when the request
+     * names neither (a single element is wanted).
+     */
+    static Integer requestedElements(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        java.util.regex.Matcher count = ELEMENT_COUNT.matcher(text);
+        if (count.find()) {
+            int n = Integer.parseInt(count.group(1));
+            if (n >= 2) {
+                return n;
+            }
+        }
+        return ARRAY_WORDS.matcher(text).find() ? ParsedQuery.ANY_ELEMENTS : null;
     }
 
     /**

@@ -25,20 +25,26 @@ import java.util.stream.Collectors;
  * {@code EXTERNAL_WAREHOUSE}; {@code NOT_IN_OFFER}, {@code PRODUCT_BLOCKED}, {@code INVALID} and
  * {@code BLOCKED_FOR_ZBL_*} are excluded from results with the last three statuses before them (not ships-now).
  *
- * @param status {@value #IN_STOCK}, {@value #LIMITED} (fewer pieces ship now than requested), {@value #LAST_UNITS}
- *               (sold while the stock lasts, no restocking: TME {@code AVAILABLE_WHILE_STOCKS_LAST}, Mouser end of
- *               life / obsolete / not recommended for new designs), {@value #SUPPLY_CONSTRAINED} (TME
- *               {@code HARDLY_AVAILABLE}: limited market availability), {@value #SPECIAL_ORDER} (TME
- *               {@code ONLY_FOR_SPECIAL_ORDER}, {@code CANNOT_BE_ORDERED}) or {@value #EXTERNAL_WAREHOUSE} (TME
- *               {@code EXTERNAL_WAREHOUSE}); the last two are excluded from results by default
+ * <p>The status is the stock situation only; supply and lifecycle flags (TME {@code HARDLY_AVAILABLE}, Mouser end of
+ * life) are the separate {@code lifecycle} ({@link #lifecycleOf}) and a note.
+ *
+ * @param status {@value #IN_STOCK}, {@value #LOW_STOCK} (fewer than {@code kina.search.low-stock-threshold} pieces,
+ *               default 10, or fewer than twice the requested quantity), {@value #LIMITED} (fewer pieces ship now
+ *               than requested), {@value #LAST_UNITS} (sold while the stock lasts, no restocking: TME
+ *               {@code AVAILABLE_WHILE_STOCKS_LAST}, Mouser end of life / obsolete / not recommended for new
+ *               designs), {@value #SPECIAL_ORDER} (TME {@code ONLY_FOR_SPECIAL_ORDER}, {@code CANNOT_BE_ORDERED}) or
+ *               {@value #EXTERNAL_WAREHOUSE} (TME {@code EXTERNAL_WAREHOUSE}); the last two are excluded from
+ *               results by default
  * @param note   one or more plain sentences
  */
 @JsonPropertyOrder({"status", "note"})
 public record Availability(@JsonProperty("status") String status, @JsonProperty("note") String note) {
 
     public static final String IN_STOCK = "in_stock";
+    public static final String LOW_STOCK = "low_stock";
     public static final String LIMITED = "limited";
     public static final String LAST_UNITS = "last_units";
+    /** A {@code lifecycle} value (TME {@code HARDLY_AVAILABLE}); no longer an availability status. */
     public static final String SUPPLY_CONSTRAINED = "supply_constrained";
     public static final String SPECIAL_ORDER = "special_order";
     public static final String EXTERNAL_WAREHOUSE = "external_warehouse";
@@ -49,8 +55,10 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
     public static final String NEW = "new";
 
     /** Status precedence, most severe first. */
-    private static final List<String> SEVERITY = List.of(SPECIAL_ORDER, EXTERNAL_WAREHOUSE, LAST_UNITS,
-            SUPPLY_CONSTRAINED, LIMITED, IN_STOCK);
+    private static final List<String> SEVERITY = List.of(SPECIAL_ORDER, EXTERNAL_WAREHOUSE, LAST_UNITS, LIMITED,
+            LOW_STOCK, IN_STOCK);
+    /** Default {@code kina.search.low-stock-threshold}. */
+    public static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
     private static final Set<String> MOUSER_END_OF_LIFE = Set.of("end of life", "eol", "obsolete",
             "not recommended for new designs", "nrnd", "last time buy");
 
@@ -80,6 +88,20 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
      * affect availability (TME {@code NEW} and {@code PROMOTED}, the JLCPCB library type, Mouser reels).
      */
     public static Availability of(Part part, int quantity, boolean full) {
+        return of(part, quantity, full, DEFAULT_LOW_STOCK_THRESHOLD);
+    }
+
+    /**
+     * True when the part's stock is low for an order of {@code quantity}: below {@code threshold} pieces or below twice
+     * the quantity (but not below the quantity itself, which is {@value #LIMITED}).
+     */
+    public static boolean isLowStock(Part part, int quantity, int threshold) {
+        int qty = Math.max(1, quantity);
+        return part.stock() >= qty && (part.stock() < threshold || part.stock() < 2L * qty);
+    }
+
+    /** As {@link #of(Part, int, boolean)} with the given {@code kina.search.low-stock-threshold}. */
+    public static Availability of(Part part, int quantity, boolean full, int lowStockThreshold) {
         String status = IN_STOCK;
         List<String> notes = new ArrayList<>();
         Set<String> tme = statuses(part.extra().get("product_status"));
@@ -100,7 +122,6 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
             notes.add("TME sells it only while stocks last; it will not be restocked.");
         }
         if (tme.contains("HARDLY_AVAILABLE")) {
-            status = worst(status, SUPPLY_CONSTRAINED);
             notes.add("TME flags limited market availability (a supply warning, not low stock).");
         }
         if (tme.contains("MOQ_VALID_WHILE_STOCKS_LAST")) {
@@ -139,7 +160,11 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
         if (part.stock() < quantity) {
             status = worst(status, LIMITED);
             notes.addFirst("Only " + part.stock() + " ship now, fewer than the " + quantity + " requested.");
-        } else if (IN_STOCK.equals(status) || SUPPLY_CONSTRAINED.equals(status)) {
+        } else if (isLowStock(part, quantity, lowStockThreshold)) {
+            status = worst(status, LOW_STOCK);
+            notes.addFirst("Only " + part.stock() + " in stock" + (quantity > 1 ? ", less than twice the " + quantity
+                    + " requested." : "."));
+        } else if (IN_STOCK.equals(status)) {
             notes.addFirst("Ships now from stock.");
         }
         return new Availability(status, String.join(" ", notes));

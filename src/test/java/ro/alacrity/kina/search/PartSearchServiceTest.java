@@ -46,7 +46,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -64,6 +63,7 @@ class PartSearchServiceTest {
     final List<Map<Distributor, List<Part>>> rankedInputs = new CopyOnWriteArrayList<>();
     final List<Duration> rankBudgets = new CopyOnWriteArrayList<>();
     final List<Integer> rankQuantities = new CopyOnWriteArrayList<>();
+    final List<RankingService.RankOptions> rankOptions = new CopyOnWriteArrayList<>();
     PartSearchService service;
 
     // ---- fakes ----------------------------------------------------------------------------------------------------
@@ -223,10 +223,12 @@ class PartSearchServiceTest {
         }).when(searchCache).upsert(any());
 
         RankingService ranking = mock(RankingService.class);
-        when(ranking.rank(any(), anyMap(), any(), anyInt())).thenAnswer(inv -> {
+        when(ranking.rank(any(), anyMap(), any(), any(RankingService.RankOptions.class))).thenAnswer(inv -> {
             Map<Distributor, List<Part>> input = inv.getArgument(1);
             Duration budget = inv.getArgument(2);
-            rankQuantities.add(inv.getArgument(3));
+            RankingService.RankOptions options = inv.getArgument(3);
+            rankQuantities.add(options.quantity());
+            rankOptions.add(options);
             rankedInputs.add(input);
             rankBudgets.add(budget == null ? Duration.ofSeconds(-1) : budget);
             Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
@@ -435,14 +437,17 @@ class PartSearchServiceTest {
     void corePhraseKeepsFamilyValuesDielectricAndPackage() {
         QueryParser parser = new QueryParser();
         assertThat(PartSearchService.corePhrase(parser.parse(MOSFET_QUERY))).isEqualTo(MOSFET_CORE);
-        // ratings and tolerances are never part of the core
+        // ratings are never part of the core
         assertThat(PartSearchService.corePhrase(parser.parse("MLCC 10uF 25V X7R 0805 ceramic low ESR")))
                 .isEqualTo("MLCC 10uF X7R 0805");
         // the technology is, in the distributor's spelling
         assertThat(PartSearchService.corePhrase(parser.parse("100uF 16V polymer aluminium capacitor SMD"),
                 Distributor.TME)).isEqualTo("capacitor 100uF polymer");
+        // the tolerance is, last: it is the last constraint the ladder loosens
         assertThat(PartSearchService.corePhrase(parser.parse("22uF X7R 1206 25V MLCC 10%")))
-                .isEqualTo("MLCC 22uF X7R 1206");
+                .isEqualTo("MLCC 22uF X7R 1206 10%");
+        assertThat(PartSearchService.corePhrase(parser.parse("22uF X7R 1206 25V MLCC 10%"), null,
+                Set.of("dielectric", "package"))).isEqualTo("MLCC 22uF 10%");
         // a regulator's voltage is a specification, not a rating
         assertThat(PartSearchService.corePhrase(parser.parse("LDO 3.3V SOT-23-5"))).isEqualTo("LDO 3.3V SOT-23-5");
         // the core may equal the query: the ladder skips a step equal to what was sent
@@ -545,18 +550,27 @@ class PartSearchServiceTest {
         String query = "22uF X7R 1206 25V 10% MLCC";
         FakeClient tme = new FakeClient(Distributor.TME).records(6, i -> part(Distributor.TME, "T" + i));
         tme.emptyFor.add("22uF X7R 1206 10% MLCC");
-        tme.emptyFor.add("22uF X7R 1206 MLCC");
+        tme.emptyFor.add("MLCC 22uF 1206 10%");
         service(List.of(tme));
 
         DistributorResult t = result(service.search(new SearchRequest(query, 5, Set.of(), false)), Distributor.TME);
 
-        // the rating never reaches TME; then the tolerance goes, then everything but the core
-        assertThat(tme.queries).containsExactly("22uF X7R 1206 10% MLCC", "22uF X7R 1206 MLCC", "MLCC 22uF X7R 1206");
+        // the rating never reaches TME; the core has the same words as the phrase (skipped); then the dielectric
+        // goes, then the package (the tolerance would be last)
+        assertThat(tme.queries).containsExactly("22uF X7R 1206 10% MLCC", "MLCC 22uF 1206 10%", "MLCC 22uF 10%");
         assertThat(t.distributorQuery()).isEqualTo("22uF X7R 1206 10% MLCC");
-        assertThat(t.fallbackQuery()).isEqualTo("MLCC 22uF X7R 1206");
+        assertThat(t.fallbackQuery()).isEqualTo("MLCC 22uF 10%");
+        assertThat(t.constraintsRelaxed()).containsExactly("dielectric", "package");
+        assertThat(t.queryTermsDropped()).contains("voltage", "dielectric", "package").doesNotContain("tolerance");
         assertThat(t.fetched()).isEqualTo(6);
-        assertThat(cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(query)).fallbackQuery())
-                .isEqualTo("MLCC 22uF X7R 1206");
+        CachedSearch stored = cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(query));
+        assertThat(stored.fallbackQuery()).isEqualTo("MLCC 22uF 10%");
+        assertThat(stored.constraintsRelaxed()).containsExactly("dielectric", "package");
+        // a cache hit reports the same relaxation
+        DistributorResult hit = result(service.search(new SearchRequest(query, 5, Set.of(), false)),
+                Distributor.TME);
+        assertThat(hit.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(hit.constraintsRelaxed()).containsExactly("dielectric", "package");
     }
 
     @Test
@@ -590,7 +604,7 @@ class PartSearchServiceTest {
         assertThat(mouser.queries).containsExactly(QUERY, QUERY, QUERY, "10uF 0805", "10uF 0805", "10uF 0805");
         assertThat(m.fetched()).isZero();
         assertThat(m.outOfStockMatches()).isEqualTo(300);
-        assertThat(m.relaxed()).containsExactly("dielectric");
+        assertThat(m.constraintsRelaxed()).containsExactly("dielectric");
     }
 
     @Test
@@ -963,7 +977,7 @@ class PartSearchServiceTest {
 
     private RankingService rankingThatSleepsOnFirstCall(Duration sleep) {
         RankingService ranking = mock(RankingService.class);
-        when(ranking.rank(any(ParsedQuery.class), anyMap(), any(), anyInt())).thenAnswer(inv -> {
+        when(ranking.rank(any(ParsedQuery.class), anyMap(), any(), any(RankingService.RankOptions.class))).thenAnswer(inv -> {
             Map<Distributor, List<Part>> input = inv.getArgument(1);
             Duration budget = inv.getArgument(2);
             rankBudgets.add(budget);

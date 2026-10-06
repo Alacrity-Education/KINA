@@ -171,6 +171,41 @@ public class MouserClient implements DistributorClient {
                 .orElseGet(PartLookupResult::notFound);
     }
 
+    /** Part numbers per {@code /search/partnumber} call (Mouser accepts up to 10 joined with {@code |}). */
+    static final int PART_NUMBERS_PER_CALL = 10;
+
+    /**
+     * Current stock and prices: {@code /search/partnumber} with up to {@value #PART_NUMBERS_PER_CALL} Mouser part
+     * numbers joined by {@code |} per call (verified live 2026-10-06 with {@code Exact}), matched by Mouser part number.
+     * A listed part without ships-now stock reports stock 0.
+     */
+    @Override
+    public java.util.Map<String, ro.alacrity.kina.distributor.StockUpdate> refreshStock(List<String> partNumbers,
+                                                                                       Deadline deadline) {
+        return guarded(() -> {
+            MouserApi mouser = requireConfigured();
+            List<String> wanted = partNumbers == null ? List.of() : partNumbers.stream()
+                    .filter(s -> s != null && !s.isBlank() && !s.contains("|")).map(String::strip).distinct().toList();
+            java.util.Map<String, ro.alacrity.kina.distributor.StockUpdate> out = new java.util.HashMap<>();
+            Instant now = clock.instant();
+            for (int from = 0; from < wanted.size(); from += PART_NUMBERS_PER_CALL) {
+                List<String> batch = wanted.subList(from, Math.min(wanted.size(), from + PART_NUMBERS_PER_CALL));
+                for (MouserPart p : requireResults(mouser.searchByPartNumber(String.join("|", batch), deadline))
+                        .parts()) {
+                    String number = p.mouserPartNumber() == null ? null : p.mouserPartNumber().strip();
+                    String key = batch.stream().filter(b -> b.equalsIgnoreCase(number)).findFirst().orElse(null);
+                    if (key == null) {
+                        continue;
+                    }
+                    out.putIfAbsent(key, mapper.map(p, now)
+                            .map(part -> new ro.alacrity.kina.distributor.StockUpdate(part.stock(), part.prices()))
+                            .orElse(new ro.alacrity.kina.distributor.StockUpdate(0, List.of())));
+                }
+            }
+            return out;
+        });
+    }
+
     /**
      * Mouser's {@code startingRecord} is 1-based: on the live API {@code startingRecord=3, records=2} returned the
      * 3rd and 4th result, and both 0 and 1 return the first one.

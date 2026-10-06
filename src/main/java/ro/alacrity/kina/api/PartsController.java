@@ -40,7 +40,10 @@ public class PartsController {
     private final PartSearchService searchService;
     private final PartLookupService lookupService;
 
-    /** {@code GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=}. */
+    /**
+     * {@code GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=
+     * &allow_below_spec=}.
+     */
     @GetMapping("/search")
     public SearchResponse search(
             @RequestParam("q") @NotBlank String q,
@@ -51,11 +54,12 @@ public class PartsController {
             @RequestParam(name = "quantity", required = false) @Min(1) @Max(SearchRequest.MAX_QUANTITY)
             Integer quantity,
             @RequestParam(name = "detail", required = false) String detail,
+            @RequestParam(name = "allow_below_spec", defaultValue = "false") boolean allowBelowSpec,
             Authentication authentication) {
         Set<Distributor> selected = parseDistributors(distributors);
         log.debug("search '{}' by {}", q, user(authentication));
         return searchService.search(SearchRequest.of(q, maxResults, selected, bypassCache, quantity,
-                ResponseDetail.parse(detail)));
+                ResponseDetail.parse(detail), allowBelowSpec));
     }
 
     /** {@code POST /api/v1/parts/search/batch} with a snake_case {@link BatchSearchRequest} body. */
@@ -68,7 +72,8 @@ public class PartsController {
 
     /**
      * {@code GET /api/v1/parts/{distributor}/{partNumber}?bypass_cache=&quantity=&detail=} ({@code detail} defaults to
-     * {@code compact}). The part number is the rest of the path, so TME symbols containing {@code /} work unencoded.
+     * {@code full}: every attribute of the one part). The part number is the rest of the path, so TME symbols
+     * containing {@code /} work unencoded.
      */
     @GetMapping("/{distributor}/{*partNumber}")
     public PartResponse getPart(@PathVariable("distributor") String distributor,
@@ -85,7 +90,7 @@ public class PartsController {
         }
         log.debug("get {} {} by {}", d, number, user(authentication));
         PartLookupResponse result = lookupService.lookup(d, number, bypassCache, quantity == null ? 1 : quantity,
-                ResponseDetail.parse(detail));
+                ResponseDetail.parse(detail, ResponseDetail.FULL));
         if (!result.found() || result.part() == null) {
             throw new PartNotFoundException(d, number.strip(), result.reason(), result.identity());
         }

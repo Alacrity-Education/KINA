@@ -133,6 +133,16 @@ class PartsApiTest {
     }
 
     @Test
+    void allowBelowSpecReachesTheSearch() {
+        when(searchService.search(any())).thenAnswer(inv -> response(((SearchRequest) inv.getArgument(0)).query()));
+
+        client.get().uri("/api/v1/parts/search?q=22uF 25V 1206&allow_below_spec=true").exchange().expectStatus().isOk();
+
+        verify(searchService).search(new SearchRequest("22uF 25V 1206", 10, Set.of(), false, 1,
+                ro.alacrity.kina.domain.ResponseDetail.COMPACT, true));
+    }
+
+    @Test
     void searchValidationErrorsAreProblemDetails() {
         client.get().uri("/api/v1/parts/search?q=10uF&max_results=0")
                 .exchange()
@@ -222,7 +232,7 @@ class PartsApiTest {
 
     @Test
     void getPartFoundNotFoundAndSlashesInPartNumbers() {
-        when(lookupService.lookup(Distributor.TME, "CL21B106KPQNNNE", false, 1, ResponseDetail.COMPACT))
+        when(lookupService.lookup(Distributor.TME, "CL21B106KPQNNNE", false, 1, ResponseDetail.FULL))
                 .thenReturn(PartLookupResponse.found(Distributor.TME, "CL21B106KPQNNNE", CacheStatus.MISS,
                         PartResponse.from(part())));
         when(lookupService.lookup(eq(Distributor.TME), eq("ABC/1"), anyBoolean(), anyInt(), any()))
@@ -247,7 +257,8 @@ class PartsApiTest {
                 .jsonPath("$.part_number").isEqualTo("ABC/1")
                 .jsonPath("$.reason").isEqualTo("not_found")
                 .jsonPath("$.identity").doesNotExist();
-        verify(lookupService).lookup(Distributor.TME, "ABC/1", true, 1, ResponseDetail.COMPACT);
+        // get_part defaults to the full attribute set (DESIGN.md 4)
+        verify(lookupService).lookup(Distributor.TME, "ABC/1", true, 1, ResponseDetail.FULL);
 
         client.get().uri("/api/v1/parts/arrow/X1")
                 .exchange()
@@ -257,7 +268,7 @@ class PartsApiTest {
 
     @Test
     void getPartOutOfStockIs404WithReasonAndIdentity() {
-        when(lookupService.lookup(Distributor.MOUSER, "ERA6AEB5361V", false, 1, ResponseDetail.COMPACT))
+        when(lookupService.lookup(Distributor.MOUSER, "ERA6AEB5361V", false, 1, ResponseDetail.FULL))
                 .thenReturn(PartLookupResponse.outOfStock(Distributor.MOUSER, "ERA6AEB5361V", CacheStatus.MISS,
                         new PartLookupResponse.Identity("667-ERA-6AEB5361V", "Panasonic", "ERA-6AEB5361V",
                                 "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm")));
@@ -277,9 +288,9 @@ class PartsApiTest {
 
     @Test
     void distributorFailuresAndUnexpectedErrorsHideInternals() {
-        when(lookupService.lookup(Distributor.MOUSER, "M1", false, 1, ResponseDetail.COMPACT)).thenThrow(
+        when(lookupService.lookup(Distributor.MOUSER, "M1", false, 1, ResponseDetail.FULL)).thenThrow(
                 new DistributorException(Distributor.MOUSER, DistributorException.Kind.RATE_LIMITED, "secret-ish"));
-        when(lookupService.lookup(Distributor.MOUSER, "M2", false, 1, ResponseDetail.COMPACT)).thenThrow(
+        when(lookupService.lookup(Distributor.MOUSER, "M2", false, 1, ResponseDetail.FULL)).thenThrow(
                 DistributorException.notConfigured(Distributor.MOUSER));
         when(searchService.search(any())).thenThrow(new IllegalStateException("internal detail /etc/passwd"));
 

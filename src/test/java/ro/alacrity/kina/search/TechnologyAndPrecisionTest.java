@@ -271,7 +271,11 @@ class TechnologyAndPrecisionTest {
         DeterministicRanker.Assessment c = ranker.assess(q, unknown);
         assertThat(a.match()).isEqualTo(1.0);
         assertThat(b.match()).isLessThan(c.match());
-        assertThat(c.match()).isLessThan(a.match());
+        // the unknown technology is unverified: left out of match, listed, and the part is not complete
+        assertThat(c.match()).isEqualTo(1.0);
+        assertThat(c.unverified()).containsExactly("technology");
+        assertThat(a.complete()).isTrue();
+        assertThat(c.complete()).isFalse();
         // without the clamp the gap is 2 x W_TECHNOLOGY; check the raw signal through the unknown part
         assertThat(c.score() - b.score()).isCloseTo(DeterministicRanker.W_TECHNOLOGY, within(1e-9));
         assertThat(b.score()).isLessThan(c.score());
@@ -296,8 +300,19 @@ class TechnologyAndPrecisionTest {
         Part noVoltage = RankingFixtures.part("NOV", "Capacitor: ceramic; MLCC; 10uF; X7R; ±10%; SMD; 0805",
                 "MLCC SMD capacitors", "0805", Map.of());
         assertThat(ranker.assess(q, full).match()).isEqualTo(1.0);
-        // the unstated voltage earns nothing: (0.30 + 0.20 + 0.15 + 0.05) / (0.30 + 0.20 + 0.15 + 0.10 + 0.05)
-        assertThat(ranker.assess(q, noVoltage).match()).isCloseTo(0.70 / 0.80, within(1e-9));
+        // the unstated voltage is unverified: it is left out of both sides of match, which is then 1.0 but not a
+        // confirmed fit (unverified is non-empty)
+        DeterministicRanker.Assessment a = ranker.assess(q, noVoltage);
+        assertThat(a.match()).isEqualTo(1.0);
+        assertThat(a.unverified()).containsExactly("voltage");
+        assertThat(a.complete()).isFalse();
+        // a wrong voltage is verified and fails: (0.30 + 0.20 + 0.15 - 0.10 + 0.05) / 0.80
+        Part tenVolt = RankingFixtures.part("10V", "Capacitor: ceramic; MLCC; 10uF; 10V; X7R; ±10%; SMD; 0805",
+                "MLCC SMD capacitors", "0805", Map.of());
+        DeterministicRanker.Assessment low = ranker.assess(q, tenVolt);
+        assertThat(low.match()).isCloseTo(0.60 / 0.80, within(1e-9));
+        assertThat(low.belowSpec()).containsExactly("voltage");
+        assertThat(low.belowSpecDistance()).isCloseTo(Math.log(2.5), within(1e-9));
     }
 
     @Test

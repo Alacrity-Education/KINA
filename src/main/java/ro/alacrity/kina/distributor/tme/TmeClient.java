@@ -205,6 +205,26 @@ public class TmeClient implements DistributorClient {
                 p.description()));
     }
 
+    /** {@code /products/data} for the symbols, 50 per call (DESIGN.md 3.2 "Stock refresh"). */
+    @Override
+    public Map<String, ro.alacrity.kina.distributor.StockUpdate> refreshStock(List<String> symbols,
+                                                                             Deadline deadline) {
+        requireConfigured();
+        List<String> wanted = symbols == null ? List.of() : symbols.stream()
+                .filter(s -> s != null && !s.isBlank()).distinct().toList();
+        if (wanted.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, ro.alacrity.kina.distributor.StockUpdate> out = new HashMap<>();
+        for (TmeResponses.ProductData data : api.data(wanted, properties.country(), properties.currency(), deadline)) {
+            ro.alacrity.kina.distributor.StockUpdate update = TmePartMapper.stockUpdate(data);
+            if (update != null) {
+                out.putIfAbsent(data.symbol(), update);
+            }
+        }
+        return out;
+    }
+
     /**
      * A lookup TME refuses as invalid input ({@code E_INPUT_PARAMS_VALIDATION_ERROR}, e.g. "Some characters are not
      * permitted in symbols[0]") found nothing: an empty list, not {@code bad_response}.
@@ -236,12 +256,13 @@ public class TmeClient implements DistributorClient {
                 async(() -> api.data(symbols, properties.country(), properties.currency(), deadline));
         CompletableFuture<List<TmeResponses.ProductParameters>> parametersFuture =
                 async(() -> api.parameters(symbols, properties.country(), deadline));
-        CompletableFuture<Map<String, String>> datasheetsFuture = async(() -> datasheets(symbols, deadline));
+        CompletableFuture<Map<String, TmePartMapper.Datasheet>> datasheetsFuture =
+                async(() -> datasheets(symbols, deadline));
 
         Map<String, TmeResponses.ProductData> data = bySymbol(join(dataFuture), TmeResponses.ProductData::symbol);
         Map<String, TmeResponses.ProductParameters> parameters =
                 bySymbol(join(parametersFuture), TmeResponses.ProductParameters::symbol);
-        Map<String, String> datasheets = join(datasheetsFuture);
+        Map<String, TmePartMapper.Datasheet> datasheets = join(datasheetsFuture);
 
         Instant now = clock.instant();
         List<Part> parts = new ArrayList<>(products.size());
@@ -262,16 +283,16 @@ public class TmeClient implements DistributorClient {
      * this account (a 4xx other than auth/rate limiting) it is disabled with a single WARN; other failures are
      * logged and yield no datasheets for this call.
      */
-    private Map<String, String> datasheets(List<String> symbols, Deadline deadline) {
+    private Map<String, TmePartMapper.Datasheet> datasheets(List<String> symbols, Deadline deadline) {
         if (filesDisabled.get()) {
             return Map.of();
         }
         try {
-            Map<String, String> result = new HashMap<>();
+            Map<String, TmePartMapper.Datasheet> result = new HashMap<>();
             for (TmeResponses.ProductFiles files : api.files(symbols, properties.country(), deadline)) {
-                String url = TmePartMapper.datasheetUrl(files);
-                if (files.symbol() != null && url != null) {
-                    result.putIfAbsent(files.symbol(), url);
+                TmePartMapper.Datasheet sheet = TmePartMapper.datasheet(files);
+                if (files.symbol() != null && sheet != null) {
+                    result.putIfAbsent(files.symbol(), sheet);
                 }
             }
             return result;

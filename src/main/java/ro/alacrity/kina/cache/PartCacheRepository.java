@@ -151,6 +151,12 @@ public class PartCacheRepository {
         return rows.isEmpty() ? Optional.empty() : rows.getFirst();
     }
 
+    /** Deletes one part (it sold out since it was cached: a refresh found no ships-now stock). */
+    public void delete(Distributor distributor, String partNumber) {
+        jdbc.sql("DELETE FROM cached_parts WHERE distributor = ? AND part_number = ?")
+                .params(distributor.name(), partNumber).update();
+    }
+
     /** Deletes rows fetched before {@code cutoff}; returns the number deleted. */
     public int deleteOlderThan(Instant cutoff) {
         return jdbc.sql("DELETE FROM cached_parts WHERE fetched_at < ?").param(utc(cutoff)).update();

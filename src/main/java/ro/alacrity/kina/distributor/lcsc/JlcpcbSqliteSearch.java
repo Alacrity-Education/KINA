@@ -41,8 +41,10 @@ import java.util.stream.Collectors;
  * <p>Query relaxation (DESIGN.md 9.3): when the full AND query ({@link MatchMode#ALL}) has no in-stock match,
  * {@link MatchMode#RELAXED} first removes the terms that occur nowhere in the database (one cheap
  * {@code MATCH ... LIMIT 1} probe per term: {@code dupont}, {@code THT} wording...), then drops terms one at a time,
- * least informative first ({@link #DROP_ORDER}: free-text keywords, USB standard/features, mounting, orientation, pitch, package, dielectric,
- * value, positions, family, category; later terms of the same kind before earlier ones) and retries while at least
+ * least informative first ({@link #DROP_ORDER}: free-text keywords, USB standard/features, mounting, orientation, pitch,
+ * dielectric, package, tolerance, rating, value, positions, family, category; later terms of the same kind before
+ * earlier ones; the dielectric-package-tolerance order is the relaxation order of DESIGN.md 3.2, and a minimum rating
+ * goes after them because the ranker excludes parts below it anyway) and retries while at least
  * {@value #MIN_RELAXED_TERMS} terms remain. A step whose terms are exactly the parametric ones is reported as
  * {@link MatchMode#PARAMETRIC}. Then {@link MatchMode#PARAMETRIC} (only values, packages, dielectrics, family and
  * connector terms, still AND) when not tried yet, then {@link MatchMode#ANY} (every 3+ character term OR-ed, no
@@ -67,12 +69,14 @@ public class JlcpcbSqliteSearch {
 
     public enum MatchMode { ALL, RELAXED, PARAMETRIC, ANY }
 
-    /** Relaxation drops terms in this order of kinds (first = least informative). */
-    static final List<JlcpcbQuery.Kind> DROP_ORDER = List.of(JlcpcbQuery.Kind.RATING, JlcpcbQuery.Kind.KEYWORD,
-            JlcpcbQuery.Kind.FEATURE,
-            JlcpcbQuery.Kind.MOUNTING,
-            JlcpcbQuery.Kind.ORIENTATION, JlcpcbQuery.Kind.PITCH, JlcpcbQuery.Kind.PACKAGE, JlcpcbQuery.Kind.DIELECTRIC,
-            JlcpcbQuery.Kind.VALUE, JlcpcbQuery.Kind.POSITIONS, JlcpcbQuery.Kind.FAMILY, JlcpcbQuery.Kind.CATEGORY);
+    /**
+     * Relaxation drops terms in this order of kinds (first = least informative); a tolerance (a {@code VALUE} term
+     * ending in {@code %}) goes right after the package ({@link #dropRank}).
+     */
+    static final List<JlcpcbQuery.Kind> DROP_ORDER = List.of(JlcpcbQuery.Kind.KEYWORD, JlcpcbQuery.Kind.FEATURE,
+            JlcpcbQuery.Kind.MOUNTING, JlcpcbQuery.Kind.ORIENTATION, JlcpcbQuery.Kind.PITCH,
+            JlcpcbQuery.Kind.DIELECTRIC, JlcpcbQuery.Kind.PACKAGE, JlcpcbQuery.Kind.RATING, JlcpcbQuery.Kind.VALUE,
+            JlcpcbQuery.Kind.POSITIONS, JlcpcbQuery.Kind.FAMILY, JlcpcbQuery.Kind.CATEGORY);
     /** Relaxation never drops below this many terms (a single term is too vague; PARAMETRIC/ANY follow). */
     static final int MIN_RELAXED_TERMS = 2;
 
@@ -237,11 +241,25 @@ public class JlcpcbSqliteSearch {
                 return r;
             }
         }
-        while (remaining.size() > MIN_RELAXED_TERMS) {
-            JlcpcbQuery.Term next = leastInformative(remaining);
-            remaining.remove(next);
-            dropped.add(next.text());
-            Result r = attempt(c, query, parsed, remaining, dropped, tried, offset, limit);
+        List<JlcpcbQuery.Term> afterDead = List.copyOf(remaining);
+        List<String> droppedDead = List.copyOf(dropped);
+        Result r = dropOneAtATime(c, query, parsed, remaining, dropped, tried, offset, limit);
+        if (r != null) {
+            return r;
+        }
+        // nothing with the minimum ratings either: the same once more without them (the ranker excludes, or with
+        // allow_below_spec flags, the parts below a rating; the closest ones are better than an ANY match)
+        List<JlcpcbQuery.Term> withoutRatings = new ArrayList<>(afterDead);
+        List<String> droppedRatings = new ArrayList<>(droppedDead);
+        afterDead.stream().filter(t -> t.kind() == JlcpcbQuery.Kind.RATING).forEach(t -> {
+            withoutRatings.remove(t);
+            droppedRatings.add(t.text());
+        });
+        if (withoutRatings.size() < afterDead.size()) {
+            r = attempt(c, query, parsed, withoutRatings, droppedRatings, tried, offset, limit);
+            if (r == null) {
+                r = dropOneAtATime(c, query, parsed, withoutRatings, droppedRatings, tried, offset, limit);
+            }
             if (r != null) {
                 return r;
             }
@@ -260,6 +278,25 @@ public class JlcpcbSqliteSearch {
             }
         }
         return Result.empty();
+    }
+
+    /**
+     * Drops the least informative term one at a time while more than {@value #MIN_RELAXED_TERMS} terms that are not
+     * minimum ratings remain (a rating alone is no query); the first step with in-stock rows wins.
+     */
+    private Result dropOneAtATime(Connection c, String query, JlcpcbQuery parsed, List<JlcpcbQuery.Term> remaining,
+                                  List<String> dropped, Set<List<JlcpcbQuery.Term>> tried, int offset, int limit)
+            throws SQLException {
+        while (remaining.stream().filter(t -> t.kind() != JlcpcbQuery.Kind.RATING).count() > MIN_RELAXED_TERMS) {
+            JlcpcbQuery.Term next = leastInformative(remaining);
+            remaining.remove(next);
+            dropped.add(next.text());
+            Result r = attempt(c, query, parsed, remaining, dropped, tried, offset, limit);
+            if (r != null) {
+                return r;
+            }
+        }
+        return null;
     }
 
     /** Rows matching the predicate regardless of stock (0 when the predicate has nothing but the stock filter). */
@@ -298,12 +335,20 @@ public class JlcpcbSqliteSearch {
         return new Result(page(c, predicate, offset, limit), total, mode, dropped);
     }
 
+    /** Position of a term in the drop order: its kind's index, a tolerance right after the package. */
+    static double dropRank(JlcpcbQuery.Term term) {
+        if (term.kind() == JlcpcbQuery.Kind.VALUE && term.text().endsWith("%")) {
+            return DROP_ORDER.indexOf(JlcpcbQuery.Kind.PACKAGE) + 0.5;
+        }
+        return DROP_ORDER.indexOf(term.kind());
+    }
+
     /** The term to drop next: the first kind of {@link #DROP_ORDER}, the last such term of the query. */
     static JlcpcbQuery.Term leastInformative(List<JlcpcbQuery.Term> terms) {
         JlcpcbQuery.Term best = null;
-        int bestRank = Integer.MAX_VALUE;
+        double bestRank = Double.MAX_VALUE;
         for (JlcpcbQuery.Term term : terms) {
-            int rank = DROP_ORDER.indexOf(term.kind());
+            double rank = dropRank(term);
             if (rank <= bestRank) {
                 best = term;
                 bestRank = rank;

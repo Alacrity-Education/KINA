@@ -92,57 +92,102 @@ public class DistributorPhraser {
     }
 
     /**
-     * The relaxation ladder tried, in order, at Mouser and TME while the search has found no in-stock part (DESIGN.md
-     * 3.2 "Relaxation ladder"): (1) {@code sent} without rating values, (2) also without the tolerance, (3) the
-     * minimal core, (4) the core without the dielectric and the technology: for connector queries the type words with the positions (TME) or with the pitch and orientation
-     * (Mouser), otherwise the parametric core ({@link PartSearchService#corePhrase}: family word, values, technology,
-     * dielectric, package) or, for keyword-only queries, the {@value #MIN_FALLBACK_TOKENS} to
-     * {@value #MAX_FALLBACK_TOKENS} most informative tokens. Steps that equal {@code sent} or an earlier step are left
-     * out, so the core is tried even when it equals the user's text minus nothing but filler; empty for LCSC (its
-     * database search relaxes by itself).
+     * One step of the relaxation ladder: the phrase sent and the request constraints it loosens
+     * ({@code constraints_relaxed}: {@code dielectric}, {@code package}, {@code tolerance}; empty for a rewording).
      */
+    public record Relaxation(String phrase, List<String> relaxed) {
+
+        public Relaxation {
+            relaxed = relaxed == null ? List.of() : List.copyOf(relaxed);
+        }
+    }
+
+    /** The phrases of {@link #ladder}, in order. */
     public static List<String> relaxations(Distributor distributor, ParsedQuery query, String sent) {
+        return ladder(distributor, query, sent).stream().map(Relaxation::phrase).toList();
+    }
+
+    /** Constraints the parametric ladder loosens, in order (user decision 2026-10-06). */
+    static final List<String> RELAXATION_ORDER = List.of("dielectric", "package", "tolerance");
+
+    /**
+     * The relaxation ladder tried, in order, at Mouser and TME while the search has found nothing that meets the
+     * request (DESIGN.md 3.2 "Relaxation ladder"): (1) {@code sent} without rating values; (2) the minimal core: for
+     * connector queries the type words with the positions (TME) or with the pitch and orientation (Mouser), for USB
+     * the type and gender words, otherwise the parametric core ({@link PartSearchService#corePhrase}: family word,
+     * values, technology, dielectric, package, tolerance) or, for keyword-only queries, the
+     * {@value #MIN_FALLBACK_TOKENS} to {@value #MAX_FALLBACK_TOKENS} most informative tokens; then, for a parametric
+     * core, (3) without the dielectric (and the technology, which stays a strict constraint), (4) also without the
+     * package, (5) also without the tolerance; each of these reports what it loosened. Ratings are never loosened:
+     * they are not in any phrase and the ranker excludes below-spec parts. Steps whose words equal {@code sent} (for
+     * TME after its 40-character cut) or an earlier step in any order are left out; empty for LCSC (its database
+     * search relaxes by itself).
+     */
+    public static List<Relaxation> ladder(Distributor distributor, ParsedQuery query, String sent) {
         if (query == null || distributor == Distributor.LCSC) {
             return List.of();
         }
         String base = sent == null ? query.originalText() : sent;
-        List<String> steps = new ArrayList<>();
-        String noRatings = withoutRatings(base, query);
-        steps.add(noRatings);
-        steps.add(withoutTolerance(noRatings));
+        List<Relaxation> steps = new ArrayList<>();
+        steps.add(new Relaxation(withoutRatings(base, query), List.of()));
         String core = null;
         if (query.isConnector() && query.connector().isUsb()) {
             core = usbFallback(distributor, query.connector());
         } else if (query.isConnector() && !query.connector().isEmpty()) {
             core = distributor == Distributor.TME ? tmeFallback(query) : mouserFallback(query);
         }
-        String bare = null;
-        if (core == null) {
-            core = PartSearchService.corePhrase(query, distributor);
-            // (4) also without the dielectric and the technology: TME has no 22uF X7R 1206 25V part, but X5R ones
-            bare = core == null ? null : PartSearchService.corePhrase(query, distributor, false);
+        if (core != null) {
+            steps.add(new Relaxation(core, List.of()));
+        } else {
+            core = PartSearchService.corePhrase(query, distributor, Set.of());
+            if (core == null) {
+                steps.add(new Relaxation(keywordCore(query), List.of()));
+            } else {
+                steps.add(new Relaxation(core, List.of()));
+                Set<String> drop = new LinkedHashSet<>();
+                List<String> relaxed = new ArrayList<>();
+                for (String constraint : RELAXATION_ORDER) {
+                    boolean stated = switch (constraint) {
+                        case "dielectric" -> query.dielectric() != null || query.technology() != null;
+                        case "package" -> query.packageName() != null;
+                        default -> query.constraint(ParsedQuery.TOLERANCE) != null;
+                    };
+                    if (!stated) {
+                        continue;
+                    }
+                    drop.add(constraint);
+                    // the technology goes with the dielectric but stays strict: it is not reported as loosened
+                    if (!"dielectric".equals(constraint) || query.dielectric() != null) {
+                        relaxed.add(constraint);
+                    }
+                    steps.add(new Relaxation(PartSearchService.corePhrase(query, distributor, drop), relaxed));
+                }
+            }
         }
-        if (core == null) {
-            core = keywordCore(query);
-        }
-        steps.add(core);
-        steps.add(bare);
         Set<String> seen = new LinkedHashSet<>();
-        seen.add(QueryParser.normalizeKey(base));
+        seen.add(words(base));
         if (distributor == Distributor.TME && base != null) {
-            seen.add(QueryParser.normalizeKey(limit(base, TME_MAX_LENGTH)));   // what TME really received
+            seen.add(words(limit(base, TME_MAX_LENGTH)));   // what TME really received
         }
-        List<String> out = new ArrayList<>();
-        for (String step : steps) {
-            if (step == null || step.isBlank()) {
+        List<Relaxation> out = new ArrayList<>();
+        for (Relaxation step : steps) {
+            if (step.phrase() == null || step.phrase().isBlank()) {
                 continue;
             }
-            String candidate = distributor == Distributor.TME ? limit(step, TME_MAX_LENGTH) : step;
-            if (candidate != null && !candidate.isBlank() && seen.add(QueryParser.normalizeKey(candidate))) {
-                out.add(candidate);
+            String candidate = distributor == Distributor.TME ? limit(step.phrase(), TME_MAX_LENGTH) : step.phrase();
+            if (candidate != null && !candidate.isBlank() && seen.add(words(candidate))) {
+                out.add(new Relaxation(candidate, step.relaxed()));
             }
         }
         return List.copyOf(out);
+    }
+
+    /** The normalised words of a phrase in sorted order: two phrases with the same words in any order are equal. */
+    private static String words(String phrase) {
+        if (phrase == null) {
+            return "";
+        }
+        return String.join(" ", new java.util.TreeSet<>(List.of(QueryParser.normalizeKey(phrase).split(" "))));
     }
 
     // ---------------------------------------------------------------- ratings and tolerance

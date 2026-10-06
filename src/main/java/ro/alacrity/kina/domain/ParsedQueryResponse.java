@@ -13,7 +13,8 @@ import java.util.Map;
 /**
  * The {@code parsed} object of a {@link SearchResponse}, e.g.
  * {@code {"family":"capacitor","capacitance":"10uF","dielectric":"X7R","package":"0805","keywords":[]}};
- * {@code technology} ("thin film", "tantalum"...) when the query names the construction of a passive.
+ * {@code technology} ("thin film", "tantalum"...) when the query names the construction of a passive; {@code elements}
+ * ("4", or "array" without a count) when it asks for an array or network.
  * Constraints are flattened into the object by kind using their display form; absent values are omitted.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -26,20 +27,23 @@ public record ParsedQueryResponse(
         @JsonProperty("mounting") String mounting,
         @JsonProperty("technology") String technology,
         @JsonProperty("keywords") List<String> keywords,
-        @JsonProperty("connector") ConnectorResponse connector
+        @JsonProperty("connector") ConnectorResponse connector,
+        @JsonProperty("elements") String elements
 ) {
 
     /** A parsed query without connector attributes and technology. */
     public ParsedQueryResponse(String family, Map<String, String> constraints, String dielectric, String packageName,
                                String mounting, List<String> keywords) {
-        this(family, constraints, dielectric, packageName, mounting, null, keywords, null);
+        this(family, constraints, dielectric, packageName, mounting, null, keywords, null, null);
     }
 
     public static ParsedQueryResponse from(ParsedQuery query) {
         Map<String, String> constraints = new LinkedHashMap<>();
         query.constraints().forEach((kind, c) -> constraints.put(kind, c.display()));
         return new ParsedQueryResponse(query.family(), constraints, query.dielectric(), query.packageName(),
-                query.mounting(), query.technology(), query.keywords(), ConnectorResponse.from(query.connector()));
+                query.mounting(), query.technology(), query.keywords(), ConnectorResponse.from(query.connector()),
+                query.elements() == null ? null
+                        : query.elements() == ParsedQuery.ANY_ELEMENTS ? "array" : query.elements().toString());
     }
 
     /**

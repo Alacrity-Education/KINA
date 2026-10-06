@@ -70,6 +70,19 @@ public class ParametricExtractor {
     public static final String MOUNTING_STYLE = "MountingStyle";
     public static final String WATERPROOF = "Waterproof";
     public static final String FEATURES = "Features";
+    // descriptive details (PassiveDetails, DESIGN.md 3.4); not scored except Elements (strict constraint "elements")
+    /** Number of elements of an array or network ("4", or "array" when not stated). */
+    public static final String ELEMENTS = "Elements";
+    /** A capacitor's ripple current (never reported as Current). */
+    public static final String RIPPLE_CURRENT = "RippleCurrent";
+    /** A capacitor's ESR with its test frequency when stated. */
+    public static final String ESR = "ESR";
+    /** Body dimensions ("D6.3 x 5.8mm" for a can, "8.8 x 8.4 x 3.8mm"). */
+    public static final String DIMENSIONS = "Dimensions";
+    /** AEC-Q200 and similar. */
+    public static final String QUALIFICATION = "Qualification";
+    /** The vendor case code of a can capacitor whose Package shows the dimensions (Panasonic "D"). */
+    public static final String CASE = "Case";
 
     /** Comparable key per {@link ParsedQuery} value kind, in output order. */
     private static final Map<String, String> KIND_KEYS = orderedKindKeys();
@@ -100,7 +113,8 @@ public class ParametricExtractor {
             VOLTAGE, CURRENT, RATED_CURRENT, SATURATION_CURRENT, DCR, POWER, MAX_TEMPERATURE, LIFETIME, TOLERANCE,
             "Dielectric", "Package", "Mounting", "Family", "Technology", "ConnectorType", "Gender", "Positions", "Rows",
             "Pitch", "Orientation", "Series", "UsbType", "UsbStandard", "UsbSpeedGbps", "PinConfiguration",
-            "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features");
+            "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features", ELEMENTS, RIPPLE_CURRENT, ESR, DIMENSIONS,
+            QUALIFICATION, CASE);
 
     // ---------------------------------------------------------------- distributor attribute names (lower-case)
 
@@ -122,7 +136,7 @@ public class ParametricExtractor {
             "io - average rectified current", "current - average rectified (io)", "average rectified current (io)",
             "ic - continuous collector current", "collector current (ic)", "current rating (amps)");
     private static final Pattern CURRENT_EXCLUDED = Pattern.compile(
-            "leakage|reverse current|surge|quiescent|supply|peak|bias|offset|standby|pulse|trip|saturation");
+            "leakage|reverse current|surge|quiescent|supply|peak|bias|offset|standby|pulse|trip|saturation|ripple");
     /** Inductors and ferrite beads: the rated current (TME "Operating current", Mouser "Maximum DC Current"). */
     private static final List<String> RATED_CURRENT_NAMES = List.of("rated current", "current rating",
             "operating current", "maximum dc current", "max. dc current", "dc current", "current - max",
@@ -210,9 +224,27 @@ public class ParametricExtractor {
 
     private static final Pattern CATEGORY_SEPARATOR = Pattern.compile("\\s*[/>\\\\]\\s*");
 
-    /** Parsed, comparable features of a part. Values are in SI base units (tolerance: percent). */
+    /**
+     * Parsed, comparable features of a part. Values are in SI base units (tolerance: percent).
+     *
+     * @param elements number of elements of an array or network ({@link ParsedQuery#ANY_ELEMENTS} when not stated),
+     *                 null for a single element
+     * @param details  descriptive canonical attributes in output order ({@value #RIPPLE_CURRENT}, {@value #ESR},
+     *                 {@value #IMPEDANCE} of a capacitor, {@value #DIMENSIONS}, {@value #CASE},
+     *                 {@value #QUALIFICATION}, {@value #FEATURES}); not scored
+     */
     record Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
-                    String mounting, String text, ParsedQuery.Connector connector, String technology) {
+                    String mounting, String text, ParsedQuery.Connector connector, String technology,
+                    Integer elements, Map<String, String> details) {
+
+        Features {
+            details = details == null ? Map.of() : details;
+        }
+
+        Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
+                 String mounting, String text, ParsedQuery.Connector connector, String technology) {
+            this(family, values, dielectric, packageName, mounting, text, connector, technology, null, null);
+        }
 
         Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
                  String mounting, String text, ParsedQuery.Connector connector) {
@@ -249,6 +281,8 @@ public class ParametricExtractor {
         putIfNotNull(out, MOUNTING, f.mounting());
         putIfNotNull(out, FAMILY, f.family());
         putIfNotNull(out, TECHNOLOGY, f.technology());
+        putIfNotNull(out, ELEMENTS, PassiveDetails.elementsDisplay(f.elements()));
+        f.details().forEach(out::putIfAbsent);
         ParsedQuery.Connector c = f.connector();
         if (c != null) {
             putIfNotNull(out, CONNECTOR_TYPE, c.type());
@@ -355,6 +389,12 @@ public class ParametricExtractor {
         if (Recognizers.inductive(family)) {
             values.remove(ParsedQuery.RESISTANCE);   // an inductor's or ferrite bead's ohm value is DCR or impedance
         }
+        Map<String, String> details = new LinkedHashMap<>();
+        if ("capacitor".equals(family)) {
+            // a capacitor's current is its ripple current (TME "Operating current" 0.24A on EEEFK1C101P), never Current
+            values.remove(ParsedQuery.CURRENT);
+            putIfNotNull(details, RIPPLE_CURRENT, PassiveDetails.rippleCurrent(attrs, family));
+        }
 
         String dielectric = null;
         for (String name : DIELECTRIC_NAMES) {
@@ -393,6 +433,27 @@ public class ParametricExtractor {
             mounting = mountingFromPackage(packageName);
         }
 
+        String technology = technology(part, attrs, family);
+        if ("capacitor".equals(family)) {
+            putIfNotNull(details, ESR, PassiveDetails.capacitorResistance(part, attrs, technology, true));
+            putIfNotNull(details, IMPEDANCE, PassiveDetails.capacitorResistance(part, attrs, technology, false));
+        }
+        String dimensions = PassiveDetails.dimensions(part, attrs, family);
+        if (dimensions != null) {
+            details.put(DIMENSIONS, dimensions);
+            if ("capacitor".equals(family) && PassiveDetails.isCan(dimensions)
+                    && (packageName == null || !Recognizers.isChipCode(packageName)) && !dimensions.equals(packageName)) {
+                // a can capacitor's package is its size; the vendor case code (Panasonic "D") is kept as Case
+                String code = attrs.containsKey("case") ? attrs.get("case").strip() : packageName;
+                if (code != null && !code.isBlank() && !code.equals(dimensions)
+                        && PassiveDetails.parseDimensions(code) == null) {
+                    details.put(CASE, code);
+                }
+                packageName = dimensions;
+            }
+        }
+        putIfNotNull(details, QUALIFICATION, PassiveDetails.qualification(part, attrs));
+
         ParsedQuery.Connector connector = connector(part, attrs, family, packageName);
         if (connector != null) {
             family = "connector";
@@ -419,8 +480,12 @@ public class ParametricExtractor {
             }
         }
         part.attributes().values().forEach(v -> text.append(v).append(' '));
+        if (connector == null) {
+            putIfNotNull(details, FEATURES, PassiveDetails.features(part, attrs, family));
+        }
         return new Features(family, values, dielectric, packageName, mounting,
-                Recognizers.normalizeKey(text.toString()), connector, technology(part, attrs, family));
+                Recognizers.normalizeKey(text.toString()), connector, connector != null ? null : technology,
+                connector == null ? PassiveDetails.elements(part, attrs, family) : null, details);
     }
 
     /**

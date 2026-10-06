@@ -316,6 +316,10 @@ class McpToolsIntegrationTest {
         assertThat(properties.has("query")).isTrue();
         assertThat(properties.has("max_results")).isTrue();
         assertThat(properties.has("bypass_cache")).isTrue();
+        assertThat(properties.has("allow_below_spec")).isTrue();
+        assertThat(properties.path("allow_below_spec").path("description").asString()).contains("below_spec");
+        assertThat(search.path("description").asString()).contains("query_understood", "constraints_relaxed",
+                "unverified", "pass quantity", "excluded_below_spec");
         assertThat(search.path("inputSchema").path("required").toString()).contains("query")
                 .doesNotContain("max_results");
         assertThat(properties.path("max_results").path("description").asString()).contains("PER DISTRIBUTOR");

@@ -19,11 +19,16 @@ public enum ResponseDetail {
         return name().toLowerCase(Locale.ROOT);
     }
 
-    /** Case-insensitive; null or blank is {@link #COMPACT}. */
+    /** Case-insensitive; null or blank is {@link #COMPACT} (the default of the searches). */
     @JsonCreator
     public static ResponseDetail parse(String value) {
+        return parse(value, COMPACT);
+    }
+
+    /** Case-insensitive; null or blank is {@code fallback} ({@code get_part} defaults to {@link #FULL}). */
+    public static ResponseDetail parse(String value, ResponseDetail fallback) {
         if (value == null || value.isBlank()) {
-            return COMPACT;
+            return fallback;
         }
         return switch (value.strip().toLowerCase(Locale.ROOT)) {
             case "compact" -> COMPACT;
