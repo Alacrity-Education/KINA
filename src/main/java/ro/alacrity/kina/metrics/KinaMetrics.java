@@ -11,6 +11,7 @@ import ro.alacrity.kina.domain.DistributorResult;
 import ro.alacrity.kina.domain.MetricsSummary;
 import ro.alacrity.kina.domain.RankingMode;
 import ro.alacrity.kina.domain.SearchResponse;
+import ro.alacrity.kina.search.QueryParser;
 
 import java.util.Locale;
 import java.util.function.Supplier;
@@ -50,6 +51,9 @@ import static ro.alacrity.kina.metrics.MetricNames.TOOL_ERRORS;
 public class KinaMetrics implements RateLimitRetry.Listener {
 
     /** Counts in memory only, registers nothing; the default before the Spring bean is injected. */
+    /** The {@code type} tag of a query whose component family the parser did not recognise. */
+    public static final String UNKNOWN_TYPE = "unknown";
+
     public static final KinaMetrics NOOP = new KinaMetrics(new MetricsStore(null));
 
     private final MetricsStore store;
@@ -96,7 +100,8 @@ public class KinaMetrics implements RateLimitRetry.Listener {
     }
 
     private void query(SearchResponse response) {
-        store.increment(MetricKey.of(SEARCH_QUERIES));
+        String type = typeOf(response);
+        store.increment(MetricKey.of(SEARCH_QUERIES, "type", type));
         if (response == null) {
             return;
         }
@@ -106,17 +111,34 @@ public class KinaMetrics implements RateLimitRetry.Listener {
             }
             String distributor = result.distributor().name();
             store.increment(MetricKey.of(DISTRIBUTOR_CALLS, "distributor", distributor,
-                    "outcome", result.error() == null ? "ok" : result.error()));
+                    "outcome", result.error() == null ? "ok" : result.error(), "type", type));
             CacheStatus cache = result.cache();
             if (cache != null && cache != CacheStatus.NOT_APPLICABLE) {
                 store.increment(MetricKey.of(CACHE_SEARCH_LOOKUPS, "distributor", distributor,
-                        "status", cache.jsonValue()));
+                        "status", cache.jsonValue(), "type", type));
             }
-            store.add(MetricKey.of(PARTS_RETURNED, "distributor", distributor), result.returned());
+            store.add(MetricKey.of(PARTS_RETURNED, "distributor", distributor, "type", type), result.returned());
         }
         if (response.ranking() == RankingMode.FALLBACK) {
             store.increment(MetricKey.of(RANKING_FALLBACK, "reason", fallbackReason(response.rankingNote())));
         }
+    }
+
+    /** The {@code type} tag of a search: the parser family of its query, {@value #UNKNOWN_TYPE} when none. */
+    static String typeOf(SearchResponse response) {
+        return typeOf(response == null || response.parsed() == null ? null : response.parsed().family());
+    }
+
+    /**
+     * The {@code type} tag for a parser family (DESIGN.md 3.7): the family in lower case when it is one of {@link
+     * QueryParser#families()}, else {@value #UNKNOWN_TYPE}, so the tag set stays bounded.
+     */
+    public static String typeOf(String family) {
+        if (family == null) {
+            return UNKNOWN_TYPE;
+        }
+        String type = family.toLowerCase(Locale.ROOT);
+        return QueryParser.families().contains(type) ? type : UNKNOWN_TYPE;
     }
 
     /**
@@ -146,12 +168,15 @@ public class KinaMetrics implements RateLimitRetry.Listener {
         return "failed";
     }
 
-    /** One distributor search page received: {@code parts} in-stock parts in {@code nanos}. */
-    public void distributorPage(Distributor distributor, long nanos, int parts) {
+    /**
+     * One distributor search page received: {@code parts} in-stock parts in {@code nanos}, for a query of the parser
+     * family {@code family} (null when none; see {@link #typeOf(String)}).
+     */
+    public void distributorPage(Distributor distributor, String family, long nanos, int parts) {
         safely(() -> {
             String name = distributor.name();
             store.record(MetricKey.of(DISTRIBUTOR_DURATION, "distributor", name), nanos);
-            store.add(MetricKey.of(PARTS_FETCHED, "distributor", name), parts);
+            store.add(MetricKey.of(PARTS_FETCHED, "distributor", name, "type", typeOf(family)), parts);
         });
     }
 
@@ -251,7 +276,7 @@ public class KinaMetrics implements RateLimitRetry.Listener {
     public MetricsSummary summary() {
         return new MetricsSummary(store.sum(SEARCHES), store.sum(SEARCH_QUERIES), store.sumBy(TOOL_CALLS, "tool"),
                 store.sumBy(CACHE_PARTS_ADDED, "distributor"), store.sumBy(RATE_LIMITED_RESPONSES, "distributor"),
-                store.sum(CROSS_ENCODER_EXECUTIONS));
+                store.sum(CROSS_ENCODER_EXECUTIONS), store.sumBy(SEARCH_QUERIES, "type"));
     }
 
     private static void safely(Runnable update) {

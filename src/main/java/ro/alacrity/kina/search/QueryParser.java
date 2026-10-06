@@ -3,9 +3,11 @@ package ro.alacrity.kina.search;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.domain.ParsedQuery;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Parses a free-text component query into a {@link ParsedQuery} (DESIGN.md section 3.4): family keywords, SI values
@@ -23,6 +25,13 @@ import java.util.Map;
  */
 @Component
 public class QueryParser {
+
+    private static final Set<String> FAMILIES = Collections.unmodifiableSet(Recognizers.families());
+
+    /** The families {@link ParsedQuery#family()} can take ({@code capacitor}, {@code resistor}...), sorted. */
+    public static Set<String> families() {
+        return FAMILIES;
+    }
 
     /** Parses a query; null or blank input yields an empty {@link ParsedQuery}. */
     public ParsedQuery parse(String query) {

@@ -334,7 +334,8 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/distri
   "metrics": {"searches": 120, "search_queries": 310,
               "tool_calls": {"get_part": 12, "list_distributors": 3, "search_parts": 90, "search_parts_batch": 10},
               "cache_added": {"MOUSER": 900, "TME": 1400}, "rate_limited_calls": {"MOUSER": 2},
-              "cross_encoder_executions": 300}
+              "cross_encoder_executions": 300,
+              "search_queries_by_type": {"capacitor": 140, "connector": 40, "resistor": 95, "unknown": 35}}
 }
 ```
 
@@ -347,6 +348,7 @@ The `metrics` object holds usage counters since the first start against this dat
 | `cache_added` | New rows in the part cache per distributor. |
 | `rate_limited_calls` | Distributor HTTP calls answered with a rate limit, per distributor (retried or not). |
 | `cross_encoder_executions` | Runs of the ranking model. |
+| `search_queries_by_type` | Search queries per component type, sorted: the family the parser recognised (`capacitor`, `resistor`, `mosfet`, `connector`...; the full list is in [DESIGN.md 3.7](DESIGN.md#37-observability)) or `unknown`. Queries counted before 0.5 are under `unknown`. |
 
 The `ranking` object:
 
@@ -375,9 +377,10 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/metric
 {
   "summary": {"searches": 120, "search_queries": 310, "tool_calls": {"search_parts": 90},
               "cache_added": {"MOUSER": 900, "TME": 1400}, "rate_limited_calls": {"MOUSER": 2},
-              "cross_encoder_executions": 300},
+              "cross_encoder_executions": 300, "search_queries_by_type": {"resistor": 95, "unknown": 35}},
   "counters": [
-    {"name": "kina_distributor_calls_total", "tags": {"distributor": "MOUSER", "outcome": "ok"}, "value": 85.0},
+    {"name": "kina_distributor_calls_total", "tags": {"distributor": "MOUSER", "outcome": "ok", "type": "resistor"},
+     "value": 85.0},
     {"name": "kina_search_duration_seconds_count", "tags": {}, "value": 120.0},
     {"name": "kina_search_duration_seconds_sum", "tags": {}, "value": 96.4},
     {"name": "kina_searches_total", "tags": {}, "value": 120.0}
@@ -385,7 +388,7 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/metric
 }
 ```
 
-`summary` is the `metrics` object of `GET /api/v1/distributors`. `counters` lists every counter and timer in Prometheus naming, sorted by name and tags (timer sums in seconds). Gauges such as the cache size are only in the Prometheus output. Metric names and tags: [DESIGN.md 3.7](DESIGN.md#37-observability).
+`summary` is the `metrics` object of `GET /api/v1/distributors`. `counters` lists every counter and timer in Prometheus naming, sorted by name and tags (timer sums in seconds). The search counters (`kina_search_queries_total`, `kina_distributor_calls_total`, `kina_parts_fetched_total`, `kina_parts_returned_total`, `kina_cache_search_lookups_total`) carry a `type` tag, the component type of the query. Gauges such as the cache size are only in the Prometheus output. Metric names and tags: [DESIGN.md 3.7](DESIGN.md#37-observability).
 
 ### Errors
 

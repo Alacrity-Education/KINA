@@ -185,6 +185,13 @@ class Recognizers {
         return null;
     }
 
+    /** Every family name the parser can yield, sorted (the values of {@code FAMILY_WORDS}). */
+    static Set<String> families() {
+        Set<String> out = new java.util.TreeSet<>();
+        FAMILY_WORDS.values().forEach(w -> out.add(w.family()));
+        return out;
+    }
+
     /** Every family a text names by a family word ({@code Resonators and Generators}: crystal and oscillator). */
     static Set<String> familiesIn(String text) {
         Set<String> out = new HashSet<>();

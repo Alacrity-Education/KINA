@@ -1102,20 +1102,25 @@ monitoring network: compose publishes it on `${KINA_METRICS_BIND:-127.0.0.1}:${K
 then be public on the main port. The metrics hold no secrets: no tokens, keys, e-mail addresses, queries or part
 numbers, only counts with the bounded tags below.
 
-**Metrics.** Prefix `kina_`. The distributor tag is the enum name (`LCSC`, `TME`, `MOUSER`).
+**Metrics.** Prefix `kina_`. The distributor tag is the enum name (`LCSC`, `TME`, `MOUSER`). The `type` tag of the
+search counters is the component type of the query: the parser family (`ParsedQuery.family()`, section 3.4) in lower
+case, one of `capacitor`, `resistor`, `inductor`, `ferrite`, `diode`, `schottky`, `zener`, `led`, `mosfet`,
+`transistor`, `regulator`, `opamp`, `comparator`, `mcu`, `crystal`, `oscillator`, `connector`, `fuse`, `tvs`, `relay`,
+`switch` (the families of `Recognizers`, `QueryParser.families()`), or `unknown` when the parser recognised no family.
+No other value is possible (connector and USB sub-types are not tags), so the tag set stays bounded.
 
 | Metric | Type | Tags | Meaning |
 |---|---|---|---|
 | `kina_searches_total` | counter | | search requests: one `search_parts`, one REST search, one whole batch |
-| `kina_search_queries_total` | counter | | search queries, every query of a batch |
+| `kina_search_queries_total` | counter | `type` | search queries, every query of a batch; `type`: a family or `unknown` |
 | `kina_search_duration_seconds` | timer (`_count`, `_sum`) | | time to answer a search request |
-| `kina_distributor_calls_total` | counter | `distributor`, `outcome` | one per distributor and search query: `ok` or the result's `error` (`rate_limited`, `timeout`, `unavailable`, `bad_response`, `not_configured`) |
+| `kina_distributor_calls_total` | counter | `distributor`, `outcome`, `type` | one per distributor and search query: `ok` or the result's `error` (`rate_limited`, `timeout`, `unavailable`, `bad_response`, `not_configured`); `type`: a family or `unknown` |
 | `kina_distributor_duration_seconds` | timer | `distributor` | one successful distributor search page, rate-limit waits included |
-| `kina_parts_fetched_total` | counter | `distributor` | in-stock parts received on distributor search pages (not from the cache) |
-| `kina_parts_returned_total` | counter | `distributor` | parts in search responses |
+| `kina_parts_fetched_total` | counter | `distributor`, `type` | in-stock parts received on distributor search pages (not from the cache); `type`: a family or `unknown` |
+| `kina_parts_returned_total` | counter | `distributor`, `type` | parts in search responses; `type`: a family or `unknown` |
 | `kina_distributor_rate_limited_responses_total` | counter | `distributor` | HTTP calls answered with a rate limit (429, 502/503/504 with `Retry-After`, Mouser `TooManyRequests`), retried or not |
 | `kina_distributor_rate_limit_waits_total` | counter | `distributor` | waits before a retry (backoff, `Retry-After` or shared cool-down) |
-| `kina_cache_search_lookups_total` | counter | `distributor`, `status` | Postgres cache use per distributor fetch: `hit`, `miss`, `partial`, `bypassed`, `stale` |
+| `kina_cache_search_lookups_total` | counter | `distributor`, `status`, `type` | Postgres cache use per distributor fetch: `hit`, `miss`, `partial`, `bypassed`, `stale`; `type`: a family or `unknown` |
 | `kina_cache_parts_added_total` | counter | `distributor` | new `cached_parts` rows |
 | `kina_cache_parts_refreshed_total` | counter | `distributor` | existing `cached_parts` rows fetched again in full and overwritten |
 | `kina_cache_stock_refreshes_total` | counter | `distributor`, `outcome` | cached parts whose stock and prices a refresh asked for (section 3.2 step 5, `get_part`): `ok`, `out_of_stock` (marked sold out), `failed` (the call failed or did not answer for the part) |
@@ -1141,6 +1146,11 @@ numbers, only counts with the bounded tags below.
 | `kina_jlcpcb_database_parts` | gauge | | parts in the JLCPCB database (0 when unknown) |
 | `kina_jlcpcb_database_age_seconds` | gauge | | age of the JLCPCB download (0 when unknown) |
 | `kina_jlcpcb_downloads_total` | counter | `outcome` | JLCPCB downloads: `ok`, `failed`, `interrupted` |
+
+The timers (`kina_search_duration_seconds`, `kina_distributor_duration_seconds`) and `kina_searches_total` (a batch
+mixes types) have no `type` tag. Counts recorded before 0.5 have no type: migration V9 moved them to `type="unknown"`
+(Prometheus refuses two meters of one name with different tag keys), so `sum without (type) (...)` continues across
+the upgrade.
 
 Spring Boot's own JVM, HTTP server, Hikari and process metrics are exported as well. Gauges cannot end in `_total` in
 the Prometheus exposition format, so the cache gauges are `kina_cache_parts` and `kina_cache_searches`.
@@ -1171,7 +1181,8 @@ interceptor on `/api/**`, `OidcUserSynchronizer`, `TokenController`, `Membership
 "counters": [{"name", "tags", "value"}]}`: the key counters and every counter and timer in Prometheus naming (timer
 sums in seconds). `list_distributors` and `GET /api/v1/distributors` carry the same key counters as `metrics`:
 `{"searches", "search_queries", "tool_calls": {tool: n}, "cache_added": {distributor: n}, "rate_limited_calls":
-{distributor: n}, "cross_encoder_executions"}`. They count since the first start against this database.
+{distributor: n}, "cross_encoder_executions", "search_queries_by_type": {type: n}}` (`search_queries_by_type` is
+`kina_search_queries_total` per `type`, sorted). They count since the first start against this database.
 
 ## 4. MCP tools
 
@@ -1183,7 +1194,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`), `allow_below_spec` (bool, default false, section 3.4 "Below spec") | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | `{ "results": [SearchResponse...] }` |
 | `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part, attributions}`; `found: false` instead of a tool error with `reason` `not_found` (unknown) or `out_of_stock` (listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, no stock or prices), or with `error` (and `reason` null) when the lookup failed. Out-of-stock parts are never returned as a part and never cached. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
-| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions}` (section 3.7). Never calls the Mouser/TME APIs |
+| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 `SearchResponse` JSON (snake_case):
@@ -1494,7 +1505,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V8__cached_parts_metadata_and_stock.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V9__metrics_counters_type_tag.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -1628,6 +1639,14 @@ CREATE TABLE metrics_counters (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (name, tags)
 );
+-- V9__metrics_counters_type_tag.sql (section 3.7): the stored rows of kina.search.queries, kina.distributor.calls,
+-- kina.parts.returned, kina.parts.fetched and kina.cache.search.lookups get type=unknown ('' becomes type=unknown,
+-- otherwise ",type=unknown" is appended, which keeps the sorted order); rows with a type tag are left alone
+UPDATE metrics_counters
+   SET tags = CASE WHEN tags = '' THEN 'type=unknown' ELSE tags || ',type=unknown' END, updated_at = now()
+ WHERE name IN ('kina.search.queries', 'kina.distributor.calls', 'kina.parts.returned', 'kina.parts.fetched',
+                'kina.cache.search.lookups')
+   AND tags NOT LIKE 'type=%' AND tags NOT LIKE '%,type=%';
 ```
 
 ## 9. Distributor details (verified against the live APIs on 2026-10-05)

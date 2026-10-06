@@ -17,6 +17,7 @@ import java.util.TreeMap;
  * @param cacheAdded             new {@code cached_parts} rows per distributor
  * @param rateLimitedCalls       distributor HTTP calls answered with a rate limit, per distributor
  * @param crossEncoderExecutions cross-encoder model runs
+ * @param searchQueriesByType    search queries per {@code type} tag (the parser family, or {@code unknown})
  */
 public record MetricsSummary(
         @JsonProperty("searches") long searches,
@@ -24,13 +25,15 @@ public record MetricsSummary(
         @JsonProperty("tool_calls") Map<String, Long> toolCalls,
         @JsonProperty("cache_added") Map<String, Long> cacheAdded,
         @JsonProperty("rate_limited_calls") Map<String, Long> rateLimitedCalls,
-        @JsonProperty("cross_encoder_executions") long crossEncoderExecutions
+        @JsonProperty("cross_encoder_executions") long crossEncoderExecutions,
+        @JsonProperty("search_queries_by_type") Map<String, Long> searchQueriesByType
 ) {
 
     public MetricsSummary {
         toolCalls = sorted(toolCalls);
         cacheAdded = sorted(cacheAdded);
         rateLimitedCalls = sorted(rateLimitedCalls);
+        searchQueriesByType = sorted(searchQueriesByType);
     }
 
     private static Map<String, Long> sorted(Map<String, Long> values) {
