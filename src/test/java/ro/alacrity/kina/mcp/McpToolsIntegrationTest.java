@@ -253,11 +253,14 @@ class McpToolsIntegrationTest {
         long queries = store.sum(MetricNames.SEARCH_QUERIES);
         long toolCalls = store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts"));
         long batchCalls = store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts_batch"));
-        long mouserOk = store.get(
-                MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "ok"));
-        long rateLimited = store.get(
-                MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "rate_limited"));
-        long returned = store.get(MetricKey.of(MetricNames.PARTS_RETURNED, "distributor", "MOUSER"));
+        // the type tag is the parser family: "100nF ..." is a capacitor, "ratelimit metrics" has no type
+        long mouserOk = store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "ok",
+                "type", "capacitor"));
+        long rateLimited = store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome",
+                "rate_limited", "type", "unknown"));
+        long returned = store.get(MetricKey.of(MetricNames.PARTS_RETURNED, "distributor", "MOUSER", "type",
+                "capacitor"));
+        Map<String, Long> byType = store.sumBy(MetricNames.SEARCH_QUERIES, "type");
 
         call("search_parts", "{\"query\":\"100nF X7R 0805 metrics\",\"max_results\":3,\"distributors\":[\"mouser\"]}");
         call("search_parts", "{\"query\":\"ratelimit metrics\",\"distributors\":[\"mouser\"]}");
@@ -269,12 +272,15 @@ class McpToolsIntegrationTest {
         assertThat(store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts"))).isEqualTo(toolCalls + 2);
         assertThat(store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts_batch")))
                 .isEqualTo(batchCalls + 1);
-        assertThat(store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "ok")))
-                .isEqualTo(mouserOk + 3);
+        assertThat(store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "ok",
+                "type", "capacitor"))).isEqualTo(mouserOk + 3);
         assertThat(store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER",
-                "outcome", "rate_limited"))).isEqualTo(rateLimited + 1);
-        assertThat(store.get(MetricKey.of(MetricNames.PARTS_RETURNED, "distributor", "MOUSER")))
+                "outcome", "rate_limited", "type", "unknown"))).isEqualTo(rateLimited + 1);
+        assertThat(store.get(MetricKey.of(MetricNames.PARTS_RETURNED, "distributor", "MOUSER", "type", "capacitor")))
                 .isGreaterThanOrEqualTo(returned + 3);
+        Map<String, Long> byTypeAfter = store.sumBy(MetricNames.SEARCH_QUERIES, "type");
+        assertThat(byTypeAfter.get("capacitor")).isEqualTo(byType.getOrDefault("capacitor", 0L) + 3);
+        assertThat(byTypeAfter.get("unknown")).isEqualTo(byType.getOrDefault("unknown", 0L) + 1);
 
         JsonNode list = call("list_distributors", "{}");
         assertThat(list.path("metrics").path("searches").asLong()).isGreaterThanOrEqualTo(searches + 3);
@@ -283,12 +289,16 @@ class McpToolsIntegrationTest {
         assertThat(list.path("metrics").has("cache_added")).isTrue();
         assertThat(list.path("metrics").has("rate_limited_calls")).isTrue();
         assertThat(list.path("metrics").path("cross_encoder_executions").asLong()).isZero();
+        assertThat(list.path("metrics").path("search_queries_by_type").path("capacitor").asLong())
+                .isGreaterThanOrEqualTo(3);
 
         client.get().uri("/api/v1/distributors").exchange().expectStatus().isOk();
         String summary = client.get().uri("/api/v1/metrics/summary").exchange()
                 .expectStatus().isOk().returnResult(String.class).getResponseBody();
         JsonNode summaryJson = json.readTree(summary);
         assertThat(summaryJson.path("summary").path("searches").asLong()).isGreaterThanOrEqualTo(searches + 3);
+        assertThat(summaryJson.path("summary").path("search_queries_by_type").path("unknown").asLong())
+                .isGreaterThanOrEqualTo(1);
         List<String> names = new ArrayList<>();
         summaryJson.path("counters").forEach(c -> names.add(c.path("name").asString()));
         assertThat(names).contains("kina_searches_total", "kina_tool_calls_total", "kina_search_duration_seconds_count",

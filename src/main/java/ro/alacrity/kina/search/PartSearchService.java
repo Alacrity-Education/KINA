@@ -436,7 +436,8 @@ public class PartSearchService {
         Check meets = new Check(p -> meetsRequest(parsed, p), p -> confirmed(parsed, p));
 
         if (!usesPostgresCache(distributor)) {
-            Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets);
+            Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets,
+                    parsed.family());
             return collected.toFetched(distributor, CacheStatus.NOT_APPLICABLE)
                     .withOutOfStockMatches(progress.outOfStock);
         }
@@ -482,7 +483,8 @@ public class PartSearchService {
         CacheStatus status = prepared.request().bypassCache() ? CacheStatus.BYPASSED : CacheStatus.MISS;
         Collected collected;
         try {
-            collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets);
+            collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets,
+                    parsed.family());
         } catch (DistributorException e) {
             Optional<Fetched> served = expired.flatMap(search -> servedStale(distributor, parsed, query, search, e));
             if (served.isPresent()) {
@@ -505,7 +507,8 @@ public class PartSearchService {
             progress.constraintsRelaxed = step.relaxed();
             Collected previous = collected;
             try {
-                collected = collect(client, step.phrase(), 0, window, maxPages, List.of(), progress, deadline, meets);
+                collected = collect(client, step.phrase(), 0, window, maxPages, List.of(), progress, deadline, meets,
+                        parsed.family());
             } catch (DistributorException e) {
                 // an earlier phrase did answer: report the failure, cache nothing
                 log.info("{} relaxed search '{}' failed: {}", distributor, step.phrase(), e.getMessage());
@@ -551,7 +554,7 @@ public class PartSearchService {
         Collected collected;
         try {
             collected = collect(client, fallbackQuery != null ? fallbackQuery : query, offset, window, maxPages,
-                    cachedParts, progress, deadline, meets);
+                    cachedParts, progress, deadline, meets, prepared.parsed().family());
         } catch (DistributorException e) {
             // serve what the cache holds, flagged with the error
             log.info("{} could not extend cached search '{}': {}", distributor, search.queryKey(), e.getMessage());
@@ -819,10 +822,13 @@ public class PartSearchService {
         static final Check ALL = new Check(p -> true, p -> true);
     }
 
-    /** As {@link #collect(DistributorClient, String, int, int, int, List, Progress, DistributorBudget, Check)}, every part meeting the request. */
+    /**
+     * As {@link #collect(DistributorClient, String, int, int, int, List, Progress, DistributorBudget, Check, String)},
+     * every part meeting the request, counted under the {@code unknown} type.
+     */
     Collected collect(DistributorClient client, String query, int offset, int window, int maxPages,
                       List<Part> existing, Progress progress, DistributorBudget deadline) {
-        return collect(client, query, offset, window, maxPages, existing, progress, deadline, Check.ALL);
+        return collect(client, query, offset, window, maxPages, existing, progress, deadline, Check.ALL, null);
     }
 
     /**
@@ -833,10 +839,12 @@ public class PartSearchService {
      * {@link DistributorClient#maxPageSize()} (the first one is shortened to end on a page boundary) because
      * distributors drop parts without ships-now stock: paging is driven by raw record offsets, not by the number of
      * parts kept. A failure on the first page propagates; a failure on a later page keeps what was collected and
-     * reports the error code.
+     * reports the error code. {@code family} is the parser family of the request, the {@code type} tag of the page
+     * metrics (DESIGN.md 3.7).
      */
     Collected collect(DistributorClient client, String query, int offset, int window, int maxPages,
-                      List<Part> existing, Progress progress, DistributorBudget deadline, Check meets) {
+                      List<Part> existing, Progress progress, DistributorBudget deadline, Check meets,
+                      String family) {
         Distributor distributor = client.distributor();
         boolean pagedByRecords = usesPostgresCache(distributor);
         int outOfStock = 0;
@@ -880,7 +888,7 @@ public class PartSearchService {
             // active time of the page: rate-limit waits do not predict how long the next page takes
             lastPageNanos = Math.max(0, System.nanoTime() - started - (deadline.rateLimitWaitedNanos() - waitedBefore));
             pages++;
-            metrics.distributorPage(distributor, System.nanoTime() - started, page.parts().size());
+            metrics.distributorPage(distributor, family, System.nanoTime() - started, page.parts().size());
             next += limit;
             total = page.totalResults();
             hasMore = page.hasMore();

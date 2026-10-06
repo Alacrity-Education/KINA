@@ -722,13 +722,18 @@ def suite_metrics(base: str, metrics_base: str, token: str, rec: Recorder):
     text = resp.text if resp.status == 200 else ""
     rec.check("metrics: /actuator/prometheus answers without credentials", resp.status == 200
               and resp.header("Content-Type").startswith("text/plain"), f"status {resp.status}", resp.millis)
-    expected = ["kina_searches_total", "kina_search_queries_total", "kina_tool_calls_total{tool=\"search_parts\"}",
+    expected = ["kina_searches_total", "kina_search_queries_total{type=",
+                "kina_tool_calls_total{tool=\"search_parts\"}",
                 "kina_distributor_calls_total{", "kina_cache_parts{distributor=\"TME\"}",
                 "kina_cache_parts_fresh{", "kina_cache_parts_stale{", "kina_cache_searches{", "kina_users_known",
                 "kina_tokens_active", "kina_jlcpcb_database_parts", "kina_search_duration_seconds_count"]
     missing = [name for name in expected if name not in text]
     rec.check("metrics: the kina_ series are exported", not missing, f"missing {missing}" if missing else
               f"{sum(1 for line in text.splitlines() if line.startswith('kina_'))} kina_ samples")
+    typed = ("kina_search_queries_total", "kina_distributor_calls_total", "kina_parts_returned_total",
+             "kina_parts_fetched_total", "kina_cache_search_lookups_total")
+    untyped = [line for line in text.splitlines() if line.startswith(typed) and "type=\"" not in line]
+    rec.check("metrics: the search counters carry the type tag", not untyped, str(untyped[:3]))
     resp = api.get("/actuator/prometheus")
     rec.check("metrics: the main port does not serve /actuator/prometheus", resp.status != 200
               and "kina_" not in resp.text, f"status {resp.status}")
@@ -736,14 +741,16 @@ def suite_metrics(base: str, metrics_base: str, token: str, rec: Recorder):
     rec.check("metrics: the main port does not serve /actuator/health", resp.status != 200, f"status {resp.status}")
     resp = api.get("/api/v1/metrics/summary", headers=auth)
     summary = resp.json().get("summary", {}) if resp.status == 200 else {}
+    by_type = summary.get("search_queries_by_type")
     rec.check("metrics: GET /api/v1/metrics/summary", resp.status == 200 and summary.get("searches", 0) > 0
-              and len(resp.json().get("counters", [])) > 0,
-              f"searches {summary.get('searches')}, tool_calls {summary.get('tool_calls')}", resp.millis)
+              and len(resp.json().get("counters", [])) > 0 and isinstance(by_type, dict) and len(by_type) > 0,
+              f"searches {summary.get('searches')}, tool_calls {summary.get('tool_calls')}, by type {by_type}",
+              resp.millis)
     resp = api.get("/api/v1/distributors", headers=auth)
     metrics = resp.json().get("metrics") if resp.status == 200 else None
     rec.check("metrics: list_distributors carries the key counters", isinstance(metrics, dict)
               and {"searches", "tool_calls", "cache_added", "rate_limited_calls",
-                   "cross_encoder_executions"} <= set(metrics), str(metrics)[:200])
+                   "cross_encoder_executions", "search_queries_by_type"} <= set(metrics), str(metrics)[:200])
 
 
 def suite_prod(base: str, rec: Recorder, expected_auth_host: str = "accounts.google.com",
