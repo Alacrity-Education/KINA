@@ -101,6 +101,11 @@ public class RankingService {
         MEETS,
         /** Meets the request as far as it is known, but a requested rating is not stated (unverified). */
         UNVERIFIED_RATING,
+        /**
+         * Returned, but does not meet the request: its primary value (capacitance, resistance, inductance, impedance at
+         * its frequency) differs. The relaxation ladder goes on past such parts.
+         */
+        WRONG_VALUE,
         /** Left out: a known attribute contradicts a strict constraint. */
         CONSTRAINT,
         /** Left out (unless {@code allow_below_spec}): a known rating is below the request. */
@@ -250,6 +255,10 @@ public class RankingService {
         DeterministicRanker.Assessment a = safeAssess(query, part);
         if (a.isBelowSpec()) {
             return Verdict.BELOW_SPEC;
+        }
+        String primary = query.isConnector() ? null : DeterministicRanker.primaryKind(query);
+        if (primary != null && a.mismatches().stream().anyMatch(m -> m.startsWith(primary.replace('_', ' ') + ":"))) {
+            return Verdict.WRONG_VALUE;
         }
         boolean ratingUnverified = a.unverified().stream()
                 .anyMatch(u -> DeterministicRanker.RATING_KINDS.contains(u.replace(' ', '_')));

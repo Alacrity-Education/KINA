@@ -1049,8 +1049,7 @@ public class PartSearchService {
                     .excludedBelowSpec(ranked.excludedBelowSpecBy(distributor))
                     .outOfStockMatches(f.outOfStockMatches())
                     .queryTermsDropped(f.queryTermsDropped())
-                    .constraintsRelaxed(distributor == Distributor.LCSC
-                            ? actuallyRelaxed(f.constraintsRelaxed(), top) : f.constraintsRelaxed())
+                    .constraintsRelaxed(actuallyRelaxed(f.constraintsRelaxed(), top))
                     .exactMatches(exact)
                     .build());
         }
@@ -1060,9 +1059,10 @@ public class PartSearchService {
     }
 
     /**
-     * Of the constraints LCSC's database search dropped, those the returned parts really miss (a mismatch or an
-     * unverified constraint of that name): its relaxation drops terms one at a time, so a dropped term is not
-     * necessarily the one that failed (DESIGN.md 3.2).
+     * Of the constraints a relaxation loosened (the ladder step of Mouser and TME, the terms LCSC's database search
+     * dropped), those the returned parts really miss: a mismatch or an unverified constraint of that name. A step that
+     * drops the dielectric and the package may still return parts with the requested dielectric, and LCSC drops terms
+     * one at a time, so a loosened term is not necessarily one the results compromise (DESIGN.md 3.2).
      */
     static List<String> actuallyRelaxed(List<String> dropped, List<RankedPart> returned) {
         if (dropped == null || dropped.isEmpty()) {

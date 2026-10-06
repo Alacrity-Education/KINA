@@ -314,6 +314,52 @@ class AuditRoundThreeTest {
     }
 
     @Test
+    void onlyTheLoosenedConstraintsTheReturnedPartsMissAreReported() {
+        // live 2026-10-06: TME has no in-stock 10uF 100V 1210 part; "MLCC 10uF" finds a 100 V X7R part in 2220
+        PhraseClient tme = new PhraseClient(Distributor.TME)
+                .on("10uF X7R 1210 MLCC", part(Distributor.TME, "LOW", "MLCC 10uF 50V X7R 1210", "MLCC", 1000,
+                        Map.of(), Map.of(), NOW))
+                .on("MLCC 10uF", part(Distributor.TME, "22201C106KAT2A", "MLCC 10uF 100V X7R 2220", "MLCC", 1000,
+                        Map.of(), Map.of(), NOW));
+        service(List.of(tme));
+
+        DistributorResult t = result(service.search(request("10uF 100V X7R 1210 MLCC", 5, false, Distributor.TME)),
+                Distributor.TME);
+
+        assertThat(tme.queries).containsExactly("10uF X7R 1210 MLCC", "MLCC 10uF 1210", "MLCC 10uF");
+        assertThat(t.fallbackQuery()).isEqualTo("MLCC 10uF");
+        // the step loosened dielectric and package; the returned part is X7R, so only the package is reported
+        assertThat(t.constraintsRelaxed()).containsExactly("package");
+        assertThat(cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey("10uF 100V X7R 1210 MLCC"))
+                .constraintsRelaxed()).containsExactly("dielectric", "package");
+        assertThat(t.parts().getFirst().mismatches()).containsExactly("package: 2220 instead of 1210");
+    }
+
+    @Test
+    void aWrongPrimaryValueDoesNotStopTheLadder() {
+        // live 2026-10-06: TME "ferrite 120ohm" returned ferrite cores specified at 25 MHz, match 0.0
+        Part core = part(Distributor.TME, "RRC-16-9-28-M2", "Ferrite: core; 120Ω @25MHz", "Ferrites", 90,
+                Map.of("Impedance at 25MHz", "120Ω"), Map.of(), NOW);
+        Part weak = part(Distributor.TME, "BEAD3A", "Ferrite: bead; 120Ω; SMD; 3A; 1206", "Ferrite - beads", 1000,
+                Map.of("Impedance at 100MHz", "120Ω", "Operating current", "3A"), Map.of(), NOW);
+        PhraseClient tme = new PhraseClient(Distributor.TME)
+                .on("120 ohm 100MHz 1206 ferrite bead", weak)
+                .on("ferrite 120ohm", core);
+        service(List.of(tme));
+        ParsedQuery q = parser.parse("120 ohm 100MHz 1206 ferrite bead 6A");
+        assertThat(service.meetsRequest(q, core)).isFalse();
+
+        DistributorResult t = result(service.search(request("120 ohm 100MHz 1206 ferrite bead 6A", 5, false,
+                Distributor.TME)), Distributor.TME);
+
+        // nothing meets the request on any rung: the least relaxed result is kept, its 3 A bead is below spec
+        assertThat(tme.queries).contains("ferrite 120ohm");
+        assertThat(t.fallbackQuery()).isNull();
+        assertThat(t.parts()).isEmpty();
+        assertThat(t.excludedBelowSpec()).isEqualTo(1);
+    }
+
+    @Test
     void tmeReadsFurtherPagesBeforeRelaxingAnything() {
         List<Part> raw = new ArrayList<>();
         for (int i = 0; i < 5; i++) {

@@ -560,7 +560,8 @@ class PartSearchServiceTest {
         assertThat(tme.queries).containsExactly("22uF X7R 1206 10% MLCC", "MLCC 22uF 1206 10%", "MLCC 22uF 10%");
         assertThat(t.distributorQuery()).isEqualTo("22uF X7R 1206 10% MLCC");
         assertThat(t.fallbackQuery()).isEqualTo("MLCC 22uF 10%");
-        assertThat(t.constraintsRelaxed()).containsExactly("dielectric", "package");
+        // the response lists only what the returned parts miss; this ranking stub reports no mismatches
+        assertThat(t.constraintsRelaxed()).isEmpty();
         assertThat(t.queryTermsDropped()).contains("voltage", "dielectric", "package").doesNotContain("tolerance");
         assertThat(t.fetched()).isEqualTo(6);
         CachedSearch stored = cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(query));
@@ -570,7 +571,7 @@ class PartSearchServiceTest {
         DistributorResult hit = result(service.search(new SearchRequest(query, 5, Set.of(), false)),
                 Distributor.TME);
         assertThat(hit.cache()).isEqualTo(CacheStatus.HIT);
-        assertThat(hit.constraintsRelaxed()).containsExactly("dielectric", "package");
+        assertThat(hit.fallbackQuery()).isEqualTo("MLCC 22uF 10%");
     }
 
     @Test
@@ -604,7 +605,7 @@ class PartSearchServiceTest {
         assertThat(mouser.queries).containsExactly(QUERY, QUERY, QUERY, "10uF 0805", "10uF 0805", "10uF 0805");
         assertThat(m.fetched()).isZero();
         assertThat(m.outOfStockMatches()).isEqualTo(300);
-        assertThat(m.constraintsRelaxed()).containsExactly("dielectric");
+        assertThat(m.constraintsRelaxed()).isEmpty();   // no part was returned, so none misses the dielectric
     }
 
     @Test

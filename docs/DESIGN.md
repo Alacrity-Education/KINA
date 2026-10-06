@@ -161,8 +161,11 @@ bounded by `kina.search.distributor-timeout` of active work; time spent waiting 
 budget, but never beyond the request deadline `kina.search.max-request-duration`, section 3.6):
 
 "Meets the request" (`PartSearchService.meetsRequest`, `RankingService.verdict`): no known attribute contradicts a
-strict constraint and no known rating is below the request (section 3.4); a part that does not state a requested rating
-meets it but is not **confirmed** (`Verdict.UNVERIFIED_RATING`).
+strict constraint, no known rating is below the request (section 3.4) and the primary value (capacitance, resistance,
+inductance, impedance at its frequency) is not known to differ (`Verdict.WRONG_VALUE`: such a part is still returned,
+but the ladder goes on; live, TME's `ferrite 120ohm` returned ferrite cores specified at 25 MHz for a 100 MHz bead
+request). A part that does not state a requested rating meets the request but is not **confirmed**
+(`Verdict.UNVERIFIED_RATING`).
 
 1. `bypassCache == false`: read `cached_searches(distributor, query_key)`. When it is fresh, load its parts from
    `cached_parts` (fresh rows only); if any part is missing or stale, go to step 2 with `offset = 0` (`MISS`).
@@ -232,12 +235,15 @@ meets it but is not **confirmed** (`Verdict.UNVERIFIED_RATING`).
    when parsed again (`voltage`, `current`, `tolerance`, `dielectric`, `package`, `technology`, `mounting`...; Mouser
    and TME never get ratings, so a rated request always lists them there; connector queries, whose phrases are
    rewritten, list none), plus the free-text keywords the LCSC relaxation dropped, as written. The ranker still checks
-   every constraint. `constraints_relaxed` lists the constraints actually loosened to obtain the parts: for Mouser and
-   TME what the ladder step loosened (empty when the first phrase or a rewording produced them; a rating never); for
-   LCSC the constraint names of the terms its relaxation dropped (by term kind; every term in `ANY` mode) **that the
-   returned parts really miss** (a mismatch or an unverified constraint of that name, `PartSearchService.actuallyRelaxed`):
-   the database search drops terms one at a time, so a dropped term is not necessarily the one that failed (the third
-   audit saw `voltage` reported when the failing term was a size).
+   every constraint. `constraints_relaxed` lists the constraints actually loosened to obtain the parts: of what the
+   relaxation loosened (for Mouser and TME the ladder step, stored as `cached_searches.constraints_relaxed`; for LCSC the
+   constraint names of the terms its relaxation dropped, by term kind, every term in `ANY` mode) those **the returned
+   parts really miss** (a mismatch or an unverified constraint of that name, `PartSearchService.actuallyRelaxed`). A
+   step that drops the dielectric and the package may still find parts with the requested dielectric (live: TME
+   `10uF 100V X7R 1210 MLCC` relaxed to `MLCC 10uF` and returned a 100 V X7R part in 2220, reported as `["package"]`),
+   and the LCSC search drops terms one at a time, so a dropped term is not necessarily the one that failed (the third
+   audit saw `voltage` reported when the failing term was a size). Empty when nothing was relaxed or nothing returned
+   misses a loosened constraint; a rating is never loosened.
    TME's 40-character phrase limit is applied by the client as for any query.
    Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is cached or
    ranked (Mouser and LCSC deliver almost no parametric attributes).
