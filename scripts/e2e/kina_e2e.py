@@ -40,6 +40,8 @@ MCP_ACCEPT = "application/json, text/event-stream"
 SEARCH_QUERY = "10uF X7R 0805"
 BATCH_QUERIES = [{"query": "10uF X7R 0805", "max_results": 3}, {"query": "100nF 50V X7R 0603", "max_results": 3}]
 REST_QUERY = "4.7k 1% 0603 resistor"
+RATED_QUERY = "22uF X7R 1206 25V MLCC"
+NONSENSE_QUERY = "asdfqwerty zz9"
 FALLBACK_QUERY = "SOT-23 N-channel MOSFET 30V"
 REDIRECT_URI = "http://localhost:6274/callback"
 JLCPCB_MIN_PARTS = 7_000_000
@@ -185,10 +187,37 @@ def summarize_search(response: dict) -> dict:
     return {
         "ranking": response.get("ranking"),
         "ranking_note": response.get("ranking_note"),
+        "query_understood": response.get("query_understood"),
+        "currencies": response.get("currencies"),
         "distributors": {d["distributor"]: {k: d.get(k) for k in
-                                            ("total_results", "fetched", "returned", "cache", "error", "fallback_query")}
+                                            ("total_results", "fetched", "excluded_by_constraints",
+                                             "excluded_below_spec", "returned", "cache", "error", "fallback_query",
+                                             "constraints_relaxed", "query_terms_dropped", "exact_matches")}
                          for d in response.get("distributors", [])},
     }
+
+
+DISTRIBUTOR_FIELDS = ("fetched", "excluded_by_constraints", "excluded_below_spec", "returned", "query_terms_dropped",
+                      "constraints_relaxed", "exact_matches", "out_of_stock_matches")
+
+
+def shape_problems(response: dict) -> list[str]:
+    """Fields of the third audit round (DESIGN.md 3.2 "Counts", 4) and the arithmetic between the counts."""
+    problems = []
+    for key in ("query_understood", "currencies"):
+        if key not in response:
+            problems.append(f"no {key}")
+    for d in response.get("distributors", []):
+        name = d.get("distributor")
+        problems += [f"{name}: no {k}" for k in DISTRIBUTOR_FIELDS if k not in d]
+        if "relaxed" in d:
+            problems.append(f"{name}: the removed field relaxed is still there")
+        left = d.get("fetched", 0) - d.get("excluded_by_constraints", 0) - d.get("excluded_below_spec", 0)
+        if d.get("returned", 0) > left or d.get("returned") != len(d.get("parts", [])) or left < 0:
+            problems.append(f"{name}: counts do not add up {[d.get(k) for k in DISTRIBUTOR_FIELDS[:4]]}")
+        problems += [f"{name}: {p.get('part_number')} has no stock_as_of" for p in d.get("parts", [])
+                     if not p.get("stock_as_of")]
+    return problems
 
 
 # ----------------------------------------------------------------------------------------------------------- suites
@@ -272,6 +301,11 @@ def suite_mcp(base: str, token: str, rec: Recorder):
               f"ranking {s1['ranking']}, " + ", ".join(f"{k}={v['cache']}/{v['returned']}of{v['fetched']}"
                                                        f"(total {v['total_results']}){' ERR ' + v['error'] if v['error'] else ''}"
                                                        for k, v in s1["distributors"].items()), resp.millis)
+    problems = shape_problems(first)
+    rec.check("mcp: response fields and counts (query_understood, currencies, excluded_below_spec, "
+              "query_terms_dropped, constraints_relaxed, stock_as_of; returned <= fetched - exclusions)",
+              not problems and first.get("query_understood") is True, "; ".join(problems) or
+              f"currencies {first.get('currencies')}")
     first_tme = next((d for d in first["distributors"] if d["distributor"] == "TME" and d["parts"]), None)
     photo = any(p.get("photo_url") for d in first["distributors"] for p in d["parts"])
     prices_ok = all(len(p.get("prices", [])) <= 3 for d in first["distributors"] for p in d["parts"])
@@ -302,6 +336,11 @@ def suite_mcp(base: str, token: str, rec: Recorder):
         rec.data["mcp_get_part"] = {"ms": round(resp.millis), "cache": part.get("cache"), "found": part.get("found")}
         rec.check(f"mcp: get_part TME {symbol}", part.get("found") is True and part.get("part", {}).get(
             "part_number") == symbol, f"cache {part.get('cache')}", resp.millis)
+        got = part.get("part", {}) or {}
+        rec.check("mcp: get_part defaults to the full attribute set (extra, raw attributes, stock_as_of)",
+                  "extra" in got and bool(got.get("stock_as_of")) and len(got.get("attributes", {})) > 4,
+                  f"{len(got.get('attributes', {}))} attributes, datasheet_source "
+                  f"{(got.get('extra') or {}).get('datasheet_source')}")
         rec.data["tme_symbol"] = symbol
     else:
         rec.check("mcp: get_part TME", False, "no TME part in the search result")
@@ -507,6 +546,31 @@ def suite_rest(base: str, token: str, rec: Recorder):
     rec.data["rest_batch"] = {"ms": round(resp.millis), "results": [summarize_search(r) for r in results]}
     rec.check("rest: POST /api/v1/parts/search/batch", resp.status == 200 and len(results) == 2,
               "; ".join(f"'{r['query']}' {r['ranking']}" for r in results), resp.millis)
+
+    # ratings are hard limits: LCSC only (a local database, no quota)
+    q = urllib.parse.urlencode({"q": RATED_QUERY, "max_results": 10, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    parts = [p for d in body.get("distributors", []) for p in d.get("parts", [])]
+    low = [p["mpn"] for p in parts if any(m.startswith("voltage:") for m in p.get("mismatches", []))]
+    rec.check(f"rest: '{RATED_QUERY}' returns nothing below 25 V by default", resp.status == 200 and parts
+              and not low and not shape_problems(body), f"{len(parts)} parts, below spec {low}, "
+              + "; ".join(shape_problems(body)), resp.millis)
+    q = urllib.parse.urlencode({"q": RATED_QUERY, "max_results": 50, "distributors": "LCSC",
+                                "allow_below_spec": "true"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    parts = [p for d in resp.json().get("distributors", []) for p in d.get("parts", [])] if resp.status == 200 else []
+    flags = [bool(p.get("below_spec")) for p in parts]
+    rec.check("rest: allow_below_spec lists flagged parts after the compliant ones", resp.status == 200
+              and flags == sorted(flags), f"{flags.count(True)} of {len(parts)} flagged below_spec", resp.millis)
+
+    q = urllib.parse.urlencode({"q": NONSENSE_QUERY, "max_results": 3, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    matches = [p.get("match") for d in body.get("distributors", []) for p in d.get("parts", [])]
+    rec.check(f"rest: '{NONSENSE_QUERY}' -> query_understood false, hint, match null",
+              resp.status == 200 and body.get("query_understood") is False and bool(body.get("hint"))
+              and all(m is None for m in matches), f"{len(matches)} parts, matches {matches}", resp.millis)
 
     q = urllib.parse.urlencode({"q": FALLBACK_QUERY, "max_results": 3, "distributors": "TME"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)
