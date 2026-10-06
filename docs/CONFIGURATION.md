@@ -144,7 +144,7 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `kina.search.candidate-window` | `40` | Minimum parts fetched per distributor per query. |
 | `kina.search.default-max-results` | `10` | Used when `max_results` is missing. |
 | `kina.search.max-max-results` | `50` | Upper limit for `max_results`. |
-| `kina.search.distributor-timeout` | `12s` | Budget for the active work of one distributor fetch. Time spent waiting on a rate limit does not count against it. |
+| `kina.search.distributor-timeout` | `20s` | Budget for the active work of one distributor fetch. Time spent waiting on a rate limit does not count against it. |
 | `kina.search.strict-constraints` | `mounting,technology,elements` | `KINA_STRICT_CONSTRAINTS`. Stated attributes that exclude a part whose known value contradicts them; `elements` excludes arrays and networks unless the request asks for one. Empty turns exclusion off. |
 | `kina.search.low-stock-threshold` | `10` | `KINA_LOW_STOCK_THRESHOLD`. A part with less stock than this, or less than twice `quantity`, is `low_stock`. |
 | `kina.search.quantity.stock-shortfall-penalty` | `0.3` | Score deduction for a part with less stock than `quantity` (it also ranks after every part that has enough). |

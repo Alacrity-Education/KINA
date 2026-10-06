@@ -858,7 +858,7 @@ within a hard per-request cap.
 `ro.alacrity.kina.distributor.Deadline` (`System.nanoTime()`-based); each distributor fetch gets its own `fork()` (same
 deadline, separate wait accounting) and passes it to `DistributorClient.search/getPart(..., Deadline)`.
 
-**Budgets.** `kina.search.distributor-timeout` (12 s) still bounds a fetch's *active* work. The distributor deadline is
+**Budgets.** `kina.search.distributor-timeout` (20 s) still bounds a fetch's *active* work. The distributor deadline is
 `min(request deadline, fetch start + distributor-timeout + rate-limit time waited)`: the client records each wait on
 its `Deadline` *before* sleeping, and the orchestrator (`DistributorBudget.await`) keeps waiting while a recorded wait
 moves the deadline. Overlapping waits of parallel calls of one fetch (TME data/parameters/files) count once. The
@@ -1522,7 +1522,7 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 - Stock refresh (`TmeClient.refreshStock`, section 3.2): `/products/data` (stock and prices) for up to 50 symbols per
   call. Measured 2026-10-06: TME answered `/products/data` in 6 to 11 s even for one symbol (the search, parameter and
   file endpoints in 0.1 s), which makes a TME search with relaxation steps exceed `kina.search.distributor-timeout`
-  (12 s); the timeout reports what was collected so far.
+  (20 s); the timeout reports what was collected so far.
 - `product_status` meanings (TME API documentation): `HARDLY_AVAILABLE` "limited market availability" (a supply-side
   flag: TME may still hold a large stock, 150k+ pieces seen; never read as low stock; availability
   `supply_constrained`, lifecycle `supply_constrained`); `AVAILABLE_WHILE_STOCKS_LAST` "available for sale while stocks
@@ -1709,7 +1709,7 @@ kina:
     candidate-window: 40
     default-max-results: 10
     max-max-results: 50
-    distributor-timeout: 12s     # active work per distributor fetch; rate-limit waits do not count
+    distributor-timeout: 20s     # active work per distributor fetch; rate-limit waits do not count
     max-request-duration: 2m     # hard cap per request (search, whole batch, get_part) incl. rate-limit waits
     strict-constraints: ${KINA_STRICT_CONSTRAINTS:mounting,technology,elements}   # section 3.4
     low-stock-threshold: ${KINA_LOW_STOCK_THRESHOLD:10}   # low_stock: stock below this or below 2 x quantity

@@ -56,7 +56,7 @@ kina:
     candidate-window: 40
     default-max-results: 10
     max-max-results: 50
-    distributor-timeout: 12s
+    distributor-timeout: 20s
     max-request-duration: 2m     # hard cap per request, including rate-limit waits (DESIGN.md 3.6)
     strict-constraints: ${KINA_STRICT_CONSTRAINTS:mounting,technology,elements}   # DESIGN.md 3.4: contradicting parts are excluded
     low-stock-threshold: ${KINA_LOW_STOCK_THRESHOLD:10}   # stock below this (or below 2 x quantity) is low_stock

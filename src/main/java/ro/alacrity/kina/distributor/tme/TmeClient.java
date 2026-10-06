@@ -51,7 +51,7 @@ import java.util.function.Supplier;
 public class TmeClient implements DistributorClient {
 
     static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
-    static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
+    static final Duration READ_TIMEOUT = Duration.ofSeconds(20);
     /** {@code phrase} length bounds from the OpenAPI document. */
     static final int MIN_PHRASE_LENGTH = 2;
     static final int MAX_PHRASE_LENGTH = 40;
