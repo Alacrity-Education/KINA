@@ -87,7 +87,7 @@ class DeterministicRankerTest {
 
     @Test
     void packageEquivalenceAndC0gEqualsNp0() {
-        assertThat(score("10uF X7R 0805", mlcc("M", "10uF", "25V", "X7R", "±10%", "2012")))
+        assertThat(score("10uF X7R 0805", mlcc("M", "10uF", "25V", "X7R", "±10%", "2012 metric")))
                 .isCloseTo(score("10uF X7R 0805", mlcc("I", "10uF", "25V", "X7R", "±10%", "0805")), within(1e-9));
         double np0 = score("22pF C0G 0402", mlcc("N", "22pF", "50V", "NP0", "±5%", "0402"));
         double c0g = score("22pF NP0 0402", mlcc("C", "22pF", "50V", "C0G", "±5%", "0402"));

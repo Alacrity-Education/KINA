@@ -180,7 +180,7 @@ class JlcpcbSqliteSearchTest {
     }
 
     @Test
-    void relaxationDropsTheDielectricThenThePackageThenTheToleranceBeforeAnyRating() {
+    void relaxationDropsTheDielectricThenTheToleranceThenThePackageBeforeAnyRating() {
         java.util.List<JlcpcbQuery.Term> terms = JlcpcbQuery.parse("22uF X7R 1206 10% MLCC >=25V").terms();
         java.util.List<String> order = new java.util.ArrayList<>();
         java.util.List<JlcpcbQuery.Term> remaining = new java.util.ArrayList<>(terms);
@@ -189,7 +189,8 @@ class JlcpcbSqliteSearchTest {
             order.add(next.text());
             remaining.remove(next);
         }
-        assertThat(order).startsWith("X7R", "1206", "10%", "25V");
+        // the relaxable dielectric and tolerance go first; the package is hard for most families (DESIGN.md 3.4)
+        assertThat(order).startsWith("X7R", "10%", "1206", "25V");
     }
 
     @Test

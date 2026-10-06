@@ -94,6 +94,7 @@ class Recognizers {
             s = phrase.getKey().matcher(s).replaceAll(phrase.getValue());
         }
         s = NUMBER_UNIT_GAP.matcher(s).replaceAll("$1");
+        s = imperial(s);
         return WHITESPACE.matcher(s).replaceAll(" ").trim();
     }
 
@@ -147,8 +148,12 @@ class Recognizers {
         family(3, false, "opamp", "opamp", "opamps");
         family(3, false, "comparator", "comparator", "comparators");
         family(2, false, "mcu", "mcu", "mcus");
-        family(2, false, "crystal", "crystal", "crystals", "xtal");
-        family(3, false, "oscillator", "oscillator", "oscillators");
+        // crystals (passive resonators) and oscillators (active, with a supply) are different families, never mixed
+        family(2, false, "crystal", "crystal", "crystals", "xtal", "xtals", "resonator", "resonators");
+        family(3, false, "oscillator", "oscillator", "oscillators", "xo", "tcxo", "vcxo", "ocxo", "spxo",
+                "vctcxo", "tcxos", "vcxos", "ocxos");
+        // TME "Generator: quartz; 16MHz; SMD" (an oscillator), category "Resonators and Generators"
+        family(3, false, "oscillator", "generator", "generators");
         family(2, false, "connector", "connector", "connectors");
         family(2, false, "fuse", "fuse", "fuses", "polyfuse");
         family(3, false, "tvs", "tvs");
@@ -180,10 +185,36 @@ class Recognizers {
         return null;
     }
 
+    /** Every family a text names by a family word ({@code Resonators and Generators}: crystal and oscillator). */
+    static Set<String> familiesIn(String text) {
+        Set<String> out = new HashSet<>();
+        if (text == null) {
+            return out;
+        }
+        for (String token : tokenize(prepare(text))) {
+            FamilyWord word = FAMILY_WORDS.get(token.toLowerCase(Locale.ROOT));
+            if (word != null) {
+                out.add(word.family());
+            }
+        }
+        return out;
+    }
+
+    /**
+     * True when a request of family {@code wanted} accepts a part of family {@code actual}: the same family, or one is
+     * the generic family of the other ({@code diode} and {@code schottky}, {@code transistor} and {@code mosfet}).
+     * Unknown families never conflict. Crystals and oscillators are different families.
+     */
+    static boolean compatibleFamilies(String wanted, String actual) {
+        if (wanted == null || actual == null || wanted.equals(actual)) {
+            return true;
+        }
+        return wanted.equals(parentFamily(actual)) || actual.equals(parentFamily(wanted));
+    }
+
     /** Families that are a specialisation of a generic family ({@code schottky} is a {@code diode}). */
     private static final Map<String, String> FAMILY_PARENT = Map.of(
-            "schottky", "diode", "zener", "diode", "tvs", "diode", "led", "diode", "mosfet", "transistor",
-            "oscillator", "crystal");
+            "schottky", "diode", "zener", "diode", "tvs", "diode", "led", "diode", "mosfet", "transistor");
 
     private static final Pattern DIODE_MPN = Pattern.compile("(?i)^1n\\d{3,4}[a-z]{0,2}$");
 
@@ -200,11 +231,6 @@ class Recognizers {
 
     static String parentFamily(String family) {
         return family == null ? null : FAMILY_PARENT.get(family);
-    }
-
-    private static boolean passiveFamily(String family) {
-        return "capacitor".equals(family) || "resistor".equals(family) || "inductor".equals(family)
-                || "ferrite".equals(family);
     }
 
     private static boolean frequencyFamily(String family) {
@@ -242,15 +268,66 @@ class Recognizers {
 
     // ------------------------------------------------------------------ packages
 
+    /**
+     * Imperial chip codes (DESIGN.md 3.4 "Packages are imperial"): a bare four-digit code is always one of these, never
+     * a metric code ({@code 0603} is imperial 0603, never metric 0603 = imperial 0201).
+     */
     private static final Set<String> CHIP_IMPERIAL = Set.of("01005", "0201", "0402", "0603", "0805", "1008", "1206",
-            "1210", "1806", "1812", "2010", "2220", "2512", "0806", "0306", "0612", "1218", "2920");
+            "1210", "1806", "1808", "1812", "1825", "2010", "2220", "2225", "2512", "0806", "0306", "0612", "1218",
+            "2920");
+    /**
+     * Metric chip codes and their imperial code. Used only where the source labels the code as millimetres: TME
+     * {@code Case - mm}, Mouser {@code Case Code - mm}, text such as {@code 1608 metric}, {@code (2012 Metric)},
+     * {@code 3216M}, {@code 0603mm} ({@link #imperial}).
+     */
     private static final Map<String, String> METRIC_TO_IMPERIAL = Map.ofEntries(
-            Map.entry("0603", "0201"), Map.entry("1005", "0402"), Map.entry("1608", "0603"), Map.entry("2012", "0805"),
-            Map.entry("3216", "1206"), Map.entry("3225", "1210"), Map.entry("4532", "1812"), Map.entry("5025", "2010"),
-            Map.entry("5750", "2220"), Map.entry("6432", "2512"), Map.entry("2016", "0806"), Map.entry("2520", "1008"),
+            Map.entry("0402", "01005"), Map.entry("0603", "0201"), Map.entry("1005", "0402"), Map.entry("1608", "0603"),
+            Map.entry("2012", "0805"), Map.entry("3216", "1206"), Map.entry("3225", "1210"), Map.entry("4532", "1812"),
+            Map.entry("4520", "1808"), Map.entry("5025", "2010"), Map.entry("5750", "2220"), Map.entry("5764", "2225"),
+            Map.entry("6332", "2512"), Map.entry("6432", "2512"), Map.entry("2016", "0806"), Map.entry("2520", "1008"),
             Map.entry("4516", "1806"));
+    /** Crystal and oscillator sizes: the body in tenths of a millimetre ({@code 3225} = 3.2 x 2.5 mm). */
     private static final Set<String> CRYSTAL_SIZES = Set.of("1210", "1612", "2012", "2016", "2520", "3215", "3225",
             "5032", "6035", "7050");
+    /** A four-digit chip code labelled as millimetres: {@code 1608 metric}, {@code 3216M}, {@code 0603mm}. */
+    private static final Pattern LABELLED_METRIC = Pattern.compile(
+            "(?<![\\p{L}\\d.])(\\d{4})(?:\\s?(?i:metric)|\\s?(?i:mm)|M)(?![\\p{L}\\d])");
+
+    /**
+     * {@code text} with every chip code it labels as millimetres replaced by the imperial code ({@code 0805 (2012
+     * metric)} -&gt; {@code 0805 (0805)}, {@code 3216M} -&gt; {@code 1206}, {@code 0603mm} -&gt; {@code 0201}). Packages
+     * are imperial everywhere in KINA; a bare code is never read as metric.
+     */
+    static String imperial(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        Matcher m = LABELLED_METRIC.matcher(text);
+        StringBuilder out = new StringBuilder();
+        while (m.find()) {
+            String code = METRIC_TO_IMPERIAL.get(m.group(1));
+            m.appendReplacement(out, Matcher.quoteReplacement(code != null ? code : m.group()));
+        }
+        m.appendTail(out);
+        return out.toString();
+    }
+
+    /** The imperial code of a metric chip code ({@code 1608} -&gt; {@code 0603}), or null. */
+    static String metricToImperial(String code) {
+        return code == null ? null : METRIC_TO_IMPERIAL.get(code.strip());
+    }
+
+    /** The crystal size code of body dimensions in millimetres ({@code 3.2 x 2.5} -&gt; {@code 3225}), or null. */
+    static String crystalSize(double length, double width) {
+        long a = Math.round(length * 10);
+        long b = Math.round(width * 10);
+        if (Math.abs(length * 10 - a) > 0.11 || Math.abs(width * 10 - b) > 0.11 || a < 10 || a > 99 || b < 10
+                || b > 99) {
+            return null;
+        }
+        String code = String.valueOf(a) + b;
+        return CRYSTAL_SIZES.contains(code) ? code : null;
+    }
 
     private static final Pattern P_SOT = Pattern.compile("^sot-?(\\d{2,3})(?:-(\\d{1,2}))?([a-z]{0,2})$");
     private static final Pattern P_SOD = Pattern.compile("^sod-?(\\d{2,3})([a-z]{0,2})$");
@@ -320,13 +397,57 @@ class Recognizers {
         return CHIP_IMPERIAL.contains(packageName) || CRYSTAL_SIZES.contains(packageName);
     }
 
+    /** True for a crystal or oscillator size code ({@code 3225}). */
+    static boolean isCrystalSize(String packageName) {
+        return packageName != null && CRYSTAL_SIZES.contains(packageName.strip());
+    }
+
+    /**
+     * True when KINA recognises {@code packageName} as a package: an imperial chip code, a crystal size, an IC or
+     * discrete package ({@code SOT-23}, {@code SMA}, {@code TO-252}...) or the size of a can capacitor
+     * ({@code D6.3 x 5.8mm}). A package string KINA cannot read never contradicts a request.
+     */
+    static boolean isRecognisedPackage(String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        String t = packageName.strip().toLowerCase(Locale.ROOT);
+        return CHIP_IMPERIAL.contains(t) || CRYSTAL_SIZES.contains(t) || icPackage(t, null) != null
+                || PassiveDetails.can(packageName) != null;
+    }
+
+    /** Largest difference in millimetres between two can capacitor sizes that are the same (diameter, length). */
+    static final double CAN_TOLERANCE_MM = 0.2;
+
+    /**
+     * Compares a requested package with a part's: true when they are the same ({@link #packageKey}; can capacitors by
+     * their diameter and length within {@value #CAN_TOLERANCE_MM} mm, {@code D6.3 x 5.4mm} == {@code D6.3 x 5.5mm}),
+     * false when the part states a different recognised package ({@link #isRecognisedPackage}), null when either side
+     * is unknown or the part's package cannot be read.
+     */
+    static Boolean samePackage(String wanted, String actual) {
+        if (wanted == null || actual == null || wanted.isBlank() || actual.isBlank()) {
+            return null;
+        }
+        double[] wantedCan = PassiveDetails.can(wanted);
+        double[] actualCan = PassiveDetails.can(actual);
+        if (wantedCan != null && actualCan != null) {
+            return Math.abs(wantedCan[0] - actualCan[0]) <= CAN_TOLERANCE_MM + 1e-9
+                    && Math.abs(wantedCan[1] - actualCan[1]) <= CAN_TOLERANCE_MM + 1e-9;
+        }
+        if (packageKey(wanted).equals(packageKey(actual))) {
+            return true;
+        }
+        return isRecognisedPackage(actual) ? Boolean.FALSE : null;
+    }
+
     private static String upper(String s) {
         return s == null ? "" : s.toUpperCase(Locale.ROOT);
     }
 
     private static final Map<String, String> PACKAGE_ALIASES = Map.ofEntries(
             Map.entry("SOT-23-3", "SOT-23"), Map.entry("SOT-25", "SOT-23-5"), Map.entry("SOT-753", "SOT-23-5"),
-            Map.entry("SOT-26", "SOT-23-6"), Map.entry("SC-70", "SOT-323"), Map.entry("SC-70-3", "SOT-323"),
+            Map.entry("SOT-26", "SOT-23-6"), Map.entry("TO-236", "SOT-23"), Map.entry("TO-236AB", "SOT-23"), Map.entry("SC-70", "SOT-323"), Map.entry("SC-70-3", "SOT-323"),
             Map.entry("SOT-323-3", "SOT-323"), Map.entry("SC-70-5", "SOT-353"), Map.entry("SC-70-6", "SOT-363"),
             Map.entry("SC-88", "SOT-363"), Map.entry("SC-88A", "SOT-353"), Map.entry("SC-59", "SOT-23"),
             Map.entry("SOT-223-3", "SOT-223"), Map.entry("SOT-223-4", "SOT-223"), Map.entry("SOT-89-3", "SOT-89"),
@@ -340,10 +461,12 @@ class Recognizers {
             + "|QFN|DFN|VQFN|WQFN|UQFN|TQFN|LQFP|TQFP|QFP|BGA|LGA|WLCSP|DIP|PDIP|SIP|ZIP|PLCC|SON|WSON|VSON|TDFN|UDFN"
             + "|XDFN|USON|LFCSP|CSP)-(\\d{1,4}).*$");
     private static final Pattern NON_ALNUM = Pattern.compile("[^A-Z0-9]");
+    private static final Pattern LEAD_SUFFIX = Pattern.compile("^((?:SOT|SOD|SC|TO)-\\d{2,3}-\\d{1,2})L$");
 
     /**
-     * Equivalence key for package comparison: {@code 0805 == 2012 (metric, converted at recognition)},
-     * {@code SOT-23-3 == SOT-23}, {@code SO-8 == SOP-8 == SOIC-8}, {@code DPAK == TO-252}, {@code SMA == DO-214AC}.
+     * Equivalence key for package comparison: {@code SOT-23-3 == SOT-23-3L == SOT-23 == TO-236AB},
+     * {@code SO-8 == SOP-8 == SOIC-8}, {@code DPAK == TO-252}, {@code SMA == DO-214AC}. Chip codes are imperial
+     * (labelled metric codes were converted at recognition, {@link #imperial}).
      * Returns null for null/blank.
      */
     static String packageKey(String packageName) {
@@ -351,6 +474,7 @@ class Recognizers {
             return null;
         }
         String p = packageName.trim().toUpperCase(Locale.ROOT);
+        p = LEAD_SUFFIX.matcher(p).replaceFirst("$1");   // JLCPCB "SOT-23-3L", "SOT-89-3L": L marks the lead count
         p = PACKAGE_ALIASES.getOrDefault(p, p);
         Matcher m = IC_CANON.matcher(p);
         if (m.matches()) {
@@ -366,8 +490,10 @@ class Recognizers {
     }
 
     /**
-     * Recognises the first package in a short text such as a distributor package field ("0805 (2012 Metric)").
-     * Metric chip codes are converted when {@code metric} is true or the family is a passive.
+     * Recognises the first package in a short text such as a distributor package field ("0805 (2012 Metric)"). A bare
+     * four-digit code is imperial; metric chip codes are converted only when {@code metric} is true (the source labels
+     * the value as millimetres: TME {@code Case - mm}) or the text says so ({@link #imperial}). Crystal sizes count
+     * for crystals and oscillators.
      */
     static String findPackage(String text, String family, boolean metric) {
         if (text == null || text.isBlank()) {
@@ -383,9 +509,6 @@ class Recognizers {
             }
             if (CHIP_IMPERIAL.contains(t)) {
                 return t;
-            }
-            if (passiveFamily(family) && METRIC_TO_IMPERIAL.containsKey(t)) {
-                return METRIC_TO_IMPERIAL.get(t);
             }
             String ic = icPackage(t, family);
             if (ic != null) {
@@ -1003,12 +1126,8 @@ class Recognizers {
             keywords.removeAll(LIFETIME_WORDS);
         }
         for (String t : deferredSizes) {
-            String resolved = null;
-            if (frequencyFamily(family) && CRYSTAL_SIZES.contains(t)) {
-                resolved = t;
-            } else if (passiveFamily(family) && METRIC_TO_IMPERIAL.containsKey(t)) {
-                resolved = METRIC_TO_IMPERIAL.get(t);
-            }
+            // a crystal size for crystals and oscillators; a bare metric code is never a package (imperial rule)
+            String resolved = frequencyFamily(family) && CRYSTAL_SIZES.contains(t) ? t : null;
             if (resolved != null && packageName == null) {
                 packageName = resolved;
             } else if (resolved == null || !resolved.equals(packageName)) {
@@ -1131,6 +1250,32 @@ class Recognizers {
                     .min(java.util.Comparator.comparingDouble(Value::value)).orElse(lowest);
         }
         values.putIfAbsent(ParsedQuery.CURRENT, lowest);
+    }
+
+    private static final Pattern RANGE_DASH = Pattern.compile("(?<=\\d[a-zA-Z]{0,3})\\s*[-–]\\s*(?=\\d)");
+
+    /**
+     * Every single value of {@code kind} a text states, in text order: words that are a range ({@code 1.2V~37V},
+     * {@code 4.8V~5.4V}) or carry a condition ({@code 100nA@0.8V}, {@code 1.1V@(800mA)}) are left out.
+     */
+    static List<Double> singleValues(String text, String kind, String family) {
+        // "1.8V - 3.3V" (Mouser) is a range too
+        List<Double> out = new ArrayList<>();
+        if (text == null || text.isBlank()) {
+            return out;
+        }
+        for (String word : WHITESPACE.split(RANGE_DASH.matcher(prepare(text)).replaceAll("~"))) {
+            if (word.indexOf('~') >= 0 || word.indexOf('@') >= 0 || word.indexOf('÷') >= 0 || word.contains("...")) {
+                continue;
+            }
+            for (String token : tokenize(word)) {
+                Value v = value(token, family);
+                if (v != null && v.kind().equals(kind)) {
+                    out.add(v.value());
+                }
+            }
+        }
+        return out;
     }
 
     /** First value of the given kind found in a short text (e.g. an attribute value), or null. */

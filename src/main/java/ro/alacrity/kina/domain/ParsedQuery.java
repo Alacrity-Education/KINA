@@ -31,6 +31,11 @@ import java.util.Map;
  * @param elements     null when the request does not ask for an array or network (a single resistor, capacitor or
  *                     ferrite bead is wanted); {@link #ANY_ELEMENTS} for "array"/"network" without a count; else the
  *                     requested number of elements ("4 lines", "4 elements", "x4")
+ * @param polarity     transistor polarity ("N-channel", "P-channel", "NPN", "PNP", "complementary"), null when not
+ *                     stated; a hard constraint (DESIGN.md 3.4)
+ * @param subtype      "standard" for a rectifier or switching diode of the generic diode family, "fixed" or
+ *                     "adjustable" for a regulator (a stated output voltage implies "fixed"), else null; a hard
+ *                     constraint
  */
 @Builder(toBuilder = true)
 public record ParsedQuery(
@@ -45,7 +50,9 @@ public record ParsedQuery(
         Connector connector,
         String technology,
         List<String> preferences,
-        Integer elements
+        Integer elements,
+        String polarity,
+        String subtype
 ) {
 
     /** {@link #elements()} of a request for an array or network whose element count is not stated. */
@@ -118,7 +125,7 @@ public record ParsedQuery(
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
         this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null,
-                null, null);
+                null, null, null, null);
     }
 
     /**

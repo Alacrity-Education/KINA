@@ -257,6 +257,21 @@ class PassiveDetails {
         return dimensions != null && dimensions.startsWith("D");
     }
 
+    private static final Pattern CAN = Pattern.compile("^D(\\d+(?:\\.\\d+)?) x (\\d+(?:\\.\\d+)?)mm$");
+
+    /**
+     * The diameter and length in millimetres of a can size ({@code D6.3 x 5.8mm}, also as written: {@code Ø6.3x5.8mm},
+     * {@code D6.3xL5.8mm}), or null when the text is no can size.
+     */
+    static double[] can(String text) {
+        String d = parseDimensions(text);
+        if (d == null || !isCan(d)) {
+            return null;
+        }
+        Matcher m = CAN.matcher(d);
+        return m.matches() ? new double[] {Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2))} : null;
+    }
+
     static String parseDimensions(String text) {
         if (text == null || text.isBlank()) {
             return null;

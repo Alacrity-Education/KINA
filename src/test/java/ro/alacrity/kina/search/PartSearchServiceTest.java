@@ -556,22 +556,22 @@ class PartSearchServiceTest {
         DistributorResult t = result(service.search(new SearchRequest(query, 5, Set.of(), false)), Distributor.TME);
 
         // the rating never reaches TME; the core has the same words as the phrase (skipped); then the dielectric
-        // goes, then the package (the tolerance would be last)
-        assertThat(tme.queries).containsExactly("22uF X7R 1206 10% MLCC", "MLCC 22uF 1206 10%", "MLCC 22uF 10%");
+        // goes, then the tolerance; the package of a capacitor is never relaxed (DESIGN.md 3.4)
+        assertThat(tme.queries).containsExactly("22uF X7R 1206 10% MLCC", "MLCC 22uF 1206 10%", "MLCC 22uF 1206");
         assertThat(t.distributorQuery()).isEqualTo("22uF X7R 1206 10% MLCC");
-        assertThat(t.fallbackQuery()).isEqualTo("MLCC 22uF 10%");
+        assertThat(t.fallbackQuery()).isEqualTo("MLCC 22uF 1206");
         // the response lists only what the returned parts miss; this ranking stub reports no mismatches
         assertThat(t.constraintsRelaxed()).isEmpty();
-        assertThat(t.queryTermsDropped()).contains("voltage", "dielectric", "package").doesNotContain("tolerance");
+        assertThat(t.queryTermsDropped()).contains("voltage", "dielectric", "tolerance").doesNotContain("package");
         assertThat(t.fetched()).isEqualTo(6);
         CachedSearch stored = cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey(query));
-        assertThat(stored.fallbackQuery()).isEqualTo("MLCC 22uF 10%");
-        assertThat(stored.constraintsRelaxed()).containsExactly("dielectric", "package");
+        assertThat(stored.fallbackQuery()).isEqualTo("MLCC 22uF 1206");
+        assertThat(stored.constraintsRelaxed()).containsExactly("dielectric", "tolerance");
         // a cache hit reports the same relaxation
         DistributorResult hit = result(service.search(new SearchRequest(query, 5, Set.of(), false)),
                 Distributor.TME);
         assertThat(hit.cache()).isEqualTo(CacheStatus.HIT);
-        assertThat(hit.fallbackQuery()).isEqualTo("MLCC 22uF 10%");
+        assertThat(hit.fallbackQuery()).isEqualTo("MLCC 22uF 1206");
     }
 
     @Test

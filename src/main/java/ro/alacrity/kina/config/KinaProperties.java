@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Every {@code kina.*} setting (DESIGN.md section 10). Defaults here mirror {@code application.yml} so tests
@@ -241,10 +242,14 @@ public record KinaProperties(
      *                           not count (DESIGN.md 3.6)
      * @param maxRequestDuration hard cap on one incoming request ({@code search_parts}, a whole batch, {@code get_part})
      *                           within which rate-limited distributor calls may wait and retry
-     * @param strictConstraints  stated request attributes that exclude a part whose known value contradicts them
-     *                           ({@code mounting}, {@code technology}, {@code elements}: an array or network for a
-     *                           single-element request; DESIGN.md 3.4 "Strict constraints"); a part that does not state
-     *                           the attribute stays but ranks below verified matches
+     * @param strictConstraints  deprecated ({@code KINA_STRICT_CONSTRAINTS}): {@code mounting}, {@code technology} or
+     *                           {@code elements} missing from a non-empty list are removed from every family's hard
+     *                           constraints, with a warning; null (or empty) when not set. Use {@code hardConstraints}
+     * @param hardConstraints    per family ({@code resistor}, {@code capacitor}, {@code inductor}, {@code ferrite},
+     *                           {@code crystal}, {@code oscillator}, {@code diode}, {@code transistor},
+     *                           {@code regulator}, {@code connector}, {@code usb}, {@code default}) the constraints that
+     *                           are never relaxed; a family listed here replaces the code default
+     *                           ({@code search.ConstraintPolicy}, DESIGN.md 3.4 "Hard constraints")
      * @param quantity           ranking penalties for the order quantity, low stock and the minimum order quantity
      * @param lifecycle          ranking penalties for last-time-buy and supply-constrained parts
      * @param lowStockThreshold  a part with less stock than this (or less than twice the quantity) is
@@ -256,38 +261,41 @@ public record KinaProperties(
             @DefaultValue("50") int maxMaxResults,
             @DefaultValue("12s") Duration distributorTimeout,
             @DefaultValue("2m") Duration maxRequestDuration,
-            @DefaultValue({"mounting", "technology", "elements"}) List<String> strictConstraints,
+            List<String> strictConstraints,
+            Map<String, List<String>> hardConstraints,
             @DefaultValue Quantity quantity,
             @DefaultValue Lifecycle lifecycle,
             @DefaultValue("10") int lowStockThreshold) {
 
-        /** Default {@code kina.search.strict-constraints}. */
-        public static final List<String> DEFAULT_STRICT_CONSTRAINTS = List.of("mounting", "technology", "elements");
         public static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
 
         @ConstructorBinding
         public Search {
-            strictConstraints = strictConstraints == null ? List.of() : strictConstraints.stream()
+            strictConstraints = strictConstraints == null ? null : strictConstraints.stream()
                     .filter(c -> c != null && !c.isBlank())
                     .map(c -> c.strip().toLowerCase(java.util.Locale.ROOT)).toList();
+            if (strictConstraints != null && strictConstraints.isEmpty()) {
+                strictConstraints = null;   // KINA_STRICT_CONSTRAINTS unset (application.yml maps it to "")
+            }
+            Map<String, List<String>> hard = new java.util.LinkedHashMap<>();
+            if (hardConstraints != null) {
+                hardConstraints.forEach((family, names) -> {
+                    if (family != null) {
+                        hard.put(family, names == null ? List.of() : List.copyOf(names));
+                    }
+                });
+            }
+            hardConstraints = java.util.Collections.unmodifiableMap(hard);
             quantity = quantity == null ? Quantity.DEFAULTS : quantity;
             lifecycle = lifecycle == null ? Lifecycle.DEFAULTS : lifecycle;
             lowStockThreshold = lowStockThreshold <= 0 ? DEFAULT_LOW_STOCK_THRESHOLD : lowStockThreshold;
         }
 
-        /** With the default low-stock threshold (tests that build the tree by hand). */
-        public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
-                      Duration maxRequestDuration, List<String> strictConstraints, Quantity quantity,
-                      Lifecycle lifecycle) {
-            this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration,
-                    strictConstraints, quantity, lifecycle, DEFAULT_LOW_STOCK_THRESHOLD);
-        }
-
-        /** With the default strict constraints and penalties (tests). */
+        /** With the default hard constraints, penalties and low-stock threshold (tests). */
         public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
                       Duration maxRequestDuration) {
-            this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration,
-                    DEFAULT_STRICT_CONSTRAINTS, null, null);
+            this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration, null, null,
+                    null, null, DEFAULT_LOW_STOCK_THRESHOLD);
         }
     }
 

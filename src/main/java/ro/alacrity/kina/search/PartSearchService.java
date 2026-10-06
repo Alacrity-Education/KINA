@@ -204,6 +204,12 @@ public class PartSearchService {
         return new RankingService.RankOptions(prepared.request().quantity(), prepared.request().allowBelowSpec());
     }
 
+    /** The hard / relaxable constraint table ({@link RankingService#policy()}; the defaults when not available). */
+    ConstraintPolicy policy() {
+        ConstraintPolicy p = ranking == null ? null : ranking.policy();
+        return p == null ? ConstraintPolicy.DEFAULTS : p;
+    }
+
     /** {@code now + kina.search.max-request-duration}. */
     Deadline requestDeadline() {
         return Deadline.after(properties.search().maxRequestDuration());
@@ -447,7 +453,7 @@ public class PartSearchService {
                 CachedSearch search = cached.get();
                 String fallbackQuery = search.fallbackQuery();
                 List<String> relaxed = search.constraintsRelaxed() != null ? search.constraintsRelaxed()
-                        : relaxedBy(distributor, parsed, query, fallbackQuery);
+                        : relaxedBy(distributor, parsed, query, fallbackQuery, policy());
                 Optional<List<Part>> parts = readCachedParts(distributor, search.partNumbers(), freshSince);
                 if (parts.isPresent()) {
                     List<Part> cachedParts = parts.get().stream().map(extractor::enrich).toList();
@@ -475,7 +481,7 @@ public class PartSearchService {
         List<String> relaxed = List.of();
         Attempt firstWithParts = collected.all().isEmpty() ? null : new Attempt(collected, null, List.of());
         // relaxation ladder (DESIGN.md 3.2): until a phrase finds a part that meets the request
-        for (DistributorPhraser.Relaxation step : DistributorPhraser.ladder(distributor, parsed, query)) {
+        for (DistributorPhraser.Relaxation step : DistributorPhraser.ladder(distributor, parsed, query, policy())) {
             if (collected.meeting() > 0 || collected.error() != null || deadline.remainingNanos() <= 0) {
                 break;
             }
@@ -550,11 +556,12 @@ public class PartSearchService {
      * What the ladder rung {@code fallbackQuery} loosened, for a cached search stored before
      * {@code cached_searches.constraints_relaxed} existed (the ladder is a pure function of the parsed query).
      */
-    static List<String> relaxedBy(Distributor distributor, ParsedQuery parsed, String query, String fallbackQuery) {
+    static List<String> relaxedBy(Distributor distributor, ParsedQuery parsed, String query, String fallbackQuery,
+                                  ConstraintPolicy policy) {
         if (fallbackQuery == null) {
             return List.of();
         }
-        return DistributorPhraser.ladder(distributor, parsed, query).stream()
+        return DistributorPhraser.ladder(distributor, parsed, query, policy).stream()
                 .filter(step -> step.phrase().equals(fallbackQuery))
                 .map(DistributorPhraser.Relaxation::relaxed)
                 .findFirst().orElse(List.of());
@@ -673,7 +680,8 @@ public class PartSearchService {
             terms.add(parsed.dielectric());
             parametric++;
         }
-        if (parsed.packageName() != null && !drop.contains("package")) {
+        // a can size ("D6.3 x 5.8mm") is no search term: the ranker compares it
+        if (parsed.packageName() != null && !drop.contains("package") && !PassiveDetails.isCan(parsed.packageName())) {
             terms.add(parsed.packageName());
             parametric++;
         }
@@ -982,7 +990,7 @@ public class PartSearchService {
             out.put(distributor, List.copyOf(kept));
         }
         return changed ? new RankedResults(out, ranked.mode(), ranked.note(), ranked.excluded(),
-                ranked.excludedBelowSpec()) : ranked;
+                ranked.excludedBelowSpec(), ranked.excludedDetail()) : ranked;
     }
 
     private void writeBack(Distributor distributor, List<Part> refreshed, List<String> soldOut) {
@@ -1013,9 +1021,14 @@ public class PartSearchService {
     private SearchResponse assemble(Prepared prepared, Map<Distributor, Fetched> fetched, RankedResults ranked,
                                     String note) {
         SearchRequest request = prepared.request();
-        boolean understood = prepared.parsed().understood();
+        ParsedQuery parsed = prepared.parsed();
+        ConstraintPolicy policy = policy();
+        boolean understood = parsed.understood();
         int lowStockThreshold = properties.search().lowStockThreshold();
         List<DistributorResult> results = new ArrayList<>();
+        List<String> empty = new ArrayList<>();
+        Map<String, Integer> emptyExcluded = new java.util.LinkedHashMap<>();
+        int emptyBelowSpec = 0;
         for (Distributor distributor : prepared.distributors()) {
             Fetched f = fetched.get(distributor);
             if (f == null) {
@@ -1034,6 +1047,16 @@ public class PartSearchService {
                         request.quantity(), request.detail(), canonical, lowStockThreshold));
             }
             Integer exact = understood ? (int) top.stream().filter(RankedPart::exact).count() : null;
+            Map<String, Integer> detail = ranked.excludedDetailBy(distributor);
+            String hint = null;
+            if (understood && parts.isEmpty() && f.error() == null) {
+                // nothing satisfies the hard constraints (DESIGN.md 3.2 "Empty after the hard set"): no substitutes
+                hint = policy.hint(parsed, List.of(distributor.name()), detail,
+                        ranked.excludedBelowSpecBy(distributor), request.allowBelowSpec());
+                empty.add(distributor.name());
+                detail.forEach((k, v) -> emptyExcluded.merge(k, v, Integer::sum));
+                emptyBelowSpec += ranked.excludedBelowSpecBy(distributor);
+            }
             results.add(DistributorResult.builder()
                     .distributor(distributor)
                     .totalResults(f.totalResults())
@@ -1046,16 +1069,32 @@ public class PartSearchService {
                     .rateLimitWaitedMs(f.rateLimitWaitedMs())
                     .distributorQuery(f.distributorQuery())
                     .excludedByConstraints(ranked.excludedBy(distributor))
+                    .excludedByConstraintsDetail(detail)
                     .excludedBelowSpec(ranked.excludedBelowSpecBy(distributor))
                     .outOfStockMatches(f.outOfStockMatches())
                     .queryTermsDropped(f.queryTermsDropped())
-                    .constraintsRelaxed(actuallyRelaxed(f.constraintsRelaxed(), top))
+                    .constraintsRelaxed(actuallyRelaxed(relaxable(parsed, f.constraintsRelaxed(), policy), top))
                     .exactMatches(exact)
+                    .hint(hint)
                     .build());
         }
-        return new SearchResponse(prepared.parsed().originalText(), ParsedQueryResponse.from(prepared.parsed()),
-                ranked.mode(), note, results, understood, understood ? null : SearchResponse.NOT_UNDERSTOOD_HINT,
-                SearchResponse.currenciesOf(results));
+        String hint = !understood ? SearchResponse.NOT_UNDERSTOOD_HINT
+                : empty.isEmpty() ? null
+                : policy.hint(parsed, empty, emptyExcluded, emptyBelowSpec, request.allowBelowSpec());
+        return new SearchResponse(parsed.originalText(), ParsedQueryResponse.from(parsed), ranked.mode(), note,
+                results, understood, hint, SearchResponse.currenciesOf(results));
+    }
+
+    /**
+     * The loosened constraints that may be reported as relaxed: those the policy lets relax for the request's family
+     * (a hard constraint or a rating is never relaxed, even when LCSC's database search dropped its term: the ranker
+     * excludes the parts that miss it).
+     */
+    static List<String> relaxable(ParsedQuery parsed, List<String> loosened, ConstraintPolicy policy) {
+        if (loosened == null || loosened.isEmpty()) {
+            return List.of();
+        }
+        return loosened.stream().filter(name -> policy.isRelaxable(parsed, name)).toList();
     }
 
     /**

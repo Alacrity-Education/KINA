@@ -83,6 +83,10 @@ public class ParametricExtractor {
     public static final String QUALIFICATION = "Qualification";
     /** The vendor case code of a can capacitor whose Package shows the dimensions (Panasonic "D"). */
     public static final String CASE = "Case";
+    /** Transistor polarity ("N-channel", "P-channel", "NPN", "PNP", "complementary"). */
+    public static final String POLARITY = "Polarity";
+    /** "standard" (rectifier / switching diode of the generic diode family), "fixed" or "adjustable" (regulators). */
+    public static final String SUBTYPE = "Subtype";
 
     /** Comparable key per {@link ParsedQuery} value kind, in output order. */
     private static final Map<String, String> KIND_KEYS = orderedKindKeys();
@@ -114,11 +118,12 @@ public class ParametricExtractor {
             "Dielectric", "Package", "Mounting", "Family", "Technology", "ConnectorType", "Gender", "Positions", "Rows",
             "Pitch", "Orientation", "Series", "UsbType", "UsbStandard", "UsbSpeedGbps", "PinConfiguration",
             "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features", ELEMENTS, RIPPLE_CURRENT, ESR, DIMENSIONS,
-            QUALIFICATION, CASE);
+            QUALIFICATION, CASE, POLARITY, SUBTYPE);
 
     // ---------------------------------------------------------------- distributor attribute names (lower-case)
 
-    private static final List<String> CAPACITANCE_NAMES = List.of("capacitance", "capacitance value", "nominal capacitance");
+    private static final List<String> CAPACITANCE_NAMES = List.of("capacitance", "capacitance value", "nominal capacitance",
+            "load capacitance", "load capacitance (cl)");
     private static final List<String> RESISTANCE_NAMES = List.of("resistance", "resistance value", "nominal resistance");
     private static final List<String> INDUCTANCE_NAMES = List.of("inductance", "nominal inductance");
     private static final List<String> FREQUENCY_NAMES = List.of("frequency", "nominal frequency", "oscillation frequency");
@@ -129,6 +134,12 @@ public class ParametricExtractor {
             "reverse voltage (vr)", "vds - drain-source breakdown voltage", "drain source voltage (vdss)",
             "drain to source voltage (vdss)", "vz - zener voltage", "voltage - zener (nom) (vz)",
             "vrwm - reverse standoff voltage", "reverse stand-off voltage (vrwm)", "voltage - reverse standoff (typ)");
+    /** A regulator's output voltage (TME {@code Output voltage}, Mouser {@code Output Voltage}) comes first. */
+    private static final List<String> OUTPUT_VOLTAGE_NAMES = List.of("output voltage", "voltage - output",
+            "voltage - output (min/fixed)", "output voltage (fixed)", "fixed output voltage");
+    /** A Zener diode's Zener voltage (Mouser {@code Vz - Zener Voltage}, TME {@code Zener voltage}) comes first. */
+    private static final List<String> ZENER_VOLTAGE_NAMES = List.of("vz - zener voltage", "zener voltage",
+            "voltage - zener (nom) (vz)", "zener voltage (vz)", "voltage - zener");
     private static final Pattern VOLTAGE_EXCLUDED = Pattern.compile(
             "forward|clamp|breakdown|input|supply|isolation|threshold|gate|ripple|dropout|temperature|coefficient|offset");
     private static final List<String> CURRENT_NAMES = List.of("current rating", "rated current", "current", "current - output",
@@ -232,28 +243,23 @@ public class ParametricExtractor {
      * @param details  descriptive canonical attributes in output order ({@value #RIPPLE_CURRENT}, {@value #ESR},
      *                 {@value #IMPEDANCE} of a capacitor, {@value #DIMENSIONS}, {@value #CASE},
      *                 {@value #QUALIFICATION}, {@value #FEATURES}); not scored
+     * @param polarity transistor polarity ({@link ComponentTypes#polarity}), null when not stated
+     * @param subtype  "standard" for a rectifier or switching diode of the generic diode family, "fixed" or
+     *                 "adjustable" for a regulator ({@link ComponentTypes#subtype}), else null
+     * @param voltages the voltages a regulator or Zener part states as its specification: the output or Zener voltage
+     *                 attribute when there is one, else every single voltage of the description (JLCPCB lists the
+     *                 values of a part without labels, sorted as text: {@code 1.1V@(800mA) 15V 1A 3.3V}); ranges
+     *                 ({@code 1.2V~37V}) and conditioned values ({@code 100nA@0.8V}) are left out. Empty for other
+     *                 families
      */
     record Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
                     String mounting, String text, ParsedQuery.Connector connector, String technology,
-                    Integer elements, Map<String, String> details) {
+                    Integer elements, Map<String, String> details, String polarity, String subtype,
+                    List<Double> voltages) {
 
         Features {
             details = details == null ? Map.of() : details;
-        }
-
-        Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
-                 String mounting, String text, ParsedQuery.Connector connector, String technology) {
-            this(family, values, dielectric, packageName, mounting, text, connector, technology, null, null);
-        }
-
-        Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
-                 String mounting, String text, ParsedQuery.Connector connector) {
-            this(family, values, dielectric, packageName, mounting, text, connector, null);
-        }
-
-        Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
-                 String mounting, String text) {
-            this(family, values, dielectric, packageName, mounting, text, null, null);
+            voltages = voltages == null ? List.of() : List.copyOf(voltages);
         }
 
         Double value(String kind) {
@@ -281,6 +287,8 @@ public class ParametricExtractor {
         putIfNotNull(out, MOUNTING, f.mounting());
         putIfNotNull(out, FAMILY, f.family());
         putIfNotNull(out, TECHNOLOGY, f.technology());
+        putIfNotNull(out, POLARITY, f.polarity());
+        putIfNotNull(out, SUBTYPE, f.subtype());
         putIfNotNull(out, ELEMENTS, PassiveDetails.elementsDisplay(f.elements()));
         f.details().forEach(out::putIfAbsent);
         ParsedQuery.Connector c = f.connector();
@@ -344,6 +352,14 @@ public class ParametricExtractor {
             // "Transistor: N-MOSFET"): the more specific family wins
             explicitFamily = description.family();
         }
+        if (category.familyExplicit() && description.familyExplicit() && category.family() != null
+                && FREQUENCY_FAMILIES.contains(category.family()) && description.family() != null
+                && FREQUENCY_FAMILIES.contains(description.family())
+                && Recognizers.familiesIn(lastCategorySegment(part.category())).containsAll(FREQUENCY_FAMILIES)) {
+            // a category naming both kinds (TME "Resonators and Generators"): the description decides
+            // ("Crystal; 16MHz" is a crystal, "Generator: quartz; 16MHz" an oscillator)
+            explicitFamily = description.family();
+        }
         final String valueFamily = explicitFamily;
 
         Map<String, Recognizers.Value> values = new LinkedHashMap<>();
@@ -356,6 +372,11 @@ public class ParametricExtractor {
         }
         attributeValue(attrs, INDUCTANCE_NAMES, ParsedQuery.INDUCTANCE, valueFamily, values);
         attributeValue(attrs, FREQUENCY_NAMES, ParsedQuery.FREQUENCY, valueFamily, values);
+        if ("regulator".equals(valueFamily)) {
+            attributeValue(attrs, OUTPUT_VOLTAGE_NAMES, ParsedQuery.VOLTAGE, valueFamily, values);
+        } else if ("zener".equals(valueFamily)) {
+            attributeValue(attrs, ZENER_VOLTAGE_NAMES, ParsedQuery.VOLTAGE, valueFamily, values);
+        }
         attributeValue(attrs, VOLTAGE_NAMES, ParsedQuery.VOLTAGE, valueFamily, values);
         if (!values.containsKey(ParsedQuery.VOLTAGE)) {
             attrs.forEach((k, v) -> {
@@ -409,6 +430,14 @@ public class ParametricExtractor {
         }
 
         String packageName = packageOf(part, attrs, family, description);
+        if (family != null && FREQUENCY_FAMILIES.contains(family) && !Recognizers.isCrystalSize(packageName)
+                && (packageName == null || !Recognizers.isRecognisedPackage(packageName))) {
+            // TME "Body dimensions: 3.2x2.5x0.8mm" (no case code): the size code of a crystal is its body in mm
+            String size = crystalSize(part, attrs);
+            if (size != null) {
+                packageName = size;
+            }
+        }
         String mounting = null;
         for (String name : MOUNTING_NAMES) {
             String v = attrs.get(name);
@@ -483,9 +512,18 @@ public class ParametricExtractor {
         if (connector == null) {
             putIfNotNull(details, FEATURES, PassiveDetails.features(part, attrs, family));
         }
+        String typeText = typeText(part, attrs);
+        String polarity = ComponentTypes.polarised(family) ? ComponentTypes.polarity(typeText) : null;
+        String subtype = connector == null ? ComponentTypes.subtype(family, typeText) : null;
+        List<Double> voltages = List.of();
+        if (DeterministicRanker.isExactRating(ParsedQuery.VOLTAGE, family)) {
+            voltages = fromAttributes.contains(ParsedQuery.VOLTAGE) ? List.of(values.get(ParsedQuery.VOLTAGE).value())
+                    : Recognizers.singleValues(part.description(), ParsedQuery.VOLTAGE, family);
+        }
         return new Features(family, values, dielectric, packageName, mounting,
                 Recognizers.normalizeKey(text.toString()), connector, connector != null ? null : technology,
-                connector == null ? PassiveDetails.elements(part, attrs, family) : null, details);
+                connector == null ? PassiveDetails.elements(part, attrs, family) : null, details, polarity, subtype,
+                voltages);
     }
 
     /**
@@ -531,6 +569,63 @@ public class ParametricExtractor {
         }
         return found.stream().filter(t -> !TechnologyVocabulary.CURRENT_SENSE.equals(t)).findFirst()
                 .orElse(found.isEmpty() ? null : found.getFirst());
+    }
+
+    private static final Set<String> FREQUENCY_FAMILIES = Set.of("crystal", "oscillator");
+    /** Attributes that state the kind of a semiconductor (TME {@code Type of transistor}, {@code Type of diode}...). */
+    private static final List<String> TYPE_NAMES = List.of("type of transistor", "type of diode",
+            "kind of voltage regulator", "type of voltage regulator", "transistor polarity", "polarity",
+            "channel type", "output type", "regulator type", "transistor type", "diode type", "configuration",
+            "number of channels", "technology");
+    private static final Pattern BODY = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s?(?:mm)?\\s?[x×*]\\s?(\\d+(?:[.,]\\d+)?)");
+    private static final List<String> BODY_NAMES = List.of("body dimensions", "dimensions", "size / dimension",
+            "size", "case size", "body size");
+
+    /** The text that names a semiconductor's type: its type attributes, the category and the description. */
+    private static String typeText(Part part, Map<String, String> attrs) {
+        StringBuilder out = new StringBuilder();
+        for (String name : TYPE_NAMES) {
+            String v = attrs.get(name);
+            if (v != null) {
+                out.append(v).append(" ; ");
+            }
+        }
+        if (part.category() != null) {
+            out.append(part.category()).append(" ; ");
+        }
+        if (part.description() != null) {
+            out.append(part.description());
+        }
+        return out.toString();
+    }
+
+    /**
+     * The size code of a crystal or oscillator from its body dimensions ({@code 3.2x2.5x0.8mm} -&gt; {@code 3225}):
+     * a dimensions attribute, else the description; null when none gives a known size.
+     */
+    private static String crystalSize(Part part, Map<String, String> attrs) {
+        for (String name : BODY_NAMES) {
+            String size = crystalSize(attrs.get(name));
+            if (size != null) {
+                return size;
+            }
+        }
+        return crystalSize(part.description());
+    }
+
+    private static String crystalSize(String text) {
+        if (text == null) {
+            return null;
+        }
+        java.util.regex.Matcher m = BODY.matcher(text);
+        while (m.find()) {
+            String size = Recognizers.crystalSize(Double.parseDouble(m.group(1).replace(',', '.')),
+                    Double.parseDouble(m.group(2).replace(',', '.')));
+            if (size != null) {
+                return size;
+            }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------- connectors

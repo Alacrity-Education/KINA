@@ -52,16 +52,29 @@ public class KinaMcpTools {
             DCR limit ("DCR < 20mOhm") is a maximum; "low DCR" is a preference (lower DCR ranks higher). A part \
             whose known rating is below the request is never returned by default (counted in excluded_below_spec); \
             pass allow_below_spec=true to see such parts, flagged below_spec: true and listed after every part that \
-            meets the request, closest to the target first. A regulator or Zener voltage and a fuse current must \
-            match. Ratings are not sent to the distributors' keyword search (distributor_query shows the phrase).
-            Mounting (SMD/THT), technology and arrays are strict when stated or implied: a part whose known mounting \
-            or technology contradicts the request, or a bead array or resistor network for a single-element request \
-            (write "array", "network" or "4 lines" to ask for one), is left out (excluded_by_constraints). \
-            "polymer aluminium" excludes tantalum polymer; a bare "polymer" accepts both.
-            When a distributor has nothing that meets the request, KINA reads further pages, then relaxes the \
-            search in this order: dielectric, then package, then tolerance (never a rating); constraints_relaxed \
-            lists what was loosened and each part's mismatches says what it misses (e.g. "dielectric: X5R instead of \
-            X7R").
+            meets the request, closest to the target first. A fuse current must match. Ratings are not sent to the \
+            distributors' keyword search (distributor_query shows the phrase).
+            Hard constraints are NEVER relaxed and never substituted: a part whose known value contradicts one is \
+            left out (excluded_by_constraints, per constraint in excluded_by_constraints_detail). Hard for every \
+            component: the primary value (resistance, capacitance, inductance, a ferrite bead's impedance at its \
+            frequency, a crystal's or oscillator's frequency), mounting (SMD/THT), technology, the package (except \
+            for inductors, crystals and oscillators) and the component type: crystals and oscillators (XO, TCXO, \
+            VCXO, MEMS) are never mixed; Schottky, standard rectifier/switching, Zener and TVS diodes are different \
+            types; N-channel vs P-channel and NPN vs PNP; fixed vs adjustable regulators and the exact output \
+            voltage; the Zener voltage and a crystal's load capacitance are exact; for connectors the type, gender, \
+            positions and pitch, for USB connectors the type and the stated pin count (a higher USB standard is \
+            accepted, a lower one is not); a bead array or resistor network for a single-element request (write \
+            "array", "network" or "4 lines" to ask for one). "polymer aluminium" excludes tantalum polymer; a bare \
+            "polymer" accepts both. A part that does not state an attribute is kept, listed in unverified.
+            Packages are imperial, always: a four-digit chip code is the inch code ("0603" is imperial 0603, never \
+            metric 0603 = imperial 0201); write "1608 metric" or "3216M" for a metric code. A can capacitor size \
+            ("6.3x5.4mm", "D6.3xL5.4mm") matches within 0.2 mm.
+            Relaxable (only when nothing else is found, always reported in constraints_relaxed and in each part's \
+            mismatches, e.g. "dielectric: X5R instead of X7R"): the dielectric, then the package of an inductor, \
+            crystal or oscillator, then a looser tolerance; also a connector's orientation. When a distributor has \
+            nothing that meets the hard constraints, its list is empty (exact_matches 0) and a hint (per \
+            distributor and for the response) names the constraints that could not be met: no substitutes are \
+            returned; try another package or value, or check whether allow_below_spec is the issue.
             Only stock that ships now is returned: parts with only factory stock, on-order or lead-time quantities \
             are never returned. For BOM work always pass quantity (pieces to order, default 1): parts with less \
             stock rank last, low stock and a minimum order quantity far above the quantity cost rank, and each part \

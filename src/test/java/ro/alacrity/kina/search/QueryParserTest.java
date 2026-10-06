@@ -46,7 +46,12 @@ class QueryParserTest {
                 row("TVS diode 5V SOD-323", "tvs", "voltage=5V", "", "SOD-323", "", ""),
                 row("0.1uF 16V X5R 0201", "capacitor", "capacitance=100nF;voltage=16V", "X5R", "0201", "", ""),
                 row("NP0 100pF 0603", "capacitor", "capacitance=100pF", "C0G", "0603", "", ""),
-                row("10uF 2012 MLCC", "capacitor", "capacitance=10uF", "", "0805", "", "mlcc"),
+                // packages are imperial: a bare 2012 is no package, a labelled metric code is converted
+                row("10uF 2012 MLCC", "capacitor", "capacitance=10uF", "", "", "", "mlcc 2012"),
+                row("10uF 2012 metric MLCC", "capacitor", "capacitance=10uF", "", "0805", "", "mlcc"),
+                row("100nF 1608M X7R", "capacitor", "capacitance=100nF", "X7R", "0603", "", ""),
+                row("1pF 0603mm C0G", "capacitor", "capacitance=1pF", "C0G", "0201", "", ""),
+                row("100nF 0603 X7R", "capacitor", "capacitance=100nF", "X7R", "0603", "", ""),
                 row("4u7 0805", "capacitor", "capacitance=4.7uF", "", "0805", "", ""),
                 row("4u7 inductor 1210", "inductor", "inductance=4.7uH", "", "1210", "", ""),
                 row("N-channel MOSFET 30V 5A SOT-23", "mosfet", "voltage=30V;current=5A", "", "SOT-23", "", "n-channel"),

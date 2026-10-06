@@ -158,14 +158,19 @@ class TmePartMapper {
         return "https://www.tme.eu/en/details/" + UriUtils.encodePathSegment(symbol, StandardCharsets.UTF_8) + "/";
     }
 
-    /** First value of the first non-empty parameter among {@link #PACKAGE_PARAMETERS}. */
+    /**
+     * First value of the first non-empty parameter among {@link #PACKAGE_PARAMETERS}. A bare code from
+     * {@code Case - mm} is labelled ({@code 1608 mm}): packages are imperial everywhere else (DESIGN.md 3.4), the search
+     * layer converts a labelled metric code to the imperial one ({@code 0603}).
+     */
     static String packageName(List<TmeResponses.Parameter> params) {
         for (String name : PACKAGE_PARAMETERS) {
             for (TmeResponses.Parameter param : params) {
                 if (name.equalsIgnoreCase(param.name())) {
                     String value = values(param).stream().findFirst().orElse(null);
                     if (value != null) {
-                        return value;
+                        return "Case - mm".equals(name) && value.strip().matches("\\d{4,5}") ? value.strip() + " mm"
+                                : value;
                     }
                 }
             }

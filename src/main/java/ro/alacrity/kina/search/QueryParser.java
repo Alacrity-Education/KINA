@@ -4,12 +4,15 @@ import org.springframework.stereotype.Component;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Parses a free-text component query into a {@link ParsedQuery} (DESIGN.md section 3.4): family keywords, SI values
  * (incl. RKM notation such as {@code 4k7}, {@code 4u7}, {@code 10R}, {@code 2R2}), tolerance, dielectric, package
- * (imperial chip codes; metric chip codes only when the family is a passive; IC/discrete packages by pattern),
+ * (imperial chip codes always: a bare four-digit code is imperial, a metric code only when labelled, {@code 1608
+ * metric}; crystal sizes for crystals and oscillators; can sizes of aluminium capacitors; IC/discrete packages by
+ * pattern), transistor polarity and the diode / regulator subtype ({@link ComponentTypes}),
  * mounting, connector attributes ({@link ConnectorRecognizer}: type, gender, positions, rows, pitch, orientation), the
  * technology of a passive ({@link TechnologyVocabulary}: thin film, tantalum, multilayer...), labelled values
  * (saturation current, DC resistance, lifetime, operating temperature, the impedance of a ferrite bead), preferences
@@ -36,20 +39,63 @@ public class QueryParser {
         analysis.values().forEach((kind, v) -> constraints.put(kind,
                 new ParsedQuery.Constraint(kind, v.value(), v.display(), v.condition())));
         String family = connector != null ? "connector" : analysis.family();
+        String polarity = null;
+        String subtype = null;
+        String packageName = analysis.packageName();
+        List<String> keywords = analysis.keywords();
+        if (connector == null) {
+            polarity = family == null || ComponentTypes.polarised(family) ? ComponentTypes.polarity(original) : null;
+            if (family == null && polarity != null) {
+                // "SOT-23 N-channel 30V": the polarity names the family
+                family = ComponentTypes.NPN.equals(polarity) || ComponentTypes.PNP.equals(polarity) ? "transistor"
+                        : "mosfet";
+            }
+            subtype = ComponentTypes.subtype(family, original);
+            if (subtype == null && "regulator".equals(family) && constraints.containsKey(ParsedQuery.VOLTAGE)) {
+                subtype = ComponentTypes.FIXED;   // "3.3V LDO": a stated output voltage is a fixed regulator
+            }
+            if (packageName == null && "capacitor".equals(family)) {
+                String can = canSize(original, analysis.technology());
+                if (can != null) {
+                    packageName = can;
+                    keywords = keywords.stream().filter(k -> PassiveDetails.parseDimensions(k) == null).toList();
+                }
+            }
+        }
         return ParsedQuery.builder()
                 .originalText(original)
                 .normalizedKey(normalizeKey(original))
                 .family(family)
                 .constraints(constraints)
                 .dielectric(analysis.dielectric())
-                .packageName(analysis.packageName())
+                .packageName(packageName)
                 .mounting(analysis.mounting())
-                .keywords(analysis.keywords())
+                .keywords(keywords)
+                .polarity(polarity)
+                .subtype(subtype)
                 .connector(connector)
                 .technology(connector != null ? null : analysis.technology())
                 .preferences(analysis.preferences())
                 .elements(connector != null ? null : requestedElements(original))
                 .build();
+    }
+
+    /**
+     * The can size of an electrolytic or polymer capacitor request ({@code D6.3 x 5.8mm}) from {@code Ø6.3x5.8mm},
+     * {@code D6.3xL5.8mm}, or {@code 6.3x5.8mm} when the technology is an aluminium (electrolytic, polymer, hybrid)
+     * one; null otherwise. Can sizes compare within 0.2 mm ({@link Recognizers#samePackage}).
+     */
+    static String canSize(String text, String technology) {
+        String d = PassiveDetails.parseDimensions(text);
+        if (d == null || d.chars().filter(c -> c == 'x').count() != 1) {
+            return null;
+        }
+        if (PassiveDetails.isCan(d)) {
+            return d;
+        }
+        boolean aluminium = technology != null && !technology.contains("tantalum")
+                && (technology.contains("aluminium") || technology.contains("polymer"));
+        return aluminium ? "D" + d : null;
     }
 
     private static final java.util.regex.Pattern ARRAY_WORDS = java.util.regex.Pattern.compile(

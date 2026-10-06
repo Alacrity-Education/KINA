@@ -319,11 +319,15 @@ class AuditFindingsTest {
             assertThat(results.excludedBy(Distributor.MOUSER)).isEqualTo(1);
             assertThat(ranked.get(0).score()).isGreaterThanOrEqualTo(ranked.get(1).score());
         }
-        // without strict constraints nothing is excluded
-        RankingService.RankedResults lenient = rankingService("kina.search.strict-constraints", "")
+        // a family whose hard constraints leave out the mounting excludes nothing
+        RankingService.RankedResults lenient = rankingService("kina.search.hard-constraints.capacitor", "value")
                 .rank(q, fetched, Duration.ofSeconds(5));
         assertThat(lenient.excludedBy(Distributor.MOUSER)).isZero();
         assertThat(lenient.byDistributor().get(Distributor.MOUSER)).hasSize(3);
+        // the deprecated strict-constraints still turns the mounting off (with a warning)
+        RankingService.RankedResults legacy = rankingService("kina.search.strict-constraints", "technology")
+                .rank(q, fetched, Duration.ofSeconds(5));
+        assertThat(legacy.excludedBy(Distributor.MOUSER)).isZero();
     }
 
     @Test
@@ -448,18 +452,23 @@ class AuditFindingsTest {
     @Test
     void relaxationLadderDropsRatingsThenDielectricThenPackageThenTolerance() {
         ParsedQuery q = parser.parse("22uF X7R 1206 25V 10% MLCC");
-        // the core "MLCC 22uF X7R 1206 10%" has the words of the rating-free phrase and is skipped
+        // the core "MLCC 22uF X7R 1206 10%" has the words of the rating-free phrase and is skipped; the package of a
+        // capacitor is hard and stays in every phrase (DESIGN.md 3.4)
         assertThat(DistributorPhraser.ladder(Distributor.TME, q, q.originalText())).containsExactly(
                 new DistributorPhraser.Relaxation("22uF X7R 1206 10% MLCC", List.of()),
                 new DistributorPhraser.Relaxation("MLCC 22uF 1206 10%", List.of("dielectric")),
-                new DistributorPhraser.Relaxation("MLCC 22uF 10%", List.of("dielectric", "package")),
-                new DistributorPhraser.Relaxation("MLCC 22uF", List.of("dielectric", "package", "tolerance")));
+                new DistributorPhraser.Relaxation("MLCC 22uF 1206", List.of("dielectric", "tolerance")));
         String sent = DistributorPhraser.phrase(Distributor.MOUSER, q);
         assertThat(DistributorPhraser.relaxations(Distributor.MOUSER, q, sent)).containsExactly(
-                "MLCC 22uF 1206 10%", "MLCC 22uF 10%", "MLCC 22uF");
+                "MLCC 22uF 1206 10%", "MLCC 22uF 1206");
         ParsedQuery same = parser.parse("22uF X7R 1206 25V MLCC");
         assertThat(DistributorPhraser.relaxations(Distributor.TME, same, DistributorPhraser.phrase(Distributor.TME, same)))
-                .containsExactly("MLCC 22uF 1206", "MLCC 22uF");
+                .containsExactly("MLCC 22uF 1206");
+        // an inductor's package is relaxable: dielectric (none), then the package, then the tolerance
+        ParsedQuery inductor = parser.parse("10uH 20% inductor 0805 1A");
+        assertThat(DistributorPhraser.ladder(Distributor.TME, inductor, "10uH 20% inductor 0805")).containsExactly(
+                new DistributorPhraser.Relaxation("inductor 10uH 20%", List.of("package")),
+                new DistributorPhraser.Relaxation("inductor 10uH", List.of("package", "tolerance")));
         // a reworded core with the same constraints loosens nothing
         ParsedQuery mosfet = parser.parse("SOT-23 N-channel MOSFET 30V");
         assertThat(DistributorPhraser.ladder(Distributor.TME, mosfet, "SOT-23 N-channel MOSFET")).containsExactly(

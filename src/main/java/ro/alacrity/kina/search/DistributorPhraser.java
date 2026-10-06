@@ -52,8 +52,9 @@ public class DistributorPhraser {
             return null;
         }
         if (!query.isConnector()) {
-            // minimum ratings never go into a phrase: "25V" would only match parts that print 25V (DESIGN.md 3.2)
-            String text = withoutRatings(query.originalText(), query);
+            // minimum ratings never go into a phrase: "25V" would only match parts that print 25V (DESIGN.md 3.2);
+            // a package labelled as metric ("2012 metric") is sent as its imperial code
+            String text = Recognizers.imperial(withoutRatings(query.originalText(), query));
             String phrase = query.technology() != null ? technologyPhrase(distributor, query, text) : null;
             if (phrase == null) {
                 phrase = text;
@@ -107,7 +108,10 @@ public class DistributorPhraser {
         return ladder(distributor, query, sent).stream().map(Relaxation::phrase).toList();
     }
 
-    /** Constraints the parametric ladder loosens, in order (user decision 2026-10-06). */
+    /**
+     * Constraints the parametric ladder loosens, in order (user decision 2026-10-06), each only where the family lets
+     * it relax ({@link ConstraintPolicy#isRelaxable}).
+     */
     static final List<String> RELAXATION_ORDER = List.of("dielectric", "package", "tolerance");
 
     /**
@@ -124,6 +128,16 @@ public class DistributorPhraser {
      * search relaxes by itself).
      */
     public static List<Relaxation> ladder(Distributor distributor, ParsedQuery query, String sent) {
+        return ladder(distributor, query, sent, ConstraintPolicy.DEFAULTS);
+    }
+
+    /**
+     * As {@link #ladder(Distributor, ParsedQuery, String)} under {@code policy}: a parametric step loosens only the
+     * constraints the policy lets relax for the request's family (the package only for inductors, crystals and
+     * oscillators by default); hard constraints stay in every phrase and the ranker excludes parts that miss them.
+     */
+    public static List<Relaxation> ladder(Distributor distributor, ParsedQuery query, String sent,
+                                          ConstraintPolicy policy) {
         if (query == null || distributor == Distributor.LCSC) {
             return List.of();
         }
@@ -137,7 +151,11 @@ public class DistributorPhraser {
             core = distributor == Distributor.TME ? tmeFallback(query) : mouserFallback(query);
         }
         if (core != null) {
-            steps.add(new Relaxation(core, List.of()));
+            // the core of a connector request leaves the orientation out (TME, USB): a relaxable constraint
+            ParsedQuery.Connector c = query.connector();
+            boolean orientationDropped = c.orientation() != null && policy.isRelaxable(query, ConstraintPolicy.ORIENTATION)
+                    && (c.isUsb() || distributor == Distributor.TME);
+            steps.add(new Relaxation(core, orientationDropped ? List.of(ConstraintPolicy.ORIENTATION) : List.of()));
         } else {
             core = PartSearchService.corePhrase(query, distributor, Set.of());
             if (core == null) {
@@ -152,7 +170,11 @@ public class DistributorPhraser {
                         case "package" -> query.packageName() != null;
                         default -> query.constraint(ParsedQuery.TOLERANCE) != null;
                     };
-                    if (!stated) {
+                    // hard constraints are never loosened (the package of most families, DESIGN.md 3.4); the
+                    // technology goes with the dielectric but is hard and stays out of what is reported
+                    boolean relaxable = policy.isRelaxable(query, constraint)
+                            || "dielectric".equals(constraint) && query.dielectric() == null;
+                    if (!stated || !relaxable) {
                         continue;
                     }
                     drop.add(constraint);

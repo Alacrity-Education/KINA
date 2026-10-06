@@ -161,7 +161,8 @@ class TmePartMapperTest {
         assertThat(TmePartMapper.packageName(List.of(caseMm, caseParam, caseInch))).isEqualTo("0805");
         assertThat(TmePartMapper.packageName(List.of(caseMm, emptyInch, caseParam))).isEqualTo("SOT23");
         assertThat(TmePartMapper.packageName(List.of(param("Package", "DIP8"), caseMm))).isEqualTo("DIP8");
-        assertThat(TmePartMapper.packageName(List.of(caseMm))).isEqualTo("2012");
+        // a bare Case - mm code is labelled: the search layer reads it as metric (2012 mm = imperial 0805)
+        assertThat(TmePartMapper.packageName(List.of(caseMm))).isEqualTo("2012 mm");
         assertThat(TmePartMapper.packageName(List.of(param("Mounting", "SMD")))).isNull();
         assertThat(TmePartMapper.attributes(List.of(caseParam))).containsExactly(entry("Case", "SOT23, TO236AB"));
     }

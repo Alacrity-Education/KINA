@@ -13,7 +13,9 @@ import java.util.List;
  *                        {@code asdfqwerty zz9}): every part then has {@code match} null and every distributor
  *                        {@code exact_matches} null, so "no parametric understanding" is distinguishable from "no
  *                        matches"
- * @param hint            what to change when {@code queryUnderstood} is false, else null (omitted)
+ * @param hint            what to change when {@code queryUnderstood} is false; for an understood query, when a
+ *                        distributor returned nothing, which hard constraints could not be met there (they are never
+ *                        relaxed and no substitutes are returned, DESIGN.md 3.2); else null (omitted)
  * @param currencies      the currencies of the prices in this response, sorted (LCSC USD, TME and Mouser EUR by
  *                        default); prices are never converted
  */

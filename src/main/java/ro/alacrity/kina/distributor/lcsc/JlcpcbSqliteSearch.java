@@ -42,9 +42,9 @@ import java.util.stream.Collectors;
  * {@link MatchMode#RELAXED} first removes the terms that occur nowhere in the database (one cheap
  * {@code MATCH ... LIMIT 1} probe per term: {@code dupont}, {@code THT} wording...), then drops terms one at a time,
  * least informative first ({@link #DROP_ORDER}: free-text keywords, USB standard/features, mounting, orientation, pitch,
- * dielectric, package, tolerance, rating, value, positions, family, category; later terms of the same kind before
- * earlier ones; the dielectric-package-tolerance order is the relaxation order of DESIGN.md 3.2, and a minimum rating
- * goes after them because the ranker excludes parts below it anyway) and retries while at least
+ * dielectric, tolerance, package, rating, value, positions, family, category; later terms of the same kind before
+ * earlier ones; the relaxable dielectric and tolerance go before the package, which is hard for most families, and a
+ * minimum rating goes after them because the ranker excludes parts below it anyway) and retries while at least
  * {@value #MIN_RELAXED_TERMS} terms remain. A step whose terms are exactly the parametric ones is reported as
  * {@link MatchMode#PARAMETRIC}. Then {@link MatchMode#PARAMETRIC} (only values, packages, dielectrics, family and
  * connector terms, still AND) when not tried yet, then {@link MatchMode#ANY} (every 3+ character term OR-ed, no
@@ -71,7 +71,8 @@ public class JlcpcbSqliteSearch {
 
     /**
      * Relaxation drops terms in this order of kinds (first = least informative); a tolerance (a {@code VALUE} term
-     * ending in {@code %}) goes right after the package ({@link #dropRank}).
+     * ending in {@code %}) goes right after the dielectric and before the package ({@link #dropRank}): the package is a
+     * hard constraint for most families, so a part found without it is excluded by the ranker.
      */
     static final List<JlcpcbQuery.Kind> DROP_ORDER = List.of(JlcpcbQuery.Kind.KEYWORD, JlcpcbQuery.Kind.FEATURE,
             JlcpcbQuery.Kind.MOUNTING, JlcpcbQuery.Kind.ORIENTATION, JlcpcbQuery.Kind.PITCH,
@@ -338,7 +339,8 @@ public class JlcpcbSqliteSearch {
     /** Position of a term in the drop order: its kind's index, a tolerance right after the package. */
     static double dropRank(JlcpcbQuery.Term term) {
         if (term.kind() == JlcpcbQuery.Kind.VALUE && term.text().endsWith("%")) {
-            return DROP_ORDER.indexOf(JlcpcbQuery.Kind.PACKAGE) + 0.5;
+            // the tolerance is relaxable, the package is hard for most families (DESIGN.md 3.4): tolerance first
+            return DROP_ORDER.indexOf(JlcpcbQuery.Kind.DIELECTRIC) + 0.5;
         }
         return DROP_ORDER.indexOf(term.kind());
     }

@@ -315,7 +315,29 @@ class AuditRoundThreeTest {
 
     @Test
     void onlyTheLoosenedConstraintsTheReturnedPartsMissAreReported() {
-        // live 2026-10-06: TME has no in-stock 10uF 100V 1210 part; "MLCC 10uF" finds a 100 V X7R part in 2220
+        // the dielectric step finds nothing; dielectric + tolerance finds an X7R part with a looser tolerance
+        PhraseClient tme = new PhraseClient(Distributor.TME)
+                .on("10uF X7R 1210 5% MLCC", part(Distributor.TME, "LOW", "MLCC 10uF 50V X7R 1210 5%", "MLCC", 1000,
+                        Map.of(), Map.of(), NOW))
+                .on("MLCC 10uF 1210", part(Distributor.TME, "GRM32ER72A106KA35L", "MLCC 10uF 100V X7R 1210 10%",
+                        "MLCC", 1000, Map.of(), Map.of(), NOW));
+        service(List.of(tme));
+
+        DistributorResult t = result(service.search(request("10uF 100V X7R 1210 5% MLCC", 5, false,
+                Distributor.TME)), Distributor.TME);
+
+        assertThat(tme.queries).containsExactly("10uF X7R 1210 5% MLCC", "MLCC 10uF 1210 5%", "MLCC 10uF 1210");
+        assertThat(t.fallbackQuery()).isEqualTo("MLCC 10uF 1210");
+        // the step loosened dielectric and tolerance; the returned part is X7R, so only the tolerance is reported
+        assertThat(t.constraintsRelaxed()).containsExactly("tolerance");
+        assertThat(cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey("10uF 100V X7R 1210 5% MLCC"))
+                .constraintsRelaxed()).containsExactly("dielectric", "tolerance");
+        assertThat(t.parts().getFirst().mismatches()).containsExactly("tolerance: 10% instead of 5%");
+    }
+
+    @Test
+    void thePackageOfACapacitorIsNeverRelaxed() {
+        // live 2026-10-06: TME has no in-stock 10uF 100V 1210 part; "MLCC 10uF" would find a 100 V X7R part in 2220
         PhraseClient tme = new PhraseClient(Distributor.TME)
                 .on("10uF X7R 1210 MLCC", part(Distributor.TME, "LOW", "MLCC 10uF 50V X7R 1210", "MLCC", 1000,
                         Map.of(), Map.of(), NOW))
@@ -323,28 +345,30 @@ class AuditRoundThreeTest {
                         Map.of(), Map.of(), NOW));
         service(List.of(tme));
 
-        DistributorResult t = result(service.search(request("10uF 100V X7R 1210 MLCC", 5, false, Distributor.TME)),
-                Distributor.TME);
+        SearchResponse response = service.search(request("10uF 100V X7R 1210 MLCC", 5, false, Distributor.TME));
+        DistributorResult t = result(response, Distributor.TME);
 
-        assertThat(tme.queries).containsExactly("10uF X7R 1210 MLCC", "MLCC 10uF 1210", "MLCC 10uF");
-        assertThat(t.fallbackQuery()).isEqualTo("MLCC 10uF");
-        // the step loosened dielectric and package; the returned part is X7R, so only the package is reported
-        assertThat(t.constraintsRelaxed()).containsExactly("package");
-        assertThat(cachedSearches.get(Distributor.TME + "|" + QueryParser.normalizeKey("10uF 100V X7R 1210 MLCC"))
-                .constraintsRelaxed()).containsExactly("dielectric", "package");
-        assertThat(t.parts().getFirst().mismatches()).containsExactly("package: 2220 instead of 1210");
+        // no rung drops the package: the 2220 part is never fetched, nothing is substituted
+        assertThat(tme.queries).containsExactly("10uF X7R 1210 MLCC", "MLCC 10uF 1210");
+        assertThat(t.parts()).isEmpty();
+        assertThat(t.exactMatches()).isZero();
+        assertThat(t.excludedBelowSpec()).isEqualTo(1);
+        assertThat(t.constraintsRelaxed()).isEmpty();
+        assertThat(t.hint()).startsWith("No in-stock 10uF capacitor in package 1210 at TME;")
+                .contains("never relaxed").contains("allow_below_spec").contains("No substitutes");
+        assertThat(response.hint()).isEqualTo(t.hint());
     }
 
     @Test
-    void aWrongPrimaryValueDoesNotStopTheLadder() {
+    void aWrongPrimaryValueExcludesThePart() {
         // live 2026-10-06: TME "ferrite 120ohm" returned ferrite cores specified at 25 MHz, match 0.0
-        Part core = part(Distributor.TME, "RRC-16-9-28-M2", "Ferrite: core; 120Ω @25MHz", "Ferrites", 90,
+        Part core = part(Distributor.TME, "RRC-16-9-28-M2", "Ferrite: core; 120Ω @25MHz; 1206", "Ferrites", 90,
                 Map.of("Impedance at 25MHz", "120Ω"), Map.of(), NOW);
         Part weak = part(Distributor.TME, "BEAD3A", "Ferrite: bead; 120Ω; SMD; 3A; 1206", "Ferrite - beads", 1000,
                 Map.of("Impedance at 100MHz", "120Ω", "Operating current", "3A"), Map.of(), NOW);
         PhraseClient tme = new PhraseClient(Distributor.TME)
                 .on("120 ohm 100MHz 1206 ferrite bead", weak)
-                .on("ferrite 120ohm", core);
+                .on("ferrite 120ohm 1206", core);
         service(List.of(tme));
         ParsedQuery q = parser.parse("120 ohm 100MHz 1206 ferrite bead 6A");
         assertThat(service.meetsRequest(q, core)).isFalse();
@@ -352,11 +376,13 @@ class AuditRoundThreeTest {
         DistributorResult t = result(service.search(request("120 ohm 100MHz 1206 ferrite bead 6A", 5, false,
                 Distributor.TME)), Distributor.TME);
 
-        // nothing meets the request on any rung: the least relaxed result is kept, its 3 A bead is below spec
-        assertThat(tme.queries).contains("ferrite 120ohm");
+        // nothing meets the request on any rung: the least relaxed result is kept, its 3 A bead is below spec; the
+        // impedance at 25 MHz of the core is a different primary value: excluded, never returned
+        assertThat(tme.queries).contains("ferrite 120ohm 1206");
         assertThat(t.fallbackQuery()).isNull();
         assertThat(t.parts()).isEmpty();
         assertThat(t.excludedBelowSpec()).isEqualTo(1);
+        assertThat(service.policy().check(q, extractor.features(core)).conflicts()).containsExactly("impedance");
     }
 
     @Test

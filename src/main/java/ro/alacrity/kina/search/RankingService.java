@@ -102,11 +102,9 @@ public class RankingService {
         /** Meets the request as far as it is known, but a requested rating is not stated (unverified). */
         UNVERIFIED_RATING,
         /**
-         * Returned, but does not meet the request: its primary value (capacitance, resistance, inductance, impedance at
-         * its frequency) differs. The relaxation ladder goes on past such parts.
+         * Left out: a known attribute contradicts a hard constraint ({@link ConstraintPolicy}: the primary value, the
+         * package, the type...).
          */
-        WRONG_VALUE,
-        /** Left out: a known attribute contradicts a strict constraint. */
         CONSTRAINT,
         /** Left out (unless {@code allow_below_spec}): a known rating is below the request. */
         BELOW_SPEC
@@ -114,7 +112,7 @@ public class RankingService {
 
     /** Why a part is left out before ranking ({@link #exclusion}). */
     public enum Exclusion {
-        /** A known attribute contradicts a strict constraint (mounting, technology, elements). */
+        /** A known attribute contradicts a hard constraint ({@link ConstraintPolicy}). */
         CONSTRAINT,
         /** A known rating is below the request (or a DCR above its maximum). */
         BELOW_SPEC
@@ -122,23 +120,36 @@ public class RankingService {
 
     /**
      * Ranked parts per distributor (best first, same distributors as the input), the ranking mode, an optional note
-     * explaining a fallback (null when the blend succeeded) and the parts left out per distributor.
+     * explaining a fallback (null when the blend succeeded), the parts left out per distributor and, per distributor,
+     * the hard constraint each excluded part was counted under (its first conflict, {@link ConstraintPolicy.Result}).
      */
     public record RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note,
-                                Map<Distributor, Integer> excluded, Map<Distributor, Integer> excludedBelowSpec) {
+                                Map<Distributor, Integer> excluded, Map<Distributor, Integer> excludedBelowSpec,
+                                Map<Distributor, Map<String, Integer>> excludedDetail) {
 
         public RankedResults {
             excluded = excluded == null ? Map.of() : Map.copyOf(excluded);
             excludedBelowSpec = excludedBelowSpec == null ? Map.of() : Map.copyOf(excludedBelowSpec);
+            excludedDetail = excludedDetail == null ? Map.of() : Map.copyOf(excludedDetail);
+        }
+
+        public RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note,
+                             Map<Distributor, Integer> excluded, Map<Distributor, Integer> excludedBelowSpec) {
+            this(byDistributor, mode, note, excluded, excludedBelowSpec, null);
         }
 
         public RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note,
                              Map<Distributor, Integer> excluded) {
-            this(byDistributor, mode, note, excluded, null);
+            this(byDistributor, mode, note, excluded, null, null);
         }
 
         public RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note) {
-            this(byDistributor, mode, note, null, null);
+            this(byDistributor, mode, note, null, null, null);
+        }
+
+        /** Parts of {@code distributor} excluded per hard constraint ({@code excluded_by_constraints_detail}). */
+        public Map<String, Integer> excludedDetailBy(Distributor distributor) {
+            return excludedDetail.getOrDefault(distributor, Map.of());
         }
 
         /** Parts of {@code distributor} removed because a known attribute contradicts a strict constraint. */
@@ -151,8 +162,9 @@ public class RankingService {
             return excludedBelowSpec.getOrDefault(distributor, 0);
         }
 
-        RankedResults withExcluded(Map<Distributor, Integer> counts, Map<Distributor, Integer> belowSpec) {
-            return new RankedResults(byDistributor, mode, note, counts, belowSpec);
+        RankedResults withExcluded(Map<Distributor, Integer> counts, Map<Distributor, Integer> belowSpec,
+                                   Map<Distributor, Map<String, Integer>> detail) {
+            return new RankedResults(byDistributor, mode, note, counts, belowSpec, detail);
         }
     }
 
@@ -179,6 +191,7 @@ public class RankingService {
     private final KinaProperties.Search search;
     private final DeterministicRanker deterministic;
     private final PartRanker ranker;
+    private final ConstraintPolicy policy;
     private final Supplier<CrossEncoderPartRanker.Status> modelStatus;
     private final RankingScoreCache cache;
 
@@ -196,6 +209,12 @@ public class RankingService {
         this.ranker = ranker;
         this.modelStatus = modelStatus;
         this.cache = cache;
+        this.policy = ConstraintPolicy.from(properties.search());
+    }
+
+    /** The hard / relaxable constraint table in use ({@code kina.search.hard-constraints}). */
+    public ConstraintPolicy policy() {
+        return policy;
     }
 
     public RankingStatus status() {
@@ -249,16 +268,12 @@ public class RankingService {
      * meets the request with every rating verified, and relaxes only when nothing meets it at all (DESIGN.md 3.2).
      */
     public Verdict verdict(ParsedQuery query, Part part) {
-        if (safeCheck(query, part) == DeterministicRanker.ConstraintCheck.CONFLICT) {
+        if (safeCheck(query, part).conflict()) {
             return Verdict.CONSTRAINT;
         }
         DeterministicRanker.Assessment a = safeAssess(query, part);
         if (a.isBelowSpec()) {
             return Verdict.BELOW_SPEC;
-        }
-        String primary = query.isConnector() ? null : DeterministicRanker.primaryKind(query);
-        if (primary != null && a.mismatches().stream().anyMatch(m -> m.startsWith(primary.replace('_', ' ') + ":"))) {
-            return Verdict.WRONG_VALUE;
         }
         boolean ratingUnverified = a.unverified().stream()
                 .anyMatch(u -> DeterministicRanker.RATING_KINDS.contains(u.replace(' ', '_')));
@@ -267,8 +282,8 @@ public class RankingService {
 
     /**
      * Ranks for an order of {@code options.quantity()} pieces (DESIGN.md 3.3 and 3.4). Parts whose known attribute
-     * contradicts a strict constraint ({@code kina.search.strict-constraints}) are removed and counted
-     * ({@link RankedResults#excludedBy}); parts with a known rating below the request are removed and counted
+     * contradicts a hard constraint ({@link ConstraintPolicy}, {@code kina.search.hard-constraints}) are removed and
+     * counted ({@link RankedResults#excludedBy}, per constraint {@link RankedResults#excludedDetailBy}); parts with a known rating below the request are removed and counted
      * ({@link RankedResults#excludedBelowSpecBy}) unless {@code options.allowBelowSpec()}, which keeps them flagged in
      * the last tier, ordered by their distance from the target. Every other part gets a tier: parts with a stock
      * shortfall after those without, parts with a mismatch or an unverified constraint after complete matches. The
@@ -288,6 +303,7 @@ public class RankingService {
         Map<String, DeterministicRanker.Assessment> assessments = new HashMap<>();
         Map<Distributor, Integer> excluded = new EnumMap<>(Distributor.class);
         Map<Distributor, Integer> excludedBelowSpec = new EnumMap<>(Distributor.class);
+        Map<Distributor, Map<String, Integer>> detail = new EnumMap<>(Distributor.class);
         Map<Distributor, List<Part>> sorted = new EnumMap<>(Distributor.class);
         int qty = opts.quantity();
         boolean understood = query.understood();
@@ -295,8 +311,11 @@ public class RankingService {
             input.forEach((distributor, parts) -> {
                 List<Part> kept = new ArrayList<>();
                 for (Part p : dedupe(parts)) {
-                    if (safeCheck(query, p) == DeterministicRanker.ConstraintCheck.CONFLICT) {
+                    ConstraintPolicy.Result check = safeCheck(query, p);
+                    if (check.conflict()) {
                         excluded.merge(distributor, 1, Integer::sum);
+                        detail.computeIfAbsent(distributor, d -> new LinkedHashMap<>())
+                                .merge(check.reason(), 1, Integer::sum);
                         continue;
                     }
                     DeterministicRanker.Assessment a = safeAssess(query, p);
@@ -323,27 +342,28 @@ public class RankingService {
             distances.clear();
             input.forEach((distributor, parts) -> sorted.put(distributor, dedupe(parts)));
             return annotate(fallback(sorted, det, "ranking failed: " + e.getClass().getSimpleName()),
-                    assessments, understood).withExcluded(excluded, excludedBelowSpec);
+                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail);
         }
 
         if (!config.crossEncoder().enabled()) {
             return annotate(fallback(sorted, det, "cross-encoder disabled"), assessments, understood)
-                    .withExcluded(excluded, excludedBelowSpec);
+                    .withExcluded(excluded, excludedBelowSpec, detail);
         }
         if (sorted.values().stream().allMatch(List::isEmpty)) {
-            return new RankedResults(emptyLists(sorted), RankingMode.BLENDED, null, excluded, excludedBelowSpec);
+            return new RankedResults(emptyLists(sorted), RankingMode.BLENDED, null, excluded, excludedBelowSpec,
+                    detail);
         }
         try {
             return annotate(blendedRanking(query, sorted, det, tiers, distances, penalties, deadline, effective),
-                    assessments, understood).withExcluded(excluded, excludedBelowSpec);
+                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail);
         } catch (RankingException e) {
             log.info("ranking fallback for '{}': {}", query.normalizedKey(), e.getMessage());
             return annotate(fallback(sorted, det, e.getMessage()), assessments, understood)
-                    .withExcluded(excluded, excludedBelowSpec);
+                    .withExcluded(excluded, excludedBelowSpec, detail);
         } catch (RuntimeException e) {
             log.warn("ranking fallback after unexpected error", e);
             return annotate(fallback(sorted, det, "cross-encoder failed: " + e.getClass().getSimpleName()),
-                    assessments, understood).withExcluded(excluded, excludedBelowSpec);
+                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail);
         }
     }
 
@@ -551,7 +571,8 @@ public class RankingService {
                             a.unverified(), a.isBelowSpec());
                 })
                 .toList()));
-        return new RankedResults(out, results.mode(), results.note(), results.excluded(), results.excludedBelowSpec());
+        return new RankedResults(out, results.mode(), results.note(), results.excluded(), results.excludedBelowSpec(),
+                results.excludedDetail());
     }
 
     /**
@@ -618,12 +639,12 @@ public class RankingService {
                 .orElse(null);
     }
 
-    private DeterministicRanker.ConstraintCheck safeCheck(ParsedQuery query, Part part) {
+    private ConstraintPolicy.Result safeCheck(ParsedQuery query, Part part) {
         try {
-            return deterministic.check(query, part, search.strictConstraints());
+            return deterministic.check(query, part, policy);
         } catch (RuntimeException e) {
             log.warn("constraint check failed for {}", PartKey.of(part), e);
-            return DeterministicRanker.ConstraintCheck.MATCH;
+            return new ConstraintPolicy.Result(List.of(), false);
         }
     }
 

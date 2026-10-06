@@ -59,8 +59,14 @@ class RankingServiceTest {
         }
     }
 
+    /**
+     * The blending tests rank parts with a wrong value or package too, so the capacitor constraints are not hard here
+     * (only mounting); the exclusion of hard constraints is covered by {@link ConstraintPolicyTest}.
+     */
     private RankingService service(FakeRanker ranker, String... properties) {
-        KinaProperties props = RankingFixtures.properties(properties);
+        List<String> kv = new ArrayList<>(List.of("kina.search.hard-constraints.capacitor", "mounting"));
+        kv.addAll(List.of(properties));
+        KinaProperties props = RankingFixtures.properties(kv.toArray(String[]::new));
         return new RankingService(props, deterministic, ranker, () -> READY,
                 new RankingScoreCache(props.ranking().scoreCacheTtl()));
     }

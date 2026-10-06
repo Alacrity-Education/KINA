@@ -58,7 +58,10 @@ kina:
     max-max-results: 50
     distributor-timeout: 20s
     max-request-duration: 2m     # hard cap per request, including rate-limit waits (DESIGN.md 3.6)
-    strict-constraints: ${KINA_STRICT_CONSTRAINTS:mounting,technology,elements}   # DESIGN.md 3.4: contradicting parts are excluded
+    strict-constraints: ${KINA_STRICT_CONSTRAINTS:}   # deprecated: use hard-constraints (unset = the code defaults)
+    # hard-constraints:           # DESIGN.md 3.4: per family the constraints that are never relaxed (unset = the decided
+    #   capacitor: value,package,mounting,technology,elements,type   # defaults of search.ConstraintPolicy); env form:
+    #                                                               # KINA_SEARCH_HARDCONSTRAINTS_CAPACITOR=value,package
     low-stock-threshold: ${KINA_LOW_STOCK_THRESHOLD:10}   # stock below this (or below 2 x quantity) is low_stock
     quantity:                    # DESIGN.md 3.4 "Quantity": score penalties for the order quantity and stock
       stock-shortfall-penalty: 0.3

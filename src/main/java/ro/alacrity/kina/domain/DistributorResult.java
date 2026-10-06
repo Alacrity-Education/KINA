@@ -1,10 +1,12 @@
 package ro.alacrity.kina.domain;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import ro.alacrity.kina.cache.CacheStatus;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Per-distributor section of a {@link SearchResponse} (DESIGN.md 3.2 "Counts" and 4).
@@ -25,8 +27,11 @@ import java.util.List;
  *                      instead (connector queries, e.g. {@code pin strips female 6 angled} for TME; queries with
  *                      ratings, which are left out); a {@code fallbackQuery} is what was sent after this phrase found
  *                      nothing
- * @param excludedByConstraints parts left out because a known attribute contradicts a strict constraint of the request
- *                      (mounting, technology, elements; {@code kina.search.strict-constraints})
+ * @param excludedByConstraints parts left out because a known attribute contradicts a hard constraint of the request
+ *                      (never relaxed: the primary value, the package except for inductors, crystals and oscillators,
+ *                      mounting, technology, the component type...; {@code kina.search.hard-constraints})
+ * @param excludedByConstraintsDetail {@code excludedByConstraints} per constraint, each part counted under its first
+ *                      conflict ({@code {"capacitance": 12, "package": 3}}); empty when nothing was excluded
  * @param excludedBelowSpec parts left out because a known rating is below the request (voltage, current, saturation
  *                      current, power, temperature, lifetime; DCR above a stated maximum); 0 when
  *                      {@code allow_below_spec} is true (they are returned with {@code below_spec: true})
@@ -40,6 +45,8 @@ import java.util.List;
  *                      really miss); empty when nothing was relaxed
  * @param exactMatches  returned parts whose constraints are all verified and met ({@code match} 1.0, no
  *                      {@code unverified}); null when the query was not understood
+ * @param hint          when the distributor returned nothing for an understood query (no error): which hard
+ *                      constraints could not be met and that no substitutes are returned; else null (omitted)
  */
 @Builder
 public record DistributorResult(
@@ -54,17 +61,21 @@ public record DistributorResult(
         @JsonProperty("rate_limit_waited_ms") long rateLimitWaitedMs,
         @JsonProperty("distributor_query") String distributorQuery,
         @JsonProperty("excluded_by_constraints") int excludedByConstraints,
+        @JsonProperty("excluded_by_constraints_detail") Map<String, Integer> excludedByConstraintsDetail,
         @JsonProperty("excluded_below_spec") int excludedBelowSpec,
         @JsonProperty("out_of_stock_matches") Integer outOfStockMatches,
         @JsonProperty("query_terms_dropped") List<String> queryTermsDropped,
         @JsonProperty("constraints_relaxed") List<String> constraintsRelaxed,
-        @JsonProperty("exact_matches") Integer exactMatches
+        @JsonProperty("exact_matches") Integer exactMatches,
+        @JsonProperty("hint") @JsonInclude(JsonInclude.Include.NON_NULL) String hint
 ) {
 
     public DistributorResult {
         parts = parts == null ? List.of() : List.copyOf(parts);
         queryTermsDropped = queryTermsDropped == null ? List.of() : List.copyOf(queryTermsDropped);
         constraintsRelaxed = constraintsRelaxed == null ? List.of() : List.copyOf(constraintsRelaxed);
+        excludedByConstraintsDetail = excludedByConstraintsDetail == null ? Map.of()
+                : java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(excludedByConstraintsDetail));
     }
 
     /** An entry for a distributor that failed; carries an empty part list. */

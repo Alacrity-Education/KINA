@@ -146,7 +146,11 @@ class McpToolsIntegrationTest {
         assertThat(mouser.path("cache").asString()).isEqualTo("miss");
         assertThat(mouser.path("total_results").asInt()).isEqualTo(60);
         assertThat(mouser.path("fetched").asInt()).isEqualTo(34);   // 50 raw records, every third without stock
-        assertThat(mouser.path("returned").asInt()).isEqualTo(5);
+        // the capacitance is never relaxed: the 33 100nF parts are excluded, no substitute fills the list
+        assertThat(mouser.path("returned").asInt()).isEqualTo(1);
+        assertThat(mouser.path("excluded_by_constraints").asInt()).isEqualTo(33);
+        assertThat(mouser.path("excluded_by_constraints_detail").path("capacitance").asInt()).isEqualTo(33);
+        assertThat(mouser.path("hint").isMissingNode()).isTrue();
         assertThat(mouser.path("error").isNull()).isTrue();
         assertThat(mouser.path("distributor_query").isNull()).isTrue();   // sent verbatim
         assertThat(first.path("parsed").path("connector").isMissingNode()).isTrue();
@@ -171,7 +175,7 @@ class McpToolsIntegrationTest {
         JsonNode again = call("search_parts", "{\"query\":\"10uF  x7r 0805\",\"max_results\":20}");
         JsonNode cached = again.path("distributors").get(0);
         assertThat(cached.path("cache").asString()).isEqualTo("hit");
-        assertThat(cached.path("returned").asInt()).isEqualTo(20);
+        assertThat(cached.path("returned").asInt()).isEqualTo(1);
         assertThat(MOUSER.searches.get() - before).isEqualTo(1);
     }
 
@@ -214,7 +218,7 @@ class McpToolsIntegrationTest {
                 "{\"queries\":[{\"query\":\"100nF X7R 0805\",\"max_results\":2},{\"query\":\"10uF 0805\"}]}");
         assertThat(batch.path("results")).hasSize(2);
         assertThat(batch.path("results").get(0).path("distributors").get(0).path("returned").asInt()).isEqualTo(2);
-        assertThat(batch.path("results").get(1).path("distributors").get(0).path("returned").asInt()).isEqualTo(10);
+        assertThat(batch.path("results").get(1).path("distributors").get(0).path("returned").asInt()).isEqualTo(1);
 
         JsonNode found = call("get_part", "{\"distributor\":\"mouser\",\"part_number\":\"603-CC0805KRX7R1\"}");
         assertThat(found.path("found").asBoolean()).isTrue();

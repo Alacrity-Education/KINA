@@ -17,7 +17,8 @@ import java.util.Map;
  *   <caption>Signals</caption>
  *   <tr><td>primary value (C/R/L; frequency for crystals/oscillators)</td><td>{@value #W_PRIMARY_VALUE}</td>
  *       <td>within 1 % -&gt; +, different -&gt; -, unknown -&gt; 0</td></tr>
- *   <tr><td>package</td><td>{@value #W_PACKAGE}</td><td>equivalent (0805 == 2012 metric, SOT-23-3 == SOT-23...)</td></tr>
+ *   <tr><td>package</td><td>{@value #W_PACKAGE}</td><td>equivalent (imperial chip codes; SOT-23-3 == SOT-23...;
+ *       can sizes within 0.2 mm)</td></tr>
  *   <tr><td>dielectric</td><td>{@value #W_DIELECTRIC}</td><td>exact, C0G == NP0</td></tr>
  *   <tr><td>technology</td><td>{@value #W_TECHNOLOGY}</td><td>same (or compatible) technology +, a different known
  *       one -, unknown 0 ({@link TechnologyVocabulary#compare})</td></tr>
@@ -118,11 +119,10 @@ public class DeterministicRanker {
     static final List<String> RATING_KINDS = List.of(ParsedQuery.VOLTAGE, ParsedQuery.CURRENT,
             ParsedQuery.SATURATION_CURRENT, ParsedQuery.POWER, ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME,
             ParsedQuery.DCR);
-    /** Strict constraint names ({@code kina.search.strict-constraints}). */
-    public static final String STRICT_MOUNTING = "mounting";
-    public static final String STRICT_TECHNOLOGY = "technology";
-    /** An array or network for a request that does not ask for one (resistors, capacitors, ferrite beads). */
-    public static final String STRICT_ELEMENTS = "elements";
+    /** Transistor polarity (N-channel, P-channel, NPN, PNP), when the request states it. */
+    static final double W_POLARITY = 0.10;
+    /** Load capacitance of a crystal (a capacitance in a crystal request), exact within 1 %. */
+    static final double W_LOAD_CAPACITANCE = 0.10;
     /** A minimum order quantity this many decades above the quantity loses the whole MOQ penalty. */
     static final double MOQ_PENALTY_DECADES = 3.0;
 
@@ -175,18 +175,18 @@ public class DeterministicRanker {
     static List<String> mismatches(ParsedQuery query, ParametricExtractor.Features f) {
         List<String> out = new java.util.ArrayList<>();
         String primary = query.isConnector() ? null : primaryKind(query);
-        if (primary != null) {
-            ParsedQuery.Constraint wanted = query.constraint(primary);
-            Recognizers.Value actual = f.values().get(primary);
-            if (actual != null && !(sameValue(wanted.value(), actual.value(), VALUE_MATCH_TOLERANCE)
-                    && (wanted.condition() == null || actual.condition() == null
-                    || sameValue(wanted.condition(), actual.condition(), VALUE_MATCH_TOLERANCE)))) {
-                out.add(label(primary) + ": " + actual.display() + " instead of " + wanted.display());
-            }
+        if (primary != null && !primaryMatches(query, f, primary)) {
+            out.add(label(primary) + ": " + f.values().get(primary).display() + " instead of "
+                    + query.constraint(primary).display());
         }
-        String wantedPackage = Recognizers.packageKey(query.packageName());
-        String partPackage = Recognizers.packageKey(f.packageName());
-        if (wantedPackage != null && partPackage != null && !wantedPackage.equals(partPackage)) {
+        if (loadCapacitanceMatches(query, f) == Boolean.FALSE) {
+            out.add("load capacitance: " + f.values().get(ParsedQuery.CAPACITANCE).display() + " instead of "
+                    + query.constraint(ParsedQuery.CAPACITANCE).display());
+        }
+        if (query.polarity() != null && f.polarity() != null && !query.polarity().equals(f.polarity())) {
+            out.add("polarity: " + f.polarity() + " instead of " + query.polarity());
+        }
+        if (Recognizers.samePackage(query.packageName(), f.packageName()) == Boolean.FALSE) {
             out.add("package: " + f.packageName() + " instead of " + query.packageName());
         }
         if (query.dielectric() != null && f.dielectric() != null
@@ -207,7 +207,9 @@ public class DeterministicRanker {
                     out.add("dcr: " + actual.display() + " above " + wanted.display());
                 }
             } else if (isExactRating(kind, query.family())) {
-                if (!sameValue(wanted.value(), actual.value(), EXACT_VOLTAGE_TOLERANCE)) {
+                Boolean same = ParsedQuery.VOLTAGE.equals(kind) ? exactVoltageMatches(query, f)
+                        : Boolean.valueOf(sameValue(wanted.value(), actual.value(), EXACT_VOLTAGE_TOLERANCE));
+                if (same == Boolean.FALSE) {
                     out.add(label(kind) + ": " + actual.display() + " instead of " + wanted.display());
                 }
             } else if (actual.value() < wanted.value() * (1 - 1e-9)) {
@@ -264,47 +266,26 @@ public class DeterministicRanker {
     }
 
     /**
-     * How a part relates to the request's strict constraints ({@code kina.search.strict-constraints}): a known
-     * contradiction ({@link #CONFLICT}, the part is excluded), an attribute the part does not state
-     * ({@link #UNKNOWN}, the part stays but ranks below known matches), or nothing against it ({@link #MATCH}).
+     * How a part relates to the hard constraints given ({@link ConstraintPolicy}): a known contradiction
+     * ({@link #CONFLICT}, the part is excluded), a stated mounting or technology the part does not state or that is not
+     * comparable ({@link #UNKNOWN}, the part stays but ranks below known matches), or nothing against it
+     * ({@link #MATCH}).
      */
     public enum ConstraintCheck { MATCH, UNKNOWN, CONFLICT }
 
-    /**
-     * Checks the strict constraints the request states (mounting SMD/THT, the technology of a passive) against the
-     * part. Mounting: a known different mounting conflicts (a hybrid USB part never does). Technology: a different
-     * known technology conflicts ({@link TechnologyVocabulary#compare} = -1); an unknown or not comparable one is
-     * {@link ConstraintCheck#UNKNOWN}.
-     */
-    public ConstraintCheck check(ParsedQuery query, Part part, java.util.Collection<String> strict) {
-        return check(query, extractor.features(part), strict);
+    /** Checks the constraints in {@code hard} ({@link ConstraintPolicy} names) that the request states against the part. */
+    public ConstraintCheck check(ParsedQuery query, Part part, java.util.Collection<String> hard) {
+        return check(query, extractor.features(part), hard);
     }
 
-    static ConstraintCheck check(ParsedQuery query, ParametricExtractor.Features f, java.util.Collection<String> strict) {
-        if (strict == null || strict.isEmpty()) {
-            return ConstraintCheck.MATCH;
-        }
-        boolean unknown = false;
-        if (strict.contains(STRICT_ELEMENTS) && query.elements() == null && f.elements() != null
-                && query.family() != null && PassiveDetails.ARRAY_FAMILIES.contains(query.family())) {
-            return ConstraintCheck.CONFLICT;   // a bead array or resistor network for a single-element request
-        }
-        if (strict.contains(STRICT_MOUNTING) && query.mounting() != null) {
-            boolean hybrid = f.connector() != null && UsbVocabulary.HYBRID.equals(f.connector().mountingStyle());
-            if (f.mounting() == null || hybrid) {
-                unknown = true;
-            } else if (!query.mounting().equals(f.mounting())) {
-                return ConstraintCheck.CONFLICT;
-            }
-        }
-        if (strict.contains(STRICT_TECHNOLOGY) && query.technology() != null) {
-            int cmp = TechnologyVocabulary.compare(query.technology(), f.technology());
-            if (cmp < 0) {
-                return ConstraintCheck.CONFLICT;
-            }
-            unknown |= cmp == 0;
-        }
-        return unknown ? ConstraintCheck.UNKNOWN : ConstraintCheck.MATCH;
+    static ConstraintCheck check(ParsedQuery query, ParametricExtractor.Features f, java.util.Collection<String> hard) {
+        ConstraintPolicy.Result r = ConstraintPolicy.check(query, f, hard);
+        return r.conflict() ? ConstraintCheck.CONFLICT : r.unknown() ? ConstraintCheck.UNKNOWN : ConstraintCheck.MATCH;
+    }
+
+    /** The hard-constraint check of {@code part} under {@code policy}, with the constraints it contradicts. */
+    public ConstraintPolicy.Result check(ParsedQuery query, Part part, ConstraintPolicy policy) {
+        return policy.check(query, extractor.features(part));
     }
 
     /**
@@ -354,24 +335,40 @@ public class DeterministicRanker {
                 unverified.add(label(primary));
             } else {
                 possible += W_PRIMARY_VALUE;
-                ParsedQuery.Constraint wanted = query.constraint(primary);
-                boolean same = sameValue(wanted.value(), partValue.value(), VALUE_MATCH_TOLERANCE)
-                        // an impedance is compared at its test frequency when both sides state one
-                        && (wanted.condition() == null || partValue.condition() == null
-                        || sameValue(wanted.condition(), partValue.condition(), VALUE_MATCH_TOLERANCE));
-                score += same ? W_PRIMARY_VALUE : -W_PRIMARY_VALUE;
+                // an impedance is compared at its test frequency when both sides state one
+                score += primaryMatches(query, f, primary) ? W_PRIMARY_VALUE : -W_PRIMARY_VALUE;
             }
         }
 
-        // package
-        String wantedPackage = Recognizers.packageKey(query.packageName());
-        String partPackage = Recognizers.packageKey(f.packageName());
-        if (wantedPackage != null) {
-            if (partPackage == null) {
+        // package (can capacitors by size within 0.2 mm; a package KINA cannot read is unverified)
+        if (query.packageName() != null) {
+            Boolean same = Recognizers.samePackage(query.packageName(), f.packageName());
+            if (same == null) {
                 unverified.add("package");
             } else {
                 possible += W_PACKAGE;
-                score += wantedPackage.equals(partPackage) ? W_PACKAGE : -W_PACKAGE;
+                score += same ? W_PACKAGE : -W_PACKAGE;
+            }
+        }
+
+        // transistor polarity (N-channel vs P-channel, NPN vs PNP)
+        if (query.polarity() != null) {
+            if (f.polarity() == null) {
+                unverified.add("polarity");
+            } else {
+                possible += W_POLARITY;
+                score += query.polarity().equals(f.polarity()) ? W_POLARITY : -W_POLARITY;
+            }
+        }
+
+        // load capacitance of a crystal
+        if (isLoadCapacitance(query)) {
+            Boolean same = loadCapacitanceMatches(query, f);
+            if (same == null) {
+                unverified.add("load capacitance");
+            } else {
+                possible += W_LOAD_CAPACITANCE;
+                score += same ? W_LOAD_CAPACITANCE : -W_LOAD_CAPACITANCE;
             }
         }
 
@@ -414,7 +411,8 @@ public class DeterministicRanker {
             if (ParsedQuery.DCR.equals(kind)) {
                 ok = partValue <= wanted * (1 + 1e-9);
             } else if (exact) {
-                ok = sameValue(wanted, partValue, EXACT_VOLTAGE_TOLERANCE);
+                ok = ParsedQuery.VOLTAGE.equals(kind) ? exactVoltageMatches(query, f) != Boolean.FALSE
+                        : sameValue(wanted, partValue, EXACT_VOLTAGE_TOLERANCE);
             } else {
                 ok = partValue >= wanted * (1 - 1e-9);
             }
@@ -693,14 +691,72 @@ public class DeterministicRanker {
         return wantedMounting.equals(partMounting) ? 1.0 : -1.0;
     }
 
-    /** First of capacitance/resistance/inductance in the query; frequency for crystals and oscillators. */
+    /**
+     * The primary value of the request: the frequency of a crystal or oscillator (a capacitance there is the load
+     * capacitance), else the first of capacitance, resistance, inductance and impedance; the frequency also when the
+     * family is not known. Null when the request states none.
+     */
     static String primaryKind(ParsedQuery query) {
-        for (String kind : PRIMARY_KINDS) {
-            if (query.constraint(kind) != null) {
-                return kind;
+        String family = query.family();
+        boolean frequencyFamily = "crystal".equals(family) || "oscillator".equals(family);
+        if (!frequencyFamily) {
+            for (String kind : PRIMARY_KINDS) {
+                if (query.constraint(kind) != null) {
+                    return kind;
+                }
             }
         }
-        return query.constraint(ParsedQuery.FREQUENCY) != null ? ParsedQuery.FREQUENCY : null;
+        return query.constraint(ParsedQuery.FREQUENCY) != null && (family == null || frequencyFamily)
+                ? ParsedQuery.FREQUENCY : null;
+    }
+
+    /**
+     * False when the part states a primary value of {@code kind} that differs from the request (1 %; an impedance also
+     * at its test frequency when both state one); true when it is the same or not stated.
+     */
+    static boolean primaryMatches(ParsedQuery query, ParametricExtractor.Features f, String kind) {
+        Recognizers.Value actual = f.values().get(kind);
+        ParsedQuery.Constraint wanted = query.constraint(kind);
+        if (actual == null || wanted == null) {
+            return true;
+        }
+        return sameValue(wanted.value(), actual.value(), VALUE_MATCH_TOLERANCE)
+                && (wanted.condition() == null || actual.condition() == null
+                || sameValue(wanted.condition(), actual.condition(), VALUE_MATCH_TOLERANCE));
+    }
+
+    /**
+     * The exact voltage of a Zener diode or a fixed regulator (within {@value #EXACT_VOLTAGE_TOLERANCE}): true when one
+     * of the voltages the part states as its specification ({@link ParametricExtractor.Features#voltages()}, else its
+     * voltage) is the requested one, false when it states voltages and none is, null when the request has no exact
+     * voltage or the part states none.
+     */
+    static Boolean exactVoltageMatches(ParsedQuery query, ParametricExtractor.Features f) {
+        ParsedQuery.Constraint wanted = query.constraint(ParsedQuery.VOLTAGE);
+        if (wanted == null || !isExactRating(ParsedQuery.VOLTAGE, query.family())) {
+            return null;
+        }
+        List<Double> candidates = !f.voltages().isEmpty() ? f.voltages()
+                : f.value(ParsedQuery.VOLTAGE) != null ? List.of(f.value(ParsedQuery.VOLTAGE)) : List.of();
+        if (candidates.isEmpty()) {
+            return null;
+        }
+        return candidates.stream().anyMatch(v -> sameValue(wanted.value(), v, EXACT_VOLTAGE_TOLERANCE));
+    }
+
+    /** True when the request is a crystal with a capacitance: its load capacitance. */
+    static boolean isLoadCapacitance(ParsedQuery query) {
+        return "crystal".equals(query.family()) && query.constraint(ParsedQuery.CAPACITANCE) != null;
+    }
+
+    /** The load capacitance of a crystal request against the part's capacitance (1 %); null when either is unknown. */
+    static Boolean loadCapacitanceMatches(ParsedQuery query, ParametricExtractor.Features f) {
+        if (!isLoadCapacitance(query)) {
+            return null;
+        }
+        Double actual = f.value(ParsedQuery.CAPACITANCE);
+        return actual == null ? null
+                : sameValue(query.constraint(ParsedQuery.CAPACITANCE).value(), actual, VALUE_MATCH_TOLERANCE);
     }
 
     static boolean sameValue(double wanted, double actual, double relativeTolerance) {
