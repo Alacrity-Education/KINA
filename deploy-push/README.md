@@ -76,6 +76,27 @@ docker compose up -d
 
 To roll out a new version later, run the script again and then `docker compose up -d` on the server.
 
+## Server-specific changes: use `compose.override.yaml`
+
+`compose.yaml` is generated and overwritten on every run, so never edit it on the server. Put host-specific
+settings into `compose.override.yaml` next to it; Docker Compose merges that file automatically and this script never
+touches it. Typical content: bind mounts instead of the named volumes (an entry with the same container path replaces
+the generated one). The host port is not an override: set `KINA_PORT` in `.env`, because `compose.yaml` maps
+`${KINA_PORT:-8080}:8080`.
+
+```yaml
+services:
+  kina:
+    volumes:
+      - /srv/kina-data:/data
+  postgres:
+    volumes:
+      - /srv/kina-db:/var/lib/postgresql/data
+```
+
+A bind-mounted `/data` must be writable by uid 10001 (the `kina` user in the image): `chown -R 10001:10001 /srv/kina-data`.
+Without that the JLCPCB database download fails with `AccessDeniedException: /data/jlcpcb` and LCSC stays unavailable.
+
 ## Rolling back
 
 Every deploy loads a new tag, and the earlier tags stay in the server's Docker daemon until you remove them. `latest` always points to the most recent push.
