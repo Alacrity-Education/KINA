@@ -16,7 +16,10 @@ spring:
 server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
-management.endpoints.web.exposure.include: health,info
+management:                    # DESIGN.md 3.7: actuator (health, info, prometheus) on its own port, no authentication
+  server.port: ${KINA_METRICS_PORT:9090}
+  endpoints.web.exposure.include: health,info,prometheus
+  prometheus.metrics.export.enabled: true
 kina:
   public-base-url: ${KINA_PUBLIC_BASE_URL:}
   security.mode: ${KINA_MODE:dev}
@@ -84,5 +87,7 @@ kina:
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
             excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE, NOT_IN_OFFER,
                                 PRODUCT_BLOCKED, INVALID, "BLOCKED_FOR_ZBL_*"] }
+  metrics:
+    save-interval: 30s           # counters saved to metrics_counters, database gauges recomputed (DESIGN.md 3.7)
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
             auto-download: true }

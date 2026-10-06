@@ -40,6 +40,51 @@ public final class RateLimitRetry {
     /** Upper bound for a parsed {@code Retry-After} (anything longer can never fit a request deadline anyway). */
     static final Duration MAX_RETRY_AFTER = Duration.ofHours(1);
 
+    /** Observes rate-limit events for the metrics (DESIGN.md 3.7). Must not throw and must not block. */
+    public interface Listener {
+        /** A call of {@code distributor} was answered with a rate limit. */
+        void rateLimited(Distributor distributor);
+
+        /** A call of {@code distributor} starts waiting (backoff, {@code Retry-After} or cool-down). */
+        void waited(Distributor distributor);
+    }
+
+    private static final Listener NO_LISTENER = new Listener() {
+        @Override
+        public void rateLimited(Distributor distributor) {
+        }
+
+        @Override
+        public void waited(Distributor distributor) {
+        }
+    };
+
+    /** Process-wide: instances are created by the clients, not by Spring; the metrics bean registers itself. */
+    private static volatile Listener listener = NO_LISTENER;
+
+    public static void listener(Listener newListener) {
+        listener = newListener == null ? NO_LISTENER : newListener;
+    }
+
+    /** Removes {@code oldListener} if it is still the registered one. */
+    public static void removeListener(Listener oldListener) {
+        if (listener == oldListener) {
+            listener = NO_LISTENER;
+        }
+    }
+
+    private void report(boolean wait) {
+        try {
+            if (wait) {
+                listener.waited(distributor);
+            } else {
+                listener.rateLimited(distributor);
+            }
+        } catch (RuntimeException e) {
+            // metrics never affect a distributor call
+        }
+    }
+
     /** Sleeps on the calling thread; tests substitute a fake. */
     @FunctionalInterface
     public interface Sleeper {
@@ -133,6 +178,7 @@ public final class RateLimitRetry {
             } catch (RateLimitedResponse e) {
                 signal = e;
             }
+            report(false);
             long now = budget.nanoTime();
             Duration retryAfter = parseRetryAfter(signal.retryAfter(), clock);
             Duration wait = retryAfter != null ? max(retryAfter, MIN_WAIT) : backoff(backoffStep++, random.getAsDouble());
@@ -169,6 +215,7 @@ public final class RateLimitRetry {
 
     private void sleep(Deadline deadline, long now, long waitNanos, long waitedSoFar) {
         deadline.recordWait(now, waitNanos);
+        report(true);
         try {
             sleeper.sleep(Duration.ofNanos(waitNanos));
         } catch (InterruptedException e) {

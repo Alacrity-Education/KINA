@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.security.UserRepository.User;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
@@ -86,6 +87,7 @@ public class MembershipVerifier {
     private final Set<UUID> inFlight = ConcurrentHashMap.newKeySet();
     /** Users whose last re-check found the provider unreachable (cleared by a successful check). */
     private final Map<UUID, Instant> unreachableSince = new ConcurrentHashMap<>();
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     @Autowired
     public MembershipVerifier(KinaProperties properties, UserRepository users, AccessTokenService tokens,
@@ -124,6 +126,12 @@ public class MembershipVerifier {
                         oidc.reloginIntervalWithoutRecheck());
             }
         }
+    }
+
+    /** Counts re-checks at the identity provider by outcome (DESIGN.md 3.7). */
+    @Autowired
+    void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
     }
 
     /** Result of an enforcement decision; {@code description} explains a refusal (safe to show to clients). */
@@ -277,6 +285,7 @@ public class MembershipVerifier {
                 return RecheckOutcome.MEMBER; // another caller just checked
             }
             RecheckOutcome outcome = askProvider(user);
+            metrics.membershipRecheck(outcome.name());
             switch (outcome) {
                 case MEMBER -> {
                     users.markMembershipChecked(userId, now(), false);

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.distributor.DistributorException;
@@ -15,6 +16,7 @@ import ro.alacrity.kina.domain.PartLookupResponse;
 import ro.alacrity.kina.domain.ResponseDetail;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.DistributorStatusService;
 import ro.alacrity.kina.search.PartLookupService;
 import ro.alacrity.kina.search.PartSearchService;
@@ -132,6 +134,7 @@ public class KinaMcpTools {
     private final PartSearchService searchService;
     private final PartLookupService lookupService;
     private final DistributorStatusService statusService;
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     /** Explicit constructor: the {@code @Value} parameter must not rely on Lombok copying field annotations. */
     public KinaMcpTools(@Value("${spring.ai.mcp.server.version:dev}") String version,
@@ -144,11 +147,17 @@ public class KinaMcpTools {
         this.statusService = statusService;
     }
 
+    /** Counts every tool call and failure (DESIGN.md 3.7). */
+    @Autowired
+    void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
+    }
+
     @McpTool(name = "ping", description = "Health check. Returns {\"status\":\"ok\",\"version\":...} when the KINA MCP server is reachable.",
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true,
                     openWorldHint = false))
     public Ping ping() {
-        return new Ping("ok", version);
+        return metrics.toolCall("ping", () -> new Ping("ok", version));
     }
 
     @McpTool(name = "search_parts", description = SEARCH_DESCRIPTION,
@@ -161,8 +170,8 @@ public class KinaMcpTools {
             @McpToolParam(description = BYPASS_CACHE_PARAM, required = false) Boolean bypass_cache,
             @McpToolParam(description = QUANTITY_PARAM, required = false) Integer quantity,
             @McpToolParam(description = DETAIL_PARAM, required = false) String detail) {
-        return searchService.search(SearchRequest.of(query, max_results, parseDistributors(distributors),
-                bypass_cache, quantity(quantity), ResponseDetail.parse(detail)));
+        return metrics.toolCall("search_parts", () -> searchService.search(SearchRequest.of(query, max_results,
+                parseDistributors(distributors), bypass_cache, quantity(quantity), ResponseDetail.parse(detail))));
     }
 
     @McpTool(name = "search_parts_batch", description = BATCH_DESCRIPTION,
@@ -175,6 +184,11 @@ public class KinaMcpTools {
             @McpToolParam(description = DISTRIBUTORS_PARAM, required = false) List<String> distributors,
             @McpToolParam(description = BYPASS_CACHE_PARAM, required = false) Boolean bypass_cache,
             @McpToolParam(description = DETAIL_PARAM, required = false) String detail) {
+        return metrics.toolCall("search_parts_batch", () -> searchBatch(queries, distributors, bypass_cache, detail));
+    }
+
+    private BatchSearchResponse searchBatch(List<BatchQuery> queries, List<String> distributors, Boolean bypass_cache,
+                                            String detail) {
         if (queries == null || queries.isEmpty()) {
             throw new IllegalArgumentException("queries must contain 1-" + BatchSearchRequest.MAX_QUERIES
                     + " entries");
@@ -209,6 +223,11 @@ public class KinaMcpTools {
             @McpToolParam(description = BYPASS_CACHE_PARAM, required = false) Boolean bypass_cache,
             @McpToolParam(description = QUANTITY_PARAM, required = false) Integer quantity,
             @McpToolParam(description = DETAIL_PARAM, required = false) String detail) {
+        return metrics.toolCall("get_part", () -> lookup(distributor, part_number, bypass_cache, quantity, detail));
+    }
+
+    private PartLookupResponse lookup(String distributor, String part_number, Boolean bypass_cache, Integer quantity,
+                                      String detail) {
         Distributor d = Distributor.parse(distributor);
         try {
             return lookupService.lookup(d, part_number, bypass_cache != null && bypass_cache,
@@ -223,12 +242,13 @@ public class KinaMcpTools {
     @McpTool(name = "list_distributors", description = """
             List the distributors KINA can search with their state: configured (credentials present), available, \
             a human-readable detail (for LCSC: JLCPCB database date and part count, or download progress), cached \
-            part counts, the Postgres cache statistics (5-day freshness) and the ranking configuration (cross-encoder \
-            model state). Does not call the distributor APIs.""",
+            part counts, the Postgres cache statistics (5-day freshness), the ranking configuration (cross-encoder \
+            model state) and usage counters since the first start (searches, tool calls, cache rows added and \
+            rate-limited calls per distributor, cross-encoder runs). Does not call the distributor APIs.""",
             annotations = @McpTool.McpAnnotations(title = "List distributors", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = false))
     public DistributorStatusResponse listDistributors() {
-        return statusService.status();
+        return metrics.toolCall("list_distributors", () -> statusService.status().withMetrics(metrics.summary()));
     }
 
     static Set<Distributor> parseDistributors(List<String> names) {

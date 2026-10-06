@@ -13,15 +13,27 @@ import java.util.List;
  * @param distributors one entry per distributor, in {@link Distributor} order
  * @param cache        Postgres component cache statistics (Mouser and TME); null when the database cannot be read
  * @param ranking      ranking configuration and cross-encoder health
+ * @param metrics      key usage counters (DESIGN.md 3.7); omitted when null
  */
 public record DistributorStatusResponse(
         @JsonProperty("distributors") List<DistributorStatus> distributors,
         @JsonProperty("cache") CacheSummary cache,
-        @JsonProperty("ranking") RankingSummary ranking
+        @JsonProperty("ranking") RankingSummary ranking,
+        @JsonProperty("metrics") @JsonInclude(JsonInclude.Include.NON_NULL) MetricsSummary metrics
 ) {
 
     public DistributorStatusResponse {
         distributors = distributors == null ? List.of() : List.copyOf(distributors);
+    }
+
+    public DistributorStatusResponse(List<DistributorStatus> distributors, CacheSummary cache,
+                                     RankingSummary ranking) {
+        this(distributors, cache, ranking, null);
+    }
+
+    /** This response with the usage counters. */
+    public DistributorStatusResponse withMetrics(MetricsSummary summary) {
+        return new DistributorStatusResponse(distributors, cache, ranking, summary);
     }
 
     /**

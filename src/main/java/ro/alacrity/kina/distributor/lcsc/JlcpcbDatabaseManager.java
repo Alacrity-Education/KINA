@@ -9,6 +9,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.metrics.KinaMetrics;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,6 +56,7 @@ public class JlcpcbDatabaseManager {
     private volatile Thread downloadThread;
     private volatile JlcpcbDatabaseInfo current;
     private volatile String lastError;
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     @Autowired
     public JlcpcbDatabaseManager(KinaProperties properties, JlcpcbDownloader downloader,
@@ -71,6 +73,12 @@ public class JlcpcbDatabaseManager {
         this.search = search;
         this.autoDownload = autoDownload;
         this.clock = clock;
+    }
+
+    /** Counts download outcomes (DESIGN.md 3.7). */
+    @Autowired
+    void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -195,13 +203,16 @@ public class JlcpcbDatabaseManager {
             current = info;
             lastError = null;
             repository.save(info);
+            metrics.jlcpcbDownload("ok");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            metrics.jlcpcbDownload("interrupted");
             lastError = "download interrupted";
             log.info("JLCPCB download interrupted");
             downloader.cleanTemp(config.dataDir(), config.library());
         } catch (IOException | RuntimeException e) {
             lastError = e.getMessage();
+            metrics.jlcpcbDownload("failed");
             log.warn("JLCPCB database download failed: {}", e.toString());
             downloader.cleanTemp(config.dataDir(), config.library());
         }
