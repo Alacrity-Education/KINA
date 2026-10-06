@@ -2,7 +2,7 @@
 
 ## What KINA is
 
-An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search electronic components at LCSC (via the JLCPCB parts database), TME (API v2) and Mouser. Only ships-now stock is returned. TME and Mouser results are cached in PostgreSQL for 5 days (1 hour for searches with no parts), and a search that finds nothing is retried once with a shorter core phrase (`fallback_query`). Parts are ranked by a deterministic parametric ranker blended 50/50 by rank with an in-process cross-encoder (`cross-encoder/ms-marco-MiniLM-L6-v2` on ONNX Runtime, CPU), with the deterministic order as fallback. KINA is also an OAuth 2.1 authorization server for Claude's remote MCP connector. Login is delegated to the organisation's OIDC provider (Authentik in the reference setup) and access requires membership of configured groups, re-checked at refresh and on bearer requests.
+An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search electronic components at LCSC (via the JLCPCB parts database), TME (API v2) and Mouser. Only ships-now stock is returned. TME and Mouser results are cached in PostgreSQL: component metadata is kept (by default forever, `kina.cache.metadata-retention.<DISTRIBUTOR>`), stock and prices expire after 3 days (`kina.cache.ttl`; 1 hour for searches with no parts) and are refreshed when older than 24 hours, else the part is returned with `stale: true`. A search that finds nothing is retried once with a shorter core phrase (`fallback_query`). Parts are ranked by a deterministic parametric ranker blended 50/50 by rank with an in-process cross-encoder (`cross-encoder/ms-marco-MiniLM-L6-v2` on ONNX Runtime, CPU), with the deterministic order as fallback. KINA is also an OAuth 2.1 authorization server for Claude's remote MCP connector. Login is delegated to the organisation's OIDC provider (Authentik in the reference setup) and access requires membership of configured groups, re-checked at refresh and on bearer requests.
 
 ## Where things are documented
 
@@ -46,7 +46,7 @@ Optional live tests: `KINA_CROSS_ENCODER_TEST_MODEL_DIR=<model dir> ./mvnw test 
 | `web` | `TokenPageController` (Thymeleaf token UI; `kina.tokens.ui-enabled=false` turns static tokens off), `LoginErrorController` (`/login-denied`), `PublicUrlResolver` (public origin; all emitted URLs go through it). |
 | `metrics` | `KinaMetrics` facade and `MetricsStore` (in-memory counters, saved to `metrics_counters` every 30 s and restored on startup), gauges from repositories, `/actuator/prometheus` on the management port (`KINA_METRICS_PORT`, no authentication), `/api/v1/metrics/summary`. |
 
-SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V7). Templates: `src/main/resources/templates`.
+SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V8). Templates: `src/main/resources/templates`.
 
 ## Conventions
 
@@ -77,4 +77,4 @@ SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V7). Templates:
 - Change the shared contracts only together with `docs/DESIGN.md`.
 - Keep the build warning-free and `./mvnw -q verify` green before committing.
 - In Markdown, use plain language and short sentences; no em-dashes.
-- Commit messages end with the co-author trailer given by the session.
+- Commit messages carry no `Co-Authored-By` trailer (the history was rewritten to remove them).
