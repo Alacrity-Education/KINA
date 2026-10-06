@@ -82,7 +82,7 @@ To roll out a new version later, run the script again and then `docker compose u
 settings into `compose.override.yaml` next to it; Docker Compose merges that file automatically and this script never
 touches it. Typical content: bind mounts instead of the named volumes (an entry with the same container path replaces
 the generated one). The host port is not an override: set `KINA_PORT` in `.env`, because `compose.yaml` maps
-`${KINA_PORT:-8080}:8080`.
+`${KINA_PORT:-8080}:8080`. The management port (health and Prometheus, no authentication) is published on `${KINA_METRICS_BIND:-127.0.0.1}:${KINA_METRICS_PORT:-9090}`; keep it off public interfaces.
 
 ```yaml
 services:

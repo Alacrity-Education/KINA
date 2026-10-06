@@ -43,6 +43,7 @@ ro.alacrity.kina
 │   └── ce/          CrossEncoderPartRanker, CrossEncoderModel (download/load), ModelDownloader, ModelLayout,
 │                    BertTokenizer, ScoringBackend, OnnxScoringBackend
 ├── mcp/             KinaMcpTools (@McpTool methods)
+├── metrics/         KinaMetrics (facade), MetricsStore, MetricsPersistence, MetricsGauges, MetricsController (3.7)
 ├── api/             PartsController, DistributorsController (/api/v1), ApiExceptionHandler (ProblemDetail)
 ├── security/        SecurityConfig, SecurityProperties, DevModeAuthenticationFilter, BearerTokenAuthenticationFilter,
 │                    AccessTokenService, AccessTokenRepository, UserRepository, OidcUserSynchronizer, KinaPrincipal
@@ -767,6 +768,90 @@ protocol). The REST controllers are synchronous (no `spring.mvc.async.request-ti
 `connection-timeout` only limits reading the request, not processing it. Clients and reverse proxies in front of KINA
 need a read timeout above two minutes (plus the ranking budget) to see such answers.
 
+### 3.7 Observability
+
+KINA exports Prometheus metrics with `micrometer-registry-prometheus`. Spring Boot's actuator runs on its own port,
+`management.server.port` (`KINA_METRICS_PORT`, default 9090), and serves `/actuator/health`, `/actuator/info` and
+`/actuator/prometheus` there. The main port (8080) has no actuator endpoints at all.
+
+**Security.** The management port has no authentication. `SecurityConfig.managementSecurityFilterChain` (order 0)
+matches `EndpointRequest.toAnyEndpoint()`, which with a separate port only matches requests of the management server,
+and permits them without authentication, CSRF or session. The machine and web chains still cover the main port, where
+`/actuator/**` is a 404 (development) or a login redirect (production). The port must be reachable only from the
+monitoring network: compose publishes it on `${KINA_METRICS_BIND:-127.0.0.1}:${KINA_METRICS_PORT:-9090}:9090`. When
+`management.server.port` is unset or equal to `server.port`, KINA logs a WARN at startup, because the actuator would
+then be public on the main port. The metrics hold no secrets: no tokens, keys, e-mail addresses, queries or part
+numbers, only counts with the bounded tags below.
+
+**Metrics.** Prefix `kina_`. The distributor tag is the enum name (`LCSC`, `TME`, `MOUSER`).
+
+| Metric | Type | Tags | Meaning |
+|---|---|---|---|
+| `kina_searches_total` | counter | | search requests: one `search_parts`, one REST search, one whole batch |
+| `kina_search_queries_total` | counter | | search queries, every query of a batch |
+| `kina_search_duration_seconds` | timer (`_count`, `_sum`) | | time to answer a search request |
+| `kina_distributor_calls_total` | counter | `distributor`, `outcome` | one per distributor and search query: `ok` or the result's `error` (`rate_limited`, `timeout`, `unavailable`, `bad_response`, `not_configured`) |
+| `kina_distributor_duration_seconds` | timer | `distributor` | one successful distributor search page, rate-limit waits included |
+| `kina_parts_fetched_total` | counter | `distributor` | in-stock parts received on distributor search pages (not from the cache) |
+| `kina_parts_returned_total` | counter | `distributor` | parts in search responses |
+| `kina_distributor_rate_limited_responses_total` | counter | `distributor` | HTTP calls answered with a rate limit (429, 502/503/504 with `Retry-After`, Mouser `TooManyRequests`), retried or not |
+| `kina_distributor_rate_limit_waits_total` | counter | `distributor` | waits before a retry (backoff, `Retry-After` or shared cool-down) |
+| `kina_cache_search_lookups_total` | counter | `distributor`, `status` | Postgres cache use per distributor fetch: `hit`, `miss`, `partial`, `bypassed` |
+| `kina_cache_parts_added_total` | counter | `distributor` | new `cached_parts` rows |
+| `kina_cache_parts_refreshed_total` | counter | `distributor` | existing `cached_parts` rows fetched again and overwritten |
+| `kina_cache_parts` | gauge | `distributor` | `cached_parts` rows (Mouser, TME) |
+| `kina_cache_parts_fresh` | gauge | `distributor` | rows younger than `kina.cache.ttl` |
+| `kina_cache_parts_stale` | gauge | `distributor` | rows older than `kina.cache.ttl` |
+| `kina_cache_searches` | gauge | `distributor` | `cached_searches` rows |
+| `kina_cross_encoder_executions_total` | counter | | cross-encoder (MiniLM) model runs |
+| `kina_cross_encoder_candidates_total` | counter | | candidates scored by the model |
+| `kina_cross_encoder_duration_seconds` | timer | | time of one model run |
+| `kina_ranking_fallback_total` | counter | `reason` | queries ranked with the deterministic fallback: `disabled`, `unavailable` (model not loaded), `busy`, `timeout`, `batch_budget`, `failed` (from `ranking_note`) |
+| `kina_tool_calls_total` | counter | `tool` | MCP tool calls (`search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping`) |
+| `kina_tool_errors_total` | counter | `tool` | tool calls that ended with an error (for example a blank query) |
+| `kina_api_requests_total` | counter | `endpoint` | `/api/**` requests by matched path pattern, e.g. `/api/v1/parts/search` |
+| `kina_logins_total` | counter | `outcome` | interactive OIDC logins: `ok`, `denied` |
+| `kina_login_denied_total` | counter | `reason` | refused logins: `group`, `email_domain`, `email_unverified`, `email_missing` |
+| `kina_oauth_tokens_issued_total` | counter | `grant` | access tokens issued by `/oauth/token`: `authorization_code`, `refresh_token` |
+| `kina_membership_rechecks_total` | counter | `outcome` | re-checks that asked the identity provider: `member`, `not_member`, `grant_invalid`, `unavailable`, `no_upstream_token` |
+| `kina_users_known` | gauge | | `users` rows that are not blocked |
+| `kina_users_revoked` | gauge | | blocked users (`access_revoked_at` set) |
+| `kina_tokens_active` | gauge | | access tokens neither revoked nor expired |
+| `kina_jlcpcb_database_parts` | gauge | | parts in the JLCPCB database (0 when unknown) |
+| `kina_jlcpcb_database_age_seconds` | gauge | | age of the JLCPCB download (0 when unknown) |
+| `kina_jlcpcb_downloads_total` | counter | `outcome` | JLCPCB downloads: `ok`, `failed`, `interrupted` |
+
+Spring Boot's own JVM, HTTP server, Hikari and process metrics are exported as well. Gauges cannot end in `_total` in
+the Prometheus exposition format, so the cache gauges are `kina_cache_parts` and `kina_cache_searches`.
+
+**Persistence.** Counters and timers live in memory (`MetricsStore`: one `AtomicLong` per name and canonical tag
+string, exported as Micrometer `FunctionCounter`s and `FunctionTimer`s). `MetricsPersistence` saves every value that
+changed to `metrics_counters` (section 8) every `kina.metrics.save-interval` (30 s) and on graceful shutdown, with one
+`INSERT ... SELECT FROM unnest(...) ON CONFLICT DO UPDATE SET value = GREATEST(old, new)` statement. On startup it
+adds the stored values to the in-memory ones, so each series continues where the previous run stopped: the counters
+only grow across restarts, and `rate()` and `increase()` work without a reset (an unclean stop loses at most the last
+30 s). A timer is stored as two rows, `<name>:count` and `<name>:nanos`. Nothing is saved until the restore succeeded,
+so a run that could not read the table never overwrites it with smaller values. A database failure never affects a
+request: it is logged once at WARN and retried at the next tick. Gauges are not persisted; `MetricsGauges` recomputes
+the database gauges every 30 s with a few `count(*)` queries and reads the JLCPCB gauges from memory at every scrape.
+Several KINA instances sharing one database would each keep their own counts, and the larger value would win in the
+table; run one instance per database.
+
+**Instrumentation.** `KinaMetrics` is the facade; business code makes one call per event and never fails because of a
+metric. Classes default to `KinaMetrics.NOOP` and get the bean through a setter, so tests that build them by hand need
+no metrics. Points: `PartSearchService` (request and batch, from the assembled response; one call per distributor
+page), `RateLimitRetry` (a process-wide `RateLimitRetry.Listener` for rate-limit responses and waits, because the
+clients create their retry objects themselves), `CrossEncoderPartRanker` (model runs), `PartCacheRepository.upsertAll`
+(counts the existing rows first to tell added from refreshed), `KinaMcpTools` (`KinaMetrics.toolCall`), an
+interceptor on `/api/**`, `OidcUserSynchronizer`, `TokenController`, `MembershipVerifier.recheck` and
+`JlcpcbDatabaseManager.runDownload`.
+
+**JSON.** `GET /api/v1/metrics/summary` (bearer token like the rest of `/api`) returns `{"summary": {...},
+"counters": [{"name", "tags", "value"}]}`: the key counters and every counter and timer in Prometheus naming (timer
+sums in seconds). `list_distributors` and `GET /api/v1/distributors` carry the same key counters as `metrics`:
+`{"searches", "search_queries", "tool_calls": {tool: n}, "cache_added": {distributor: n}, "rate_limited_calls":
+{distributor: n}, "cross_encoder_executions"}`. They count since the first start against this database.
+
 ## 4. MCP tools
 
 Server name `kina`, version from the build. Tools (JSON Schema generated from the method
@@ -777,7 +862,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`) | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail` | `{ "results": [SearchResponse...] }` |
 | `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`compact` default) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown) or `out_of_stock` (listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, no stock or prices), or with `error` (and `reason` null) when the lookup failed. Out-of-stock parts are never returned as a part and never cached. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
-| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`. Never calls the Mouser/TME APIs |
+| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions}` (section 3.7). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 `SearchResponse` JSON (snake_case):
@@ -863,7 +948,8 @@ Tool parameter names are the Java parameter names (`-parameters`), so the tool m
 | `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case: `queries[{query, max_results, quantity}]`, `distributors`, `bypass_cache`, `detail`), returns `{results: [...]}` |
 | `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; an MPN works as for `get_part`; 404 problem with `reason` `not_found` or `out_of_stock` (then also `identity`) |
 | `GET /api/v1/distributors` | same as `list_distributors` |
-| `GET /actuator/health`, `GET /actuator/info` | public |
+| `GET /api/v1/metrics/summary` | key counters and every persisted counter and timer as JSON (section 3.7) |
+| `GET /actuator/health`, `GET /actuator/info`, `GET /actuator/prometheus` | management port only (`KINA_METRICS_PORT`, 9090), no authentication (section 3.7); not served on the main port |
 
 Distributor names are case-insensitive everywhere (query, path and JSON body). Errors use RFC 9457
 `application/problem+json` (`ApiExceptionHandler`, `@RestControllerAdvice(basePackages = "ro.alacrity.kina.api")`), types
@@ -895,7 +981,8 @@ upserts `users(issuer, subject, email, display_name, last_login_at)`, sets `memb
 sentence per reason, section 7.1), and an existing user row is blocked (`access_revoked_at`, all tokens revoked).
 The login's authorized client lives in the HTTP session (`UpstreamTokenCapturingClientRepository`), which hands the
 provider's refresh token to `MembershipVerifier` (stored encrypted, section 7.1).
-`/api/**` and `/mcp/**` accept bearer tokens only. `RevokedUserSessionFilter` ends the web session of a user blocked
+`/api/**` and `/mcp/**` accept bearer tokens only. The actuator endpoints are on the management port and need no
+authentication (management chain, section 3.7). `RevokedUserSessionFilter` ends the web session of a user blocked
 after signing in; the next page view starts a new login (and so a new group check).
 
 **Access tokens** (`AccessTokenService`): plaintext `kina_` + 43 base64url chars from 32 random
@@ -1057,7 +1144,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V5__cached_search_out_of_stock.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V6__metrics_counters.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -1170,6 +1257,15 @@ CREATE TABLE jlcpcb_database (
   size_bytes    BIGINT,
   part_count    BIGINT,
   source_date   TEXT
+);
+
+-- V6__metrics_counters.sql (section 3.7): Prometheus counters kept across restarts
+CREATE TABLE metrics_counters (
+  name       TEXT        NOT NULL,             -- Micrometer name; a timer is <name>:count and <name>:nanos
+  tags       TEXT        NOT NULL DEFAULT '',  -- canonical "key=value,key=value", sorted by key
+  value      BIGINT      NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (name, tags)
 );
 ```
 
@@ -1392,7 +1488,10 @@ spring:
 server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
-management.endpoints.web.exposure.include: health,info
+management:                    # section 3.7: actuator on its own port, no authentication there
+  server.port: ${KINA_METRICS_PORT:9090}
+  endpoints.web.exposure.include: health,info,prometheus
+  prometheus.metrics.export.enabled: true
 kina:
   public-base-url: ${KINA_PUBLIC_BASE_URL:}
   security.mode: ${KINA_MODE:dev}
@@ -1456,6 +1555,8 @@ kina:
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
               excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE, NOT_IN_OFFER, PRODUCT_BLOCKED,
                                   INVALID, "BLOCKED_FOR_ZBL_*"] }
+  metrics:
+    save-interval: 30s           # section 3.7: counters saved to metrics_counters, database gauges recomputed
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
             auto-download: true }   # false in src/test/resources/config/application.yml
 ```
@@ -1475,7 +1576,8 @@ empty value is not a valid duration or boolean).
   `docker/model/fetch-model.sh` (the only build-time dependency on Hugging Face); stage `runtime` `eclipse-temurin:21-jre`,
   non-root user `kina` (uid 10001), the model copied to `/opt/kina/cross-encoder` (owned by uid 10001, directories
   0555, files 0444), `ENV KINA_JLCPCB_DATA_DIR=/data/jlcpcb KINA_CROSS_ENCODER_MODEL_URL=/opt/kina/cross-encoder
-  KINA_CROSS_ENCODER_AUTO_DOWNLOAD=false`, `/data` volume (JLCPCB database only), `HEALTHCHECK` on `/actuator/health` (curl), `ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED",
+  KINA_CROSS_ENCODER_AUTO_DOWNLOAD=false`, `/data` volume (JLCPCB database only), `EXPOSE 8080 9090`, `HEALTHCHECK` on
+  `http://localhost:${KINA_METRICS_PORT:-9090}/actuator/health` (curl, management port), `ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED",
   "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/kina.jar"]` (native access for sqlite-jdbc;
   heap sized from the container memory limit; extra flags via `JAVA_TOOL_OPTIONS`). The ONNX Runtime jar bundles its
   native library (linux-x64/aarch64), extracted to the temp directory at first use; it loads in `eclipse-temurin:21-jre`
@@ -1499,8 +1601,10 @@ empty value is not a valid duration or boolean).
 - `compose.yaml`: top-level `name: kina` (volumes are `kina_kina-data`, `kina_pgdata`, network `kina_default`; a
   pre-seeded JLCPCB file in `kina_kina-data` is adopted at startup, see 9.3; the volume no longer holds the model).
   Services:
-  - `kina`: build `.`, ports `${KINA_PORT:-8080}:8080`, `env_file: .env` (optional), environment for the datasource
-    and `KINA_JLCPCB_DATA_DIR=/data/jlcpcb`, volume `kina-data:/data`,
+  - `kina`: build `.`, ports `${KINA_PORT:-8080}:8080` and `${KINA_METRICS_BIND:-127.0.0.1}:${KINA_METRICS_PORT:-9090}:9090`
+    (management port without authentication, localhost only by default, section 3.7), `env_file: .env` (optional),
+    environment for the datasource, `KINA_JLCPCB_DATA_DIR=/data/jlcpcb` and `KINA_METRICS_PORT=9090` (the container
+    always listens on 9090; the `.env` value only picks the host port), volume `kina-data:/data`,
     `mem_limit: ${KINA_MEM_LIMIT:-2g}` (heap = 75%; the ONNX Runtime session lives outside the heap),
     `depends_on: postgres (healthy)`.
   - `postgres`: `postgres:17-alpine`, `POSTGRES_DB/USER/PASSWORD=kina`, volume `pgdata`, healthcheck `pg_isready`.
@@ -1515,6 +1619,10 @@ empty value is not a valid duration or boolean).
   OAuth metadata/register/authorize/token flow (MockMvc), bearer filter; group-claim evaluation, upstream token
   cipher, Client ID Metadata Document parsing and host allowlist, registration rate limit; a production-mode
   integration test against an in-process OIDC provider (`FakeOidcProvider`: login gate, refresh re-checks, grace,
-  fallback without upstream token, static-token background re-check); Testcontainers-backed repository tests.
+  fallback without upstream token, static-token background re-check); Testcontainers-backed repository tests;
+  metrics: the counter store (canonical tags, timers, restore), persistence round trip with Testcontainers (save,
+  restore in a new store, never decreasing), a production-mode `@SpringBootTest` on random ports that scrapes
+  `/actuator/prometheus` on the management port without credentials and checks the main port does not serve it, and
+  the MCP integration test counting searches and tool calls.
 - No secrets in code, logs or test fixtures. Never log bearer tokens or API keys.
 - Every external call has a timeout. Every distributor error is isolated per distributor.

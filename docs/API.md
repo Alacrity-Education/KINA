@@ -27,7 +27,7 @@ WWW-Authenticate: Bearer realm="kina", resource_metadata="https://<host>/.well-k
 
 In `prod` with required groups (`OIDC_REQUIRED_GROUPS`), a user who is no longer a member is blocked: every token of that user gives `401` with `error="invalid_token"`, and the web session ends. A static token of a member triggers a background membership re-check at most once per user per interval; the request itself never waits for the identity provider.
 
-`/actuator/health` and `/actuator/info` are public.
+`/actuator/health`, `/actuator/info` and `/actuator/prometheus` are not on this port: they are served on the management port (`KINA_METRICS_PORT`, default 9090) without authentication, see [OPERATIONS.md](OPERATIONS.md#monitoring).
 
 CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oauth/register`, `/oauth/token` and `/oauth/revoke`.
 
@@ -293,9 +293,23 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/distri
               "model": "cross-encoder/ms-marco-MiniLM-L6-v2", "model_variant": "int8",
               "model_revision": "<hugging face commit>", "model_dir": "/opt/kina/cross-encoder",
               "threads": 4, "avg_latency_ms": 180.0, "last_error": null,
-              "max_candidates": 40, "weight": 0.5, "timeout": "PT5S"}
+              "max_candidates": 40, "weight": 0.5, "timeout": "PT5S"},
+  "metrics": {"searches": 120, "search_queries": 310,
+              "tool_calls": {"get_part": 12, "list_distributors": 3, "search_parts": 90, "search_parts_batch": 10},
+              "cache_added": {"MOUSER": 900, "TME": 1400}, "rate_limited_calls": {"MOUSER": 2},
+              "cross_encoder_executions": 300}
 }
 ```
+
+The `metrics` object holds usage counters since the first start against this database (they survive restarts):
+
+| Field | Meaning |
+|---|---|
+| `searches`, `search_queries` | Search requests (a batch counts once) and queries (every query of a batch). |
+| `tool_calls` | MCP tool calls per tool. |
+| `cache_added` | New rows in the part cache per distributor. |
+| `rate_limited_calls` | Distributor HTTP calls answered with a rate limit, per distributor (retried or not). |
+| `cross_encoder_executions` | Runs of the ranking model. |
 
 The `ranking` object:
 
@@ -311,6 +325,30 @@ The `ranking` object:
 | `max_candidates`, `weight`, `timeout` | Candidates scored per query (40), weight of the model in the blend (0.5) and ranking budget per query (ISO-8601 duration). |
 
 Numbers above are placeholders. `available` for TME and Mouser means "configured"; there is no live probe. `cache` is null when the database cannot be read. Null fields in a distributor entry are omitted.
+
+### `GET /api/v1/metrics/summary`
+
+The usage counters as JSON, for clients without Prometheus. Needs a bearer token like every `/api` endpoint. The Prometheus format is on the management port (`/actuator/prometheus`, port 9090, no authentication; see [OPERATIONS.md](OPERATIONS.md#monitoring)).
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/metrics/summary
+```
+
+```json
+{
+  "summary": {"searches": 120, "search_queries": 310, "tool_calls": {"search_parts": 90},
+              "cache_added": {"MOUSER": 900, "TME": 1400}, "rate_limited_calls": {"MOUSER": 2},
+              "cross_encoder_executions": 300},
+  "counters": [
+    {"name": "kina_distributor_calls_total", "tags": {"distributor": "MOUSER", "outcome": "ok"}, "value": 85.0},
+    {"name": "kina_search_duration_seconds_count", "tags": {}, "value": 120.0},
+    {"name": "kina_search_duration_seconds_sum", "tags": {}, "value": 96.4},
+    {"name": "kina_searches_total", "tags": {}, "value": 120.0}
+  ]
+}
+```
+
+`summary` is the `metrics` object of `GET /api/v1/distributors`. `counters` lists every counter and timer in Prometheus naming, sorted by name and tags (timer sums in seconds). Gauges such as the cache size are only in the Prometheus output. Metric names and tags: [DESIGN.md 3.7](DESIGN.md#37-observability).
 
 ### Errors
 
@@ -442,7 +480,7 @@ The lookup failed: `error` carries the failure code and `reason` is null. On a r
 
 ### `list_distributors`
 
-No parameters. Returns the same payload as `GET /api/v1/distributors`: per-distributor state, cache statistics and ranking status. Does not call the Mouser or TME APIs.
+No parameters. Returns the same payload as `GET /api/v1/distributors`: per-distributor state, cache statistics, ranking status and the usage counters (`metrics`). Does not call the Mouser or TME APIs.
 
 ### `ping`
 
