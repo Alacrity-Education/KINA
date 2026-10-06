@@ -1,5 +1,6 @@
 package ro.alacrity.kina.security;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,7 @@ import ro.alacrity.kina.config.KinaProperties;
  * {@code spring.security.oauth2.client.*} properties keeps development mode free of any OIDC configuration and lets
  * discovery happen lazily (see {@link LazyOidcClientRegistrationRepository}).
  */
+@Slf4j
 @Configuration(proxyBeanMethods = false)
 @Conditional(DevModeCondition.Prod.class)
 public class OidcLoginConfiguration {
@@ -33,7 +35,9 @@ public class OidcLoginConfiguration {
 
     @Bean
     OidcAccessPolicy oidcAccessPolicy(KinaProperties properties) {
-        return new OidcAccessPolicy(properties.security().oidc());
+        OidcAccessPolicy policy = new OidcAccessPolicy(properties.security().oidc());
+        log.info("OIDC login policy: {}", policy.describe());
+        return policy;
     }
 
     @Bean

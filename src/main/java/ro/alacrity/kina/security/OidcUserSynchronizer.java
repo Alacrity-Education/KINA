@@ -6,12 +6,13 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import java.time.Clock;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Production OIDC login: loads the OIDC user with Spring's standard {@code OidcUserService}, applies the group and
@@ -19,9 +20,10 @@ import java.util.Set;
  * last_login_at)} and returns a {@link KinaOidcUser} that carries the {@link KinaPrincipal}. Works with any compliant
  * provider: only standard claims plus the configured groups claim are read.
  * <p>
- * A denied identity is not signed in: an {@link OAuth2AuthenticationException} with
- * {@link OidcAccessPolicy#ERROR_GROUP} or {@link OidcAccessPolicy#ERROR_EMAIL_DOMAIN} ends the login on the
- * {@code /login-denied} page, and an existing user row is blocked ({@code access_revoked_at}, all tokens revoked).
+ * A denied identity is not signed in: a {@link LoginDeniedException} (error code {@link OidcAccessPolicy#ERROR_GROUP}
+ * or {@link OidcAccessPolicy#ERROR_EMAIL_DOMAIN}, plus the reason) ends the login on the {@code /login-denied} page,
+ * and an existing user row is blocked ({@code access_revoked_at}, all tokens revoked). The refusal is logged at WARN
+ * (subject, reason, domain) and the claim names the provider sent at INFO; never addresses or claim values.
  */
 @Slf4j
 public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, OidcUser> {
@@ -50,16 +52,26 @@ public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, 
         OidcUser oidcUser = delegate.loadUser(request);
         String issuer = oidcUser.getIssuer() != null ? oidcUser.getIssuer().toString()
                 : request.getClientRegistration().getProviderDetails().getIssuerUri();
-        OidcAccessPolicy.Decision decision = policy.evaluateLogin(oidcUser.getIdToken().getClaims(),
-                oidcUser.getUserInfo() == null ? null : oidcUser.getUserInfo().getClaims());
+        Map<String, Object> idClaims = oidcUser.getIdToken().getClaims();
+        Map<String, Object> userInfoClaims = oidcUser.getUserInfo() == null ? null : oidcUser.getUserInfo().getClaims();
+        OidcAccessPolicy.Decision decision = policy.evaluateLogin(idClaims, userInfoClaims);
         if (!decision.allowed()) {
-            // Log the subject only, never the e-mail address or the claims.
+            // Log the subject only, never the e-mail address or claim values (the detail holds names and domains).
             log.warn("OIDC login denied for subject {} (issuer {}): {}", oidcUser.getSubject(), issuer,
-                    decision.reason());
-            users.findByIssuerAndSubject(issuer, oidcUser.getSubject())
-                    .ifPresent(user -> membership.recordDeniedLogin(user.id()));
-            throw new OAuth2AuthenticationException(new OAuth2Error(decision.errorCode(),
-                    "Access to KINA requires membership in " + String.join(" or ", policy.requiredGroups()), null));
+                    decision.detail());
+            log.info("OIDC login denied for subject {}: ID token claims {}; {}; {}", oidcUser.getSubject(),
+                    new TreeSet<>(idClaims.keySet()), userInfoDiagnosis(request, userInfoClaims),
+                    scopeDiagnosis(request));
+            boolean blocked = users.findByIssuerAndSubject(issuer, oidcUser.getSubject())
+                    .map(user -> {
+                        membership.recordDeniedLogin(user.id());
+                        return true;
+                    })
+                    .orElse(false);
+            throw new LoginDeniedException(decision, blocked, decision.reason() == OidcAccessPolicy.Reason.GROUP
+                    ? "Access to KINA requires membership in " + String.join(" or ", policy.requiredGroups())
+                    : "Access to KINA requires a verified e-mail address from "
+                    + String.join(" or ", policy.allowedEmailDomains()));
         }
         KinaPrincipal principal = synchronize(issuer, oidcUser);
         membership.recordSuccessfulLogin(principal.userId());
@@ -68,10 +80,32 @@ public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, 
         return new KinaOidcUser(authorities, oidcUser.getIdToken(), oidcUser.getUserInfo(), principal);
     }
 
+    /** Whether userinfo was fetched and which claim names it returned; names only. */
+    static String userInfoDiagnosis(OidcUserRequest request, Map<String, Object> userInfoClaims) {
+        if (userInfoClaims != null) {
+            return "userinfo claims " + new TreeSet<>(userInfoClaims.keySet());
+        }
+        String uri = request.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUri();
+        return uri == null || uri.isBlank()
+                ? "userinfo not fetched (the provider's discovery document has no userinfo_endpoint)"
+                : "userinfo not fetched";
+    }
+
+    /** The scopes the token response granted, with a hint when it named none or lacks {@code email}. */
+    static String scopeDiagnosis(OidcUserRequest request) {
+        Set<String> scopes = new TreeSet<>(request.getAccessToken().getScopes());
+        if (scopes.isEmpty()) {
+            return "the token response named no scope (the provider did not confirm which scopes it granted)";
+        }
+        return "granted scopes " + scopes + (scopes.contains("email") ? ""
+                : " (no email scope granted: the provider sends no e-mail claims)");
+    }
+
     /** Upserts the user row and returns its principal. */
     public KinaPrincipal synchronize(String issuer, OidcUser oidcUser) {
         String subject = oidcUser.getSubject();
-        String email = blankToNull(oidcUser.getEmail());
+        String email = policy.email(oidcUser.getIdToken().getClaims(),
+                oidcUser.getUserInfo() == null ? null : oidcUser.getUserInfo().getClaims()).orElse(null);
         String displayName = firstNonBlank(oidcUser.getFullName(), oidcUser.getPreferredUsername(), email, subject);
         return users.upsert(issuer, subject, email, displayName, clock.instant()).toPrincipal();
     }
@@ -85,7 +119,4 @@ public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, 
         return null;
     }
 
-    private static String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value;
-    }
 }

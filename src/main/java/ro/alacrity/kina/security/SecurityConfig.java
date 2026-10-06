@@ -126,13 +126,16 @@ public class SecurityConfig {
     }
 
     /**
-     * Failed OIDC login: a group or e-mail-domain refusal goes to {@code /login-denied} (which names the required
-     * group), anything else to {@code /login-error}. No session is established in either case.
+     * Failed OIDC login: a policy refusal goes to {@code /login-denied?reason=<code>} (the {@link LoginDenial} for the
+     * page is kept in the session), anything else to {@code /login-error}. No session is authenticated in either case.
      */
     static void loginFailure(HttpServletRequest request, HttpServletResponse response,
                              AuthenticationException exception) throws IOException {
         String target = "/login-error";
-        if (exception instanceof OAuth2AuthenticationException oauth2) {
+        if (exception instanceof LoginDeniedException denied) {
+            request.getSession().setAttribute(LoginDenial.SESSION_ATTRIBUTE, denied.getDenial());
+            target = "/login-denied?reason=" + denied.getDenial().reason();
+        } else if (exception instanceof OAuth2AuthenticationException oauth2) {
             String code = oauth2.getError().getErrorCode();
             if (OidcAccessPolicy.ERROR_GROUP.equals(code)) {
                 target = "/login-denied?reason=group";

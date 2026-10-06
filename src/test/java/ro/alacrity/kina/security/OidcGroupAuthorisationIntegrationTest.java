@@ -3,8 +3,11 @@ package ro.alacrity.kina.security;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
@@ -48,6 +51,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import({TestcontainersConfiguration.class, TestEchoController.Endpoint.class})
+@ExtendWith(OutputCaptureExtension.class)
 @TestPropertySource(properties = {
         "kina.security.mode=prod",
         "kina.security.oidc.client-id=" + FakeOidcProvider.CLIENT_ID,
@@ -63,6 +67,7 @@ class OidcGroupAuthorisationIntegrationTest {
     static final FakeOidcProvider PROVIDER = new FakeOidcProvider();
     static final String GROUP = "ElectronicsEngineer";
     static final String REDIRECT_URI = "http://localhost:33418/callback";
+    static final String TOKENS_SENTENCE = "Tokens you created earlier no longer work.";
     static final JsonMapper JSON = JsonMapper.builder().build();
     static final HttpClient HTTP = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER)
             .connectTimeout(Duration.ofSeconds(5)).build();
@@ -145,7 +150,9 @@ class OidcGroupAuthorisationIntegrationTest {
         MockHttpServletResponse denied = mvc.perform(get("/login-denied").param("reason", "group")
                 .session(login.session())).andReturn().getResponse();
         assertThat(denied.getStatus()).isEqualTo(403);
-        assertThat(denied.getContentAsString()).contains("Access denied").contains(GROUP);
+        assertThat(denied.getContentAsString()).contains("Access denied")
+                .contains("Your account is not in a group that may use KINA (required:").contains(GROUP)
+                .as("an existing user was blocked").contains(TOKENS_SENTENCE);
 
         MockHttpServletResponse index = mvc.perform(get("/").session(login.session())).andReturn().getResponse();
         assertThat(index.getStatus()).isEqualTo(302);
@@ -156,14 +163,69 @@ class OidcGroupAuthorisationIntegrationTest {
     }
 
     @Test
-    void wrongEmailDomainIsDenied() throws Exception {
+    void wrongEmailDomainIsDeniedAndThePageNamesTheDomain(CapturedOutput output) throws Exception {
         String subject = subject("mallory");
-        PROVIDER.user(subject, "mallory@gmail.com", GROUP);
+        PROVIDER.user(subject, "mallory@Gmail.com", GROUP);
         Login login = login(subject);
-        assertThat(login.callback().getRedirectedUrl()).endsWith("/login-denied?reason=email");
+        assertThat(login.callback().getRedirectedUrl()).endsWith("/login-denied?reason=email_domain");
+        String page = deniedPage(login);
+        assertThat(page).contains("You signed in with an account from <strong>gmail.com</strong>")
+                .contains("but KINA only accepts <strong>alacrity.ro</strong>")
+                .as("a new user had no tokens").doesNotContain(TOKENS_SENTENCE);
+        assertThat(users.findByIssuerAndSubject(PROVIDER.issuer(), subject)).isEmpty();
+        assertThat(output.getOut()).contains("OIDC login denied for subject " + subject + " (issuer "
+                + PROVIDER.issuer() + "): e-mail domain gmail.com not allowed").doesNotContain("mallory@");
+
+        // The page shows the details once; a later visit (or a hand-made URL) falls back to the generic text.
+        String again = mvc.perform(get("/login-denied").param("reason", "email_domain").session(login.session()))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(again).doesNotContain("gmail.com").contains("KINA only accepts accounts from");
         assertThat(mvc.perform(get("/login-denied").param("reason", "email")).andReturn().getResponse()
                 .getContentAsString()).contains("alacrity.ro");
-        assertThat(users.findByIssuerAndSubject(PROVIDER.issuer(), subject)).isEmpty();
+    }
+
+    @Test
+    void loginWithoutEmailClaimSaysTheProviderSentNoAddress(CapturedOutput output) throws Exception {
+        String subject = subject("nomail");
+        PROVIDER.user(subject, "nomail@alacrity.ro", GROUP);
+        PROVIDER.omitEmail(subject);
+        Login login = login(subject);
+        assertThat(login.callback().getRedirectedUrl()).endsWith("/login-denied?reason=email_missing");
+        assertThat(deniedPage(login))
+                .contains("Your identity provider did not send an e-mail address for your account")
+                .contains("Ask the administrator to enable the e-mail scope for the KINA application.")
+                .doesNotContain(TOKENS_SENTENCE);
+        assertThat(output.getOut())
+                .contains("OIDC login denied for subject " + subject + " (issuer " + PROVIDER.issuer()
+                        + "): no e-mail claim in ID token or userinfo (claims present: ")
+                .contains("groups, iat, iss, name, nonce, sub")
+                .contains("userinfo claims [groups, name, sub]")
+                .contains("the token response named no scope")
+                .doesNotContain("User " + subject + ",");
+    }
+
+    @Test
+    void unverifiedEmailIsDenied(CapturedOutput output) throws Exception {
+        String subject = subject("unverified");
+        PROVIDER.user(subject, "unverified@alacrity.ro", GROUP);
+        PROVIDER.setEmailVerified(subject, false);
+        Login login = login(subject);
+        assertThat(login.callback().getRedirectedUrl()).endsWith("/login-denied?reason=email_unverified");
+        assertThat(deniedPage(login)).contains("Your e-mail address is marked as unverified by the identity provider.")
+                .doesNotContain(TOKENS_SENTENCE);
+        assertThat(output.getOut()).contains("e-mail address not verified").doesNotContain("unverified@alacrity.ro");
+    }
+
+    @Test
+    void existingUserDeniedForTheirAddressSeesTheTokensSentence() throws Exception {
+        String subject = subject("oscar");
+        PROVIDER.user(subject, "oscar@alacrity.ro", GROUP);
+        PROVIDER.setEmailVerified(subject, "false");
+        users.upsert(PROVIDER.issuer(), subject, "oscar@alacrity.ro", "Oscar", Instant.now());
+        Login login = login(subject);
+        assertThat(login.callback().getRedirectedUrl()).endsWith("/login-denied?reason=email_unverified");
+        assertThat(deniedPage(login)).contains("marked as unverified").contains(TOKENS_SENTENCE);
+        assertThat(row(subject).accessRevokedAt()).isNotNull();
     }
 
     // ---- refresh-time re-check -----------------------------------------------------------------------------------
@@ -316,6 +378,14 @@ class OidcGroupAuthorisationIntegrationTest {
     }
 
     record UserRow(UUID id, Instant membershipCheckedAt, Instant accessRevokedAt, String upstreamRefreshToken) {
+    }
+
+    /** The denied page as the browser sees it after the redirect (same session, reason from the redirect URL). */
+    String deniedPage(Login login) throws Exception {
+        MockHttpServletResponse page = mvc.perform(get(URI.create(login.callback().getRedirectedUrl()))
+                .session(login.session())).andReturn().getResponse();
+        assertThat(page.getStatus()).isEqualTo(403);
+        return page.getContentAsString();
     }
 
     static String subject(String name) {

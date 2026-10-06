@@ -61,6 +61,8 @@ public record KinaProperties(
      * @param requiredGroups                 a user must be in at least one of these groups (case-insensitive); empty
      *                                       disables the group check
      * @param allowedEmailDomains            optional: the {@code email} claim must end in one of these domains
+     * @param emailFromPreferredUsername     when no {@code email} claim is present, take the address from
+     *                                       {@code preferred_username} or {@code upn} if it contains {@code @}
      * @param extraScopes                    scopes requested in addition to {@code openid profile email}
      * @param tokenEncryptionKey             base64 of 32 bytes; AES-GCM key for stored upstream refresh tokens; unset:
      *                                       upstream refresh tokens are not stored (fallback: periodic re-login)
@@ -74,6 +76,7 @@ public record KinaProperties(
                        @DefaultValue("groups") String groupsClaim,
                        @DefaultValue List<String> requiredGroups,
                        @DefaultValue List<String> allowedEmailDomains,
+                       @DefaultValue("false") boolean emailFromPreferredUsername,
                        @DefaultValue List<String> extraScopes,
                        String tokenEncryptionKey,
                        @DefaultValue("1h") Duration membershipRecheckInterval,
@@ -95,7 +98,7 @@ public record KinaProperties(
 
         /** Issuer and client only; every group-authorisation setting at its default (no group check). */
         public Oidc(String issuerUri, String clientId, String clientSecret) {
-            this(issuerUri, clientId, clientSecret, null, null, null, null, null, null, null, null);
+            this(issuerUri, clientId, clientSecret, null, null, null, false, null, null, null, null, null);
         }
 
         public boolean isConfigured() {
@@ -116,7 +119,8 @@ public record KinaProperties(
             return "Oidc[issuerUri=" + issuerUri + ", clientId=" + clientId + ", clientSecret="
                     + (clientSecret == null || clientSecret.isBlank() ? "" : "***") + ", groupsClaim=" + groupsClaim
                     + ", requiredGroups=" + requiredGroups + ", allowedEmailDomains=" + allowedEmailDomains
-                    + ", extraScopes=" + extraScopes + ", tokenEncryptionKey=" + (hasTokenEncryptionKey() ? "***" : "")
+                    + ", emailFromPreferredUsername=" + emailFromPreferredUsername + ", extraScopes=" + extraScopes
+                    + ", tokenEncryptionKey=" + (hasTokenEncryptionKey() ? "***" : "")
                     + ", membershipRecheckInterval=" + membershipRecheckInterval + ", membershipGrace="
                     + membershipGrace + ", reloginIntervalWithoutRecheck=" + reloginIntervalWithoutRecheck + "]";
         }

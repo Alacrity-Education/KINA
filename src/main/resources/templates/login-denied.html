@@ -8,18 +8,36 @@
 <main>
     <div class="card" style="max-width:560px;margin:0 auto">
         <h1>Access denied</h1>
-        <th:block th:if="${emailDomain}">
-            <p>You signed in, but KINA only accepts accounts from
-                <strong th:text="${#strings.listJoin(domains, ', ')}">example.com</strong>.</p>
-            <p class="muted">Sign in again with your organisation account.</p>
+        <th:block th:switch="${reason}">
+            <th:block th:case="'email_missing'">
+                <p>Your identity provider did not send an e-mail address for your account, so KINA cannot check it.
+                    Ask the administrator to enable the e-mail scope for the KINA application.</p>
+            </th:block>
+            <th:block th:case="'email_unverified'">
+                <p>Your e-mail address is marked as unverified by the identity provider.</p>
+                <p class="muted">Ask the administrator to check how the identity provider marks addresses as
+                    verified, then sign in again.</p>
+            </th:block>
+            <th:block th:case="'email_domain'">
+                <p th:if="${domain != null}">You signed in with an account from <strong th:text="${domain}">example.org</strong>,
+                    but KINA only accepts <strong th:text="${#strings.listJoin(domains, ', ')}">example.com</strong>.</p>
+                <p th:unless="${domain != null}">You signed in, but KINA only accepts accounts from
+                    <strong th:text="${#strings.listJoin(domains, ', ')}">example.com</strong>.</p>
+                <p class="muted">Sign in again with your organisation account.</p>
+            </th:block>
+            <th:block th:case="'email'">
+                <p>You signed in, but KINA only accepts accounts from
+                    <strong th:text="${#strings.listJoin(domains, ', ')}">example.com</strong>.</p>
+                <p class="muted">Sign in again with your organisation account.</p>
+            </th:block>
+            <th:block th:case="*">
+                <p>Your account is not in a group that may use KINA (required:
+                    <strong th:text="${#strings.listJoin(groups, ', ')}">Group</strong>).</p>
+                <p class="muted">Ask your administrator to add you to the group, then sign in again. If you were just
+                    added, sign out of the identity provider first so it issues a fresh sign-in.</p>
+            </th:block>
         </th:block>
-        <th:block th:unless="${emailDomain}">
-            <p>You signed in, but KINA is only available to members of the group
-                <strong th:text="${#strings.listJoin(groups, ' or ')}">Group</strong>.</p>
-            <p class="muted">Ask your administrator to add you to the group, then sign in again. If you were just
-                added, sign out of the identity provider first so it issues a fresh sign-in.</p>
-        </th:block>
-        <p class="muted">Tokens you created earlier no longer work.</p>
+        <p class="muted" th:if="${tokensRevoked}">Tokens you created earlier no longer work.</p>
     </div>
 </main>
 </body>

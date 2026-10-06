@@ -216,6 +216,7 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 | `OIDC_CLIENT_SECRET` | empty | OIDC client secret. |
 | `OIDC_REQUIRED_GROUPS` | empty | Comma-separated groups; a user needs at least one. Empty means no group check. |
 | `OIDC_ALLOWED_EMAIL_DOMAINS` | empty | Comma-separated e-mail domains, for example `alacrity.ro`. Empty means any domain. |
+| `OIDC_EMAIL_FROM_PREFERRED_USERNAME` | `false` | `true`: when the provider sends no `email` claim, use `preferred_username` (then `upn`) as the address if it contains `@`. For providers that put the address there. |
 | `OIDC_GROUPS_CLAIM` | `groups` | Claim that holds the groups (ID token first, then userinfo). Dotted paths and namespaced names work. |
 | `OIDC_EXTRA_SCOPES` | empty | Extra scopes besides `openid profile email`. `offline_access` is added automatically. |
 | `KINA_TOKEN_ENCRYPTION_KEY` | unset | Base64 of 32 bytes (`openssl rand -base64 32`). Encrypts the provider's refresh tokens for re-checks. Unset: no server-side re-checks (24 hour re-login fallback, WARN at startup). |
@@ -482,7 +483,7 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 | Client or proxy times out on a search | Their read timeout is below about 2.5 minutes. Raise it (see [docs/OPERATIONS.md](docs/OPERATIONS.md)). |
 | 401 on `/api` or `/mcp` in `prod` | Missing, expired or revoked token. The `WWW-Authenticate` header points to the OAuth metadata. |
 | Claude connector cannot sign in | Check HTTPS, the `X-Forwarded-*` headers or `KINA_PUBLIC_BASE_URL`, and that `https://<host>/.well-known/oauth-protected-resource` shows your public origin. |
-| "Access denied" page after signing in (`/login-denied`, 403) | The account is not in a group listed in `OIDC_REQUIRED_GROUPS` (or its e-mail domain is not allowed). Ask the administrator to add you to the group, then sign in again. If you were just added, sign out of the identity provider first so it issues a fresh sign-in. |
+| "Access denied" page after signing in (`/login-denied`, 403) | The page says why: no e-mail address from the provider, an unverified address, a domain not in `OIDC_ALLOWED_EMAIL_DOMAINS`, or no group listed in `OIDC_REQUIRED_GROUPS`. The KINA log has the reason and the claim names the provider sent. For a group, ask the administrator to add you, then sign out of the identity provider and sign in again. For the other reasons see [Troubleshooting login](docs/OPERATIONS.md#troubleshooting-login). |
 | Claude asks you to reconnect; a refresh answers `invalid_grant` | Either you were removed from the group, or the identity provider was unreachable for longer than `KINA_MEMBERSHIP_GRACE` (4 hours). In the second case nothing was revoked and it recovers by itself when the provider is back. Without `KINA_TOKEN_ENCRYPTION_KEY`, users must also sign in again every 24 hours. |
 | 429 on `POST /oauth/register` | The client IP went over `KINA_OAUTH_REGISTER_RATE_LIMIT_PER_MINUTE`. Wait for `Retry-After` seconds. If every client seems to share one address, the proxy is not overwriting `X-Forwarded-For`. |
 | Claude Code still shows the Approve page | Expected. Claude Code redirects to a local port, so KINA always asks. Claude.ai with Claude's published identity skips the page. |

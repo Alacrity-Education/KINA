@@ -37,7 +37,8 @@ class OidcAccessPolicyTest {
     void missingClaimEverywhereIsDenied() {
         OidcAccessPolicy.Decision decision = POLICY.evaluateGroups(Map.of("sub", "1"), Map.of("sub", "1"));
         assertThat(decision.allowed()).isFalse();
-        assertThat(decision.reason()).contains("missing");
+        assertThat(decision.reason()).isEqualTo(OidcAccessPolicy.Reason.GROUP);
+        assertThat(decision.detail()).contains("missing");
         assertThat(POLICY.evaluateGroups(Map.of("sub", "1"), null).allowed()).isFalse();
     }
 
@@ -111,5 +112,98 @@ class OidcAccessPolicyTest {
                 .isEqualTo(OidcAccessPolicy.ERROR_EMAIL_DOMAIN);
         assertThat(policy.evaluateLogin(Map.of("email", "ana@alacrity.ro", "groups", List.of("H")), null).errorCode())
                 .isEqualTo(OidcAccessPolicy.ERROR_GROUP);
+    }
+
+    // ---- distinct e-mail reasons ---------------------------------------------------------------------------------
+
+    static final OidcAccessPolicy DOMAIN = new OidcAccessPolicy("groups", List.of(), List.of("alacrity.ro"));
+
+    @Test
+    void missingEmailIsItsOwnReasonAndListsClaimNamesOnly() {
+        OidcAccessPolicy.Decision decision = DOMAIN.evaluateLogin(
+                Map.of("sub", "s1", "name", "Ana Pop", "preferred_username", "ana"), Map.of("sub", "s1", "nickname", "a"));
+        assertThat(decision.allowed()).isFalse();
+        assertThat(decision.reason()).isEqualTo(OidcAccessPolicy.Reason.EMAIL_MISSING);
+        assertThat(decision.reason().code()).isEqualTo("email_missing");
+        assertThat(decision.errorCode()).isEqualTo(OidcAccessPolicy.ERROR_EMAIL_DOMAIN);
+        assertThat(decision.domain()).isNull();
+        assertThat(decision.detail()).contains("no e-mail claim in ID token or userinfo")
+                .contains("claims present: name, nickname, preferred_username, sub")
+                .doesNotContain("Ana Pop").doesNotContain("s1");
+        // Blank and non-string values do not count as an address.
+        assertThat(DOMAIN.evaluateLogin(Map.of("email", "  "), Map.of("email", List.of("x@alacrity.ro"))).reason())
+                .isEqualTo(OidcAccessPolicy.Reason.EMAIL_MISSING);
+        assertThat(DOMAIN.evaluateLogin(Map.of("email", "ana"), null).reason())
+                .isEqualTo(OidcAccessPolicy.Reason.EMAIL_MISSING);
+        // A blank ID token value falls back to userinfo.
+        assertThat(DOMAIN.evaluateLogin(Map.of("email", ""), Map.of("email", "ana@alacrity.ro")).allowed()).isTrue();
+    }
+
+    @Test
+    void unverifiedEmailIsItsOwnReason() {
+        for (Object flag : List.of(false, "false", "FALSE")) {
+            OidcAccessPolicy.Decision decision = DOMAIN.evaluateLogin(
+                    Map.of("email", "ana@alacrity.ro", "email_verified", flag), null);
+            assertThat(decision.allowed()).as(flag.toString()).isFalse();
+            assertThat(decision.reason()).isEqualTo(OidcAccessPolicy.Reason.EMAIL_UNVERIFIED);
+            assertThat(decision.errorCode()).isEqualTo(OidcAccessPolicy.ERROR_EMAIL_DOMAIN);
+            assertThat(decision.detail()).doesNotContain("ana@");
+        }
+        assertThat(DOMAIN.evaluateLogin(Map.of("sub", "1"), Map.of("email", "ana@alacrity.ro", "email_verified",
+                "false")).reason()).as("userinfo").isEqualTo(OidcAccessPolicy.Reason.EMAIL_UNVERIFIED);
+        assertThat(DOMAIN.evaluateLogin(Map.of("email", "ana@alacrity.ro", "email_verified", "true"), null).allowed())
+                .isTrue();
+    }
+
+    @Test
+    void wrongDomainCarriesTheLowerCaseDomain() {
+        OidcAccessPolicy.Decision decision = DOMAIN.evaluateLogin(Map.of("email", "Eve@Example.ORG"), null);
+        assertThat(decision.reason()).isEqualTo(OidcAccessPolicy.Reason.EMAIL_DOMAIN);
+        assertThat(decision.reason().code()).isEqualTo("email_domain");
+        assertThat(decision.domain()).isEqualTo("example.org");
+        assertThat(decision.detail()).isEqualTo("e-mail domain example.org not allowed").doesNotContain("Eve");
+        // Wrong domain wins over unverified: the address is refused either way.
+        assertThat(DOMAIN.evaluateLogin(Map.of("email", "eve@gmail.com", "email_verified", false), null).reason())
+                .isEqualTo(OidcAccessPolicy.Reason.EMAIL_DOMAIN);
+    }
+
+    @Test
+    void upperCaseAddressAndConfiguredDomainWithLeadingAt() {
+        OidcAccessPolicy policy = new OidcAccessPolicy("groups", List.of(), List.of(" @Alacrity.RO "));
+        assertThat(policy.allowedEmailDomains()).containsExactly("alacrity.ro");
+        assertThat(policy.evaluateLogin(Map.of("email", "ANA@ALACRITY.RO"), null).allowed()).isTrue();
+        assertThat(policy.evaluateLogin(Map.of("email", "ana@alacrity.ro "), null).allowed()).isTrue();
+    }
+
+    @Test
+    void preferredUsernameFallbackOnlyWhenEnabled() {
+        Map<String, Object> claims = Map.of("sub", "1", "preferred_username", "ana@alacrity.ro");
+        assertThat(DOMAIN.evaluateLogin(claims, null).reason()).as("off by default")
+                .isEqualTo(OidcAccessPolicy.Reason.EMAIL_MISSING);
+        assertThat(DOMAIN.evaluateLogin(claims, null).detail()).contains("preferred_username/upn is off");
+        assertThat(DOMAIN.email(claims, null)).isEmpty();
+
+        OidcAccessPolicy on = new OidcAccessPolicy("groups", List.of(), List.of("alacrity.ro"), true);
+        assertThat(on.evaluateLogin(claims, null).allowed()).isTrue();
+        assertThat(on.email(claims, null)).contains("ana@alacrity.ro");
+        assertThat(on.evaluateLogin(Map.of("preferred_username", "ana"), null).reason())
+                .as("no @").isEqualTo(OidcAccessPolicy.Reason.EMAIL_MISSING);
+        assertThat(on.evaluateLogin(Map.of("preferred_username", "ana"), Map.of("upn", "ana@alacrity.ro")).allowed())
+                .as("upn").isTrue();
+        assertThat(on.evaluateLogin(Map.of("preferred_username", "eve@gmail.com"), null).domain())
+                .isEqualTo("gmail.com");
+        // The email claim wins over the fallback.
+        assertThat(on.evaluateLogin(Map.of("email", "eve@gmail.com", "preferred_username", "ana@alacrity.ro"), null)
+                .reason()).isEqualTo(OidcAccessPolicy.Reason.EMAIL_DOMAIN);
+    }
+
+    @Test
+    void reasonCodesAndPolicyDescription() {
+        assertThat(OidcAccessPolicy.Reason.fromCode("group")).isEqualTo(OidcAccessPolicy.Reason.GROUP);
+        assertThat(OidcAccessPolicy.Reason.fromCode("email")).isNull();
+        assertThat(OidcAccessPolicy.Reason.GROUP.errorCode()).isEqualTo(OidcAccessPolicy.ERROR_GROUP);
+        assertThat(new OidcAccessPolicy("groups", List.of("G"), List.of("alacrity.ro"), true).describe())
+                .isEqualTo("groups claim 'groups', required groups [G], allowed e-mail domains [alacrity.ro], "
+                        + "e-mail from preferred_username/upn on");
     }
 }

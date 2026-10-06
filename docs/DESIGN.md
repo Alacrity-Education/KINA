@@ -740,8 +740,8 @@ the provider made by KINA's code (code exchange, userinfo, JWKS, re-checks) has 
 (`OidcIdTokenDecoders`, RS256 when it advertises none).
 On login `OidcUserSynchronizer` applies the group and e-mail-domain policy (`OidcAccessPolicy`, section 7.1) and then
 upserts `users(issuer, subject, email, display_name, last_login_at)`, sets `membership_checked_at` and clears
-`access_revoked_at`. A refused identity is not signed in: the login ends on `/login-denied` (403, names the required
-group or the allowed domains), and an existing user row is blocked (`access_revoked_at`, all tokens revoked).
+`access_revoked_at`. A refused identity is not signed in: the login ends on `/login-denied?reason=<code>` (403, one
+sentence per reason, section 7.1), and an existing user row is blocked (`access_revoked_at`, all tokens revoked).
 The login's authorized client lives in the HTTP session (`UpstreamTokenCapturingClientRepository`), which hands the
 provider's refresh token to `MembershipVerifier` (stored encrypted, section 7.1).
 `/api/**` and `/mcp/**` accept bearer tokens only. `RevokedUserSessionFilter` ends the web session of a user blocked
@@ -804,9 +804,39 @@ group membership, checked at three points:
 
 | Point | Where | What |
 |---|---|---|
-| Login | `OidcUserSynchronizer` + `OidcAccessPolicy` | The groups claim (`kina.security.oidc.groups-claim`, default `groups`) is read from the ID token; only when the ID token does not carry it, from userinfo. The name is looked up literally (namespaced claims such as `https://example.com/groups` work), then as a dotted path (`realm_access.roles`). An array of strings or a single string; group names compare case-insensitively, a leading `/` is ignored. The user must be in at least one of `required-groups`. Optional `allowed-email-domains`: the `email` claim must be in one of them and not marked `email_verified=false`. Failure: `/login-denied`, no session, existing user blocked (`access_revoked_at`, all tokens revoked), WARN log with the subject only. Success: `membership_checked_at = now`, `access_revoked_at` cleared. |
+| Login | `OidcUserSynchronizer` + `OidcAccessPolicy` | The groups claim (`kina.security.oidc.groups-claim`, default `groups`) is read from the ID token; only when the ID token does not carry it, from userinfo. The name is looked up literally (namespaced claims such as `https://example.com/groups` work), then as a dotted path (`realm_access.roles`). An array of strings or a single string; group names compare case-insensitively, a leading `/` is ignored. The user must be in at least one of `required-groups`. Optional `allowed-email-domains`: the address must be present, in one of them and not marked unverified (reasons below). Failure: `/login-denied?reason=<code>`, no session, existing user blocked (`access_revoked_at`, all tokens revoked), logs as below. Success: `membership_checked_at = now`, `access_revoked_at` cleared. |
 | Refresh grant | `TokenController` -> `MembershipVerifier.checkRefreshGrant` (synchronous) | When `membership_checked_at` is older than `membership-recheck-interval` (default `1h`), re-check at the provider before rotating. With 1-hour access tokens, a removed member is cut off within about an hour. |
 | Static tokens | `BearerTokenAuthenticationFilter` -> `MembershipVerifier.allowsStaticToken` (asynchronous) | Same interval; the re-check runs on a virtual thread (at most one per user), the request is never blocked. OAuth access tokens are only checked for `access_revoked_at` (they live one hour and are re-checked at refresh). |
+
+**Login refusals.** `OidcAccessPolicy.evaluateLogin` checks the e-mail address first (only with
+`allowed-email-domains`), then the groups, and returns one of four reasons. The OAuth2 error codes stay
+`kina_email_domain_not_allowed` (the three e-mail reasons) and `kina_group_membership_required`.
+
+| Reason code | When | Page text |
+|---|---|---|
+| `email_missing` | No non-blank string `email` claim in the ID token or userinfo (or one without `@` and domain). With `kina.security.oidc.email-from-preferred-username=true` (default `false`, `OIDC_EMAIL_FROM_PREFERRED_USERNAME`), `preferred_username` and then `upn` count as the address when they contain `@`; `email` always wins. | "Your identity provider did not send an e-mail address for your account, so KINA cannot check it. Ask the administrator to enable the e-mail scope for the KINA application." |
+| `email_domain` | The domain after the last `@`, trimmed and lower-cased, is not one of the allowed domains (also lower-cased, a leading `@` ignored). Checked before `email_verified`: a wrong domain is refused either way. | "You signed in with an account from <domain>, but KINA only accepts <allowed domains>." |
+| `email_unverified` | `email_verified` (ID token, then userinfo) is `false` or the string `"false"` (any case). A missing flag counts as verified. | "Your e-mail address is marked as unverified by the identity provider." |
+| `group` | Not in a required group, or no groups claim. | "Your account is not in a group that may use KINA (required: <groups>)." |
+
+`OidcUserSynchronizer` throws a `LoginDeniedException` (an `OAuth2AuthenticationException`) that carries a
+`LoginDenial(reason, domain, existingUserBlocked)`. The failure handler puts the `LoginDenial` in the HTTP session and
+redirects to `/login-denied?reason=<code>`. The page shows the domain and the sentence "Tokens you created earlier no
+longer work" only from that session attribute (read once, then removed), and the sentence only when the identity
+matched an existing user that this refusal blocked. A hand-made URL shows only the generic text of its `reason`
+(`email`, the old form, still works). Logs, never with an address, a name or another claim value:
+
+- WARN `OIDC login denied for subject <sub> (issuer <iss>): <detail>`, where the detail is, for example,
+  `no e-mail claim in ID token or userinfo (claims present: aud, exp, iat, iss, name, sub); e-mail from
+  preferred_username/upn is off`, `e-mail domain example.org not allowed`, `e-mail address not verified
+  (email_verified=false)` or `not in a required group [ElectronicsEngineer]`.
+- INFO `OIDC login denied for subject <sub>: ID token claims [names]; userinfo claims [names]; granted scopes [scopes]`.
+  Instead of the userinfo names it says `userinfo not fetched`, with the cause when the discovery document has no
+  `userinfo_endpoint`. Spring Security 7 fetches userinfo whenever the provider has that endpoint, whatever the
+  granted scopes. A token response without `scope` is logged as `the token response named no scope`, and granted
+  scopes without `email` get the hint `no email scope granted`.
+- INFO at startup (production): `OIDC login policy: groups claim 'groups', required groups [...], allowed e-mail
+  domains [...], e-mail from preferred_username/upn off`.
 
 **Re-check**: `MembershipVerifier` decrypts the stored upstream refresh token (`UpstreamTokenCipher`, AES-256-GCM, key
 `kina.security.oidc.token-encryption-key`, base64 of 32 bytes, user id as associated data; stored as `v1.` +
@@ -1195,6 +1225,7 @@ kina:
     groups-claim: "${OIDC_GROUPS_CLAIM:groups}"                 # ID token first, then userinfo; dotted path for nested claims
     required-groups: "${OIDC_REQUIRED_GROUPS:}"                 # comma separated, any of them; empty = no group check
     allowed-email-domains: "${OIDC_ALLOWED_EMAIL_DOMAINS:}"     # comma separated; empty = any domain
+    email-from-preferred-username: ${OIDC_EMAIL_FROM_PREFERRED_USERNAME:false}  # no email claim: preferred_username/upn with @
     extra-scopes: "${OIDC_EXTRA_SCOPES:}"                       # besides openid profile email; offline_access is automatic
     token-encryption-key: "${KINA_TOKEN_ENCRYPTION_KEY:}"       # base64 of 32 bytes; unset = no upstream refresh tokens
     membership-recheck-interval: ${KINA_MEMBERSHIP_RECHECK_INTERVAL:1h}

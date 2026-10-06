@@ -27,6 +27,7 @@ kina:
     groups-claim: "${OIDC_GROUPS_CLAIM:groups}"                 # ID token first, then userinfo; dotted path for nested claims
     required-groups: "${OIDC_REQUIRED_GROUPS:}"                 # comma separated; empty = no group check
     allowed-email-domains: "${OIDC_ALLOWED_EMAIL_DOMAINS:}"     # comma separated; empty = any domain
+    email-from-preferred-username: ${OIDC_EMAIL_FROM_PREFERRED_USERNAME:false}  # no email claim: use preferred_username/upn if it has an @
     extra-scopes: "${OIDC_EXTRA_SCOPES:}"                       # offline_access is added automatically (DESIGN.md 7.1)
     token-encryption-key: "${KINA_TOKEN_ENCRYPTION_KEY:}"       # base64 of 32 bytes; unset = upstream refresh tokens not stored
     membership-recheck-interval: ${KINA_MEMBERSHIP_RECHECK_INTERVAL:1h}

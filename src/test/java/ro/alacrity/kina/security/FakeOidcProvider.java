@@ -48,6 +48,9 @@ public final class FakeOidcProvider implements AutoCloseable {
         volatile List<String> groups;
         volatile boolean groupsInIdToken = true;
         volatile boolean grantRevoked;
+        /** {@code false}: neither the ID token nor userinfo carries {@code email} or {@code email_verified}. */
+        volatile boolean sendsEmail = true;
+        volatile Object emailVerified = true;
 
         User(String subject, String email, List<String> groups) {
             this.subject = subject;
@@ -103,6 +106,16 @@ public final class FakeOidcProvider implements AutoCloseable {
 
     public void setGroupsInIdToken(String subject, boolean inIdToken) {
         users.get(subject).groupsInIdToken = inIdToken;
+    }
+
+    /** The provider sends no {@code email} claim for this user (as without the e-mail scope mapping). */
+    public void omitEmail(String subject) {
+        users.get(subject).sendsEmail = false;
+    }
+
+    /** Value of {@code email_verified} in the ID token and userinfo (boolean or string). */
+    public void setEmailVerified(String subject, Object verified) {
+        users.get(subject).emailVerified = verified;
     }
 
     public void revokeGrant(String subject) {
@@ -224,9 +237,10 @@ public final class FakeOidcProvider implements AutoCloseable {
                 .claim("azp", CLIENT_ID)
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(now.plusSeconds(300)))
-                .claim("email", user.email)
-                .claim("email_verified", true)
                 .claim("name", "User " + user.subject);
+        if (user.sendsEmail) {
+            claims.claim("email", user.email).claim("email_verified", user.emailVerified);
+        }
         if (nonce != null) {
             claims.claim("nonce", nonce);
         }
@@ -255,8 +269,10 @@ public final class FakeOidcProvider implements AutoCloseable {
         User user = users.get(subject);
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("sub", user.subject);
-        body.put("email", user.email);
-        body.put("email_verified", true);
+        if (user.sendsEmail) {
+            body.put("email", user.email);
+            body.put("email_verified", user.emailVerified);
+        }
         body.put("name", "User " + user.subject);
         body.put("groups", user.groups);
         json(exchange, 200, body);

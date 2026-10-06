@@ -43,7 +43,8 @@ Register this redirect URI at the OIDC provider: `https://kina.example.com/login
 The group settings are:
 
 - `OIDC_REQUIRED_GROUPS`: comma-separated; a user needs at least one. Empty means no group check.
-- `OIDC_ALLOWED_EMAIL_DOMAINS`: optional, for example `alacrity.ro`.
+- `OIDC_ALLOWED_EMAIL_DOMAINS`: optional, for example `alacrity.ro`. The provider must then send a verified `email` claim.
+- `OIDC_EMAIL_FROM_PREFERRED_USERNAME` (default `false`): set `true` only if your provider sends no `email` claim but puts the address in `preferred_username` or `upn`.
 - `KINA_TOKEN_ENCRYPTION_KEY`: base64 of 32 random bytes. Without it KINA cannot re-check a member in the background, logs a WARN at startup, and users must sign in again every 24 hours. Treat it like a password and never commit it.
 - `OIDC_GROUPS_CLAIM` (default `groups`) and `OIDC_EXTRA_SCOPES` (default empty) only matter if your provider differs from the Authentik example.
 
@@ -63,7 +64,7 @@ KINA is the OAuth 2.1 server that Claude talks to. It delegates the login to you
    - Grant types: `authorization_code` and `refresh_token`.
    - Redirect URIs: strict, exactly `https://<kina>/login/oauth2/code/oidc`.
    - Signing key: the self-signed certificate, so tokens are signed with RS256.
-   - Scopes: `openid`, `email`, `profile` and `offline_access`. The default `profile` scope already carries `groups`. If you use a dedicated `groups` scope mapping, add that scope too and set `OIDC_EXTRA_SCOPES=groups` in KINA.
+   - Scopes: `openid`, `email`, `profile` and `offline_access`. The `email` scope uses the mapping "authentik default OAuth Mapping: OpenID 'email'"; without it KINA gets no address and refuses everyone when `OIDC_ALLOWED_EMAIL_DOMAINS` is set. The default `profile` scope already carries `groups`. If you use a dedicated `groups` scope mapping, add that scope too and set `OIDC_EXTRA_SCOPES=groups` in KINA.
    - Authorization flow: implicit consent (`default-provider-authorization-implicit-consent`). KINA has its own consent decision, so one consent screen is enough.
    - Include claims in id_token: enabled.
    - Refresh token validity: at least 30 days, so Authentik does not end sessions earlier than KINA does.
@@ -371,6 +372,19 @@ Set them in `.env` as `KINA_SEARCH_MAX_REQUEST_DURATION=2m`. Keep `spring.ai.mcp
 The retry helps with the per-minute limit (Mouser: 30 calls a minute). It does not help when the daily quota (1 000 calls) is used up: the request waits out its budget and then reports `rate_limited`. Use the cache and avoid `bypass_cache` in that case.
 
 A 503 without a `Retry-After` header is treated as an outage and fails at once. Only 429, and 502, 503 or 504 with `Retry-After`, are waited for.
+
+## Troubleshooting login
+
+When KINA refuses a login, the "Access denied" page names the reason, and `docker compose logs kina` has two lines for it. The WARN line has the provider subject, the issuer and the reason. The INFO line lists the claim names (never values) of the ID token and the userinfo response, and the granted scopes. At startup an INFO line `OIDC login policy: ...` shows the groups claim, the required groups, the allowed domains and whether `OIDC_EMAIL_FROM_PREFERRED_USERNAME` is on.
+
+| Page says | Log says | Fix in Authentik |
+|---|---|---|
+| "Your identity provider did not send an e-mail address for your account" (`reason=email_missing`) | `no e-mail claim in ID token or userinfo (claims present: ...)` | In the KINA provider, add the scope mapping "authentik default OAuth Mapping: OpenID 'email'" to the selected scopes, and enable "Include claims in id_token". Check that the user has an e-mail address in Authentik (Directory, Users); for Google sign-in, check the source's user property mappings. If the INFO line shows `no email scope granted`, the provider did not grant the `email` scope. Only if your provider puts the address in `preferred_username` or `upn`, set `OIDC_EMAIL_FROM_PREFERRED_USERNAME=true`. |
+| "Your e-mail address is marked as unverified by the identity provider" (`reason=email_unverified`) | `e-mail address not verified (email_verified=false)` | `email_verified` comes from Authentik's default `email` mapping. Look at the value in the provider's Preview tab for that user. Authentik does not verify addresses itself, so if your login source already guarantees them (Google accounts of your domain), create a custom scope mapping for `email` that returns `"email_verified": True` and select it instead of the default one. |
+| "You signed in with an account from example.org, but KINA only accepts alacrity.ro" (`reason=email_domain`) | `e-mail domain example.org not allowed` | The user signed in with another account. Limit the login source to your organisation (see Authentik setup, step 1). If the domain is right but KINA still refuses it, check `OIDC_ALLOWED_EMAIL_DOMAINS` in the startup line. |
+| "Your account is not in a group that may use KINA" (`reason=group`) | `not in a required group [...]` or `groups claim 'groups' missing in ID token and userinfo` | Add the user to the group. If the claim is missing, the `profile` scope (or your `groups` mapping, with `OIDC_EXTRA_SCOPES=groups`) is not selected, or `OIDC_GROUPS_CLAIM` names the wrong claim. After a change, sign out of Authentik so it issues a fresh sign-in. |
+
+"Tokens you created earlier no longer work" appears only when the refused account already existed in KINA. That account is now blocked; the next successful login lifts the block.
 
 ## Troubleshooting rate limits
 
