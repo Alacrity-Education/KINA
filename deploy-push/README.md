@@ -19,7 +19,7 @@ On the server:
 - A running Docker daemon and the Docker Compose plugin (`docker compose version`). Without Compose the script warns and continues, but you need it to start KINA.
 - The SSH user can run `docker` without `sudo`, that is, it is in the `docker` group. The script never uses `sudo`.
 - A POSIX login shell (`sh`, `bash`, `dash`, `ash`) and `gunzip` (for the default streaming mode).
-- Disk space: the image is about 700 MB in Docker (about 230 MB compressed while it is transferred). On the first start KINA downloads the JLCPCB database (5.3 GB, about twice that at peak during a refresh) and the ranking model (23 MB) into the `kina-data` volume. See [docs/OPERATIONS.md](../docs/OPERATIONS.md) for sizing.
+- Disk space: the image is about 960 MB in Docker (about 360 MB compressed while it is transferred). It includes the ranking model (138 MB), so the server needs no access to Hugging Face. On the first start KINA downloads the JLCPCB database (5.3 GB, about twice that at peak during a refresh) into the `kina-data` volume; that is the only download. See [docs/OPERATIONS.md](../docs/OPERATIONS.md) for sizing.
 
 ## Options
 
@@ -39,7 +39,7 @@ On the server:
 1. Checks the arguments and the local tools, and runs `check-template.sh` (see below).
 2. Prints the plan: the hostname the alias resolves to (`ssh -G`), the image tag and the remote directory.
 3. Checks the server: SSH login with `BatchMode=yes`, `docker info` as that user, `docker compose version` (warning only) and `gunzip`.
-4. Builds the image from the repository root: `docker build -t alacrity-education/kina:<tag> -t alacrity-education/kina:latest .` The root is found from the script's location, so you can run it from any directory. It prints the image size.
+4. Builds the image from the repository root: `docker build -t alacrity-education/kina:<tag> -t alacrity-education/kina:latest .` The root is found from the script's location, so you can run it from any directory. The build downloads the ranking model from Hugging Face and verifies it (default build arguments; for others, such as `CROSS_ENCODER_VARIANTS=int8`, build `alacrity-education/kina:<tag>` yourself and use `--no-build`). It prints the image size.
 5. Transfers the image (both tags):
    - Default: `docker save ... | gzip -1 | ssh <host> 'gunzip -c | docker load'`. No file is written on either side.
    - `--via-tmp`: the archive goes to a local temporary directory, then to `/tmp/kina-deploy-<random>/` on the server. Both are removed after `docker load`, and also when the script fails or is interrupted.

@@ -43,21 +43,54 @@ SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/kina ./mvnw spring-boot:r
 
 Everything in Docker: `docker compose up -d --build` (project name `kina`, services `kina` and `postgres`). Wait for
 `docker compose ps` to show both services `healthy`; on a fresh volume the JLCPCB database (~5.3 GB) downloads in the
-background and LCSC reports `unavailable` until it is in place, and the cross-encoder model (~25 MB, DESIGN.md 3.5)
-downloads to `/data/cross-encoder`; until it is loaded searches report `ranking: "fallback"` with
-`ranking_note: "cross-encoder model not loaded yet"` (`docker compose logs -f kina`; `list_distributors` shows
-`ranking.ready`). Ranking threads: `KINA_CROSS_ENCODER_THREADS` in `.env` (default `min(4, cores)`).
+background and LCSC reports `unavailable` until it is in place. The cross-encoder model is baked into the image at
+build time (`/opt/kina/cross-encoder`, DESIGN.md 3.5 and 11) and loads about 0.2 s after startup; until then searches
+report `ranking: "fallback"` with `ranking_note: "cross-encoder model not loaded yet"` (`docker compose logs -f kina`;
+`list_distributors` shows `ranking.ready`). Ranking threads: `KINA_CROSS_ENCODER_THREADS` in `.env` (default
+`min(4, cores)`).
 Every environment variable is documented in `.env.example`; `.env` is git-ignored and must never be committed.
 
 A second instance next to a running compose stack (e.g. to test ranking changes against the full JLCPCB database without
 touching the stack): start a throwaway Postgres on another port, then run the jar with `PORT=8081`,
 `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:<port>/kina`, `KINA_JLCPCB_DATA_DIR` pointing at a directory that
-already holds `parts-fts5.db` (it is adopted, not downloaded) and `KINA_CROSS_ENCODER_MODEL_DIR` pointing at a model
-directory (downloaded once, then reused; `KINA_CROSS_ENCODER_ENABLED=false` for deterministic ranking only). The
+already holds `parts-fts5.db` (it is adopted, not downloaded) and `KINA_CROSS_ENCODER_MODEL_URL` pointing at a model
+directory (used in place; `KINA_CROSS_ENCODER_ENABLED=false` for deterministic ranking only). The
 cross-encoder time per query is logged at DEBUG (`LOGGING_LEVEL_RO_ALACRITY_KINA_SEARCH_CE=DEBUG`:
 `cross-encoder scored 40 candidates in N ms (T threads, <file>)`). Connector checks: `curl -G localhost:8081/api/v1/parts/search --data-urlencode "q=2x3 female header right
 angle" --data-urlencode max_results=5`; each distributor entry shows the phrase it was sent as `distributor_query`.
 Mind the Mouser quota (1 000 calls a day): every new query costs one call, plus one when the fallback runs.
+
+### Ranking model: local runs and the image
+
+Local runs (`./mvnw spring-boot:run`, `java -jar`) keep the download mode: on the first start KINA downloads the
+int8 file matching the CPU plus the tokenizer files from `KINA_CROSS_ENCODER_MODEL_URL` (default Hugging Face
+`resolve/main/`) into `./data/cross-encoder` (`KINA_CROSS_ENCODER_MODEL_DIR`) and retries hourly on failure.
+`KINA_CROSS_ENCODER_AUTO_DOWNLOAD=false` turns that off. To pre-fetch the exact files the image bundles (pinned
+revision, verified hashes) and use them in place:
+
+```bash
+docker/model/fetch-model.sh ./data/cross-encoder-pinned        # POSIX sh, curl, sha256sum; CROSS_ENCODER_VARIANTS=int8 to skip fp32
+KINA_CROSS_ENCODER_MODEL_URL=$PWD/data/cross-encoder-pinned ./mvnw spring-boot:run
+```
+
+The Docker image differs: the `model` stage of the `Dockerfile` runs the same script at build time, so the container
+never downloads the model (`KINA_CROSS_ENCODER_MODEL_URL=/opt/kina/cross-encoder`,
+`KINA_CROSS_ENCODER_AUTO_DOWNLOAD=false`). Build variants:
+
+```bash
+docker compose build --build-arg CROSS_ENCODER_VARIANTS=int8 kina     # about 90 MB smaller, no fp32 file
+# a fine-tuned model from scripts/ranking/finetune_cross_encoder.sh, served over HTTP during the build
+(cd data/cross-encoder-finetuned && sha256sum config.json tokenizer_config.json vocab.txt onnx/*.onnx) \
+  > docker/model/finetuned.sha256
+(cd data/cross-encoder-finetuned && python3 -m http.server 8000) &
+docker build --network host -t kina:latest --build-arg CROSS_ENCODER_SOURCE=http://127.0.0.1:8000/ \
+  --build-arg CROSS_ENCODER_SHA256_FILE=finetuned.sha256 --build-arg CROSS_ENCODER_REVISION=finetuned-synth .
+```
+
+A custom source needs its own hash file in `docker/model/` or `--build-arg CROSS_ENCODER_SKIP_VERIFY=1`. Do not commit
+model binaries (`*.onnx` is git-ignored). To check the offline guarantee, run the image on an internal Docker network
+(`docker network create --internal ...`) with Postgres: `list_distributors` must show `ranking.ready: true` and
+`model_dir: /opt/kina/cross-encoder`, and the log must contain no download line.
 
 MCP smoke test (stateless Streamable HTTP, no `initialize` needed):
 
@@ -215,12 +248,15 @@ estimate in the notes):
 | `kina` | ~485 MiB of the 2 GiB `mem_limit` | max heap 1.5 GiB (75%); the JLCPCB file is read through the OS page cache, not the heap; the cross-encoder session adds native memory outside the heap (about 100-200 MB int8, estimate) |
 | `postgres` | ~45 MiB | `pgdata` ~50 MB after the e2e run |
 
-Disk: `kina_kina-data` 5.33 GB JLCPCB database + 23 MB int8 cross-encoder (`/data/cross-encoder`; 91 MB for fp32),
-`kina` image ~580 MB before the ONNX Runtime jar (53 MB, native libraries for Linux x64/aarch64, macOS and Windows; `kina.jar` is now 115 MB).
+Disk: `kina_kina-data` 5.33 GB JLCPCB database. `kina` image ~580 MB before the ONNX Runtime jar (53 MB, native
+libraries for Linux x64/aarch64, macOS and Windows; `kina.jar` is now 115 MB); measured 2026-10-06 with the bundled
+model: the model layer is 138 MB (two int8 files of 23 MB, fp32 91 MB), `docker image inspect` size 695 MB before and
+962 MB after (containerd image store), `docker save` archive 231 MB before and 360 MB after.
 
 Startup: Spring context ~2 s; Flyway V1-V4 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
-(validation `count(*)`) ~19 s in the background; cross-encoder first start (download of vocab, configs and the
-23 MB int8 file from Hugging Face, session creation, warm-up) 3.6 s in the background, later starts < 0.5 s.
+(validation `count(*)`) ~19 s in the background; cross-encoder load from the bundled directory (session creation,
+warm-up) ~0.2 s in the background. A local run's first start (download of vocab, configs and the 23 MB int8 file from
+Hugging Face) took 3.6 s.
 
 Ranking, local jar (`taskset -c 0-7`, `KINA_CROSS_ENCODER_THREADS` default = 4, int8 `model_qint8_avx512_vnni.onnx`,
 all three distributors; the server logs `search '<key>': fetch N ms [...], rank N ms (blended|fallback)` and, at DEBUG,

@@ -1,8 +1,9 @@
 # Cross-encoder model tooling
 
 KINA ranks search results with the deterministic ranker blended 50/50 (by rank) with the MiniLM cross-encoder
-`cross-encoder/ms-marco-MiniLM-L6-v2`, run in the JVM with ONNX Runtime (`docs/DESIGN.md` sections 3.3 and 3.5). By
-default KINA downloads the zero-shot model from Hugging Face. The scripts here build an optional fine-tuned model in the
+`cross-encoder/ms-marco-MiniLM-L6-v2`, run in the JVM with ONNX Runtime (`docs/DESIGN.md` sections 3.3 and 3.5). The
+Docker image bundles the zero-shot model (fetched and verified at build time, `docker/model/`); local runs download it
+from Hugging Face. The scripts here build an optional fine-tuned model in the
 same directory layout and regenerate the tokenizer test fixtures.
 
 | file | role |
@@ -67,8 +68,12 @@ docker run --rm -v kina_kina-data:/data -v "$PWD/data/cross-encoder-finetuned":/
 docker compose up -d kina
 ```
 
+The value in `.env` overrides the model bundled in the image. To bake the fine-tuned model into the image instead, serve
+the directory over HTTP during the build and pass `--build-arg CROSS_ENCODER_SOURCE=...` with its own hash file
+(`docs/DEVELOPMENT.md`, "Ranking model: local runs and the image").
+
 An HTTP(S) directory with the same layout works too: KINA downloads it into `KINA_CROSS_ENCODER_MODEL_DIR`, replacing
-files that `model.json` says came from another source. `list_distributors` shows the loaded `model_revision`.
+files that `model.json` says came from another source. In Docker this also needs `KINA_CROSS_ENCODER_AUTO_DOWNLOAD=true`. `list_distributors` shows the loaded `model_revision`.
 
 Evaluate a model directory before shipping it:
 

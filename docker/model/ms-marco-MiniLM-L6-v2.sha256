@@ -1,0 +1,11 @@
+# SHA-256 of the cross-encoder files baked into the KINA image (Dockerfile stage "model").
+# Source: https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2 at revision
+# 233902d25c440f23af6f7d6e94d2946bac0bee0a. The ONNX values equal the Hugging Face LFS object ids; the small files
+# were hashed once after download and cross-checked with their git blob ids and a model.json written by KINA.
+# Format: sha256sum (two spaces between hash and path). Lines starting with # are ignored.
+380e02c93f431831be65d99a4e7e5f67c133985bf2e77d9d4eba46847190bacc  config.json
+a5c2e5a7b1a29a0702cd28c08a399b5ecc110c263009d17f7e3b415f25905fd8  tokenizer_config.json
+07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3  vocab.txt
+3573b6b9593cb2f75987a31815d409ca3dd8808629118fd20451bb1a5d90cec7  onnx/model_qint8_avx512_vnni.onnx
+c80a8b34256ea453093d612e3ac48d3d965a0c0a48c7906709af8b8e28461bf9  onnx/model_quint8_avx2.onnx
+5d3e70fd0c9ff14b9b5169a51e957b7a9c74897afd0a35ce4bd318150c1d4d4a  onnx/model.onnx

@@ -11,8 +11,8 @@
 #               KINA_CROSS_ENCODER_THREADS (default min(4, cores)) threads. The JLCPCB SQLite file (~5.3 GB) is read
 #               through the OS page cache, so free host RAM makes LCSC searches faster but is not required.
 #   postgres    < 100 MB RAM.
-#   disk        ~5.3 GB JLCPCB database (kina-data:/data/jlcpcb), ~25 MB int8 cross-encoder model
-#               (kina-data:/data/cross-encoder, downloaded from Hugging Face on first start; ~90 MB for fp32).
+#   disk        ~5.3 GB JLCPCB database (kina-data:/data/jlcpcb). The cross-encoder model (~140 MB, int8 and fp32)
+#               is in the image at /opt/kina/cross-encoder; the container never downloads it (DESIGN.md 3.5, 11).
 name: kina
 
 services:
@@ -29,7 +29,6 @@ services:
       SPRING_DATASOURCE_USERNAME: kina
       SPRING_DATASOURCE_PASSWORD: kina
       KINA_JLCPCB_DATA_DIR: /data/jlcpcb
-      KINA_CROSS_ENCODER_MODEL_DIR: /data/cross-encoder
     volumes:
       - kina-data:/data
     # The JVM heap is 75% of this limit (Dockerfile ENTRYPOINT: -XX:MaxRAMPercentage=75).

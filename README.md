@@ -45,7 +45,7 @@ The distributors are LCSC (served from the JLCPCB parts database, downloaded and
 ### Prerequisites
 
 - Docker with the Compose plugin.
-- About 7 GB of free disk: the JLCPCB database takes 5.3 GB once unpacked (about 1 GB more for the zip while it downloads), the ranking model 23 MB (int8) or 91 MB (fp32), and the images about 0.6 GB.
+- About 7 GB of free disk: the JLCPCB database takes 5.3 GB once unpacked (about 1 GB more for the zip while it downloads) and the images about 1 GB (the `kina` image includes the ranking model, 138 MB).
 - RAM: about 2 GB free is a safe minimum, 4 GB is comfortable. Measured: `kina` about 485 MiB before the model was added, PostgreSQL about 45 MiB. The model adds an estimated 100 to 250 MB outside the JVM heap. See [Measured numbers](#measured-numbers) and [docs/OPERATIONS.md](docs/OPERATIONS.md).
 - Optional: a Mouser API key and TME API v2 credentials. Without them those distributors report `not_configured` and LCSC still works.
 
@@ -60,9 +60,9 @@ docker compose up -d --build
 
 ### What happens on the first start
 
-- The `kina` image is built (Maven build, a few minutes).
+- The `kina` image is built (Maven build, a few minutes). The build also downloads the ranking model from a pinned Hugging Face revision, checks every file against the SHA-256 values in `docker/model/` and puts it into the image. This is the only time Hugging Face is contacted.
 - KINA starts and, in the background, downloads the JLCPCB parts database (about 1 GB zipped, 5.3 GB on disk) into the `kina-data` volume. KINA does not wait for it. Until the file is ready, LCSC reports `unavailable` ("JLCPCB database not downloaded yet") and TME and Mouser work normally.
-- Also in the background, KINA downloads the ranking model from Hugging Face into `/data/cross-encoder` on the same volume (about 23 MB for the default int8 file, a few seconds). It checks size and SHA-256 and records the revision in `model.json`. Until the model is loaded, searches still work and report `ranking: "fallback"` with the note `cross-encoder model not loaded yet`. If the download fails, KINA logs it once and tries again every hour. Files that are already in the directory are used without downloading.
+- KINA loads the bundled ranking model from `/opt/kina/cross-encoder` in the background (well under a second). The container never downloads it. Until it is loaded, searches still work and report `ranking: "fallback"` with the note `cross-encoder model not loaded yet`. If the bundled files are missing or unusable, KINA logs one ERROR line, keeps the deterministic order and checks again every hour.
 - The JLCPCB database is downloaded again when it is older than 5 days.
 
 ### Check that it is ready
@@ -236,9 +236,10 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 | Variable | Default | Meaning |
 |---|---|---|
 | `KINA_CROSS_ENCODER_ENABLED` | `true` | `false` disables the model; searches use the deterministic ranking (`ranking: "fallback"`, note `cross-encoder disabled`). |
-| `KINA_CROSS_ENCODER_VARIANT` | `int8` | `int8` (about 23 MB, quantised, about twice as fast) or `fp32` (91 MB). int8 picks the file that matches the CPU: `model_qint8_avx512_vnni` (AVX-VNNI and ARM) or `model_quint8_avx2`. |
-| `KINA_CROSS_ENCODER_MODEL_DIR` | `/data/cross-encoder` in Docker, `./data/cross-encoder` otherwise | Where the model files live. In Compose it is on the `kina-data` volume. |
-| `KINA_CROSS_ENCODER_MODEL_URL` | `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` | Where the files are downloaded from: an HTTP(S) directory with the same layout, or a local path that is used in place (for a fine-tuned or pre-provisioned model). |
+| `KINA_CROSS_ENCODER_VARIANT` | `int8` | `int8` (about 23 MB, quantised, about twice as fast) or `fp32` (91 MB). Both are in the image. int8 picks the file that matches the CPU: `model_qint8_avx512_vnni` (AVX-VNNI and ARM) or `model_quint8_avx2`. |
+| `KINA_CROSS_ENCODER_MODEL_URL` | `/opt/kina/cross-encoder` in Docker (bundled), `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` otherwise | A local path is used in place and only read (a fine-tuned model, for example). An HTTP(S) directory with the same layout is downloaded into `KINA_CROSS_ENCODER_MODEL_DIR`. A value you set replaces the bundled model. |
+| `KINA_CROSS_ENCODER_AUTO_DOWNLOAD` | `false` in Docker, `true` otherwise | Download missing files from an HTTP(S) `KINA_CROSS_ENCODER_MODEL_URL`. Set it to `true` in Docker only to use a mirror at runtime. |
+| `KINA_CROSS_ENCODER_MODEL_DIR` | `${KINA_JLCPCB_DATA_DIR}/../cross-encoder` (`./data/cross-encoder` locally) | Download target for an HTTP(S) source. Not used by the bundled model. |
 | `KINA_CROSS_ENCODER_THREADS` | `0` | ONNX Runtime threads for one ranking call. `0` means the smaller of 4 and the number of cores. Count physical cores only. |
 
 ### JLCPCB / LCSC database
@@ -285,7 +286,7 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `kina.ranking.cross-encoder.max-sequence-length` | `256` | Tokens per pair. The part text is cut first. |
 | `kina.ranking.cross-encoder.check-interval` | `1h` | How often a missing or failed model is tried again. |
 | `kina.ranking.cross-encoder.download-timeout` | `10m` | Upper bound for downloading one model file. |
-| `kina.ranking.cross-encoder.auto-download` | `true` | `false` never downloads; only files already present are used (air-gapped hosts). |
+| `kina.ranking.cross-encoder.auto-download` | `true` (`false` in the image) | `KINA_CROSS_ENCODER_AUTO_DOWNLOAD`. `false` never downloads; only files already present are used. |
 | `kina.distributors.mouser.max-results-per-search` | `50` | Parts requested from Mouser per query (one API call). |
 | `kina.distributors.tme.max-results-per-search` | `60` | Parts requested from TME per query (up to 3 pages). |
 | `kina.distributors.tme.currency` and `.language` | `EUR` and `en` | TME price currency and language. |
@@ -426,10 +427,10 @@ The cross-encoder helps most on discrete parts, ICs and connectors, where the pa
 
 ### Model files
 
-- KINA downloads the model files on the first start, in the background, from `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` into `KINA_CROSS_ENCODER_MODEL_DIR`. Each file is checked by size and SHA-256. `model.json` in that directory records the source and revision. `list_distributors` shows `model_revision`.
+- Docker: the image build downloads the files from the pinned revision `233902d25c440f23af6f7d6e94d2946bac0bee0a`, checks them against `docker/model/ms-marco-MiniLM-L6-v2.sha256` (a mismatch fails the build) and stores them read only in `/opt/kina/cross-encoder` with a `model.json` (source, revision, hashes). The running container has no dependency on Hugging Face. `list_distributors` shows `model_revision` and `model_dir`.
+- Build arguments: `CROSS_ENCODER_VARIANTS=int8` leaves out fp32 (about 90 MB smaller image); `CROSS_ENCODER_SOURCE` takes another HTTP(S) directory (a mirror or a fine-tuned model) with its own hash file (`CROSS_ENCODER_SHA256_FILE`) or `CROSS_ENCODER_SKIP_VERIFY=1`. See [docs/OPERATIONS.md](docs/OPERATIONS.md#ranking-model).
 - The default is the int8 file (about 23 MB). Set `KINA_CROSS_ENCODER_VARIANT=fp32` for the 91 MB file. It is slower and scored the same in the study.
-- Files that are already in the directory are used without downloading, so you can provision the directory yourself (see [docs/OPERATIONS.md](docs/OPERATIONS.md)).
-- A failed download is logged once and retried every hour. KINA never waits for it at startup.
+- Local runs (`./mvnw spring-boot:run`) download the files on the first start, in the background, from `KINA_CROSS_ENCODER_MODEL_URL` into `./data/cross-encoder`, check size and SHA-256 and retry every hour on failure. `docker/model/fetch-model.sh <dir>` pre-fetches the pinned, verified files instead. KINA never waits for the model at startup.
 
 ### Fine-tuning
 
@@ -440,7 +441,7 @@ scripts/ranking/finetune_cross_encoder.sh                    # mode synth (defau
 scripts/ranking/finetune_cross_encoder.sh -m synth_real -o ./data/ce-synth-real
 ```
 
-It writes a model directory in the Hugging Face layout plus `model.json`. Point `KINA_CROSS_ENCODER_MODEL_URL` at it (a local path is used in place). Details are in `scripts/ranking/README.md`.
+It writes a model directory in the Hugging Face layout plus `model.json`. Point `KINA_CROSS_ENCODER_MODEL_URL` at it (a local path is used in place), or bake it into the image with `--build-arg CROSS_ENCODER_SOURCE=...` (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)). Details are in `scripts/ranking/README.md`.
 
 Check a model before you ship it. The evaluation test runs when `KINA_CROSS_ENCODER_TEST_MODEL_DIR` is set, and it asserts a blended NDCG@10 of at least 0.90 on `docs/research/data/ranking-eval.jsonl`:
 
@@ -453,7 +454,7 @@ Part data is never sent to a third-party service for ranking.
 ## Operations
 
 - Deployment to a server over SSH: `deploy-push/deploy-push.sh <sshhost>:<path>` builds the image, loads it into the server's Docker daemon and writes `compose.yaml` and `.env` there without starting anything (see [deploy-push/README.md](deploy-push/README.md)).
-- Volumes: `kina-data` (JLCPCB SQLite file), `pgdata` (PostgreSQL). The ranking model is in `kina-data` too, under `/data/cross-encoder`.
+- Volumes: `kina-data` (JLCPCB SQLite file only), `pgdata` (PostgreSQL). The ranking model is in the image, under `/opt/kina/cross-encoder`.
 - JLCPCB database: checked every hour, downloaded again when older than 5 days. The old file keeps serving while the new one downloads.
 - TME and Mouser cache: 5 days. A cached search with zero parts goes stale after 1 hour (`kina.cache.empty-result-ttl`). Rows older than 10 days (2 x TTL) are purged every 6 hours.
 - Rate limits: Mouser allows 1 000 calls per day and 30 per minute. KINA makes one Mouser call per uncached query and does not throttle itself. When a distributor answers with a rate limit, KINA waits and retries (see the next item). Use `bypass_cache` sparingly.
@@ -477,7 +478,7 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 | Connector results look generic or wrong | Look at `parsed.connector`: it shows what KINA understood (type, gender, positions, pitch, orientation). If a field is missing, state it more plainly, for example "female header 1x6 right angle 2.54mm". Then look at `distributor_query` per distributor to see the phrase KINA really sent. Results cached before an upgrade can look old; ask again with `bypass_cache`. Mouser ignores rows. |
 | USB results show the wrong pin count or standard | Look at `parsed.connector`: `pin_configuration` is what KINA compared, `positions` is what you wrote. If `pin_configuration_implied` is `true`, you gave no pin count and KINA guessed from the standard (16 for USB 2.0, 24 for USB 3.x); state the count to fix it. Check the part's `PinConfiguration`, `ShieldPinsCounted` and `UsbStandard` attributes: a 17P listing is a 16-pin part, and a 12 to 16 pin Type-C is USB 2.0 whatever its label says. Mouser gives no USB attributes, so its parts depend on description text. Ask again with `bypass_cache` if the results were cached before the upgrade. |
 | LCSC `error: "unavailable"`, detail "JLCPCB parts database not downloaded yet" | The first download is still running (about 1 GB). Watch `docker compose logs kina`. If it failed, `jlcpcb.last_error` in `list_distributors` says why; check disk space and internet access. |
-| `ranking: "fallback"` | Read `ranking_note`. `cross-encoder model not loaded yet`: the first download is still running or failed; check `ranking.last_error` in `list_distributors` and `docker compose logs kina`, then internet access, disk space and write access to `/data/cross-encoder`. KINA retries every hour. `cross-encoder disabled`: `KINA_CROSS_ENCODER_ENABLED` is `false`. `cross-encoder timeout ...` or `busy ...`: the host is short of CPU; lower the load or check `KINA_CROSS_ENCODER_THREADS`. `cross-encoder failed: ...`: see the log. Search still works. |
+| `ranking: "fallback"` | Read `ranking_note`. `cross-encoder model not loaded yet`: the model is still loading or cannot be loaded; check `ranking.last_error` and `ranking.model_dir` in `list_distributors` and the ERROR line in `docker compose logs kina` (a wrong `KINA_CROSS_ENCODER_MODEL_URL`, or `fp32` on an image built with `CROSS_ENCODER_VARIANTS=int8`). KINA checks again every hour. `cross-encoder disabled`: `KINA_CROSS_ENCODER_ENABLED` is `false`. `cross-encoder timeout ...` or `busy ...`: the host is short of CPU; lower the load or check `KINA_CROSS_ENCODER_THREADS`. `cross-encoder failed: ...`: see the log. Search still works. |
 | TME or Mouser `error: "not_configured"` | The credentials are missing in `.env`. Restart with `docker compose up -d`. |
 | Slow search (up to 2 minutes), `rate_limit_waited_ms` above 0 | The distributor rate limited the request and KINA waited. This is normal for Mouser's 30 calls per minute. The log has a `rate limited ... cooling down` line. |
 | Mouser `error: "rate_limited"` | The limit outlasted the 2-minute budget, usually an exhausted daily quota (1 000 calls). Wait, and rely on the cache. |

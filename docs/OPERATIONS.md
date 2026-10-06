@@ -8,7 +8,7 @@ This guide covers running KINA for real: HTTPS, login and group access (with an 
 
 | Service | Image | Port | Volume | Purpose |
 |---|---|---|---|---|
-| `kina` | built from `Dockerfile` (memory limit `KINA_MEM_LIMIT`, default `2g`) | `${KINA_PORT:-8080}` published on the host | `kina-data` at `/data` | The application. Holds the JLCPCB SQLite file in `/data/jlcpcb` and the ranking model in `/data/cross-encoder`. |
+| `kina` | built from `Dockerfile` (memory limit `KINA_MEM_LIMIT`, default `2g`) | `${KINA_PORT:-8080}` published on the host | `kina-data` at `/data` | The application. The volume holds only the JLCPCB SQLite file (`/data/jlcpcb`). The ranking model is part of the image (`/opt/kina/cross-encoder`). |
 | `postgres` | `postgres:17-alpine` | none published | `pgdata` | Cache, users, tokens, OAuth clients, JLCPCB download timestamp. Schema is managed by Flyway at KINA startup. |
 
 `compose.yaml` sets the project name `name: kina`, so the volumes are `kina_kina-data` and `kina_pgdata` whatever the directory is called. Use `docker volume ls` to see them.
@@ -178,7 +178,7 @@ Every URL in the answers must start with `https://kina.example.com`. If they sho
 |---|---|---|
 | Users, tokens, OAuth clients, refresh tokens, TME/Mouser cache | PostgreSQL, volume `pgdata` | Back up with `pg_dump`. |
 | JLCPCB parts database | SQLite file in volume `kina-data` (`/data/jlcpcb`) | Not needed. KINA downloads it again. |
-| Ranking model | Directory `/data/cross-encoder` in volume `kina-data` | Not needed. It is downloaded again from Hugging Face (about 23 MB). Back it up only if it is a fine-tuned model that you cannot rebuild, or if the host has no internet access. |
+| Ranking model | In the image, `/opt/kina/cross-encoder` | Not needed. Rebuild or reload the image. Back up a fine-tuned model directory yourself if you mount one. |
 
 Dump and restore PostgreSQL:
 
@@ -236,7 +236,7 @@ git pull
 docker compose up -d --build
 ```
 
-Flyway applies new database migrations when `kina` starts (the current ones are V1 to V4; V4 adds the group-authorisation columns). Take a `pg_dump` first. The ranking model stays in the `kina-data` volume, so an upgrade does not download it again. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
+Flyway applies new database migrations when `kina` starts (the current ones are V1 to V4; V4 adds the group-authorisation columns). Take a `pg_dump` first. The ranking model comes with the image, so an upgrade never downloads it. A `/data/cross-encoder` directory left in `kina-data` by an older version is no longer used; delete it if you want the space back: `docker compose exec kina rm -rf /data/cross-encoder`. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
 
 Upgrading to group access: set the group variables from [Environment](#environment) and restart. Existing users must sign in once. OAuth access tokens now live 1 hour (`expires_in` 3600) and refresh tokens 30 days (they were 30 days and 90 days); clients refresh by themselves. Refresh tokens issued earlier keep their old expiry.
 
@@ -252,38 +252,66 @@ Roll back by checking out the previous version and running `docker compose up -d
 
 Ranking blends the deterministic score with the `cross-encoder/ms-marco-MiniLM-L6-v2` model (Apache-2.0, 22.7 M parameters). It runs in the KINA process on the CPU with ONNX Runtime. There is no GPU overlay, no sidecar and no ranking API key. The CPU is fast enough: 40 candidates take 130 to 300 ms with 4 threads (int8), and 16 ms when the scores are cached.
 
-### First start
+### The model is in the image
 
-KINA downloads the model in the background after startup, from `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` into `/data/cross-encoder`. The default int8 file is about 23 MB and the first start took a few seconds on the measured host. Each file is checked by size and SHA-256, and `model.json` records the source and revision. Startup never waits for it. Until the model is loaded, searches work and report `ranking: "fallback"` with the note `cross-encoder model not loaded yet`. A failure is logged once and retried every hour (`kina.ranking.cross-encoder.check-interval`).
+The `Dockerfile` downloads the model while the image is built, from the pinned Hugging Face revision `233902d25c440f23af6f7d6e94d2946bac0bee0a`, and checks every file against the SHA-256 values in `docker/model/ms-marco-MiniLM-L6-v2.sha256`. A mismatch fails the build. The files land in `/opt/kina/cross-encoder` (read only, owned by uid 10001) with a `model.json` that records the source, revision and hashes. The image sets `KINA_CROSS_ENCODER_MODEL_URL=/opt/kina/cross-encoder` and `KINA_CROSS_ENCODER_AUTO_DOWNLOAD=false`, so the running container never contacts Hugging Face. Every host is "air-gapped" for the model: only the build machine needs internet access.
 
-The int8 file matches the CPU: `model_qint8_avx512_vnni` (AVX-VNNI and ARM) or `model_quint8_avx2`. A CPU without AVX2 uses fp32 (91 MB). Set `KINA_CROSS_ENCODER_VARIANT=fp32` to force fp32.
+KINA loads the model in the background after startup (about 0.2 s on the measured host). Startup never waits for it. Until it is loaded, searches report `ranking: "fallback"` with the note `cross-encoder model not loaded yet`. The log shows:
 
-### Air-gapped hosts
-
-Files that are already in the model directory are used without any download. To provision a host without internet access:
-
-1. On a machine with internet access, copy the files from `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` with this layout: `vocab.txt`, `config.json`, `tokenizer_config.json`, and `onnx/model_qint8_avx512_vnni.onnx` and `onnx/model_quint8_avx2.onnx` (int8) or `onnx/model.onnx` (fp32). Or start a normal KINA once and copy `/data/cross-encoder` (it also holds `model.json`).
-2. Put the directory into the `kina-data` volume as `/data/cross-encoder`. The directory must be writable and owned by the user of the `kina` container (uid 10001):
-
-```bash
-docker run --rm -v kina_kina-data:/data -v "$PWD/cross-encoder":/src:ro alpine \
-  sh -c 'mkdir -p /data/cross-encoder && cp -r /src/. /data/cross-encoder/ && chown -R 10001:10001 /data/cross-encoder'
-docker compose up -d kina
+```
+Cross-encoder model: local directory /opt/kina/cross-encoder used in place (read only, no download)
+Cross-encoder ready: onnx/model_qint8_avx512_vnni.onnx (int8), revision 233902d2..., 4 threads, from /opt/kina/cross-encoder
 ```
 
-3. Optionally set `KINA_RANKING_CROSS_ENCODER_AUTO_DOWNLOAD=false` (key `kina.ranking.cross-encoder.auto-download`) so KINA never tries the network.
+If the directory is missing or unusable (for example an image built with the wrong arguments), KINA logs one ERROR line, ranks with the deterministic order and checks again every hour (`kina.ranking.cross-encoder.check-interval`). It never falls back to a download.
 
-Check `ranking.ready` in `list_distributors`.
+The image holds both variants by default. The int8 file matches the CPU: `model_qint8_avx512_vnni` (AVX-512 VNNI, AVX-VNNI and ARM) or `model_quint8_avx2` (AVX2). A CPU without AVX2 uses fp32 (91 MB). `KINA_CROSS_ENCODER_VARIANT=fp32` forces fp32 and works from the bundled files.
+
+Build arguments (`docker compose build --build-arg NAME=value kina`):
+
+| Argument | Default | Effect |
+|---|---|---|
+| `CROSS_ENCODER_VARIANTS` | `int8,fp32` | `int8` leaves out the fp32 file and makes the image about 90 MB smaller. Then `KINA_CROSS_ENCODER_VARIANT=fp32` and CPUs without AVX2 have no model and rank deterministically. |
+| `CROSS_ENCODER_SOURCE` | the pinned Hugging Face `resolve/<revision>/` URL | Any HTTP(S) directory with the same layout, for example an internal mirror or a fine-tuned model. |
+| `CROSS_ENCODER_SHA256_FILE` | `ms-marco-MiniLM-L6-v2.sha256` | Hash file in `docker/model/`. A custom source needs its own file (same `sha256sum` format). |
+| `CROSS_ENCODER_SKIP_VERIFY` | `0` | `1` skips the hash check. Only for a custom source you trust. |
+| `CROSS_ENCODER_REVISION` | from a Hugging Face URL | The revision recorded in `model.json` and shown as `model_revision`. |
+
+`deploy-push/deploy-push.sh` builds with the defaults. For other arguments, build the image yourself and push it with `--no-build`.
 
 ### Fine-tuned or mirrored model
 
-`KINA_CROSS_ENCODER_MODEL_URL` accepts an HTTP(S) directory with the same layout (for example an internal mirror) or a local path, which is used in place without a download. Build a fine-tuned model with `scripts/ranking/finetune_cross_encoder.sh` (about 4 to 5 minutes on 16 cores, runs in a `kina-ce-finetune:local` Docker image). It writes a Hugging Face layout directory plus `model.json`. Copy it into the volume as above, for example to `/data/cross-encoder-finetuned`, and set `KINA_CROSS_ENCODER_MODEL_URL=/data/cross-encoder-finetuned` in `.env`. Run `CrossEncoderEvaluationTest` first (see the [README](../README.md#fine-tuning)); it must give a blended NDCG@10 of at least 0.90. `model_revision` in `list_distributors` shows which model is loaded. Back up a fine-tuned model directory yourself.
+Precedence: a `KINA_CROSS_ENCODER_MODEL_URL` that you set in `.env` (or in the compose `environment`) replaces the bundled directory, because the image value is only a default.
+
+- A local path, for example a fine-tuned model from `scripts/ranking/finetune_cross_encoder.sh` copied into the `kina-data` volume as `/data/cross-encoder-finetuned`, is used in place and only read:
+
+```bash
+docker run --rm -v kina_kina-data:/data -v "$PWD/data/cross-encoder-finetuned":/src:ro alpine \
+  sh -c 'cp -r /src /data/cross-encoder-finetuned && chown -R 10001:10001 /data/cross-encoder-finetuned'
+# .env: KINA_CROSS_ENCODER_MODEL_URL=/data/cross-encoder-finetuned
+docker compose up -d kina
+```
+
+- An HTTP(S) directory (an internal mirror) is downloaded at runtime only if you also set `KINA_CROSS_ENCODER_AUTO_DOWNLOAD=true`. The files go to `KINA_CROSS_ENCODER_MODEL_DIR` (default `/data/cross-encoder` in the volume) and are checked against the source's size and SHA-256 headers. Without that variable the image refuses to download and logs an ERROR.
+- To bake a fine-tuned model into the image instead, serve its directory over HTTP during the build and give it its own hash file:
+
+```bash
+(cd data/cross-encoder-finetuned && sha256sum config.json tokenizer_config.json vocab.txt onnx/*.onnx) \
+  > docker/model/finetuned.sha256
+(cd data/cross-encoder-finetuned && python3 -m http.server 8000) &
+docker build --network host -t kina:latest \
+  --build-arg CROSS_ENCODER_SOURCE=http://127.0.0.1:8000/ \
+  --build-arg CROSS_ENCODER_SHA256_FILE=finetuned.sha256 \
+  --build-arg CROSS_ENCODER_REVISION=finetuned-synth-2026-10-05 .
+```
+
+Run `CrossEncoderEvaluationTest` first (see the [README](../README.md#fine-tuning)); it must give a blended NDCG@10 of at least 0.90. `model_revision` and `model_dir` in `list_distributors` show which model is loaded.
 
 ## Sizing
 
 | Component | Memory | Notes |
 |---|---|---|
-| Ranking model (cross-encoder) | an estimated 100 to 250 MB, outside the JVM heap | Not measured yet. int8 about 100 to 200 MB, fp32 about 150 to 250 MB. On disk: 23 MB int8 or 91 MB fp32. There is no separate container. |
+| Ranking model (cross-encoder) | an estimated 100 to 250 MB, outside the JVM heap | Not measured yet. int8 about 100 to 200 MB, fp32 about 150 to 250 MB. In the image: 46 MB for the two int8 files plus 91 MB fp32 (138 MB layer). There is no separate container. |
 | KINA JVM | about 485 MiB measured (before the model was added) | The container limit is `KINA_MEM_LIMIT` (default `2g`) and the heap is 75 percent of it (1.5 GiB). The JVM exits on out-of-memory (`-XX:+ExitOnOutOfMemoryError`) and Compose restarts it. |
 | PostgreSQL | about 45 MiB measured | The cache and tokens are small (`pgdata` about 50 MB after the end-to-end run). |
 | JLCPCB SQLite file | page cache | The file is read through the operating system page cache; free RAM makes LCSC queries faster. |
@@ -343,12 +371,12 @@ Registered clients live in `oauth_clients`. A daily job (first run 15 minutes af
 - Overwrite `X-Forwarded-For` at the proxy, or the registration rate limit can be bypassed.
 - Client registration (`/oauth/register`) is anonymous, as the MCP specification requires, and rate limited per IP. A malformed `/oauth/authorize` request for a registered client is answered with a redirect to that client's registered URI (RFC 6749 behaviour), without user interaction. Approving access always needs a signed-in user and the consent page.
 - Do not publish the PostgreSQL port. `compose.yaml` does not. If you add a port, set a real password: the compose file uses the database password `kina`, which you can change in the `kina` and `postgres` services (or in a `compose.override.yaml`) together with `SPRING_DATASOURCE_PASSWORD`.
-- The ranking model runs inside the KINA process. There is no ranking service to secure, and nothing leaves the host for ranking. The only outbound call is the one-time model download from Hugging Face (or your own mirror).
+- The ranking model runs inside the KINA process. There is no ranking service to secure, and nothing leaves the host for ranking. The model is in the image, so ranking makes no outbound call at all. Hugging Face is contacted only while the image is built.
 - Never put part data or credentials in logs. KINA logs neither tokens nor API keys; keep it that way when adding debug output.
 - Keep `.env` out of git and readable only by the deploy user. Rotate `MOUSER_API_KEY`, `TME_TOKEN`, `TME_APPLICATION_SECRET` and `OIDC_CLIENT_SECRET` if they leak.
 - CORS for `/mcp`, `/oauth/*` and `/.well-known/*` allows any origin without credentials. This is intended for browser-based MCP clients and is safe because bearer tokens are not cookies.
 - Limit who can sign in at the OIDC provider and with `OIDC_REQUIRED_GROUPS`. Every user who gets in can use the distributors' quotas (Mouser: 1 000 calls a day).
-- Only the model files are downloaded. If you set `KINA_CROSS_ENCODER_MODEL_URL`, point it at a source you trust, because the files are loaded and executed as a model. KINA checks size and SHA-256 against the source's own headers, which protects against corrupt downloads, not against a malicious source.
+- The image build verifies the model against hashes committed in the repository (`docker/model/`), so a changed upstream file fails the build. If you set `KINA_CROSS_ENCODER_MODEL_URL` or `CROSS_ENCODER_SOURCE`, point it at a source you trust, because the files are loaded and executed as a model. A runtime download (mirror with `KINA_CROSS_ENCODER_AUTO_DOWNLOAD=true`) checks size and SHA-256 only against the source's own headers, which protects against corrupt downloads, not against a malicious source.
 
 ## Monitoring
 
@@ -400,9 +428,9 @@ When KINA refuses a login, the "Access denied" page names the reason, and `docke
 
 | Symptom | Cause and fix |
 |---|---|
-| `ranking: "fallback"`, note `cross-encoder model not loaded yet` | The model is still downloading, or the download failed. Look at `ranking.last_error` in `list_distributors` and at `docker compose logs kina`. Check internet access to `huggingface.co`, free disk space and that `/data/cross-encoder` is writable by uid 10001. KINA retries every hour. For hosts without internet access, provision the directory (see Ranking model). |
+| `ranking: "fallback"`, note `cross-encoder model not loaded yet` | The model is still loading (well under a second after startup), or it cannot be loaded. Look at `ranking.last_error` and `ranking.model_dir` in `list_distributors` and for the ERROR line in `docker compose logs kina`. With the bundled model, check that `KINA_CROSS_ENCODER_MODEL_URL` is not set to a wrong path, and that a `KINA_CROSS_ENCODER_VARIANT=fp32` image was not built with `CROSS_ENCODER_VARIANTS=int8`. KINA checks again every hour. |
 | Note `cross-encoder disabled` | `KINA_CROSS_ENCODER_ENABLED=false`. Remove it or set it to `true`, then `docker compose up -d`. |
 | Note `cross-encoder timeout after 5s` or `cross-encoder timeout: budget exhausted` | The host is short of CPU, or too many threads share too few cores. Lower the load, set `KINA_CROSS_ENCODER_THREADS` to the physical cores you can spare, and check `ranking.avg_latency_ms`. |
 | Note `cross-encoder busy: no free slot within ...` | Two scoring calls (`kina.ranking.cross-encoder.max-concurrent`) were already running for the whole budget. Reduce parallel searches or add CPU. |
-| Note `cross-encoder failed: ...` | An error while scoring. Read the log line, and check that the model files are complete (`model.json` and the `onnx` directory). Delete the directory to download it again. |
-| Model failed to load after a manual copy | Wrong layout, a missing `vocab.txt`, or files not owned by uid 10001. Compare with the layout under Ranking model. |
+| Note `cross-encoder failed: ...` | An error while scoring. Read the log line, and check that the model files are complete (`model.json` and the `onnx` directory). With the bundled model, rebuild the image. |
+| Mounted model directory failed to load | Wrong layout, a missing `vocab.txt`, or files not readable by uid 10001. Compare with the layout in `docs/DESIGN.md` 3.5. |
