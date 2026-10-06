@@ -47,9 +47,11 @@ ENV KINA_JLCPCB_DATA_DIR=/data/jlcpcb \
     KINA_CROSS_ENCODER_AUTO_DOWNLOAD=false
 VOLUME ["/data"]
 USER kina
-EXPOSE 8080
+# 8080: MCP, REST API, web UI. 9090: management port (actuator health and /actuator/prometheus), NO authentication;
+# publish it only to the monitoring network (DESIGN.md 3.7).
+EXPOSE 8080 9090
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD curl -fsS http://localhost:8080/actuator/health || exit 1
+    CMD curl -fsS "http://localhost:${KINA_METRICS_PORT:-9090}/actuator/health" || exit 1
 # --enable-native-access: sqlite-jdbc and ONNX Runtime load native libraries (silences the JDK 21+ restricted-method
 # warning); ONNX Runtime extracts its bundled library to java.io.tmpdir at first use.
 # MaxRAMPercentage sizes the heap from the container memory limit (compose sets mem_limit for kina).

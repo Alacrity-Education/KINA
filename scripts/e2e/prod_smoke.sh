@@ -3,7 +3,8 @@
 #
 # Starts a throwaway second KINA container (image kina:latest, built by `docker compose up --build`) in prod mode
 # next to the running compose stack, sharing its Postgres and (read-only) JLCPCB volume, then checks that:
-#   - the app starts,
+#   - the app starts (health on the management port),
+#   - /actuator/prometheus answers there without credentials and is not served on the main port,
 #   - POST /mcp without a token is 401 with a resource_metadata challenge,
 #   - GET / redirects to /oauth2/authorization/oidc,
 #   - /oauth2/authorization/oidc redirects to the authorization endpoint discovered from the issuer
@@ -17,6 +18,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 NAME=${SMOKE_CONTAINER:-kina-prod-smoke}
 PORT=${SMOKE_PORT:-18080}
+METRICS_PORT=${SMOKE_METRICS_PORT:-19090}
 NETWORK=${SMOKE_NETWORK:-kina_default}
 ISSUER=${OIDC_ISSUER_URI:-https://accounts.google.com}
 AUTH_HOST=${EXPECTED_AUTH_HOST:-accounts.google.com}
@@ -25,7 +27,7 @@ cleanup() { docker rm -f "$NAME" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 cleanup
 
-docker run -d --name "$NAME" --network "$NETWORK" -p "127.0.0.1:${PORT}:8080" \
+docker run -d --name "$NAME" --network "$NETWORK" -p "127.0.0.1:${PORT}:8080" -p "127.0.0.1:${METRICS_PORT}:9090" \
   -e KINA_MODE=prod \
   -e OIDC_ISSUER_URI="$ISSUER" -e OIDC_CLIENT_ID=dummy -e OIDC_CLIENT_SECRET=dummy \
   -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/kina \
@@ -36,9 +38,10 @@ docker run -d --name "$NAME" --network "$NETWORK" -p "127.0.0.1:${PORT}:8080" \
 
 echo "waiting for $NAME on port $PORT ..."
 for _ in $(seq 1 60); do
-  if curl -fsS "http://localhost:${PORT}/actuator/health" >/dev/null 2>&1; then break; fi
+  if curl -fsS "http://localhost:${METRICS_PORT}/actuator/health" >/dev/null 2>&1; then break; fi
   sleep 1
 done
 docker logs "$NAME" 2>&1 | grep -E "Started KinaApplication|PRODUCTION|OIDC|ERROR" | sed 's/^/  log: /' || true
 
-python3 scripts/e2e/kina_e2e.py --base "http://localhost:${PORT}" --auth-host "$AUTH_HOST" prod "$@"
+python3 scripts/e2e/kina_e2e.py --base "http://localhost:${PORT}" --metrics "http://localhost:${METRICS_PORT}" \
+  --auth-host "$AUTH_HOST" prod "$@"
