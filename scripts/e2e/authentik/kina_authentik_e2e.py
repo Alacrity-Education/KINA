@@ -43,6 +43,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 AUTHENTIK = os.environ.get("AUTHENTIK_URL", "http://localhost:19000")
 KINA = os.environ.get("KINA_E2E_URL", "http://localhost:18080")
+# management port (actuator health, Prometheus); not 9090, which the compose stack may publish
+KINA_METRICS = os.environ.get("KINA_E2E_METRICS_URL", "http://localhost:19091")
 KINA_DB_PORT = os.environ.get("KINA_DB_PORT", "15432")
 CLIENT_REDIRECT = "http://localhost:33418/callback"  # the MCP client's callback (never contacted)
 TIMEOUT = 20
@@ -291,14 +293,20 @@ def start_kina(info: dict) -> subprocess.Popen:
     jar = ROOT / "target" / "kina.jar"
     if not jar.exists():
         raise SystemExit("target/kina.jar missing: run ./mvnw -q -DskipTests package first")
-    try:
-        urllib.request.urlopen(KINA + "/actuator/health", timeout=2)
-        raise SystemExit(f"{KINA} is already in use (a KINA left over from --keep?); stop it first")
-    except (urllib.error.URLError, OSError):
-        pass
+    for url in (KINA + "/", KINA_METRICS + "/actuator/health"):
+        try:
+            urllib.request.urlopen(url, timeout=2)
+            in_use = True
+        except urllib.error.HTTPError:
+            in_use = True  # something answers on that port
+        except (urllib.error.URLError, OSError):
+            in_use = False
+        if in_use:
+            raise SystemExit(f"{url} is already in use (a KINA left over from --keep?); stop it first")
     out = HERE / "out"
     out.mkdir(exist_ok=True)
-    env = {**os.environ, "PORT": KINA.rsplit(":", 1)[1], "KINA_MODE": "prod", "KINA_PUBLIC_BASE_URL": KINA,
+    env = {**os.environ, "PORT": KINA.rsplit(":", 1)[1], "KINA_METRICS_PORT": KINA_METRICS.rsplit(":", 1)[1],
+           "KINA_MODE": "prod", "KINA_PUBLIC_BASE_URL": KINA,
            "SPRING_DATASOURCE_URL": f"jdbc:postgresql://localhost:{KINA_DB_PORT}/kina",
            "SPRING_DATASOURCE_USERNAME": "kina", "SPRING_DATASOURCE_PASSWORD": "kina",
            "OIDC_ISSUER_URI": info["issuer"], "OIDC_CLIENT_ID": info["client_id"],
@@ -313,7 +321,7 @@ def start_kina(info: dict) -> subprocess.Popen:
     deadline = time.time() + 90
     while time.time() < deadline:
         try:
-            with urllib.request.urlopen(KINA + "/actuator/health", timeout=3) as response:
+            with urllib.request.urlopen(KINA_METRICS + "/actuator/health", timeout=3) as response:
                 if response.status == 200:
                     return process
         except (urllib.error.URLError, OSError):
