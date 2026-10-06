@@ -43,6 +43,10 @@ REST_QUERY = "4.7k 1% 0603 resistor"
 RATED_QUERY = "22uF X7R 1206 25V MLCC"
 NONSENSE_QUERY = "asdfqwerty zz9"
 FALLBACK_QUERY = "SOT-23 N-channel MOSFET 30V"
+# never-relax rules (DESIGN.md 3.4 "Hard constraints"), checked against LCSC (a local database, no quota)
+IMPOSSIBLE_QUERY = "22uF X7R 0201 100V"
+CRYSTAL_QUERY = "16MHz crystal 3225 SMD"
+OSCILLATOR_QUERY = "16MHz oscillator 3225"
 REDIRECT_URI = "http://localhost:6274/callback"
 JLCPCB_MIN_PARTS = 7_000_000
 
@@ -192,13 +196,14 @@ def summarize_search(response: dict) -> dict:
         "distributors": {d["distributor"]: {k: d.get(k) for k in
                                             ("total_results", "fetched", "excluded_by_constraints",
                                              "excluded_below_spec", "returned", "cache", "error", "fallback_query",
-                                             "constraints_relaxed", "query_terms_dropped", "exact_matches")}
+                                             "constraints_relaxed", "query_terms_dropped", "exact_matches",
+                                             "excluded_by_constraints_detail", "hint")}
                          for d in response.get("distributors", [])},
     }
 
 
 DISTRIBUTOR_FIELDS = ("fetched", "excluded_by_constraints", "excluded_below_spec", "returned", "query_terms_dropped",
-                      "constraints_relaxed", "exact_matches", "out_of_stock_matches")
+                      "constraints_relaxed", "exact_matches", "out_of_stock_matches", "excluded_by_constraints_detail")
 
 
 def shape_problems(response: dict) -> list[str]:
@@ -217,6 +222,14 @@ def shape_problems(response: dict) -> list[str]:
             problems.append(f"{name}: counts do not add up {[d.get(k) for k in DISTRIBUTOR_FIELDS[:4]]}")
         problems += [f"{name}: {p.get('part_number')} has no stock_as_of" for p in d.get("parts", [])
                      if not p.get("stock_as_of")]
+        detail = d.get("excluded_by_constraints_detail") or {}
+        if sum(detail.values()) != d.get("excluded_by_constraints", 0):
+            problems.append(f"{name}: excluded_by_constraints_detail {detail} does not add up to "
+                            f"{d.get('excluded_by_constraints')}")
+        # a hint exactly when an understood query found nothing at a distributor that answered
+        wants_hint = response.get("query_understood") is True and not d.get("parts") and not d.get("error")
+        if wants_hint != bool(d.get("hint")):
+            problems.append(f"{name}: hint {d.get('hint')!r} for {len(d.get('parts', []))} parts")
     return problems
 
 
@@ -571,6 +584,35 @@ def suite_rest(base: str, token: str, rec: Recorder):
     rec.check(f"rest: '{NONSENSE_QUERY}' -> query_understood false, hint, match null",
               resp.status == 200 and body.get("query_understood") is False and bool(body.get("hint"))
               and all(m is None for m in matches), f"{len(matches)} parts, matches {matches}", resp.millis)
+
+    # hard constraints are never relaxed: an impossible request comes back empty with a hint, never with substitutes
+    q = urllib.parse.urlencode({"q": IMPOSSIBLE_QUERY, "max_results": 5, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    rec.check(f"rest: '{IMPOSSIBLE_QUERY}' -> empty, exact_matches 0, hint naming the hard constraints",
+              resp.status == 200 and not lcsc.get("parts") and lcsc.get("exact_matches") == 0
+              and "never relaxed" in (lcsc.get("hint") or "") and bool(body.get("hint"))
+              and not shape_problems(body),
+              f"excluded {lcsc.get('excluded_by_constraints')} {lcsc.get('excluded_by_constraints_detail')}, "
+              f"hint {lcsc.get('hint')!r}", resp.millis)
+    for query, wanted in ((CRYSTAL_QUERY, "crystal"), (OSCILLATOR_QUERY, "oscillator")):
+        q = urllib.parse.urlencode({"q": query, "max_results": 20, "distributors": "LCSC"})
+        resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+        body = resp.json() if resp.status == 200 else {}
+        families = [p.get("attributes", {}).get("Family") for d in body.get("distributors", [])
+                    for p in d.get("parts", [])]
+        rec.check(f"rest: '{query}' returns only {wanted}s (crystals and oscillators are never mixed)",
+                  resp.status == 200 and families and all(f == wanted for f in families)
+                  and not shape_problems(body), f"families {sorted(set(map(str, families)))}", resp.millis)
+    q = urllib.parse.urlencode({"q": FALLBACK_QUERY, "max_results": 20, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    polarities = [p.get("attributes", {}).get("Polarity") for d in body.get("distributors", [])
+                  for p in d.get("parts", [])]
+    rec.check(f"rest: '{FALLBACK_QUERY}' returns no P-channel part", resp.status == 200
+              and "P-channel" not in polarities and not shape_problems(body),
+              f"polarities {sorted(set(map(str, polarities)))}", resp.millis)
 
     q = urllib.parse.urlencode({"q": FALLBACK_QUERY, "max_results": 3, "distributors": "TME"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)
