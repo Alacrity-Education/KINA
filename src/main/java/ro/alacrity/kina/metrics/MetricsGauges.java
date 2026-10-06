@@ -31,9 +31,10 @@ import static ro.alacrity.kina.metrics.MetricNames.USERS_KNOWN;
 import static ro.alacrity.kina.metrics.MetricNames.USERS_REVOKED;
 
 /**
- * Gauges of what the database holds (DESIGN.md 3.7), recomputed every {@code kina.metrics.save-interval} with a few
- * {@code count(*)} queries and not persisted: cache rows per distributor (all, fresh, stale; searches), users, active
- * tokens and the JLCPCB database. A failed refresh keeps the previous values and is logged once at WARN.
+ * Gauges of what the database holds (DESIGN.md 3.7), not persisted: cache rows per distributor (all, fresh, stale;
+ * searches), users and active tokens, recomputed every {@code kina.metrics.save-interval} with a few {@code count(*)}
+ * queries (a failed refresh keeps the previous values and is logged once at WARN); the JLCPCB database part count and
+ * age, read from memory on every scrape.
  */
 @Slf4j
 public class MetricsGauges {
@@ -53,8 +54,6 @@ public class MetricsGauges {
     private final AtomicLong usersKnown = new AtomicLong();
     private final AtomicLong usersRevoked = new AtomicLong();
     private final AtomicLong tokensActive = new AtomicLong();
-    private final AtomicLong jlcpcbParts = new AtomicLong();
-    private final AtomicLong jlcpcbAgeSeconds = new AtomicLong();
     private boolean failing;
 
     public MetricsGauges(JdbcClient jdbc, KinaProperties properties, Clock clock,
@@ -72,8 +71,14 @@ public class MetricsGauges {
         gauge(registry, USERS_KNOWN, usersKnown, null);
         gauge(registry, USERS_REVOKED, usersRevoked, null);
         gauge(registry, TOKENS_ACTIVE, tokensActive, null);
-        gauge(registry, JLCPCB_DATABASE_PARTS, jlcpcbParts, null);
-        gauge(registry, JLCPCB_DATABASE_AGE, jlcpcbAgeSeconds, "seconds");
+        // read on every scrape: the JLCPCB status is in memory
+        Gauge.builder(JLCPCB_DATABASE_PARTS, this, MetricsGauges::jlcpcbParts)
+                .description(MetricNames.description(JLCPCB_DATABASE_PARTS))
+                .register(registry);
+        Gauge.builder(JLCPCB_DATABASE_AGE, this, MetricsGauges::jlcpcbAgeSeconds)
+                .description(MetricNames.description(JLCPCB_DATABASE_AGE))
+                .baseUnit("seconds")
+                .register(registry);
     }
 
     private static void register(MeterRegistry registry, String name, Map<Distributor, AtomicLong> holders,
@@ -108,7 +113,6 @@ public class MetricsGauges {
                 log.warn("Reading the metric gauges failed, keeping the previous values: {}", e.toString());
             }
         }
-        refreshJlcpcb();
     }
 
     private void refreshDatabase() {
@@ -154,16 +158,24 @@ public class MetricsGauges {
         tokensActive.set(active == null ? 0 : active);
     }
 
-    private void refreshJlcpcb() {
+    double jlcpcbParts() {
+        JlcpcbStatus status = jlcpcbStatus();
+        return status == null || status.partCount() == null ? 0 : status.partCount();
+    }
+
+    double jlcpcbAgeSeconds() {
+        JlcpcbStatus status = jlcpcbStatus();
+        Instant downloaded = status == null ? null : status.downloadedAt();
+        return downloaded == null ? 0 : Math.max(0, Duration.between(downloaded, clock.instant()).toSeconds());
+    }
+
+    private JlcpcbStatus jlcpcbStatus() {
         try {
             JlcpcbDatabaseManager manager = jlcpcb.getIfAvailable();
-            JlcpcbStatus status = manager == null ? null : manager.status().orElse(null);
-            jlcpcbParts.set(status == null || status.partCount() == null ? 0 : status.partCount());
-            Instant downloaded = status == null ? null : status.downloadedAt();
-            jlcpcbAgeSeconds.set(downloaded == null ? 0
-                    : Math.max(0, Duration.between(downloaded, clock.instant()).toSeconds()));
+            return manager == null ? null : manager.status().orElse(null);
         } catch (RuntimeException e) {
             log.debug("Reading the JLCPCB status for the metrics failed: {}", e.toString());
+            return null;
         }
     }
 

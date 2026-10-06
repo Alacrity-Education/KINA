@@ -1,5 +1,6 @@
 package ro.alacrity.kina.metrics;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +36,12 @@ class MetricsPersistenceTest {
 
     @Autowired
     PartCacheRepository partCache;
+
+    @Autowired
+    MetricsGauges gauges;
+
+    @Autowired
+    MeterRegistry registry;
 
     /** Unique names so the application's own persistence bean never collides with this test. */
     final String prefix = "test." + UUID.randomUUID().toString().replace("-", "") + ".";
@@ -98,6 +105,14 @@ class MetricsPersistenceTest {
                 .isEqualTo(added + 2);
         assertThat(metrics.store().get(MetricKey.of(MetricNames.CACHE_PARTS_REFRESHED, "distributor", "TME")))
                 .isEqualTo(refreshed + 1);
+
+        gauges.refresh();
+        long rows = jdbc.sql("SELECT count(*) FROM cached_parts WHERE distributor = 'TME'").query(Long.class).single();
+        assertThat(registry.get(MetricNames.CACHE_PARTS).tag("distributor", "TME").gauge().value()).isEqualTo(rows);
+        assertThat(registry.get(MetricNames.CACHE_PARTS_FRESH).tag("distributor", "TME").gauge().value())
+                .isEqualTo(rows);
+        assertThat(registry.get(MetricNames.CACHE_PARTS_STALE).tag("distributor", "TME").gauge().value()).isZero();
+        assertThat(registry.get(MetricNames.USERS_KNOWN).gauge().value()).isPositive(); // the development admin
     }
 
     long stored(MetricKey key) {
