@@ -46,7 +46,7 @@ Optional live tests: `KINA_CROSS_ENCODER_TEST_MODEL_DIR=<model dir> ./mvnw test 
 | `oauth` | Metadata, dynamic registration, authorize, token, revoke endpoints, PKCE. `ClientMetadataDocumentResolver` (https `client_id` documents on trusted hosts), `RegistrationRateLimiter`, `OAuthClientMaintenance` (daily cleanup of unused clients). |
 | `web` | `TokenPageController` (Thymeleaf token UI; `kina.tokens.ui-enabled=false` turns static tokens off), `LoginErrorController` (`/login-denied`), `PublicUrlResolver` (public origin; all emitted URLs go through it). |
 
-SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V4). Templates: `src/main/resources/templates`.
+SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V5). Templates: `src/main/resources/templates`.
 
 ## Conventions
 
