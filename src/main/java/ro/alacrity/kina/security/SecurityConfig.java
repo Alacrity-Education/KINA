@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -32,8 +33,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Two filter chains (DESIGN.md sections 6 and 7).
+ * Two filter chains (DESIGN.md sections 6 and 7), after the management chain (DESIGN.md 3.7).
  * <ol>
+ *   <li><b>Management chain</b> (actuator endpoints, served only on the management port {@code management.server.port},
+ *   9090): no authentication, no CSRF, no session. The port must be reachable only from the monitoring network. On
+ *   the main port the actuator endpoints do not exist (404 in development, a login redirect in production).</li>
  *   <li><b>Machine chain</b> ({@code /api/**}, {@code /mcp/**}, OAuth endpoints, {@code /.well-known/**}): stateless,
  *   CSRF off, CORS for the endpoints browser-based MCP clients call, bearer tokens only. {@code /api/**} and
  *   {@code /mcp/**} need a valid KINA access token (production) or fall back to the development admin (development).
@@ -59,6 +63,24 @@ public class SecurityConfig {
 
     static final String[] PUBLIC_WEB_PATHS = {"/actuator/health", "/actuator/health/**", "/actuator/info", "/error",
             "/login-error", "/login-denied", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/webjars/**"};
+
+    /**
+     * Everything served on the management port: health, info and the Prometheus scrape endpoint, unauthenticated.
+     * {@link EndpointRequest} matches only requests of the management server when it has its own port.
+     */
+    @Bean
+    @Order(0)
+    SecurityFilterChain managementSecurityFilterChain(HttpSecurity http) {
+        http.securityMatcher(EndpointRequest.toAnyEndpoint())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .requestCache(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable);
+        return http.build();
+    }
 
     @Bean
     @Order(1)

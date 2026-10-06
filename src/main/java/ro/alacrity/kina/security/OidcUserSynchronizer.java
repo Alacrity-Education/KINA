@@ -7,6 +7,7 @@ import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import ro.alacrity.kina.metrics.KinaMetrics;
 
 import java.time.Clock;
 import java.util.LinkedHashSet;
@@ -33,6 +34,7 @@ public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, 
     private final OidcAccessPolicy policy;
     private final MembershipVerifier membership;
     private final Clock clock;
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     public OidcUserSynchronizer(UserRepository users, OidcAccessPolicy policy, MembershipVerifier membership) {
         this(OidcHttp.oidcUserService(), users, policy, membership, Clock.systemUTC());
@@ -45,6 +47,11 @@ public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, 
         this.policy = policy;
         this.membership = membership;
         this.clock = clock;
+    }
+
+    /** Counts logins and refusals (DESIGN.md 3.7). */
+    public void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
     }
 
     @Override
@@ -68,6 +75,7 @@ public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, 
                         return true;
                     })
                     .orElse(false);
+            metrics.loginDenied(decision.reason() == null ? null : decision.reason().code());
             throw new LoginDeniedException(decision, blocked, decision.reason() == OidcAccessPolicy.Reason.GROUP
                     ? "Access to KINA requires membership in " + String.join(" or ", policy.requiredGroups())
                     : "Access to KINA requires a verified e-mail address from "
@@ -75,6 +83,7 @@ public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, 
         }
         KinaPrincipal principal = synchronize(issuer, oidcUser);
         membership.recordSuccessfulLogin(principal.userId());
+        metrics.loginSucceeded();
         Set<GrantedAuthority> authorities = new LinkedHashSet<>(oidcUser.getAuthorities());
         authorities.add(new SimpleGrantedAuthority(KinaAuthentication.ROLE_USER));
         return new KinaOidcUser(authorities, oidcUser.getIdToken(), oidcUser.getUserInfo(), principal);

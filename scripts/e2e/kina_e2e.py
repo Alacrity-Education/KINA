@@ -6,9 +6,12 @@ Usage (stack started with `docker compose up -d --build`):
     python3 scripts/e2e/kina_e2e.py                       # all dev-mode suites against http://localhost:8080
     python3 scripts/e2e/kina_e2e.py ui mcp                # selected suites
     python3 scripts/e2e/kina_e2e.py --report out.json     # also write timings / responses summary as JSON
-    python3 scripts/e2e/kina_e2e.py --base http://localhost:18080 prod   # prod-mode smoke (see prod_smoke.sh)
+    python3 scripts/e2e/kina_e2e.py --base http://localhost:18080 --metrics http://localhost:19090 prod
+                                                          # prod-mode smoke (see prod_smoke.sh)
 
-Suites: ui, mcp, oauth, forwarded, rest (dev mode; "all" = these five) and prod (prod mode only).
+Suites: ui, mcp, oauth, forwarded, rest, metrics (dev mode; "all" = these six) and prod (prod mode only).
+Actuator (health, Prometheus) is on the separate management port: --metrics (default http://localhost:9090,
+env KINA_METRICS_URL).
 The mcp and rest suites need a static bearer token; it is created through the token UI (suite ui runs first
 automatically) or taken from KINA_TOKEN. Tokens are never printed, only their 12-character prefix.
 
@@ -537,16 +540,57 @@ def suite_rest(base: str, token: str, rec: Recorder):
     resp = api.get("/api/v1/distributors", headers=bearer("kina_" + "q" * 43))
     rec.check("rest: invalid token -> 401", resp.status == 401 and 'error="invalid_token"' in resp.header(
         "WWW-Authenticate"), resp.header("WWW-Authenticate"))
+
+
+def suite_metrics(base: str, metrics_base: str, token: str, rec: Recorder):
+    """Actuator on the management port without authentication; not served on the main port (DESIGN.md 3.7)."""
+    api = Client(base)
+    management = Client(metrics_base)
+    auth = bearer(token)
+    resp = management.get("/actuator/health")
+    rec.check("metrics: /actuator/health on the management port is public and UP", resp.status == 200
+              and resp.json().get("status") == "UP", resp.text[:60], resp.millis)
+    resp = management.get("/actuator/prometheus")
+    text = resp.text if resp.status == 200 else ""
+    rec.check("metrics: /actuator/prometheus answers without credentials", resp.status == 200
+              and resp.header("Content-Type").startswith("text/plain"), f"status {resp.status}", resp.millis)
+    expected = ["kina_searches_total", "kina_search_queries_total", "kina_tool_calls_total{tool=\"search_parts\"}",
+                "kina_distributor_calls_total{", "kina_cache_parts{distributor=\"TME\"}",
+                "kina_cache_parts_fresh{", "kina_cache_parts_stale{", "kina_cache_searches{", "kina_users_known",
+                "kina_tokens_active", "kina_jlcpcb_database_parts", "kina_search_duration_seconds_count"]
+    missing = [name for name in expected if name not in text]
+    rec.check("metrics: the kina_ series are exported", not missing, f"missing {missing}" if missing else
+              f"{sum(1 for line in text.splitlines() if line.startswith('kina_'))} kina_ samples")
+    resp = api.get("/actuator/prometheus")
+    rec.check("metrics: the main port does not serve /actuator/prometheus", resp.status != 200
+              and "kina_" not in resp.text, f"status {resp.status}")
     resp = api.get("/actuator/health")
-    rec.check("rest: /actuator/health is public", resp.status == 200 and resp.json().get("status") == "UP",
-              resp.text[:60])
+    rec.check("metrics: the main port does not serve /actuator/health", resp.status != 200, f"status {resp.status}")
+    resp = api.get("/api/v1/metrics/summary", headers=auth)
+    summary = resp.json().get("summary", {}) if resp.status == 200 else {}
+    rec.check("metrics: GET /api/v1/metrics/summary", resp.status == 200 and summary.get("searches", 0) > 0
+              and len(resp.json().get("counters", [])) > 0,
+              f"searches {summary.get('searches')}, tool_calls {summary.get('tool_calls')}", resp.millis)
+    resp = api.get("/api/v1/distributors", headers=auth)
+    metrics = resp.json().get("metrics") if resp.status == 200 else None
+    rec.check("metrics: list_distributors carries the key counters", isinstance(metrics, dict)
+              and {"searches", "tool_calls", "cache_added", "rate_limited_calls",
+                   "cross_encoder_executions"} <= set(metrics), str(metrics)[:200])
 
 
-def suite_prod(base: str, rec: Recorder, expected_auth_host: str = "accounts.google.com"):
+def suite_prod(base: str, rec: Recorder, expected_auth_host: str = "accounts.google.com",
+               metrics_base: str = "http://localhost:9090"):
     """Production mode without real OIDC credentials: protection and provider discovery."""
     api = Client(base)
-    resp = api.get("/actuator/health")
-    rec.check("prod: application started (/actuator/health UP)", resp.status == 200, resp.text[:60], resp.millis)
+    resp = Client(metrics_base).get("/actuator/health")
+    rec.check("prod: application started (/actuator/health UP on the management port)", resp.status == 200,
+              resp.text[:60], resp.millis)
+    resp = Client(metrics_base).get("/actuator/prometheus")
+    rec.check("prod: /actuator/prometheus needs no credentials on the management port", resp.status == 200
+              and "kina_users_known" in resp.text, f"status {resp.status}")
+    resp = api.get("/actuator/prometheus")
+    rec.check("prod: the main port does not serve /actuator/prometheus", resp.status != 200
+              and "kina_" not in resp.text, f"status {resp.status}")
     resp = api.post("/mcp", headers={"Accept": MCP_ACCEPT}, body={"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
     www = resp.header("WWW-Authenticate")
     rec.check("prod: POST /mcp without a token -> 401 + resource_metadata", resp.status == 401
@@ -576,8 +620,10 @@ def suite_prod(base: str, rec: Recorder, expected_auth_host: str = "accounts.goo
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("suites", nargs="*", default=["all"],
-                        help="ui, mcp, oauth, forwarded, rest, prod or all (default)")
+                        help="ui, mcp, oauth, forwarded, rest, metrics, prod or all (default)")
     parser.add_argument("--base", default=os.environ.get("KINA_URL", "http://localhost:8080"))
+    parser.add_argument("--metrics", default=os.environ.get("KINA_METRICS_URL", "http://localhost:9090"),
+                        help="management port (actuator health and Prometheus)")
     parser.add_argument("--report", help="write results, timings and response summaries to this JSON file")
     parser.add_argument("--auth-host", default="accounts.google.com",
                         help="prod suite: expected host of the provider's authorization endpoint")
@@ -585,10 +631,10 @@ def main() -> int:
 
     suites = args.suites
     if "all" in suites:
-        suites = ["ui", "mcp", "oauth", "forwarded", "rest"]
+        suites = ["ui", "mcp", "oauth", "forwarded", "rest", "metrics"]
     rec = Recorder()
     token = os.environ.get("KINA_TOKEN")
-    needs_token = any(s in suites for s in ("mcp", "rest"))
+    needs_token = any(s in suites for s in ("mcp", "rest", "metrics"))
     if "ui" in suites or (needs_token and not token):
         try:
             created = suite_ui(args.base, rec)
@@ -600,12 +646,13 @@ def main() -> int:
         "oauth": lambda: suite_oauth(args.base, rec),
         "forwarded": lambda: suite_forwarded(args.base, rec),
         "rest": lambda: suite_rest(args.base, token, rec),
-        "prod": lambda: suite_prod(args.base, rec, args.auth_host),
+        "metrics": lambda: suite_metrics(args.base, args.metrics, token, rec),
+        "prod": lambda: suite_prod(args.base, rec, args.auth_host, args.metrics),
     }
     for suite in suites:
         if suite == "ui":
             continue
-        if suite in ("mcp", "rest") and not token:
+        if suite in ("mcp", "rest", "metrics") and not token:
             rec.check(f"{suite}: needs a token", False, "token UI failed and KINA_TOKEN is not set")
             continue
         try:

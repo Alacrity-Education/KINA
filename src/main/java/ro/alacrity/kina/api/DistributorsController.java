@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ro.alacrity.kina.domain.DistributorStatusResponse;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.DistributorStatusService;
 
 /** {@code GET /api/v1/distributors}: same payload as the {@code list_distributors} MCP tool. */
@@ -14,9 +15,10 @@ import ro.alacrity.kina.search.DistributorStatusService;
 public class DistributorsController {
 
     private final DistributorStatusService statusService;
+    private final KinaMetrics metrics;
 
     @GetMapping
     public DistributorStatusResponse list() {
-        return statusService.status();
+        return statusService.status().withMetrics(metrics.summary());
     }
 }

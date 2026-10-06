@@ -22,8 +22,20 @@ public record KinaProperties(
         @DefaultValue Search search,
         @DefaultValue Ranking ranking,
         @DefaultValue Distributors distributors,
-        @DefaultValue Jlcpcb jlcpcb
+        @DefaultValue Jlcpcb jlcpcb,
+        @DefaultValue Metrics metrics
 ) {
+
+    @ConstructorBinding
+    public KinaProperties {
+        metrics = metrics == null ? new Metrics(Duration.ofSeconds(30)) : metrics;
+    }
+
+    /** Without {@code metrics} (tests that build the tree by hand): the defaults. */
+    public KinaProperties(String publicBaseUrl, Security security, Tokens tokens, OAuth oauth, Cache cache,
+                          Search search, Ranking ranking, Distributors distributors, Jlcpcb jlcpcb) {
+        this(publicBaseUrl, security, tokens, oauth, cache, search, ranking, distributors, jlcpcb, null);
+    }
 
     /** {@code kina.public-base-url} if non-blank. */
     public boolean hasPublicBaseUrl() {
@@ -197,6 +209,15 @@ public record KinaProperties(
      *                       or a new listing should not hide parts for the whole {@code ttl})
      */
     public record Cache(@DefaultValue("5d") Duration ttl, @DefaultValue("1h") Duration emptyResultTtl) {
+    }
+
+    /**
+     * {@code kina.metrics.*} (DESIGN.md 3.7).
+     *
+     * @param saveInterval how often the counters are saved to {@code metrics_counters} and the database gauges are
+     *                     recomputed (read by the {@code @Scheduled} methods through the same property)
+     */
+    public record Metrics(@DefaultValue("30s") Duration saveInterval) {
     }
 
     /**

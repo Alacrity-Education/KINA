@@ -17,6 +17,10 @@ import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PriceBreak;
+import ro.alacrity.kina.metrics.KinaMetrics;
+import ro.alacrity.kina.metrics.MetricKey;
+import ro.alacrity.kina.metrics.MetricNames;
+import ro.alacrity.kina.metrics.MetricsStore;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -53,6 +57,9 @@ class McpToolsIntegrationTest {
 
     @Autowired
     JdbcClient jdbc;
+
+    @Autowired
+    KinaMetrics metrics;
 
     final JsonMapper json = JsonMapper.builder().build();
 
@@ -233,6 +240,55 @@ class McpToolsIntegrationTest {
         assertThat(list.path("ranking").path("ready").asBoolean()).isFalse();
         assertThat(list.path("ranking").path("mode").asString()).isEqualTo("fallback");
         assertThat(list.path("ranking").path("cross_encoder_enabled").asBoolean()).isTrue();
+    }
+
+    @Test
+    void toolCallsAndSearchesAreCounted() {
+        MetricsStore store = metrics.store();
+        long searches = store.sum(MetricNames.SEARCHES);
+        long queries = store.sum(MetricNames.SEARCH_QUERIES);
+        long toolCalls = store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts"));
+        long batchCalls = store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts_batch"));
+        long mouserOk = store.get(
+                MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "ok"));
+        long rateLimited = store.get(
+                MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "rate_limited"));
+        long returned = store.get(MetricKey.of(MetricNames.PARTS_RETURNED, "distributor", "MOUSER"));
+
+        call("search_parts", "{\"query\":\"100nF X7R 0805 metrics\",\"max_results\":3,\"distributors\":[\"mouser\"]}");
+        call("search_parts", "{\"query\":\"ratelimit metrics\",\"distributors\":[\"mouser\"]}");
+        call("search_parts_batch", "{\"queries\":[{\"query\":\"100nF 0805 a\"},{\"query\":\"100nF 0805 b\"}],"
+                + "\"distributors\":[\"mouser\"]}");
+
+        assertThat(store.sum(MetricNames.SEARCHES)).isEqualTo(searches + 3);
+        assertThat(store.sum(MetricNames.SEARCH_QUERIES)).isEqualTo(queries + 4);
+        assertThat(store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts"))).isEqualTo(toolCalls + 2);
+        assertThat(store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts_batch")))
+                .isEqualTo(batchCalls + 1);
+        assertThat(store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "ok")))
+                .isEqualTo(mouserOk + 3);
+        assertThat(store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER",
+                "outcome", "rate_limited"))).isEqualTo(rateLimited + 1);
+        assertThat(store.get(MetricKey.of(MetricNames.PARTS_RETURNED, "distributor", "MOUSER")))
+                .isGreaterThanOrEqualTo(returned + 3);
+
+        JsonNode list = call("list_distributors", "{}");
+        assertThat(list.path("metrics").path("searches").asLong()).isGreaterThanOrEqualTo(searches + 3);
+        assertThat(list.path("metrics").path("tool_calls").path("search_parts").asLong())
+                .isGreaterThanOrEqualTo(toolCalls + 2);
+        assertThat(list.path("metrics").has("cache_added")).isTrue();
+        assertThat(list.path("metrics").has("rate_limited_calls")).isTrue();
+        assertThat(list.path("metrics").path("cross_encoder_executions").asLong()).isZero();
+
+        client.get().uri("/api/v1/distributors").exchange().expectStatus().isOk();
+        String summary = client.get().uri("/api/v1/metrics/summary").exchange()
+                .expectStatus().isOk().returnResult(String.class).getResponseBody();
+        JsonNode summaryJson = json.readTree(summary);
+        assertThat(summaryJson.path("summary").path("searches").asLong()).isGreaterThanOrEqualTo(searches + 3);
+        List<String> names = new ArrayList<>();
+        summaryJson.path("counters").forEach(c -> names.add(c.path("name").asString()));
+        assertThat(names).contains("kina_searches_total", "kina_tool_calls_total", "kina_search_duration_seconds_count",
+                "kina_search_duration_seconds_sum", "kina_api_requests_total");
     }
 
     @Test

@@ -8,14 +8,14 @@ This guide covers running KINA for real: HTTPS, login and group access (with an 
 
 | Service | Image | Port | Volume | Purpose |
 |---|---|---|---|---|
-| `kina` | built from `Dockerfile` (memory limit `KINA_MEM_LIMIT`, default `2g`) | `${KINA_PORT:-8080}` published on the host | `kina-data` at `/data` | The application. The volume holds only the JLCPCB SQLite file (`/data/jlcpcb`). The ranking model is part of the image (`/opt/kina/cross-encoder`). |
-| `postgres` | `postgres:17-alpine` | none published | `pgdata` | Cache, users, tokens, OAuth clients, JLCPCB download timestamp. Schema is managed by Flyway at KINA startup. |
+| `kina` | built from `Dockerfile` (memory limit `KINA_MEM_LIMIT`, default `2g`) | `${KINA_PORT:-8080}` published on the host; management port `${KINA_METRICS_PORT:-9090}` (health and Prometheus, no authentication) on `${KINA_METRICS_BIND:-127.0.0.1}` | `kina-data` at `/data` | The application. The volume holds only the JLCPCB SQLite file (`/data/jlcpcb`). The ranking model is part of the image (`/opt/kina/cross-encoder`). |
+| `postgres` | `postgres:17-alpine` | none published | `pgdata` | Cache, users, tokens, OAuth clients, JLCPCB download timestamp, Prometheus counters. Schema is managed by Flyway at KINA startup. |
 
 `compose.yaml` sets the project name `name: kina`, so the volumes are `kina_kina-data` and `kina_pgdata` whatever the directory is called. Use `docker volume ls` to see them.
 
 ## Environment
 
-Create `.env` from `.env.example`, keep it out of git and restrict it (`chmod 600 .env`). Compose passes it to the `kina` container, and substitutes `KINA_PORT` and `KINA_MEM_LIMIT` in `compose.yaml`. The ranking variables (`KINA_CROSS_ENCODER_*`) reach the `kina` container through `.env`. The full variable list is in the [README](../README.md#configuration-reference).
+Create `.env` from `.env.example`, keep it out of git and restrict it (`chmod 600 .env`). Compose passes it to the `kina` container, and substitutes `KINA_PORT`, `KINA_METRICS_PORT`, `KINA_METRICS_BIND` and `KINA_MEM_LIMIT` in `compose.yaml`. The ranking variables (`KINA_CROSS_ENCODER_*`) reach the `kina` container through `.env`. The full variable list is in the [README](../README.md#configuration-reference).
 
 A minimal production `.env`:
 
@@ -37,6 +37,8 @@ KINA_MEM_LIMIT=2g
 ```
 
 `KINA_PORT=127.0.0.1:8080` works because `compose.yaml` publishes `"${KINA_PORT:-8080}:8080"`; it binds KINA to the loopback interface so only the reverse proxy on the same host can reach it.
+
+The management port (health and Prometheus) is published as `"${KINA_METRICS_BIND:-127.0.0.1}:${KINA_METRICS_PORT:-9090}:9090"`, so by default only the host itself reaches it. It has no authentication; see [Monitoring](#monitoring) before you change `KINA_METRICS_BIND`. Do not proxy it through the public reverse proxy.
 
 Register this redirect URI at the OIDC provider: `https://kina.example.com/login/oauth2/code/oidc`. KINA refuses to start in `prod` mode without `OIDC_ISSUER_URI` and `OIDC_CLIENT_ID`. Discovery of the provider happens on the first login, not at startup.
 
@@ -202,7 +204,7 @@ Disk use: the unpacked JLCPCB database is 5.33 GB. During a refresh the new file
 `scripts/e2e/` holds end-to-end checks that drive a running stack through its published port (Python 3.10+, standard library only):
 
 ```bash
-python3 scripts/e2e/kina_e2e.py                 # suites ui, mcp, oauth, forwarded, rest against http://localhost:8080
+python3 scripts/e2e/kina_e2e.py                 # suites ui, mcp, oauth, forwarded, rest, metrics against http://localhost:8080 (management port 9090)
 KINA_URL=http://host:8080 python3 scripts/e2e/kina_e2e.py
 scripts/e2e/prod_smoke.sh                       # prod mode smoke test in a throwaway container on port 18080
 ```
@@ -236,7 +238,7 @@ git pull
 docker compose up -d --build
 ```
 
-Flyway applies new database migrations when `kina` starts (the current ones are V1 to V5; V4 adds the group-authorisation columns, V5 the `out_of_stock_matches` column of `cached_searches`). Take a `pg_dump` first. The ranking model comes with the image, so an upgrade never downloads it. A `/data/cross-encoder` directory left in `kina-data` by an older version is no longer used; delete it if you want the space back: `docker compose exec kina rm -rf /data/cross-encoder`. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
+Flyway applies new database migrations when `kina` starts (the current ones are V1 to V6; V4 adds the group-authorisation columns, V5 the `out_of_stock_matches` column of `cached_searches`, V6 the `metrics_counters` table). Since V6 the health check is on the management port (9090): update external health checks and load-balancer probes that called `/actuator/health` on 8080. Take a `pg_dump` first. The ranking model comes with the image, so an upgrade never downloads it. A `/data/cross-encoder` directory left in `kina-data` by an older version is no longer used; delete it if you want the space back: `docker compose exec kina rm -rf /data/cross-encoder`. Changing the JLCPCB library variant makes KINA download that file on the next check; the old file stays in the volume and can be deleted by hand.
 
 Upgrading to group access: set the group variables from [Environment](#environment) and restart. Existing users must sign in once. OAuth access tokens now live 1 hour (`expires_in` 3600) and refresh tokens 30 days (they were 30 days and 90 days); clients refresh by themselves. Refresh tokens issued earlier keep their old expiry.
 
@@ -370,6 +372,7 @@ Registered clients live in `oauth_clients`. A daily job (first run 15 minutes af
 - Never log or share e-mail addresses of refused users. KINA logs only the provider's subject id for a refusal; keep it that way.
 - Overwrite `X-Forwarded-For` at the proxy, or the registration rate limit can be bypassed.
 - Client registration (`/oauth/register`) is anonymous, as the MCP specification requires, and rate limited per IP. A malformed `/oauth/authorize` request for a registered client is answered with a redirect to that client's registered URI (RFC 6749 behaviour), without user interaction. Approving access always needs a signed-in user and the consent page.
+- Keep the management port (`KINA_METRICS_PORT`, 9090) private. It serves health and `/actuator/prometheus` without authentication. Leave `KINA_METRICS_BIND=127.0.0.1` unless Prometheus runs on another host, then bind it to the monitoring network's interface and firewall it; never `0.0.0.0` on a public host and never through the reverse proxy. The metrics hold counts only (no tokens, addresses, queries or part numbers), but they still reveal usage.
 - Do not publish the PostgreSQL port. `compose.yaml` does not. If you add a port, set a real password: the compose file uses the database password `kina`, which you can change in the `kina` and `postgres` services (or in a `compose.override.yaml`) together with `SPRING_DATASOURCE_PASSWORD`.
 - The ranking model runs inside the KINA process. There is no ranking service to secure, and nothing leaves the host for ranking. The model is in the image, so ranking makes no outbound call at all. Hugging Face is contacted only while the image is built.
 - Never put part data or credentials in logs. KINA logs neither tokens nor API keys; keep it that way when adding debug output.
@@ -380,12 +383,28 @@ Registered clients live in `oauth_clients`. A daily job (first run 15 minutes af
 
 ## Monitoring
 
-- `GET /actuator/health` is public and returns `{"status":"UP"}`. The Docker `HEALTHCHECK` of the `kina` image uses it. It does not check the ranking model, the distributors or the JLCPCB database.
+- Health and metrics are on the management port, not on 8080: `http://localhost:9090/actuator/health` returns `{"status":"UP"}` and `/actuator/prometheus` the Prometheus metrics, both without authentication. The Docker `HEALTHCHECK` of the `kina` image uses the health endpoint. It does not check the ranking model, the distributors or the JLCPCB database. On port 8080, `/actuator/*` does not exist.
+- The port is published on `127.0.0.1` by default. **It has no authentication: expose it only to the monitoring network.** If Prometheus runs on the same host, scrape `127.0.0.1:9090`. If it runs elsewhere, set `KINA_METRICS_BIND` to the address of the interface on the monitoring network (for example a WireGuard or private VLAN address) and allow only the Prometheus host in the firewall. If Prometheus runs in Docker on the same host, attach it to the `kina_default` network and scrape `kina:9090` instead of publishing the port at all (`KINA_METRICS_BIND` stays `127.0.0.1`).
+- Prometheus scrape configuration:
+
+  ```yaml
+  scrape_configs:
+    - job_name: kina
+      metrics_path: /actuator/prometheus
+      scrape_interval: 30s
+      static_configs:
+        - targets: ["127.0.0.1:9090"]     # or kina:9090 on the kina_default network
+  ```
+
+- What is exported (all names start with `kina_`, full list in [DESIGN.md 3.7](DESIGN.md#37-observability)): searches and queries (`kina_searches_total`, `kina_search_queries_total`, `kina_search_duration_seconds`), distributor outcomes per distributor (`kina_distributor_calls_total{outcome}`, `kina_distributor_rate_limited_responses_total`, `kina_distributor_rate_limit_waits_total`, `kina_parts_fetched_total`, `kina_parts_returned_total`), the cache (`kina_cache_parts`, `kina_cache_parts_fresh`, `kina_cache_parts_stale`, `kina_cache_searches`, `kina_cache_parts_added_total`, `kina_cache_parts_refreshed_total`, `kina_cache_search_lookups_total{status}`), ranking (`kina_cross_encoder_executions_total`, `kina_cross_encoder_duration_seconds`, `kina_ranking_fallback_total{reason}`), MCP and API (`kina_tool_calls_total{tool}`, `kina_tool_errors_total{tool}`, `kina_api_requests_total{endpoint}`), users and logins (`kina_users_known`, `kina_users_revoked`, `kina_tokens_active`, `kina_logins_total`, `kina_login_denied_total{reason}`, `kina_oauth_tokens_issued_total{grant}`, `kina_membership_rechecks_total{outcome}`) and the JLCPCB database (`kina_jlcpcb_database_parts`, `kina_jlcpcb_database_age_seconds`, `kina_jlcpcb_downloads_total`). The JVM, Tomcat and HikariCP metrics of Spring Boot are there too.
+- The counters are saved to PostgreSQL (`metrics_counters`) every 30 seconds and on shutdown, and restored at startup, so they keep growing across restarts and upgrades; `rate()` and `increase()` see no reset. An unclean stop loses at most the last 30 seconds. The gauges are recomputed every 30 seconds. To start the counters from zero, stop `kina` and run `docker compose exec postgres psql -U kina -d kina -c 'TRUNCATE metrics_counters'`.
+- Grafana: add the Prometheus data source and build panels from queries such as `sum by (distributor) (rate(kina_distributor_calls_total{outcome!="ok"}[1h]))` (failures per distributor), `increase(kina_distributor_rate_limited_responses_total[1d])` (rate limits a day, compare with the Mouser quota), `kina_cache_parts_stale / kina_cache_parts` (stale share of the cache), `rate(kina_search_duration_seconds_sum[5m]) / rate(kina_search_duration_seconds_count[5m])` (mean search time), `sum by (tool) (increase(kina_tool_calls_total[1d]))` and `kina_jlcpcb_database_age_seconds / 86400` (alert above 7 days).
+- Without Prometheus, `GET /api/v1/metrics/summary` (bearer token) returns the same counters as JSON, and `list_distributors` shows the key ones under `metrics`.
 - For those, call `list_distributors` (MCP) or `GET /api/v1/distributors` with a token. Watch `jlcpcb.available`, `jlcpcb.downloading`, `jlcpcb.last_error`, `ranking.ready`, `ranking.last_error`, `ranking.avg_latency_ms` and `cache.fresh_parts`.
 - `ranking: "fallback"` in search results means the model was not loaded, slow, busy, failed or disabled; `ranking_note` gives the reason (see the troubleshooting table below). `ranking.mode` in `list_distributors` is `blended` when the model is loaded.
 - Logs: `docker compose logs -f kina`. Each search logs how long fetching and ranking took. Cache purges (every 6 hours, rows older than twice the cache TTL; a cached search with no parts is already stale after 1 hour) and JLCPCB downloads are logged too.
 - `docker compose ps` shows the health of `kina` and `postgres`. The model download does not delay the health check. Set `LOGGING_LEVEL_RO_ALACRITY_KINA_SEARCH_CE=DEBUG` to log the scoring time of every search.
-- Mouser quota: 1 000 calls a day and 30 a minute. KINA does not count calls. Avoid `bypass_cache` for bulk work.
+- Mouser quota: 1 000 calls a day and 30 a minute. KINA does not enforce it; `kina_distributor_calls_total{distributor="MOUSER"}` and `kina_parts_fetched_total` show how much is used. Avoid `bypass_cache` for bulk work.
 - Rate limits: KINA waits and retries when a distributor rate limits a call. One WARN line is logged per episode, for example `Mouser rate limited (/search/keyword returned HTTP 429, Retry-After 30 s); cooling down for 30 s`. Retries inside the episode log at DEBUG. A WARN now and then is normal. Frequent WARNs, or `error: "rate_limited"` in results, mean the quota is too small for the load.
 - `rate_limit_waited_ms` in each distributor entry shows how long a request waited. Values near 120000 with `error: "rate_limited"` mean the limit outlasted the deadline.
 

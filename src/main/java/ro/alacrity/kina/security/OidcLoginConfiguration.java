@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.metrics.KinaMetrics;
 
 /**
  * Production mode only: OIDC login beans, built programmatically from {@code kina.security.oidc.*}
@@ -42,7 +43,9 @@ public class OidcLoginConfiguration {
 
     @Bean
     OidcUserSynchronizer oidcUserSynchronizer(UserRepository users, OidcAccessPolicy policy,
-                                              MembershipVerifier membership) {
-        return new OidcUserSynchronizer(users, policy, membership);
+                                              MembershipVerifier membership, KinaMetrics metrics) {
+        OidcUserSynchronizer synchronizer = new OidcUserSynchronizer(users, policy, membership);
+        synchronizer.setMetrics(metrics);
+        return synchronizer;
     }
 }

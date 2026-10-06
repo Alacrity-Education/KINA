@@ -122,7 +122,8 @@ class ProdModeSecurityTest {
                 .isEqualTo(200);
         assertThat(mvc.perform(get("/.well-known/oauth-authorization-server")).andReturn().getResponse().getStatus())
                 .isEqualTo(200);
-        assertThat(mvc.perform(get("/actuator/health")).andReturn().getResponse().getStatus()).isEqualTo(200);
+        // actuator lives on the management port (DESIGN.md 3.7, PrometheusEndpointTest); the main port has none
+        assertThat(mvc.perform(get("/actuator/health")).andReturn().getResponse().getStatus()).isEqualTo(404);
         assertThat(mvc.perform(post("/oauth/register").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"redirect_uris\":[\"https://claude.ai/api/mcp/auth_callback\"]}"))
                 .andReturn().getResponse().getStatus()).isEqualTo(201);

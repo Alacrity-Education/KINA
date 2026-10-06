@@ -18,6 +18,9 @@ services:
     image: kina:latest
     ports:
       - "${KINA_PORT:-8080}:8080"
+      # Management port: actuator health and Prometheus (/actuator/prometheus) WITHOUT authentication.
+      # Bound to localhost by default; expose it only to the monitoring network (DESIGN.md 3.7).
+      - "${KINA_METRICS_BIND:-127.0.0.1}:${KINA_METRICS_PORT:-9090}:9090"
     env_file:
       - path: .env
         required: false
@@ -26,6 +29,7 @@ services:
       SPRING_DATASOURCE_USERNAME: kina
       SPRING_DATASOURCE_PASSWORD: kina
       KINA_JLCPCB_DATA_DIR: /data/jlcpcb
+      KINA_METRICS_PORT: "9090"   # inside the container; KINA_METRICS_PORT in .env only picks the host port
     volumes:
       - kina-data:/data
     # The JVM heap is 75% of this limit (Dockerfile ENTRYPOINT: -XX:MaxRAMPercentage=75).

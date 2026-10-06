@@ -175,7 +175,8 @@ Gotchas:
 (Python 3.10+, standard library only). Start the stack, wait for `healthy`, then:
 
 ```bash
-python3 scripts/e2e/kina_e2e.py                     # suites ui, mcp, oauth, forwarded, rest against http://localhost:8080
+python3 scripts/e2e/kina_e2e.py                     # suites ui, mcp, oauth, forwarded, rest, metrics against http://localhost:8080
+                                                     # (actuator on the management port, --metrics http://localhost:9090)
 python3 scripts/e2e/kina_e2e.py mcp rest --report /tmp/kina-e2e.json   # selected suites + JSON report with timings
 KINA_URL=http://host:8080 python3 scripts/e2e/kina_e2e.py               # another instance
 scripts/e2e/prod_smoke.sh                           # prod-mode smoke in a throwaway second container (port 18080)
@@ -253,7 +254,7 @@ libraries for Linux x64/aarch64, macOS and Windows; `kina.jar` is now 115 MB); m
 model: the model layer is 138 MB (two int8 files of 23 MB, fp32 91 MB), `docker image inspect` size 695 MB before and
 962 MB after (containerd image store), `docker save` archive 231 MB before and 360 MB after.
 
-Startup: Spring context ~2 s; Flyway V1-V5 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
+Startup: Spring context ~2 s; Flyway V1-V6 on an empty database < 0.1 s; adopting a pre-seeded JLCPCB file
 (validation `count(*)`) ~19 s in the background; cross-encoder load from the bundled directory (session creation,
 warm-up) ~0.2 s in the background. A local run's first start (download of vocab, configs and the 23 MB int8 file from
 Hugging Face) took 3.6 s.

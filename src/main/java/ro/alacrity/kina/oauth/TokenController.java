@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.oauth.AuthorizationCodeRepository.AuthorizationCode;
 import ro.alacrity.kina.oauth.OAuthClientRepository.OAuthClient;
 import ro.alacrity.kina.oauth.RefreshTokenRepository.RefreshToken;
@@ -51,6 +52,7 @@ public class TokenController extends OAuthEndpointSupport {
     private final Duration accessTokenValidity;
     private final Duration refreshTokenValidity;
     private final Clock clock;
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     @Autowired
     public TokenController(ClientAuthenticator clientAuthenticator, AuthorizationCodeRepository codes,
@@ -77,6 +79,12 @@ public class TokenController extends OAuthEndpointSupport {
         this.accessTokenValidity = accessTokenValidity;
         this.refreshTokenValidity = refreshTokenValidity;
         this.clock = clock;
+    }
+
+    /** Counts issued tokens per grant type (DESIGN.md 3.7). */
+    @Autowired
+    void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -111,6 +119,7 @@ public class TokenController extends OAuthEndpointSupport {
         TokenResponse response = GRANT_AUTHORIZATION_CODE.equals(grantType)
                 ? authorizationCode(client, params)
                 : refreshToken(client, params);
+        metrics.oauthTokenIssued(grantType);
         return ResponseEntity.ok().headers(noStore()).body(response);
     }
 

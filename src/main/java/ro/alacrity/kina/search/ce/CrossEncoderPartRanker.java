@@ -8,6 +8,7 @@ import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartKey;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.ParametricExtractor;
 import ro.alacrity.kina.search.PartRanker;
 import ro.alacrity.kina.search.RankingException;
@@ -50,6 +51,7 @@ public class CrossEncoderPartRanker implements PartRanker {
     private final Semaphore slots;
     private final AtomicLong calls = new AtomicLong();
     private final AtomicLong totalNanos = new AtomicLong();
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     @Autowired
     public CrossEncoderPartRanker(KinaProperties properties, ParametricExtractor extractor, CrossEncoderModel model) {
@@ -64,6 +66,11 @@ public class CrossEncoderPartRanker implements PartRanker {
         this.model = model;
         this.owner = owner;
         this.slots = new Semaphore(Math.max(1, config.maxConcurrent()), true);
+    }
+
+    @Autowired
+    void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
     }
 
     @Override
@@ -157,6 +164,7 @@ public class CrossEncoderPartRanker implements PartRanker {
             long nanos = System.nanoTime() - started;
             calls.incrementAndGet();
             totalNanos.addAndGet(nanos);
+            metrics.crossEncoderRun(keys.size(), nanos);
             log.debug("cross-encoder scored {} candidates in {} ms ({} threads, {})", keys.size(), nanos / 1_000_000,
                     config.effectiveThreads(), loaded.onnxFile());
             return scores;

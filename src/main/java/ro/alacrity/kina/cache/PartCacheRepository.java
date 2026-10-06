@@ -1,12 +1,14 @@
 package ro.alacrity.kina.cache;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.sql.ResultSet;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * {@code cached_parts}: one JSONB payload (the default camelCase Jackson serialisation of {@link Part}) per
@@ -47,6 +50,7 @@ public class PartCacheRepository {
     private final JsonMapper jsonMapper;
     private final Clock clock;
     private final Duration ttl;
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     public PartCacheRepository(JdbcClient jdbc, JdbcTemplate jdbcTemplate, JsonMapper jsonMapper, Clock clock,
                                KinaProperties properties) {
@@ -55,6 +59,11 @@ public class PartCacheRepository {
         this.jsonMapper = jsonMapper;
         this.clock = clock;
         this.ttl = properties.cache().ttl();
+    }
+
+    @Autowired
+    void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
     }
 
     /**
@@ -69,6 +78,7 @@ public class PartCacheRepository {
         }
         Instant now = clock.instant();
         List<Object[]> rows = new ArrayList<>(parts.size());
+        Map<Distributor, Set<String>> written = new EnumMap<>(Distributor.class);
         for (Part part : parts) {
             Objects.requireNonNull(part.distributor(), "part.distributor");
             Objects.requireNonNull(part.distributorPartNumber(), "part.distributorPartNumber");
@@ -80,10 +90,36 @@ public class PartCacheRepository {
             Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
             rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
                     jsonMapper.writeValueAsString(part), utc(fetchedAt)});
+            written.computeIfAbsent(part.distributor(), d -> new LinkedHashSet<>()).add(part.distributorPartNumber());
         }
+        Map<Distributor, Long> existing = countExisting(written);
         for (int from = 0; from < rows.size(); from += BATCH_SIZE) {
             jdbcTemplate.batchUpdate(UPSERT, rows.subList(from, Math.min(rows.size(), from + BATCH_SIZE)));
         }
+        // DESIGN.md 3.7: kina_cache_parts_added_total / kina_cache_parts_refreshed_total
+        written.forEach((d, numbers) -> {
+            Long before = existing.get(d);
+            if (before != null) {
+                metrics.cachePartsWritten(d, numbers.size() - before, before);
+            }
+        });
+    }
+
+    /** How many of {@code partNumbers} already have a row, per distributor; a distributor is missing on failure. */
+    private Map<Distributor, Long> countExisting(Map<Distributor, Set<String>> partNumbers) {
+        Map<Distributor, Long> out = new EnumMap<>(Distributor.class);
+        partNumbers.forEach((d, numbers) -> {
+            try {
+                Long n = jdbc.sql("SELECT count(*) FROM cached_parts WHERE distributor = ? AND part_number = ANY(?)")
+                        .params(d.name(), numbers.toArray(String[]::new))
+                        .query(Long.class)
+                        .single();
+                out.put(d, n == null ? 0 : n);
+            } catch (RuntimeException e) {
+                log.debug("Counting existing cached {} parts failed: {}", d, e.toString());
+            }
+        });
+        return out;
     }
 
     /** Fresh ({@code fetched_at >= since}) cached parts among {@code partNumbers}, keyed by part number, unordered. */

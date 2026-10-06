@@ -27,6 +27,7 @@ import ro.alacrity.kina.domain.RankingMode;
 import ro.alacrity.kina.domain.ResponseDetail;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.RankingService.RankedPart;
 import ro.alacrity.kina.search.RankingService.RankedResults;
 
@@ -87,6 +88,7 @@ public class PartSearchService {
     private final SearchCacheRepository searchCache;
     private final Clock clock;
     private final ExecutorService executor;
+    private KinaMetrics metrics = KinaMetrics.NOOP;
 
     @Autowired
     public PartSearchService(KinaProperties properties, DistributorRegistry registry, QueryParser parser,
@@ -101,6 +103,11 @@ public class PartSearchService {
         this.searchCache = searchCache;
         this.clock = clock;
         this.executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("kina-search-", 0).factory());
+    }
+
+    @Autowired
+    void setMetrics(KinaMetrics metrics) {
+        this.metrics = metrics;
     }
 
     @PreDestroy
@@ -124,7 +131,9 @@ public class PartSearchService {
                     (fetchedAt - started) / 1_000_000, summary(fetched), (System.nanoTime() - fetchedAt) / 1_000_000,
                     ranked.mode().jsonValue());
         }
-        return assemble(prepared, fetched, ranked, ranked.note());
+        SearchResponse response = assemble(prepared, fetched, ranked, ranked.note());
+        metrics.searchCompleted(response, System.nanoTime() - started);
+        return response;
     }
 
     /**
@@ -141,6 +150,7 @@ public class PartSearchService {
             throw new IllegalArgumentException("at most " + BatchSearchRequest.MAX_QUERIES + " queries per batch");
         }
         List<Prepared> prepared = requests.stream().map(this::prepare).toList();
+        long started = System.nanoTime();
         Deadline requestDeadline = requestDeadline(); // one incoming request: one deadline for every query of the batch
 
         Semaphore slots = new Semaphore(BATCH_FETCH_CONCURRENCY);
@@ -184,7 +194,9 @@ public class PartSearchService {
             }
             results.add(assemble(p, fetched.get(i), ranked, note));
         }
-        return new BatchSearchResponse(results);
+        BatchSearchResponse response = new BatchSearchResponse(results);
+        metrics.batchCompleted(response, System.nanoTime() - started);
+        return response;
     }
 
     /** {@code now + kina.search.max-request-duration}. */
@@ -665,6 +677,7 @@ public class PartSearchService {
             // active time of the page: rate-limit waits do not predict how long the next page takes
             lastPageNanos = Math.max(0, System.nanoTime() - started - (deadline.rateLimitWaitedNanos() - waitedBefore));
             pages++;
+            metrics.distributorPage(distributor, System.nanoTime() - started, page.parts().size());
             next += limit;
             total = page.totalResults();
             hasMore = page.hasMore();
