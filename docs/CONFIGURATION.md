@@ -99,7 +99,9 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `KINA_STRICT_CONSTRAINTS` | `mounting,technology` | Stated attributes that exclude a contradicting part (`excluded_by_constraints`); empty turns exclusion off. |
+| `KINA_STRICT_CONSTRAINTS` | `mounting,technology,elements` | Stated attributes that exclude a contradicting part (`excluded_by_constraints`); `elements` excludes arrays and networks for a single-element resistor, capacitor or ferrite request. Empty turns exclusion off. Ratings are not in this list: a part below a stated rating is always excluded (`excluded_below_spec`) unless the request passes `allow_below_spec`. |
+| `KINA_LOW_STOCK_THRESHOLD` | `10` | A part with less stock than this, or less than twice the requested quantity, is `low_stock` and ranks lower. |
+| `KINA_CACHE_STOCK_TTL` | `24h` | Cached TME and Mouser stock and prices older than this are refreshed with one cheap call before a part is returned. |
 | `KINA_CROSS_ENCODER_ENABLED` | `true` | `false` disables the model; searches use the deterministic ranking (`ranking: "fallback"`, note `cross-encoder disabled`). |
 | `KINA_CROSS_ENCODER_VARIANT` | `int8` | `int8` (about 23 MB, quantised, about twice as fast) or `fp32` (91 MB). Both are in the image. int8 picks the file that matches the CPU: `model_qint8_avx512_vnni` (AVX-VNNI and ARM) or `model_quint8_avx2`. |
 | `KINA_CROSS_ENCODER_MODEL_URL` | `/opt/kina/cross-encoder` in Docker (bundled), `https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/main/` otherwise | A local path is used in place and only read (a fine-tuned model, for example). An HTTP(S) directory with the same layout is downloaded into `KINA_CROSS_ENCODER_MODEL_DIR`. A value you set replaces the bundled model. |
@@ -138,15 +140,18 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `kina.oauth.unused-client-retention` | `90d` | Dynamically registered clients unused for this long, with no live tokens, are deleted by the daily cleanup. |
 | `kina.cache.ttl` | `5d` | Freshness of cached TME and Mouser data. |
 | `kina.cache.empty-result-ttl` | `1h` | Freshness of a cached search that found no in-stock part. It goes stale after this time, so a glitch or a new listing does not hide parts for 5 days. |
+| `kina.cache.stock-ttl` | `24h` | `KINA_CACHE_STOCK_TTL`. Cached stock and prices of the parts about to be returned that are older than this are refreshed (TME `/products/data`, 50 symbols per call; Mouser part-number search, 10 numbers per call). Every part reports its age as `stock_as_of`. |
 | `kina.search.candidate-window` | `40` | Minimum parts fetched per distributor per query. |
 | `kina.search.default-max-results` | `10` | Used when `max_results` is missing. |
 | `kina.search.max-max-results` | `50` | Upper limit for `max_results`. |
 | `kina.search.distributor-timeout` | `12s` | Budget for the active work of one distributor fetch. Time spent waiting on a rate limit does not count against it. |
-| `kina.search.strict-constraints` | `mounting,technology` | `KINA_STRICT_CONSTRAINTS`. Stated attributes that exclude a part whose known value contradicts them. Empty turns exclusion off. |
+| `kina.search.strict-constraints` | `mounting,technology,elements` | `KINA_STRICT_CONSTRAINTS`. Stated attributes that exclude a part whose known value contradicts them; `elements` excludes arrays and networks unless the request asks for one. Empty turns exclusion off. |
+| `kina.search.low-stock-threshold` | `10` | `KINA_LOW_STOCK_THRESHOLD`. A part with less stock than this, or less than twice `quantity`, is `low_stock`. |
 | `kina.search.quantity.stock-shortfall-penalty` | `0.3` | Score deduction for a part with less stock than `quantity` (it also ranks after every part that has enough). |
-| `kina.search.quantity.moq-penalty` | `0.15` | Largest score deduction for a minimum order quantity above `quantity`. |
+| `kina.search.quantity.low-stock-penalty` | `0.3` | Score deduction for a `low_stock` part that can still supply `quantity`. |
+| `kina.search.quantity.moq-penalty` | `0.3` | Largest score deduction for a minimum order quantity above `quantity`, also for a quantity of 1: `0.3 * min(1, log10(moq / quantity) / 3)` (an MOQ of 10 for one piece costs 0.1, 1000 or more the whole 0.3). |
 | `kina.search.lifecycle.last-time-buy-penalty` | `0.1` | Score deduction for a `last_time_buy` part. |
-| `kina.search.lifecycle.supply-constrained-penalty` | `0.03` | Score deduction for a `supply_constrained` part (TME `HARDLY_AVAILABLE`). |
+| `kina.search.lifecycle.supply-constrained-penalty` | `0.05` | Score deduction for a `supply_constrained` part (TME `HARDLY_AVAILABLE`). |
 | `kina.search.max-request-duration` | `2m` | Hard cap for one incoming request (`search_parts`, a whole `search_parts_batch`, `get_part` and the REST equivalents), including rate-limit waits. Clients and proxies need a read timeout above this plus ranking, about 2.5 minutes. |
 | `kina.ranking.timeout` | `5s` | Ranking budget per query (the model needs about 0.1 to 0.35 s for 40 candidates). |
 | `kina.ranking.batch-timeout` | `60s` | Ranking budget for a whole batch. |

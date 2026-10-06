@@ -28,17 +28,19 @@ KINA answers (abridged):
 {
   "query": "10uF X7R 0805",
   "parsed": {"family": "capacitor", "capacitance": "10uF", "dielectric": "X7R", "package": "0805", "keywords": []},
+  "query_understood": true,
   "ranking": "blended",
+  "currencies": ["EUR"],
   "distributors": [
     {
       "distributor": "MOUSER",
-      "total_results": 113, "fetched": 50, "returned": 10,
-      "cache": "hit", "error": null, "relaxed": [], "exact_matches": 7,
+      "total_results": 113, "fetched": 50, "excluded_by_constraints": 0, "excluded_below_spec": 0, "returned": 10,
+      "cache": "hit", "error": null, "query_terms_dropped": [], "constraints_relaxed": [], "exact_matches": 7,
       "parts": [
         {
           "rank": 1, "score": 0.93, "match": 1.0, "part_number": "603-CC0805MKX77BB106",
           "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106",
-          "stock": 76689, "min_order_qty": 1, "order_multiple": 1,
+          "stock": 76689, "stock_as_of": "2026-10-06T09:12:44Z", "min_order_qty": 1, "order_multiple": 1,
           "prices": [
             {"qty": 1, "unit_price": 1.40, "currency": "EUR"},
             {"qty": 10, "unit_price": 0.853, "currency": "EUR"},
@@ -54,7 +56,7 @@ KINA answers (abridged):
 }
 ```
 
-`parsed` shows what KINA understood. `total_results` is what the distributor reported, `fetched` is how many in-stock parts KINA holds, and `returned` is what you get. Add `quantity` and each part also gets `ordered_quantity`, `unit_price_at_quantity` and `total_price`.
+`parsed` shows what KINA understood (`query_understood` is false when it recognised nothing typed). `total_results` is what the distributor reported, `fetched` is every in-stock part KINA received, the two `excluded_*` counts are the parts of it left out, and `returned` is what you get. Add `quantity` and each part also gets `ordered_quantity`, `unit_price_at_quantity` and `total_price`. LCSC prices are USD, TME and Mouser EUR (`currencies`); KINA does not convert them.
 
 ## Features
 
@@ -64,11 +66,12 @@ KINA answers (abridged):
 - **Prices that fit in a chat.** The three smallest price brackets, plus `total_price` at the `quantity` you ask for (minimum order quantity and multiples included).
 - **Understands components, not only words.** Value, tolerance, package, dielectric, mounting and technology (thin film, wirewound, tantalum, polymer and more) are parsed and rewritten into each distributor's own vocabulary.
 - **Connector and USB aware.** "90 degree dupont style female pin header, THT, 6 position" becomes a typed request. USB-C requests know standards, speed classes, pin configurations and features, and shield pins are normalised (a 17 pin listing is a 16 pin part).
-- **Ratings are minimums.** `25V` accepts 35 V and 50 V parts. An equal rating ranks first.
-- **Strict where it matters.** A part whose known mounting or technology contradicts the request is left out.
-- **Honest about compromises.** When nothing matches, KINA relaxes the request step by step. The response lists what was dropped (`relaxed`) and what each part does not satisfy (`mismatches`).
+- **Ratings are hard minimums.** `25V` accepts 35 V and 50 V parts, and an equal rating ranks first. A part below a stated rating is never returned unless you pass `allow_below_spec`, and then it is flagged `below_spec` and listed last.
+- **Strict where it matters.** A part whose known mounting or technology contradicts the request, or a bead array or resistor network when you asked for one element, is left out.
+- **Honest about compromises.** When nothing meets the request, KINA reads more pages, then loosens the dielectric, then the package, then the tolerance (never a rating). The response lists what was loosened (`constraints_relaxed`), what each part does not satisfy (`mismatches`) and what the distributor does not state (`unverified`).
+- **Stock you can trust.** Low stock (`low_stock`) and large minimum orders rank lower, every part says how old its stock figure is (`stock_as_of`), and cached figures older than a day are refreshed before they are returned.
 - **Better ranking.** A deterministic parametric ranker is blended 50/50 by rank with a MiniLM cross-encoder (`ms-marco-MiniLM-L6-v2`) on ONNX Runtime. NDCG@10 is 0.913 blended against 0.898 deterministic on our labelled queries. If the model cannot score, you get the deterministic order and `ranking: "fallback"`. Search never fails because of the model.
-- **Small answers by default.** `detail: compact` returns identity, stock, prices, availability, links and key attributes. `full` adds photo, category and raw distributor attributes.
+- **Small answers by default.** `detail: compact` returns identity, stock, prices, availability, links and key attributes. `full` adds photo, category and raw distributor attributes; it is the default for `get_part`.
 - **Fast on the second ask.** TME and Mouser results are cached in PostgreSQL for 5 days. A cold search takes about 6 s, a cached one about 60 ms, and ranking 40 candidates takes 130 to 300 ms.
 - **Polite to rate limits.** KINA waits and retries on rate limits, inside a 2-minute deadline per request, instead of failing at once.
 - **Access control.** OAuth 2.1 for Claude, OIDC login, group-gated access that is checked again at every refresh and on bearer requests (a removed member is cut off within about an hour), and static tokens for scripts.

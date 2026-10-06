@@ -11,12 +11,15 @@ Details of how KINA reads a request, what it returns and how it ranks. The overv
 - `max_results` is per distributor (1 to 50, default 10). Every distributor entry also reports how many matches the distributor found, how many KINA holds, and how many it returned.
 - Cache of 5 days for TME and Mouser. Ask again with a larger `max_results` and the answer comes from the cache; KINA only calls the distributor when the cache holds too few parts.
 - `bypass_cache` skips the cache lookup and still refreshes the cache.
-- Ratings are minimums: `25V` also accepts 35 V and 50 V parts (an equal rating ranks first), `6A` accepts 8 A. Ratings are never put into the Mouser and TME keyword phrases; LCSC checks them in its database (`>=25V`). For inductors `6A` is the rated current, `Isat 8A` the saturation current; `DCR < 20mOhm` is a maximum and `low DCR` a preference.
-- Relaxation ladder: when Mouser or TME find no in-stock part, KINA retries without ratings, then without the tolerance, then with the minimal core (for example `MLCC 22uF X7R 1206`), then without the dielectric (`MLCC 22uF 1206`), and reports the phrase in `fallback_query` and the dropped constraints in `relaxed`. Each part lists what it does not satisfy in `mismatches` (`"dielectric: X5R instead of X7R"`); `exact_matches` counts the parts that satisfy everything. While every match is out of stock KINA reads more pages; `out_of_stock_matches` reports matches that exist but do not ship now.
-- Strict mounting and technology: a part whose known mounting (SMD/THT) or technology contradicts the request is left out (`excluded_by_constraints`); a part that does not state it ranks below known matches. `polymer aluminium` excludes tantalum polymer; plain `polymer` accepts both.
-- `quantity` (pieces to order): parts that cannot supply it rank lower, and each part gets `ordered_quantity` (raised to the minimum order quantity and multiple), `unit_price_at_quantity` and `total_price`.
-- Every part has `availability` (`in_stock`, `limited`, `last_units`, `supply_constrained`, `special_order`, `external_warehouse` with a plain note) and `lifecycle` (`active`, `last_time_buy`, `supply_constrained`, `new`).
-- `detail`: `compact` (default) returns identity, stock, prices, availability, links and canonical attributes; `full` adds the category, photo, raw distributor attributes and extra fields.
+- Ratings are hard minimums: `25V` also accepts 35 V and 50 V parts (an equal rating ranks first), `6A` accepts 8 A. A part whose known rating is below the request is never returned by default (`excluded_below_spec`); with `allow_below_spec=true` such parts come last, flagged `below_spec: true` and ordered by how close they are. Ratings are never put into the Mouser and TME keyword phrases; LCSC checks them in its database (`>=25V`). For inductors `6A` is the rated current, `Isat 8A` the saturation current; `DCR < 20mOhm` is a maximum and `low DCR` a preference.
+- Relaxation: when Mouser or TME have nothing that meets the request, KINA first reads more pages (TME), then loosens the dielectric, then the package, then the tolerance, never a rating. `fallback_query` shows the phrase that produced the parts, `constraints_relaxed` what was actually loosened (for example `["dielectric"]`), and `query_terms_dropped` the request terms that were not in that phrase (informational: a rated request always lists the rating for Mouser and TME). Each part lists what it does not satisfy in `mismatches` (`"dielectric: X5R instead of X7R"`) and what the distributor does not state in `unverified` (`["current"]`); `exact_matches` counts the parts whose constraints are all verified and met. While every match is out of stock KINA reads more pages; `out_of_stock_matches` reports matches that exist but do not ship now.
+- Counts add up: `fetched` is every in-stock part KINA received, `excluded_by_constraints` and `excluded_below_spec` are parts of it that were left out, and `returned` is at most what is left.
+- Strict mounting, technology and arrays: a part whose known mounting or technology contradicts the request, or a bead array or resistor network for a single-element request, is left out (`excluded_by_constraints`); write `array`, `network` or `4 lines` to ask for one. A part that does not state an attribute ranks below verified matches. `polymer aluminium` excludes tantalum polymer; plain `polymer` accepts both.
+- `quantity` (pieces to order; pass it for BOM work): parts that cannot supply it rank last, low stock (under 10 pieces or under twice the quantity) and a minimum order quantity far above the quantity cost rank (also for one piece), and each part gets `ordered_quantity` (raised to the minimum order quantity and multiple), `unit_price_at_quantity` and `total_price`.
+- Every part has `availability` (the stock situation: `in_stock`, `low_stock`, `limited`, `last_units`, `special_order`, `external_warehouse` with a plain note), `lifecycle` (`active`, `new`, `supply_constrained`, `last_time_buy`; the last two rank lower) and `stock_as_of`. Cached stock and prices older than a day are refreshed before they are returned.
+- A query with no recognised component type or parameter (`asdfqwerty zz9`, a bare part number) returns `query_understood: false` with a `hint`, and `match` is null.
+- `currencies` lists the price currencies of a response: LCSC prices are USD, TME and Mouser EUR. Prices are not converted.
+- `detail`: `compact` (default for searches) returns identity, stock, prices, availability, links and canonical attributes; `full` (default for `get_part`) adds the category, photo, raw distributor attributes and extra fields. Capacitors also report `RippleCurrent`, `ESR` or `Impedance` with the test frequency, `Dimensions`, `Qualification` (`AEC-Q200`) and `Features` (`low ESR`).
 - Distributor phrasing: when KINA rewrites a request for a distributor (ratings left out, connector wording), `distributor_query` shows the phrase it sent. It is null when your text went through as written. The cache key stays your own query text.
 - Connector-aware search. Describe a connector in plain words ("90 degree dupont style female pin header, THT, 6 position") and KINA extracts the type, gender, positions, rows, pitch, orientation and mounting, then rewrites the request into each distributor's own vocabulary (`distributor_query`). Accepted wording:
   - Types: pin header (male), female header, socket or receptacle, box or shrouded header, terminal block or screw terminal, JST series XH, PH, GH, SH and ZH, USB-C, micro USB, FPC or FFC, RJ45, D-sub, barrel jack, or just "connector".
@@ -47,9 +50,9 @@ Details of how KINA reads a request, what it returns and how it ranks. The overv
 
 | Tool | Parameters | Purpose |
 |---|---|---|
-| `search_parts` | `query` (required), `max_results` (1 to 50, default 10, per distributor), `distributors` (`LCSC`, `TME`, `MOUSER`; default all configured), `bypass_cache` (default false), `quantity` (default 1), `detail` (`compact` or `full`) | Search and rank in-stock parts. Can take up to 2 minutes when a distributor is rate limited. |
-| `search_parts_batch` | `queries` (1 to 20 of `{query, max_results, quantity}`), `distributors`, `bypass_cache`, `detail` | Several searches in one call. Returns `{"results": [...]}` in request order. The whole batch shares one 2-minute limit for rate-limit waits. |
-| `get_part` | `distributor`, `part_number`, `bypass_cache`, `quantity`, `detail` | One part by distributor part number (LCSC `C15850`, TME symbol, Mouser number) or by MPN (hyphens and spaces ignored: `HCMA0703 2R2 R` finds `HCMA0703-2R2-R`). Returns `found: false` with `reason` `not_found` or `out_of_stock` (then `identity` names the listed part). Can take up to 2 minutes when the distributor is rate limited. |
+| `search_parts` | `query` (required), `max_results` (1 to 50, default 10, per distributor), `distributors` (`LCSC`, `TME`, `MOUSER`; default all configured), `bypass_cache` (default false), `quantity` (default 1), `detail` (`compact` or `full`), `allow_below_spec` (default false) | Search and rank in-stock parts. Can take up to 2 minutes when a distributor is rate limited. |
+| `search_parts_batch` | `queries` (1 to 20 of `{query, max_results, quantity}`), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | Several searches in one call. Returns `{"results": [...]}` in request order. The whole batch shares one 2-minute limit for rate-limit waits. |
+| `get_part` | `distributor`, `part_number`, `bypass_cache`, `quantity`, `detail` (default `full`) | One part by distributor part number (LCSC `C15850`, TME symbol, Mouser number) or by MPN (hyphens and spaces ignored: `HCMA0703 2R2 R` finds `HCMA0703-2R2-R`), with every attribute the distributor gives. Returns `found: false` with `reason` `not_found` or `out_of_stock` (then `identity` names the listed part). Can take up to 2 minutes when the distributor is rate limited. |
 | `list_distributors` | none | State of each distributor, cache statistics and ranking status (mode, model, readiness, latency, last error). Never calls the Mouser or TME APIs. |
 | `ping` | none | `{"status":"ok","version":"..."}`. |
 
@@ -69,8 +72,10 @@ Response (abridged):
 {
   "query": "10uF X7R 0805",
   "parsed": {"family": "capacitor", "capacitance": "10uF", "dielectric": "X7R", "package": "0805", "keywords": []},
+  "query_understood": true,
   "ranking": "blended",
   "ranking_note": null,
+  "currencies": ["EUR"],
   "distributors": [
     {
       "distributor": "MOUSER",
@@ -80,9 +85,11 @@ Response (abridged):
       "cache": "hit",
       "error": null,
       "rate_limit_waited_ms": 0,
-      "relaxed": [],
+      "query_terms_dropped": [],
+      "constraints_relaxed": [],
       "exact_matches": 7,
       "excluded_by_constraints": 0,
+      "excluded_below_spec": 0,
       "out_of_stock_matches": 0,
       "parts": [
         {
@@ -104,7 +111,11 @@ Response (abridged):
 }
 ```
 
-`total_results` is what the distributor reported. `fetched` is how many in-stock parts KINA holds for the query. `returned` is `min(max_results, fetched)`.
+`total_results` is what the distributor reported. `fetched` is every in-stock part KINA received for the query, before exclusions. `returned` is at most `max_results` and at most `fetched` minus `excluded_by_constraints` and `excluded_below_spec`.
+
+### Example: a rating nobody stocks in the requested dielectric
+
+`22uF X7R 1206 25V MLCC` at TME (checked 2026-10-06): TME lists 22uF X7R 1206 parts only at 6.3 to 16 V. KINA reads the phrase `22uF X7R 1206 MLCC`, finds nothing that meets 25 V, and relaxes the dielectric: `fallback_query: "MLCC 22uF 1206"`, `constraints_relaxed: ["dielectric"]`, and the returned parts are 25 V X5R capacitors with `mismatches: ["dielectric: X5R instead of X7R"]`. The 10 V and 16 V parts are counted in `excluded_below_spec`. With `allow_below_spec=true` they follow the 25 V parts, flagged `below_spec: true`, 16 V before 10 V.
 
 ### USB connectors: pin counts and standards
 
@@ -159,7 +170,8 @@ Known limit: KINA does not send rows to Mouser, and Mouser keyword search is loo
 
 1. The query is parsed: component family, value, tolerance (`.1%` too), ratings (voltage, current, saturation current, power, temperature, lifetime; all minimums) and DCR (a maximum), dielectric, package, mounting, the technology of a resistor, capacitor or inductor (thin film, thick film, wirewound, tantalum, polymer, film, multilayer...), and leftover keywords.
 2. A deterministic ranker scores every part from 0 to 1: primary value (0.30), package (0.20), dielectric (0.15), technology (0.15), ratings (0.10; a higher rating counts as a match, an equal one ranks a little higher), tolerance (0.10), mounting (0.05), family keyword (0.05), lexical match (0.10), and small tie-break bonuses for stock, price and the JLCPCB Basic/Preferred library. A mismatch on value, package, dielectric, technology, rating or tolerance is penalised by the same amount a match earns. The same signals give each part its `match` grade (0 to 1, 1.0 = every stated parameter matches), which is absolute while `score` is relative to the other candidates.
-   Parts whose known mounting or technology contradicts the request are removed first; parts that do not state them, and parts with less stock than `quantity`, rank after the others. A `quantity` above 1, a large minimum order quantity and a `last_time_buy` or `supply_constrained` lifecycle lower the score.
+   Parts whose known mounting or technology contradicts the request, arrays for a single-element request and parts below a stated rating are removed first. Complete matches (every stated constraint known and met) rank first; parts with a mismatch or an unverified constraint come after them, parts with less stock than `quantity` after those, and below-spec parts (only with `allow_below_spec`) last, closest first. Low stock, a large minimum order quantity and a `last_time_buy` or `supply_constrained` lifecycle lower the score, also the final blended one.
+   `match` counts only the constraints the part states; the ones it does not state are listed in `unverified`, so a `match` of 1.0 with a non-empty `unverified` list is not a confirmed fit.
    For USB requests see the weights in [docs/API.md](API.md#usb-connector-queries). For other connector requests the value feature is replaced by connector features: positions (0.30), gender (0.20), orientation (0.15), pitch (0.15, where 2.54 mm equals 0.1"), connector type (0.10) and mounting (0.05). A wrong row count costs 0.10. Multi-row parts cost 0.08 when you did not ask for rows. Attributes a part does not list never count against it.
 3. The top 40 candidates (shared across distributors, at least 5 per distributor) go to the cross-encoder `cross-encoder/ms-marco-MiniLM-L6-v2`. It reads the query text and the part text (manufacturer, MPN, description, category, package, attributes) together and returns one relevance score per part. It runs inside the KINA JVM through ONNX Runtime on the CPU. The score is cached in memory for 1 hour.
 4. Both orders are turned into ranks inside the candidate set, and the final score is `0.5 * deterministic rank + 0.5 * model rank`. Parts that were not sent to the model come after the scored ones. The response says `"ranking": "blended"`.
