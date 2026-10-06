@@ -48,6 +48,12 @@ IMPOSSIBLE_QUERY = "22uF X7R 0201 100V"
 CRYSTAL_QUERY = "16MHz crystal 3225 SMD"
 OSCILLATOR_QUERY = "16MHz oscillator 3225"
 REDIRECT_URI = "http://localhost:6274/callback"
+# data notices every response lists for the distributors whose parts it returns (DESIGN.md 3.2 "Attributions")
+ATTRIBUTIONS = {
+    "LCSC": "LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)",
+    "TME": "Data powered by TME.eu Data \u2013 no guarantee of data accuracy",
+    "MOUSER": "Product data provided by Mouser Electronics",
+}
 JLCPCB_MIN_PARTS = 7_000_000
 
 
@@ -209,9 +215,13 @@ DISTRIBUTOR_FIELDS = ("fetched", "excluded_by_constraints", "excluded_below_spec
 def shape_problems(response: dict) -> list[str]:
     """Fields of the third audit round (DESIGN.md 3.2 "Counts", 4) and the arithmetic between the counts."""
     problems = []
-    for key in ("query_understood", "currencies"):
+    for key in ("query_understood", "currencies", "attributions"):
         if key not in response:
             problems.append(f"no {key}")
+    with_parts = [d.get("distributor") for d in response.get("distributors", []) if d.get("parts")]
+    wanted = [ATTRIBUTIONS[n] for n in ("LCSC", "TME", "MOUSER") if n in with_parts]
+    if response.get("attributions") != wanted:
+        problems.append(f"attributions {response.get('attributions')} instead of {wanted}")
     for d in response.get("distributors", []):
         name = d.get("distributor")
         problems += [f"{name}: no {k}" for k in DISTRIBUTOR_FIELDS if k not in d]
@@ -222,6 +232,15 @@ def shape_problems(response: dict) -> list[str]:
             problems.append(f"{name}: counts do not add up {[d.get(k) for k in DISTRIBUTOR_FIELDS[:4]]}")
         problems += [f"{name}: {p.get('part_number')} has no stock_as_of" for p in d.get("parts", [])
                      if not p.get("stock_as_of")]
+        # stale: only ever true, always with availability "stale", and never above a fresh part (DESIGN.md 3.2)
+        flags = [p.get("stale") for p in d.get("parts", [])]
+        problems += [f"{name}: {p.get('part_number')} stale {p.get('stale')!r} / availability "
+                     f"{p.get('availability', {}).get('status')}" for p in d.get("parts", [])
+                     if ("stale" in p and p.get("stale") is not True)
+                     or (p.get("stale") is True) != (p.get("availability", {}).get("status") == "stale")]
+        meets = [f for f, p in zip(flags, d.get("parts", [])) if not p.get("below_spec")]
+        if True in meets and None in meets[meets.index(True):]:
+            problems.append(f"{name}: a stale part ranks above a fresh one {flags}")
         detail = d.get("excluded_by_constraints_detail") or {}
         if sum(detail.values()) != d.get("excluded_by_constraints", 0):
             problems.append(f"{name}: excluded_by_constraints_detail {detail} does not add up to "
@@ -242,6 +261,8 @@ def suite_ui(base: str, rec: Recorder) -> str | None:
     csrf = re.search(r'name="_csrf" value="([^"]+)"', resp.text)
     rec.check("ui: GET / renders the token page", resp.status == 200 and "Access tokens" in resp.text and csrf,
               f"status {resp.status}", resp.millis)
+    rec.check("ui: the footer shows the TME data notice (TME terms 8.7)", ATTRIBUTIONS["TME"] in resp.text,
+              "footer present" if "<footer" in resp.text else "no footer")
     if not csrf:
         return None
 
@@ -354,6 +375,10 @@ def suite_mcp(base: str, token: str, rec: Recorder):
                   "extra" in got and bool(got.get("stock_as_of")) and len(got.get("attributes", {})) > 4,
                   f"{len(got.get('attributes', {}))} attributes, datasheet_source "
                   f"{(got.get('extra') or {}).get('datasheet_source')}")
+        rec.check("mcp: get_part carries the TME attribution and no stale flag on fresh data",
+                  part.get("attributions") == [ATTRIBUTIONS["TME"]] and got.get("stale") is None
+                  and (got.get("availability") or {}).get("status") != "stale",
+                  f"attributions {part.get('attributions')}, stale {got.get('stale')}")
         rec.data["tme_symbol"] = symbol
     else:
         rec.check("mcp: get_part TME", False, "no TME part in the search result")
@@ -613,6 +638,19 @@ def suite_rest(base: str, token: str, rec: Recorder):
     rec.check(f"rest: '{FALLBACK_QUERY}' returns no P-channel part", resp.status == 200
               and "P-channel" not in polarities and not shape_problems(body),
               f"polarities {sorted(set(map(str, polarities)))}", resp.millis)
+    # JLCPCB lists a MOSFET's gate threshold before its Vds: the rating is the largest stated voltage (DESIGN.md 3.4)
+    lcsc = next((d for d in body.get("distributors", []) if d["distributor"] == "LCSC"), {})
+    volts = [p.get("attributes", {}).get("Voltage") for p in lcsc.get("parts", [])]
+    def volts_ok(v):
+        try:
+            return v is None or float(str(v).rstrip("V")) >= 30
+        except ValueError:
+            return False
+    rec.check(f"rest: LCSC '{FALLBACK_QUERY}' returns its 30 V N-channel parts (no mass exclusion)",
+              len(lcsc.get("parts", [])) >= 10 and all(volts_ok(v) for v in volts)
+              and lcsc.get("excluded_below_spec", 0) + lcsc.get("excluded_by_constraints", 0) < lcsc.get("fetched", 0),
+              f"returned {lcsc.get('returned')} of {lcsc.get('fetched')}, excluded {lcsc.get('excluded_by_constraints')}"
+              f"+{lcsc.get('excluded_below_spec')} below spec, voltages {sorted(set(map(str, volts)))}")
 
     q = urllib.parse.urlencode({"q": FALLBACK_QUERY, "max_results": 3, "distributors": "TME"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)
