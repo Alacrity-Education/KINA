@@ -19,7 +19,7 @@ On the server:
 - A running Docker daemon and the Docker Compose plugin (`docker compose version`). Without Compose the script warns and continues, but you need it to start KINA.
 - The SSH user can run `docker` without `sudo`, that is, it is in the `docker` group. The script never uses `sudo`.
 - A POSIX login shell (`sh`, `bash`, `dash`, `ash`) and `gunzip` (for the default streaming mode).
-- Disk space: the image is about 960 MB in Docker (about 360 MB compressed while it is transferred). It includes the ranking model (138 MB), so the server needs no access to Hugging Face. On the first start KINA downloads the JLCPCB database (5.3 GB, about twice that at peak during a refresh) into the `kina-data` volume; that is the only download. See [docs/OPERATIONS.md](../docs/OPERATIONS.md) for sizing.
+- Disk space: the image is about 960 MB in Docker (about 350 MB compressed while it is transferred). It includes the ranking model (138 MB), so the server needs no access to Hugging Face. On the first start KINA downloads the JLCPCB database (5.3 GB, about twice that at peak during a refresh) into the `kina-data` volume; that is the only download. See [docs/OPERATIONS.md](../docs/OPERATIONS.md) for sizing.
 
 ## Options
 
