@@ -2,8 +2,7 @@
 
 KINA is an MCP server and HTTP API that lets an LLM (Claude) search electronic components across
 three distributors: **LCSC** (served from the JLCPCB parts database), **TME** (API v2) and **Mouser**.
-This document is the binding contract for the implementation. `task.md` holds the original
-requirements; where this document is more specific, follow this document.
+This document is the binding contract for the implementation. The original brief that started the project is no longer kept in the repository; where this document is silent, the code is the reference.
 
 ## 1. Stack
 
