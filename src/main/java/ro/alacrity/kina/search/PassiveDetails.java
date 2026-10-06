@@ -38,7 +38,7 @@ class PassiveDetails {
             "(?i)(?<![\\p{L}\\d.])(\\d{1,2})\\s?-?\\s?(?:lines|elements|resistors|capacitors|channels|bits)(?![\\p{L}])");
     /** JLCPCB networks: package {@code 0603x4}, description {@code 0402x8}. */
     private static final Pattern CHIP_TIMES = Pattern.compile(
-            "(?i)(?<![\\d])(?:0201|0402|0603|0805|1206)\\s?[x×*]\\s?(\\d{1,2})(?![\\d])");
+            "(?i)(?<![\\p{L}\\d])(?:0201|0402|0603|0805|1206)[x×*](\\d{1,2})(?![\\p{L}\\d])");
     private static final Pattern COMMON_MODE = Pattern.compile("(?i)common[- ]mode");
     private static final Pattern DIGITS = Pattern.compile("\\d{1,2}");
 

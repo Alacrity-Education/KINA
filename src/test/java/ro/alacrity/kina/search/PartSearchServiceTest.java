@@ -19,6 +19,7 @@ import ro.alacrity.kina.domain.DistributorResult;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartKey;
+import ro.alacrity.kina.domain.PartResponse;
 import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.domain.RankingMode;
 import ro.alacrity.kina.domain.SearchRequest;
@@ -902,7 +903,8 @@ class PartSearchServiceTest {
         assertThat(response.parsed().packageName()).isEqualTo("0805");
         var part = result(response, Distributor.MOUSER).parts().getFirst();
         assertThat(part.prices()).extracting(p -> p.qty()).containsExactly(1, 10, 100);
-        assertThat(part.score()).isEqualTo(0.9);
+        assertThat(part.score()).isNull();   // compact detail leaves score out; rank orders the list
+        assertThat(part.rank()).isEqualTo(1);
         // the cache keeps the complete list
         assertThat(cachedParts.get(PartKey.of(Distributor.MOUSER, "M0")).prices()).hasSize(5);
     }
@@ -1102,5 +1104,99 @@ class PartSearchServiceTest {
         assertThat(tme.deadlines.stream().map(Deadline::deadlineNanos).distinct()).hasSize(1);
         assertThat(response.results().stream().mapToLong(r -> r.distributors().getFirst().rateLimitWaitedMs()).sum())
                 .as("only the rate-limited query reports a wait").isEqualTo(300);
+    }
+
+    // ---- power resistors (recorded fixtures, DESIGN.md 3.4 "Power resistors") -------------------------------------
+
+    /** Recorded parts of {@code fixtures/power-resistors/query-<name>.json} (live probe of 2026-10-07) per distributor. */
+    static Map<Distributor, List<Part>> powerFixture(String name) {
+        tools.jackson.databind.json.JsonMapper mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+        try (var in = PartSearchServiceTest.class.getResourceAsStream("/fixtures/power-resistors/query-" + name
+                + ".json")) {
+            tools.jackson.databind.JsonNode root = mapper.readTree(in);
+            Map<Distributor, List<Part>> out = new EnumMap<>(Distributor.class);
+            root.get("parts").properties().forEach(e -> {
+                List<Part> parts = new ArrayList<>();
+                e.getValue().forEach(node -> parts.add(mapper.treeToValue(node, Part.class)));
+                out.put(Distributor.valueOf(e.getKey()), parts);
+            });
+            return out;
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+    }
+
+    /** The search over the recorded parts with the real deterministic ranking (cross-encoder off). */
+    SearchResponse powerSearch(String name, String query, ro.alacrity.kina.domain.ResponseDetail detail) {
+        List<FakeClient> clients = new ArrayList<>();
+        powerFixture(name).forEach((d, parts) -> {
+            FakeClient client = new FakeClient(d);
+            client.raw.addAll(parts);
+            clients.add(client);
+        });
+        KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
+        ParametricExtractor extractor = new ParametricExtractor();
+        RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
+                mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
+        service = new PartSearchService(props, new DistributorRegistry(List.copyOf(clients)), new QueryParser(),
+                extractor, ranking, mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
+        return service.search(new SearchRequest(query, 10, Set.of(), false, 1, detail));
+    }
+
+    @Test
+    void queryA_heatsinkMountPowerResistorsAreExactAndShowWatts() {
+        SearchResponse response = powerSearch("a", "150W power resistor 4.7 ohm heatsink mount",
+                ro.alacrity.kina.domain.ResponseDetail.COMPACT);
+
+        assertThat(response.parsed().formFactor()).isEqualTo(FormFactor.CHASSIS);
+        DistributorResult mouser = result(response, Distributor.MOUSER);
+        // "300watts" / "800watts" are read: nothing is unverified, every planar part is an exact match
+        assertThat(mouser.parts()).allSatisfy(p -> {
+            assertThat(p.unverified()).isEmpty();
+            assertThat(p.match()).isEqualTo(1.0);
+            assertThat(p.score()).isNull();   // compact: rank carries the order
+            assertThat(p.attributes()).containsEntry("Technology", "thick film").containsKey("Power");
+        });
+        assertThat(mouser.parts()).filteredOn(p -> p.mpn().equals("LPS0300H4R70JB")).singleElement()
+                .satisfies(p -> assertThat(p.attributes()).containsEntry("Power", "300W"));
+        assertThat(mouser.exactMatches()).isEqualTo(mouser.returned()).isEqualTo(4);
+        DistributorResult tme = result(response, Distributor.TME);
+        assertThat(tme.parts()).filteredOn(p -> p.mpn().equals("AHP250W-4R7F")).singleElement()
+                .satisfies(p -> assertThat(p.attributes()).containsEntry("Power", "250W"));
+        assertThat(tme.exactMatches()).isEqualTo(2);
+        assertThat(result(response, Distributor.LCSC).exactMatches()).isEqualTo(1);   // LTO150, TO-247
+    }
+
+    @Test
+    void queryB_sot227RequestExcludesChipAndLeadedResistors() {
+        SearchResponse response = powerSearch("b", "300W 10 ohm power resistor SOT-227 heatsink",
+                ro.alacrity.kina.domain.ResponseDetail.FULL);
+
+        DistributorResult mouser = result(response, Distributor.MOUSER);
+        assertThat(mouser.parts()).extracting(PartResponse::mpn).containsExactly("TGHPV10R0KE");
+        assertThat(mouser.parts().getFirst().score()).isNotNull();   // full detail keeps score
+        // chip resistors (category "- SMD", chip size 1225) and the axial ones are form-factor exclusions
+        // (PWR3014W, PWR2010W, AC03AT "- SMD"; RCL1225; two G003 "Axial")
+        assertThat(mouser.excludedByConstraintsDetail()).containsEntry(ConstraintPolicy.FORM_FACTOR, 6);
+        // the through-hole and chassis parts without a class read now their power: 1 W, 5 W, 12.5 W are below 300 W
+        assertThat(mouser.excludedBelowSpec()).isEqualTo(3);
+        assertThat(mouser.exactMatches()).isEqualTo(1);
+        assertThat(result(response, Distributor.LCSC).exactMatches()).isEqualTo(1);
+    }
+
+    @Test
+    void queryC_aluminiumHousedChassisResistorsAreExactMatches() {
+        SearchResponse response = powerSearch("c", "25W 100 ohm aluminium housed chassis mount resistor",
+                ro.alacrity.kina.domain.ResponseDetail.COMPACT);
+
+        DistributorResult mouser = result(response, Distributor.MOUSER);
+        assertThat(mouser.exactMatches()).isPositive();
+        assertThat(mouser.parts().getFirst().mpn()).isEqualTo("HS25E3 100R F M145");
+        assertThat(mouser.parts().getFirst().match()).isEqualTo(1.0);
+        assertThat(result(response, Distributor.TME).exactMatches()).isPositive();
+        DistributorResult lcsc = result(response, Distributor.LCSC);
+        assertThat(lcsc.exactMatches()).isPositive();
+        // the surface-mount power packages (TO-263, D2PAK) are no chassis part
+        assertThat(lcsc.excludedByConstraintsDetail()).containsEntry(ConstraintPolicy.FORM_FACTOR, 2);
     }
 }

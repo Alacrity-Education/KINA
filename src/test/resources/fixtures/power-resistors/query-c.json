@@ -1,0 +1,1264 @@
+{
+ "query": "25W 100 ohm aluminium housed chassis mount resistor",
+ "recorded": "2026-10-07 live probe of the main build (detail=full); attributes are the raw distributor attributes (canonical keys removed)",
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C49375386",
+    "manufacturer": "VO",
+    "manufacturerPartNumber": "RX24/50W-100Ω±1%",
+    "description": "100Ω 50W Aluminum Housed Resistor ±1% 螺栓安装",
+    "category": "Resistors / Aluminum Case/Porcelain Tube Resistance",
+    "packageName": "Bolt Mount",
+    "stock": 21,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.227,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 2.788,
+      "currency": "USD"
+     },
+     {
+      "quantity": 40,
+      "unitPrice": 2.529,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/VO-RX24_50W_100_1/C49375386",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C49375386.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Aluminum Case/Porcelain Tube Resistance"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C22395726",
+    "manufacturer": "VO",
+    "manufacturerPartNumber": "RX24/50W-100Ω±5%",
+    "description": "100Ω 50W Aluminum Housed Resistor ±5%",
+    "category": "Resistors / Aluminum Case/Porcelain Tube Resistance",
+    "packageName": "Bolt Mount",
+    "stock": 19,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.928,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 1.885,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 1.856,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2405150912_VO-RX24-50W-100R-5-_C22395726.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C22395726.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Aluminum Case/Porcelain Tube Resistance"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2094647",
+    "manufacturer": "BOURNS",
+    "manufacturerPartNumber": "PWR163S-25-1000FE",
+    "description": "-55℃~+155℃ 100Ω 25W Thick Film Resistor ±1% ±100ppm/℃",
+    "category": "Resistors / Chip Resistor - Surface Mount",
+    "packageName": "D2PAK",
+    "stock": 29,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.174,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.333,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 4.835,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2108042130_BOURNS-PWR163S-25-1000FE_C2094647.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2094647.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Chip Resistor - Surface Mount"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2985696",
+    "manufacturer": "Milliohm",
+    "manufacturerPartNumber": "HoRX-100W-100R-5%",
+    "description": "100W 100Ω Aluminum Housed Resistor ±5% 螺栓安装",
+    "category": "Resistors / Aluminum Case/Porcelain Tube Resistance",
+    "packageName": "Bolt Mount",
+    "stock": 19,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.168,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.82,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 7.998,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2203300930_Milliohm-HoRX-100W-100R-5-_C2985696.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2985696.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Aluminum Case/Porcelain Tube Resistance"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5807955",
+    "manufacturer": "VO",
+    "manufacturerPartNumber": "SQZ25W-100Ω±5%-AP",
+    "description": "-55℃~+155℃ 100Ω 25W Cement Resistor ±5%",
+    "category": "Resistors / Through Hole Resistors",
+    "packageName": "Plugin",
+    "stock": 40,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.568,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.452,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 0.401,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/VO-SQZ25W_100_5_AP/C5807955",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5807955.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Through Hole Resistors"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C26159126",
+    "manufacturer": "RESI",
+    "manufacturerPartNumber": "TPAL0263F100RK9",
+    "description": "-55℃~+150℃ 100Ω 35W 500V Thick Film Resistor ±1% ±100ppm/℃",
+    "category": "Resistors / Chip Resistor - Surface Mount",
+    "packageName": "TO-263",
+    "stock": 53,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.053,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 2.613,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 2.337,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2409141430_RESI-TPAL0263F100RK9_C26159126.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C26159126.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Chip Resistor - Surface Mount"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5209737",
+    "manufacturer": "Milliohm",
+    "manufacturerPartNumber": "To-220-35W-100R-5%",
+    "description": "-65℃~+150℃ 100Ω 350V 35W ±5%",
+    "category": "Resistors / Through Hole Resistors",
+    "packageName": "TO-220-2",
+    "stock": 20,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.675,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 2.283,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 1.908,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2210201730_Milliohm-To-220-35W-100R-5-_C5209737.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5209737.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Through Hole Resistors"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C3546054",
+    "manufacturer": "TE Connectivity",
+    "manufacturerPartNumber": "MPT35C100RJ",
+    "description": "-65℃~+150℃ 100Ω 35W Thick Film Resistor ±5% ±50ppm/℃",
+    "category": "Resistors / Through Hole Resistors",
+    "packageName": "TO-220-2",
+    "stock": 10,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.97,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.584,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2404071211_TE-Connectivity-MPT35C100RJ_C3546054.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C3546054.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Through Hole Resistors"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C22468856",
+    "manufacturer": "RESI",
+    "manufacturerPartNumber": "TPAN0220F100RK9",
+    "description": "-55℃~+150℃ 100Ω 500V 50W Planar Non-Inductive Power Resistor ±1% ±100ppm/℃",
+    "category": "Resistors / Through Hole Resistors",
+    "packageName": "TO-220",
+    "stock": 553,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.147,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 2.691,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.348,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2406211539_RESI-TPAN0220F100RK9_C22468856.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C22468856.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Through Hole Resistors"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C1525755",
+    "manufacturer": "Vishay Intertech",
+    "manufacturerPartNumber": "LTO050F100R0JTE3",
+    "description": "-55℃~+155℃ 100Ω 50W Thick Film Resistor ±150ppm/℃ ±5%",
+    "category": "Resistors / Through Hole Resistors",
+    "packageName": "TO-220",
+    "stock": 137,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.672,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.88,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 4.396,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2211022300_Vishay-Intertech-LTO050F100R0JTE3_C1525755.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C1525755.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Through Hole Resistors"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "HS25-100RJ",
+    "manufacturer": "ARCOL/OHMITE",
+    "manufacturerPartNumber": "HS25 100R J",
+    "description": "Resistor: wire-wound; 100Ω; with heatsink; screw; 25W; ±5%; 550V",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 444,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 3.09,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 2.95,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/31b47129226aa06e0db28999c6f0483d/hs_arcol.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/HS25-100RJ/",
+    "attributes": {
+     "Leads": "for soldering",
+     "Power": "25W",
+     "Voltage": "550V",
+     "Mounting": "screw",
+     "Tolerance": "±5%",
+     "Resistance": "100Ω",
+     "Manufacturer": "ARCOL/OHMITE",
+     "Body dimensions": "27.3x28x14.6mm",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Operating voltage": "550V",
+     "Resistor features": "needs additional heatsink",
+     "Mounting holes pitch": "18.3x19.8mm",
+     "Power without heatsink": "9W",
+     "Temperature coefficient": "100ppm/°C"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AHP25W-100RJ",
+    "manufacturer": "SR PASSIVES",
+    "manufacturerPartNumber": "AHP25W-100RJ",
+    "description": "Resistor: wire-wound; 100Ω; with heatsink; 25W; ±5%; 50ppm/°C",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 308,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 1.06,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.96,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/0331e4865285740fc126d511674532d5/AHP.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AHP25W-100RJ/",
+    "attributes": {
+     "Leads": "for soldering",
+     "Power": "25W",
+     "Tolerance": "±5%",
+     "Resistance": "100Ω",
+     "Manufacturer": "SR PASSIVES",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Mounting holes pitch": "18.6mm",
+     "Temperature coefficient": "50ppm/°C",
+     "Number of mounting holes": "2"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AHP25W-100RF",
+    "manufacturer": "SR PASSIVES",
+    "manufacturerPartNumber": "AHP25W-100RF",
+    "description": "Resistor: wire-wound; 100Ω; with heatsink; 25W; ±1%; 50ppm/°C",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 219,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 1.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 1.18,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/0331e4865285740fc126d511674532d5/AHP.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AHP25W-100RF/",
+    "attributes": {
+     "Leads": "for soldering",
+     "Power": "25W",
+     "Tolerance": "±1%",
+     "Resistance": "100Ω",
+     "Manufacturer": "SR PASSIVES",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Mounting holes pitch": "18.6mm",
+     "Temperature coefficient": "50ppm/°C",
+     "Number of mounting holes": "2"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AX25WR-100R",
+    "manufacturer": "TE Connectivity",
+    "manufacturerPartNumber": "1625971-2",
+    "description": "Resistor: wire-wound; 100Ω; with heatsink; screw; 25W; ±5%; 550V",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 134,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.28,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 4.65,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.22,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/526457e54ee9daf38f788e1d30fc1dd6/ax10wr_0r1.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AX25WR-100R/",
+    "attributes": {
+     "Leads": "for soldering",
+     "Power": "25W",
+     "Voltage": "550V",
+     "Mounting": "screw",
+     "Tolerance": "±5%",
+     "Resistance": "100Ω",
+     "Manufacturer": "TE Connectivity",
+     "Body dimensions": "29x28x15mm",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Operating voltage": "550V",
+     "Resistor features": "needs additional heatsink, robust mechanical structure",
+     "Mounting holes pitch": "19.8x18.3mm",
+     "Power without heatsink": "12.5W",
+     "Temperature coefficient": "50ppm/°C"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "QL25-100R",
+    "manufacturer": "ROYALOHM",
+    "manufacturerPartNumber": "QL0025J0101000",
+    "description": "Resistor: wire-wound; 100Ω; 25W; ±5%; Ø22x60mm; 300ppm/°C; L: 60mm",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 10,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.57,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 3.63,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.35,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/0ff7219a5068579357589fcbf949779b/QH_QL.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/QL25-100R/",
+    "attributes": {
+     "Leads": "solder lugs",
+     "Power": "25W",
+     "Length": "60mm",
+     "Diameter": "22mm",
+     "Tolerance": "±5%",
+     "Resistance": "100Ω",
+     "Manufacturer": "ROYALOHM",
+     "Body dimensions": "Ø22x60mm",
+     "Type of resistor": "wire-wound",
+     "Temperature coefficient": "300ppm/°C",
+     "Number of mounting holes": "2"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AX50WR-100R",
+    "manufacturer": "TE Connectivity",
+    "manufacturerPartNumber": "0-1625984-1",
+    "description": "Resistor: wire-wound; 100Ω; with heatsink; screw; 50W; ±5%; 1.25kV",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 165,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.79,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 5.95,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.43,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/526457e54ee9daf38f788e1d30fc1dd6/ax10wr_0r1.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AX50WR-100R/",
+    "attributes": {
+     "Leads": "for soldering",
+     "Power": "50W",
+     "Voltage": "1.25kV",
+     "Mounting": "screw",
+     "Tolerance": "±5%",
+     "Resistance": "100Ω",
+     "Manufacturer": "TE Connectivity",
+     "Body dimensions": "51x30x17mm",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Operating voltage": "1.25kV",
+     "Resistor features": "needs additional heatsink, robust mechanical structure",
+     "Mounting holes pitch": "21.4x39.7mm",
+     "Power without heatsink": "20W",
+     "Temperature coefficient": "50ppm/°C"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "CRL40W-100R",
+    "manufacturer": "SR PASSIVES",
+    "manufacturerPartNumber": "CRL40W-100R",
+    "description": "Resistor: wire-wound; 100Ω; cement; THT; 40W; ±5%; Ø0.8x35mm",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 31,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.532,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 1.052,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 18,
+      "unitPrice": 0.737,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/3124a84f97c98eccec91af2022548c81/CR-L(SQP)--DATASHEET.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/CRL40W-100R/",
+    "attributes": {
+     "Power": "40W",
+     "Mounting": "THT",
+     "Tolerance": "±5%",
+     "Resistance": "100Ω",
+     "Manufacturer": "SR PASSIVES",
+     "Body dimensions": "19x19x89mm",
+     "Kind of resistor": "cement",
+     "Leads dimensions": "Ø0.8x35mm",
+     "Type of resistor": "wire-wound"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AHP50W-100RF",
+    "manufacturer": "SR PASSIVES",
+    "manufacturerPartNumber": "AHP50W-100RF",
+    "description": "Resistor: wire-wound; 100Ω; with heatsink; 50W; ±1%; 50ppm/°C",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 220,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.97,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 1.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 1.46,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/0331e4865285740fc126d511674532d5/AHP.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AHP50W-100RF/",
+    "attributes": {
+     "Leads": "for soldering",
+     "Power": "50W",
+     "Tolerance": "±1%",
+     "Resistance": "100Ω",
+     "Manufacturer": "SR PASSIVES",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Mounting holes pitch": "38.5mm",
+     "Temperature coefficient": "50ppm/°C",
+     "Number of mounting holes": "2"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AHP50W-100RJ",
+    "manufacturer": "SR PASSIVES",
+    "manufacturerPartNumber": "AHP50W-100RJ",
+    "description": "Resistor: wire-wound; 100Ω; with heatsink; 50W; ±5%; 50ppm/°C",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 667,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.46,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 1.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 1.07,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/0331e4865285740fc126d511674532d5/AHP.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AHP50W-100RJ/",
+    "attributes": {
+     "Leads": "for soldering",
+     "Power": "50W",
+     "Tolerance": "±5%",
+     "Resistance": "100Ω",
+     "Manufacturer": "SR PASSIVES",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Mounting holes pitch": "38.5mm",
+     "Temperature coefficient": "50ppm/°C",
+     "Number of mounting holes": "2"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AL500W-100R",
+    "manufacturer": "SR PASSIVES",
+    "manufacturerPartNumber": "AL500W-100R",
+    "description": "Resistor: wire-wound; 100Ω; with heatsink; 500W; ±5%; 335x60x30mm",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 86,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 36.54,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 26.27,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 21.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a88b9e948f6d3bbb4a8f7850cbfb34dd/AL.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AL500W-100R/",
+    "attributes": {
+     "Leads": "cables",
+     "Power": "0.5kW",
+     "Tolerance": "±5%",
+     "Resistance": "100Ω",
+     "Application": "breaking resistor",
+     "Lead length": "0.4m",
+     "Manufacturer": "SR PASSIVES",
+     "Body dimensions": "335x60x30mm",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Mounting holes pitch": "320mm",
+     "Temperature coefficient": "200ppm/°C",
+     "Number of mounting holes": "2"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "MOUSER": [
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "284-HS25E3100RFM145",
+    "manufacturer": "Ohmite",
+    "manufacturerPartNumber": "HS25E3 100R F M145",
+    "description": "Wirewound Resistors - Chassis Mount 25W 100 ohm 1% Alum Housed",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 80,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.84,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.62,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 7.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/132/1/HSE3_E6_01_37.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Ohmite/HS25E3-100R-F-M145?qs=B6kkDfuK7%2FCzXxlSbUQ2mw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "708-KAL25FB100R",
+    "manufacturer": "SEI Stackpole",
+    "manufacturerPartNumber": "KAL25FB100R",
+    "description": "Wirewound Resistors - Chassis Mount 100Ohms 25W 1% Aluminum",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 447,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.28,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 2.86,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1099/1/SEI_KAL.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/SEI-Stackpole/KAL25FB100R?qs=FESYatJ8odLK6kbRXaGjWg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "250"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "279-THS50100RJ",
+    "manufacturer": "TE Connectivity / Holsworthy",
+    "manufacturerPartNumber": "THS50100RJ",
+    "description": "Wirewound Resistors - Chassis Mount 100 Ohms 50W 50PPM",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 386,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 4.21,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/te_ENG_DS_1773277_C.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Holsworthy/THS50100RJ?qs=VHcS2MTj4gZlenCl4XRe6g%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "100"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "284-HS200100RJ",
+    "manufacturer": "Ohmite",
+    "manufacturerPartNumber": "HS200 100R J",
+    "description": "Wirewound Resistors - Chassis Mount 200W 100 Ohms 5%",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 134,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 30.01,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 23.95,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 22.61,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/132/1/acl_hs10.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Ohmite/HS200-100R-J?qs=bvCpHSZmQjkAAeSoRxZ49g%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "284-HS100100R5%",
+    "manufacturer": "Ohmite",
+    "manufacturerPartNumber": "HS100 100R J",
+    "description": "Wirewound Resistors - Chassis Mount 100W 100 Ohms 5%",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 417,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.22,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.82,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/132/1/acl_hs10.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Ohmite/HS100-100R-J?qs=mzRxyRlhVdsX49eKsaGr5Q%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "45"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "279-HSC300100RJ",
+    "manufacturer": "TE Connectivity / Holsworthy",
+    "manufacturerPartNumber": "HSC300100RJ",
+    "description": "Wirewound Resistors - Chassis Mount 100 Ohms 300W 50PPM",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 33,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 64.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 55.03,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 26,
+      "unitPrice": 49.94,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/45/ENG_CD_1630027_N.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Holsworthy/HSC300100RJ?qs=DfH2yQaBz6u20zcNNzRtsA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "2"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "279-HSC150100RJ",
+    "manufacturer": "TE Connectivity / Holsworthy",
+    "manufacturerPartNumber": "HSC150100RJ",
+    "description": "Wirewound Resistors - Chassis Mount 100 Ohms 150W 50PPM",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 12,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 24.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 17.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 16.62,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Holsworthy/HSC150100RJ?qs=DfH2yQaBz6ubykhU9hVowA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "5"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "279-HCF80J100RJ",
+    "manufacturer": "TE Connectivity / Holsworthy",
+    "manufacturerPartNumber": "HCF80J100RJ",
+    "description": "Wirewound Resistors - Chassis Mount HCF80 75W 100R 5% LEAD",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 19,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 68.28,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 51.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 49.46,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/45/ENG_DS_1773309_3_D.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Holsworthy/HCF80J100RJ?qs=W%2FMpXkg%252BdQ6x9cqsqCEB3g%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "284-HS100F100RF",
+    "manufacturer": "Ohmite",
+    "manufacturerPartNumber": "HS100F 100R F 200MM M372",
+    "description": "Wirewound Resistors - Chassis Mount 100 ohm ,1% 100W",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 35,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 22.01,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 15.51,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 13.79,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Ohmite/HS100F-100R-F-200MM-M372?qs=Zz7%252BYVVL6bEKfgwJ2mr%2FwA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "5"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "279-HSC100-100R",
+    "manufacturer": "TE Connectivity / Holsworthy",
+    "manufacturerPartNumber": "HSC100-100R",
+    "description": "Wirewound Resistors - Chassis Mount 100 Ohms 100W",
+    "category": "Wirewound Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 38,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 17.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 10.84,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Holsworthy/HSC100-100R?qs=IAPfasySNH%2FvAGQxFjBD9g%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "10"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ]
+ }
+}

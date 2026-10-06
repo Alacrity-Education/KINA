@@ -872,7 +872,7 @@ class AuditRoundThreeTest {
                 + fourDays.toString().substring(0, 10) + " (4 days ago) and could not be refreshed").contains(
                 "Last known stock: ").doesNotContain("Ships now");
         assertThat(stale.stockAsOf()).isEqualTo(fourDays);
-        assertThat(stale.score()).isLessThanOrEqualTo(m.parts().get(1).score());
+        assertThat(stale.score()).isNull();   // compact detail: rank carries the order
         assertThat(stale.rank()).isEqualTo(3);
     }
 

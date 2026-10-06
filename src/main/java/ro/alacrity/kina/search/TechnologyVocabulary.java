@@ -214,6 +214,30 @@ public class TechnologyVocabulary {
         return of(value, family);
     }
 
+    /** Mouser files planar power resistors (LPS...) under "Planar Resistors": a thick film on a ceramic substrate. */
+    private static final Pattern PLANAR_CATEGORY = Pattern.compile("(?i)(?<![\\p{L}])planar resistors?(?![\\p{L}])");
+    private static final Pattern OHMITE = Pattern.compile("(?i)ohmite");
+
+    /**
+     * The technology a part's series or category implies when the words do not name it (resistors only): the Mouser
+     * category {@code Planar Resistors} and Ohmite's {@code TGH} series ({@code TGHG}, {@code TGHPV}...) are thick
+     * film. Only for parts: a request saying "planar" keeps its words. TME's {@code Type of resistor: power} and the
+     * TME series {@code LPR} / {@code AHP} name no technology and get none.
+     */
+    public static String ofPart(String manufacturer, String mpn, String category, String family) {
+        if (!"resistor".equals(family)) {
+            return null;
+        }
+        if (category != null && PLANAR_CATEGORY.matcher(category).find()) {
+            return THICK_FILM;
+        }
+        if (mpn != null && manufacturer != null && OHMITE.matcher(manufacturer).find()
+                && mpn.strip().toUpperCase(Locale.ROOT).startsWith("TGH")) {
+            return THICK_FILM;
+        }
+        return null;
+    }
+
     private static boolean overlaps(int[] taken, int start, int end) {
         for (int i = start; i < end; i++) {
             if (taken[i] != 0) {

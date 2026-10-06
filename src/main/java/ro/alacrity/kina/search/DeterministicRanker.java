@@ -32,7 +32,10 @@ import java.util.Map;
  *   <tr><td>tolerance</td><td>{@value #W_TOLERANCE}</td><td>part &lt;= requested</td></tr>
  *   <tr><td>family</td><td>{@value #W_FAMILY}</td><td>same (or more specific) family; a different known family is
  *       penalised by the same amount</td></tr>
- *   <tr><td>lexical</td><td>{@value #W_LEXICAL}</td><td>share of free-text keywords found in the part text</td></tr>
+ *   <tr><td>form factor (stated by words: chassis, heatsink...)</td><td>{@value #W_FORM_FACTOR}</td><td>compatible
+ *       class + ({@link FormFactor#compatible}), another known class -, unknown: unverified</td></tr>
+ *   <tr><td>lexical</td><td>{@value #W_LEXICAL}</td><td>share of free-text keywords found in the part text (score
+ *       only, never part of the match grade)</td></tr>
  *   <tr><td>tie-break</td><td>up to {@value #W_TIE_BREAK}</td><td>log10(stock), has a price, JLCPCB Basic/Preferred</td></tr>
  * </table>
  *
@@ -51,8 +54,10 @@ import java.util.Map;
  * {@value #W_USB_MOUNTING} (mid-mount / hybrid / SMD / THT), orientation {@value #W_USB_ORIENTATION} and
  * +{@value #W_USB_FEATURE} per requested feature present (waterproof, board lock, power only).
  *
- * <p>{@link #assess} also reports the <b>match grade</b>: the signals the part earned (tie-break excluded) divided by
- * what a part matching every stated and <i>verified</i> parameter would earn, clamped to [0,1]. A stated constraint the
+ * <p>{@link #assess} also reports the <b>match grade</b>: the typed signals the part earned (tie-break and free-text
+ * keywords excluded) divided by what a part matching every stated and <i>verified</i> parameter would earn, clamped to
+ * [0,1]. A word such as {@code heatsink} or {@code housed} missing from the part text lowers the score, never the
+ * grade. A stated constraint the
  * part does not state at all is <b>unverified</b>: it is listed ({@link Assessment#unverified()}) and left out of both
  * sides of the grade, so 1.0 means every verified parameter matches; with a non-empty unverified list it is not a
  * confirmed fit. It is absolute (not rank-normalised) and does not influence the order. A known rating below the
@@ -78,6 +83,8 @@ public class DeterministicRanker {
     static final double RATING_EXCESS_OCTAVES = 2.0;
     /** SMD/THT of a non-connector request (connector and USB requests have their own mounting signals). */
     static final double W_MOUNTING = 0.05;
+    /** Form factor class stated by the request's words ({@link FormFactor}); a package-implied class is not scored. */
+    static final double W_FORM_FACTOR = 0.10;
     /** "low DCR" preference: {@code W_LOW_DCR / (1 + DCR / LOW_DCR_REFERENCE_OHM)} (score only). */
     static final double W_LOW_DCR = 0.04;
     static final double LOW_DCR_REFERENCE_OHM = 0.01;
@@ -224,6 +231,10 @@ public class DeterministicRanker {
         if (query.mounting() != null && f.mounting() != null && !query.mounting().equals(f.mounting())
                 && !(f.connector() != null && UsbVocabulary.HYBRID.equals(f.connector().mountingStyle()))) {
             out.add("mounting: " + f.mounting() + " instead of " + query.mounting());
+        }
+        String wantedForm = FormFactor.ofRequest(query, true);
+        if (FormFactor.compatible(wantedForm, f.formFactor()) == Boolean.FALSE) {
+            out.add("form factor: " + FormFactor.label(f.formFactor()) + " instead of " + FormFactor.label(wantedForm));
         }
         if (query.family() != null && familyScore(query.family(), f) < 0) {
             out.add("family: " + f.family() + " instead of " + query.family());
@@ -437,6 +448,17 @@ public class DeterministicRanker {
             }
         }
 
+        // form factor named by the request's words (chassis, heatsink...); a class implied by the package is the package
+        if (query.formFactor() != null && FormFactor.applies(query.family())) {
+            Boolean same = FormFactor.compatible(FormFactor.ofRequest(query, true), f.formFactor());
+            if (same == null) {
+                unverified.add(ConstraintPolicy.FORM_FACTOR);
+            } else {
+                possible += W_FORM_FACTOR;
+                score += same ? W_FORM_FACTOR : -W_FORM_FACTOR;
+            }
+        }
+
         // "low DCR": lower DC resistance ranks higher among otherwise equal parts
         Double dcr = f.value(ParsedQuery.DCR);
         if (query.prefers(ParsedQuery.LOW_DCR) && dcr != null && dcr >= 0) {
@@ -467,15 +489,15 @@ public class DeterministicRanker {
         }
         score += familyScore(query.family(), f);
 
-        // lexical overlap
+        // the match grade counts typed constraints only: free-text keywords rank, they never grade
+        Double match = possible <= 0 ? (unverified.isEmpty() ? Double.valueOf(1.0) : null)
+                : Double.valueOf(Math.clamp(score / possible, 0.0, 1.0));
+
+        // lexical overlap (score only)
         if (!query.keywords().isEmpty()) {
-            possible += W_LEXICAL;
             long found = query.keywords().stream().filter(k -> f.text().contains(k)).count();
             score += W_LEXICAL * found / query.keywords().size();
         }
-
-        Double match = possible <= 0 ? (unverified.isEmpty() ? Double.valueOf(1.0) : null)
-                : Double.valueOf(Math.clamp(score / possible, 0.0, 1.0));
         return new Assessment(Math.clamp(score + preference + tieBreak(part), 0.0, 1.0), match, mismatches(query, f),
                 unverified, belowSpec, belowSpecDistance);
     }

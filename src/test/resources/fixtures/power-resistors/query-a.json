@@ -1,0 +1,299 @@
+{
+ "query": "150W power resistor 4.7 ohm heatsink mount",
+ "recorded": "2026-10-07 live probe of the main build (detail=full); attributes are the raw distributor attributes (canonical keys removed)",
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C1365855",
+    "manufacturer": "Vishay Intertech",
+    "manufacturerPartNumber": "LTO150F4R700JTE3",
+    "description": "-55℃~+175℃ 150W 4.7Ω Thick Film Resistor ±350ppm/℃ ±5%",
+    "category": "Resistors / Through Hole Resistors",
+    "packageName": "TO-247-2",
+    "stock": 10,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.757,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.413,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2304140030_Vishay-Intertech-LTO150F4R700JTE3_C1365855.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C1365855.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "second_category": "Through Hole Resistors"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AHP250W-4R7F",
+    "manufacturer": "SR PASSIVES",
+    "manufacturerPartNumber": "AHP250W-4R7F",
+    "description": "Resistor: wire-wound; 4.7Ω; with heatsink; screw; 250W; ±1%",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 26.64,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 21.42,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 19.19,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/0331e4865285740fc126d511674532d5/AHP.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AHP250W-4R7F/",
+    "attributes": {
+     "Leads": "M8 screws",
+     "Power": "0.25kW",
+     "Mounting": "screw",
+     "Tolerance": "±1%",
+     "Resistance": "4.7Ω",
+     "Application": "breaking resistor",
+     "Manufacturer": "SR PASSIVES",
+     "Body dimensions": "114x77x54.5mm",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Mounting holes pitch": "76mm",
+     "Temperature coefficient": "50ppm/°C",
+     "Number of mounting holes": "4"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AX300WR-4R7",
+    "manufacturer": "TE Connectivity",
+    "manufacturerPartNumber": "1-1630027-7",
+    "description": "Resistor: wire-wound; 4.7Ω; with heatsink; screw; 300W; ±5%; 2.5kV",
+    "category": "Power resistors",
+    "packageName": null,
+    "stock": 1,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 67.82,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 2,
+      "unitPrice": 63.03,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 55.66,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/bad69a71b6bab658d6fa8a2a0f4eb249/ENG_DS_1773035_C.PDF",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/AX300WR-4R7/",
+    "attributes": {
+     "Leads": "for soldering",
+     "Power": "300W",
+     "Voltage": "2.5kV",
+     "Mounting": "screw",
+     "Tolerance": "±5%",
+     "Resistance": "4.7Ω",
+     "Manufacturer": "TE Connectivity",
+     "Body dimensions": "128x73x45mm",
+     "Kind of resistor": "with heatsink",
+     "Type of resistor": "wire-wound",
+     "Operating voltage": "2.5kV",
+     "Resistor features": "needs additional heatsink",
+     "Mounting holes pitch": "59x52+52mm",
+     "Recommended heatsink": "surface 578000mm<sup>2</sup>, thickness 3mm",
+     "Operating temperature": "-55...250°C",
+     "Power without heatsink": "75W",
+     "Temperature coefficient": "50ppm/°C",
+     "Number of mounting holes": "6"
+    },
+    "extra": {
+     "product_status": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "MOUSER": [
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "72-LPSA600H4R70JB",
+    "manufacturer": "Vishay / Sfernice",
+    "manufacturerPartNumber": "LPSA600H4R70JB",
+    "description": "Planar Resistors - Chassis Mount 600W 4.7ohms 5% Dielectric 12kV",
+    "category": "Planar Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 9,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 99.43,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 78.11,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 73.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Sfernice/LPSA600H4R70JB?qs=sPbYRqrBIVlOq7hkCckE4A%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "15"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "72-LPSA800H4R70JB",
+    "manufacturer": "Vishay / Sfernice",
+    "manufacturerPartNumber": "LPSA800H4R70JB",
+    "description": "Planar Resistors - Chassis Mount 800W 4.7ohms 5% Dielectric 12kV",
+    "category": "Planar Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 148.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 110.21,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Sfernice/LPSA800H4R70JB?qs=vHuUswq2%252BsxHiFz3tLznAA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "15"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "72-LPS0300H4R70JB",
+    "manufacturer": "Vishay / Sfernice",
+    "manufacturerPartNumber": "LPS0300H4R70JB",
+    "description": "Planar Resistors - Chassis Mount 300watts 4.7ohms 5% 12kV",
+    "category": "Planar Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 34,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 76.51,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 60.54,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 56.32,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Sfernice/LPS0300H4R70JB?qs=i2mp%2Fn9EmlIYVBrU8Bafdg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "15"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "72-LPS0800H4R70JB",
+    "manufacturer": "Vishay / Sfernice",
+    "manufacturerPartNumber": "LPS0800H4R70JB",
+    "description": "Planar Resistors - Chassis Mount 800watts 4.7ohms 5% 12kV",
+    "category": "Planar Resistors - Chassis Mount",
+    "packageName": null,
+    "stock": 7,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 148.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 121.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 118.75,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Sfernice/LPS0800H4R70JB?qs=i2mp%2Fn9EmlIqrd9Ag6b1jQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "15"
+    },
+    "extra": {},
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ]
+ }
+}

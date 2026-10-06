@@ -22,7 +22,10 @@ import java.util.Set;
  *
  * <p>Code defaults ({@link #DEFAULT_HARD}): the primary value (resistance, capacitance, inductance, the impedance of a
  * ferrite bead at its frequency, the frequency of a crystal or oscillator), mounting, technology and the package are
- * hard for every family, except that the package of inductors, crystals and oscillators is relaxable. The component
+ * hard for every family, except that the package of inductors, crystals and oscillators is relaxable. The form
+ * factor ({@link FormFactor}: chip, through-hole body, chassis, power package, power SMD) is hard for resistors,
+ * capacitors, inductors and the default family: a part of another class is excluded, one whose class cannot be read
+ * stays unverified. The component
  * type is hard (crystal vs oscillator, Schottky vs standard rectifier vs Zener vs TVS, fixed vs adjustable regulator),
  * as are the transistor polarity, the exact voltages (Zener voltage, regulator output voltage), the load capacitance of
  * a crystal, and for connectors the type, gender, positions and pitch; for USB connectors the USB type, the stated pin
@@ -58,6 +61,11 @@ public final class ConstraintPolicy {
     public static final String USB_TYPE = "usb type";
     public static final String PIN_CONFIGURATION = "pin configuration";
     public static final String USB_STANDARD = "usb standard";
+    /**
+     * The form factor class ({@link FormFactor}: chip, through_hole, chassis, power_package, power_smd) the request's
+     * words or package name.
+     */
+    public static final String FORM_FACTOR = "form factor";
     // relaxable by default (they become hard when a family lists them in kina.search.hard-constraints)
     public static final String DIELECTRIC = "dielectric";
     public static final String TOLERANCE = "tolerance";
@@ -69,7 +77,7 @@ public final class ConstraintPolicy {
     /** Every name a hard-constraint list may contain. */
     public static final Set<String> NAMES = Set.of(VALUE, PACKAGE, MOUNTING, TECHNOLOGY, ELEMENTS, TYPE, POLARITY,
             VOLTAGE, LOAD_CAPACITANCE, CONNECTOR_TYPE, GENDER, POSITIONS, PITCH, USB_TYPE, PIN_CONFIGURATION,
-            USB_STANDARD, DIELECTRIC, TOLERANCE, ORIENTATION, TCR, ESR, DCR);
+            USB_STANDARD, FORM_FACTOR, DIELECTRIC, TOLERANCE, ORIENTATION, TCR, ESR, DCR);
 
     /** Constraints the relaxation may loosen when they are not hard, in ladder order (DESIGN.md 3.2). */
     public static final List<String> RELAXABLE = List.of(DIELECTRIC, PACKAGE, TOLERANCE, ORIENTATION, TCR, ESR, DCR);
@@ -96,9 +104,9 @@ public final class ConstraintPolicy {
 
     private static Map<String, List<String>> defaults() {
         Map<String, List<String>> m = new LinkedHashMap<>();
-        m.put(RESISTOR, List.of(TYPE, VALUE, PACKAGE, MOUNTING, TECHNOLOGY, ELEMENTS));
-        m.put(CAPACITOR, List.of(TYPE, VALUE, PACKAGE, MOUNTING, TECHNOLOGY, ELEMENTS));
-        m.put(INDUCTOR, List.of(TYPE, VALUE, MOUNTING, TECHNOLOGY));
+        m.put(RESISTOR, List.of(TYPE, VALUE, PACKAGE, MOUNTING, TECHNOLOGY, ELEMENTS, FORM_FACTOR));
+        m.put(CAPACITOR, List.of(TYPE, VALUE, PACKAGE, MOUNTING, TECHNOLOGY, ELEMENTS, FORM_FACTOR));
+        m.put(INDUCTOR, List.of(TYPE, VALUE, MOUNTING, TECHNOLOGY, FORM_FACTOR));
         m.put(FERRITE, List.of(TYPE, VALUE, PACKAGE, MOUNTING, ELEMENTS));
         m.put(CRYSTAL, List.of(TYPE, VALUE, LOAD_CAPACITANCE, MOUNTING));
         m.put(OSCILLATOR, List.of(TYPE, VALUE, MOUNTING));
@@ -107,7 +115,7 @@ public final class ConstraintPolicy {
         m.put(REGULATOR, List.of(TYPE, VOLTAGE, PACKAGE, MOUNTING));
         m.put(CONNECTOR, List.of(TYPE, CONNECTOR_TYPE, GENDER, POSITIONS, PITCH, PACKAGE, MOUNTING));
         m.put(USB, List.of(TYPE, USB_TYPE, PIN_CONFIGURATION, USB_STANDARD, GENDER, MOUNTING));
-        m.put(DEFAULT, List.of(TYPE, VALUE, PACKAGE, MOUNTING, TECHNOLOGY, ELEMENTS, POLARITY, VOLTAGE));
+        m.put(DEFAULT, List.of(TYPE, VALUE, PACKAGE, MOUNTING, TECHNOLOGY, ELEMENTS, POLARITY, VOLTAGE, FORM_FACTOR));
         return java.util.Collections.unmodifiableMap(m);
     }
 
@@ -288,6 +296,13 @@ public final class ConstraintPolicy {
             }
             unknown |= cmp == 0;
         }
+        if (hard.contains(FORM_FACTOR)) {
+            Boolean same = FormFactor.compatible(FormFactor.ofRequest(query, hard.contains(PACKAGE)), f.formFactor());
+            if (same == Boolean.FALSE) {
+                conflicts.add(FORM_FACTOR);
+            }
+            unknown |= same == null && query.formFactor() != null;
+        }
         if (hard.contains(ELEMENTS) && query.elements() == null && f.elements() != null && query.family() != null
                 && PassiveDetails.ARRAY_FAMILIES.contains(query.family())) {
             conflicts.add(ELEMENTS);   // a bead array or resistor network for a single-element request
@@ -423,6 +438,9 @@ public final class ConstraintPolicy {
         }
         if (hardSet.contains(TECHNOLOGY) && query.technology() != null) {
             out.add(TECHNOLOGY);
+        }
+        if (hardSet.contains(FORM_FACTOR) && query.formFactor() != null) {
+            out.add(FORM_FACTOR);
         }
         ParsedQuery.Connector c = query.connector();
         if (c != null) {

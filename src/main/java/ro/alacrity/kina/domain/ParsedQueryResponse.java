@@ -15,7 +15,8 @@ import java.util.Map;
  * {@code {"family":"capacitor","capacitance":"10uF","dielectric":"X7R","package":"0805","keywords":[]}};
  * {@code technology} ("thin film", "tantalum"...) when the query names the construction of a passive; {@code elements}
  * ("4", or "array" without a count) when it asks for an array or network; {@code polarity} ("N-channel", "NPN"...) and
- * {@code subtype} ("standard" diode, "fixed" or "adjustable" regulator) when stated or implied.
+ * {@code subtype} ("standard" diode, "fixed" or "adjustable" regulator) when stated or implied; {@code form_factor}
+ * ("chassis") when the words ask for a chassis or heatsink mounted part.
  * Constraints are flattened into the object by kind using their display form; absent values are omitted.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -31,13 +32,14 @@ public record ParsedQueryResponse(
         @JsonProperty("connector") ConnectorResponse connector,
         @JsonProperty("elements") String elements,
         @JsonProperty("polarity") String polarity,
-        @JsonProperty("subtype") String subtype
+        @JsonProperty("subtype") String subtype,
+        @JsonProperty("form_factor") String formFactor
 ) {
 
     /** A parsed query without connector attributes and technology. */
     public ParsedQueryResponse(String family, Map<String, String> constraints, String dielectric, String packageName,
                                String mounting, List<String> keywords) {
-        this(family, constraints, dielectric, packageName, mounting, null, keywords, null, null, null, null);
+        this(family, constraints, dielectric, packageName, mounting, null, keywords, null, null, null, null, null);
     }
 
     public static ParsedQueryResponse from(ParsedQuery query) {
@@ -47,7 +49,7 @@ public record ParsedQueryResponse(
                 query.mounting(), query.technology(), query.keywords(), ConnectorResponse.from(query.connector()),
                 query.elements() == null ? null
                         : query.elements() == ParsedQuery.ANY_ELEMENTS ? "array" : query.elements().toString(),
-                query.polarity(), query.subtype());
+                query.polarity(), query.subtype(), query.formFactor());
     }
 
     /**

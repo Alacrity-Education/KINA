@@ -87,6 +87,10 @@ public class ParametricExtractor {
     public static final String POLARITY = "Polarity";
     /** "standard" (rectifier / switching diode of the generic diode family), "fixed" or "adjustable" (regulators). */
     public static final String SUBTYPE = "Subtype";
+    /** Form factor class of a passive ({@link FormFactor}: chip, through_hole, chassis, power_package, power_smd). */
+    public static final String FORM_FACTOR = "FormFactor";
+    /** Operating temperature range as printed by the distributor, normalised ("-55...155°C"). */
+    public static final String OPERATING_TEMPERATURE = "OperatingTemperature";
 
     /** Comparable key per {@link ParsedQuery} value kind, in output order. */
     private static final Map<String, String> KIND_KEYS = orderedKindKeys();
@@ -118,7 +122,7 @@ public class ParametricExtractor {
             "Dielectric", "Package", "Mounting", "Family", "Technology", "ConnectorType", "Gender", "Positions", "Rows",
             "Pitch", "Orientation", "Series", "UsbType", "UsbStandard", "UsbSpeedGbps", "PinConfiguration",
             "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features", ELEMENTS, RIPPLE_CURRENT, ESR, DIMENSIONS,
-            QUALIFICATION, CASE, POLARITY, SUBTYPE);
+            QUALIFICATION, CASE, POLARITY, SUBTYPE, FORM_FACTOR, OPERATING_TEMPERATURE);
 
     // ---------------------------------------------------------------- distributor attribute names (lower-case)
 
@@ -176,7 +180,17 @@ public class ParametricExtractor {
             "endurance", "useful life", "lifetime @ temp.", "life", "operating life");
     /** Operating temperature (TME "-55...105°C", Mouser "Maximum Operating Temperature" = "+ 105 C"). */
     private static final List<String> TEMPERATURE_NAMES = List.of("maximum operating temperature",
-            "operating temperature", "operating temperature range", "temperature range", "max. operating temperature");
+            "max. operating temperature", "operating temperature", "operating temperature range", "temperature range");
+    /** Operating temperature ranges (TME {@code Operating temperature} = {@code -55...155°C}). */
+    private static final List<String> TEMPERATURE_RANGE_NAMES = List.of("operating temperature",
+            "operating temperature range", "temperature range");
+    /**
+     * A printed temperature range with both ends: TME {@code -55...155°C}, {@code -55÷125°C}, LCSC {@code -55℃~+155℃}
+     * (NFKC: {@code °C}), {@code -40°C to +85°C}, {@code -55 ~ +155 C}.
+     */
+    private static final Pattern TEMPERATURE_RANGE = Pattern.compile(
+            "(?<![\\d.])([-−]\\s?\\d{1,3}(?:\\.\\d+)?)\\s?(?:°C?|℃)?\\s?(?:~|\\.{2,3}|…|÷|to)\\s?(\\+?\\d{1,3}(?:\\.\\d+)?)"
+                    + "\\s?(?:°C?|℃|C(?![\\p{L}\\d]))");
     private static final Pattern HOURS = Pattern.compile(
             "(?i)(\\d+(?:[.,]\\d+)?)\\s*(?:h|hrs?|hours?)(?![a-z])(?:\\s*@\\s*\\+?(\\d{2,3})\\s*°?\\s*C)?");
     private static final Pattern SIGNED_NUMBER = Pattern.compile("[-+−]?\\s?\\d+(?:\\.\\d+)?");
@@ -262,11 +276,12 @@ public class ParametricExtractor {
      *                 values of a part without labels, sorted as text: {@code 1.1V@(800mA) 15V 1A 3.3V}); ranges
      *                 ({@code 1.2V~37V}) and conditioned values ({@code 100nA@0.8V}) are left out. Empty for other
      *                 families
+     * @param formFactor the form factor class of a passive ({@link FormFactor#ofPart}), null when nothing says
      */
     record Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
                     String mounting, String text, ParsedQuery.Connector connector, String technology,
                     Integer elements, Map<String, String> details, String polarity, String subtype,
-                    List<Double> voltages) {
+                    List<Double> voltages, String formFactor) {
 
         Features {
             details = details == null ? Map.of() : details;
@@ -301,6 +316,9 @@ public class ParametricExtractor {
         putIfNotNull(out, POLARITY, f.polarity());
         putIfNotNull(out, SUBTYPE, f.subtype());
         putIfNotNull(out, ELEMENTS, PassiveDetails.elementsDisplay(f.elements()));
+        if (FormFactor.ofPackage(f.packageName()) == null) {
+            putIfNotNull(out, FORM_FACTOR, f.formFactor());   // a package (0805, SOT-227) already says it
+        }
         f.details().forEach(out::putIfAbsent);
         ParsedQuery.Connector c = f.connector();
         if (c != null) {
@@ -337,8 +355,32 @@ public class ParametricExtractor {
      */
     public Part enrich(Part part) {
         Map<String, String> attributes = new LinkedHashMap<>(part.attributes());
-        extract(part).forEach(attributes::putIfAbsent);
+        extract(part).forEach((key, value) -> {
+            String raw = attributes.get(key);
+            if (raw == null) {
+                attributes.put(key, value);
+            } else if (!raw.equals(value) && sameQuantity(key, raw, value)) {
+                attributes.put(key, value);   // TME "Power: 0.25kW" is shown in the canonical form "250W"
+            }
+        });
         return part.toBuilder().attributes(attributes).build();
+    }
+
+    /**
+     * True when a distributor's {@code Power} attribute states the canonical power in another form (TME
+     * {@code 0.25kW}): it is then shown as the canonical {@code 250W}. Every other distributor attribute is kept as
+     * given.
+     */
+    private static boolean sameQuantity(String key, String raw, String canonical) {
+        String kind = KIND_KEYS.entrySet().stream().filter(e -> e.getValue().equals(key)).map(Map.Entry::getKey)
+                .findFirst().orElse(null);
+        if (!ParsedQuery.POWER.equals(kind)) {
+            return false;
+        }
+        Recognizers.Value a = Recognizers.firstValue(raw, kind, null);
+        Recognizers.Value b = Recognizers.firstValue(canonical, kind, null);
+        return a != null && b != null && a.condition() == null
+                && DeterministicRanker.sameValue(b.value(), a.value(), 1e-9);
     }
 
     /** Typed features used by {@link DeterministicRanker}. */
@@ -410,6 +452,14 @@ public class ParametricExtractor {
         temperatureAttribute(attrs, values);
         Set<String> fromAttributes = Set.copyOf(values.keySet());
         description.values().forEach(values::putIfAbsent);
+        if (!values.containsKey(ParsedQuery.POWER) && "resistor".equals(explicitFamily != null ? explicitFamily
+                : values.containsKey(ParsedQuery.RESISTANCE) ? "resistor" : null)) {
+            // Arcol HS50, TE THS25, Vishay RH-50...: the series names the wattage the text does not state
+            Double watts = ResistorSeries.power(part.manufacturer(), part.manufacturerPartNumber());
+            if (watts != null) {
+                values.put(ParsedQuery.POWER, Recognizers.of(ParsedQuery.POWER, watts));
+            }
+        }
 
         String family = explicitFamily;
         if (family == null) {
@@ -426,6 +476,7 @@ public class ParametricExtractor {
             ratingFromLargestVoltage(part.description(), family, values);
         }
         Map<String, String> details = new LinkedHashMap<>();
+        putIfNotNull(details, OPERATING_TEMPERATURE, operatingTemperature(attrs, part.description()));
         if ("capacitor".equals(family)) {
             // a capacitor's current is its ripple current (TME "Operating current" 0.24A on EEEFK1C101P), never Current
             values.remove(ParsedQuery.CURRENT);
@@ -535,10 +586,12 @@ public class ParametricExtractor {
             voltages = fromAttributes.contains(ParsedQuery.VOLTAGE) ? List.of(values.get(ParsedQuery.VOLTAGE).value())
                     : Recognizers.singleValues(part.description(), ParsedQuery.VOLTAGE, family);
         }
+        String formFactor = connector != null ? null
+                : FormFactor.ofPart(family, packageName, part.description(), part.category(), part.packageName());
         return new Features(family, values, dielectric, packageName, mounting,
                 Recognizers.normalizeKey(text.toString()), connector, connector != null ? null : technology,
                 connector == null ? PassiveDetails.elements(part, attrs, family) : null, details, polarity, subtype,
-                voltages);
+                voltages, formFactor);
     }
 
     /**
@@ -585,6 +638,11 @@ public class ParametricExtractor {
         String fromCategory = TechnologyVocabulary.of(part.category(), family);
         if (fromCategory != null) {
             found.add(fromCategory);
+        }
+        String fromSeries = TechnologyVocabulary.ofPart(part.manufacturer(), part.manufacturerPartNumber(),
+                part.category(), family);
+        if (fromSeries != null) {
+            found.add(fromSeries);
         }
         // "polymer" alone is refined by another source: JLCPCB "Polarized Polymer" in the category "Polymer Aluminum
         // Capacitors" is aluminium polymer, "polymer" next to "tantalum" is tantalum polymer
@@ -1250,6 +1308,42 @@ public class ParametricExtractor {
                 return;
             }
         }
+    }
+
+    /**
+     * The operating temperature range, normalised to {@code <min>...<max>°C}: a range attribute (TME
+     * {@code Operating temperature}), else a range the description prints (LCSC {@code -55℃~+155℃}); null when neither
+     * states both ends.
+     */
+    static String operatingTemperature(Map<String, String> attrs, String description) {
+        for (String name : TEMPERATURE_RANGE_NAMES) {
+            String range = temperatureRange(attrs.get(name));
+            if (range != null) {
+                return range;
+            }
+        }
+        return temperatureRange(description);
+    }
+
+    private static String temperatureRange(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        java.util.regex.Matcher m = TEMPERATURE_RANGE.matcher(
+                java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFKC));
+        if (!m.find()) {
+            return null;
+        }
+        double min = Double.parseDouble(m.group(1).replace("−", "-").replace(" ", ""));
+        double max = Double.parseDouble(m.group(2).replace("+", ""));
+        if (min >= max) {
+            return null;
+        }
+        return plain(min) + "..." + plain(max) + "°C";
+    }
+
+    private static String plain(double v) {
+        return java.math.BigDecimal.valueOf(v).stripTrailingZeros().toPlainString();
     }
 
     /** The maximum operating temperature: the largest number of an operating temperature attribute. */

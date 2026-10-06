@@ -38,7 +38,7 @@ KINA answers (abridged):
       "cache": "hit", "error": null, "query_terms_dropped": [], "constraints_relaxed": [], "exact_matches": 7,
       "parts": [
         {
-          "rank": 1, "score": 0.93, "match": 1.0, "part_number": "603-CC0805MKX77BB106",
+          "rank": 1, "match": 1.0, "part_number": "603-CC0805MKX77BB106",
           "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106",
           "stock": 76689, "stock_as_of": "2026-10-06T09:12:44Z", "min_order_qty": 1, "order_multiple": 1,
           "prices": [

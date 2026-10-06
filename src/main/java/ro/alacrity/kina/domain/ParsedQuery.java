@@ -36,6 +36,10 @@ import java.util.Map;
  * @param subtype      "standard" for a rectifier or switching diode of the generic diode family, "fixed" or
  *                     "adjustable" for a regulator (a stated output voltage implies "fixed"), else null; a hard
  *                     constraint
+ * @param formFactor   the form factor the request's words name ({@code "chassis"} for heatsink, chassis, bolt or screw
+ *                     mount and aluminium housed; {@code search.FormFactor}), null when none; a package with a form
+ *                     factor (SOT-227, 0805) is read from {@link #packageName} instead. A hard constraint for
+ *                     resistors, capacitors, inductors and the default family (DESIGN.md 3.4)
  */
 @Builder(toBuilder = true)
 public record ParsedQuery(
@@ -52,7 +56,8 @@ public record ParsedQuery(
         List<String> preferences,
         Integer elements,
         String polarity,
-        String subtype
+        String subtype,
+        String formFactor
 ) {
 
     /** {@link #elements()} of a request for an array or network whose element count is not stated. */
@@ -125,7 +130,7 @@ public record ParsedQuery(
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
         this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null,
-                null, null, null, null);
+                null, null, null, null, null);
     }
 
     /**
@@ -135,7 +140,8 @@ public record ParsedQuery(
      */
     public boolean understood() {
         return family != null || !constraints.isEmpty() || dielectric != null || packageName != null
-                || mounting != null || technology != null || connector != null || elements != null;
+                || mounting != null || technology != null || connector != null || elements != null
+                || formFactor != null;
     }
 
     /** True when the query states the preference ({@link #LOW_DCR}). */

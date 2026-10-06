@@ -47,6 +47,10 @@ FALLBACK_QUERY = "SOT-23 N-channel MOSFET 30V"
 IMPOSSIBLE_QUERY = "22uF X7R 0201 100V"
 CRYSTAL_QUERY = "16MHz crystal 3225 SMD"
 OSCILLATOR_QUERY = "16MHz oscillator 3225"
+# power resistors (DESIGN.md 3.4 "Form factor", "Match grade"): free-text words never block an exact match, and a
+# SOT-227 request never returns chip resistors
+CHASSIS_QUERY = "25W 100 ohm aluminium housed chassis mount resistor"
+SOT227_QUERY = "300W 10 ohm power resistor SOT-227 heatsink"
 REDIRECT_URI = "http://localhost:6274/callback"
 # data notices every response lists for the distributors whose parts it returns (DESIGN.md 3.2 "Attributions")
 ATTRIBUTIONS = {
@@ -651,6 +655,26 @@ def suite_rest(base: str, token: str, rec: Recorder):
               and lcsc.get("excluded_below_spec", 0) + lcsc.get("excluded_by_constraints", 0) < lcsc.get("fetched", 0),
               f"returned {lcsc.get('returned')} of {lcsc.get('fetched')}, excluded {lcsc.get('excluded_by_constraints')}"
               f"+{lcsc.get('excluded_below_spec')} below spec, voltages {sorted(set(map(str, volts)))}")
+
+    q = urllib.parse.urlencode({"q": CHASSIS_QUERY, "max_results": 10})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    exact = {d["distributor"]: d.get("exact_matches") for d in body.get("distributors", [])}
+    scores = [p for d in body.get("distributors", []) for p in d.get("parts", []) if "score" in p]
+    rec.check(f"rest: '{CHASSIS_QUERY}' -> exact_matches > 0 somewhere, no score in compact",
+              resp.status == 200 and any((v or 0) > 0 for v in exact.values()) and not scores
+              and not shape_problems(body), f"exact_matches {exact}, form_factor "
+              f"{body.get('parsed', {}).get('form_factor')!r}; " + "; ".join(shape_problems(body)), resp.millis)
+    q = urllib.parse.urlencode({"q": SOT227_QUERY, "max_results": 10, "distributors": "MOUSER"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    mouser = next((d for d in body.get("distributors", []) if d["distributor"] == "MOUSER"), {})
+    chips = [p["mpn"] for p in mouser.get("parts", [])
+             if " - SMD" in p.get("description", "") or p.get("attributes", {}).get("FormFactor") == "chip"]
+    rec.check(f"rest: Mouser '{SOT227_QUERY}' returns no chip resistor", resp.status == 200 and not mouser.get(
+        "error") and not chips and not shape_problems(body),
+              f"returned {[p['mpn'] for p in mouser.get('parts', [])]}, excluded "
+              f"{mouser.get('excluded_by_constraints_detail')}, chips {chips}", resp.millis)
 
     q = urllib.parse.urlencode({"q": FALLBACK_QUERY, "max_results": 3, "distributors": "TME"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)

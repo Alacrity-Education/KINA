@@ -485,7 +485,8 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
 - value with SI prefix and unit, including RKM notation (`4k7`, `4u7`, `10R`, `2R2`):
   capacitance (`pF nF uF µF mF F`), resistance (`Ω ohm R`, `k`, `M`, `m`), inductance (`nH uH mH H`),
   voltage (`V`, `kV`, `mV`; KEMET's truncated `10Volt`, `10Vol`, `6.3Vo` at Mouser), current (`A`, `mA`, `uA`), power
-  (`W`, `mW`), frequency (`Hz kHz MHz`), maximum operating temperature (`105°C`, `℃`, Mouser `105C` for 70..200, the
+  (`W`, `mW`, `kW`, `watt`, `watts`, `kilowatt`, with or without a space: `300watts`, `50watt`, `150 W`, `1.5 kW`,
+  `1/4W`; shown in watts below 1 kW, `250W`, `0.5W`, `0.125W`, and in kilowatts from 1 kW, `1.5kW`), frequency (`Hz kHz MHz`), maximum operating temperature (`105°C`, `℃`, Mouser `105C` for 70..200, the
   upper end of a range `-55℃~+105℃`, `-55...105°C`, `-55÷125°C`), lifetime in hours (`2000h`, `2000hrs`, `5000 hours`,
   `2000hrs@105℃` with its test temperature)
 - units are read case-sensitively where the case carries meaning: the prefix `m` is milli and `M` mega for every unit
@@ -598,8 +599,11 @@ part's description and attribute values, so parts from all three distributors ex
 `Package` (imperial, section "Packages are imperial"), `Mounting` keys, `Technology` for resistors, capacitors and
 inductors, `Polarity` for transistors (`N-channel`, `P-channel`, `NPN`, `PNP`, `complementary`), `Subtype` (`standard`
 for a rectifier or switching diode of the generic diode family, `fixed` or `adjustable` for a regulator), and
-`Impedance` (ferrite beads, `120ohm @100MHz`), `SaturationCurrent`, `DCR`, `MaxTemperature` (`105°C`) and `Lifetime`
-(`2000h @105°C`). A crystal's `Capacitance` is its load capacitance (attribute `Load capacitance` too). Inductors
+`Impedance` (ferrite beads, `120ohm @100MHz`), `SaturationCurrent`, `DCR`, `MaxTemperature` (`105°C`),
+`OperatingTemperature` (`-55...155°C`, below), `Lifetime` (`2000h @105°C`) and `FormFactor` (section "Form factor"
+below; only when the package does not already say it). A distributor `Power` attribute in another form of the same
+value (TME `Power: 0.25kW`) is shown as the canonical `250W` in both detail levels; every other distributor attribute
+is kept as given. A crystal's `Capacitance` is its load capacitance (attribute `Load capacitance` too). Inductors
 and ferrite beads report their current as `RatedCurrent` instead of `Current` and never carry `Resistance`. Distributor
 attributes (TME parameters, Mouser ProductAttributes) take precedence over description parsing. Inductor and ferrite
 parameters (verified on TME 2026-10-06): `Resistance` (TME: the DC resistance, BLM31KN121SN1L `9mΩ`), `DC resistance`,
@@ -612,7 +616,23 @@ the package field (LCSC `SMD,D8xL10mm`, `插件,D6.3xL8mm`) and the category (`.
 `radial`, `axial`, `leaded` mean THT). Extracting again from an enriched (cached) part gives the same values. `Technology` comes from the TME
 parameters `Type of resistor`/`Type of capacitor`/`Type of inductor`/`Kind of capacitor`/`Kind of resistor` (or a
 `Technology`/`Composition`/`Construction` attribute), then the description, then the category (JLCPCB capacitors say
-it only in the category: `Capacitors / Tantalum Capacitors`).
+it only in the category: `Capacitors / Tantalum Capacitors`), then the series or category of a power resistor
+(`TechnologyVocabulary.ofPart`, parts only): the Mouser category `Planar Resistors` and Ohmite's `TGH` series
+(`TGHG`, `TGHPV`) are thick film. TME's `Type of resistor: power` and its `LPR` / `AHP` series name no technology and
+get none, never a guessed one; a technology request against such a part stays unverified.
+
+**Thermal fields** (distributor text only, never datasheets): `MaxTemperature` is the largest number of an operating
+temperature attribute (Mouser `Maximum Operating Temperature`, TME `Max. operating temperature`, then TME `Operating
+temperature`), else the upper end of a range or a single temperature in the description (LCSC `-55℃~+155℃`, Mouser
+`+155C`). `OperatingTemperature` is the range with both ends, normalised to `<min>...<max>°C`: TME `Operating
+temperature` (`-55...155°C`), else a range the description prints (LCSC `-55℃~+175℃` -> `-55...175°C`). Mouser's
+search API returns no parametric attributes, so Mouser parts carry only what the description says.
+
+**Power resistors** (DESIGN decision 2026-10-07). A power the description or the attributes state always wins. Only
+when neither states one, the series of a resistor's part number names it (`ResistorSeries`): Arcol `HS`, `HSA`, `HSC`
+(`HS25` 25 W, `HSC100` 100 W; the number must be a series wattage, so `HS254R7J` is 25 W), TE `THS` (`THS25`), Vishay /
+Dale `RH` (`RH-50`, `RH0254R700`), Ohmite `TEH70` / `TEH100`, Bourns `PWR220T-20` (20 W) / `PWR263S-35`, Caddock
+`MP915`, `MP925`, `MP930`, `MP9100`, and `LPS0300` / `LPS0800` (300 W / 800 W). Ohmite `TGH` names no wattage.
 
 **Descriptive details of passives** (`PassiveDetails`, canonical keys that are reported but not scored, except
 `Elements`): `Elements` (arrays and networks, section "Arrays" below); for capacitors `RippleCurrent` (a capacitor's
@@ -691,18 +711,20 @@ with the product kind (`Adapter;`, `Cable;`, `Hub USB;`, `Power supply`).
 | technology (`W_TECHNOLOGY`) | 0.15 | the query names a technology: same -> +0.15; a different known technology -> -0.15; unknown -> 0. Compatible (+): a `film` request and a polypropylene/polyester/PPS part, a `tantalum` or `polymer` request and a tantalum polymer part, a `current sense` request and a metal strip/metal foil part. Neutral (0): a polypropylene request and a part that only says `film`, a tantalum polymer request and a `tantalum` part, a `current sense` request and any other construction |
 | ratings: voltage, current (an inductor's rated current), saturation current, power, temperature, lifetime; DCR | 0.10 | shared between the stated ratings. Minimums: part >= requested -> full; lower -> -0.10; a higher rating keeps full credit in the match grade but loses up to `W_RATING_EXCESS` (0.05) of score, `0.05 * min(1, log2(part / requested) / 2)`, so 25 V > 35 V > 50 V > 100 V for a 25 V request. DCR is a maximum (part <= requested). Regulator and Zener voltages and fuse currents must match within 2 %. Saturation current is compared with the part's saturation current only: a part that does not state it scores 0 |
 | mounting (non-connector requests, `W_MOUNTING`) | 0.05 | SMD/THT same +0.05, different -0.05 |
+| form factor named by the request's words (`W_FORM_FACTOR`) | 0.10 | `FormFactor.compatible`: +0.10, another known class -0.10 (excluded anyway), unknown -> unverified (`form factor`). A class implied only by the package is not scored again |
 | low DCR preference (`W_LOW_DCR`) | up to 0.04 | `0.04 / (1 + DCR / 10 mΩ)`, score only: lower DCR ranks higher among otherwise equal parts |
 | tolerance | 0.10 | part tolerance <= requested -> full; looser -> -0.10 |
 | family keyword present in description/category | 0.05 | |
-| lexical: share of free-text tokens found in mpn/description/attributes | 0.10 | |
+| lexical: share of free-text tokens found in mpn/description/attributes | 0.10 | score only, never part of the match grade |
 | tie-break bonuses | up to 0.05 | log10(stock) scaled, has price, JLCPCB "Basic"/"Preferred" library |
 
 Clamp to [0,1].
 
 **Match grade** (`DeterministicRanker.assess`, the `match` field of every search result part): the signals the part
 earned (tie-break excluded) divided by what a part matching every stated **and verified** parameter earns: the weights
-of the stated signals (primary value, package, dielectric, technology, each rating with an equal share of 0.10,
-mounting, tolerance, family, lexical; for connector and USB requests the stated connector attributes), clamped to [0,1]
+of the stated typed signals (primary value, package, polarity, load capacitance, dielectric, technology, each rating
+with an equal share of 0.10, mounting, form factor, tolerance, family; for connector and USB requests the stated
+connector attributes), clamped to [0,1]
 and rounded to 2 decimals in responses. It is computed before the blend, is absolute (not rank-normalised) and does
 not influence the order. For `Thin film resistor, 5.36k 0805 0.1%` the Mouser parts `TNPW08055K36BEEA` and
 `RN73C2A5K36BTDF` grade 1.0 (tolerance `.1%`, package from the MPN, technology from the category).
@@ -715,8 +737,11 @@ mounting; for USB requests type, pin configuration, standard, gender, mounting a
 verified constraints. `match` 1.0 with a non-empty `unverified` list is therefore **not** a confirmed fit (the third
 audit saw TME `JRPI0804M-2R2M`, which states no current, score 0.67 for an 8 A request because the unknown rating
 counted as a match). Such a part ranks below every complete part (tier, section 3.3) and is not counted in
-`exact_matches`. A part that states none of the stated constraints has `match` null. Family words and the free-text
-keywords stay in the grade (an unknown family earns nothing; a keyword not found earns nothing).
+`exact_matches`. A part that states none of the stated constraints has `match` null. Family words stay in the grade
+(an unknown family earns nothing). Free-text keywords never do (since 2026-10-07): they rank (the lexical signal of
+the score) but neither lower `match` nor block an exact match. Before, every chassis query (`heatsink`, `housed`,
+`chassis`, `mount` missing from the part text) reported `exact_matches` 0 on every distributor although parts met 25 W
+and 100 ohm with nothing unverified.
 
 **Mismatches** (`DeterministicRanker.mismatches`, the `mismatches` of every search result part): the stated
 parameters the part is known not to satisfy, in plain words (a part with a hard conflict is excluded, so returned
@@ -724,10 +749,12 @@ parts show relaxable misses, and ratings with `allow_below_spec`): `capacitance:
 instead of 1206` (an inductor, crystal or oscillator), `polarity: P-channel instead of N-channel`, `load capacitance:
 8pF instead of 18pF`, `dielectric: X5R instead of X7R`, `technology: tantalum polymer instead of aluminium polymer`,
 `voltage: 16V below 25V`, `dcr: 40mohm above 20mohm`, `tolerance: 10% instead of 1%`, `mounting: THT instead of SMD`,
-`family: ...`, `elements: single instead of array` / `elements: array instead of single`, and for non-USB connectors
+`family: ...`, `elements: single instead of array` / `elements: array instead of single`, `form factor: chip instead of
+chassis`, and for non-USB connectors
 positions, gender, pitch and orientation. An attribute the part does not state is not a mismatch (it is unverified).
 The distributor entry's `exact_matches` counts the returned parts with `match` 1.0, nothing unverified and not below
-spec (null when the query was not understood).
+spec (null when the query was not understood): every typed constraint of the request (family, value, tolerance,
+ratings, package, mounting, technology, dielectric, polarity, subtype, elements, form factor) met and verified.
 
 **Below spec** (`Assessment.belowSpec`, `belowSpecDistance`): every stated rating is a hard limit. A part whose
 **known** voltage, current (an inductor's rated current), saturation current, power, maximum temperature or lifetime is
@@ -753,9 +780,9 @@ request is its family, `diode` for Schottky, Zener, TVS and LED, `transistor` fo
 
 | Family | Hard (never relaxed) | Relaxable |
 |---|---|---|
-| resistor | type, value (resistance), package, mounting, technology, elements (single) | tolerance (looser), TCR |
-| capacitor | type, value (capacitance), package (a can size within 0.2 mm), mounting, technology, elements | dielectric, tolerance, ESR |
-| inductor | type, value (inductance), mounting, technology | package, tolerance, DCR preference |
+| resistor | type, value (resistance), package, mounting, technology, elements (single), form factor | tolerance (looser), TCR |
+| capacitor | type, value (capacitance), package (a can size within 0.2 mm), mounting, technology, elements, form factor | dielectric, tolerance, ESR |
+| inductor | type, value (inductance), mounting, technology, form factor | package, tolerance, DCR preference |
 | ferrite | type, value (impedance at its test frequency), package, mounting, elements | tolerance, DCR preference |
 | crystal | type (never an oscillator), value (frequency), load capacitance (exact, 1 %), mounting | package, tolerance |
 | oscillator | type (never a crystal), value (frequency), mounting | package |
@@ -764,7 +791,7 @@ request is its family, `diode` for Schottky, Zener, TVS and LED, `transistor` fo
 | regulator | type (fixed or adjustable), voltage (output, exact), package, mounting | |
 | connector | type, connector type, gender, positions, pitch, package, mounting | orientation |
 | usb | type, usb type, pin configuration (stated, normalised), usb standard (a higher one is accepted), gender, mounting | orientation |
-| default | type, value, package, mounting, technology, elements, polarity, voltage | |
+| default | type, value, package, mounting, technology, elements, polarity, voltage, form factor | |
 
 Ratings (minimum voltage, current, saturation current, power, temperature, lifetime; maximum DCR) are not in the
 table: they are always hard downward ("Below spec" below) and only `allow_below_spec` returns parts below them.
@@ -809,6 +836,10 @@ The checks, in this order (the first conflict names the part's entry in the deta
   **elements**: a resistor, capacitor or ferrite request that does not ask for an array (`ParsedQuery.elements` null)
   excludes arrays and networks (the part's `Elements`, see "Arrays" below), e.g. the 4-line bead array
   `BLA31BD121SN4D` for `120 ohm 100MHz 1206 ferrite bead 6A`.
+- **form factor** (reported as `form factor`): the request's class (its package's class when the package is hard and
+  has one, else the class its words name) against the part's class, `FormFactor.compatible` false. A part whose class
+  cannot be read stays; it is `unverified: ["form factor"]` when the request's words named the class (a class implied
+  only by the package adds nothing: the package is already unverified), and ranks below every verified part.
 - **connector type** (`ConnectorRecognizer.typesMatch` false), **positions**, **pitch** (0.03 mm), **gender**: known
   and different. **usb type**: different USB types, or a non-USB connector; **pin configuration**: a stated (not
   implied) configuration against the part's canonical one (17P is 16); **usb standard**: a lower class or a
@@ -821,6 +852,27 @@ unknown families and names are ignored with a warning). The deprecated `kina.sea
 removed from every family, with a warning; empty or unset means the defaults. Distributor data is taken as given: KINA
 does not decode part numbers to check a distributor's values and does not compare distributors with each other (user
 decision 2026-10-07).
+
+**Form factor** (`search.FormFactor`, decision 2026-10-07; resistors, capacitors, inductors, ferrite beads and
+requests without a family). A bounded set of classes, read from distributor text only:
+
+| Class | Part side | Request side |
+|---|---|---|
+| `chip` | imperial chip package (`0201`..`2512`, also `1225`, `2728`, `4527`, `0612`, `1218` in a resistor's description); for resistors without a body package also `SMD`, `SMT`, surface mount (Mouser `Wirewound Resistors - SMD`) | a chip package (`0805`) |
+| `through_hole` | leaded bodies: `axial`, `radial`, `leaded`, LCSC `AXIAL-0.6`. A bare `Through Hole` or `THT` is not enough: Mouser files TO-220 and TO-247 power resistors under `Through Hole` | (none) |
+| `chassis` | `chassis`, `heatsink`, `bolt`, `screw` (with or without `mount`; never `screw terminal`), `aluminium housed` / `aluminum housed` / `alum housed`, TME `with heatsink; screw`, LCSC package `Bolt Mount`, Mouser `- Chassis Mount` | the same words |
+| `power_package` | `SOT-227`, `TO-220`, `TO-247`, `TO-218`, `TO-126`, `TO-264`, `TO-3P` | the same packages |
+| `power_smd` | `TO-263` / `D2PAK`, `TO-252` / `DPAK`, `D3PAK`, `TO-268` | the same packages |
+
+The part's package decides first, then the chassis and leaded-body words of its description, category and package
+field, then (resistors only) the chip codes and the SMD words. A request's package with a class wins over its words
+(`300W 10 ohm power resistor SOT-227 heatsink` asks for `power_package`); `parsed.form_factor` shows the class the
+words name. Compatibility: a `chassis` request accepts `chassis` and `power_package` parts (both are screwed to a
+heatsink), a `power_package` request accepts both as well, every other class only itself. A different known class is
+a hard conflict for resistors, capacitors, inductors and the default family (never relaxed); for an inductor only the
+request's words count (its package is relaxable). The live probe of 2026-10-07 for query B returned Mouser `Wirewound
+Resistors - SMD 10 OHMS 5%` and `Thick Film Resistors - SMD 2watt ... 1225` for a SOT-227 request because their package
+was unreadable; they are now excluded under `form factor`.
 
 **Packages are imperial** (user decision 2026-10-07). A bare four-digit chip code anywhere (query, description,
 attribute, package field) is the imperial code: `0603` is imperial 0603, never metric 0603 (imperial 0201). A metric
@@ -844,7 +896,8 @@ aluminium polymer and tantalum polymer; hybrid polymer neither matches nor contr
 **Arrays** (`PassiveDetails.elements`, the `Elements` attribute; resistors, capacitors and ferrite beads; never for
 common-mode chokes and filters): the count from an attribute (`Number of elements`, `Number of resistors`, `Number of
 lines`, `Number of channels`...), from the text (`4 lines`, `4 elements`, `8 resistors`; JLCPCB networks
-`0603x4` in the package or description), else `array` when a word says so (`array`, `network`, TME `Kind of ferrite:
+`0603x4`, `0402x8` in the package or description: the chip code directly followed by `x` and the count, with no letter
+after the count, so `0805 X7R` is never a 7-element array), else `array` when a word says so (`array`, `network`, TME `Kind of ferrite:
 array`, categories such as `Resistor Networks, Arrays`). A request asks for an array with `array`, `network`
 (`ParsedQuery.ANY_ELEMENTS`, `parsed.elements` `"array"`) or a count (`4 lines`, `2 elements`; `parsed.elements` `"4"`);
 a different known count is a mismatch, an array of unstated size for a counted request is unverified.
@@ -1206,7 +1259,7 @@ parameters; descriptions are read by the LLM, keep them precise):
       "cache": "hit",
       "error": null,
       "parts": [
-        {"rank": 1, "score": 0.93, "match": 1.0, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
+        {"rank": 1, "match": 1.0, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
          "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106", "description": "...",
          "stock": 76689, "stock_as_of": "2026-10-06T09:12:44Z", "min_order_qty": 1, "order_multiple": 1,
          "prices": [{"qty": 1, "unit_price": 1.40, "currency": "EUR"}, {"qty": 10, "unit_price": 0.853, "currency": "EUR"}, {"qty": 50, "unit_price": 0.631, "currency": "EUR"}],
@@ -1239,7 +1292,7 @@ section 3.2 "Attributions"; `get_part` carries the same field with the distribut
 an identity, else an empty list).
 
 **Detail** (`ResponseDetail`, `detail`): `compact` (default for the searches; `get_part` and its REST endpoint default
-to `full`) returns per part `rank`, `score`, `match`, `below_spec` (only when true), `mismatches` and `unverified`
+to `full`) returns per part `rank`, `match`, `below_spec` (only when true), `mismatches` and `unverified`
 (omitted when empty), `distributor`, `part_number` (the distributor's number), `manufacturer`, `manufacturer_id` (the
 distributor's own manufacturer id as it provides it: TME only, omitted when absent), `mpn`, `description`, `stock`,
 `stock_as_of` (the part's `fetchedAt` to the second, both levels), `stale` (only when true: stock and prices older
@@ -1247,7 +1300,7 @@ than `kina.cache.ttl` that could not be refreshed, section 3.2 "Cache model"), `
 `order_multiple`, `prices` (3 brackets), with `quantity` > 1 `ordered_quantity`, `unit_price_at_quantity` and
 `total_price`, `availability`, `lifecycle`, `datasheet_url`, `product_url` and only the canonical attributes
 (`ParametricExtractor.CANONICAL_KEYS`, computed with `extract`, so raw duplicates such as TME `Operating voltage`,
-`Case - inch`, `Case - mm` are left out). `full` adds `category`, `package`, `photo_url`, every distributor attribute
+`Case - inch`, `Case - mm` are left out). `full` adds `score`, `category`, `package`, `photo_url`, every distributor attribute
 and `extra` (TME `product_status`, `category_id`, `packing`, `price_type`, `tax_rate`; Mouser compliance and lifecycle
 fields; LCSC library type), and always the order fields. Fields a level leaves out are omitted from the JSON (null
 `category`, `package` and `photo_url` are omitted in `full` as well).
@@ -1272,10 +1325,12 @@ conflict, `{"capacitance": 12, "package": 3}`; empty object when nothing was exc
 understood query and no `error`) are described in sections 3.2 and 3.4. `parsed` also carries `polarity` and `subtype`
 when stated or implied (section 3.4).
 
-`score` orders the list: it is the blend of rank-normalised scores (section 3.3), relative to the other candidates, so
-the last of four exact matches can show `0.00`. `match` (0 to 1) says how well the part satisfies the stated parameters
-(section 3.4 "Match grade"; 1.0 = every stated parameter matches); both are on every search result part and null for
-`get_part`. `parsed.technology` is the recognised technology of a passive (omitted when absent); parts carry it as the
+`rank` orders the list. `score` is the blend of rank-normalised scores (section 3.3), relative to the other candidates,
+so the last of four exact matches can show `0.00`; a reader took that for "does not fit", so `score` is returned with
+`detail: "full"` only (omitted in `compact`). `match` (0 to 1) says how well the part satisfies the stated typed
+parameters (section 3.4 "Match grade"; 1.0 = every stated parameter matches; free-text words do not count); it is on
+every search result part. Both are null (omitted) for `get_part`. `parsed.form_factor` is the form factor the request's
+words name (`chassis`), omitted when none. `parsed.technology` is the recognised technology of a passive (omitted when absent); parts carry it as the
 `Technology` attribute.
 `total_results` is what the distributor reported for the query (in-stock where the API can filter),
 `fetched` is every in-stock part KINA received for the query before any exclusion, `returned` is at most `max_results`

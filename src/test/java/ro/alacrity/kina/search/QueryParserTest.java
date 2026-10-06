@@ -29,7 +29,7 @@ class QueryParserTest {
                 row("10µF 25V X7R ±10% 0805", "capacitor", "capacitance=10uF;voltage=25V;tolerance=10%", "X7R", "0805", "", ""),
                 row("4k7 0603 1%", "resistor", "resistance=4.7kohm;tolerance=1%", "", "0603", "", ""),
                 row("100nF 50V X7R 0402", "capacitor", "capacitance=100nF;voltage=50V", "X7R", "0402", "", ""),
-                row("10k resistor 0805 1% 1/8W", "resistor", "resistance=10kohm;power=125mW;tolerance=1%", "", "0805", "", ""),
+                row("10k resistor 0805 1% 1/8W", "resistor", "resistance=10kohm;power=0.125W;tolerance=1%", "", "0805", "", ""),
                 row("2.2uH 1A inductor 0806", "inductor", "inductance=2.2uH;current=1A", "", "0806", "", ""),
                 row("SOT-23 NPN transistor 40V", "transistor", "voltage=40V", "", "SOT-23", "", "npn"),
                 row("1N4148 SOD-123", "diode", "", "", "SOD-123", "", "1n4148"),

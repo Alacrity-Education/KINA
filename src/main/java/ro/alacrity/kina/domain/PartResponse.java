@@ -15,14 +15,17 @@ import java.util.Map;
 
 /**
  * A part as returned to clients (DESIGN.md section 4). {@code rank}, {@code score} and {@code match} are null for
- * {@code get_part}. {@code score} orders the list (rank-normalised, relative to the other candidates); {@code match}
- * is the absolute deterministic match grade in [0,1] (1.0 = every stated parameter is known and matches), rounded to
- * 2 decimals. Prices are trimmed to the {@value #MAX_PRICE_BREAKS} smallest quantity brackets.
+ * {@code get_part}. {@code score} (rank-normalised, relative to the other candidates) is returned with {@code full}
+ * detail only and omitted otherwise: {@code rank} carries the order, and a reader would take the last valid part's
+ * {@code 0.00} for "does not fit". {@code match} is the absolute deterministic match grade in [0,1] over the typed
+ * constraints (1.0 = every stated parameter is known and matches; free-text words do not count), rounded to 2
+ * decimals. Prices are trimmed to the {@value #MAX_PRICE_BREAKS} smallest quantity brackets.
  *
- * <p>Detail ({@link ResponseDetail}): {@code compact} carries the identity ({@code distributor}, {@code part_number},
+ * <p>Detail ({@link ResponseDetail}): {@code compact} carries {@code rank} and {@code match} (no {@code score}), the
+ * identity ({@code distributor}, {@code part_number},
  * {@code manufacturer}, {@code manufacturer_id} when the distributor has one, {@code mpn}), {@code description},
  * {@code stock}, the order rules, {@code prices}, the order pricing when the quantity is above 1,
- * {@code availability}, the links and only the canonical attributes; {@code full} adds {@code category},
+ * {@code availability}, the links and only the canonical attributes; {@code full} adds {@code score}, {@code category},
  * {@code package}, {@code photo_url}, every distributor attribute and {@code extra}, and always the order pricing.
  * Fields a detail level leaves out are omitted from the JSON.
  *
@@ -53,7 +56,7 @@ import java.util.Map;
 @Builder
 public record PartResponse(
         @JsonProperty("rank") Integer rank,
-        @JsonProperty("score") Double score,
+        @JsonProperty("score") @JsonInclude(JsonInclude.Include.NON_NULL) Double score,
         @JsonProperty("match") Double match,
         @JsonProperty("below_spec") @JsonInclude(JsonInclude.Include.NON_NULL) Boolean belowSpec,
         @JsonProperty("distributor") Distributor distributor,
@@ -160,7 +163,7 @@ public record PartResponse(
         Object manufacturerId = part.extra().get("manufacturer_id");
         return builder()
                 .rank(rank)
-                .score(score)
+                .score(full ? score : null)
                 .match(match == null ? null : Math.round(match * 100) / 100.0)
                 .belowSpec(r.belowSpec() ? Boolean.TRUE : null)
                 .distributor(part.distributor())

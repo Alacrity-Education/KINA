@@ -54,9 +54,9 @@ Decided by the product owner on 2026-10-07. A hard constraint is never relaxed: 
 
 | Family | Hard (never relaxed) | Relaxable |
 |---|---|---|
-| Resistor | resistance, package, mounting, technology, single element, type | tolerance (looser), TCR |
-| Capacitor | capacitance, package (can size within 0.2 mm), mounting, technology, single element, type | dielectric, tolerance, ESR |
-| Inductor | inductance, mounting, technology, type | package, tolerance, DCR preference |
+| Resistor | resistance, package, mounting, technology, single element, form factor, type | tolerance (looser), TCR |
+| Capacitor | capacitance, package (can size within 0.2 mm), mounting, technology, single element, form factor, type | dielectric, tolerance, ESR |
+| Inductor | inductance, mounting, technology, form factor, type | package, tolerance, DCR preference |
 | Ferrite bead | impedance at its frequency, package, mounting, single element, type | tolerance, DCR preference |
 | Crystal | frequency, load capacitance (exact), mounting, type (never an oscillator) | package, tolerance |
 | Oscillator (XO, TCXO, VCXO, OCXO, MEMS) | frequency, mounting, type (never a crystal) | package |
@@ -65,7 +65,9 @@ Decided by the product owner on 2026-10-07. A hard constraint is never relaxed: 
 | Regulator | type (fixed or adjustable; a stated output voltage means fixed), output voltage (exact), package, mounting | none |
 | Connector | connector type, gender, positions, pitch, package, mounting | orientation |
 | USB connector | USB type, stated pin configuration (normalised: 17P is 16), USB standard (a higher one is accepted), gender, mounting | orientation |
-| Any other part | value, package, mounting, technology, type | |
+| Any other part | value, package, mounting, technology, form factor, type | |
+
+The form factor is a short list of classes: `chip` (chip packages, and resistors listed as SMD without a body package), `through_hole` (axial, radial, leaded bodies), `chassis` (chassis, heatsink, bolt or screw mount, aluminium housed), `power_package` (SOT-227, TO-220, TO-247, TO-218, TO-126) and `power_smd` (TO-263/D2PAK, TO-252/DPAK). Write `heatsink`, `chassis mount` or `aluminium housed` to ask for a chassis part: chassis and power-package parts qualify, chip resistors, axial bodies and D2PAK parts are excluded (`excluded_by_constraints_detail` key `form factor`). A package with a class (`SOT-227`, `0805`) decides the class. A part whose class cannot be read stays, `unverified: ["form factor"]`, below the verified ones. Only distributor text is read, never datasheets. A resistor that states no power gets it from its series when the part number names it (Arcol `HS25`, TE `THS50`, Vishay `RH-50`, Bourns `PWR263S-35`, Caddock `MP930`); a stated power always wins.
 
 Ratings are always hard downward: a voltage, current, power, temperature or lifetime below the request (or a DCR above a stated maximum) is excluded unless the request passes `allow_below_spec`. "Type" also means a different component family: a resistor is never returned for a capacitor request. KINA takes distributor data as given; it does not decode part numbers or compare distributors.
 
@@ -125,7 +127,7 @@ Response (abridged):
       "out_of_stock_matches": 0,
       "parts": [
         {
-          "rank": 1, "score": 0.93, "match": 1.0, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
+          "rank": 1, "match": 1.0, "distributor": "MOUSER", "part_number": "603-CC0805MKX77BB106",
           "manufacturer": "YAGEO", "mpn": "CC0805MKX7R7BB106", "description": "...",
           "stock": 76689, "min_order_qty": 1, "order_multiple": 1,
           "prices": [
@@ -201,7 +203,7 @@ Known limit: KINA does not send rows to Mouser, and Mouser keyword search is loo
 ## How ranking works
 
 1. The query is parsed: component family, value, tolerance (`.1%` too), ratings (voltage, current, saturation current, power, temperature, lifetime; all minimums) and DCR (a maximum), dielectric, package, mounting, the technology of a resistor, capacitor or inductor (thin film, thick film, wirewound, tantalum, polymer, film, multilayer...), and leftover keywords.
-2. A deterministic ranker scores every part from 0 to 1: primary value (0.30), package (0.20), dielectric (0.15), technology (0.15), ratings (0.10; a higher rating counts as a match, an equal one ranks a little higher), tolerance (0.10), mounting (0.05), family keyword (0.05), lexical match (0.10), and small tie-break bonuses for stock, price and the JLCPCB Basic/Preferred library. A mismatch on value, package, dielectric, technology, rating or tolerance is penalised by the same amount a match earns. The same signals give each part its `match` grade (0 to 1, 1.0 = every stated parameter matches), which is absolute while `score` is relative to the other candidates.
+2. A deterministic ranker scores every part from 0 to 1: primary value (0.30), package (0.20), dielectric (0.15), technology (0.15), ratings (0.10; a higher rating counts as a match, an equal one ranks a little higher), tolerance (0.10), mounting (0.05), form factor named by the words (0.10), family keyword (0.05), lexical match (0.10), and small tie-break bonuses for stock, price and the JLCPCB Basic/Preferred library. A mismatch on value, package, dielectric, technology, rating or tolerance is penalised by the same amount a match earns. The same typed signals give each part its `match` grade (0 to 1, 1.0 = every stated parameter matches); free-text words rank but never lower `match` or block `exact_matches`. `match` is absolute while `score` (returned with `detail=full` only) is relative to the other candidates.
    Parts that contradict a hard constraint (value, package, mounting, technology, type, polarity, exact voltages, connector attributes; see the table above) and parts below a stated rating are removed first. Complete matches (every stated constraint known and met) rank first; parts with a mismatch or an unverified constraint come after them, parts with less stock than `quantity` after those, and below-spec parts (only with `allow_below_spec`) last, closest first. Low stock, a large minimum order quantity and a `last_time_buy` or `supply_constrained` lifecycle lower the score, also the final blended one.
    `match` counts only the constraints the part states; the ones it does not state are listed in `unverified`, so a `match` of 1.0 with a non-empty `unverified` list is not a confirmed fit.
    For USB requests see the weights in [docs/API.md](API.md#usb-connector-queries). For other connector requests the value feature is replaced by connector features: positions (0.30), gender (0.20), orientation (0.15), pitch (0.15, where 2.54 mm equals 0.1"), connector type (0.10) and mounting (0.05). A wrong row count costs 0.10. Multi-row parts cost 0.08 when you did not ask for rows. Attributes a part does not list never count against it.

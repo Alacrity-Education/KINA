@@ -77,6 +77,7 @@ public class QueryParser {
                 .technology(connector != null ? null : analysis.technology())
                 .preferences(analysis.preferences())
                 .elements(connector != null ? null : requestedElements(original))
+                .formFactor(connector != null ? null : FormFactor.ofRequestWords(original, family))
                 .build();
     }
 

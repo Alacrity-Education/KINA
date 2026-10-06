@@ -65,7 +65,11 @@ public class KinaMcpTools {
             positions and pitch, for USB connectors the type and the stated pin count (a higher USB standard is \
             accepted, a lower one is not); a bead array or resistor network for a single-element request (write \
             "array", "network" or "4 lines" to ask for one). "polymer aluminium" excludes tantalum polymer; a bare \
-            "polymer" accepts both. A part that does not state an attribute is kept, listed in unverified.
+            "polymer" accepts both. The form factor is hard for passives: "heatsink", "chassis", "bolt"/"screw \
+            mount" or "aluminium housed" asks for a chassis part (chassis or power package such as SOT-227, TO-220, \
+            TO-247), a package names its class (SOT-227 power package, 0805 chip, D2PAK power SMD); chip resistors \
+            and leaded (axial, radial) bodies are excluded from such requests. A part that does not state an \
+            attribute is kept, listed in unverified.
             Packages are imperial, always: a four-digit chip code is the inch code ("0603" is imperial 0603, never \
             metric 0603 = imperial 0201); write "1608 metric" or "3216M" for a metric code. A can capacitor size \
             ("6.3x5.4mm", "D6.3xL5.4mm") matches within 0.2 mm.
@@ -91,15 +95,15 @@ public class KinaMcpTools {
             (ratings left out; connector queries rewritten into the distributor's wording); fallback_query = null, \
             or the relaxed phrase that produced the parts; query_terms_dropped = request terms not sent in that \
             phrase (informational, they are still checked); constraints_relaxed = constraints actually loosened \
-            (empty when nothing was relaxed); exact_matches = returned parts with every stated constraint verified \
-            and met. currencies lists the price currencies (LCSC USD, TME and Mouser EUR); prices are not converted.
+            (empty when nothing was relaxed); exact_matches = returned parts with every typed constraint verified \
+            and met (free-text words such as "housed" never block it). currencies lists the price currencies (LCSC USD, TME and Mouser EUR); prices are not converted.
             Connector queries: type (pin header, female header, box header, terminal block, JST, USB-C, FPC, \
             RJ45...), gender, number of positions, rows (1x6, 2x3), pitch (2.54mm, 0.1") and orientation (right \
             angle / vertical) are recognised (parsed.connector) and ranked; say them explicitly.
             Rate limits: when a distributor API is rate limited KINA waits and retries instead of failing at once, \
             so a call may take up to 2 minutes; rate_limit_waited_ms reports how long it waited (0 normally).
-            Parts (detail "compact", the default) carry rank (1 = best within the distributor), score (0..1), match \
-            (0..1), below_spec (only when true), distributor, part_number (the distributor's number, for get_part), \
+            Parts (detail "compact", the default) carry rank (1 = best within the distributor), match (0..1), \
+            below_spec (only when true), distributor, part_number (the distributor's number, for get_part), \
             manufacturer, manufacturer_id (TME's own id), mpn, description, stock, stock_as_of (when stock and \
             prices were fetched; cached figures older than a day are refreshed before they are returned), stale \
             (only when true: stock and prices are older than 3 days and could not be refreshed; treat them as \
@@ -111,10 +115,12 @@ public class KinaMcpTools {
             lower), mismatches, unverified, datasheet_url, product_url and the canonical attributes (Capacitance, \
             Resistance, Inductance, Impedance, Voltage, Current or RatedCurrent, SaturationCurrent, DCR, \
             RippleCurrent, ESR, Power, MaxTemperature, Lifetime, Tolerance, Dielectric, Package, Dimensions, \
-            Mounting, Technology, Elements, Qualification, Features...). detail "full" adds category, package, \
-            photo_url, every raw distributor attribute and the distributor-specific extra fields.
-            score orders the list; it is relative to the other candidates, so the last of several good parts can \
-            score 0.00. match says how well the part satisfies the stated constraints it states: unverified lists \
+            Mounting, Technology, FormFactor, OperatingTemperature, Elements, Qualification, Features...). detail \
+            "full" adds score, category, package, photo_url, every raw distributor attribute and the \
+            distributor-specific extra fields.
+            rank orders the list. score (full detail only) is relative to the other candidates, so the last of \
+            several good parts can score 0.00. match says how well the part satisfies the typed constraints it \
+            states (free-text words do not count): unverified lists \
             the requested constraints the distributor does not state for the part (e.g. ["current"]); they are left \
             out of match, so match 1.0 with a non-empty unverified list is NOT a confirmed fit (check the \
             datasheet), and such parts rank below parts whose constraints are all verified and met. Judge a part by \
@@ -158,8 +164,8 @@ public class KinaMcpTools {
             the target first. Use it only when no compliant part exists and a weaker one is acceptable.""";
 
     static final String DETAIL_PARAM = """
-            "compact" (default): identity, stock, order rules, prices, availability, links, match/score and the \
-            canonical attributes. "full": additionally category, package, photo_url, raw distributor attributes and \
+            "compact" (default): identity, stock, order rules, prices, availability, links, rank/match and the \
+            canonical attributes. "full": additionally score, category, package, photo_url, raw distributor attributes and \
             distributor-specific extra fields (larger responses).""";
 
     static final String GET_PART_DETAIL_PARAM = """

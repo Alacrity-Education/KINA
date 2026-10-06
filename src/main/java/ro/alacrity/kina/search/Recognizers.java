@@ -57,7 +57,7 @@ class Recognizers {
     private static final Pattern DECIMAL_COMMA = Pattern.compile("(?<=\\d),(?=\\d)");
     private static final Pattern NUMBER_UNIT_GAP = Pattern.compile(
             "(?i)(\\d)\\s+(?=(?:pf|nf|uf|mf|f|ohms?|kohms?|mohms?|megohms?|r|k|meg|nh|uh|mh|h|v|kv|mv|vdc|vac|a|ma|ua"
-                    + "|w|mw|kw|hz|khz|mhz|ghz|hrs?|hours?|volts?|vol|vo)(?![\\p{L}\\d])|°)");
+                    + "|w|mw|kw|watts?|kilowatts?|hz|khz|mhz|ghz|hrs?|hours?|volts?|vol|vo)(?![\\p{L}\\d])|°)");
     private static final Pattern TOKEN_SPLIT = Pattern.compile("[\\s,;:()\\[\\]{}|\"<>=~*]+|/(?!\\d)|(?<!\\d)/");
 
     private static final List<Map.Entry<Pattern, String>> PHRASES = List.of(
@@ -529,7 +529,7 @@ class Recognizers {
      * ({@code H}) are told apart by case, see {@link #value}.
      */
     private static final Pattern P_UNIT_VALUE = Pattern.compile(
-            "^(\\d+(?:\\.\\d+)?|\\.\\d+)(meg|[pnumkgPNUMKG]?)(f|ohms?|r|h|v|vdc|vac|volts?|vol|vo|a|w|hz)$",
+            "^(\\d+(?:\\.\\d+)?|\\.\\d+)(meg|kilo|[pnumkgPNUMKG]?)(f|ohms?|r|h|v|vdc|vac|volts?|vol|vo|a|w|watts?|hz)$",
             Pattern.CASE_INSENSITIVE);
     /** Hours: {@code 2000h} (lower-case h only), {@code 2000hrs}, {@code 1000 hours}, {@code 5000Hrs}. */
     private static final Pattern P_HOURS = Pattern.compile("^(\\d+(?:\\.\\d+)?)(h|[hH](?:rs?|RS?|ours?|OURS?))$");
@@ -600,7 +600,7 @@ class Recognizers {
                 case "h" -> ParsedQuery.INDUCTANCE;
                 case "v", "vdc", "vac", "volt", "volts", "vol", "vo" -> ParsedQuery.VOLTAGE;   // KEMET "10Vol", "6.3Vo"
                 case "a" -> ParsedQuery.CURRENT;
-                case "w" -> ParsedQuery.POWER;
+                case "w", "watt", "watts" -> ParsedQuery.POWER;
                 default -> ParsedQuery.FREQUENCY;
             };
             Double multiplier = multiplier(prefix, kind);
@@ -673,6 +673,9 @@ class Recognizers {
         if (prefix.equalsIgnoreCase("meg")) {
             return 1e6;
         }
+        if (prefix.equalsIgnoreCase("kilo")) {
+            return 1e3;
+        }
         return switch (prefix) {
             case "p", "P" -> 1e-12;
             case "n", "N" -> 1e-9;
@@ -713,8 +716,12 @@ class Recognizers {
     private static final List<Prefix> FREQ_PREFIXES = List.of(new Prefix("", 1), new Prefix("k", 1e3),
             new Prefix("M", 1e6), new Prefix("G", 1e9));
     private static final List<Prefix> NO_PREFIXES = List.of(new Prefix("", 1));
+    private static final List<Prefix> POWER_PREFIXES = List.of(new Prefix("", 1), new Prefix("k", 1e3));
 
-    /** Compact human form: "10uF", "4.7kohm", "16V", "125mW", "12MHz", "5%", "105°C", "2000h". */
+    /**
+     * Compact human form: "10uF", "4.7kohm", "16V", "0.125W", "250W", "1.5kW", "12MHz", "5%", "105°C", "2000h". Power is
+     * in watts below 1 kW and in kilowatts from 1 kW.
+     */
     static String display(String kind, double value) {
         if (kind.equals(ParsedQuery.TOLERANCE)) {
             return format(value) + "%";
@@ -743,7 +750,7 @@ class Recognizers {
                 unit = "A";
             }
             case ParsedQuery.POWER -> {
-                prefixes = SMALL_PREFIXES;
+                prefixes = POWER_PREFIXES;   // watts below 1 kW ("250W", "0.5W"), kilowatts from 1 kW
                 unit = "W";
             }
             case ParsedQuery.TEMPERATURE -> {

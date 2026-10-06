@@ -55,7 +55,7 @@ class TechnologyAndPrecisionTest {
     void mouserLeadingDotToleranceIsExtracted() {
         assertThat(extractor.extract(MOUSER_VISHAY)).containsEntry("Tolerance", "0.1%")
                 .containsEntry("Resistance", "5.36kohm");
-        assertThat(extractor.extract(MOUSER_TE)).containsEntry("Tolerance", "0.1%").containsEntry("Power", "100mW");
+        assertThat(extractor.extract(MOUSER_TE)).containsEntry("Tolerance", "0.1%").containsEntry("Power", "0.1W");
         assertThat(Recognizers.value(".5k", "resistor").value()).isCloseTo(500, within(1e-9));
     }
 

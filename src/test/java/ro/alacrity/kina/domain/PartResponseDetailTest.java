@@ -63,8 +63,8 @@ class PartResponseDetailTest {
                 "\"min_order_qty\":10", "\"order_multiple\":10", "\"prices\":", "\"datasheet_url\":\"https://ds\"",
                 "\"product_url\":\"https://prod\"", "\"availability\":{\"status\":\"in_stock\"",
                 "\"lifecycle\":\"supply_constrained\"", "\"stock_as_of\":\"2026-10-05T00:00:00Z\"",
-                "\"Voltage\":\"50V\"", "\"match\":1.0", "\"score\":0.9");
-        assertThat(compact).doesNotContain("photo_url", "\"extra\"", "Operating voltage", "Case - inch", "packing",
+                "\"Voltage\":\"50V\"", "\"match\":1.0", "\"rank\":1");
+        assertThat(compact).doesNotContain("\"score\"", "photo_url", "\"extra\"", "Operating voltage", "Case - inch", "packing",
                 "product_status", "\"category\"", "\"package\"", "total_price", "ordered_quantity");
 
         String compact25 = mapper.writeValueAsString(PartResponse.of(p, 1, 0.9, 1.0, 25, ResponseDetail.COMPACT,
@@ -75,7 +75,7 @@ class PartResponseDetailTest {
         String full = mapper.writeValueAsString(PartResponse.of(p, 1, 0.9, 1.0, 1, ResponseDetail.FULL, canonical));
         assertThat(full).contains("\"photo_url\":\"https://img\"", "\"extra\":", "\"product_status\"",
                 "\"Operating voltage\"", "\"category\":\"MLCC\"", "\"package\":\"0603\"", "\"total_price\":0.20",
-                "\"ordered_quantity\":10");
+                "\"ordered_quantity\":10", "\"score\":0.9");
     }
 
     @Test
