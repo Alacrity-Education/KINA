@@ -15,22 +15,16 @@ import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
-import ro.alacrity.kina.distributor.StockUpdate;
 import ro.alacrity.kina.domain.BatchSearchRequest;
 import ro.alacrity.kina.domain.BatchSearchResponse;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
-import ro.alacrity.kina.domain.DistributorResult;
 import ro.alacrity.kina.domain.ParsedQuery;
-import ro.alacrity.kina.domain.ParsedQueryResponse;
 import ro.alacrity.kina.domain.Part;
-import ro.alacrity.kina.domain.PartResponse;
 import ro.alacrity.kina.domain.RankingMode;
-import ro.alacrity.kina.domain.ResponseDetail;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
 import ro.alacrity.kina.metrics.KinaMetrics;
-import ro.alacrity.kina.search.RankingService.RankedPart;
 import ro.alacrity.kina.search.RankingService.RankedResults;
 
 import java.time.Clock;
@@ -90,6 +84,8 @@ public class PartSearchService {
     private final SearchCacheRepository searchCache;
     private final Clock clock;
     private final ExecutorService executor;
+    private final StockRefresher stockRefresher;
+    private final ResponseAssembler assembler;
     private KinaMetrics metrics = KinaMetrics.NOOP;
 
     @Autowired
@@ -105,11 +101,14 @@ public class PartSearchService {
         this.searchCache = searchCache;
         this.clock = clock;
         this.executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("kina-search-", 0).factory());
+        this.stockRefresher = new StockRefresher(properties, registry, partCache, clock);
+        this.assembler = new ResponseAssembler(properties, extractor, ranking, stockRefresher, clock);
     }
 
     @Autowired
     void setMetrics(KinaMetrics metrics) {
         this.metrics = metrics;
+        stockRefresher.setMetrics(metrics);
     }
 
     @PreDestroy
@@ -126,14 +125,14 @@ public class PartSearchService {
         long started = System.nanoTime();
         Map<Distributor, Fetched> fetched = fetchAll(prepared, deadline);
         long fetchedAt = System.nanoTime();
-        RankedResults ranked = refreshStock(prepared, ranking.rank(prepared.parsed(), partsByDistributor(fetched),
-                null, rankOptions(prepared)), deadline);
+        RankedResults ranked = stockRefresher.refresh(prepared, ranking.rank(prepared.parsed(),
+                partsByDistributor(fetched), null, rankOptions(prepared)), deadline);
         if (log.isInfoEnabled()) {
             log.info("search '{}': fetch {} ms {}, rank {} ms ({})", prepared.parsed().normalizedKey(),
                     (fetchedAt - started) / 1_000_000, summary(fetched), (System.nanoTime() - fetchedAt) / 1_000_000,
                     ranked.mode().jsonValue());
         }
-        SearchResponse response = assemble(prepared, fetched, ranked, ranked.note());
+        SearchResponse response = assembler.assemble(prepared, fetched, ranked, ranked.note());
         metrics.searchCompleted(response, System.nanoTime() - started);
         return response;
     }
@@ -194,7 +193,8 @@ public class PartSearchService {
                         rankOptions(p));
                 note = ranked.note();
             }
-            results.add(assemble(p, fetched.get(i), refreshStock(p, ranked, requestDeadline), note));
+            results.add(assembler.assemble(p, fetched.get(i), stockRefresher.refresh(p, ranked, requestDeadline),
+                    note));
         }
         BatchSearchResponse response = new BatchSearchResponse(results);
         metrics.batchCompleted(response, System.nanoTime() - started);
@@ -207,8 +207,12 @@ public class PartSearchService {
 
     /** The hard / relaxable constraint table ({@link RankingService#policy()}; the defaults when not available). */
     ConstraintPolicy policy() {
-        ConstraintPolicy p = ranking == null ? null : ranking.policy();
-        return p == null ? ConstraintPolicy.DEFAULTS : p;
+        return ResponseAssembler.policyOf(ranking);
+    }
+
+    /** Whether the part's stock and prices are older than {@code kina.cache.ttl} ({@link StockRefresher#isStale}). */
+    boolean isStale(Part part, Instant now) {
+        return stockRefresher.isStale(part, now);
     }
 
     /** {@code now + kina.search.max-request-duration}. */
@@ -772,15 +776,6 @@ public class PartSearchService {
                 .withOutOfStockMatches(search.outOfStockMatches()).withConstraintsRelaxed(relaxed));
     }
 
-    /**
-     * True when the part's stock and prices are older than {@code kina.cache.ttl} (Mouser and TME only: LCSC is read
-     * from its local database).
-     */
-    boolean isStale(Part part, Instant now) {
-        return usesPostgresCache(part.distributor()) && part.fetchedAt() != null
-                && part.fetchedAt().isBefore(now.minus(properties.cache().ttl()));
-    }
-
     private Optional<CachedSearch> readCachedSearch(Distributor distributor, String queryKey) {
         try {
             return searchCache.find(distributor, queryKey);
@@ -965,142 +960,6 @@ public class PartSearchService {
         return out;
     }
 
-    // ---- stock refresh --------------------------------------------------------------------------------------------
-
-    /** Rounds of refreshing the parts about to be returned (a sold-out part pulls the next one into the top). */
-    static final int STOCK_REFRESH_ROUNDS = 2;
-
-    /**
-     * Refreshes the stock and prices of the parts about to be returned whose cached figures are older than
-     * {@code kina.cache.stock-ttl} (DESIGN.md 3.2 "Stock refresh"): one cheap distributor call per batch of part numbers
-     * (TME {@code /products/data}, Mouser part-number search), only for Mouser and TME and only for the top
-     * {@code max_results} parts. Refreshed parts get the new figures and {@code fetchedAt = now} and are written back to
-     * the cache; a part that sold out is removed from the list and marked sold out in the cache (its metadata stays). A
-     * failed refresh keeps the cached figures. Then parts whose figures are older than {@code kina.cache.ttl} (refresh
-     * failed, not attempted, or the distributor is not configured) are stale: they rank below the fresh ones
-     * ({@link #demoteStale}) and are returned with {@code stale: true}.
-     */
-    private RankedResults refreshStock(Prepared prepared, RankedResults ranked, Deadline deadline) {
-        Instant now = clock.instant();
-        Instant staleBefore = now.minus(properties.cache().stockTtl());
-        Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
-        boolean changed = false;
-        for (Map.Entry<Distributor, List<RankedPart>> entry : ranked.byDistributor().entrySet()) {
-            Distributor distributor = entry.getKey();
-            List<RankedPart> list = entry.getValue();
-            if (!usesPostgresCache(distributor) || list.isEmpty()) {
-                out.put(distributor, list);
-                continue;
-            }
-            Optional<DistributorClient> client = registry.find(distributor).filter(DistributorClient::isConfigured);
-            List<RankedPart> kept = new ArrayList<>(list);
-            Set<String> attempted = new HashSet<>();
-            for (int round = 0; client.isPresent() && round < STOCK_REFRESH_ROUNDS && deadline.remainingNanos() > 0;
-                 round++) {
-                List<String> due = kept.subList(0, Math.min(prepared.maxResults(), kept.size())).stream()
-                        .map(RankedPart::part)
-                        .filter(p -> p.fetchedAt() == null || p.fetchedAt().isBefore(staleBefore))
-                        .map(Part::distributorPartNumber)
-                        .filter(attempted::add)
-                        .toList();
-                if (due.isEmpty()) {
-                    break;
-                }
-                Map<String, StockUpdate> updates;
-                try {
-                    updates = client.get().refreshStock(due, deadline);
-                } catch (DistributorException e) {
-                    log.info("{} stock refresh of {} parts failed, keeping the cached figures: {}", distributor,
-                            due.size(), e.getMessage());
-                    metrics.stockRefreshed(distributor, "failed", due.size());
-                    break;
-                } catch (RuntimeException e) {
-                    log.warn("{} stock refresh failed unexpectedly", distributor, e);
-                    metrics.stockRefreshed(distributor, "failed", due.size());
-                    break;
-                }
-                List<Part> refreshed = new ArrayList<>();
-                List<String> soldOut = new ArrayList<>();
-                List<RankedPart> next = new ArrayList<>(kept.size());
-                for (RankedPart r : kept) {
-                    StockUpdate update = updates == null ? null : updates.get(r.part().distributorPartNumber());
-                    if (update == null) {
-                        next.add(r);
-                    } else if (update.stock() <= 0) {
-                        soldOut.add(r.part().distributorPartNumber());
-                    } else {
-                        Part p = r.part().toBuilder().stock(update.stock())
-                                .prices(update.prices().isEmpty() ? r.part().prices() : update.prices())
-                                .fetchedAt(now).build();
-                        refreshed.add(p);
-                        next.add(new RankedPart(p, r.score(), r.match(), r.mismatches(), r.unverified(),
-                                r.belowSpec()));
-                    }
-                }
-                kept = next;
-                changed = true;
-                log.info("{} stock refresh: {} parts updated, {} sold out", distributor, refreshed.size(),
-                        soldOut.size());
-                metrics.stockRefreshed(distributor, "ok", refreshed.size());
-                metrics.stockRefreshed(distributor, "out_of_stock", soldOut.size());
-                metrics.stockRefreshed(distributor, "failed", due.size() - refreshed.size() - soldOut.size());
-                writeBack(distributor, refreshed, soldOut);
-                if (soldOut.isEmpty()) {
-                    break;
-                }
-            }
-            List<RankedPart> ordered = demoteStale(kept, now);
-            changed |= ordered != kept;
-            out.put(distributor, List.copyOf(ordered));
-        }
-        return changed ? new RankedResults(out, ranked.mode(), ranked.note(), ranked.excluded(),
-                ranked.excludedBelowSpec(), ranked.excludedDetail()) : ranked;
-    }
-
-    /**
-     * Moves the parts whose stock and prices are stale ({@link #isStale}) below the fresh ones: each stale part's score
-     * is lowered by {@code kina.cache.stale-rank-penalty} (reported at least 0) and it is placed before the first fresh
-     * part of its group (meeting the request, then below spec) that scores lower; stale parts keep their relative
-     * order. With the default penalty of 1.0 every stale part ends up after every fresh part of its group. Returns
-     * {@code list} itself when nothing is stale.
-     */
-    List<RankedPart> demoteStale(List<RankedPart> list, Instant now) {
-        if (list.stream().noneMatch(r -> isStale(r.part(), now))) {
-            return list;
-        }
-        double penalty = properties.cache().staleRankPenalty();
-        List<RankedPart> out = new ArrayList<>(list.size());
-        List<RankedPart> stale = new ArrayList<>();
-        for (RankedPart r : list) {
-            (isStale(r.part(), now) ? stale : out).add(r);
-        }
-        for (RankedPart r : stale) {
-            double adjusted = r.score() - penalty;
-            int at = out.size();
-            for (int i = 0; i < out.size(); i++) {
-                RankedPart other = out.get(i);
-                boolean laterGroup = !r.belowSpec() && other.belowSpec();
-                boolean sameGroupLower = r.belowSpec() == other.belowSpec() && !isStale(other.part(), now)
-                        && other.score() < adjusted;
-                if (laterGroup || sameGroupLower) {
-                    at = i;
-                    break;
-                }
-            }
-            out.add(at, r.withScore(Math.max(0, adjusted)));
-        }
-        return out;
-    }
-
-    private void writeBack(Distributor distributor, List<Part> refreshed, List<String> soldOut) {
-        try {
-            partCache.updateStock(refreshed);
-            soldOut.forEach(number -> partCache.markSoldOut(distributor, number));
-        } catch (RuntimeException e) {
-            log.warn("Writing refreshed {} stock to the cache failed: {}", distributor, e.toString());
-        }
-    }
-
     // ---- assembly -------------------------------------------------------------------------------------------------
 
     /** {@code [MOUSER=hit/50, TME=timeout/0]} for the timing log. */
@@ -1115,107 +974,6 @@ public class PartSearchService {
         Map<Distributor, List<Part>> parts = new EnumMap<>(Distributor.class);
         fetched.forEach((d, f) -> parts.put(d, f.parts()));
         return parts;
-    }
-
-    private SearchResponse assemble(Prepared prepared, Map<Distributor, Fetched> fetched, RankedResults ranked,
-                                    String note) {
-        SearchRequest request = prepared.request();
-        ParsedQuery parsed = prepared.parsed();
-        ConstraintPolicy policy = policy();
-        boolean understood = parsed.understood();
-        int lowStockThreshold = properties.search().lowStockThreshold();
-        Instant now = clock.instant();
-        List<DistributorResult> results = new ArrayList<>();
-        List<String> empty = new ArrayList<>();
-        Map<String, Integer> emptyExcluded = new java.util.LinkedHashMap<>();
-        int emptyBelowSpec = 0;
-        for (Distributor distributor : prepared.distributors()) {
-            Fetched f = fetched.get(distributor);
-            if (f == null) {
-                continue;
-            }
-            List<RankedPart> rankedParts = ranked.byDistributor().getOrDefault(distributor, List.of());
-            int returned = Math.min(prepared.maxResults(), rankedParts.size());
-            List<RankedPart> top = rankedParts.subList(0, returned);
-            List<PartResponse> parts = new ArrayList<>(returned);
-            for (int i = 0; i < returned; i++) {
-                RankedPart rp = top.get(i);
-                Map<String, String> canonical = request.detail() == ResponseDetail.FULL ? null
-                        : extractor.extract(rp.part());
-                parts.add(PartResponse.of(rp.part(), new PartResponse.Ranking(i + 1, roundScore(rp.score()),
-                                rp.match(), rp.mismatches(), rp.unverified(), rp.belowSpec()),
-                        request.quantity(), request.detail(), canonical, lowStockThreshold, isStale(rp.part(), now),
-                        now));
-            }
-            Integer exact = understood ? (int) top.stream().filter(RankedPart::exact).count() : null;
-            Map<String, Integer> detail = ranked.excludedDetailBy(distributor);
-            String hint = null;
-            if (understood && parts.isEmpty() && f.error() == null) {
-                // nothing satisfies the hard constraints (DESIGN.md 3.2 "Empty after the hard set"): no substitutes
-                hint = policy.hint(parsed, List.of(distributor.name()), detail,
-                        ranked.excludedBelowSpecBy(distributor), request.allowBelowSpec());
-                empty.add(distributor.name());
-                detail.forEach((k, v) -> emptyExcluded.merge(k, v, Integer::sum));
-                emptyBelowSpec += ranked.excludedBelowSpecBy(distributor);
-            }
-            results.add(DistributorResult.builder()
-                    .distributor(distributor)
-                    .totalResults(f.totalResults())
-                    .fetched(f.parts().size())
-                    .returned(returned)
-                    .cache(f.cache())
-                    .error(f.error())
-                    .parts(parts)
-                    .fallbackQuery(f.fallbackQuery())
-                    .rateLimitWaitedMs(f.rateLimitWaitedMs())
-                    .distributorQuery(f.distributorQuery())
-                    .excludedByConstraints(ranked.excludedBy(distributor))
-                    .excludedByConstraintsDetail(detail)
-                    .excludedBelowSpec(ranked.excludedBelowSpecBy(distributor))
-                    .outOfStockMatches(f.outOfStockMatches())
-                    .queryTermsDropped(f.queryTermsDropped())
-                    .constraintsRelaxed(actuallyRelaxed(relaxable(parsed, f.constraintsRelaxed(), policy), top))
-                    .exactMatches(exact)
-                    .hint(hint)
-                    .build());
-        }
-        String hint = !understood ? SearchResponse.NOT_UNDERSTOOD_HINT
-                : empty.isEmpty() ? null
-                : policy.hint(parsed, empty, emptyExcluded, emptyBelowSpec, request.allowBelowSpec());
-        return new SearchResponse(parsed.originalText(), ParsedQueryResponse.from(parsed), ranked.mode(), note,
-                results, understood, hint, SearchResponse.currenciesOf(results));
-    }
-
-    /**
-     * The loosened constraints that may be reported as relaxed: those the policy lets relax for the request's family
-     * (a hard constraint or a rating is never relaxed, even when LCSC's database search dropped its term: the ranker
-     * excludes the parts that miss it).
-     */
-    static List<String> relaxable(ParsedQuery parsed, List<String> loosened, ConstraintPolicy policy) {
-        if (loosened == null || loosened.isEmpty()) {
-            return List.of();
-        }
-        return loosened.stream().filter(name -> policy.isRelaxable(parsed, name)).toList();
-    }
-
-    /**
-     * Of the constraints a relaxation loosened (the ladder step of Mouser and TME, the terms LCSC's database search
-     * dropped), those the returned parts really miss: a mismatch or an unverified constraint of that name. A step that
-     * drops the dielectric and the package may still return parts with the requested dielectric, and LCSC drops terms
-     * one at a time, so a loosened term is not necessarily one the results compromise (DESIGN.md 3.2).
-     */
-    static List<String> actuallyRelaxed(List<String> dropped, List<RankedPart> returned) {
-        if (dropped == null || dropped.isEmpty()) {
-            return List.of();
-        }
-        return dropped.stream()
-                .filter(name -> returned.stream().anyMatch(r -> r.unverified().contains(name)
-                        || r.mismatches().stream().anyMatch(m -> m.startsWith(name + ":"))))
-                .toList();
-    }
-
-    static double roundScore(double score) {
-        return Math.round(score * 1e4) / 1e4;
     }
 
     static String format(Duration duration) {

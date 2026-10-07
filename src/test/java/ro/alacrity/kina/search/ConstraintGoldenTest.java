@@ -182,7 +182,7 @@ class ConstraintGoldenTest {
         r.put("hard", p.hardFor(q).stream().sorted().toList());
         r.put("stated_hard", p.statedHard(q));
         r.put("relaxable", ConstraintPolicy.NAMES.stream().sorted().filter(n -> p.isRelaxable(q, n)).toList());
-        r.put("reportable", PartSearchService.relaxable(q, ConstraintPolicy.NAMES.stream().sorted().toList(), p));
+        r.put("reportable", ResponseAssembler.relaxable(q, ConstraintPolicy.NAMES.stream().sorted().toList(), p));
         Map<String, Integer> excluded = new LinkedHashMap<>();
         excluded.put("package", 3);
         excluded.put("capacitance", 1);

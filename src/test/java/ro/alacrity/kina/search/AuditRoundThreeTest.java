@@ -23,6 +23,10 @@ import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.domain.ResponseDetail;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
+import ro.alacrity.kina.metrics.KinaMetrics;
+import ro.alacrity.kina.metrics.MetricKey;
+import ro.alacrity.kina.metrics.MetricNames;
+import ro.alacrity.kina.metrics.MetricsStore;
 import ro.alacrity.kina.search.RankingService.RankOptions;
 import ro.alacrity.kina.search.RankingService.RankedPart;
 import ro.alacrity.kina.search.RankingService.RankedResults;
@@ -506,9 +510,9 @@ class AuditRoundThreeTest {
         RankedPart missing = new RankedPart(x5r, 1.0, 0.8, List.of("dielectric: X5R instead of X7R"), List.of(),
                 false);
         // dropped by the database search one at a time: only the dielectric is really missed by the parts
-        assertThat(PartSearchService.actuallyRelaxed(List.of("voltage", "dielectric", "package"), List.of(missing)))
+        assertThat(ResponseAssembler.actuallyRelaxed(List.of("voltage", "dielectric", "package"), List.of(missing)))
                 .containsExactly("dielectric");
-        assertThat(PartSearchService.actuallyRelaxed(List.of(), List.of(missing))).isEmpty();
+        assertThat(ResponseAssembler.actuallyRelaxed(List.of(), List.of(missing))).isEmpty();
     }
 
     // ---- 4. counts -----------------------------------------------------------------------------------------------------
@@ -741,6 +745,52 @@ class AuditRoundThreeTest {
         assertThat(m.parts()).allSatisfy(p -> assertThat(p.stale()).isNull());
         assertThat(cachedParts.get(PartKey.of(Distributor.MOUSER, "M1")).fetchedAt()).isEqualTo(NOW);
         assertThat(cachedParts.get(PartKey.of(Distributor.MOUSER, "M3")).fetchedAt()).isEqualTo(old);
+    }
+
+    @Test
+    void stockRefreshOutcomesAndFetchedPagesReachTheMetrics() {
+        String query = "10uF X7R 0805 MLCC";
+        String key = QueryParser.normalizeKey(query);
+        Instant old = NOW.minus(Duration.ofDays(2));
+        List<String> numbers = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            Part p = part(Distributor.MOUSER, "M" + i, "Multilayer Ceramic Capacitors MLCC 10uF 25V X7R 0805",
+                    "MLCC", 1000 - i, Map.of(), Map.of(), old);
+            cachedParts.put(p.key(), p);
+            numbers.add(p.distributorPartNumber());
+        }
+        cachedSearches.put(Distributor.MOUSER + "|" + key, new CachedSearch(Distributor.MOUSER, key, 4, numbers,
+                true, NOW.minus(Duration.ofDays(2)), 4, null, 0, List.of()));
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        mouser.stock.put("M0", new StockUpdate(0, List.of()));
+        mouser.stock.put("M1", new StockUpdate(42, List.of()));
+        mouser.stock.put("M2", new StockUpdate(7, List.of()));
+        MetricsStore store = new MetricsStore(null);
+        service(List.of(mouser)).setMetrics(new KinaMetrics(store));
+
+        service.search(request(query, 2, false, Distributor.MOUSER));
+
+        assertThat(store.get(MetricKey.of(MetricNames.CACHE_STOCK_REFRESHES, "distributor", "MOUSER", "outcome",
+                "ok"))).isEqualTo(2);
+        assertThat(store.get(MetricKey.of(MetricNames.CACHE_STOCK_REFRESHES, "distributor", "MOUSER", "outcome",
+                "out_of_stock"))).isEqualTo(1);
+        assertThat(store.sum(MetricNames.PARTS_FETCHED)).isZero();   // served from the cache: no page was fetched
+
+        // a cache miss fetches a page of three parts from the distributor
+        cachedSearches.clear();
+        PhraseClient live = new PhraseClient(Distributor.MOUSER);
+        service.shutdown();
+        service(List.of(live)).setMetrics(new KinaMetrics(store));
+        service.search(request(query, 2, false, Distributor.MOUSER));
+        String phrase = live.queries.getFirst();
+        live.queries.clear();
+        cachedSearches.clear();
+        live.on(phrase, mlcc(Distributor.MOUSER, "L0", "25V", "X7R"), mlcc(Distributor.MOUSER, "L1", "25V", "X7R"),
+                mlcc(Distributor.MOUSER, "L2", "25V", "X7R"));
+
+        service.search(request(query, 2, false, Distributor.MOUSER));
+
+        assertThat(store.sum(MetricNames.PARTS_FETCHED)).isEqualTo(3);
     }
 
     // ---- 6. get_part attributes of can capacitors; 12. datasheets, currencies ---------------------------------------------

@@ -486,9 +486,9 @@ class ConstraintPolicyTest {
     void onlyRelaxableConstraintsAreReportedAsRelaxed() {
         ParsedQuery capacitor = parser.parse("22uF X7R 1206 25V MLCC");
         // LCSC's database search may drop the package or the rating term; neither is ever relaxed for a capacitor
-        assertThat(PartSearchService.relaxable(capacitor, List.of("dielectric", "package", "voltage"), policy))
+        assertThat(ResponseAssembler.relaxable(capacitor, List.of("dielectric", "package", "voltage"), policy))
                 .containsExactly("dielectric");
-        assertThat(PartSearchService.relaxable(parser.parse("10uH inductor 0805"), List.of("package", "inductance"),
+        assertThat(ResponseAssembler.relaxable(parser.parse("10uH inductor 0805"), List.of("package", "inductance"),
                 policy)).containsExactly("package");
     }
 }
