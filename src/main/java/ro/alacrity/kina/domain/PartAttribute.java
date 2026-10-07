@@ -1,5 +1,40 @@
 package ro.alacrity.kina.domain;
 
+import ro.alacrity.kina.domain.extract.CanDimensions;
+import ro.alacrity.kina.domain.extract.ConnectorOrientation;
+import ro.alacrity.kina.domain.extract.ConnectorTypeWord;
+import ro.alacrity.kina.domain.extract.Described;
+import ro.alacrity.kina.domain.extract.DescriptionDimensions;
+import ro.alacrity.kina.domain.extract.DescriptionTemperatureRange;
+import ro.alacrity.kina.domain.extract.DielectricCode;
+import ro.alacrity.kina.domain.extract.Dimensions;
+import ro.alacrity.kina.domain.extract.ElementsCount;
+import ro.alacrity.kina.domain.extract.FirstInteger;
+import ro.alacrity.kina.domain.extract.GenderWord;
+import ro.alacrity.kina.domain.extract.ImpedanceAtFrequency;
+import ro.alacrity.kina.domain.extract.KeyContaining;
+import ro.alacrity.kina.domain.extract.LargestVoltage;
+import ro.alacrity.kina.domain.extract.LayoutPositions;
+import ro.alacrity.kina.domain.extract.LayoutRows;
+import ro.alacrity.kina.domain.extract.LifetimeAtTemperature;
+import ro.alacrity.kina.domain.extract.MaxTemperature;
+import ro.alacrity.kina.domain.extract.MetricPackageCode;
+import ro.alacrity.kina.domain.extract.Millimetres;
+import ro.alacrity.kina.domain.extract.MountingWord;
+import ro.alacrity.kina.domain.extract.OhmsAtFrequency;
+import ro.alacrity.kina.domain.extract.OhmsAtKeyPrefix;
+import ro.alacrity.kina.domain.extract.PackageCode;
+import ro.alacrity.kina.domain.extract.PackageField;
+import ro.alacrity.kina.domain.extract.PackageFieldDimensions;
+import ro.alacrity.kina.domain.extract.PackageFieldMounting;
+import ro.alacrity.kina.domain.extract.PartNumberPackage;
+import ro.alacrity.kina.domain.extract.PitchValue;
+import ro.alacrity.kina.domain.extract.RawPackageField;
+import ro.alacrity.kina.domain.extract.SeriesPower;
+import ro.alacrity.kina.domain.extract.ShortSeries;
+import ro.alacrity.kina.domain.extract.StatedGender;
+import ro.alacrity.kina.domain.extract.TemperatureRange;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -10,6 +45,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static ro.alacrity.kina.domain.ComponentFamily.Trait.ARRAYS;
+import static ro.alacrity.kina.domain.ComponentFamily.Trait.INDUCTIVE;
+import static ro.alacrity.kina.domain.ComponentFamily.Trait.PASSIVE;
 
 /**
  * Every attribute KINA reads from a part, with its distributor spellings and extraction logic ({@link Source}) and,
@@ -29,51 +68,289 @@ public enum PartAttribute {
 
     // ---------------------------------------------------------------- numeric attributes, in output order
 
+    /** Capacitance (also the load capacitance of a crystal). */
     @Unit(symbols = "f", base = "F", prefixes = {"p", "n", "u", "m", ""})
     @Source(names = {"capacitance", "capacitance value", "nominal capacitance", "load capacitance",
             "load capacitance (cl)"})
+    @Source(precedence = 9, logic = Described.class)
     CAPACITANCE(ParsedQuery.CAPACITANCE, "Capacitance"),
 
+    /**
+     * Resistance; for a MOSFET its on-resistance (Mouser {@code Rds On - Drain-Source Resistance}). Never for an
+     * inductor or ferrite bead: their ohm values are the DC resistance or the impedance.
+     */
     @Unit(symbols = {"ohm", "ohms", "r"}, base = "ohm", prefixes = {"m", "", "k", "M", "G"})
+    @Source(names = {"resistance", "resistance value", "nominal resistance", "rds on - drain-source resistance",
+            "drain-source on resistance", "on-state resistance", "rds(on)"}, exceptTraits = INDUCTIVE)
+    @Source(precedence = 9, logic = Described.class, exceptTraits = INDUCTIVE)
     RESISTANCE(ParsedQuery.RESISTANCE, "Resistance"),
 
     @Unit(symbols = "h", base = "H", prefixes = {"n", "u", "m", ""})
     @Source(names = {"inductance", "nominal inductance"})
+    @Source(precedence = 9, logic = Described.class)
     INDUCTANCE(ParsedQuery.INDUCTANCE, "Inductance"),
 
+    /**
+     * A ferrite bead's impedance with its test frequency ({@code 120ohm @100MHz}): attributes whose name starts with
+     * {@code impedance} (TME {@code Impedance at 100MHz}, Mouser {@code Impedance} with {@link #TEST_FREQUENCY}).
+     */
     @Unit(base = "ohm", prefixes = {"m", "", "k", "M", "G"})
+    @Source(names = "impedance", families = ComponentFamily.FERRITE, logic = ImpedanceAtFrequency.class)
+    @Source(precedence = 9, logic = Described.class)
     IMPEDANCE(ParsedQuery.IMPEDANCE, "Impedance"),
 
     @Unit(symbols = "hz", base = "Hz", prefixes = {"", "k", "M", "G"})
     @Source(names = {"frequency", "nominal frequency", "oscillation frequency"})
+    @Source(precedence = 9, logic = Described.class)
     FREQUENCY(ParsedQuery.FREQUENCY, "Frequency"),
 
+    /**
+     * The voltage: a regulator's output voltage (TME {@code Output voltage}, Mouser {@code Output Voltage}) first, a
+     * Zener diode's Zener voltage (Mouser {@code Vz - Zener Voltage}) first, then the voltage ratings (Mouser
+     * {@code Voltage Rating DC}, TME {@code Operating voltage}, LCSC {@code Voltage Rated}), then any attribute named
+     * with {@code voltage} that is no forward, clamp, breakdown... voltage, last the description (for a transistor or
+     * diode its largest unlabelled voltage, {@link LargestVoltage}).
+     */
     @Unit(symbols = {"v", "vdc", "vac", "volt", "volts", "vol", "vo"}, base = "V", prefixes = {"u", "m", "", "k"})
+    @Source(names = {"output voltage", "voltage - output", "voltage - output (min/fixed)", "output voltage (fixed)",
+            "fixed output voltage"}, families = ComponentFamily.REGULATOR)
+    @Source(precedence = 1, names = {"vz - zener voltage", "zener voltage", "voltage - zener (nom) (vz)",
+            "zener voltage (vz)", "voltage - zener"}, families = ComponentFamily.ZENER)
+    @Source(precedence = 2, names = {"voltage rating dc", "voltage rating - dc", "voltage rating", "voltage rated",
+            "rated voltage", "voltage - rated", "operating voltage", "dc voltage rating", "voltage", "output voltage",
+            "voltage - output", "voltage - output (min/fixed)", "vr - reverse voltage", "reverse voltage (vr)",
+            "vds - drain-source breakdown voltage", "drain source voltage (vdss)", "drain to source voltage (vdss)",
+            "vz - zener voltage", "voltage - zener (nom) (vz)", "vrwm - reverse standoff voltage",
+            "reverse stand-off voltage (vrwm)", "voltage - reverse standoff (typ)"})
+    @Source(precedence = 3, names = "voltage", logic = KeyContaining.class, excluding = {"forward", "clamp",
+            "breakdown", "input", "supply", "isolation", "threshold", "gate", "ripple", "dropout", "temperature",
+            "coefficient", "offset"})
+    @Source(precedence = 9, logic = LargestVoltage.class)
     VOLTAGE(ParsedQuery.VOLTAGE, "Voltage"),
 
+    /**
+     * The current; for an inductor or ferrite bead its rated current (TME {@code Operating current}, Mouser
+     * {@code Maximum DC Current}) first, reported as {@code RatedCurrent}. Then the current ratings, then any attribute
+     * named with {@code current} that is no leakage, surge, peak... current, last the description.
+     */
     @Unit(symbols = "a", base = "A", prefixes = {"u", "m", "", "k"})
+    @Source(names = {"rated current", "current rating", "operating current", "maximum dc current", "max. dc current",
+            "dc current", "current - max", "current rating (amps)", "irms", "i rms", "rated current (irms)", "current"},
+            traits = INDUCTIVE)
+    @Source(precedence = 1, names = {"current rating", "rated current", "current", "current - output",
+            "output current", "id - continuous drain current", "continuous drain current (id)", "if - forward current",
+            "io - average rectified current", "current - average rectified (io)", "average rectified current (io)",
+            "ic - continuous collector current", "collector current (ic)", "current rating (amps)"})
+    @Source(precedence = 2, names = "current", logic = KeyContaining.class, excluding = {"leakage",
+            "reverse current", "surge", "quiescent", "supply", "peak", "bias", "offset", "standby", "pulse", "trip",
+            "saturation", "ripple"})
+    @Source(precedence = 9, logic = Described.class)
     CURRENT(ParsedQuery.CURRENT, "Current"),
 
+    /** An inductor's saturation current (I_sat). */
     @Unit(base = "A", prefixes = {"u", "m", "", "k"})
+    @Source(names = {"saturation current", "isat", "current - saturation", "current - saturation (isat)",
+            "saturation current (isat)", "isat (max)", "saturation current max."}, traits = INDUCTIVE)
+    @Source(precedence = 9, logic = Described.class)
     SATURATION_CURRENT(ParsedQuery.SATURATION_CURRENT, "SaturationCurrent"),
 
+    /** The DC resistance of an inductor or ferrite bead (TME {@code Resistance}, Mouser {@code Maximum DC Resistance}). */
     @Unit(base = "ohm", prefixes = {"m", "", "k", "M", "G"})
+    @Source(names = {"dc resistance", "dc resistance (dcr)", "dcr", "maximum dc resistance", "max. dc resistance",
+            "dc resistance max", "dc resistance (dcr) (max)", "resistance - dc", "resistance", "dc resistance (max)"},
+            traits = INDUCTIVE)
+    @Source(precedence = 9, logic = Described.class)
     DCR(ParsedQuery.DCR, "DCR"),
 
+    /** The power rating; after the description, the wattage a resistor series implies ({@link SeriesPower}). */
     @Unit(symbols = {"w", "watt", "watts"}, base = "W", prefixes = {"", "k"})
     @Source(names = {"power rating", "power", "power(watts)", "power (watts)", "pd - power dissipation",
             "power dissipation (pd)", "power dissipation"})
+    @Source(precedence = 8, logic = Described.class)
+    @Source(precedence = 9, logic = SeriesPower.class)
     POWER(ParsedQuery.POWER, "Power"),
 
+    /** The maximum operating temperature ({@code 105°C}). */
     @Unit(base = "°C")
+    @Source(names = {"maximum operating temperature", "max. operating temperature", "operating temperature",
+            "operating temperature range", "temperature range"}, logic = MaxTemperature.class)
+    @Source(precedence = 9, logic = Described.class)
     TEMPERATURE(ParsedQuery.TEMPERATURE, "MaxTemperature"),
 
+    /** The rated lifetime in hours with its test temperature ({@code 2000h @105°C}). */
     @Unit(base = "h")
+    @Source(names = {"service life", "lifetime", "life time", "load life", "endurance", "useful life",
+            "lifetime @ temp.", "life", "operating life"}, logic = LifetimeAtTemperature.class)
+    @Source(precedence = 9, logic = Described.class)
     LIFETIME(ParsedQuery.LIFETIME, "Lifetime"),
 
     @Unit(base = "%")
     @Source(names = {"tolerance", "resistance tolerance", "capacitance tolerance", "inductance tolerance"})
-    TOLERANCE(ParsedQuery.TOLERANCE, "Tolerance");
+    @Source(precedence = 9, logic = Described.class)
+    TOLERANCE(ParsedQuery.TOLERANCE, "Tolerance"),
+
+    // ---------------------------------------------------------------- numeric details
+
+    /** The test frequency of a ferrite bead's impedance (Mouser {@code Test Frequency}), read by {@link #IMPEDANCE}. */
+    @Source(names = {"test frequency", "impedance test frequency", "frequency", "measuring frequency"})
+    TEST_FREQUENCY(ParsedQuery.FREQUENCY, null),
+
+    /** A capacitor's ripple current (TME lists it as {@code Operating current}, Mouser as {@code Ripple Current}). */
+    @Source(names = {"ripplecurrent", "ripple current", "rated ripple current", "ripple current (max)",
+            "max ripple current", "current - ripple", "ripple current @ high frequency", "ripple current @ low frequency",
+            "operating current", "current rating", "rated current", "current"})
+    @Source(precedence = 1, names = "ripple", logic = KeyContaining.class)
+    RIPPLE_CURRENT(ParsedQuery.CURRENT, "RippleCurrent"),
+
+    // ---------------------------------------------------------------- words
+
+    @Source(names = {"dielectric", "temperature coefficient", "temperature characteristic",
+            "temperature characteristics", "dielectric material", "tempco"}, logic = DielectricCode.class)
+    @Source(precedence = 9, logic = Described.class)
+    DIELECTRIC(null, "Dielectric"),
+
+    /**
+     * The package: the package field when KINA recognises it, the inch case codes (Mouser {@code Case Code - in}, TME
+     * {@code Case - inch}), the millimetre case codes (TME {@code Case - mm}), the package attributes, the
+     * description, the package field as stated, and for a passive the part number ({@link PartNumberPackage}).
+     */
+    @Source(logic = PackageField.class)
+    @Source(precedence = 1, names = {"case code - in", "case - inch", "case code (inch)", "package (inch)",
+            "imperial size", "case code - inch"}, logic = PackageCode.class)
+    @Source(precedence = 2, names = {"case code - mm", "case - mm", "case code (mm)", "metric size", "package (mm)"},
+            logic = MetricPackageCode.class)
+    @Source(precedence = 3, names = {"package / case", "package/case", "package", "case", "supplier device package",
+            "package type", "case / package", "case/package", "housing"}, logic = PackageCode.class)
+    @Source(precedence = 4, logic = Described.class)
+    @Source(precedence = 5, logic = RawPackageField.class)
+    @Source(precedence = 6, logic = PartNumberPackage.class, traits = PASSIVE)
+    PACKAGE(null, "Package"),
+
+    /** SMD or THT; the extractor falls back to the category and the package's prefix. */
+    @Source(names = {"mounting", "mounting style", "mounting type", "mounting method", "termination style", "montage",
+            "electrical mounting"}, logic = MountingWord.class)
+    @Source(precedence = 1, logic = Described.class)
+    @Source(precedence = 2, logic = PackageFieldMounting.class)
+    MOUNTING(null, "Mounting"),
+
+    /**
+     * Technology parameters: TME {@code Type of resistor} / {@code Type of capacitor} / {@code Type of inductor}
+     * (verified live 2026-10-05: thin film, thick film, metal film, carbon film, metal oxide, wire-wound, metal strip;
+     * ceramic, tantalum, tantalum-polymer, polymer, electrolytic, polypropylene, polyester, supercapacitor; wire,
+     * multilayer, thin film), {@code Kind of capacitor} (MLCC), {@code Kind of resistor} (current shunt, sensing);
+     * generic names other sources use. Every name counts: the extractor merges them with the description, category
+     * and series.
+     */
+    @Source(names = {"type of resistor", "type of capacitor", "type of inductor", "kind of capacitor",
+            "kind of resistor", "technology", "composition", "construction", "resistor type", "capacitor type",
+            "inductor type"})
+    TECHNOLOGY(null, "Technology"),
+
+    /** Attributes that state the kind of a semiconductor (TME {@code Type of transistor}, {@code Type of diode}...). */
+    @Source(names = {"type of transistor", "type of diode", "kind of voltage regulator", "type of voltage regulator",
+            "transistor polarity", "polarity", "channel type", "output type", "regulator type", "transistor type",
+            "diode type", "configuration", "number of channels", "technology"})
+    SEMICONDUCTOR_TYPE(null, null),
+
+    /** Body dimensions of a crystal or oscillator: its size code when no package names one ({@code 3.2x2.5mm}). */
+    @Source(names = {"body dimensions", "dimensions", "size / dimension", "size", "case size", "body size"})
+    CRYSTAL_BODY(null, null),
+
+    /** The operating temperature range as printed, normalised ({@code -55...155°C}). */
+    @Source(names = {"operating temperature", "operating temperature range", "temperature range"},
+            logic = TemperatureRange.class)
+    @Source(precedence = 1, logic = DescriptionTemperatureRange.class)
+    OPERATING_TEMPERATURE(null, "OperatingTemperature"),
+
+    // ---------------------------------------------------------------- passive details
+
+    /** The number of elements of an array or network. */
+    @Source(names = {"elements", "number of elements", "number of resistors", "number of capacitors",
+            "number of lines", "number of channels", "number of bits"}, traits = ARRAYS, logic = ElementsCount.class)
+    ELEMENTS(null, "Elements"),
+
+    /** A capacitor's ESR with its test frequency; the description is read by the extractor (it needs the technology). */
+    @Source(names = {"esr", "esr (equivalent series resistance)", "equivalent series resistance", "esr max",
+            "esr (max)", "max esr", "esr max."}, logic = OhmsAtFrequency.class)
+    @Source(precedence = 1, names = "esr ", logic = OhmsAtKeyPrefix.class)
+    ESR(null, "ESR"),
+
+    /** A capacitor's impedance with its test frequency; the description as for {@link #ESR}. */
+    @Source(names = {"impedance", "impedance max", "max. impedance", "impedance (max)", "max impedance"},
+            logic = OhmsAtFrequency.class)
+    @Source(precedence = 1, names = "impedance ", excluding = "tolerance", logic = OhmsAtKeyPrefix.class)
+    CAPACITOR_IMPEDANCE(null, "Impedance"),
+
+    /** Body dimensions of a passive: {@code D6.3 x 5.8mm} for a can, {@code 8.8 x 8.4 x 3.8mm} otherwise. */
+    @Source(names = {"dimensions", "body dimensions", "size / dimension", "size", "case size", "body size",
+            "dimension"}, traits = PASSIVE, logic = Dimensions.class)
+    @Source(precedence = 1, traits = PASSIVE, logic = CanDimensions.class)
+    @Source(precedence = 2, traits = PASSIVE, logic = PackageFieldDimensions.class)
+    @Source(precedence = 3, traits = PASSIVE, logic = DescriptionDimensions.class)
+    DIMENSIONS(null, "Dimensions"),
+
+    /** A can's diameter in millimetres, read by {@link #DIMENSIONS}. */
+    @Source(names = {"diameter", "body diameter", "case diameter"}, logic = Millimetres.class)
+    DIAMETER(null, null),
+
+    /** A can's height in millimetres, read by {@link #DIMENSIONS}. */
+    @Source(names = {"height", "body height", "height - seated (max)", "case height", "length"},
+            logic = Millimetres.class)
+    HEIGHT(null, null),
+
+    // ---------------------------------------------------------------- connectors (TME parameters verified live
+    // 2026-10-05: "Type of connector" = pin strips, "Connector" = socket, "Kind of connector" = female, "Number of
+    // pins" = 6, "Spatial orientation" = angled 90°, "Contacts pitch" = 2.54mm, "Connector pinout layout" = 1x6,
+    // "Electrical mounting" = THT, "Manufacturer series" = XH; Mouser ProductAttributes names as documented by Mouser)
+
+    @Source(names = {"type of connector", "connector type", "connector", "product", "product type", "type"},
+            logic = ConnectorTypeWord.class)
+    CONNECTOR_TYPE(null, "ConnectorType"),
+
+    /** The gender: one a connector type attribute states, then the gender attributes. */
+    @Source(logic = StatedGender.class)
+    @Source(precedence = 1, names = {"kind of connector", "gender", "contact gender", "connector gender"},
+            logic = GenderWord.class)
+    GENDER(null, "Gender"),
+
+    @Source(names = {"number of pins", "number of positions", "positions", "no. of positions", "number of contacts",
+            "number of ways", "number of circuits", "pins"}, logic = FirstInteger.class)
+    @Source(precedence = 1, logic = LayoutPositions.class)
+    POSITIONS(null, "Positions"),
+
+    @Source(names = {"number of rows", "rows", "no. of rows"}, logic = FirstInteger.class)
+    @Source(precedence = 1, logic = LayoutRows.class)
+    ROWS(null, "Rows"),
+
+    /** The pinout layout ({@code 1x6}, {@code 2x5}), read by {@link #POSITIONS} and {@link #ROWS}. */
+    @Source(names = {"connector pinout layout", "pinout layout", "layout"})
+    PINOUT_LAYOUT(null, null),
+
+    @Source(names = {"contacts pitch", "pitch", "contact pitch", "pitch - mating", "raster"}, logic = PitchValue.class)
+    PITCH(null, "Pitch"),
+
+    @Source(names = {"spatial orientation", "mounting angle", "orientation", "angle", "termination orientation"},
+            logic = ConnectorOrientation.class)
+    ORIENTATION(null, "Orientation"),
+
+    @Source(names = {"manufacturer series", "series"}, logic = ShortSeries.class)
+    SERIES(null, "Series"),
+
+    /**
+     * TME parameters that carry USB details (verified live 2026-10-05: {@code Version} = USB 2.0 / USB 3.1 Gen 2 /
+     * USB 4.0, {@code Data transfer rate} = 5Gbps, {@code Connector variant} = middle board mount / Gen.2x2 / sealed,
+     * {@code Connectors application} = only for charging (6p), {@code IP rating} = IP67, {@code Electrical mounting}
+     * = hybrid SMT/THT). Mouser's keyword search returns no such ProductAttributes for USB connectors (only
+     * Packaging and Standard Pack Qty) and LCSC has no parameter columns, so both rely on the description.
+     */
+    @Source(names = {"type of connector", "version", "usb version", "usb standard", "data transfer rate", "data rate",
+            "connector variant", "connectors application", "ip rating", "ingress protection", "electrical mounting",
+            "mounting style"})
+    USB_DETAILS(null, null),
+
+    /** The data rate of a USB connector (TME {@code Data transfer rate}): it beats the {@code Version}. */
+    @Source(names = {"data transfer rate", "data rate"})
+    USB_RATE(null, null);
 
     /** The numeric attributes the extractor reports, in output order. */
     public static final List<PartAttribute> VALUES = List.of(CAPACITANCE, RESISTANCE, INDUCTANCE, IMPEDANCE,

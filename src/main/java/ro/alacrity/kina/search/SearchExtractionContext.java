@@ -118,7 +118,12 @@ final class SearchExtractionContext implements ExtractionContext {
 
     @Override
     public <T> T described(PartAttribute attribute, Class<T> type) {
-        Object value = attribute.kind() == null ? null : description.values().get(attribute.kind());
+        Object value = switch (attribute) {
+            case DIELECTRIC -> description.dielectric();
+            case MOUNTING -> description.mounting();
+            case PACKAGE -> description.packageName();
+            default -> attribute.kind() == null ? null : description.values().get(attribute.kind());
+        };
         return value == null ? null : type.cast(value);
     }
 }
