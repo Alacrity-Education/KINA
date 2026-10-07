@@ -34,6 +34,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * between names and lists). The probe records are summarised per attribute name by a SHA-256 digest; the probes run
  * in parallel (the extractor is stateless).
  *
+ * <p>The master covers the attributes it was captured with: the canonical keys and value kinds added later
+ * ({@link #LATER_KEYS}, {@link #LATER_KINDS}: the LED attributes, 0.13) are left out of every record, and the enriched
+ * part is read again without them. They are covered by their own tests ({@code LedExtractionTest}); every captured
+ * attribute of every part and probe must stay the same.
+ *
  * <p>On a mismatch the current dump is written to {@code target/golden/extraction-actual.jsonl}. To recapture (only
  * for an intended behaviour change), run with {@code -Dkina.golden.write=true}.
  */
@@ -74,6 +79,17 @@ class ExtractionGoldenTest {
             + "-40...85°C 1x8 2.0mm male vertical PH 8 pins USB 2.0 IP68 5.0x3.2x1.0mm 600ohm @1GHz";
     /** Contexts of the pair probes (indexes into {@link #CONTEXTS}). */
     private static final List<Integer> PAIR_CONTEXTS = List.of(0, 2, 4, 7, 10);
+
+    /** Canonical keys added after the capture (LEDs, 0.13). */
+    static final java.util.Set<String> LATER_KEYS = java.util.Set.of(ParametricExtractor.WAVELENGTH,
+            ParametricExtractor.COLOUR_TEMPERATURE, ParametricExtractor.FORWARD_VOLTAGE,
+            ParametricExtractor.LUMINOUS_INTENSITY, ParametricExtractor.LUMINOUS_FLUX, ParametricExtractor.VIEWING_ANGLE,
+            ParametricExtractor.COLOUR, ParametricExtractor.LENS, ParametricExtractor.LED_TYPE);
+    /** Value kinds added after the capture (LEDs, 0.13). */
+    static final java.util.Set<String> LATER_KINDS = java.util.Set.of(ro.alacrity.kina.domain.ParsedQuery.WAVELENGTH,
+            ro.alacrity.kina.domain.ParsedQuery.COLOUR_TEMPERATURE, ro.alacrity.kina.domain.ParsedQuery.FORWARD_VOLTAGE,
+            ro.alacrity.kina.domain.ParsedQuery.LUMINOUS_INTENSITY, ro.alacrity.kina.domain.ParsedQuery.LUMINOUS_FLUX,
+            ro.alacrity.kina.domain.ParsedQuery.VIEWING_ANGLE);
 
     private final ParametricExtractor extractor = new ParametricExtractor();
 
@@ -145,8 +161,8 @@ class ExtractionGoldenTest {
                 Map<String, Object> r = new LinkedHashMap<>();
                 r.put("features", features(extractor.features(part)));
                 r.put("extract", pairs(extractor.extract(part)));
-                Part enriched = extractor.enrich(part);
-                r.put("enriched", pairs(enriched.attributes()));
+                Part enriched = captured(extractor.enrich(part));
+                r.put("enriched", all(enriched.attributes()));
                 r.put("derived", enriched.derivedAttributes().stream().sorted().toList());
                 probes += digest(digest, r);
             }
@@ -187,17 +203,41 @@ class ExtractionGoldenTest {
         ParametricExtractor.Features f = extractor.features(part);
         r.put("features", features(f));
         r.put("extract", pairs(extractor.extract(part)));
-        Part enriched = extractor.enrich(part);
-        r.put("enriched", pairs(enriched.attributes()));
+        Part enriched = captured(extractor.enrich(part));
+        r.put("enriched", all(enriched.attributes()));
         r.put("derived", enriched.derivedAttributes().stream().sorted().toList());
         Map<String, Object> again = features(extractor.features(enriched));
         r.put("enriched_features", again.equals(features(f)) ? "same" : again);
         return r;
     }
 
-    private static List<List<String>> pairs(Map<String, String> map) {
+    /** An enriched part without the attributes added after the capture ({@link #LATER_KEYS}). */
+    private static Part captured(Part enriched) {
+        Map<String, String> attributes = new LinkedHashMap<>(enriched.attributes());
+        java.util.Set<String> derived = new java.util.LinkedHashSet<>(enriched.derivedAttributes());
+        for (String key : LATER_KEYS) {
+            if (derived.remove(key)) {
+                attributes.remove(key);
+            }
+        }
+        return enriched.toBuilder().attributes(attributes).derivedAttributes(derived).build();
+    }
+
+    /** Every pair of a map (an enriched part's attributes: the later keys are already left out). */
+    private static List<List<String>> all(Map<String, String> map) {
         List<List<String>> out = new ArrayList<>();
         map.forEach((k, v) -> out.add(java.util.Arrays.asList(k, v)));
+        return out;
+    }
+
+    /** The pairs of a map, without the keys added after the capture ({@link #LATER_KEYS}). */
+    private static List<List<String>> pairs(Map<String, String> map) {
+        List<List<String>> out = new ArrayList<>();
+        map.forEach((k, v) -> {
+            if (!LATER_KEYS.contains(k)) {
+                out.add(java.util.Arrays.asList(k, v));
+            }
+        });
         return out;
     }
 
@@ -205,8 +245,12 @@ class ExtractionGoldenTest {
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("family", f.family());
         Map<String, Object> values = new TreeMap<>();
-        f.values().forEach((kind, v) -> values.put(kind, List.of(v.kind(), Double.toString(v.value()), v.display(),
-                String.valueOf(v.condition()))));
+        f.values().forEach((kind, v) -> {
+            if (!LATER_KINDS.contains(kind)) {
+                values.put(kind, List.of(v.kind(), Double.toString(v.value()), v.display(),
+                        String.valueOf(v.condition())));
+            }
+        });
         r.put("values", values);
         r.put("dielectric", f.dielectric());
         r.put("package", f.packageName());

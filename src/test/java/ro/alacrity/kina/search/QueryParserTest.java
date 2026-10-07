@@ -56,7 +56,7 @@ class QueryParserTest {
                 row("4u7 inductor 1210", "inductor", "inductance=4.7uH", "", "1210", "", ""),
                 row("N-channel MOSFET 30V 5A SOT-23", "mosfet", "voltage=30V;current=5A", "", "SOT-23", "", "n-channel"),
                 row("1k 1% THT resistor", "resistor", "resistance=1kohm;tolerance=1%", "", "", "THT", ""),
-                row("LED red 0603 SMD", "led", "", "", "0603", "SMD", "red"),
+                row("LED red 0603 SMD", "led", "", "", "0603", "SMD", ""),   // red is the colour (LEDs, 0.13)
                 row("10 uF 25 V", "capacitor", "capacitance=10uF;voltage=25V", "", "", "", ""),
                 row("47uF 35V electrolytic capacitor through hole", "capacitor", "capacitance=47uF;voltage=35V", "", "", "THT", ""),
                 row("100mΩ 2512 shunt", "resistor", "resistance=100mohm", "", "2512", "", ""),

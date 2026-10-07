@@ -1,0 +1,5672 @@
+{
+ "query": "IR LED 940nm 5mm",
+ "recorded": "2026-10-07 live probe (one search per query through the stack, detail=full, allow_below_spec, max_results 50): Mouser and TME parts are every part the search fetched, read back from the part cache (raw distributor attributes); LCSC parts are the returned ones without the derived attributes; prices as listed",
+ "phrases": {
+  "LCSC": "\"Infrared LED Emitters\" 5mm",
+  "TME": "IR transmitter 5mm 940nm",
+  "MOUSER": "infrared emitter 940nm 5mm"
+ },
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C264291",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333/H0/L10",
+    "description": "-40℃~+85℃ 100mA 11mW/sr@IF=20mA 150mW 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 19890,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.115,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.091,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.079,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1808280419_Everlight-Elec-IR333-H0-L10_C264291.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C264291.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C264291"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C264292",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333/H0-A",
+    "description": "-40℃~+85℃ 1.5V 100mA 150mW 5.6mW/sr@IF=20mA 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 20019,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.096,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.077,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.068,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1808280419_Everlight-Elec-IR333-H0-A_C264292.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C264292.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C264292"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C264290",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333-A",
+    "description": "-40℃~+85℃ 1.2V 100mA 150mW 5V 7.8mW/sr@IF=20mA 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 39680,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.055,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.043,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.037,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1808280419_Everlight-Elec-IR333-A_C264290.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C264290.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C264290"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5200795",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333C",
+    "description": "-40℃~+85℃ 1.2V 7.8mW/sr@IF=20mA 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 20847,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.109,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.086,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.075,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2212141409_Everlight-Elec-IR333C_C5200795.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5200795.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5200795"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5130",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333C-A",
+    "description": "-40℃~+85℃ 1.2V、1.4V 100mA 150mW 15mW/sr@IF=20mA 20° 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 30780,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.054,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.043,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.037,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1810281710_Everlight-Elec-IR333C-A_C5130.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5130.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5130"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C52034726",
+    "manufacturer": "Gui guang light",
+    "manufacturerPartNumber": "5A2L-10",
+    "description": "-40℃~+85℃ 1.2V~1.4V 20mA 20mW 22mW/sr@IF=20mA 45° 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 25543,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.039,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.031,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.026,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/Gui_guanglight-5A2L10/C52034726",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C52034726.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C52034726"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C405270",
+    "manufacturer": "MEIHUA",
+    "manufacturerPartNumber": "MHL512IR029CRT-N",
+    "description": "-35℃~+85℃ 1.9V 150mW 18mW/sr 20mA 20° 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 1074,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.09,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.072,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.064,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1912111437_MEIHUA-MHL512IR029CRT-N_C405270.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C405270.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C405270"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2962772",
+    "manufacturer": "PARALIGHT",
+    "manufacturerPartNumber": "L519EIR1C-UEI",
+    "description": "-40℃~+85℃ 100mA 150mW 50° 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 1010,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.101,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.082,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.072,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/PARALIGHT-L519EIR1CUEI/C2962772",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2962772.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2962772"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C264297",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR383-A",
+    "description": "-40℃~+85℃ 1.2V 100mA 150mW 20mW/sr@IF=20mA 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 2920,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.078,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.063,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.053,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1810261549_Everlight-Elec-IR383-A_C264297.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C264297.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C264297"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C6081252",
+    "manufacturer": "NEWOPTO",
+    "manufacturerPartNumber": "XYC-IR5D940AC-S2",
+    "description": "-40℃~+85℃ 1.1V~1.4V 35° 5V 60mA 80mW 940nm 9mW/sr 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 143,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.086,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.065,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.054,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2305191759_NEWOPTO-XYC-IR5D940AC-S2_C6081252.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C6081252.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C6081252"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C72053",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333C/H0/L10",
+    "description": "-40℃~+85℃ 11mW/sr@IF=20mA 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 243,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.076,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.06,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.052,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1809301129_Everlight-Elec-IR333C-H0-L10_C72053.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C72053.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C72053"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C264287",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333C/H0-A",
+    "description": "-40℃~+85℃ 1.2V 100mA 150mW 5.6mW/sr@IF=20mA 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 26,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.058,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.045,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.039,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1808280419_Everlight-Elec-IR333C-H0-A_C264287.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C264287.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C264287"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C405273",
+    "manufacturer": "MEIHUA",
+    "manufacturerPartNumber": "MHL512IR059CRT",
+    "description": "-25℃~+85℃ 1.8V 100mA 180mW 3mW/sr 5V 70° 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 639,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.099,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.08,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.07,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1912111437_MEIHUA-MHL512IR059CRT_C405273.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C405273.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C405273"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2693585",
+    "manufacturer": "NEWOPTO",
+    "manufacturerPartNumber": "XYC-IR333C-L4",
+    "description": "-30℃~+85℃ 1.23V 100mW 20mW/sr@IF=80mA 20° 5V 80mA 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 171,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.055,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.045,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.039,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2106062312_NEWOPTO-XYC-IR333C-L4_C2693585.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2693585.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2693585"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2900370",
+    "manufacturer": "OSRAM Opto Semicon",
+    "manufacturerPartNumber": "SFH 4544",
+    "description": "-40℃~+100℃ 1.6V 550mW/sr@IF=100mA 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 14,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.697,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.56,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 0.494,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2409300604_OSRAM-Opto-Semicon-SFH-4544_C2900370.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2900370.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2900370"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C575320",
+    "manufacturer": "Chau Light",
+    "manufacturerPartNumber": "ZIR053",
+    "description": "-40℃~+85℃ 1.2V 100mA 150mW 20° 35mW/sr、5.71mW/sr、390mW/sr 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 7,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.064,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.052,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.041,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2006021732_Chau-Light-ZIR053_C575320.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C575320.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C575320"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C405269",
+    "manufacturer": "MEIHUA",
+    "manufacturerPartNumber": "MHL512IR029CRT",
+    "description": "-40℃~+85℃ 1.8V 150mW 18mW/sr 20mA 20° 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 5,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.092,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.073,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.064,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1912111437_MEIHUA-MHL512IR029CRT_C405269.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C405269.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C405269"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C264294",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR7393C",
+    "description": "-40℃~+85℃ 1.2V 4mW/sr@IF=20mA 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 4,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.079,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.062,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.053,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1808280420_Everlight-Elec-IR7393C_C264294.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C264294.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C264294"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C182234",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR423C/L10",
+    "description": "-40℃~+85℃ 1.15mW/sr@IF=20mA 1.2V 100mW 50mA 5V 940nm 插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.118,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.096,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.086,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1809301133_Everlight-Elec-IR423C-L10_C182234.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C182234.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C182234"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53446534",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333C-6-A",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 38915,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.074,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.059,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.051,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/EverlightElec-IR333C_6A/C53446534",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53446534.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53446534"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2992769",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "HIR8383C/L289",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 11756,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.107,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.095,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.088,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2204181745_Everlight-Elec-HIR8383C-L289_C2992769.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2992769.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2992769"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55121776",
+    "manufacturer": "LIGHT",
+    "manufacturerPartNumber": "LG-05IR4T94C-557C-B2-T",
+    "description": null,
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "SMD,D=5mm",
+    "stock": 2000,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.096,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.076,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.067,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LIGHT-LG_05IR4T94C_557C_B2T/C55121776",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55121776.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55121776"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55121797",
+    "manufacturer": "LIGHT",
+    "manufacturerPartNumber": "LG-05IR4C94C-707-T1",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 1995,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.115,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.092,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.08,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LIGHT-LG_05IR4C94C_707T1/C55121797",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55121797.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55121797"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55121796",
+    "manufacturer": "LIGHT",
+    "manufacturerPartNumber": "LG-05IR3C94C-544A-B1",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 1000,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.077,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.061,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.053,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LIGHT-LG_05IR3C94C_544AB1/C55121796",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55121796.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55121796"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55121795",
+    "manufacturer": "LIGHT",
+    "manufacturerPartNumber": "LG-05IR4C94C-707-B1",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 997,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.077,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.061,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.053,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LIGHT-LG_05IR4C94C_707B1/C55121795",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55121795.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55121795"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54123509",
+    "manufacturer": "TONYU",
+    "manufacturerPartNumber": "DY-IR333T/H0-08B2",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 500,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.059,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.047,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.041,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/TONYU-DY_IR333T_H008B2/C54123509",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54123509.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54123509"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54123518",
+    "manufacturer": "TONYU",
+    "manufacturerPartNumber": "DY-IR333C/H21-A3",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 495,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.061,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.049,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.043,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/TONYU-DY_IR333C_H21A3/C54123518",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54123518.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54123518"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54123508",
+    "manufacturer": "TONYU",
+    "manufacturerPartNumber": "DY-IR333C/H0-08B2",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 460,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.059,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.047,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.041,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/TONYU-DY_IR333C_H008B2/C54123508",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54123508.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54123508"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C139041",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "IR333C-A RFile",
+    "description": "IR333C-A R not ROHS",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 311,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.058,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.045,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.039,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2009011533_Everlight-Elec-IR333C-A-R_C139041.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C139041.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C139041"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C461624",
+    "manufacturer": "Vishay Intertech",
+    "manufacturerPartNumber": "tsal6102",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 185,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.222,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.177,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.157,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1912111437_Vishay-Intertech-tsal6102_C461624.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C461624.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C461624"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2916529",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "334-15/T1C1-7VXC",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 82,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.149,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.121,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.107,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2111180930_Everlight-Elec-334-15-T1C1-7VXC_C2916529.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2916529.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2916529"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C710235",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "SIR333C",
+    "description": "插件,D=5mm",
+    "category": "Optoelectronics / Infrared LED Emitters",
+    "packageName": "Plugin,D=5mm",
+    "stock": 21,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.251,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.201,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.18,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2007311836_Everlight-Elec-SIR333C_C710235.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C710235.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Infrared LED Emitters",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C710235"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      },
+      {
+       "id": "CT1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 36,
+     "datasheet_source": "dte"
+    },
+    "stock": 9067,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.255
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.168
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.116
+     },
+     {
+      "currency": "EUR",
+      "quantity": 300,
+      "unitPrice": 0.095
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.094
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.09
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.086
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.081
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.08
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/56/9B/00/00/0/47461_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0951853ee31f45e2a8419235a5694b38fd5bdfd9",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "blue-grey, transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED diameter": "5mm",
+     "Manufacturer": "VISHAY",
+     "Radiant power": "210mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "17°"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tsal6200/",
+    "description": "IR transmitter; 5mm; 940nm; blue-grey,transparent; 210mW; 17°; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/93687986f26d0565e87dd84a45e9139c/tsal6200.pdf",
+    "manufacturer": "VISHAY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "TSAL6200",
+    "manufacturerPartNumber": "TSAL6200"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      },
+      {
+       "id": "CT1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 36,
+     "datasheet_source": "dte"
+    },
+    "stock": 1076,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.344
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.235
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.185
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.169
+     },
+     {
+      "currency": "EUR",
+      "quantity": 300,
+      "unitPrice": 0.147
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.139
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.128
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.112
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.107
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.105
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/66/9B/00/00/0/47462_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9ccd705a0b11583b604352e94fab931c4afe157c",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "blue, transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED diameter": "5mm",
+     "Manufacturer": "VISHAY",
+     "Radiant power": "160mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "25°"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tsal6400/",
+    "description": "IR transmitter; 5mm; 940nm; blue,transparent; 160mW; 25°; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/64d987a9d1fee017c6974e44f89bdd7f/TSAL6400.pdf",
+    "manufacturer": "VISHAY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "TSAL6400",
+    "manufacturerPartNumber": "TSAL6400"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      },
+      {
+       "id": "CT1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 36,
+     "datasheet_source": "dte"
+    },
+    "stock": 6803,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.346
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.232
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.208
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.175
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.132
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.117
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.109
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.102
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.095
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.092
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1A/C8/30/00/0/232609_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0a1511527ba4f1cbaed5d62b6cc7862361a719bd",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "blue-grey, transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED diameter": "5mm",
+     "Manufacturer": "VISHAY",
+     "Radiant power": "40mW",
+     "Type of diode": "IR transmitter"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tsal6100/",
+    "description": "IR transmitter; 5mm; 940nm; blue-grey,transparent; 40mW; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/c0a772194dfee7f78d4f3985a439ebc7/tsal6100.pdf",
+    "manufacturer": "VISHAY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "TSAL6100",
+    "manufacturerPartNumber": "TSAL6100"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "PB1",
+       "amount": 10
+      },
+      {
+       "id": "PB2",
+       "amount": 100
+      },
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 111,
+     "datasheet_source": "dte"
+    },
+    "stock": 8786,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.172
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.149
+     },
+     {
+      "currency": "EUR",
+      "quantity": 15,
+      "unitPrice": 0.144
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.129
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.12
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.108
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.099
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.091
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.088
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/4D/17/00/00/0/29140_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ca28ceab0867691377d0971141ba0d849509ae1c",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED diameter": "5mm",
+     "Manufacturer": "KINGBRIGHT ELECTRONIC",
+     "Radiant power": "20mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "30°"
+    },
+    "productUrl": "https://www.tme.eu/en/details/l-53f3c/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 20mW; 30°; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/49118d934bd7dd8719a54163c0a31782/KINGBRIGHT_TECH_NOTES.pdf",
+    "manufacturer": "KINGBRIGHT ELECTRONIC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "L-53F3C",
+    "manufacturerPartNumber": "L-53F3C"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "PB1",
+       "amount": 10
+      },
+      {
+       "id": "PB2",
+       "amount": 100
+      },
+      {
+       "id": "BG1",
+       "amount": 1000
+      },
+      {
+       "id": "CT1",
+       "amount": 18000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 111,
+     "datasheet_source": "dte"
+    },
+    "stock": 2949,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.123
+     },
+     {
+      "currency": "EUR",
+      "quantity": 16,
+      "unitPrice": 0.113
+     },
+     {
+      "currency": "EUR",
+      "quantity": 45,
+      "unitPrice": 0.108
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.103
+     },
+     {
+      "currency": "EUR",
+      "quantity": 300,
+      "unitPrice": 0.098
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.095
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.092
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.089
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3D/17/00/00/0/29139_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c0d3b746f8f3926cd220da30454e66ee1678eed4",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "blue, transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED diameter": "5mm",
+     "Manufacturer": "KINGBRIGHT ELECTRONIC",
+     "Radiant power": "20mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "30°"
+    },
+    "productUrl": "https://www.tme.eu/en/details/l-53f3bt/",
+    "description": "IR transmitter; 5mm; 940nm; blue,transparent; 20mW; 30°; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/49118d934bd7dd8719a54163c0a31782/KINGBRIGHT_TECH_NOTES.pdf",
+    "manufacturer": "KINGBRIGHT ELECTRONIC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "L-53F3BT",
+    "manufacturerPartNumber": "L-53F3BT"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 500
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 126,
+     "datasheet_source": "dte"
+    },
+    "stock": 828,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.086
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.079
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.074
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.069
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.067
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.062
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.057
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.054
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20000,
+      "unitPrice": 0.052
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/7A/59/D0/00/0/890279_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b0bdb162124e505651121d7d4d29eb52cf20d49e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "EVERLIGHT",
+     "Maximum power": "150mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "55°",
+     "Operating voltage": "1.2...1.8V DC",
+     "radiant intensity": "4...25mW/sr",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ir7393c/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 55°; 1.2÷1.8VDC; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/780c69bbe96d09eb761d6e2cc47c59d8/PCN20231124-02 - CN23110015.pdf",
+    "manufacturer": "EVERLIGHT",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "IR7393C",
+    "manufacturerPartNumber": "IR7393C"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 36,
+     "datasheet_source": "dte"
+    },
+    "stock": 1814,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.331
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2,
+      "unitPrice": 0.304
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.241
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.188
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.17
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.149
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.135
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.124
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.109
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.098
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/57/1B/80/00/0/569717_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=77e762ba32711071fea685f7f4dd817eb378f11e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "blue-grey",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "VISHAY",
+     "Radiant power": "170mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "10°",
+     "Operating voltage": "1.35...1.6V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tsal6100-as12z/",
+    "description": "IR transmitter; 5mm; 940nm; blue-grey; 170mW; 10°; 1.35÷1.6VDC; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/abd89e4e899a31beb79c11193ad3ea5e/TSAL6100-AS12Z.pdf",
+    "manufacturer": "VISHAY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "TSAL6100-AS12Z",
+    "manufacturerPartNumber": "TSAL6100-AS12Z"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 119,
+     "datasheet_source": "dte"
+    },
+    "stock": 9785,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.1022
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.0644
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0512
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0408
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0364
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/0F/47/00/00/0/29936_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=888f842994054253c08bb2dc9c614eb6c1a4716a",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Power": "0.1W",
+     "LED lens": "blue, transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED diameter": "5mm",
+     "Manufacturer": "LUCKYLIGHT",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "20°",
+     "radiant intensity": "6mW/sr"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ll-503irt2e-2ac/",
+    "description": "IR transmitter; 5mm; 940nm; blue,transparent; 20°; THT; 100mW",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/5c3da3de715f474d8e3e1e9b931a76c3/LL-503IRT2E-2AC.pdf",
+    "manufacturer": "LUCKYLIGHT",
+    "orderMultiple": 5,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "LL-503IRT2E-2AC",
+    "manufacturerPartNumber": "LL-503IRT2E-2AC"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 500
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 126,
+     "datasheet_source": "dte"
+    },
+    "stock": 638,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.293
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.253
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.212
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.132
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.094
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/6A/59/D0/00/0/890278_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=98df64e6adfcb10ca9cabb0fbc02b6aab7594134",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "blue",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "EVERLIGHT",
+     "Maximum power": "150mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "20°",
+     "Operating voltage": "1.2...1.8V DC",
+     "radiant intensity": "7.8...85mW/sr",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ir333-a/",
+    "description": "IR transmitter; 5mm; 940nm; blue; 20°; 1.2÷1.8VDC; λp max: 940nm",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/097342f750dbebe9dd7ab067539b8904/IR333-A.PDF",
+    "manufacturer": "EVERLIGHT",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "IR333-A",
+    "manufacturerPartNumber": "IR333-A"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 36,
+     "datasheet_source": "dte"
+    },
+    "stock": 1226,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 2,
+      "unitPrice": 0.715
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.362
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.194
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.155
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.135
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.132
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.131
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/05/4D/80/00/0/578640_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2460bfe3b1bd303814908acb2ea81059ac8cf75e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "blue-grey",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "VISHAY",
+     "Radiant power": "72mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "17°",
+     "Operating voltage": "1.35...1.6V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tsal6200-es21/",
+    "description": "IR transmitter; 5mm; 940nm; blue-grey; 72mW; 17°; 1.35÷1.6VDC; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/7f465f98d8d46d0c8926916c9dc9a702/TSAL6200-ES21.pdf",
+    "manufacturer": "VISHAY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 2,
+    "distributorPartNumber": "TSAL6200-ES21",
+    "manufacturerPartNumber": "TSAL6200-ES21"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 500
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 126,
+     "datasheet_source": "dte"
+    },
+    "stock": 36,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.294
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.078
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.059
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.054
+     },
+     {
+      "currency": "EUR",
+      "quantity": 150,
+      "unitPrice": 0.053
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/48/97/D0/00/0/883076_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2f5cd47ee4725fe5546b1ff9a9464773f8c9b096",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "EVERLIGHT",
+     "Maximum power": "150mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "40°",
+     "Operating voltage": "1.2...1.8V DC",
+     "radiant intensity": "7.8...45mW/sr",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ir333c_h0_l10/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 40°; 1.2÷1.8VDC; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/718517e6543daf1c68849d45f93a13a0/IR333C-H0-L10.PDF",
+    "manufacturer": "EVERLIGHT",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "IR333C/H0/L10",
+    "manufacturerPartNumber": "IR333C/H0/L10"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 36,
+     "datasheet_source": "dte"
+    },
+    "stock": 1118,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 2,
+      "unitPrice": 0.467
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.176
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.136
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.116
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.108
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/D4/F9/80/00/0/565069_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9eb40f33b7eda82f7fead8e478d3ec7e182ad35e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "blue-grey",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "VISHAY",
+     "Radiant power": "170mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "10°",
+     "Operating voltage": "1.35...1.6V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tsal6100-ms12/",
+    "description": "IR transmitter; 5mm; 940nm; blue-grey; 170mW; 10°; 1.35÷1.6VDC; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/c3c84319f6d730b12e6ca9a1534419e2/TSAL6100-MS12.pdf",
+    "manufacturer": "VISHAY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 2,
+    "distributorPartNumber": "TSAL6100-MS12",
+    "manufacturerPartNumber": "TSAL6100-MS12"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 119,
+     "datasheet_source": "dte"
+    },
+    "stock": 6415,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.0768
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0487
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0408
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.038
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/03/91/50/00/0/334128_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d81c5e7ada8d4a31e5be97728be813a7aa027204",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Power": "0.1W",
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "20mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "LUCKYLIGHT",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "30°",
+     "Operating voltage": "0.8...1.5V DC",
+     "radiant intensity": "7.8...12mW/sr"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ll-503irc2v-2ad/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 30°; 0.8÷1.5VDC; THT; 20mA",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/ff405decbff84dcab5808e6abd28e75f/LL-503IRC2V-2AD.pdf",
+    "manufacturer": "LUCKYLIGHT",
+    "orderMultiple": 5,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "LL-503IRC2V-2AD",
+    "manufacturerPartNumber": "LL-503IRC2V-2AD"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 500
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 126,
+     "datasheet_source": "dte"
+    },
+    "stock": 624,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.0955
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0841
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0812
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0791
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.075
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0693
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.0644
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.0586
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20000,
+      "unitPrice": 0.0558
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/36/DD/D0/00/0/908643_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=39c29764fe028f3cb6dacfb6b6266619140c74be",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "20mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "EVERLIGHT",
+     "Maximum power": "150mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "20°",
+     "Operating voltage": "1.2...1.5V DC",
+     "radiant intensity": "7.8...20mW/sr",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ir333c/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 20°; 1.2÷1.5VDC; THT; 20mA",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/a26e1151a7b947115a917d56c60e498e/IR333C.PDF",
+    "manufacturer": "EVERLIGHT",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "IR333C",
+    "manufacturerPartNumber": "IR333C"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "PB2",
+       "amount": 100
+      },
+      {
+       "id": "BG1",
+       "amount": 1000
+      },
+      {
+       "id": "CT1",
+       "amount": 5000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 119,
+     "datasheet_source": "dte"
+    },
+    "stock": 5655,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.0914
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0722
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0579
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0453
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1F/47/00/00/0/29937_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8249b37a24a9a377f1d94317d7261510e26a5e2e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Power": "0.1W",
+     "LED lens": "blue, transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED diameter": "5mm",
+     "Manufacturer": "LUCKYLIGHT",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "45°",
+     "radiant intensity": "5.5...8.5mW/sr"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ll-503irt2e-2ae/",
+    "description": "IR transmitter; 5mm; 940nm; blue,transparent; 45°; THT; 100mW",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/1faece82457e38e3967e41f9f94f0b81/LL-503IRT2E-2AE.pdf",
+    "manufacturer": "LUCKYLIGHT",
+    "orderMultiple": 5,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "LL-503IRT2E-2AE",
+    "manufacturerPartNumber": "LL-503IRT2E-2AE"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 111,
+     "datasheet_source": "dte"
+    },
+    "stock": 1124,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 2,
+      "unitPrice": 0.4
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.18
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.134
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.12
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.111
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/FF/01/90/00/0/594175_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e5a527b5070ca8760baa59dd8c4dde6e5f77235c",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "blue, transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "20mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "KINGBRIGHT ELECTRONIC",
+     "Radiant power": "15...30mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "20°",
+     "Operating voltage": "1.2...1.6V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/l-7113f3bt/",
+    "description": "IR transmitter; 5mm; 940nm; blue,transparent; 15÷30mW; 20°; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/49118d934bd7dd8719a54163c0a31782/KINGBRIGHT_TECH_NOTES.pdf",
+    "manufacturer": "KINGBRIGHT ELECTRONIC",
+    "orderMultiple": 2,
+    "minimumOrderQuantity": 2,
+    "distributorPartNumber": "L-7113F3BT",
+    "manufacturerPartNumber": "L-7113F3BT"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 128,
+     "datasheet_source": "dte"
+    },
+    "stock": 14685,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.321
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.225
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.155
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.124
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.119
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.114
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F7/AA/F0/00/0/1026687_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f4f372831b044388d0888fd078e2da2f83e11394",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "50mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "LITEON",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "40°",
+     "Operating voltage": "1.25...1.6V DC",
+     "radiant intensity": "4.81...39.84W/sr"
+    },
+    "productUrl": "https://www.tme.eu/en/details/lte-3371t/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 40°; 1.25÷1.6VDC; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/bdb5545a0e8719cdf742a154864a800b/LTE-3371T.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "LTE-3371T",
+    "manufacturerPartNumber": "LTE-3371T"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 128,
+     "datasheet_source": "dte"
+    },
+    "stock": 11675,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.337
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.169
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.134
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.12
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.11
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.096
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.086
+     },
+     {
+      "currency": "EUR",
+      "quantity": 15000,
+      "unitPrice": 0.081
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20000,
+      "unitPrice": 0.076
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B6/29/F0/00/0/1020523_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0733d5084d69a8a0dc9a67f330c5204457d381a8",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "20mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "LITEON",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "20°",
+     "Operating voltage": "1.2...1.6V DC",
+     "radiant intensity": "3.31...23.58W/sr"
+    },
+    "productUrl": "https://www.tme.eu/en/details/lte-4208/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 20°; 1.2÷1.6VDC; THT; 20mA",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/3fe777666e8ce26b41124907586f4eaf/LTE-4208.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "LTE-4208",
+    "manufacturerPartNumber": "LTE-4208"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 128,
+     "datasheet_source": "dte"
+    },
+    "stock": 3206,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.114
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.105
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.101
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.099
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.094
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.091
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.086
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.085
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20000,
+      "unitPrice": 0.084
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/69/57/F0/00/0/1013142_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a6b9288ab8951b7572a4757ead50b6b424186e53",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "50mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "LITEON",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "50°",
+     "Operating voltage": "1.25...1.6V DC",
+     "radiant intensity": "6...18.52W/sr"
+    },
+    "productUrl": "https://www.tme.eu/en/details/lte-3271b/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 50°; 1.25÷1.6VDC; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/48b633fb982eb0c404b06e19319879a5/LTE-3271B.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "LTE-3271B",
+    "manufacturerPartNumber": "LTE-3271B"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 500
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 126,
+     "datasheet_source": "dte"
+    },
+    "stock": 875,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.105
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.059
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/58/97/D0/00/0/883077_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=020c1f4699e694be834a13efc5b8049a590020ad",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "blue",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "EVERLIGHT",
+     "Maximum power": "150mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "20°",
+     "Operating voltage": "1.2...1.8V DC",
+     "radiant intensity": "15...80mW/sr",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ir383/",
+    "description": "IR transmitter; 5mm; 940nm; blue; 20°; 1.2÷1.8VDC; λp max: 940nm",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/780c69bbe96d09eb761d6e2cc47c59d8/PCN20231124-02 - CN23110015.pdf",
+    "manufacturer": "EVERLIGHT",
+    "orderMultiple": 5,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "IR383",
+    "manufacturerPartNumber": "IR383"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 250
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 41,
+     "datasheet_source": "dte"
+    },
+    "stock": 540,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.381
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.328
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.29
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.162
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.133
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.116
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.108
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.104
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/A4/6B/80/00/0/570954_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=969fa16606790196c56e81458708783a7ad948a3",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Shape": "round",
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "ONSEMI",
+     "Radiant power": "27mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "40°",
+     "Operating voltage": "1.6V DC",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/qed234/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 27mW; 40°; 1.6VDC; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/bb70eb8213ed171ab23e0b26cd0a42a9/QED234.PDF",
+    "manufacturer": "ONSEMI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "QED234",
+    "manufacturerPartNumber": "QED234"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 500
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 126,
+     "datasheet_source": "dte"
+    },
+    "stock": 285,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.11
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.084
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.062
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/6B/17/D0/00/0/881078_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=fbf561ef02e5eff81daf59eaa2be56e8f53d0023",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "blue",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "EVERLIGHT",
+     "Maximum power": "150mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "20°",
+     "Operating voltage": "1.2...4V DC",
+     "radiant intensity": "15...1000mW/sr",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ir1503/",
+    "description": "IR transmitter; 5mm; 940nm; blue; 20°; 1.2÷4VDC; λp max: 940nm; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/cdf76dedaa8e6a35704c6c8aa8b7de11/PCN20231130-01 - CN23110016.pdf",
+    "manufacturer": "EVERLIGHT",
+    "orderMultiple": 5,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "IR1503",
+    "manufacturerPartNumber": "IR1503"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 128,
+     "datasheet_source": "dte"
+    },
+    "stock": 3751,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.38
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.233
+     },
+     {
+      "currency": "EUR",
+      "quantity": 21,
+      "unitPrice": 0.217
+     },
+     {
+      "currency": "EUR",
+      "quantity": 35,
+      "unitPrice": 0.205
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.18
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.137
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.122
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.115
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.105
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.096
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E7/AA/F0/00/0/1026686_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=40e0aaf6e5aaa06d66379c6cfc1b2c6f7ee58605",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "20mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "LITEON",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "40°",
+     "Operating voltage": "1.2...1.6V DC",
+     "radiant intensity": "3.31...12.63W/sr"
+    },
+    "productUrl": "https://www.tme.eu/en/details/lte-5208a/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 40°; 1.2÷1.6VDC; THT; 20mA",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/558dd2f9d94d2b8315398021dcbf1007/LTE-5208A.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "LTE-5208A",
+    "manufacturerPartNumber": "LTE-5208A"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "dte"
+    },
+    "stock": 217,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.43
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.136
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.127
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/10/6E/80/00/0/583169_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=80fc44e9b3753931a95e09a25a728eba5a0d0d59",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "OPTOSUPPLY",
+     "Radiant power": "60mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "15°",
+     "Operating voltage": "1.6...1.8V DC",
+     "Number of terminals": "2",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/osi5ca5111y/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 60mW; 15°; 1.6÷1.8VDC",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/968ffb6fe6dc38df66c57c4c2a50f217/OSI5CA5111Y.pdf",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "OSI5CA5111Y",
+    "manufacturerPartNumber": "OSI5CA5111Y"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 1000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 128,
+     "datasheet_source": "dte"
+    },
+    "stock": 3963,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.447
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.303
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.234
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.19
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.171
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.153
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.129
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.123
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.112
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C6/29/F0/00/0/1020524_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=03209e147f1b527b67fdaeda691ad1b0aa70c40c",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "20mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "LITEON",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "40°",
+     "Operating voltage": "1.2...1.6V DC",
+     "radiant intensity": "3.31...12.63W/sr"
+    },
+    "productUrl": "https://www.tme.eu/en/details/lte-5228a/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 40°; 1.2÷1.6VDC; THT; 20mA",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/322768ec3496e8a75ea425ceab0da106/LTE-5228A.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "LTE-5228A",
+    "manufacturerPartNumber": "LTE-5228A"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "product_page"
+    },
+    "stock": 77,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.168
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.146
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.129
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.112
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.084
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.078
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.075
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.073
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1F/E9/41/00/0/1351409_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=074e0894727769c17f1464a98035ce143ffd16af",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "Wavelength": "940nm",
+     "LED current": "1A",
+     "LED diameter": "5mm",
+     "Manufacturer": "OPTOSUPPLY",
+     "Radiant power": "20...26mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "30°",
+     "Operating voltage": "1.6...1.8V DC",
+     "radiant intensity": "30...40mW/sr",
+     "Number of terminals": "2"
+    },
+    "productUrl": "https://www.tme.eu/en/details/osi5la5l31a/",
+    "description": "IR transmitter; 5mm; 940nm; transparent; 20÷26mW; 30°; 1.6÷1.8VDC",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/en/details/osi5la5l31a/",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "OSI5LA5L31A",
+    "manufacturerPartNumber": "OSI5LA5L31A"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 500
+      },
+      {
+       "id": "CT1",
+       "amount": 5000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1792,
+     "datasheet_source": "dte"
+    },
+    "stock": 3067,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.3816
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.2662
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.1331
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0799
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0577
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.0534
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/64/9C/F0/00/0/1034566_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=187d59721fc9f655fe4bbd6cbf1df6d08a172371",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "blue",
+     "Mounting": "THT",
+     "Rise time": "600ns",
+     "LED current": "20mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "BRIGHTEK (EUROPE)",
+     "Maximum power": "0.1W",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "16°",
+     "Terminal pitch": "2.54mm",
+     "Operating voltage": "1.2...1.6V DC",
+     "radiant intensity": "10...14mW/sr",
+     "Number of terminals": "2",
+     "Operating temperature": "-40...85°C",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/n0f00l30/",
+    "description": "IR transmitter; 5mm; blue; 16°; 1.2÷1.6VDC; λp max: 940nm; THT; 20mA",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/bc32cb25d8938468468d36c8839c7b6f/N0F00L30.pdf",
+    "manufacturer": "BRIGHTEK (EUROPE)",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "N0F00L30",
+    "manufacturerPartNumber": "N0F00L30"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1382,
+     "datasheet_source": "dte"
+    },
+    "stock": 96,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.31
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 1.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.81
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.63
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/09/46/D0/00/0/877712_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7eb5972cf030be6ebe1f1c72fe67d9d46dc7faae",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "LED current": "50mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "NTE Electronics",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "45°",
+     "Operating voltage": "1.3...1.5V DC",
+     "radiant intensity": "50...60mW/sr",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/nte3027/",
+    "description": "IR transmitter; 5mm; transparent; 45°; 1.3÷1.5VDC; λp max: 940nm",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/6c5b7226859fb4c392732518e0be87c5/nte3027.pdf",
+    "manufacturer": "NTE Electronics",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "NTE3027",
+    "manufacturerPartNumber": "NTE3027"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 100
+      },
+      {
+       "id": "BG2",
+       "amount": 2000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100425,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "dte"
+    },
+    "stock": 778,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.0747
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0641
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0547
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0509
+     }
+    ],
+    "category": "IR LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C1/22/60/00/0/401948_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9e8e16a74ad91fea0ca94c69b27bc024b7f70b27",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "THT",
+     "LED current": "100mA",
+     "LED diameter": "5mm",
+     "Manufacturer": "OPTOSUPPLY",
+     "Radiant power": "60mW",
+     "Type of diode": "IR transmitter",
+     "Viewing angle": "8°",
+     "Operating voltage": "1.6...1.8V DC",
+     "Manufacturer series": "Bullet",
+     "Number of terminals": "2",
+     "Wavelength of peak sensitivity": "940nm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/osi5la5201a/",
+    "description": "IR transmitter; 5mm; transparent; 60mW; 8°; 1.6÷1.8VDC; THT; 100mA",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/5eccc42a5113051f8c0cfdd64e7fa99c/OSI5LA5201A.pdf",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "OSI5LA5201A",
+    "manufacturerPartNumber": "OSI5LA5201A"
+   }
+  ],
+  "MOUSER": [
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "74 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 6750,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.636
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.417
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.279
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.193
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.177
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.135
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.134
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.124
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/TSAL6100UL_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "5000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6200-ESZ?qs=RzxYCzJDjPVfv41o3UDRsA%3D%3D",
+    "description": "Infrared Emitters IR EMITTER HIGH POWR 950NM 5MM 17DEG-e3",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "78-TSAL6200-ESZ",
+    "manufacturerPartNumber": "TSAL6200-ESZ"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "47 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 7864,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.507
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.352
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.25
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.207
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.192
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.186
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.166
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.155
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.145
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/TSAL6100UL_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6102?qs=Vcr9%2FL0R50jxng8A4XzfFA%3D%3D",
+    "description": "Infrared Emitters IREMITTER HIGHPOWR 940NM 5MM 10DEG",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "78-TSAL6102",
+    "manufacturerPartNumber": "TSAL6102"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "lifecycle_status": "New Product",
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 4114,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.49
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.349
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.24
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.217
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.202
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.168
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.125
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/dialight/images/521-5002F_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "100"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Dialight/521-5002F?qs=VVKQmw408U8ZGGesPD%2FQIQ%3D%3D",
+    "description": "Infrared Emitters 5mm Infrared (IR) LED 940nm wavelength, Blue Transparent Lens",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/350/1/C18723.pdf",
+    "manufacturer": "Dialight",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "645-521-5002F",
+    "manufacturerPartNumber": "521-5002F"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "56 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 2633,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.232
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.159
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.098
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.089
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.076
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.065
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.06
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/inolux/images/INL-3ABCMIR40_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "250"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Inolux/INL-5AHIR30?qs=mAH9sUMRCtt0qdMJoE2uiA%3D%3D",
+    "description": "Infrared Emitters Through Hole / Standard 5mm T1 3/4",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/760/1/INL_5AHIR30_V1.0.pdf",
+    "manufacturer": "Inolux",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "743-INL-5AHIR30",
+    "manufacturerPartNumber": "INL-5AHIR30"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "56 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 10000,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.232
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.159
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.098
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.089
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.076
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.065
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.06
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/inolux/images/INL-3ABCMIR40_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "250"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Inolux/INL-5AHIR15?qs=mAH9sUMRCtsYRU9AtM0WcQ%3D%3D",
+    "description": "Infrared Emitters Through Hole / Standard 5mm T1 3/4",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Inolux",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "743-INL-5AHIR15",
+    "manufacturerPartNumber": "INL-5AHIR15"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "94 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 4028,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.593
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.398
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.283
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.234
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.215
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.209
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.187
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.166
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.158
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/TSAL6100UL_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6102UL?qs=5aG0NVq1C4whyL8TlYjsHg%3D%3D",
+    "description": "Infrared Emitters IREMITTER HIGHPOWR 940NM 5MM 10DEG-UL-E3",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "78-TSAL6102UL",
+    "manufacturerPartNumber": "TSAL6102UL"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "56 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 11811,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.27
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.691
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.588
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.552
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.532
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.503
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.493
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.456
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/ITP_78-VSLY5940_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/VSLY5940?qs=94CH1SeFPDYs4Y%2FR3DhmKA%3D%3D",
+    "description": "Infrared Emitters 940nm,T-1.75 600mW/sr,+/-3deg.",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "78-VSLY5940",
+    "manufacturerPartNumber": "VSLY5940"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 6219,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.619
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.427
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.311
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.259
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.242
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.204
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.189
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.182
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/TSAL6100UL_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6100UL?qs=5aG0NVq1C4ykw%252BIpB7yxxQ%3D%3D",
+    "description": "Infrared Emitters IR EMITTER HIPOWER 950NM 5MM 10DEG UL-E3",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "78-TSAL6100UL",
+    "manufacturerPartNumber": "TSAL6100UL"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-10-23T00:00:00",
+       "quantity": 500
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 19,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.353
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.319
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.3
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.261
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.222
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/wurthelectronics/images/15400385F3590_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wurth-Elektronik/15400594F3590?qs=sPbYRqrBIVneJVAwAlq5Hw%3D%3D",
+    "description": "Infrared Emitters WL-TIRC IR THT Blue 5mm 940nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Wurth Elektronik",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "710-15400594F3590",
+    "manufacturerPartNumber": "15400594F3590"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "56 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-10-16T00:00:00",
+       "quantity": 2000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 20436,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.722
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.503
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.366
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.299
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.267
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.253
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.235
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.22
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/ams/images/SFH-4547_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ams-OSRAM/SFH-4547?qs=3W28jC%252BmlM1vZNZR18djPA%3D%3D",
+    "description": "Infrared Emitters RADIAL T1 3/4 HI PWR IR EMITTR",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/5912/1/SFH_4547_EN.pdf",
+    "manufacturer": "ams OSRAM",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "720-SFH4547",
+    "manufacturerPartNumber": "SFH 4547"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "78 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 54881,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.43
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.297
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.212
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.175
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.163
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.134
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.131
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.123
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/T1_34_case_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6200?qs=GAjK1cmKyrlKVEUhArzG2A%3D%3D",
+    "description": "Infrared Emitters 940nm,T-1.75 72mW/sr,+/-17deg.",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "782-TSAL6200",
+    "manufacturerPartNumber": "TSAL6200"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "42 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 39729,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.378
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.256
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.187
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.144
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.141
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.128
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.126
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.12
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/T1_34_case_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6100?qs=hQ8xas2ojoxzFnfG3K8LcA%3D%3D",
+    "description": "Infrared Emitters 940nm, T-1.75 170mW/sr, +/-10deg.",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "782-TSAL6100",
+    "manufacturerPartNumber": "TSAL6100"
+   },
+   {
+    "extra": {
+     "rohs": null,
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "163 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 2388,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.636
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.417
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.279
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.193
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.177
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.172
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.145
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.144
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.131
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/TSAL6100UL_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "5000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6200-ASZ?qs=RzxYCzJDjPXGIg%252BOjWUsOg%3D%3D",
+    "description": "Infrared Emitters IR EMITTER HIGH POWR 950NM 5MM 17DEG",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "78-TSAL6200-ASZ",
+    "manufacturerPartNumber": "TSAL6200-ASZ"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 628,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.542
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.355
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.237
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.164
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.151
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.146
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.124
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.123
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.112
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/TSAL6100UL_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "5000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6100-AS12Z?qs=RzxYCzJDjPXP8rXxcMPVuw%3D%3D",
+    "description": "Infrared Emitters IR EMITTER HIGH POWR 950NM 5MM 10DEG",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "78-TSAL6100-AS12Z",
+    "manufacturerPartNumber": "TSAL6100-AS12Z"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 5882,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.404
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.279
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.2
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.163
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.143
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.133
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.129
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.122
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.113
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/liteon/images/ITP_LTE-4208.JPG",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/LITEON/LTE-4208?qs=YmyZEYq5wW8LrIKlCQ2NxQ%3D%3D",
+    "description": "Infrared Emitters Ired 940nm 5mm Water Clr 50mA",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "859-LTE4208",
+    "manufacturerPartNumber": "LTE-4208"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "56 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 36294,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.722
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.503
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.366
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.299
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.267
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.253
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.235
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.22
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/ams/images/SFH-4545_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ams-OSRAM/SFH-4545?qs=VcOkZLzzaubOJpq6Xyji1A%3D%3D",
+    "description": "Infrared Emitters RADIAL T1 3/4 HI PWR IR EMITTR",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/5912/1/SFH_4545_EN.pdf",
+    "manufacturer": "ams OSRAM",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "720-SFH4545",
+    "manufacturerPartNumber": "SFH 4545"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "56 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 13473,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.722
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.503
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.366
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.299
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.267
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.253
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.235
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.22
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/ams/images/SFH-4546_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ams-OSRAM/SFH-4546?qs=VcOkZLzzauarreCVxaCHEQ%3D%3D",
+    "description": "Infrared Emitters RADIAL T1 3/4 HI PWR IR EMITTR",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/5912/1/SFH_4546_EN.pdf",
+    "manufacturer": "ams OSRAM",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "720-SFH4546",
+    "manufacturerPartNumber": "SFH 4546"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 855,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.361
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.247
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.176
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.144
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.126
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.119
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.111
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.105
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.097
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/kingbright/images/WP7113-series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Kingbright/WP7113F3C?qs=DkZGzo4b%252BTLOhcEVPp62Zw%3D%3D",
+    "description": "Infrared Emitters IR 940nm 20 deg Water Clear",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/308/1/WP7113F3C.pdf",
+    "manufacturer": "Kingbright",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "604-WP7113F3C",
+    "manufacturerPartNumber": "WP7113F3C"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "42 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1402,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.361
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.247
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.176
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.144
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.133
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.124
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.114
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.108
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.101
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/kingbright/images/WP7113-series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Kingbright/WP7113F3BT?qs=FlsQBa5xHTbl1%2FaGqV3Z7w%3D%3D",
+    "description": "Infrared Emitters 5MM TRANSPARENT LED INFRARED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/308/1/WP7113F3BT.pdf",
+    "manufacturer": "Kingbright",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "604-WP7113F3BT",
+    "manufacturerPartNumber": "WP7113F3BT"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 364,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.378
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.313
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.225
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.205
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.186
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/wurthelectronics/images/15400385A3590_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wurth-Elektronik/15400594A3590?qs=5aG0NVq1C4xq5TwbX552tA%3D%3D",
+    "description": "Infrared Emitters WL-TIRW THT Infrared Waterclr Rnd 5mm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Wurth Elektronik",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "710-15400594A3590",
+    "manufacturerPartNumber": "15400594A3590"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 2325,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.378
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.313
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.225
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.205
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.186
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/wurthelectronics/images/15400385A3590_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wurth-Elektronik/15400394A3590?qs=5aG0NVq1C4ysU6iW8ImS5g%3D%3D",
+    "description": "Infrared Emitters WL-TIRW THT Infrared Waterclr Rnd 5mm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Wurth Elektronik",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "710-15400394A3590",
+    "manufacturerPartNumber": "15400394A3590"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Infrared Emitters",
+     "lead_time": "84 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 4310,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.525
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.343
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.159
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.146
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.136
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.126
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.119
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.108
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/liteon/images/LTE-2871_SPL.JPG",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/LITEON/ASDL-4264-C22?qs=hH%252BOa0VZEiAwywPS2P87kg%3D%3D",
+    "description": "Infrared Emitters Infrared 940nm 16 Degrees",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/lite-on_lites06253-1.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "859-ASDL-4264-C22",
+    "manufacturerPartNumber": "ASDL-4264-C22"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "31 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 6364,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.43
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.297
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.212
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.175
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.163
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.134
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.131
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.124
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/vishay/images/T1_34_case_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Vishay-Semiconductors/TSAL6400?qs=oSAwVt7aKTHCOCv1ythi7g%3D%3D",
+    "description": "Infrared Emitters 940nm,T-1.75 50mW/sr,+/-25deg.",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Vishay Semiconductors",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "782-TSAL6400",
+    "manufacturerPartNumber": "TSAL6400"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1510,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.525
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.336
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.224
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.161
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.144
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.127
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.122
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.109
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/liteon/images/LTE-2871_SPL.JPG",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/LITEON/LTE-2871?qs=WxFF5lh7QM1003vS%252BYhXpA%3D%3D",
+    "description": "Infrared Emitters Emitter Clear 940nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "859-LTE-2871",
+    "manufacturerPartNumber": "LTE-2871"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "84 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 3197,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.619
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.421
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.302
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.25
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.217
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.186
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.173
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.161
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/lumex/images/743.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumex/OED-EL-1L1?qs=P2CO9%252Bg33Zs0QGiVHJDYDg%3D%3D",
+    "description": "Infrared Emitters IR 940nm Emitter 120mw/sr Clear",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Lumex",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "696-OED-EL-1L1",
+    "manufacturerPartNumber": "OED-EL-1L1"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Infrared Emitters",
+     "lead_time": "84 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-12-28T00:00:00",
+       "quantity": 54000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 7373,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.344
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.238
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.169
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.132
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.11
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.103
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.087
+     }
+    ],
+    "category": "Infrared Emitters",
+    "photoUrl": "https://www.mouser.com/images/lumex/images/743.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumex/OED-EL-1L2?qs=WVEbXnpyD8B50auE9jsxcg%3D%3D",
+    "description": "Infrared Emitters 5mm IRED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/389/1/SSL_LX4673YD_LA20.pdf",
+    "manufacturer": "Lumex",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "696-OED-EL-1L2",
+    "manufacturerPartNumber": "OED-EL-1L2"
+   }
+  ]
+ }
+}

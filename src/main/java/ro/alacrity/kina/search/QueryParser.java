@@ -21,7 +21,9 @@ import java.util.Set;
  * (saturation current, DC resistance, lifetime, operating temperature, the impedance of a ferrite bead), preferences
  * ("low DCR"), the part numbers it names ({@link PartNumbers}), the fan attributes of a fan request
  * ({@link FanVocabulary}: type, supply, frame size, bearing, features; speed, airflow, static pressure and noise are
- * values) and the remaining free-text keywords. Stateless and thread-safe.
+ * values), the LED attributes of an LED request ({@link LedVocabulary}: colour, lens, LED type, orientation, the LED
+ * package names; wavelength, colour temperature, luminous intensity and flux and viewing angle are values, a voltage
+ * is the forward voltage) and the remaining free-text keywords. Stateless and thread-safe.
  *
  * <p>When no family keyword is present the family is inferred from the value kind (capacitance or dielectric -&gt;
  * capacitor, resistance -&gt; resistor, inductance -&gt; inductor).
@@ -56,6 +58,7 @@ public class QueryParser {
         String packageName = analysis.packageName();
         List<String> keywords = analysis.keywords();
         ParsedQuery.Fan fan = null;
+        ParsedQuery.Led led = null;
         if (connector == null) {
             polarity = family == null || ComponentFamily.has(family, ComponentFamily.Trait.POLARISED) ? ComponentTypes.polarity(original) : null;
             if (family == null && polarity != null) {
@@ -72,6 +75,22 @@ public class QueryParser {
                 FanVocabulary.Analysis f = FanVocabulary.analyze(original, false);
                 fan = f.fan();
                 keywords = keywords.stream().filter(k -> !f.consumed().contains(k)).toList();
+            }
+            if (LedVocabulary.LED.equals(family)) {
+                // colour, lens, LED type, orientation and the LED package (LedVocabulary); their words are no keywords
+                LedVocabulary.Analysis l = LedVocabulary.analyze(original, false);
+                led = l.led();
+                // the voltage of an LED request is the forward voltage, a maximum (FORWARD_VOLTAGE)
+                constraints.remove(ParsedQuery.VOLTAGE);
+                ParsedQuery.Constraint wavelength = constraints.get(ParsedQuery.WAVELENGTH);
+                if (led.colour() == null && wavelength != null) {
+                    // a wavelength implies its colour band (470nm: blue)
+                    led = led.toBuilder().colour(LedVocabulary.band(wavelength.value())).build();
+                }
+                if (packageName == null) {
+                    packageName = l.packageName();
+                }
+                keywords = keywords.stream().filter(k -> !l.consumed().contains(k)).toList();
             }
             if (packageName == null && "capacitor".equals(family)) {
                 String can = canSize(original, analysis.technology());
@@ -99,6 +118,7 @@ public class QueryParser {
                 .formFactor(connector != null ? null : FormFactor.ofRequestWords(original, family))
                 .partNumbers(PartNumbers.in(original, keywords))
                 .fan(fan)
+                .led(led)
                 .build();
     }
 

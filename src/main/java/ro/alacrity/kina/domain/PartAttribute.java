@@ -252,19 +252,20 @@ public enum PartAttribute {
     COLOUR_TEMPERATURE(ParsedQuery.COLOUR_TEMPERATURE, "ColourTemperature"),
 
     /**
-     * The forward voltage of an LED: Mouser {@code Vf - Forward Voltage}, TME {@code Forward voltage}; a range
-     * ({@code 1.8÷2.6V}) is read as its upper end, the most the LED needs; JLCPCB's first unlabelled voltage.
+     * The forward voltage of an LED: Mouser {@code Vf - Forward Voltage}, TME {@code Operating voltage}
+     * ({@code 2...2.4V DC}, verified live 2026-10-07); a range is read as its upper end, the most the LED needs; the
+     * description's first unlabelled voltage that is not 5V (JLCPCB lists the 5V reverse voltage too).
      */
     @Unit(base = "V", prefixes = {"m", ""})
     @Source(names = {"vf - forward voltage", "forward voltage", "forward voltage (vf)", "voltage - forward (vf) (typ)",
-            "vf", "forward voltage typ."}, families = LED)
+            "vf", "forward voltage typ.", "operating voltage"}, families = LED)
     @Source(precedence = 9, logic = Described.class, families = LED)
     FORWARD_VOLTAGE(ParsedQuery.FORWARD_VOLTAGE, "ForwardVoltage"),
 
     /** The luminous intensity of an LED ({@code 200mcd}, {@code 2.4cd}); a range is read as its upper end. */
     @Unit(symbols = "cd", base = "cd", prefixes = {"m", ""}, families = LED)
-    @Source(names = {"luminous intensity", "luminous intensity (iv)", "millicandela rating", "luminous intensity iv",
-            "iv"}, families = LED)
+    @Source(names = {"luminous intensity", "luminosity", "luminous intensity (iv)", "millicandela rating",
+            "luminous intensity iv", "iv"}, families = LED)
     @Source(precedence = 9, logic = Described.class, families = LED)
     LUMINOUS_INTENSITY(ParsedQuery.LUMINOUS_INTENSITY, "LuminousIntensity"),
 
@@ -303,24 +304,25 @@ public enum PartAttribute {
     DIELECTRIC(null, "Dielectric"),
 
     /**
-     * The package: the package field when KINA recognises it, the inch case codes (Mouser {@code Case Code - in}, TME
-     * {@code Case - inch}), for an LED its package name in the package field and attributes ({@link LedPackage}:
-     * {@code 5050}, {@code PLCC-4}, {@code 5mm}), the millimetre case codes (TME {@code Case - mm}), the package
+     * The package: for an LED its package name in the package field and attributes first ({@link LedPackage}:
+     * {@code 5050}, {@code PLCC-4}, {@code 5mm}; TME {@code Case - mm: 5050} before the package field {@code PLCC6}),
+     * the package field when KINA recognises it, the inch case codes (Mouser {@code Case Code - in}, TME
+     * {@code Case - inch}), the millimetre case codes (TME {@code Case - mm}), the package
      * attributes, the description (for an LED also its package name there, {@link DescribedWord}), the package field
      * as stated, and for a passive the part number ({@link PartNumberPackage}). The vocabulary is the LED one: the
      * other sources name their own.
      */
+    @Source(names = {"case - mm", "led diameter", "package / case", "case", "package", "case / package", "lamp size",
+            "size"}, families = LED, logic = LedPackage.class)
     @Source(logic = PackageField.class)
     @Source(precedence = 1, names = {"case code - in", "case - inch", "case code (inch)", "package (inch)",
             "imperial size", "case code - inch"}, logic = PackageCode.class)
-    @Source(precedence = 1, names = {"package / case", "case", "package", "case / package", "lamp size", "size"},
-            families = LED, logic = LedPackage.class)
     @Source(precedence = 2, names = {"case code - mm", "case - mm", "case code (mm)", "metric size", "package (mm)"},
             logic = MetricPackageCode.class)
     @Source(precedence = 3, names = {"package / case", "package/case", "package", "case", "supplier device package",
             "package type", "case / package", "case/package", "housing"}, logic = PackageCode.class)
-    @Source(precedence = 4, logic = Described.class)
     @Source(precedence = 4, families = LED, logic = DescribedWord.class)
+    @Source(precedence = 4, logic = Described.class)
     @Source(precedence = 5, logic = RawPackageField.class)
     @Source(precedence = 6, logic = PartNumberPackage.class, traits = PASSIVE)
     PACKAGE(null, "Package", Vocabulary.LED_PACKAGE),
@@ -396,28 +398,31 @@ public enum PartAttribute {
             families = FAN, logic = MergedWords.class)
     FAN_FEATURES(null, "Features", Vocabulary.FAN_FEATURES),
 
-    // ---------------------------------------------------------------- LEDs (Mouser "Illumination Color", "Lens Color/Style",
-    // "Viewing Angle", "Vf - Forward Voltage"; TME "Colour of light", "Lens", "Wavelength"; JLCPCB descriptions only)
+    // ---------------------------------------------------------------- LEDs (TME parameters verified live 2026-10-07:
+    // "LED colour" = red / white cold / white/blue, "LED lens" = diffused, white / transparent, "Luminosity" =
+    // 18...54mcd, "Wavelength" = 631nm, "LED current" = 20mA, "Operating voltage" = 2...2.4V DC, "LED diameter" = 5mm,
+    // "Case - mm" = 5050, "LED version" = blinking, "Kind of controller" = WS2811; Mouser's search sends no LED
+    // attributes: its category and description say it, as JLCPCB's do)
 
     /** The colour of an LED's light ({@code red}, {@code warm white}, {@code RGB}); a lens colour is none. */
     @Source(names = {"illumination color", "led colour", "led color", "colour of light", "colour of led",
             "emitted colour", "emitted color", "color", "colour"}, families = LED, logic = VocabularyWord.class)
     @Source(precedence = 1, families = LED, logic = DescribedWord.class)
-    COLOUR(null, "Colour", Vocabulary.LED_COLOUR),
+    COLOUR(null, "LedColour", Vocabulary.LED_COLOUR),
 
     /** The lens of an LED: {@code clear} (water clear, transparent), {@code diffused} (milky, frosted), {@code tinted}. */
-    @Source(names = {"lens", "lens color/style", "lens colour", "lens color", "lens type", "lens style",
+    @Source(names = {"led lens", "lens", "lens color/style", "lens colour", "lens color", "lens type", "lens style",
             "lens transparency"}, families = LED, logic = VocabularyWord.class)
     @Source(precedence = 1, families = LED, logic = DescribedWord.class)
-    LENS(null, "Lens", Vocabulary.LENS),
+    LENS(null, "LensType", Vocabulary.LENS),
 
     /**
      * The LED type: addressable (WS2812, SK6812, APA102, {@code Built-in IC}), or no discrete emitter (strip, laser,
      * receiver, display, driver), high power, else an indicator LED: every name, the description and the category
      * together.
      */
-    @Source(names = {"product", "product type", "type of led", "kind of led", "led type", "type"}, families = LED,
-            logic = MergedWords.class)
+    @Source(names = {"led version", "kind of controller", "type of optoelectronic module", "product", "product type",
+            "type of led", "kind of led", "led type", "type"}, families = LED, logic = MergedWords.class)
     LED_TYPE(null, "LedType", Vocabulary.LED_TYPE),
 
     /** An LED's orientation: {@code right angle} (side view), {@code reverse mount}, {@code vertical} (top view). */

@@ -771,7 +771,7 @@ empty description, so their voltage and frame are unverified and their type is t
 **LEDs** (`search.LedVocabulary`, `ParsedQuery.Led`, family `led`, policy family `led`; 2026-10-07). An LED is a
 specialisation of the diode with a policy row of its own. The vocabulary is read in texts of the LED family only.
 
-- **Colour** (`parsed.led.colour`, the part's `Colour`): `red`, `green` (`emerald`, `pure`), `blue` (`royal`),
+- **Colour** (`parsed.led.colour`, the part's `LedColour`): `red`, `green` (`emerald`, `pure`), `blue` (`royal`),
   `yellow`, `amber`, `orange`, `pink`, `purple`, `yellow green`, `white`, `warm white`, `neutral white` (`natural`),
   `cool white` (`cold`, `pure white`, `daylight`), `UV` (`ultraviolet`, `UVA`), `IR` (`infrared`), `RGB` (`full
   colour`), `RGBW`, `bi-colour`, `tri-colour`. A lens colour is no colour of the light: JLCPCB `Blue Frosted White Lens`
@@ -780,11 +780,15 @@ specialisation of the diode with a policy row of its own. The vocabulary is read
   red, 585 to 600 nm yellow, 515 to 540 nm green, 460 to 480 nm blue, 395 to 410 nm UV, 840 to 950 nm IR.
 - **Lens** (`lens`): `clear` (`water clear`, `transparent`), `diffused` (`milky`, `frosted`), `tinted` (`tinted`, a
   coloured lens such as `Red Lens`). Diffused wins over tinted (`Frosted Red Lens` is diffused).
-- **LED type** (`type`, the part's `LedType`): `addressable` (`WS2812`, `SK6812`, `APA102`, `NeoPixel`, JLCPCB
-  `RGB LEDs(Built-in IC)`), `high power` (`high power`, `power LED`, `1W star`), `indicator` (the part default), and no
-  discrete emitter: `strip` (`LED strip`), `laser`, `receiver` (photodiode, phototransistor, IR receiver, optocoupler),
-  `display` (segment display, dot matrix), `driver` (LED driver ICs). A request that names no type asks for a plain
-  emitter: indicator and high power LEDs. `indicator`, `status` and `PCB LED` name no type of a request.
+- **LED type** (`type`, the part's `LedType`): `addressable` (`WS2812`, `SK6812`, `APA102`, `NeoPixel`,
+  `programmable`, JLCPCB `RGB LEDs(Built-in IC)`, Mouser `IC Embedded`, `with IC`, `ICLED`, `32bit data`, `SingleWire`),
+  `high power` (`high power`, `power LED`, Mouser `HIGH POWR`, `HI PWR`, `1W star`), `blinking` (TME `LED version:
+  blinking`, `special effect`), `indicator` (the part default), and no discrete emitter: `strip` (`LED strip`, TME
+  `LED tape` and `LED ribbon`, `LED modules`, Mouser `Light Bars & Light Strips`; a programmable tape is a strip, not
+  an addressable LED), `accessory` (light pipes, lens caps, holders), `laser`, `receiver` (photodiode, phototransistor,
+  IR receiver, optocoupler), `display` (segment display, dot matrix), `driver` (LED driver ICs). A request that names no
+  type asks for a plain emitter: indicator and high power LEDs. `indicator`, `status` and `PCB LED` name no type of a
+  request.
 - **Orientation** (`orientation`): `right angle` (`side view`, `side emitting`), `reverse mount`, `vertical` (`top
   view`, JLCPCB `Top-mount`).
 - **Package**: chip codes stay imperial (`0402` to `1206`, section "Packages"). LED package names are never metric chip
@@ -798,10 +802,24 @@ specialisation of the diode with a policy row of its own. The vocabulary is read
 - **Units** (`@Unit` on `PartAttribute`, LED texts only): wavelength in nm (`625nm`, `470 nm`); colour temperature in
   K (`3000K`, `6500 K`, shown `3000 K`); luminous intensity in cd (`200mcd`, `1.25cd`, shown `200mcd`); luminous flux
   in lm (`20lm`); viewing angle in degrees (`120°`, `120 deg`, `30 degrees`, shown `120°`; never a temperature in an LED
-  text). A voltage of an LED request is the forward voltage (`2.0V`, `Vf 3.2V`). Ranges: TME `1.8÷2.6V` and
-  `30÷60mcd`, JLCPCB `1.8V~2.4V` and `630mcd~1.25cd` are read as their upper end (the most an LED needs, the brightest
-  it is binned at); a wavelength range (`620nm~630nm`) as its centre (`625nm`). The radiant intensity of an IR emitter
-  (`3mW/sr@IF=20mA`) is dropped.
+  text). A voltage of an LED request is the forward voltage (`2.0V`, `Vf 3.2V`). Ranges: TME `2...2.4V DC`,
+  `18...54mcd` and `1.8÷2.6V`, JLCPCB `1.8V~2.4V` and `630mcd~1.25cd` are read as their upper end (the most an LED
+  needs, the brightest it is binned at); a wavelength or colour temperature range (`620nm~630nm`, TME `2700-3200K`) as
+  its centre (`625nm`, `2950 K`); a half angle (Vishay `+/-17deg.`) as the full viewing angle (`34°`). The radiant
+  intensity of an IR emitter (`3mW/sr@IF=20mA`) is dropped, and a 5V in an LED's description is its reverse voltage,
+  never the forward voltage (JLCPCB `100mA 150mW 5V 940nm`).
+- **Family words**: `led`, `leds`; `indicator` at the lowest priority (`panel indicator`); the controllers `WS2812`,
+  `WS2812B`, `WS2813`, `WS2815`, `SK6812`, `APA102`, `NeoPixel` (kept as keywords); `IR emitter`, `infrared emitter`
+  and `IRED` (Mouser `Infrared Emitters`, `IR EMITTR`, `IREMITTER`). A description that names only the generic family of
+  its category's family is read with the category's (JLCPCB `Discrete Diode` in an LED description: `4000K` is then a
+  colour temperature, `120°` a viewing angle, not a resistance and a temperature).
+- **Distributor data** (verified live 2026-10-07): TME sends `LED colour` (`red`, `white cold`, `white warm`,
+  `white/blue`), `LED lens` (`diffused, white`, `transparent`), `Luminosity`, `Wavelength`, `LED current`, `Operating
+  voltage` (the forward voltage range), `Viewing angle`, `Colour temperature`, `LED diameter`, `Case - inch`, `Case -
+  mm` (`5050`), `LED version` (`blinking`, `bicolour`), `Kind of controller` (`WS2811`). Mouser's search sends no LED
+  attributes: its categories (`Single Colour LEDs`, `Multi-Colour LEDs`, `White LEDs`, `Infrared Emitters`, `LED
+  Circuit Board Indicators`) and descriptions (`Single Colour LEDs RED 630nm LED 0603 Surface Mount`) say it. JLCPCB
+  writes everything unlabelled in the description.
 
 | Attribute | Match | Policy |
 |---|---|---|
@@ -819,7 +837,8 @@ specialisation of the diode with a policy row of its own. The vocabulary is read
 
 `parsed.led` shows `colour`, `lens`, `type` and `orientation`; the values are constraints (`wavelength`,
 `colour_temperature`, `forward_voltage`, `current`, `luminous_intensity`, `luminous_flux`, `viewing_angle`). A part's
-canonical attributes add `Colour`, `Lens`, `LedType`, `Orientation`, `Wavelength`, `ColourTemperature`,
+canonical attributes add `LedColour`, `LensType` (TME sends `Colour` for a housing and `Lens` in its own wording),
+`LedType`, `Orientation`, `Wavelength`, `ColourTemperature`,
 `ForwardVoltage`, `LuminousIntensity`, `LuminousFlux` and `ViewingAngle`; `Voltage` stays the voltage the part states
 (for an LED usually its forward voltage, for an IR emitter sometimes its reverse voltage).
 
@@ -901,9 +920,9 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `Described` | `led` |  |
 | `COLOUR_TEMPERATURE` | `K` from `k` in `led` (Spaced) | `Simple` | `led` | `colour temperature`, `color temperature`, `cct`, `wavelength/color temperature`, `color temperature - cct` |
 |  |  | `Described` | `led` |  |
-| `FORWARD_VOLTAGE` | `V` | `Simple` | `led` | `vf - forward voltage`, `forward voltage`, `forward voltage (vf)`, `voltage - forward (vf) (typ)`, `vf`, `forward voltage typ.` |
+| `FORWARD_VOLTAGE` | `V` | `Simple` | `led` | `vf - forward voltage`, `forward voltage`, `forward voltage (vf)`, `voltage - forward (vf) (typ)`, `vf`, `forward voltage typ.`, `operating voltage` |
 |  |  | `Described` | `led` |  |
-| `LUMINOUS_INTENSITY` | `cd` from `cd` in `led` | `Simple` | `led` | `luminous intensity`, `luminous intensity (iv)`, `millicandela rating`, `luminous intensity iv`, `iv` |
+| `LUMINOUS_INTENSITY` | `cd` from `cd` in `led` | `Simple` | `led` | `luminous intensity`, `luminosity`, `luminous intensity (iv)`, `millicandela rating`, `luminous intensity iv`, `iv` |
 |  |  | `Described` | `led` |  |
 | `LUMINOUS_FLUX` | `lm` from `lm` in `led` | `Simple` | `led` | `luminous flux`, `luminous flux @ current/temperature`, `flux @ 25°c, current - test`, `luminous flux (typ)` |
 |  |  | `Described` | `led` |  |
@@ -914,13 +933,13 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `KeyContaining` |  | `ripple` |
 | `DIELECTRIC` |  | `DielectricCode` |  | `dielectric`, `temperature coefficient`, `temperature characteristic`, `temperature characteristics`, `dielectric material`, `tempco` |
 |  |  | `Described` |  |  |
-| `PACKAGE` |  | `PackageField` |  |  |
+| `PACKAGE` |  | `LedPackage` | `led` | `case - mm`, `led diameter`, `package / case`, `case`, `package`, `case / package`, `lamp size`, `size` |
+|  |  | `PackageField` |  |  |
 |  |  | `PackageCode` |  | `case code - in`, `case - inch`, `case code (inch)`, `package (inch)`, `imperial size`, `case code - inch` |
-|  |  | `LedPackage` | `led` | `package / case`, `case`, `package`, `case / package`, `lamp size`, `size` |
 |  |  | `MetricPackageCode` |  | `case code - mm`, `case - mm`, `case code (mm)`, `metric size`, `package (mm)` |
 |  |  | `PackageCode` |  | `package / case`, `package/case`, `package`, `case`, `supplier device package`, `package type`, `case / package`, `case/package`, `housing` |
-|  |  | `Described` |  |  |
 |  |  | `DescribedWord` | `led` |  |
+|  |  | `Described` |  |  |
 |  |  | `RawPackageField` |  |  |
 |  |  | `PartNumberPackage` | `PASSIVE` |  |
 | `MOUNTING` |  | `MountingWord` |  | `mounting`, `mounting style`, `mounting type`, `mounting method`, `termination style`, `montage`, `electrical mounting` |
@@ -942,9 +961,9 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 | `FAN_FEATURES` |  | `MergedWords` | `fan` | `additional functions`, `signal output`, `leads`, `ip rating`, `features`, `control`, `output signal` |
 | `COLOUR` |  | `VocabularyWord` | `led` | `illumination color`, `led colour`, `led color`, `colour of light`, `colour of led`, `emitted colour`, `emitted color`, `color`, `colour` |
 |  |  | `DescribedWord` | `led` |  |
-| `LENS` |  | `VocabularyWord` | `led` | `lens`, `lens color/style`, `lens colour`, `lens color`, `lens type`, `lens style`, `lens transparency` |
+| `LENS` |  | `VocabularyWord` | `led` | `led lens`, `lens`, `lens color/style`, `lens colour`, `lens color`, `lens type`, `lens style`, `lens transparency` |
 |  |  | `DescribedWord` | `led` |  |
-| `LED_TYPE` |  | `MergedWords` | `led` | `product`, `product type`, `type of led`, `kind of led`, `led type`, `type` |
+| `LED_TYPE` |  | `MergedWords` | `led` | `led version`, `kind of controller`, `type of optoelectronic module`, `product`, `product type`, `type of led`, `kind of led`, `led type`, `type` |
 | `LED_ORIENTATION` |  | `VocabularyWord` | `led` | `orientation`, `mounting angle`, `emitting direction`, `view` |
 |  |  | `DescribedWord` | `led` |  |
 | `ELEMENTS` |  | `ElementsCount` | `ARRAYS` | `elements`, `number of elements`, `number of resistors`, `number of capacitors`, `number of lines`, `number of channels`, `number of bits` |

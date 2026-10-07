@@ -117,6 +117,19 @@ public class ParametricExtractor {
     public static final String FRAME_SIZE = "FrameSize";
     /** "ball", "sleeve", "fluid dynamic", "vapo"... */
     public static final String BEARING = "Bearing";
+    // LEDs (DESIGN.md 3.4 "LEDs")
+    public static final String WAVELENGTH = "Wavelength";
+    public static final String COLOUR_TEMPERATURE = "ColourTemperature";
+    public static final String FORWARD_VOLTAGE = "ForwardVoltage";
+    public static final String LUMINOUS_INTENSITY = "LuminousIntensity";
+    public static final String LUMINOUS_FLUX = "LuminousFlux";
+    public static final String VIEWING_ANGLE = "ViewingAngle";
+    /** "red", "warm white", "RGB"... (not "Colour": TME sends that for the colour of a housing). */
+    public static final String COLOUR = "LedColour";
+    /** "clear", "diffused", "tinted" (not "Lens": TME sends that with its own wording). */
+    public static final String LENS = "LensType";
+    /** "indicator", "high power", "addressable", "strip", "receiver"... */
+    public static final String LED_TYPE = "LedType";
 
     /**
      * Every canonical key {@link #extract} can produce: the {@code compact} response detail returns only these and
@@ -128,7 +141,8 @@ public class ParametricExtractor {
             "Pitch", "Orientation", "Series", "UsbType", "UsbStandard", "UsbSpeedGbps", "PinConfiguration",
             "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features", ELEMENTS, RIPPLE_CURRENT, ESR, DIMENSIONS,
             QUALIFICATION, CASE, POLARITY, SUBTYPE, FORM_FACTOR, OPERATING_TEMPERATURE, SPEED, AIRFLOW, STATIC_PRESSURE,
-            NOISE, FAN_TYPE, FAN_SUPPLY, FRAME_SIZE, BEARING);
+            NOISE, FAN_TYPE, FAN_SUPPLY, FRAME_SIZE, BEARING, WAVELENGTH, COLOUR_TEMPERATURE, FORWARD_VOLTAGE,
+            LUMINOUS_INTENSITY, LUMINOUS_FLUX, VIEWING_ANGLE, COLOUR, LENS, LED_TYPE);
 
     /**
      * Canonical keys no distributor sends (verified against the recorded TME and Mouser responses; LCSC parts have no
@@ -231,6 +245,13 @@ public class ParametricExtractor {
             if (!fan.features().isEmpty()) {
                 out.put(FEATURES, String.join(", ", fan.features()));
             }
+        }
+        ParsedQuery.Led led = f.led();
+        if (led != null) {
+            putIfNotNull(out, COLOUR, led.colour());
+            putIfNotNull(out, LENS, led.lens());
+            putIfNotNull(out, LED_TYPE, led.type());
+            putIfNotNull(out, ORIENTATION, led.orientation());
         }
         f.details().forEach(out::putIfAbsent);
         ParsedQuery.Connector c = f.connector();
@@ -446,7 +467,8 @@ public class ParametricExtractor {
         return new Features(family, values, dielectric, packageName, mounting,
                 Recognizers.normalizeKey(text.toString()), connector, connector != null ? null : technology,
                 connector == null ? ctx.read(PartAttribute.ELEMENTS, Integer.class) : null, details, polarity, subtype,
-                voltages, formFactor, connector == null ? fan(ctx) : null, null);
+                voltages, formFactor, connector == null ? fan(ctx) : null,
+                connector == null ? led(ctx, values.get(ParsedQuery.WAVELENGTH)) : null);
     }
 
     /**
@@ -462,6 +484,21 @@ public class ParametricExtractor {
                 ctx.read(PartAttribute.BEARING, String.class),
                 features == null ? List.of() : List.of(features.split(", ")));
         return fan.isEmpty() ? null : fan;
+    }
+
+    /**
+     * The LED attributes of a part as their declared sources read them ({@link PartAttribute#COLOUR},
+     * {@link PartAttribute#LENS}, {@link PartAttribute#LED_TYPE}, {@link PartAttribute#LED_ORIENTATION}: LED family
+     * only), null for a part of another family. A part without a colour word gets the band of its wavelength.
+     */
+    private static ParsedQuery.Led led(SearchExtractionContext ctx, Recognizers.Value wavelength) {
+        String colour = ctx.read(PartAttribute.COLOUR, String.class);
+        if (colour == null && wavelength != null) {
+            colour = LedVocabulary.band(wavelength.value());
+        }
+        ParsedQuery.Led led = new ParsedQuery.Led(colour, ctx.read(PartAttribute.LENS, String.class),
+                ctx.read(PartAttribute.LED_TYPE, String.class), ctx.read(PartAttribute.LED_ORIENTATION, String.class));
+        return led.isEmpty() ? null : led;
     }
 
     /**
@@ -874,6 +911,10 @@ public class ParametricExtractor {
     private static String mountingFromPackage(String packageName) {
         if (packageName == null) {
             return null;
+        }
+        String led = LedVocabulary.mounting(packageName);
+        if (led != null) {
+            return led;   // a 5mm lamp is THT, a 5050 LED SMD
         }
         if (Recognizers.isChipCode(packageName)) {
             return "SMD";

@@ -92,6 +92,8 @@ class Recognizers {
             Map.entry(Pattern.compile("(?i)\\bsurface[- ]mount(?:ed)?\\b"), "SMD"),
             Map.entry(Pattern.compile("(?i)\\b([np])[- ]channel\\b"), "$1-channel"),
             Map.entry(Pattern.compile("(?i)\\bmicro[- ]?controllers?\\b"), "mcu"),
+            // infrared emitters (Mouser category "Infrared Emitters", "IR EMITTR", "IREMITTER"): an LED family token
+            Map.entry(Pattern.compile("(?i)\\b(?:infra-?red|ir)[- ]?emitt?e?rs?\\b"), "ir-emitter"),
             // gate drivers (Mouser "Gate Drivers", "Half Bridge Gate Dvr", "HALF BRDG DRVR", "Iso 1/2 Bridge Drv",
             // "MOSFET DRIVER"; EPC "ePower Stage", "Half-Bridge Power Stage"): one token each, see FAMILY_WORDS
             Map.entry(Pattern.compile("(?i)(?<![\\p{L}\\d])(?:half|1/2|h)[- ]?(?:bridge|brdg|brg)[- ]+"
@@ -133,12 +135,20 @@ class Recognizers {
     }
 
     /**
-     * {@link #prepare(String)} for a text of {@code family}: a fan text also gets its units in token spelling
-     * ({@link FanVocabulary#normaliseUnits}: {@code 70 m³/h} -&gt; {@code 70m3h}).
+     * {@link #prepare(String)} for a text of {@code family}: a fan or LED text also gets its units in token spelling
+     * ({@link FanVocabulary#normaliseUnits}: {@code 70 m³/h} -&gt; {@code 70m3h}; {@link LedVocabulary#normaliseUnits}:
+     * {@code 120°} -&gt; {@code 120deg}, {@code 1.8÷2.6V} -&gt; {@code 2.6V}).
      */
     static String prepare(String text, String family) {
-        String prepared = prepare(text);
-        return FanVocabulary.FAN.equals(family) ? FanVocabulary.normaliseUnits(prepared) : prepared;
+        return normaliseUnits(prepare(text), family);
+    }
+
+    /** The family's unit spellings in a prepared text (fans, LEDs), else the text unchanged. */
+    private static String normaliseUnits(String prepared, String family) {
+        if (FanVocabulary.FAN.equals(family)) {
+            return FanVocabulary.normaliseUnits(prepared);
+        }
+        return LedVocabulary.LED.equals(family) ? LedVocabulary.normaliseUnits(prepared) : prepared;
     }
 
     static List<String> tokenize(String prepared) {
@@ -184,6 +194,11 @@ class Recognizers {
         family(3, false, SCHOTTKY, "schottky");
         family(3, false, ZENER, "zener");
         family(3, false, LED, "led", "leds");
+        // addressable LEDs by their controller (the part number stays a keyword); "indicator" names an LED at the
+        // lowest priority ("indicator LED", "panel indicator"), every other family word wins
+        family(3, true, LED, "ws2812", "ws2812b", "ws2813", "ws2815", "sk6812", "apa102", "neopixel", "neopixels");
+        family(1, false, LED, "indicator", "indicators");
+        family(3, false, LED, "ir-emitter", "ired", "ireds");
         family(3, false, MOSFET, "mosfet", "mosfets", "fet", "fets", "hemt", "hemts");
         // TME writes "Transistor: N-MOSFET" / "P-MOSFET"; the polarity stays a keyword
         family(3, true, MOSFET, "n-mosfet", "p-mosfet");
@@ -471,7 +486,7 @@ class Recognizers {
         }
         String t = packageName.strip().toLowerCase(Locale.ROOT);
         return CHIP_IMPERIAL.contains(t) || CRYSTAL_SIZES.contains(t) || icPackage(t, null) != null
-                || PassiveDetails.can(packageName) != null;
+                || PassiveDetails.can(packageName) != null || LedVocabulary.isPackage(t);
     }
 
     /** Largest difference in millimetres between two can capacitor sizes that are the same (diameter, length). */
@@ -495,6 +510,10 @@ class Recognizers {
         }
         if (packageKey(wanted).equals(packageKey(actual))) {
             return true;
+        }
+        if (LedVocabulary.isPackage(wanted) && actual.strip().toUpperCase(Locale.ROOT).startsWith("PLCC")
+                || LedVocabulary.isPackage(actual) && wanted.strip().toUpperCase(Locale.ROOT).startsWith("PLCC")) {
+            return null;   // a 5050 LED is often listed as PLCC-6: an LED size and a PLCC package are not compared
         }
         return isRecognisedPackage(actual) ? Boolean.FALSE : null;
     }
@@ -1031,7 +1050,12 @@ class Recognizers {
             ParsedQuery.INDUCTANCE, ParsedQuery.IMPEDANCE, ParsedQuery.FREQUENCY, ParsedQuery.VOLTAGE,
             ParsedQuery.CURRENT, ParsedQuery.SATURATION_CURRENT, ParsedQuery.DCR, ParsedQuery.POWER,
             ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME, ParsedQuery.TOLERANCE, ParsedQuery.SPEED,
-            ParsedQuery.AIRFLOW, ParsedQuery.STATIC_PRESSURE, ParsedQuery.NOISE);
+            ParsedQuery.AIRFLOW, ParsedQuery.STATIC_PRESSURE, ParsedQuery.NOISE, ParsedQuery.WAVELENGTH,
+            ParsedQuery.COLOUR_TEMPERATURE, ParsedQuery.FORWARD_VOLTAGE, ParsedQuery.LUMINOUS_INTENSITY,
+            ParsedQuery.LUMINOUS_FLUX, ParsedQuery.VIEWING_ANGLE);
+
+    /** The reverse voltage most LED descriptions list beside the forward voltage: never read as the forward voltage. */
+    private static final double LED_REVERSE_VOLTAGE = 5.0;
 
     /** A value with the token it was read from. */
     private record Read(Value value, String token) {
@@ -1043,9 +1067,10 @@ class Recognizers {
     }
 
     /**
-     * As {@link #analyze(String)}; when the text names no family itself, {@code familyHint} (e.g. the family of the
-     * part's category: an LCSC ferrite bead description says only {@code 120Ω@100MHz 30mΩ 3A}) decides how values are
-     * read. The hint is not reported as an explicit family.
+     * As {@link #analyze(String)}; when the text names no family itself, or only the generic family of
+     * {@code familyHint}, the hint (e.g. the family of the part's category: an LCSC ferrite bead description says only
+     * {@code 120Ω@100MHz 30mΩ 3A}, an LCSC LED description {@code Discrete Diode}) decides how values are read. The
+     * hint is not reported as an explicit family when the text names none.
      */
     static Analysis analyze(String text, String familyHint) {
         String prepared = text == null ? "" : prepare(text);
@@ -1068,12 +1093,15 @@ class Recognizers {
             }
         }
         boolean explicit = family != null;
-        if (family == null) {
+        if (family == null || familyHint != null && family.equals(ComponentFamily.parentOf(familyHint))) {
+            // no family word, or only the generic family of the hint (JLCPCB "Discrete Diode" in the description of
+            // an LED of the category "LED Indication - Discrete"): the values are read with the hint's family
             family = familyHint;
         }
-        if (text != null && FanVocabulary.FAN.equals(family)) {
-            // fan units in token spelling ("8.5m3/h", "25dB(A)", "3000 r/min")
-            residual = FanVocabulary.normaliseUnits(residual);
+        if (text != null && (FanVocabulary.FAN.equals(family) || LedVocabulary.LED.equals(family))) {
+            // fan units in token spelling ("8.5m3/h", "25dB(A)", "3000 r/min"); LED units ("120°" is a viewing
+            // angle, "470 nm", a range "1.8V~2.4V" as its upper end)
+            residual = normaliseUnits(residual, family);
             tokens = tokenize(residual);
         }
 
@@ -1183,6 +1211,13 @@ class Recognizers {
         resolveOhms(family, values, ohms, keywords);
         resolveCurrents(family, values, currents, labelled.values());
         labelled.values().forEach(values::putIfAbsent);
+        if (text != null && LedVocabulary.LED.equals(family) && values.containsKey(ParsedQuery.VOLTAGE)) {
+            // the voltage an LED text states is its forward voltage (JLCPCB lists it unlabelled: "120° 2.3V 20mA"),
+            // except 5V, the reverse voltage JLCPCB lists for most LEDs ("100mA 150mW 5V 940nm")
+            singleValues(text, ParsedQuery.VOLTAGE, family).stream()
+                    .filter(v -> Math.abs(v - LED_REVERSE_VOLTAGE) > 1e-9).findFirst()
+                    .ifPresent(v -> values.putIfAbsent(ParsedQuery.FORWARD_VOLTAGE, of(ParsedQuery.FORWARD_VOLTAGE, v)));
+        }
         if (values.containsKey(ParsedQuery.LIFETIME)) {
             keywords.removeAll(LIFETIME_WORDS);
         }

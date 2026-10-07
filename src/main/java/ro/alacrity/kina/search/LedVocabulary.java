@@ -57,7 +57,7 @@ class LedVocabulary {
             Map.entry(Pattern.compile("(?i)(\\d)\\s?(?:°(?![cCfF])|deg(?:rees?)?" + AFTER + ")"), "$1deg"),
             Map.entry(Pattern.compile("(?i)(\\d)\\s+(?=(?:nm|mcd|cd|lm|k)" + AFTER + ")"), "$1"),
             // "T-1 3/4" is the 5 mm lamp, "T-1" the 3 mm one; "Ø5mm", "D=5mm", "φ3mm" a round lamp
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "T-?1\\s?3/4" + AFTER), "5mm"),
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "T-?1(?:\\s?3/4|\\.75)" + AFTER), "5mm"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "T-?1" + AFTER + "(?!\\s?3/4)"), "3mm"),
             Map.entry(Pattern.compile("(?i)(?:[Øøφ]|D=)\\s?(\\d+(?:\\.\\d+)?)\\s?mm"), " $1mm"),
             Map.entry(Pattern.compile("(?i)(\\d)\\s+mm" + AFTER), "$1mm"));
@@ -66,7 +66,8 @@ class LedVocabulary {
      * {@code prepared} with the LED units in their token spelling: a viewing angle {@code 120°} as {@code 120deg} (so it
      * is no temperature), {@code 470 nm} as {@code 470nm}, the radiant intensity of an IR emitter dropped, and a range
      * as its upper end ({@code 1.8÷2.6V} -&gt; {@code 2.6V}: the most an LED needs or the brightest it is binned at),
-     * a wavelength range as its centre ({@code 620nm~630nm} -&gt; {@code 625nm}). For texts of the LED family only.
+     * a wavelength or colour temperature range as its centre ({@code 620nm~630nm} -&gt; {@code 625nm}), a half angle
+     * as the full viewing angle ({@code +/-17deg} -&gt; {@code 34deg}). For texts of the LED family only.
      */
     static String normaliseUnits(String prepared) {
         if (prepared == null || prepared.isEmpty()) {
@@ -82,9 +83,9 @@ class LedVocabulary {
             String unit = m.group(4).toLowerCase(Locale.ROOT);
             String left = m.group(2) == null ? unit : m.group(2).toLowerCase(Locale.ROOT);
             String replacement;
-            if (unit.equals("nm") && left.equals("nm")) {
+            if ((unit.equals("nm") || unit.equals("k")) && left.equals(unit)) {
                 double centre = (Double.parseDouble(m.group(1)) + Double.parseDouble(m.group(3))) / 2;
-                replacement = java.math.BigDecimal.valueOf(centre).stripTrailingZeros().toPlainString() + "nm";
+                replacement = java.math.BigDecimal.valueOf(centre).stripTrailingZeros().toPlainString() + m.group(4);
             } else if (unit.equals("°") || unit.equals("deg")) {
                 replacement = m.group(3) + "deg";
             } else {
@@ -93,20 +94,33 @@ class LedVocabulary {
             m.appendReplacement(out, Matcher.quoteReplacement(replacement));
         }
         m.appendTail(out);
-        return out.toString();
+        Matcher half = HALF_ANGLE.matcher(out);
+        StringBuilder full = new StringBuilder();
+        while (half.find()) {
+            double angle = 2 * Double.parseDouble(half.group(1));
+            half.appendReplacement(full, java.math.BigDecimal.valueOf(angle).stripTrailingZeros().toPlainString()
+                    + "deg");
+        }
+        half.appendTail(full);
+        return full.toString();
     }
+
+    /** A half angle ({@code ±17deg}, Vishay {@code +/-17deg.}): the viewing angle is twice it. */
+    private static final Pattern HALF_ANGLE = Pattern.compile("±\\s?(\\d+(?:\\.\\d+)?)deg");
 
     // ---------------------------------------------------------------- colour
 
     /** Colour words, most specific first, and their canonical colour. */
     private static final List<Map.Entry<Pattern, String>> COLOURS = List.of(
             Map.entry(word("rgbw|rgb\\s?\\+\\s?w|rgb-w"), "RGBW"),
-            Map.entry(word("rgb|full[- ]colou?r|multi[- ]?colou?r"), "RGB"),
+            Map.entry(word("rgb|full[- ]colou?r"), "RGB"),
             Map.entry(word("bi[- ]?colou?r|two[- ]colou?r|dual[- ]colou?r"), "bi-colour"),
             Map.entry(word("tri[- ]?colou?r|three[- ]colou?r"), "tri-colour"),
-            Map.entry(word("warm[- ]?white"), "warm white"),
-            Map.entry(word("neutral[- ]?white|natural[- ]?white|nature[- ]?white"), "neutral white"),
-            Map.entry(word("cool[- ]?white|cold[- ]?white|pure[- ]?white|daylight(?:[- ]?white)?"), "cool white"),
+            // TME writes "white warm", "white cold", "white neutral"
+            Map.entry(word("warm[- ]?white|white[- ]warm"), "warm white"),
+            Map.entry(word("neutral[- ]?white|natural[- ]?white|nature[- ]?white|white[- ]neutral"), "neutral white"),
+            Map.entry(word("cool[- ]?white|cold[- ]?white|pure[- ]?white|daylight(?:[- ]?white)?|white[- ]cold"),
+                    "cool white"),
             Map.entry(word("yellow[- ]?green|yellowish[- ]green"), "yellow green"),
             Map.entry(word("white"), "white"),
             Map.entry(word("(?:emerald|pure|true|super)?[- ]?green"), "green"),
@@ -187,7 +201,7 @@ class LedVocabulary {
 
     // ---------------------------------------------------------------- lens, type, orientation
 
-    private static final Pattern DIFFUSED = word("diffused|diffuse|milky|frosted|white[- ]diffused");
+    private static final Pattern DIFFUSED = word("diffused|diffuse|diff|milky|frosted|white[- ]diffused");
     private static final Pattern TINTED = word("tinted|colou?red[- ]lens|[\\p{L}]+[- ]lens");
     private static final Pattern CLEAR = word("water[- ]?clear|clear|transparent");
 
@@ -213,19 +227,24 @@ class LedVocabulary {
 
     /** LED type words, most specific first, and their type. */
     private static final List<Map.Entry<Pattern, String>> TYPES = List.of(
+            // a strip or module of LEDs is no discrete LED, also when its LEDs are addressable ("Programmable LED tape")
+            Map.entry(word("led[- ]?strips?|led[- ]?tapes?|led[- ]?ribbons?|strip[- ]lights?|light[- ]strips?"
+                    + "|light[- ]bars?|led[- ]modules?|optoelectronic module"), "strip"),
             Map.entry(word("ws28\\d\\d[a-z]{0,2}|sk68\\d\\d[a-z\\-0-9]{0,6}|sk9822|apa10[2-9][a-z\\-0-9]{0,4}"
-                    + "|neopixels?|addressable|built-in ic|built-in driver|integrated ic|intelligent control"
-                    + "|smart (?:rgb )?led|digital rgb"), ParsedQuery.Led.ADDRESSABLE),
-            Map.entry(word("led[- ]?strips?|strip[- ]lights?|light[- ]strips?|led[- ]tapes?"), "strip"),
+                    + "|neopixels?|addressable|programmable|built[- ]?in (?:ic|driver)|integrated (?:ic|drivers?)"
+                    + "|ic embedded|embedded ic|with ic|ic rgb|icled|intelligent control|smart (?:rgb )?led|digital rgb"
+                    + "|\\d+\\s?bit data|(?:single|dual)[- ]?wire"), ParsedQuery.Led.ADDRESSABLE),
+            Map.entry(word("light[- ]?pipes?|lens caps?|led holders?|led mounts?|led spacers?|reflectors?"),
+                    "accessory"),
             Map.entry(word("laser(?:[- ]diodes?)?"), "laser"),
             Map.entry(word("receivers?|photo[- ]?diodes?|photo[- ]?transistors?|photo[- ]?interrupters?"
                     + "|opto[- ]?couplers?|photo[- ]?couplers?|light sensors?|ambient light"), "receiver"),
             Map.entry(word("segment displays?|\\d-segment|seven[- ]segment|dot[- ]matrix|bar[- ]?graph|digital tubes?"
-                    + "|led displays?|display modules?"),
-                    "display"),
+                    + "|led displays?|display modules?"), "display"),
             Map.entry(word("drivers?|led drivers?|constant current"), "driver"),
-            Map.entry(word("high[- ]power|power leds?|\\d+(?:\\.\\d+)?\\s?w star|star pcb|star board"),
-                    ParsedQuery.Led.HIGH_POWER),
+            Map.entry(word("blinking|flashing|flicker(?:ing)?|special effect"), "blinking"),
+            Map.entry(word("high[- ]power|hi[- ]?pwr|high[- ]?powr|hi[- ]?power|power leds?|\\d+(?:\\.\\d+)?\\s?w star"
+                    + "|star pcb|star board"), ParsedQuery.Led.HIGH_POWER),
             Map.entry(word("indicators?|indication|status|pcb leds?"), ParsedQuery.Led.INDICATOR));
 
     /**
@@ -281,9 +300,25 @@ class LedVocabulary {
     private static final Pattern LAMP = Pattern.compile("(?i)(?<![\\d.x×*])(1\\.8|3|4|5|8|10)\\s?mm(?![\\d.x×*])");
     private static final Pattern RECTANGULAR = Pattern.compile("(?i)(?<![\\d.])2\\s?[x×*]\\s?5\\s?[x×*]\\s?7\\s?(?:mm)?");
     private static final Pattern PLCC = Pattern.compile("(?i)" + BEFORE + "plcc-?([246])" + AFTER);
+    /** A body in millimetres ({@code SMD-4P,5x5mm}, {@code 5.0 x 5.0 mm}). */
+    private static final Pattern BODY = Pattern.compile("(?i)(?<![\\d.])(\\d(?:\\.\\d+)?)\\s?(?:mm)?\\s?[x×*]\\s?"
+            + "(\\d(?:\\.\\d+)?)\\s?mm(?![\\d.x×*])");
+    /**
+     * LED size codes of a body whose size names one alone (in tenths of a millimetre, either order); 3528 and 2835
+     * share their body and are never read from it.
+     */
+    private static final Map<String, String> SQUARE_BODIES = Map.ofEntries(Map.entry("50x50", "5050"),
+            Map.entry("30x30", "3030"), Map.entry("35x35", "3535"), Map.entry("20x20", "2020"),
+            Map.entry("15x15", "1515"), Map.entry("57x30", "5730"), Map.entry("30x57", "5730"),
+            Map.entry("56x30", "5630"), Map.entry("30x56", "5630"), Map.entry("70x30", "7030"),
+            Map.entry("30x70", "7030"));
+
+    private static String tenths(String mm) {
+        return String.valueOf(Math.round(Double.parseDouble(mm) * 10));
+    }
 
     /** Words that make a millimetre size in a part's description a through-hole lamp ({@code 5mm round lamp head}). */
-    private static final Pattern LAMP_CUE = word("round|lamp|through[- ]?hole|tht|plugin|插件|dip|radial");
+    private static final Pattern LAMP_CUE = word("round|lamp|through[- ]?hole|tht|plugin|插件|dip|radial|ir-emitter");
     /** Longest attribute value whose bare millimetre size is a lamp ({@code 5 mm (T-1 3/4)}). */
     private static final int SHORT_VALUE = 24;
 
@@ -307,6 +342,13 @@ class LedVocabulary {
         Matcher m = SIZE_CODE.matcher(s);
         if (m.find()) {
             return m.group(1);
+        }
+        m = BODY.matcher(s);
+        while (m.find()) {
+            String code = SQUARE_BODIES.get(tenths(m.group(1)) + "x" + tenths(m.group(2)));
+            if (code != null) {
+                return code;
+            }
         }
         m = PLCC.matcher(s);
         if (m.find()) {

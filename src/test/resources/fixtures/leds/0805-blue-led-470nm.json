@@ -1,0 +1,5868 @@
+{
+ "query": "0805 blue LED 470nm",
+ "recorded": "2026-10-07 live probe (one search per query through the stack, detail=full, allow_below_spec, max_results 50): Mouser and TME parts are every part the search fetched, read back from the part cache (raw distributor attributes); LCSC parts are the returned ones without the derived attributes; prices as listed",
+ "phrases": {
+  "LCSC": "\"LED Indication - Discrete\" 0805 Blue",
+  "TME": "LED 0805 blue",
+  "MOUSER": "LED 0805 blue"
+ },
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C51933309",
+    "manufacturer": "Gui guang light",
+    "manufacturerPartNumber": "GL0805UB01",
+    "description": "-40℃~+85℃ 120° 2.6V~3.1V 2mm x 1.25mm square LED 30mcd~80mcd 460nm~470nm 5mA、20mA Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 338045,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.006,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/Gui_guanglight-GL0805UB01/C51933309",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C51933309.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C51933309"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C52676049",
+    "manufacturer": "CHONGTIAN",
+    "manufacturerPartNumber": "CT-2012UBC-P8",
+    "description": "-40℃~+85℃ 120° 2.0mm x 1.2mm square LED 2.6V~3.2V 40mcd~80mcd 460nm~475nm 465nm 70mW Blue Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 5876,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.007,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/CHONGTIAN-CT_2012UBCP8/C52676049",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C52676049.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C52676049"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C52125210",
+    "manufacturer": "TONYU",
+    "manufacturerPartNumber": "DYWH-17-21BHC/AP15P19-3T",
+    "description": "-40℃~+85℃ 120° 2.6V~3.1V 2mm x 1.25mm square LED 460nm~475nm 464nm 70mW 85mcd~100mcd Blue Discrete Diode",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 2759,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/TONYU-DYWH_17_21BHC_AP15P193T/C52125210",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C52125210.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C52125210"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2992683",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "17-21/BHC-AN1P2/3T(PF)",
+    "description": "-40℃~+85℃ 140° 28.5mcd~72mcd 3.5V 464.5nm~476.5nm 468nm Blue Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 20,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.05,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.04,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.035,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2204191745_Everlight-Elec-17-21-BHC-AN1P2-3T-PF_C2992683.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2992683.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2992683"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C19712536",
+    "manufacturer": "Yongyu Photoelectric",
+    "manufacturerPartNumber": "SZYY0805B1",
+    "description": "-40℃~+85℃ 100mW 100mcd 120° 2mm x 1.25mm square LED 3.1V 460nm~475nm 469nm 5mA Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 32691,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2312221748_Yongyu-Photoelectric-SZYY0805B1_C19712536.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C19712536.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C19712536"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C6795841",
+    "manufacturer": "Broadcom Limited",
+    "manufacturerPartNumber": "HSMN-C170",
+    "description": "170° 20mA 3.3V 35mcd 468nm 470nm Blue White Lens",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 3,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.711,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.695,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 0.684,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/BroadcomLimited-HSMNC170/C6795841",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C6795841.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C6795841"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5906651",
+    "manufacturer": "Dialight",
+    "manufacturerPartNumber": "5973605607F",
+    "description": "-20℃~+80℃ 130° 15mcd 2.8V 2mA 465nm~480nm 468nm Blue",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.877,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.715,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 0.633,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2312032345_Dialight-5973605607F_C5906651.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5906651.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5906651"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C965817",
+    "manufacturer": "XINGLIGHT",
+    "manufacturerPartNumber": "XL-2012UBC",
+    "description": "-40℃~+85℃ 120° 20mA 260mcd 3.2V 460nm~475nm 470nm 70mW Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 1166743,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.008,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2402181505_XINGLIGHT-XL-2012UBC_C965817.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C965817.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C965817"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C779459",
+    "manufacturer": "TUOZHAN",
+    "manufacturerPartNumber": "TZ-P2-0805BTCS2-0.8T",
+    "description": "-40℃~+80℃ 120° 200mcd 20mA 3V~3.6V 461nm 462nm~470nm 90mW Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 391473,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.009,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2009251740_TUOZHAN-TZ-P2-0805BTCS2-0-8T_C779459.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C779459.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C779459"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2986040",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "17-21/BHC-XL2M2TY/4T",
+    "description": "-40℃~+85℃ 10mA 11.5mcd~18mcd 140° 2.6V~3V 40mW 465nm~470nm 468nm Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 39466,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.021,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.016,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.013,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2204211700_Everlight-Elec-17-21-BHC-XL2M2TY-4T_C2986040.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2986040.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2986040"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2837824",
+    "manufacturer": "ROHM Semicon",
+    "manufacturerPartNumber": "SMLMN2BCTT86C",
+    "description": "-40℃~+100℃ 2.9V 36mcd 470nm 476nm 5mA 68mW Blue Discrete Diode",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 26609,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.308,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.238,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.208,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2202131930_ROHM-Semicon-SMLMN2BCTT86C_C2837824.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2837824.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2837824"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5349940",
+    "manufacturer": "XINGLIGHT",
+    "manufacturerPartNumber": "XL-TD2012UBC",
+    "description": "-30℃~+85℃ 2.7V~3.2V 20mA 30° 470nm 470nm 500mcd~1.2cd 70mW Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 15859,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.037,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.029,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.024,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2402181501_XINGLIGHT-XL-TD2012UBC_C5349940.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5349940.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5349940"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2293",
+    "manufacturer": "Hubei KENTO Elec",
+    "manufacturerPartNumber": "KT-0805B",
+    "description": "-40℃~+85℃ 100mW 100mcd 120° 3.1V 460nm~475nm 469nm 5mA Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 33016,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.01,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1806130620_Hubei-KENTO-Elec-KT-0805B_C2293.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2293.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2293"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C98222",
+    "manufacturer": "Lite-On",
+    "manufacturerPartNumber": "LTST-C170TBKT",
+    "description": "-20℃~+80℃ 104mcd 130° 20mA 3.3V 465nm~475nm 468nm 76mW Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 79174,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.025,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.02,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1810231513_Lite-On-LTST-C170TBKT_C98222.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C98222.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C98222"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C434433",
+    "manufacturer": "Yongyu Photoelectric",
+    "manufacturerPartNumber": "SZYY0805B",
+    "description": "-40℃~+85℃ 100mW 100mcd 120° 3.1V 460nm~475nm 469nm 5mA Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 166624,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.016,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     },
+     {
+      "quantity": 3000,
+      "unitPrice": 0.011,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/1912111437_Yongyu-Photoelectric-SZYY0805B_C434433.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C434433.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C434433"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C189307",
+    "manufacturer": "BrtLed(Bright LED Elec)",
+    "manufacturerPartNumber": "BL-HB335B-TRB-6",
+    "description": "-40℃~+85℃ 120° 2.8V 25mcd 460nm 468nm 5mA 72mW Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 37991,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.021,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1811131411_BrtLed-Bright-LED-Elec-BL-HB335B-TRB-6_C189307.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C189307.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C189307"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C205441",
+    "manufacturer": "Orient",
+    "manufacturerPartNumber": "ORH-B35A",
+    "description": "-25℃~+80℃ 100mW 130° 20mcd~80mcd 3.2V 459nm~468nm 465nm 5mA Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 136187,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.011,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1810071515_Orient-ORH-B35A_C205441.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C205441.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C205441"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C84259",
+    "manufacturer": "Foshan NationStar Optoelectronics",
+    "manufacturerPartNumber": "NCD0805B2",
+    "description": "-30℃~+85℃ 130° 2.5V~3.6V 20mA 465nm 468nm~478nm 55mcd 72mW Blue Discrete Diode",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 421605,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.021,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.018,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2409272203_Foshan-NationStar-Optoelectronics-NCD0805B2_C84259.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C84259.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C84259"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C98225",
+    "manufacturer": "Lite-On",
+    "manufacturerPartNumber": "LTST-C171TBKT",
+    "description": "-20℃~+80℃ 104mcd 130° 20mA 3.3V 465nm~475nm 468nm 76mW Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 21029,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.042,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.033,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.028,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/1810231510_Lite-On-LTST-C171TBKT_C98225.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C98225.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C98225"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C108412",
+    "manufacturer": "ARKLED(Wuxi ARK Tech Elec)",
+    "manufacturerPartNumber": "D-B080508B1-KS2",
+    "description": "-30℃~+80℃ 120° 2.6V~3.2V 459nm~464nm 5mA 60mcd 70mW Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 81773,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.02,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1810221612_ARKLED-Wuxi-ARK-Tech-Elec-D-B080508B1-KS2_C108412.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C108412.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C108412"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C19273154",
+    "manufacturer": "YONGYUTAI",
+    "manufacturerPartNumber": "YLED0805B",
+    "description": "-40℃~+85℃ 1.25mmx1.1mm square lamp head 120° 2.7V~3.1V 25mA 457nm~475nm 80mcd Blue Discrete Diode",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 78814,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.009,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2312012005_YONGYUTAI-YLED0805B_C19273154.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C19273154.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C19273154"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C965819",
+    "manufacturer": "XINGLIGHT",
+    "manufacturerPartNumber": "XL-2012BGWC",
+    "description": "-40℃~+85℃ 120° 20mA 3.3V 540mcd 70mW Discrete Diode Ice Blue Ice Blue Lens, Light Yellow Lens Top-mount",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 120810,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     },
+     {
+      "quantity": 3000,
+      "unitPrice": 0.01,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2402181505_XINGLIGHT-XL-2012BGWC_C965819.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C965819.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C965819"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C693906",
+    "manufacturer": "MEIHUA",
+    "manufacturerPartNumber": "MHS171UBCT",
+    "description": "-40℃~+85℃ 140° 2.5V~3.1V 467nm~476nm 468nm 5mA 75mW 90mcd Blue Discrete Diode Side View Mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 23933,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.06,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.047,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.041,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2008101836_MEIHUA-MHS171UBCT_C693906.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C693906.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C693906"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5355441",
+    "manufacturer": "Amicc",
+    "manufacturerPartNumber": "A-SC170ZB1D-A02-3T",
+    "description": "-40℃~+85℃ 120° 2.5V~2.9V 2mA 90mcd 95mW Discrete Diode Green Diffused Lens Ice Blue Top-mount",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 15434,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.063,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.05,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.043,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2302091809_Amicc-A-SC170ZB1D-A02-3T_C5355441.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5355441.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5355441"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2859407",
+    "manufacturer": "EKINGLUX",
+    "manufacturerPartNumber": "E6C0805TKAY1UDA",
+    "description": "-40℃~+90℃ 120° 20mA 3.4V 800mcd Discrete Diode Frosted Yellow Lens Ice Blue",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 5751,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.034,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.026,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.023,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2108231930_EKINGLUX-E6C0805TKAY1UDA_C2859407.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2859407.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2859407"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C3646927",
+    "manufacturer": "XINGLIGHT",
+    "manufacturerPartNumber": "XL-2012UBC-DS",
+    "description": "-40℃~+85℃ 120° 20mA 240mcd 460nm~475nm 470nm Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 5447,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.036,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.029,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.024,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2402181504_XINGLIGHT-XL-2012UBC-DS_C3646927.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C3646927.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C3646927"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C375453",
+    "manufacturer": "EKINGLUX",
+    "manufacturerPartNumber": "E6C0805QBAC1UDA",
+    "description": "-40℃~+85℃ 120° 150mcd 20mA 3V 465nm 465nm 85mW Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 5352,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     },
+     {
+      "quantity": 3000,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2203301730_EKINGLUX-E6C0805QBAC1UDA_C375453.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C375453.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C375453"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C6277515",
+    "manufacturer": "Inolux",
+    "manufacturerPartNumber": "IN-S85AT5B",
+    "description": "-30℃~+85℃ 120° 3V 470nm 473nm 5mA 75mW 80mcd Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 4819,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.188,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.149,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.133,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2404191054_Inolux-IN-S85AT5B_C6277515.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C6277515.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C6277515"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C389525",
+    "manufacturer": "MEIHUA",
+    "manufacturerPartNumber": "MHT170UBCT",
+    "description": "-40℃~+85℃ 140° 20mA 225mcd 3.3V 460nm~475nm 468nm 95mW Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 4628,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.039,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.031,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1912111437_MEIHUA-MHT170UBCT_C389525.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C389525.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C389525"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5879058",
+    "manufacturer": "Kingbright",
+    "manufacturerPartNumber": "APTD2012LQBC/D",
+    "description": "-40℃~+85℃ 2.65V 2mA 30° 460nm 465nm 50mcd 80mW Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 4332,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.408,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.318,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 0.281,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2404170946_Kingbright-APTD2012LQBC-D_C5879058.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5879058.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5879058"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2987526",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "17-215/BHC-AP1Q2/4T",
+    "description": "-40℃~+85℃ 130° 20mA 3.3V 468nm 75mW Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 3927,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.046,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.036,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.031,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/EverlightElec-17_215_BHC_AP1Q24T/C2987526",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2987526.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2987526"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C52125187",
+    "manufacturer": "TONYU",
+    "manufacturerPartNumber": "DYWH-17-21/BHC-AP1Q2/4T",
+    "description": "-40℃~+85℃ 140° 3.3V 464.5nm~476.5nm 468nm 75mW 90mcd~112mcd Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 3838,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.029,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.022,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/TONYU-DYWH_17_21_BHC_AP1Q24T/C52125187",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C52125187.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C52125187"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5248439",
+    "manufacturer": "Kingbright",
+    "manufacturerPartNumber": "APHCM2012QBC/D-F01",
+    "description": "-40℃~+85℃ 100mcd 120mW 140° 20mA 3.3V 460nm 465nm Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 2714,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.266,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.212,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.189,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2404151203_Kingbright-APHCM2012QBC-D-F01_C5248439.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5248439.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5248439"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C52676051",
+    "manufacturer": "CHONGTIAN",
+    "manufacturerPartNumber": "CT-2012UCBC-P8",
+    "description": "-30℃~+85℃ 120° 180mcd~310mcd 2.7V~2.9V 2mm x 1.2mm square LED 70mW Blue Discrete Diode Green Lens",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 2585,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.011,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/CHONGTIAN-CT_2012UCBCP8/C52676051",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C52676051.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C52676051"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C598277",
+    "manufacturer": "Kingbright",
+    "manufacturerPartNumber": "KP-2012QBC-D",
+    "description": "-40℃~+85℃ 100mcd 120mW 120° 20mA 3.3V 460nm 465nm Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 1826,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.272,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.213,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.188,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/Kingbright-KP_2012QBCD/C598277",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C598277.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C598277"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5160698",
+    "manufacturer": "Amicc",
+    "manufacturerPartNumber": "A-SP170B1C-C02-3T",
+    "description": "-40℃~+85℃ 140° 3.1V 465nm~475nm 468nm 5mA 90mcd 95mW Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 1295,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.045,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.036,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.031,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2209161630_Amicc-A-SP170B1C-C02-3T_C5160698.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5160698.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5160698"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C601702",
+    "manufacturer": "TOGIALED",
+    "manufacturerPartNumber": "TJ-S2012CY8T5ALC6B-A5",
+    "description": "-40℃~+80℃ 108mW 120° 2.8V~3.4V 200mcd 20mA 460nm~470nm 465nm Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 981,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.025,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2006181313_TOGIALED-TJ-S2012CY8T5ALC6B-A5_C601702.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C601702.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C601702"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C601670",
+    "manufacturer": "TOGIALED",
+    "manufacturerPartNumber": "TJ-S2012SW8TBHLC6B-A5",
+    "description": "-40℃~+80℃ 108mW 120° 2.8V~3.4V 20mA 400mcd 460nm~470nm 465nm Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 452,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.058,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.046,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.04,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2006182314_TOGIALED-TJ-S2012SW8TBHLC6B-A5_C601670.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C601670.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C601670"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C192320",
+    "manufacturer": "TOGIALED",
+    "manufacturerPartNumber": "TJ-S2012SW8TGLC6B-A5",
+    "description": "-40℃~+80℃ 111mW 120° 2.9V~3.5V 20mA 300mcd 460nm 465nm Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 413,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.035,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.028,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.024,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_1810181725_TOGIALED-TJ-S2012SW8TGLC6B-A5_C192320.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C192320.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C192320"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C488203",
+    "manufacturer": "EKINGLUX",
+    "manufacturerPartNumber": "E6C0805QBAC1UDA",
+    "description": "-40℃~+90℃ 120° 150mcd 20mA 3V 465nm 85mW Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 371,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.023,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.018,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.016,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2002201406_EKINGLUX-E6C0805QBAC1UDA_C488203.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C488203.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C488203"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5179626",
+    "manufacturer": "Amicc",
+    "manufacturerPartNumber": "A-SC170ZB1C-C01-3T",
+    "description": "-40℃~+85℃ 140° 3.1V 465nm~475nm 468nm 5mA 90mcd 95mW Blue Discrete Diode Top-mount Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 308,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.061,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.049,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.042,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2210091830_Amicc-A-SC170ZB1C-C01-3T_C5179626.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5179626.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5179626"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5875731",
+    "manufacturer": "Kingbright",
+    "manufacturerPartNumber": "KPT-2012QBC-D",
+    "description": "-40℃~+85℃ 100mcd 120mW 140° 20mA 460nm 465nm 4V Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 307,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.291,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.227,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.2,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2305191756_Kingbright-KPT-2012QBC-D_C5875731.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5875731.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5875731"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5197655",
+    "manufacturer": "EKINGLUX",
+    "manufacturerPartNumber": "E6C0805TKAY1UDA-A",
+    "description": "-40℃~+90℃ 120° 20mA 3V 400mcd、800mcd Discrete Diode Frosted Yellow Lens Ice Blue",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 121,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.033,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.026,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.022,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2210131730_EKINGLUX-E6C0805TKAY1UDA-A_C5197655.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5197655.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5197655"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2686018",
+    "manufacturer": "Broadcom Limited",
+    "manufacturerPartNumber": "HSMR-C170",
+    "description": "-40℃~+85℃ 140° 20mA 3.4V 469nm 473nm 55mcd 78mW Blue Discrete Diode",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 44,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.651,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.638,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 0.628,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://www.lcsc.com/datasheet/lcsc_datasheet_2106070207_Broadcom-AVAGO-HSMR-C170_C2686018.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2686018.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2686018"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5879268",
+    "manufacturer": "Kingbright",
+    "manufacturerPartNumber": "KPT-2012LVVBC-D",
+    "description": "-40℃~+85℃ 140° 15mcd~24mcd 2.65V 465nm 470nm Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 17,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.287,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.281,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 0.276,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/Kingbright-KPT_2012LVVBCD/C5879268",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5879268.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5879268"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C710215",
+    "manufacturer": "Everlight Elec",
+    "manufacturerPartNumber": "65-21B2P/V2W2E/2T",
+    "description": "-40℃~+85℃ 100mW 120° 20mA Blue Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.127,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.1,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.086,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2009301205_Everlight-Elec-65-21B2P-V2W2E-2T_C710215.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C710215.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C710215"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C5554162",
+    "manufacturer": "Kingbright",
+    "manufacturerPartNumber": "APT2012QBC/D",
+    "description": "-40℃~+85℃ 100mcd 120mW 140° 20mA 3.3V 460nm 465nm Blue Discrete Diode Water Clear",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.264,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.218,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.199,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2306151637_Kingbright-APT2012QBC-D_C5554162.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C5554162.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C5554162"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C3018551",
+    "manufacturer": "Broadcom Limited",
+    "manufacturerPartNumber": "HSMN-C170",
+    "description": "-40℃~+85℃ 170° 20mA 3.3V 35mcd 468nm 470nm 78mW Blue Discrete Diode Frosted White Lens",
+    "category": "Optoelectronics / LED Indication - Discrete",
+    "packageName": "0805",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.622,
+      "currency": "USD"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 0.606,
+      "currency": "USD"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 0.596,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2206221715_Broadcom-Limited-HSMN-C170_C3018551.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C3018551.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "LED Indication - Discrete",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C3018551"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 122,
+     "datasheet_source": "dte"
+    },
+    "stock": 41531,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0611
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.047
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.0346
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0328
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0311
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.0293
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.0275
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.0253
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.023
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B6/B8/00/00/0/35691_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f6e97354dcea906522556e2176d3abb4048d006e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x0.68mm",
+     "LED colour": "blue",
+     "Luminosity": "150...200mcd",
+     "Wavelength": "476nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "OPTOFLASH",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "3...3.2V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/of-smd2012b/",
+    "description": "LED; blue; SMD; 0805; 150÷200mcd; 3÷3.2VDC; 2x1.25x0.68mm; 120°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/21fa6ab089fe09769870f36933b4d316/of-smd2012b.pdf",
+    "manufacturer": "OPTOFLASH",
+    "orderMultiple": 10,
+    "minimumOrderQuantity": 10,
+    "distributorPartNumber": "OF-SMD2012B",
+    "manufacturerPartNumber": "OF-SMD2012B"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 2000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 111,
+     "datasheet_source": "dte"
+    },
+    "stock": 25388,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.176
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.162
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.156
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.131
+     },
+     {
+      "currency": "EUR",
+      "quantity": 400,
+      "unitPrice": 0.105
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.082
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.069
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/60/F8/70/00/0/495366_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=66bd7caff26a5c9fa8a5e4f6845b377913d7dd70",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Power": "0.12W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x1.1mm",
+     "LED colour": "blue",
+     "Luminosity": "40...100mcd",
+     "Wavelength": "465nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "KINGBRIGHT ELECTRONIC",
+     "Type of diode": "LED",
+     "Viewing angle": "140°"
+    },
+    "productUrl": "https://www.tme.eu/en/details/kp-2012qbc-d/",
+    "description": "LED; blue; SMD; 0805; 40÷100mcd; 2x1.25x1.1mm; 140°; 20mA; λd: 465nm",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/49118d934bd7dd8719a54163c0a31782/KINGBRIGHT_TECH_NOTES.pdf",
+    "manufacturer": "KINGBRIGHT ELECTRONIC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "KP-2012QBC-D",
+    "manufacturerPartNumber": "KP-2012QBC-D"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 119,
+     "datasheet_source": "dte"
+    },
+    "stock": 29160,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0716
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.0341
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.0212
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0165
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.015
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/A6/84/80/00/0/542826_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=af062bb5264556e3d92de2200cfbef4d5d111e3d",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Power": "0.09W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x1.1mm",
+     "LED colour": "blue",
+     "Luminosity": "100...160mcd",
+     "Wavelength": "470nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "LUCKYLIGHT",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "2.5...3.6V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ll-s170bc-b4-1a/",
+    "description": "LED; blue; SMD; 0805; 100÷160mcd; 2.5÷3.6VDC; 2x1.25x1.1mm; 120°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/9e85d88d50cab0b4f6652056ae5544bf/LL-S170BC-B4-1A.pdf",
+    "manufacturer": "LUCKYLIGHT",
+    "orderMultiple": 10,
+    "minimumOrderQuantity": 10,
+    "distributorPartNumber": "LL-S170BC-B4-1A",
+    "manufacturerPartNumber": "LL-S170BC-B4-1A"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 128,
+     "datasheet_source": "dte"
+    },
+    "stock": 30764,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.1275
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.118
+     },
+     {
+      "currency": "EUR",
+      "quantity": 75,
+      "unitPrice": 0.1025
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0964
+     },
+     {
+      "currency": "EUR",
+      "quantity": 125,
+      "unitPrice": 0.091
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.0726
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0555
+     },
+     {
+      "currency": "EUR",
+      "quantity": 650,
+      "unitPrice": 0.0503
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0439
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0378
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/88/48/50/00/0/361608_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b7eaf2331f12f9db64ed176923ca1a5c1512b9fd",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.076W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x1.1mm",
+     "LED colour": "blue",
+     "Luminosity": "28...180mcd",
+     "Wavelength": "465...475nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "LITEON",
+     "Type of diode": "LED",
+     "Viewing angle": "130°",
+     "Operating voltage": "2.8...3.8V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ltst-c170tbkt/",
+    "description": "LED; blue; SMD; 0805; 28÷180mcd; 2.8÷3.8VDC; 2x1.25x1.1mm; 130°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/c04aad2b4ffd11fa6954abc81121a1c0/PCN-ChipLED-LITEON.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "LTST-C170TBKT",
+    "manufacturerPartNumber": "LTST-C170TBKT"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 128,
+     "datasheet_source": "dte"
+    },
+    "stock": 16675,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.1168
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0951
+     },
+     {
+      "currency": "EUR",
+      "quantity": 21,
+      "unitPrice": 0.0851
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0662
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0524
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0479
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0438
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.0385
+     },
+     {
+      "currency": "EUR",
+      "quantity": 15000,
+      "unitPrice": 0.0374
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/8A/AE/60/00/0/453288_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c05eea55f7e526582a65dba5b807f656b93afd51",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.076W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "blue",
+     "Luminosity": "28...180mcd",
+     "Wavelength": "465...475nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "LITEON",
+     "Type of diode": "LED",
+     "Viewing angle": "130°",
+     "Operating voltage": "2.8...3.8V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ltst-c171tbkt/",
+    "description": "LED; blue; SMD; 0805; 28÷180mcd; 2.8÷3.8VDC; 2x1.25x0.8mm; 130°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/c04aad2b4ffd11fa6954abc81121a1c0/PCN-ChipLED-LITEON.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "LTST-C171TBKT",
+    "manufacturerPartNumber": "LTST-C171TBKT"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 889,
+     "datasheet_source": "product_page"
+    },
+    "stock": 25830,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.085
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0509
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0358
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0339
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0319
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.0276
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.0266
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.0244
+     },
+     {
+      "currency": "EUR",
+      "quantity": 16000,
+      "unitPrice": 0.0232
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20000,
+      "unitPrice": 0.0222
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/23/E6/80/00/0/552498_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e3614f7cafac81ab2d723a4c66114ea261c2b0db",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "blue",
+     "Luminosity": "120mcd",
+     "Wavelength": "468nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "FORYARD",
+     "Type of diode": "LED",
+     "Viewing angle": "130°",
+     "Operating voltage": "2.8...3.6V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/fyls-0805ubc/",
+    "description": "LED; blue; SMD; 0805; 120mcd; 2.8÷3.6VDC; 2x1.25x0.8mm; 130°; 20mA",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/en/details/fyls-0805ubc/",
+    "manufacturer": "FORYARD",
+    "orderMultiple": 10,
+    "minimumOrderQuantity": 10,
+    "distributorPartNumber": "FYLS-0805UBC",
+    "manufacturerPartNumber": "FYLS-0805UBC"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "dte"
+    },
+    "stock": 7880,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0656
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.0301
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.025
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.022
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0205
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B7/D8/40/00/0/298363_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8511335641e9193ddfc2d19de4647de15d8a1de4",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Power": "0.108W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "blue",
+     "Luminosity": "42...80mcd",
+     "Wavelength": "460...475nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "OPTOSUPPLY",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "3.2...3.6V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/osb50805c1e/",
+    "description": "LED; blue; SMD; 0805; 42÷80mcd; 3.2÷3.6VDC; 2x1.25x0.8mm; 120°; 20mA",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/0e6c7afafccb884a5f112d4400c39645/OSR50805C1E.pdf",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 10,
+    "minimumOrderQuantity": 10,
+    "distributorPartNumber": "OSB50805C1E",
+    "manufacturerPartNumber": "OSB50805C1E"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1368,
+     "datasheet_source": "dte"
+    },
+    "stock": 15165,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.071
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.0461
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.0355
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0311
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.0293
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.0281
+     },
+     {
+      "currency": "EUR",
+      "quantity": 12000,
+      "unitPrice": 0.0278
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F9/23/90/00/0/602783_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=666f5556ff0de0a355b25823a4640375db46613b",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.7mm",
+     "LED colour": "blue",
+     "Luminosity": "90...200mcd",
+     "Wavelength": "465...475nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "REFOND",
+     "Type of diode": "LED",
+     "Viewing angle": "140°",
+     "Operating voltage": "2.8...3.5V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/rf-bnb170ts-ce/",
+    "description": "LED; blue; SMD; 0805; 90÷200mcd; 2.8÷3.5VDC; 2x1.25x0.7mm; 140°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/c153ba1d402c388c7abac20103e4bdd9/RF-BNB170TS-CE.pdf",
+    "manufacturer": "REFOND",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 10,
+    "distributorPartNumber": "RF-BNB170TS-CE",
+    "manufacturerPartNumber": "RF-BNB170TS-CE"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 2000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 111,
+     "datasheet_source": "product_page"
+    },
+    "stock": 3764,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.17
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.145
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.135
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.125
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.113
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.106
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 0.097
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.095
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.088
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/8E/12/71/00/0/1516008_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=1e9cfbc244732bf2f9bf7efd9f7396a94a362c34",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.12W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x0.75mm",
+     "LED colour": "blue",
+     "Luminosity": "40...100mcd",
+     "Wavelength": "465nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "KINGBRIGHT ELECTRONIC",
+     "Type of diode": "LED",
+     "Viewing angle": "140°",
+     "Operating voltage": "3.3...4V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/kpt-2012qbc-d/",
+    "description": "LED; blue; SMD; 0805; 40÷100mcd; 3.3÷4VDC; 2x1.25x0.75mm; 140°; 20mA",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/en/details/kpt-2012qbc-d/",
+    "manufacturer": "KINGBRIGHT ELECTRONIC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "KPT-2012QBC-D",
+    "manufacturerPartNumber": "KPT-2012QBC-D"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1221,
+     "datasheet_source": "dte"
+    },
+    "stock": 4789,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.802
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.662
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.596
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.468
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.423
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.374
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.343
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.316
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.294
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.276
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F0/29/60/00/1/430607_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9fa8fd2e21ef24b52ffd0e61cd786f85e5ece0be",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Power": "0.078W",
+     "LED lens": "diffused",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "blue",
+     "Luminosity": "18...55mcd",
+     "Wavelength": "469nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "BROADCOM (AVAGO)",
+     "Type of diode": "LED",
+     "Viewing angle": "140°",
+     "Operating voltage": "3.4...3.9V DC",
+     "Manufacturer series": "chipLED"
+    },
+    "productUrl": "https://www.tme.eu/en/details/hsmr-c170/",
+    "description": "LED; blue; SMD; 0805; 18÷55mcd; 3.4÷3.9VDC; 2x1.25x0.8mm; 140°; 20mA",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/e37482ed652862e2f0c350e88defcf2c/HSMX-CXXX-DTE.pdf",
+    "manufacturer": "BROADCOM (AVAGO)",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "HSMR-C170",
+    "manufacturerPartNumber": "HSMR-C170"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1792,
+     "datasheet_source": "dte"
+    },
+    "stock": 1945,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.114
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.0424
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.039
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0354
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.0346
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/AA/C0/E0/00/0/920746_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f687031e5afce123b185e81f0622277f2be4f013",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.111W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "1.25x2x1.1mm",
+     "LED colour": "blue",
+     "Luminosity": "80...200mcd",
+     "Wavelength": "465...475nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "BRIGHTEK (EUROPE)",
+     "Type of diode": "LED",
+     "Viewing angle": "140°",
+     "Operating voltage": "2.8...3.7V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/n0b10s41/",
+    "description": "LED; blue; SMD; 0805; 80÷200mcd; 2.8÷3.7VDC; 1.25x2x1.1mm; 140°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/d4ee7deb22b12ffb219c5e1ad224f06c/N0B10S41.pdf",
+    "manufacturer": "BRIGHTEK (EUROPE)",
+    "orderMultiple": 5,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "N0B10S41",
+    "manufacturerPartNumber": "N0B10S41"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1865,
+     "datasheet_source": "dte"
+    },
+    "stock": 4463,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.1598
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.1099
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0755
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0618
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0549
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0337
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/26/6B/F0/00/0/1029730_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=12afb4fa0e499cdcde8d7701b89453e3f7979656",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.075W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x1.1mm",
+     "LED colour": "blue",
+     "Luminosity": "56mcd",
+     "Wavelength": "470nm",
+     "Case - inch": "0805",
+     "LED current": "5mA",
+     "Manufacturer": "Inolux",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "2.8V DC",
+     "Operating temperature": "-30...85°C"
+    },
+    "productUrl": "https://www.tme.eu/en/details/in-s85at5b/",
+    "description": "LED; blue; SMD; 0805; 56mcd; 2.8VDC; 2x1.25x1.1mm; 120°; 5mA; 75mW",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/e83fa03bf58d6010c5719ea5b6cdbf9b/IN-S85AT5B.pdf",
+    "manufacturer": "Inolux",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "IN-S85AT5B",
+    "manufacturerPartNumber": "IN-S85AT5B"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 111,
+     "datasheet_source": "product_page"
+    },
+    "stock": 388,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.285
+     },
+     {
+      "currency": "EUR",
+      "quantity": 150,
+      "unitPrice": 0.261
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 0.255
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.251
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.236
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.218
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.2
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.181
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.169
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.155
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/43/8D/61/00/0/1497140_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f95fe827554d7664df568ec686b49b9d9849b3a6",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.09W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x0.75mm",
+     "LED colour": "blue",
+     "Luminosity": "15...24mcd",
+     "Wavelength": "470nm",
+     "Case - inch": "0805",
+     "LED current": "2mA",
+     "Manufacturer": "KINGBRIGHT ELECTRONIC",
+     "Type of diode": "LED",
+     "Viewing angle": "140°",
+     "Operating voltage": "2.65...3V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/kpt-2012lvvbc-d/",
+    "description": "LED; blue; SMD; 0805; 15÷24mcd; 2.65÷3VDC; 2x1.25x0.75mm; 140°; 2mA",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/en/details/kpt-2012lvvbc-d/",
+    "manufacturer": "KINGBRIGHT ELECTRONIC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "KPT-2012LVVBC-D",
+    "manufacturerPartNumber": "KPT-2012LVVBC-D"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1865,
+     "datasheet_source": "dte"
+    },
+    "stock": 4057,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.1942
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.1296
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0952
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0721
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.062
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0462
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.0437
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B0/A7/11/00/0/1145355_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new_render3d.png&wat_scale=100p&ci_sign=7644f574b47a506049ed62aa8981fe3b2dbaa854",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.09W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2.1x0.6x1mm",
+     "LED colour": "blue",
+     "Luminosity": "40mcd",
+     "Wavelength": "470nm",
+     "Case - inch": "0805",
+     "LED current": "5mA",
+     "LED version": "angular",
+     "Manufacturer": "Inolux",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "2.6...3V DC",
+     "Operating temperature": "-30...85°C"
+    },
+    "productUrl": "https://www.tme.eu/en/details/in-s85cs5b/",
+    "description": "LED; blue; SMD; 0805; 40mcd; 2.6÷3VDC; 2.1x0.6x1mm; 120°; 5mA; 90mW",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/8158af63c3ae47abee26a57ce1225fcd/IN-S85CS5B.pdf",
+    "manufacturer": "Inolux",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "IN-S85CS5B",
+    "manufacturerPartNumber": "IN-S85CS5B"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 119,
+     "datasheet_source": "dte"
+    },
+    "stock": 3210,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.0715
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0592
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.054
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0485
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/68/57/00/00/0/30086_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f08b7a4b5a0b3e83442b1bb3524e5f50924abf65",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Power": "0.1W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "blue",
+     "Luminosity": "12...20mcd",
+     "Wavelength": "470nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "LUCKYLIGHT",
+     "Type of diode": "LED",
+     "Viewing angle": "140°",
+     "Operating voltage": "2.8...4V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ll-s172bc-b4-1b/",
+    "description": "LED; blue; SMD; 0805; 12÷20mcd; 2.8÷4VDC; 2x1.25x0.8mm; 140°; 20mA",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/6bcac70aa5d42043112adc43b4e58d6e/APPLICATION NOTES.pdf",
+    "manufacturer": "LUCKYLIGHT",
+    "orderMultiple": 5,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "LL-S172BC-B4-1B",
+    "manufacturerPartNumber": "LL-S172BC-B4-1B"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1719,
+     "datasheet_source": "dte"
+    },
+    "stock": 2434,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.336
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.246
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.168
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.128
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.113
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.095
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.094
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/10/3A/01/00/0/1090305_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f2118dad8ab4a88ea88fe3eec92802ac21d8f512",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.038W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "blue",
+     "Luminosity": "4.5...15(typ)-18mcd",
+     "Wavelength": "465...480nm",
+     "Case - inch": "0805",
+     "LED current": "2mA",
+     "Manufacturer": "DIALIGHT",
+     "Type of diode": "LED",
+     "Viewing angle": "130°",
+     "LEDs' features": "built-in zener diode",
+     "Operating voltage": "2.8...3.05V DC",
+     "Manufacturer series": "597",
+     "Operating temperature": "-20...80°C"
+    },
+    "productUrl": "https://www.tme.eu/en/details/597-3605-607f/",
+    "description": "LED; blue; SMD; 0805; 4.5÷15(typ)-18mcd; 2.8÷3.05VDC; 2x1.25x0.8mm",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/f13f6f13c40c6dcc6cf23a676cbcaf15/DIA_Selector_Guide_SMD.pdf",
+    "manufacturer": "DIALIGHT",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "597-3605-607F",
+    "manufacturerPartNumber": "597-3605-607F"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1719,
+     "datasheet_source": "dte"
+    },
+    "stock": 1121,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.403
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.321
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.295
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.256
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.21
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.191
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.172
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.166
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/FC/AB/11/00/0/1161935_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new_render3d.png&wat_scale=100p&ci_sign=ca16c52feb37661f1a0a6a90aebbca99287b1d47",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.07W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.7mm",
+     "LED colour": "blue",
+     "Luminosity": "90...200mcd",
+     "Wavelength": "465...475nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "DIALIGHT",
+     "Type of diode": "LED",
+     "Viewing angle": "140°",
+     "Operating voltage": "2.8...3.5V DC",
+     "Manufacturer series": "598",
+     "Operating temperature": "-40...100°C"
+    },
+    "productUrl": "https://www.tme.eu/en/details/598-8191-107f/",
+    "description": "LED; blue; SMD; 0805; 90÷200mcd; 2.8÷3.5VDC; 2x1.25x0.7mm; 140°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/5d4a11f6d640eea2c19fc27595c7def8/598-8170-107F.pdf",
+    "manufacturer": "DIALIGHT",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "598-8191-107F",
+    "manufacturerPartNumber": "598-8191-107F"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 4000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 628,
+     "datasheet_source": "dte"
+    },
+    "stock": 2050,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.0721
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0579
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0457
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.0425
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/35/B8/60/00/0/428883_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e83cd0b8dcb6ec91abe745f74bc02d58cc85f98b",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.7mm",
+     "LED colour": "blue",
+     "Luminosity": "80...170mcd",
+     "Wavelength": "465...475nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "WAH WANG HOLDING",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "2.8...3.6V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ww-bis170ts-e/",
+    "description": "LED; blue; SMD; 0805; 80÷170mcd; 2.8÷3.6VDC; 2x1.25x0.7mm; 120°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/770b3c97f639783f1be244177bb298c1/WW-BIS170TS-E.pdf",
+    "manufacturer": "WAH WANG HOLDING",
+    "orderMultiple": 5,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "WW-BIS170TS-E",
+    "manufacturerPartNumber": "WW-BIS170TS-E"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1866,
+     "datasheet_source": "product_page"
+    },
+    "stock": 2646,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.355
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.222
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.107
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.098
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.072
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.065
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.062
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/02/2D/F0/00/0/1036832_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=cbd46851e8acefaa9170c0f201f3cdde86425559",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "flat",
+     "Power": "0.111W",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.6mm",
+     "LED colour": "blue",
+     "Luminosity": "80...200mcd",
+     "Wavelength": "470nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "Manufacturer": "QT-Brightek Corporation",
+     "Type of diode": "LED",
+     "Viewing angle": "140°",
+     "Operating voltage": "2.8...3.7V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/qblp631-ib/",
+    "description": "LED; blue; SMD; 0805; 80÷200mcd; 2.8÷3.7VDC; 2x1.25x0.6mm; 140°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/en/details/qblp631-ib/",
+    "manufacturer": "QT-Brightek Corporation",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "QBLP631-IB",
+    "manufacturerPartNumber": "QBLP631-IB"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 111,
+     "datasheet_source": "dte"
+    },
+    "stock": 2850,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.226
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.215
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.192
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.181
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.158
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.153
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C9/82/01/00/1/1058972_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0e8c90583f6be6c9ab7e43bc20e9460019259ae8",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Front": "convex",
+     "LED lens": "transparent",
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x1.05mm",
+     "LED colour": "blue",
+     "Luminosity": "30...90mcd",
+     "Wavelength": "470nm",
+     "Case - inch": "0805",
+     "Manufacturer": "KINGBRIGHT ELECTRONIC",
+     "Type of diode": "LED",
+     "Viewing angle": "30°"
+    },
+    "productUrl": "https://www.tme.eu/en/details/kptd-2012lvvbc-d/",
+    "description": "LED; blue; SMD; 0805; 30÷90mcd; 2x1.25x1.05mm; 30°; λd: 470nm",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/67570426e3dd1f95e4c06f61edb232f1/KPTD-2012LVVBC-D(Ver.3B).pdf",
+    "manufacturer": "KINGBRIGHT ELECTRONIC",
+    "orderMultiple": 10,
+    "minimumOrderQuantity": 10,
+    "distributorPartNumber": "KPTD-2012LVVBC-D",
+    "manufacturerPartNumber": "KPTD-2012LVVBC-D"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113363,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "dte"
+    },
+    "stock": 2030,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0717
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.0566
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 0.0494
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0391
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0257
+     }
+    ],
+    "category": "SMD colour LEDs",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/7F/29/A0/00/0/692983_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=4daae25f64ca0b12d2d6bef8fcfed1bf6b411968",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "red/blue",
+     "Wavelength": "460...470nm, 617...630nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "LED version": "bicolour",
+     "Manufacturer": "OPTOSUPPLY",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "1.8...2.6/2.6...3.6V DC",
+     "Luminosity of red colour": "80...150mcd",
+     "Luminosity of blue colour": "100...150mcd"
+    },
+    "productUrl": "https://www.tme.eu/en/details/osrb0805c1e-0.8t/",
+    "description": "LED; red/blue; SMD; 0805; 1.8÷2.6/2.6÷3.6VDC; 2x1.25x0.8mm; 120°",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/9580eaab45200db084e95e87f615e918/OSRB0805C1E-0.8T_VER.A.1.2.pdf",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 10,
+    "minimumOrderQuantity": 10,
+    "distributorPartNumber": "OSRB0805C1E-0.8T",
+    "manufacturerPartNumber": "OSRB0805C1E-0.8T"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113470,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "product_page"
+    },
+    "stock": 100,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.082
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0732
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.0644
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0586
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0527
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0469
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0439
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.041
+     }
+    ],
+    "category": "Special effect LED's",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/21/C8/51/00/0/1412114_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=01709694cf5a75b965c13d2522387141afc5ce1e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "LED colour": "blue, yellow",
+     "Wavelength": "460...470nm, 585...595nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "LED version": "bicolour, blinking",
+     "Manufacturer": "OPTOSUPPLY",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "3...5V DC",
+     "Luminosity of blue colour": "100mcd",
+     "Luminosity of yellow colour": "100mcd"
+    },
+    "productUrl": "https://www.tme.eu/en/details/osyb0805c1s/",
+    "description": "LED; blue,yellow; bicolour,blinking; 120°; 3÷5VDC; 20mA; Case: 0805",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/en/details/osyb0805c1s/",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "OSYB0805C1S",
+    "manufacturerPartNumber": "OSYB0805C1S"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "RL1",
+       "amount": 3000
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113470,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "dte"
+    },
+    "stock": 1800,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.0617
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0514
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0452
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0421
+     }
+    ],
+    "category": "Special effect LED's",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E3/5D/A0/00/0/709950_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=4f04a7cc4a4ee806e8e02741e6bd8c0ff8ff534a",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "blue",
+     "Luminosity": "30...70mcd",
+     "Wavelength": "460...475nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "LED version": "blinking",
+     "Manufacturer": "OPTOSUPPLY",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "3...4V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/osbs0805c1e-b/",
+    "description": "LED; blue; blinking; 30÷70mcd; 120°; 3÷4VDC; 20mA; 2x1.25x0.8mm",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/484acdbefc57d2d73e976b9d8eb2c0e9/OSBS0805C1E-B-VA34.pdf",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 5,
+    "distributorPartNumber": "OSBS0805C1E-B",
+    "manufacturerPartNumber": "OSBS0805C1E (TYPE B)"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113470,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "dte"
+    },
+    "stock": 65,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.0753
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0673
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.0592
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0538
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0484
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.043
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0404
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.0376
+     }
+    ],
+    "category": "Special effect LED's",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/61/C8/51/00/0/1412118_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d63a6c121729c9b9956a55915b90e972c94d4c09",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Mounting": "SMD",
+     "Case - mm": "2012",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "blue",
+     "Luminosity": "100mcd",
+     "Wavelength": "460...470nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "LED version": "blinking",
+     "Manufacturer": "OPTOSUPPLY",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "3...5V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/osrb0805c1s/",
+    "description": "LED; blue; blinking; 100mcd; 120°; 3÷5VDC; 20mA; 2x1.25x0.8mm",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/837894718be4eee4a58f2144ccdf43d9/OSXX0805C1S.pdf",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "OSRB0805C1S",
+    "manufacturerPartNumber": "OSRB0805C1S"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113470,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 120,
+     "datasheet_source": "dte"
+    },
+    "stock": 100,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.082
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.0732
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.0644
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.0586
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.0527
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.0469
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.0439
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.041
+     }
+    ],
+    "category": "Special effect LED's",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/91/C8/51/00/0/1412121_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e7bdd43e3f7f7cbdec3eb9da50ef70fb3359f8f0",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Mounting": "SMD",
+     "Dimensions": "2x1.25x0.8mm",
+     "LED colour": "bluish green",
+     "Luminosity": "100mcd, 400mcd",
+     "Wavelength": "460...470nm, 520...530nm",
+     "Case - inch": "0805",
+     "LED current": "20mA",
+     "LED version": "blinking",
+     "Manufacturer": "OPTOSUPPLY",
+     "Type of diode": "LED",
+     "Viewing angle": "120°",
+     "Operating voltage": "3...5/3...5V DC"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ospb0805c1s/",
+    "description": "LED; bluish green; blinking; 100mcd,400mcd; 120°; 3÷5/3÷5VDC; 20mA",
+    "distributor": "TME",
+    "packageName": "0805",
+    "datasheetUrl": "https://www.tme.eu/Document/837894718be4eee4a58f2144ccdf43d9/OSXX0805C1S.pdf",
+    "manufacturer": "OPTOSUPPLY",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "OSPB0805C1S",
+    "manufacturerPartNumber": "OSPB0805C1S"
+   }
+  ],
+  "MOUSER": [
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Multi-Colour LEDs",
+     "lead_time": "42 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 23397,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.87
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.34
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.02
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.877
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.817
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.777
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.769
+     }
+    ],
+    "category": "Multi-Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/lumileds/images/L1MC-RGB3080500MP0_new_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumileds/L1MC-RGB3080500MP0?qs=bZr6mbWTK5ktxuxBZ0LpAQ%3D%3D",
+    "description": "Multi-Colour LEDs RGBW, 3000 K, 80-CRI LUXEON MultiColor",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Lumileds",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "997-L1MCRGB3080500MP",
+    "manufacturerPartNumber": "L1MC-RGB3080500MP0"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Multi-Colour LEDs",
+     "lead_time": "42 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1761,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.75
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.26
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.963
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.829
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.786
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.731
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.697
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.685
+     }
+    ],
+    "category": "Multi-Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/lumileds/images/L1MC-RGB3080500MP0_new_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumileds/L1MC-RGB4080500MP0?qs=GedFDFLaBXFzIHiEjFtc0w%3D%3D",
+    "description": "Multi-Colour LEDs RGBW, 4000 K, 80-CRI LUXEON MultiColor",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Lumileds",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "997-L1MCRGB485MP0",
+    "manufacturerPartNumber": "L1MC-RGB4080500MP0"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Multi-Colour LEDs",
+     "lead_time": "42 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 3328,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.81
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.3
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.989
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.854
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.786
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.731
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.697
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.685
+     }
+    ],
+    "category": "Multi-Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/lumileds/images/L1MC-RGB3080500MP0_new_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumileds/L1MC-RGU4080500MP0?qs=W%2FMpXkg%252BdQ4ZVO0lRT2w5A%3D%3D",
+    "description": "Multi-Colour LEDs RGBW, 4000 K, 80-CRI LUXEON MultiColor",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Lumileds",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "997-L1MCRGU4085MP0",
+    "manufacturerPartNumber": "L1MC-RGU4080500MP0"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "112 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 11699,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.387
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.265
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.189
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.155
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.144
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.128
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.125
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.105
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/vcc/images/LSM0805463V_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/VCC/LSM0805463V?qs=T3oQrply3y%252B92KGe6UJ6%252BA%3D%3D",
+    "description": "Single Colour LEDs 0805 3V 100mcd Blue",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/299/1/LSM0805_DS_rev2_072024.pdf",
+    "manufacturer": "VCC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "593-LSM0805463V",
+    "manufacturerPartNumber": "LSM0805463V"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "63 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 14387,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.4
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.998
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.714
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.624
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.589
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.549
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.543
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.517
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/bivar/images/SM0805XXX_SPL.JPG",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Bivar/SM0805UBWC?qs=hWDdE2Pc5RAgQGamDSfd%252BQ%3D%3D",
+    "description": "Single Colour LEDs Ultra Blue 470 nm Water Clear",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/112/1/SM0805UBWC.pdf",
+    "manufacturer": "Bivar",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "749-SM0805UBWC",
+    "manufacturerPartNumber": "SM0805UBWC"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Multi-Colour LEDs",
+     "lead_time": "42 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1028,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.87
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.34
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.02
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.877
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.827
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.753
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.718
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.706
+     }
+    ],
+    "category": "Multi-Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/lumileds/images/L1MC-RGB3080500MP0_new_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumileds/L1MC-RGU3080500MP0?qs=W%2FMpXkg%252BdQ5PkGjyx72AEQ%3D%3D",
+    "description": "Multi-Colour LEDs RGBW, 3000 K, 80-CRI LUXEON MultiColor",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Lumileds",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "997-L1MCRGU3085MP0",
+    "manufacturerPartNumber": "L1MC-RGU3080500MP0"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "84 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 3690,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.55
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.11
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.836
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.647
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.634
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.633
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.624
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.593
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/lumex/images/143.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumex/SML-LX0805USBC-TR?qs=jywnEC9mS4F%2FCvyk4BNITw%3D%3D",
+    "description": "Single Colour LEDs Super Blue, 470nm 3.5V, 25mcd",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/389/1/SML_LX0805USBC_TR.pdf",
+    "manufacturer": "Lumex",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "696-SML-LX0805USBC",
+    "manufacturerPartNumber": "SML-LX0805USBC-TR"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Multi-Colour LEDs",
+     "lead_time": "42 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1385,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.87
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.34
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.02
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.854
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.809
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.753
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.718
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.706
+     }
+    ],
+    "category": "Multi-Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/lumileds/images/L1MC-RGB3080500MP0_new_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumileds/L1MC-RGB5080500MP0?qs=W%2FMpXkg%252BdQ4xqWtXkzneww%3D%3D",
+    "description": "Multi-Colour LEDs RGBW, 5000 K, 80-CRI LUXEON MultiColor",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Lumileds",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "997-L1MCRGB5085MP0",
+    "manufacturerPartNumber": "L1MC-RGB5080500MP0"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "84 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 2345,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.54
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.831
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.714
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.675
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.596
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.565
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.544
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/lumex/images/707.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumex/SML-LXR85USBC-TR?qs=L64QHqBhuJTeanm2j8%252BYFQ%3D%3D",
+    "description": "Single Colour LEDs 0805 Right Angle Blu",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/389/1/SML_LXR85USBC_TR.pdf",
+    "manufacturer": "Lumex",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "696-SML-LXR85USBC",
+    "manufacturerPartNumber": "SML-LXR85USBC-TR"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "357 Days",
+     "factory_stock": 0,
+     "lifecycle_status": "New Product",
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 10169,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.284
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.197
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.139
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.113
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.104
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.097
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.083
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.076
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/dialight/images/599-0130-137F_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Dialight/599-0190-137F?qs=4dK74SdgGtydrkULkzqtWQ%3D%3D",
+    "description": "Single Colour LEDs SMD LED 0805 0.80mm ht Blue 7\" Reel",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Dialight",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "645-599-0190-137F",
+    "manufacturerPartNumber": "599-0190-137F"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "105 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 151691,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.163
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.161
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.151
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.119
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.119
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/wurthelectronics/images/WL-SMCW.JPG",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wurth-Elektronik/150080BS75000?qs=2kOmHSv6VfT2tBo3UPVqAQ%3D%3D",
+    "description": "Single Colour LEDs WL-SMCW SMDMono TpVw Waterclr 0805 Blue",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Wurth Elektronik",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "710-150080BS75000",
+    "manufacturerPartNumber": "150080BS75000"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "70 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 15729,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.499
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.345
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.249
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.192
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.182
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.171
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.157
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.143
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/kingbright/images/APTD2012LCGCK_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Kingbright/APTD2012LQBC-D?qs=AQlKX63v8RvDGqprk6aUCg%3D%3D",
+    "description": "Single Colour LEDs 0805 Dome Lens LED Blue- 465nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/308/1/APTD2012LQBC_D.pdf",
+    "manufacturer": "Kingbright",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "604-APTD2012LQBCD",
+    "manufacturerPartNumber": "APTD2012LQBC/D"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 97112,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.073
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.062
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.058
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.052
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.051
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/liteon/images/LTST_C171_series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/LITEON/LTST-C171TBKT?qs=DIGZ1Yxiz2%2FRYShBNqRoMg%3D%3D",
+    "description": "Single Colour LEDs Blue Clear 466nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Lite-On_LTST-C171TBKT.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "859-LTST-C171TBKT",
+    "manufacturerPartNumber": "LTST-C171TBKT"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-10-26T00:00:00",
+       "quantity": 48000
+      },
+      {
+       "date": "2027-01-04T00:00:00",
+       "quantity": 60000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 61239,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.267
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.181
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.123
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.103
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.093
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.076
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.065
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/liteon/images/LTST_C170_series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/LITEON/LTST-C170TBKT?qs=0uL0gcxEMop2ooGmIUzw3A%3D%3D",
+    "description": "Single Colour LEDs Blue Clear 466nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Lite-On-LTST-C170TBKT.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "859-LTST-C170TBKT",
+    "manufacturerPartNumber": "LTST-C170TBKT"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 28184,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.525
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.362
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.261
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.217
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.201
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.189
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.166
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.165
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/mousercatalog/images/630_90_B_SMD%20LED.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Dialight/598-8191-107F?qs=7JStj%2FjQ2SEHXRogAyjPqQ%3D%3D",
+    "description": "Single Colour LEDs Blue Water Clr 160mcd 475nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Dialight",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "645-598-8191-107F",
+    "manufacturerPartNumber": "598-8191-107F"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "35 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 10986,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.163
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.112
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.078
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.063
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.057
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.05
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.046
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.041
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.04
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/inolux/images/0805_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Inolux/IN-S85AT5B?qs=fAHHVMwC%252BbhdqQjpS5WDHQ%3D%3D",
+    "description": "Single Colour LEDs Blue LED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Inolux",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "743-IN-S85AT5B",
+    "manufacturerPartNumber": "IN-S85AT5B"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "70 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 6762,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.198
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.133
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.093
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.075
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.069
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.06
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.056
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.05
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.048
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/inolux/images/IN-S85CS5B_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Inolux/IN-S85CS5B?qs=stqOd1AaK79rJ2RZKPoGSg%3D%3D",
+    "description": "Single Colour LEDs Blue LED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Inolux",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "743-IN-S85CS5B",
+    "manufacturerPartNumber": "IN-S85CS5B"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "55 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 4451,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.576
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.397
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.277
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.24
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.224
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.202
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.192
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.177
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.169
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/kingbright/images/APTD2012LCGCK_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Kingbright/APTD2012LVBC-D?qs=AQlKX63v8RtBBvAHcuxu8A%3D%3D",
+    "description": "Single Colour LEDs 0805 Dome Lens LED Blue- 470nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/308/1/APTD2012LVBC_D.pdf",
+    "manufacturer": "Kingbright",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "604-APTD2012LVBCD",
+    "manufacturerPartNumber": "APTD2012LVBC/D"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2027-01-20T00:00:00",
+       "quantity": 12000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 7841,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.327
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.222
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.157
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.128
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.119
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.11
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.095
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.089
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.087
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/dialight/images/599_0805_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Dialight/599-0191-007F?qs=gTYE2QTfZfTbWzs5Ohdbbg%3D%3D",
+    "description": "Single Colour LEDs SMD 0805 BLUE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Dialight",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "645-599-0191-007F",
+    "manufacturerPartNumber": "599-0191-007F"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 24699,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.073
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.068
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.058
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.054
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.052
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/liteon/images/LTST_S220_series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/LITEON/LTST-S220TBKT?qs=6X4AWLaL1XJ9Adu1iuzfWw%3D%3D",
+    "description": "Single Colour LEDs Blue Clear 466nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Lite-On-LTST-S220TBKT.pdf",
+    "manufacturer": "LITEON",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "859-LTST-S220TBKT",
+    "manufacturerPartNumber": "LTST-S220TBKT"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "112 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 5359,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.731
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.509
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.373
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.312
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.27
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.239
+     },
+     {
+      "currency": "EUR",
+      "quantity": 8000,
+      "unitPrice": 0.226
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.219
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/vcc/images/VAOL-S8RP4_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/VCC/VAOL-S8SB4?qs=7DG%2Fna1Fp6stxi2frZsTKA%3D%3D",
+    "description": "Single Colour LEDs Blue 468nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/299/1/VAOL_S8SB4.pdf",
+    "manufacturer": "VCC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "593-VAOL-S8SB4",
+    "manufacturerPartNumber": "VAOL-S8SB4"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 24744,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.275
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.187
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.132
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.107
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.099
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.079
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.075
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.073
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/brightled/images/bl-hb535a-trb_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/American-Bright-LED/BL-HB535A-TRB?qs=9qK3lZr%252Bi0JkaNaVvOIiUw%3D%3D",
+    "description": "Single Colour LEDs 0805 SUP BLUE CLR SMT LED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "American Bright LED",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "442-BLHB535ATB",
+    "manufacturerPartNumber": "BL-HB535A-TRB"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": "End of Life",
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 2620,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.679
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.47
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.341
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.276
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.234
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.218
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.206
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": null,
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumex/SML-LXL0805USBC-TR?qs=Y%2FvQ59CGTzU1E0p5Imwzmg%3D%3D",
+    "description": "Single Colour LEDs 2.0x1.25mm SMT LED w/ Lens Blue 470nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Lumex",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "696-LXL0805USBC-TR",
+    "manufacturerPartNumber": "SML-LXL0805USBC-TR"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": "End of Life",
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 804,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.2
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.845
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.617
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.515
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.484
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.383
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.353
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.335
+     },
+     {
+      "currency": "EUR",
+      "quantity": 24000,
+      "unitPrice": 0.328
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/lumex/images/142.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Lumex/SML-LXFT0805USBCTR?qs=XnHEeJup%252Bh%252B9HWjgc9Bcpg%3D%3D",
+    "description": "Single Colour LEDs Surface Mount LEDs",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Lumex",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "696-SMLFT805USBCTR",
+    "manufacturerPartNumber": "SML-LXFT0805USBCTR"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Single Colour LEDs",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": "End of Life",
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 4733,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.301
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.147
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.105
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.098
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.087
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.083
+     },
+     {
+      "currency": "EUR",
+      "quantity": 9000,
+      "unitPrice": 0.082
+     }
+    ],
+    "category": "Single Colour LEDs",
+    "photoUrl": "https://www.mouser.com/images/dialight/images/5973605607F_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Dialight/5973605607F?qs=gTYE2QTfZfRdHR7Ilz7z4g%3D%3D",
+    "description": "Single Colour LEDs SMD 0805 BLUE 470nm",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/350/1/C18375.pdf",
+    "manufacturer": "Dialight",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "645-5973605607F",
+    "manufacturerPartNumber": "5973605607F"
+   }
+  ]
+ }
+}
