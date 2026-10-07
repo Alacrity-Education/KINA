@@ -12,7 +12,7 @@ Usage (stack started with `docker compose up -d --build`):
 Suites: ui, mcp, oauth, forwarded, rest, metrics (dev mode; "all" = these six) and prod (prod mode only).
 Actuator (health, Prometheus) is on the separate management port: --metrics (default http://localhost:9090,
 env KINA_METRICS_URL).
-The mcp and rest suites need a static bearer token; it is created through the token UI (suite ui runs first
+The mcp and rest suites need a static bearer token; it is created through the token UI on the MCP tab (suite ui runs first
 automatically) or taken from KINA_TOKEN. Tokens are never printed, only their 12-character prefix.
 
 Distributor quota: on a cold cache the suites make 2 Mouser calls (one search, one new batch query); reruns within the
@@ -288,19 +288,44 @@ def shape_problems(response: dict) -> list[str]:
 # ----------------------------------------------------------------------------------------------------------- suites
 
 def suite_ui(base: str, rec: Recorder) -> str | None:
-    """Token UI in dev mode: render, create (CSRF + session), list, revoke a second token, 401 for it."""
+    """Web UI in dev mode: the three tabs, an LCSC search in the browser (no Mouser or TME quota), the Status tab; then
+    the token flow on the MCP tab (/connect): render, create (CSRF + session), list, revoke a second token, 401 for it."""
     web = Client(base, cookies=True)
-    resp = web.get("/")
+    home = web.get("/")
+    tabs = all(re.search(r'<a href="' + re.escape(path) + r'"[^>]*>' + label + "</a>", home.text)
+               for path, label in (("/", "Search"), ("/connect", "MCP"), ("/status", "Status")))
+    rec.check("ui: GET / is the Search tab (three tabs, search form)", home.status == 200 and tabs
+              and 'aria-current="page" class="active">Search</a>' in home.text and 'name="q"' in home.text
+              and 'name="distributors"' in home.text, f"status {home.status}, tabs {tabs}", home.millis)
+    found = web.get("/?" + urllib.parse.urlencode({"q": "10k 0603 resistor", "distributors": "LCSC",
+                                                  "max_results": 5}))
+    rows = len(re.findall(r'<tr class="part-row"', found.text))
+    rec.check("ui: an LCSC search renders result rows", found.status == 200 and rows >= 1
+              and 'class="card distributor-result"' in found.text, f"status {found.status}, {rows} rows", found.millis)
+    escaped = web.get("/?" + urllib.parse.urlencode({"q": "<script>alert(1)</script> 10k resistor",
+                                                    "distributors": "LCSC", "max_results": 1}))
+    rec.check("ui: the query is echoed escaped", escaped.status == 200 and "<script>alert(1)" not in escaped.text
+              and "&lt;script&gt;alert(1)" in escaped.text, f"status {escaped.status}", escaped.millis)
+    blank = web.get("/?q=+")
+    rec.check("ui: a blank query renders the error with 400", blank.status == 400 and 'class="error"' in blank.text,
+              f"status {blank.status}")
+    status = web.get("/status")
+    ping_version = re.search(r'id="version">([^<]+)<', status.text)
+    rec.check("ui: /status shows the version and the cache-by-type table", status.status == 200 and ping_version
+              is not None and 'id="cache-by-type"' in status.text and 'id="cache-by-distributor"' in status.text,
+              f"status {status.status}, version {ping_version.group(1) if ping_version else None}", status.millis)
+
+    resp = web.get("/connect")
     csrf = re.search(r'name="_csrf" value="([^"]+)"', resp.text)
-    rec.check("ui: GET / renders the token page", resp.status == 200 and "Access tokens" in resp.text and csrf,
-              f"status {resp.status}", resp.millis)
+    rec.check("ui: GET /connect renders the token page (MCP tab)", resp.status == 200 and "Access tokens" in resp.text
+              and csrf, f"status {resp.status}", resp.millis)
     rec.check("ui: the footer shows the TME data notice (TME terms 8.7)", TME_NOTICE in resp.text,
               "footer present" if "<footer" in resp.text else "no footer")
     if not csrf:
         return None
 
     def create(name: str) -> str | None:
-        page = web.get("/")
+        page = web.get("/connect")
         token_csrf = re.search(r'name="_csrf" value="([^"]+)"', page.text).group(1)
         created = web.post("/tokens", form={"name": name, "_csrf": token_csrf})
         match = re.search(r'id="token"[^>]*value="(kina_[A-Za-z0-9_-]{43})"', created.text, re.S)
@@ -315,7 +340,7 @@ def suite_ui(base: str, rec: Recorder) -> str | None:
     if not main_token or not second:
         return main_token
 
-    listing = web.get("/")
+    listing = web.get("/connect")
     rec.check("ui: tokens appear in the list", f"e2e main {run}" in listing.text and prefix(main_token)[:12]
               in listing.text, "listed by name and prefix")
 
@@ -329,8 +354,8 @@ def suite_ui(base: str, rec: Recorder) -> str | None:
         rec.check("ui: revoke form found", False, "no revoke form for the second token")
         return main_token
     revoked = web.post(row.group(1), form={"_csrf": row.group(2)})
-    rec.check("ui: POST /tokens/{id}/revoke redirects back", revoked.status == 302, f"status {revoked.status}",
-              revoked.millis)
+    rec.check("ui: POST /tokens/{id}/revoke redirects back to /connect", revoked.status == 302
+              and (revoked.header("Location") or "").endswith("/connect"), f"status {revoked.status}", revoked.millis)
     after = web.get("/api/v1/distributors", headers=bearer(second))
     rec.check("ui: revoked token is rejected with 401", after.status == 401,
               f"status {after.status}, WWW-Authenticate {after.header('WWW-Authenticate')!r}")
@@ -550,7 +575,7 @@ def suite_oauth(base: str, rec: Recorder):
     pair3 = api.post("/oauth/token", form={"grant_type": "authorization_code", "code": code3,
                                            "redirect_uri": REDIRECT_URI, "client_id": client_id,
                                            "code_verifier": verifier}).json()
-    listing = browser.get("/")
+    listing = browser.get("/connect")
     row = re.search(re.escape(pair3["access_token"][:12]) + r".*?action=\"(/tokens/[0-9a-f-]{36}/revoke)\".*?"
                     r"name=\"_csrf\" value=\"([^\"]+)\"", listing.text, re.S)
     ui_revoked = row is not None and browser.post(row.group(1), form={"_csrf": row.group(2)}).status == 302

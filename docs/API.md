@@ -673,11 +673,13 @@ RFC 7009. Form-encoded `token=<access or refresh token>`, with the same client a
 
 ## Web UI endpoints
 
-These need a signed-in user (`prod`: OIDC session, `dev`: automatic) and use CSRF-protected forms.
+These need a signed-in user (`prod`: OIDC session, `dev`: automatic). The POST forms are CSRF-protected; the search form is a plain GET.
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /` | List your tokens, with a short explanation of how to connect Claude. When `kina.tokens.ui-enabled` is `false` it shows only that explanation. |
+| `GET /` | The Search tab (also `/search`): a form that runs a part search (`q`, `distributors`, `max_results`, `quantity`, `detail`, `bypass_cache`, `allow_below_spec`, as in `GET /api/v1/parts/search`) and shows the results as a page. |
+| `GET /connect` | The MCP tab: how to connect Claude, and your tokens. When `kina.tokens.ui-enabled` is `false` it shows only the explanation. |
+| `GET /status` | The Status tab: version, distributors, ranking, cache (also by component type), counters and users. |
 | `POST /tokens` | Create a static token (`name`, up to 100 characters). The plaintext is shown once. Returns `404` when `kina.tokens.ui-enabled` (`KINA_TOKENS_UI_ENABLED`) is `false`; existing tokens keep working until they expire or are revoked. |
 | `POST /tokens/{id}/revoke` | Revoke one of your tokens. For an OAuth token this also revokes its refresh tokens. |
 | `GET`/`POST /oauth/authorize` | Consent page and decision. |

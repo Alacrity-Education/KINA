@@ -139,6 +139,8 @@ curl -s localhost:8080/actuator/health      # {"status":"UP"}
 curl -s localhost:8080/api/v1/distributors  # same data as the list_distributors tool
 ```
 
+Open http://localhost:8080 for the web UI. It has three tabs: Search runs a part search in the browser, MCP shows how to connect Claude and holds your static tokens, and Status shows the distributors, the ranking model, the cache (also by component type) and the usage counters.
+
 Call the `list_distributors` tool and look for LCSC `available: true`, TME and Mouser `configured: true`, and `ranking.ready: true`. The default mode is `dev`: no login, every request runs as a fake admin. Never expose `dev` mode to the internet. For anything public set `KINA_MODE=prod` (see [Security](#security)).
 
 ## Connecting Claude
@@ -163,7 +165,7 @@ To stop the permission prompts, add this to your user or project `settings.json`
 {"permissions": {"allow": ["mcp__kina"]}}
 ```
 
-**Scripts and machines without a browser.** Open the web UI at `https://<host>/`, create a static token (valid 30 days) and send it as a bearer token:
+**Scripts and machines without a browser.** Open the MCP tab of the web UI at `https://<host>/connect`, create a static token (valid 30 days) and send it as a bearer token:
 
 ```bash
 claude mcp add --transport http kina https://<host>/mcp --header "Authorization: Bearer <token>"

@@ -11,7 +11,7 @@ This document is the binding contract for the implementation. The original brief
 | Language / build | Java 21 (`maven.compiler.release=21`), Maven with wrapper (`./mvnw`), single module |
 | Framework | Spring Boot **4.1.1** (parent POM), Spring Framework 7, Jackson **3** (`tools.jackson.*`; annotations stay `com.fasterxml.jackson.annotation.*`) |
 | MCP | Spring AI **2.0.1** BOM, `spring-ai-starter-mcp-server-webmvc` (MCP Java SDK 2.0.0, Jackson 3), Streamable HTTP transport, **stateless** protocol, endpoint `/mcp`; tool annotations `org.springframework.ai.mcp.annotation.McpTool`/`McpToolParam` |
-| Web | Spring MVC, Thymeleaf for the small token UI, Spring Security, `spring-boot-starter-security-oauth2-client` for OIDC login (Boot 4 deprecates the old `spring-boot-starter-oauth2-client` name) |
+| Web | Spring MVC, Thymeleaf for the small web UI (Search, MCP and Status tabs), Spring Security, `spring-boot-starter-security-oauth2-client` for OIDC login (Boot 4 deprecates the old `spring-boot-starter-oauth2-client` name) |
 | Persistence | PostgreSQL 17, Flyway migrations, `JdbcClient` (no JPA), JSONB for cached payloads |
 | JLCPCB data | `org.xerial:sqlite-jdbc` reading the downloaded FTS5 database read-only |
 | HTTP clients | Spring `RestClient` on the JDK `HttpClient`, explicit connect/read timeouts everywhere |
@@ -53,7 +53,8 @@ ro.alacrity.kina
 │                    AccessTokenService, AccessTokenRepository, UserRepository, OidcUserSynchronizer, KinaPrincipal
 ├── oauth/           OAuthMetadataController, ClientRegistrationController, AuthorizationController, TokenController,
 │                    RevocationController, OAuthClientRepository, AuthorizationCodeRepository, RefreshTokenRepository, Pkce
-└── web/             TokenPageController (Thymeleaf), PublicUrlResolver
+└── web/             SearchPageController, McpPageController, StatusPageController (Thymeleaf tabs), SearchView,
+                     WebTabs, LoginErrorController, PublicUrlResolver
 ```
 
 ## 2. Domain model (exact contracts)
@@ -1726,7 +1727,9 @@ upserts `users(issuer, subject, email, display_name, last_login_at)`, sets `memb
 sentence per reason, section 7.1), and an existing user row is blocked (`access_revoked_at`, all tokens revoked).
 The login's authorized client lives in the HTTP session (`UpstreamTokenCapturingClientRepository`), which hands the
 provider's refresh token to `MembershipVerifier` (stored encrypted, section 7.1).
-`/api/**` and `/mcp/**` accept bearer tokens only. The actuator endpoints are on the management port and need no
+`/api/**` and `/mcp/**` accept bearer tokens only. The web UI pages (`/`, `/search`, `/connect`, `/status`, section 6
+"Web UI") stay on the web chain: signed-in users only in `prod`, the fake admin in `dev`; none of them is public. The
+actuator endpoints are on the management port and need no
 authentication (management chain, section 3.7). `RevokedUserSessionFilter` ends the web session of a user blocked
 after signing in; the next page view starts a new login (and so a new group check).
 
@@ -1753,14 +1756,36 @@ connector discover the authorization server.
 `X-Forwarded-For` for the client address) are honoured; `PublicUrlResolver` returns `kina.public-base-url` when set,
 otherwise the request's forwarded origin. All metadata, redirect URIs and `resource_metadata` values use it.
 
-**Web UI** (Thymeleaf, CSRF on): `GET /` first explains the main path (Claude's connector with the `/mcp` URL, or
-`claude mcp add` + `/mcp` sign-in in Claude Code), then lists the current user's tokens (name, prefix, created,
-expires, last used, revoked). Static tokens are presented as the option for scripts calling the HTTP API and for Claude
-Code on machines without a browser. `POST /tokens` creates one (name required) and renders the plaintext once,
-`POST /tokens/{id}/revoke`. `kina.tokens.ui-enabled=false` (`KINA_TOKENS_UI_ENABLED`) replaces `/` with a short page
-explaining that access is through Claude's connector and that static tokens are disabled, and makes `POST /tokens` a
-404 (existing tokens keep working until they expire or are revoked). Keep the pages plain and dependency-free (inline
-CSS).
+**Web UI** (Thymeleaf, CSRF on for the POST forms): three tabs in the page header, all on the web chain.
+
+- **Search** (`GET /`, alias `/search`, the default): a GET form (bookmarkable, no CSRF) with the query `q` (up to 300
+  characters), distributor checkboxes (`distributors`; the configured ones are checked by default, none checked means
+  every configured one, as in the API), `max_results` (1, 3, 5, 10, 20, 50, capped by `kina.search.max-max-results`),
+  `quantity`, `detail` (`compact` or `full`), `bypass_cache` and `allow_below_spec`. With `q` present it calls
+  `PartSearchService.search`, the same path as the MCP tool and the REST API (counted in the metrics like any search),
+  and renders the parsed query, the ranking mode and note, the elapsed time, one card per distributor (cache status,
+  error, counts, exclusions with their detail, `distributor_query`, hints) and the parts table (rank, match, part
+  number linked to `product_url`, MPN, manufacturer, description, stock, the three price brackets, availability,
+  lifecycle, datasheet link, attributes; `full` adds the raw attributes and `extra`). A blank query or a bad value
+  renders an error with status 400; a failing search renders a generic error. Every distributor value is escaped
+  (`th:text`, never `th:utext`), and links are rendered only for `http`/`https` URLs. A few lines of inline JavaScript
+  show "Searching..." on submit; nothing else needs JavaScript.
+- **MCP** (`GET /connect`): first explains the main path (Claude's connector with the `/mcp` URL, or `claude mcp add`
+  + `/mcp` sign-in in Claude Code), then lists the current user's tokens (name, prefix, created, expires, last used,
+  revoked). The tab is not at `/mcp`, which is the MCP endpoint on the machine chain. Static tokens are presented as the
+  option for scripts calling the HTTP API and for Claude Code on machines without a browser. `POST /tokens` creates one
+  (name required) and renders the plaintext once, `POST /tokens/{id}/revoke` redirects back to `/connect`.
+  `kina.tokens.ui-enabled=false` (`KINA_TOKENS_UI_ENABLED`) replaces the tab with a short page explaining that access is
+  through Claude's connector and that static tokens are disabled, and makes `POST /tokens` a 404 (existing tokens keep
+  working until they expire or are revoked). The Search and Status tabs stay.
+- **Status** (`GET /status`): read from the beans that already hold the values, no new queries: version (as `ping`
+  reports it), mode, public URL, uptime and JVM memory; `DistributorStatusService.status()` for the distributors, the
+  cache totals and the ranking; `MetricsGauges` for the cache rows per distributor (parts, fresh, stale, stale stock,
+  searches) and per type (the `kina_cache_parts` and `kina_cache_searches` series, as of their last refresh every
+  `kina.metrics.save-interval`), users and active tokens; `KinaMetrics.summary()` for the counters; and
+  `MetricsBackfill.status()` (last completed run, runs by outcome, amounts moved per counter). Reloading refreshes it.
+
+Keep the pages plain and dependency-free (inline CSS).
 
 ## 7. OAuth 2.1 authorization server for MCP clients
 

@@ -116,7 +116,7 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 | `security` | `SecurityConfig` (dev/prod filter chains, login failure routing), `DevModeAuthenticationFilter`, `BearerTokenAuthenticationFilter` + `BearerAuthenticationEntryPoint` (401 with `resource_metadata`), `AccessTokenService`/`AccessTokenRepository` (static tokens 30 days, OAuth tokens 1 hour; revoking one also revokes its OAuth refresh tokens; `revokeAllForUser`), OIDC login (`OidcLoginConfiguration`, `LazyOidcClientRegistrationRepository`, `OidcUserSynchronizer`, `OidcIdTokenDecoders`, `OidcHttp` timeouts), group authorisation (`OidcAccessPolicy` claim/domain rules, `MembershipVerifier` re-checks, `UpstreamTokenCipher` AES-GCM, `UpstreamTokenCapturingClientRepository`, `RevokedUserSessionFilter`) |
 | `oauth` | OAuth 2.1 authorization server for MCP clients: metadata, `/oauth/register` (+ `RegistrationRateLimiter`), `/oauth/authorize` (consent page, auto-approval of trusted metadata-document clients), `/oauth/token`, `/oauth/revoke`, PKCE; Client ID Metadata Documents (`ClientMetadataDocument` rules, `ClientMetadataDocumentResolver` fetch/trust/cache, `OAuthClientLookup`); `OAuthClientMaintenance` (daily cleanup of unused registered clients) |
 | `mcp` | `KinaMcpTools`: `search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping` |
-| `api` / `web` | `/api/v1` controllers + `ApiExceptionHandler` (RFC 9457 problems); Thymeleaf token UI (`TokenPageController`), `PublicUrlResolver` |
+| `api` / `web` | `/api/v1` controllers + `ApiExceptionHandler` (RFC 9457 problems); Thymeleaf tabs (`SearchPageController` at `/`, `McpPageController` at `/connect`, `StatusPageController` at `/status`), `PublicUrlResolver` |
 
 Dependency injection: Spring beans take their collaborators as `@Autowired private Foo foo;` fields (not final),
 grouped at the top of the class. This is a deliberate choice for shorter classes. There are no injection constructors
@@ -200,7 +200,7 @@ scripts/e2e/prod_smoke.sh                           # prod-mode smoke in a throw
 
 | Suite | What it checks |
 |---|---|
-| `ui` | dev-mode token page renders; creates two tokens through the form (session cookie + CSRF), reads the plaintext once, sees them listed, revokes one (it gets 401, the other keeps working); POST without CSRF is 403. The first token is used by `mcp` and `rest` (or set `KINA_TOKEN`). |
+| `ui` | dev-mode tabs: `/` shows the three tabs and the search form, an LCSC search (`/?q=10k+0603+resistor&distributors=LCSC`, no Mouser or TME quota) renders result rows, `/status` shows the version and the cache-by-type table; the MCP tab (`/connect`) renders; creates two tokens through the form (session cookie + CSRF), reads the plaintext once, sees them listed, revokes one (it gets 401, the other keeps working); POST without CSRF is 403. The first token is used by `mcp` and `rest` (or set `KINA_TOKEN`). |
 | `mcp` | `initialize`, `tools/list` (5 tools), `ping`, `search_parts` `10uF X7R 0805` with `max_results` 5 then 20 (second call must be `cache: hit` for Mouser and TME), `search_parts_batch` (2 queries), `get_part` (TME part from the search, unknown LCSC part -> `found: false`), `list_distributors` (3 available, cross-encoder ready, JLCPCB >= 7 M parts); the first `search_parts` must report `ranking: "blended"`, invalid bearer -> 401 |
 | `oauth` | the Claude connector flow: 401 challenge with `resource_metadata`, both metadata documents, dynamic registration, `/oauth/authorize` with PKCE S256 + consent (CSRF) -> code, code exchange, no code replay, `tools/list` with the OAuth token, refresh rotation (old pair dead), `/oauth/revoke` of access and refresh tokens, web-UI revocation of an OAuth token also kills its refresh token |
 | `forwarded` | with `X-Forwarded-Proto: https` + `X-Forwarded-Host: kina.example.com` every URL in both metadata documents and the `resource_metadata` challenge uses `https://kina.example.com` |
@@ -244,7 +244,7 @@ Quota: on a cold cache the dev suites make 2 Mouser calls (one search, one new b
 LCSC and TME, and reruns within the cache TTL make no Mouser calls. In dev mode an anonymous `POST /mcp` is served as
 the dev admin, so the dev `oauth` suite triggers the 401 challenge with an unknown token; the anonymous 401 is covered
 by the `prod` suite. Tokens are never printed (only their 12-character prefix); the suites leave their tokens and
-OAuth clients in the database (revoke them on the token page if you care).
+OAuth clients in the database (revoke them in the MCP tab, `/connect`, if you care).
 
 Claude Code normally connects through OAuth (`claude mcp add --transport http kina <url>/mcp`, then `/mcp` to sign
 in); a static token is for machines without a browser. Static-token check (verified with Claude Code 2.1.286):

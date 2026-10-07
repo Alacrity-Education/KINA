@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.TreeSet;
 
 /**
- * The Status tab of the web UI (DESIGN.md section 6, "Web UI"): {@code GET /status}. Server-rendered from the beans that
- * already hold the values: {@link DistributorStatusService} (distributors, cache totals, ranking),
+ * The Status tab of the web UI (DESIGN.md section 6, "Web UI"): {@code GET /status}. Server-rendered from the beans
+ * that already hold the values: {@link DistributorStatusService} (distributors, cache totals, ranking),
  * {@link MetricsGauges} (cache rows per distributor and type, users, tokens; as of their last refresh),
  * {@link KinaMetrics#summary()} (counters) and {@link MetricsBackfill#status()}. Reloading the page refreshes it.
  */

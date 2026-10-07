@@ -339,8 +339,8 @@ These numbers come from the measurements in `docs/DEVELOPMENT.md` ("Measured on 
 
 Revoking:
 
-- A web UI token: click Revoke on the token page.
-- An OAuth connector: Revoke on the token page (or `POST /oauth/revoke` by the client) revokes that access token and every refresh token issued with it, so the client cannot get a new access token. The client must go through the consent flow again. To remove a client registration or revoke everything it holds in one go, use SQL:
+- A web UI token: click Revoke in the MCP tab (`/connect`).
+- An OAuth connector: Revoke in the MCP tab (or `POST /oauth/revoke` by the client) revokes that access token and every refresh token issued with it, so the client cannot get a new access token. The client must go through the consent flow again. To remove a client registration or revoke everything it holds in one go, use SQL:
 
 ```bash
 # list clients and their active tokens
