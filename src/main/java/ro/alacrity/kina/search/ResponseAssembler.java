@@ -39,17 +39,11 @@ final class ResponseAssembler {
         this.clock = clock;
     }
 
-    /** The hard / relaxable constraint table ({@link RankingService#policy()}; the defaults when not available). */
-    static ConstraintPolicy policyOf(RankingService ranking) {
-        ConstraintPolicy p = ranking == null ? null : ranking.policy();
-        return p == null ? ConstraintPolicy.DEFAULTS : p;
-    }
-
     SearchResponse assemble(Prepared prepared, Map<Distributor, Fetched> fetched,
                             RankedResults ranked, String note) {
         SearchRequest request = prepared.request();
         ParsedQuery parsed = prepared.parsed();
-        ConstraintPolicy policy = policyOf(ranking);
+        ConstraintPolicy policy = ConstraintPolicy.of(ranking);
         boolean understood = parsed.understood();
         int lowStockThreshold = properties.search().lowStockThreshold();
         Instant now = clock.instant();

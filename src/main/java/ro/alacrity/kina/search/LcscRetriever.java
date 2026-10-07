@@ -28,12 +28,11 @@ final class LcscRetriever implements DistributorRetriever {
                             DistributorBudget deadline) {
         Distributor distributor = client.distributor();
         ParsedQuery parsed = prepared.parsed();
-        // connector queries are sent in the distributor's own wording; the cache key stays the user's query
-        String phrase = DistributorPhraser.phrase(distributor, parsed);
-        String query = phrase != null ? phrase : parsed.originalText();
-        int window = DistributorRetriever.window(properties, distributor, prepared.maxResults());
-        int maxPages = DistributorRetriever.maxPages(properties, distributor);
-        Check meets = Check.of(ranking, parsed);
+        DistributorRetriever.Plan plan = DistributorRetriever.plan(properties, ranking, distributor, prepared);
+        String query = plan.query();
+        int window = plan.window();
+        int maxPages = plan.maxPages();
+        Check meets = plan.meets();
 
         Collected collected = pages.collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets,
                 parsed.family());

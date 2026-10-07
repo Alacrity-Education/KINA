@@ -175,7 +175,7 @@ public class PartSearchService {
                 ranked = ranking.rank(p.parsed(), parts, Duration.ZERO, rankOptions(p));
                 // with the cross-encoder disabled the fallback has nothing to do with the budget: keep that note
                 note = ranked.mode() == RankingMode.FALLBACK && properties.ranking().crossEncoder().enabled()
-                        ? "batch ranking budget of " + format(batchBudget) + " exhausted"
+                        ? "batch ranking budget of " + Durations.format(batchBudget) + " exhausted"
                         : ranked.note();
             } else {
                 Duration perQuery = properties.ranking().timeout();
@@ -197,7 +197,7 @@ public class PartSearchService {
 
     /** The hard / relaxable constraint table ({@link RankingService#policy()}; the defaults when not available). */
     ConstraintPolicy policy() {
-        return ResponseAssembler.policyOf(ranking);
+        return ConstraintPolicy.of(ranking);
     }
 
     /** Whether the part's stock and prices are older than {@code kina.cache.ttl} ({@link StockRefresher#isStale}). */
@@ -263,10 +263,5 @@ public class PartSearchService {
         Map<Distributor, List<Part>> parts = new EnumMap<>(Distributor.class);
         fetched.forEach((d, f) -> parts.put(d, f.parts()));
         return parts;
-    }
-
-    static String format(Duration duration) {
-        long millis = duration.toMillis();
-        return millis % 1000 == 0 ? (millis / 1000) + "s" : millis + "ms";
     }
 }

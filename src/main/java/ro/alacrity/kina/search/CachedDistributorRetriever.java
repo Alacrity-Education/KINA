@@ -61,12 +61,11 @@ final class CachedDistributorRetriever implements DistributorRetriever {
                             DistributorBudget deadline) {
         Distributor distributor = client.distributor();
         ParsedQuery parsed = prepared.parsed();
-        // connector queries are sent in the distributor's own wording; the cache key stays the user's query
-        String phrase = DistributorPhraser.phrase(distributor, parsed);
-        String query = phrase != null ? phrase : parsed.originalText();
-        int window = DistributorRetriever.window(properties, distributor, prepared.maxResults());
-        int maxPages = DistributorRetriever.maxPages(properties, distributor);
-        Check meets = Check.of(ranking, parsed);
+        DistributorRetriever.Plan plan = DistributorRetriever.plan(properties, ranking, distributor, prepared);
+        String query = plan.query();
+        int window = plan.window();
+        int maxPages = plan.maxPages();
+        Check meets = plan.meets();
 
         String queryKey = parsed.normalizedKey();
         Instant now = clock.instant();
@@ -82,7 +81,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
                 CachedSearch search = cached.get();
                 String fallbackQuery = search.fallbackQuery();
                 List<String> relaxed = search.constraintsRelaxed() != null ? search.constraintsRelaxed()
-                        : relaxedBy(distributor, parsed, query, fallbackQuery, ResponseAssembler.policyOf(ranking));
+                        : relaxedBy(distributor, parsed, query, fallbackQuery, ConstraintPolicy.of(ranking));
                 // metadata is kept and stock ages on its own: a part of any stock age is used (refreshed or marked
                 // stale after ranking, DESIGN.md 3.2 "Cache model"); a part missing or sold out is a miss
                 Optional<List<Part>> parts = readCachedParts(distributor, search.partNumbers(), false);
@@ -123,7 +122,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         Attempt firstWithParts = collected.all().isEmpty() ? null : new Attempt(collected, null, List.of());
         // relaxation ladder (DESIGN.md 3.2): until a phrase finds a part that meets the request
         for (DistributorPhraser.Relaxation step
-                : DistributorPhraser.ladder(distributor, parsed, query, ResponseAssembler.policyOf(ranking))) {
+                : DistributorPhraser.ladder(distributor, parsed, query, ConstraintPolicy.of(ranking))) {
             if (collected.meeting() > 0 || collected.error() != null || deadline.remainingNanos() <= 0) {
                 break;
             }
@@ -275,7 +274,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         log.info("{} search '{}' failed ({}); serving the expired cached list of {} parts", distributor,
                 search.queryKey(), error.errorCode(), parts.size());
         List<String> relaxed = search.constraintsRelaxed() != null ? search.constraintsRelaxed()
-                : relaxedBy(distributor, parsed, query, search.fallbackQuery(), ResponseAssembler.policyOf(ranking));
+                : relaxedBy(distributor, parsed, query, search.fallbackQuery(), ConstraintPolicy.of(ranking));
         return Optional.of(new Fetched(distributor, parts.stream().map(extractor::enrich).toList(),
                 search.totalResults(), CacheStatus.STALE, error.errorCode(), search.fallbackQuery())
                 .withOutOfStockMatches(search.outOfStockMatches()).withConstraintsRelaxed(relaxed));

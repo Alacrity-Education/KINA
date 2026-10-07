@@ -88,7 +88,7 @@ class ParallelRetrieval {
             } catch (TimeoutException e) {
                 future.cancel(true);
                 log.info("{} did not answer '{}' within {}{}", distributor, prepared.parsed().normalizedKey(),
-                        PartSearchService.format(timeout), budget.rateLimitWaitedNanos() > 0
+                        Durations.format(timeout), budget.rateLimitWaitedNanos() > 0
                                 ? " (+ " + budget.rateLimitWaitedMillis() + " ms rate-limit wait)" : "");
                 fetched = new Fetched(distributor, p.parts, p.totalResults, p.cache,
                         DistributorException.Kind.TIMEOUT.code(), p.fallbackQuery).withOutOfStockMatches(p.outOfStock)

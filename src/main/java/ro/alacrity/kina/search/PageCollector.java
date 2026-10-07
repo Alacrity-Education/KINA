@@ -51,11 +51,6 @@ final class PageCollector {
     record Collected(List<Part> all, List<Part> fetched, Integer totalResults, boolean exhausted, int nextOffset,
                      String error, List<String> relaxed, List<String> droppedKeywords, int meeting) {
 
-        Collected(List<Part> all, List<Part> fetched, Integer totalResults, boolean exhausted, int nextOffset,
-                  String error) {
-            this(all, fetched, totalResults, exhausted, nextOffset, error, List.of(), List.of(), all.size());
-        }
-
         Fetched toFetched(Distributor distributor, CacheStatus cache) {
             return toFetched(distributor, cache, null);
         }

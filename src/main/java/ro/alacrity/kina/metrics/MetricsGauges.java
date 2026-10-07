@@ -39,7 +39,7 @@ import static ro.alacrity.kina.metrics.MetricNames.USERS_REVOKED;
  * age, read from memory on every scrape.
  */
 @Slf4j
-public class MetricsGauges {
+public final class MetricsGauges {
 
     /** The distributors whose results are cached in PostgreSQL (LCSC's SQLite database is its own cache). */
     static final Distributor[] CACHED = {Distributor.MOUSER, Distributor.TME};

@@ -38,6 +38,12 @@ import java.util.Set;
 @Slf4j
 public final class ConstraintPolicy {
 
+    /** The hard / relaxable constraint table ({@link RankingService#policy()}; the defaults when not available). */
+    static ConstraintPolicy of(RankingService ranking) {
+        ConstraintPolicy p = ranking == null ? null : ranking.policy();
+        return p == null ? DEFAULTS : p;
+    }
+
     // ---- constraint names (the labels of ConstraintKind; also the keys of excluded_by_constraints_detail, except
     // the primary value: its kind is reported)
     public static final String PACKAGE = ConstraintKind.PACKAGE.label();

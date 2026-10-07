@@ -260,7 +260,7 @@ public class PartLookupService {
         } catch (TimeoutException e) {
             future.cancel(true);
             throw new DistributorException(client.distributor(), DistributorException.Kind.TIMEOUT,
-                    "no answer within " + PartSearchService.format(timeout));
+                    "no answer within " + Durations.format(timeout));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             future.cancel(true);

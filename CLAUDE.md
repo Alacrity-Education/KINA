@@ -25,7 +25,7 @@ An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search 
 docker compose up -d --build     # kina + postgres (the ranking model is baked into the image at build time; local runs download it on first start)
 ```
 
-Always use `./mvnw`. The build must stay free of compiler warnings (`-Xlint:all`).
+Always use `./mvnw`. The build must stay free of compiler warnings (`-Xlint:all -Werror`: any compiler warning fails the build).
 
 End-to-end checks against a running compose stack: `python3 scripts/e2e/kina_e2e.py` and `scripts/e2e/prod_smoke.sh` (see `docs/DEVELOPMENT.md`).
 

@@ -19,8 +19,8 @@
 ```
 
 Surefire runs with `-XX:+EnableDynamicAgentLoading --enable-native-access=ALL-UNNAMED` to silence JDK agent warnings.
-The compiler runs with `-Xlint:all` (minus `processing`, `serial`); keep the build warning-free. `./mvnw -q` hides
-compiler warnings, so check with `./mvnw clean test-compile | grep WARNING` (it must print nothing).
+The compiler runs with `-Xlint:all` (minus `processing`, `serial`) and `-Werror`, so any compiler warning in main or test code fails the
+build. Fix the cause; do not suppress it.
 
 Annotation processors run from an explicit `annotationProcessorPaths` list in the POM: Lombok first, then
 `spring-boot-configuration-processor`. JDK 23 and later no longer run processors found on the class path, so a new

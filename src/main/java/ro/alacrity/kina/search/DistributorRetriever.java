@@ -4,6 +4,8 @@ import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.domain.Distributor;
+import ro.alacrity.kina.domain.ParsedQuery;
+import ro.alacrity.kina.search.PageCollector.Check;
 
 /**
  * Retrieval of one query from one distributor (DESIGN.md 3.2). Runs on a virtual thread; exceptions escape to the
@@ -40,6 +42,23 @@ interface DistributorRetriever {
             case TME -> properties.distributors().tme().maxPagesPerSearch();
             case LCSC -> LCSC_MAX_PAGES;
         });
+    }
+
+    /** What a retriever sends to the distributor: the phrase, the fetch window, the page cap and the request check. */
+    record Plan(String query, int window, int maxPages, Check meets) {
+    }
+
+    /**
+     * The opening of every retrieval. Connector queries are sent in the distributor's own wording; the cache key
+     * stays the user's query.
+     */
+    static Plan plan(KinaProperties properties, RankingService ranking, Distributor distributor, Prepared prepared) {
+        ParsedQuery parsed = prepared.parsed();
+        String phrase = DistributorPhraser.phrase(distributor, parsed);
+        String query = phrase != null ? phrase : parsed.originalText();
+        int window = window(properties, distributor, prepared.maxResults());
+        int maxPages = maxPages(properties, distributor);
+        return new Plan(query, window, maxPages, Check.of(ranking, parsed));
     }
 
     static CacheStatus initialStatus(Distributor distributor, boolean bypassCache) {
