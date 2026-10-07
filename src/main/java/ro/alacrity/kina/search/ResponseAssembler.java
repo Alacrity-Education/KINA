@@ -72,8 +72,8 @@ final class ResponseAssembler {
                         : extractor.extract(rp.part());
                 parts.add(PartResponse.of(rp.part(), new PartResponse.Ranking(i + 1, roundScore(rp.score()),
                                 rp.match(), rp.mismatches(), rp.unverified(), rp.belowSpec()),
-                        request.quantity(), request.detail(), canonical, lowStockThreshold, staleness.isStale(rp.part(), now),
-                        now));
+                        request.quantity(), request.detail(), canonical, lowStockThreshold,
+                        staleness.isStale(rp.part(), now), now));
             }
             Integer exact = understood ? (int) top.stream().filter(RankedPart::exact).count() : null;
             Map<String, Integer> detail = ranked.excludedDetailBy(distributor);

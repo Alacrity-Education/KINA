@@ -70,11 +70,13 @@ class ParallelRetrieval {
                         DistributorException.Kind.NOT_CONFIGURED.code()));
                 continue;
             }
-            Progress p = new Progress(DistributorRetriever.initialStatus(distributor, prepared.request().bypassCache()));
+            Progress p = new Progress(
+                    DistributorRetriever.initialStatus(distributor, prepared.request().bypassCache()));
             progress.put(distributor, p);
             DistributorBudget budget = new DistributorBudget(requestDeadline, timeout);
             budgets.put(distributor, budget);
-            futures.put(distributor, executor.submit(() -> retrieverFor(distributor).retrieve(client.get(), prepared, p, budget)));
+            DistributorRetriever retriever = retrieverFor(distributor);
+            futures.put(distributor, executor.submit(() -> retriever.retrieve(client.get(), prepared, p, budget)));
         }
 
         futures.forEach((distributor, future) -> {
@@ -115,7 +117,7 @@ class ParallelRetrieval {
         return DistributorRetriever.usesPostgresCache(distributor) ? cachedRetriever : lcscRetriever;
     }
 
-    static String errorCode(Distributor distributor, Throwable error) {
+    private static String errorCode(Distributor distributor, Throwable error) {
         if (error instanceof DistributorException de) {
             log.info("{} search failed: {}", distributor, de.getMessage());
             return de.errorCode();

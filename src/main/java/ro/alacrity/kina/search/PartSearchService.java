@@ -60,9 +60,11 @@ import java.util.concurrent.Semaphore;
 @Slf4j
 public class PartSearchService {
 
+    /** Queries of one batch whose distributor fetches run at the same time (protects distributor rate limits). */
     static final int BATCH_FETCH_CONCURRENCY = 4;
     /** Below this remaining batch budget a query is ranked with the fallback ranking. */
     static final Duration MIN_BATCH_RANKING_BUDGET = Duration.ofMillis(250);
+
     private final KinaProperties properties;
     private final DistributorRegistry registry;
     private final QueryParser parser;

@@ -7,8 +7,6 @@ import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
-import ro.alacrity.kina.search.Fetched;
-import ro.alacrity.kina.search.Prepared;
 
 import java.util.List;
 

@@ -194,9 +194,10 @@ Fetch window per distributor: `window = max(maxResults, kina.search.candidate-wi
 capped by `kina.distributors.<name>.max-results-per-search` (Mouser default 50 = one API call,
 TME default 60, LCSC default 200).
 
-Algorithm (`CachedDistributorRetriever` and `LcscRetriever`, through `DistributorRetriever.retrieve`; `ParallelRetrieval` runs every requested distributor on its own virtual thread,
-bounded by `kina.search.distributor-timeout` of active work; time spent waiting on a rate limit is added to that
-budget, but never beyond the request deadline `kina.search.max-request-duration`, section 3.6):
+Algorithm (`DistributorRetriever.retrieve`: `CachedDistributorRetriever` for Mouser and TME, `LcscRetriever` for
+LCSC). `ParallelRetrieval` runs every requested distributor on its own virtual thread, bounded by
+`kina.search.distributor-timeout` of active work; time spent waiting on a rate limit is added to that budget, but never
+beyond the request deadline `kina.search.max-request-duration` (section 3.6):
 
 "Meets the request" (`PageCollector.Check`, `RankingService.verdict`): no known attribute contradicts a
 hard constraint (section 3.4 "Hard constraints": the primary value, the package except for inductors, crystals and
@@ -276,7 +277,7 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    nothing.
    **Out-of-stock matches**: distributors drop records without ships-now stock (TME stock 0 or an excluded status,
    Mouser `AvailabilityInStock` 0; LCSC counts the rows that match every term but have no stock when that step found
-   nothing in stock). `collect` adds them up over every phrase tried (`out_of_stock_matches`, stored in
+   nothing in stock). `PageCollector.collect` adds them up over every phrase tried (`out_of_stock_matches`, stored in
    `cached_searches.out_of_stock_matches` and reported again on a cache hit). While every match so far is out of
    stock, up to `PageCollector.EXTRA_OUT_OF_STOCK_PAGES` (2) pages beyond `max-pages-per-search` are read, then the
    next relaxation step is tried.
@@ -1271,9 +1272,9 @@ table; run one instance per database.
 
 **Instrumentation.** `KinaMetrics` is the facade; business code makes one call per event and never fails because of a
 metric. Classes default to `KinaMetrics.NOOP` and get the bean through a setter, so tests that build them by hand need
-no metrics. Points: `PartSearchService` (request and batch, from the assembled response), `PageCollector` (one call per page),
-`StockRefresher` (stock refresh outcomes), `RateLimitRetry` (a process-wide `RateLimitRetry.Listener` for rate-limit responses and waits, because the
-clients create their retry objects themselves), `CrossEncoderPartRanker` (model runs), `PartCacheRepository.upsertAll`
+no metrics. Points: `PartSearchService` (request and batch, from the assembled response), `PageCollector` (one call
+per page), `StockRefresher` (stock refresh outcomes), `RateLimitRetry` (a process-wide `RateLimitRetry.Listener` for
+rate-limit responses and waits, because the clients create their retry objects themselves), `CrossEncoderPartRanker` (model runs), `PartCacheRepository.upsertAll`
 (counts the existing rows first to tell added from refreshed), `KinaMcpTools` (`KinaMetrics.toolCall`), an
 interceptor on `/api/**`, `OidcUserSynchronizer`, `TokenController`, `MembershipVerifier.recheck` and
 `JlcpcbDatabaseManager.runDownload`.

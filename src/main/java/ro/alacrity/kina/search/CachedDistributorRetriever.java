@@ -13,8 +13,6 @@ import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
-import ro.alacrity.kina.search.Fetched;
-import ro.alacrity.kina.search.Prepared;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -124,7 +122,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         List<String> relaxed = List.of();
         Attempt firstWithParts = collected.all().isEmpty() ? null : new Attempt(collected, null, List.of());
         // relaxation ladder (DESIGN.md 3.2): until a phrase finds a part that meets the request
-        for (DistributorPhraser.Relaxation step : DistributorPhraser.ladder(distributor, parsed, query, ResponseAssembler.policyOf(ranking))) {
+        for (DistributorPhraser.Relaxation step
+                : DistributorPhraser.ladder(distributor, parsed, query, ResponseAssembler.policyOf(ranking))) {
             if (collected.meeting() > 0 || collected.error() != null || deadline.remainingNanos() <= 0) {
                 break;
             }
@@ -135,8 +134,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
             progress.constraintsRelaxed = step.relaxed();
             Collected previous = collected;
             try {
-                collected = pages.collect(client, step.phrase(), 0, window, maxPages, List.of(), progress, deadline, meets,
-                        parsed.family());
+                collected = pages.collect(client, step.phrase(), 0, window, maxPages, List.of(), progress, deadline,
+                        meets, parsed.family());
             } catch (DistributorException e) {
                 // an earlier phrase did answer: report the failure, cache nothing
                 log.info("{} relaxed search '{}' failed: {}", distributor, step.phrase(), e.getMessage());

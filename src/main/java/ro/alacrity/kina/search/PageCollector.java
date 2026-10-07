@@ -9,7 +9,6 @@ import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.metrics.KinaMetrics;
-import ro.alacrity.kina.search.Fetched;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -86,7 +85,9 @@ final class PageCollector {
             return v == RankingService.Verdict.MEETS || v == RankingService.Verdict.UNVERIFIED_RATING;
         }
 
-        /** True when the part meets the request with every requested rating stated: paging stops only for such parts. */
+        /**
+         * True when the part meets the request with every requested rating stated: paging stops only for such parts.
+         */
         static boolean confirmed(RankingService ranking, ParsedQuery parsed, Part part) {
             return verdict(ranking, parsed, part) == RankingService.Verdict.MEETS;
         }
@@ -111,8 +112,8 @@ final class PageCollector {
     /**
      * Pages through {@link DistributorClient#search} from {@code offset} until {@code window} parts are held and at
      * least one of them meets the request with its ratings verified ({@code meets}; DESIGN.md 3.2: a rating is never
-     * in the phrase, so the parts that satisfy it may sit on later pages), the distributor reports no more results, {@code maxPages} pages were
-     * requested or the next page would not fit within {@code deadline}. Pages have the distributor's
+     * in the phrase, so the parts that satisfy it may sit on later pages), the distributor reports no more results,
+     * {@code maxPages} pages were requested or the next page would not fit within {@code deadline}. Pages have the distributor's
      * {@link DistributorClient#maxPageSize()} (the first one is shortened to end on a page boundary) because
      * distributors drop parts without ships-now stock: paging is driven by raw record offsets, not by the number of
      * parts kept. A failure on the first page propagates; a failure on a later page keeps what was collected and

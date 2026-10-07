@@ -31,6 +31,9 @@ import java.util.Set;
 @Slf4j
 final class StockRefresher {
 
+    /** Rounds of refreshing the parts about to be returned (a sold-out part pulls the next one into the top). */
+    static final int STOCK_REFRESH_ROUNDS = 2;
+
     private final KinaProperties properties;
     private final DistributorRegistry registry;
     private final PartCacheRepository partCache;
@@ -48,9 +51,6 @@ final class StockRefresher {
     void setMetrics(KinaMetrics metrics) {
         this.metrics = metrics;
     }
-
-    /** Rounds of refreshing the parts about to be returned (a sold-out part pulls the next one into the top). */
-    static final int STOCK_REFRESH_ROUNDS = 2;
 
     /**
      * Refreshes the stock and prices of the parts about to be returned whose cached figures are older than
