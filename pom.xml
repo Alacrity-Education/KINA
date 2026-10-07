@@ -13,7 +13,7 @@
 
     <groupId>ro.alacrity</groupId>
     <artifactId>kina</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
     <name>kina</name>
     <description>KINA - MCP server and HTTP API for searching electronic components (LCSC/JLCPCB, TME, Mouser)</description>
 
