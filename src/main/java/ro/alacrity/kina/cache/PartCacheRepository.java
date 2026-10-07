@@ -14,7 +14,6 @@ import tools.jackson.databind.json.JsonMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -66,26 +65,12 @@ public class PartCacheRepository {
 
     private static final int BATCH_SIZE = 500;
 
-    private final JdbcClient jdbc;
-    private final JdbcTemplate jdbcTemplate;
-    private final JsonMapper jsonMapper;
-    private final Clock clock;
-    private final Duration ttl;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
-
-    public PartCacheRepository(JdbcClient jdbc, JdbcTemplate jdbcTemplate, JsonMapper jsonMapper, Clock clock,
-                               KinaProperties properties) {
-        this.jdbc = jdbc;
-        this.jdbcTemplate = jdbcTemplate;
-        this.jsonMapper = jsonMapper;
-        this.clock = clock;
-        this.ttl = properties.cache().ttl();
-    }
-
-    @Autowired
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
-    }
+    @Autowired private JdbcClient jdbc;
+    @Autowired private JdbcTemplate jdbcTemplate;
+    @Autowired private JsonMapper jsonMapper;
+    @Autowired private Clock clock;
+    @Autowired private KinaProperties properties;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
 
     /**
      * Inserts or replaces every part fetched in full from the distributor (metadata, stock and prices) using JDBC
@@ -292,7 +277,7 @@ public class PartCacheRepository {
      * the clock's now; the oldest fetch is the oldest {@code stock_fetched_at}.
      */
     public CacheStatistics stats() {
-        Instant freshSince = clock.instant().minus(ttl);
+        Instant freshSince = clock.instant().minus(properties.cache().ttl());
         Map<Distributor, Long> byDistributor = new EnumMap<>(Distributor.class);
         for (Distributor d : Distributor.values()) {
             byDistributor.put(d, 0L);

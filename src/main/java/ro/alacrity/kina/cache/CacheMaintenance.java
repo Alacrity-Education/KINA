@@ -1,6 +1,8 @@
 package ro.alacrity.kina.cache;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
@@ -25,18 +27,14 @@ public class CacheMaintenance {
     /** The distributors whose parts are cached in PostgreSQL (LCSC's SQLite database is its own cache). */
     static final Distributor[] CACHED = {Distributor.TME, Distributor.MOUSER};
 
-    private final PartCacheRepository parts;
-    private final SearchCacheRepository searches;
-    private final Clock clock;
-    private final Duration searchRetention;
+    @Autowired private PartCacheRepository parts;
+    @Autowired private SearchCacheRepository searches;
+    @Autowired private Clock clock;
+    @Autowired private KinaProperties properties;
     private final Map<Distributor, Duration> metadataRetention = new EnumMap<>(Distributor.class);
 
-    public CacheMaintenance(PartCacheRepository parts, SearchCacheRepository searches, Clock clock,
-                            KinaProperties properties) {
-        this.parts = parts;
-        this.searches = searches;
-        this.clock = clock;
-        this.searchRetention = properties.cache().ttl().multipliedBy(2);
+    @PostConstruct
+    void readRetention() {
         for (Distributor d : CACHED) {
             Optional<Duration> retention = properties.cache().metadataRetention(d.name());
             retention.ifPresent(r -> metadataRetention.put(d, r));
@@ -64,7 +62,7 @@ public class CacheMaintenance {
      */
     public PurgeResult purge() {
         Instant now = clock.instant();
-        Instant searchCutoff = now.minus(searchRetention);
+        Instant searchCutoff = now.minus(properties.cache().ttl().multipliedBy(2));
         int deletedParts = 0;
         for (Map.Entry<Distributor, Duration> e : metadataRetention.entrySet()) {
             deletedParts += parts.deleteMetadataOlderThan(e.getKey(), now.minus(e.getValue()));

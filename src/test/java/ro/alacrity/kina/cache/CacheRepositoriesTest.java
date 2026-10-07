@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.TestcontainersConfiguration;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
@@ -224,7 +225,8 @@ class CacheRepositoriesTest {
         KinaProperties props = new Binder(new MapConfigurationPropertySource(Map.of(
                 "kina.cache.metadata-retention.MOUSER", "3d", "kina.cache.metadata-retention.TME", "forever")))
                 .bindOrCreate("kina", Bindable.of(KinaProperties.class));
-        CacheMaintenance mouser3d = new CacheMaintenance(parts, searches, Clock.fixed(NOW, ZoneOffset.UTC), props);
+        CacheMaintenance mouser3d = TestWiring.wire(new CacheMaintenance(), "parts", parts, "searches", searches,
+                "clock", Clock.fixed(NOW, ZoneOffset.UTC), "properties", props);
         parts.upsertAll(List.of(
                 part(Distributor.MOUSER, "M-4d", 1, NOW.minus(Duration.ofDays(4))),
                 part(Distributor.MOUSER, "M-2d", 1, NOW.minus(Duration.ofDays(2))),

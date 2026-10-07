@@ -1,7 +1,7 @@
 package ro.alacrity.kina.cache;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import ro.alacrity.kina.domain.Distributor;
@@ -22,15 +22,14 @@ import static ro.alacrity.kina.cache.PartCacheRepository.utc;
  */
 @Repository
 @Slf4j
-@RequiredArgsConstructor
 public class SearchCacheRepository {
 
     private static final tools.jackson.core.type.TypeReference<Map<String, CachedSearch.RequestedPart>> REQUESTED_TYPE =
             new tools.jackson.core.type.TypeReference<>() {
             };
 
-    private final JdbcClient jdbc;
-    private final JsonMapper jsonMapper;
+    @Autowired private JdbcClient jdbc;
+    @Autowired private JsonMapper jsonMapper;
 
     public Optional<CachedSearch> find(Distributor distributor, String queryKey) {
         List<Optional<CachedSearch>> rows = jdbc.sql("""
