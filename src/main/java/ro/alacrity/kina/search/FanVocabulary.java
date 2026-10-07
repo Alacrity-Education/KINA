@@ -46,6 +46,9 @@ class FanVocabulary {
             Map.entry(Pattern.compile("(?i)<su[bp]>\\s?(\\w+)\\s?</su[bp]>"), "$1"),
             // TME "4200 (±10%)rpm": the tolerance of a rated value is no value of its own
             Map.entry(Pattern.compile("\\s?\\(\\s?±\\s?\\d+(?:\\.\\d+)?\\s?%\\s?\\)\\s?(?=\\p{L})"), ""),
+            // a speed range is its upper end, the rated speed (TME "Rotational rate/speed: 0...2000rpm", a PWM fan)
+            Map.entry(Pattern.compile("(?i)(?<![\\d.])\\d+(?:\\.\\d+)?\\s?(?:\\.{2,3}|…|÷|~|-|to)\\s?(\\d+(?:\\.\\d+)?)\\s?"
+                    + "(?=rpm(?![\\p{L}\\d]))"), "$1"),
             // Mouser 0.25"H2O: inches of water
             Map.entry(Pattern.compile("(?i)(\\d)\\s?(?:\"|''|”|″)\\s?h2o(?![\\p{L}\\d])"), "$1inH2O"),
             Map.entry(Pattern.compile("(?i)m\\^?3\\s?/\\s?h(?:r|our)?(?![\\p{L}\\d])"), "m3h"),

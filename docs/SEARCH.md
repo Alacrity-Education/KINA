@@ -40,6 +40,7 @@ Details of how KINA reads a request, what it returns and how it ranks. The overv
   - Features: power only, PD, waterproof or IPX7, board lock.
   - Examples: `USB-C receptacle 16 pin SMD USB 2.0`, `USB Type-C 24 pin USB 3.1 receptacle horizontal`, `micro USB B receptacle 5 pin SMD`, `USB-C 6 pin power only`, `waterproof USB-C receptacle IP67`, `mid-mount USB-C 16P`.
   - Pin counts are normalised. Some distributors count 1 or 2 shell or mounting pins, so a 16-pin connector can be listed as 17P or 18P. KINA keeps the reported `Positions` and adds the canonical `PinConfiguration`. Ranking compares configurations, so a 17P listing fully matches a 16-pin request, and a "17 pin" request finds 16-pin parts.
+- Fans and blowers: type (axial or radial), frame size and supply voltage are hard, current and noise are maximums, airflow and static pressure minimums (CFM, m³/h, m³/min, l/min; Pa, mmH2O, inH2O), the speed matches within 15 %; see [Fans](#fans).
 - Batch search of up to 20 queries in one call.
 - Graceful rate limits: when Mouser or TME answer with a rate limit, KINA waits and retries instead of failing at once, for up to 2 minutes per request (`kina.search.max-request-duration`). `rate_limit_waited_ms` in each distributor entry says how long it waited.
 - Ranking: deterministic parametric ranker blended 50/50 by rank with an in-process cross-encoder (ONNX Runtime, CPU, no extra container, nothing leaves the host), with a 5 s budget per query and an automatic fallback (`ranking: "fallback"`). Search never fails because of the model.
@@ -67,6 +68,7 @@ Decided by the product owner on 2026-10-07. A hard constraint is never relaxed: 
 | Regulator | type (fixed or adjustable; a stated output voltage means fixed), output voltage (exact), package, mounting | none |
 | Connector | connector type, gender, positions, pitch, package, mounting | orientation |
 | USB connector | USB type, stated pin configuration (normalised: 17P is 16), USB standard (a higher one is accepted), gender, mounting | orientation |
+| Fan, blower | fan type (axial or radial; AC or DC when both state it), frame size, supply voltage (exact), mounting, type | speed (within 15 %), bearing |
 | Any other part | value, package, mounting, technology, form factor, single element, polarity, exact voltage, type | |
 
 The form factor is a short list of classes: `chip` (chip packages, and resistors listed as SMD without a body package), `through_hole` (axial, radial, leaded bodies), `chassis` (chassis, heatsink, bolt or screw mount, aluminium housed), `power_package` (SOT-227, TO-220, TO-247, TO-218, TO-126) and `power_smd` (TO-263/D2PAK, TO-252/DPAK). Write `heatsink`, `chassis mount` or `aluminium housed` to ask for a chassis part: chassis and power-package parts qualify, chip resistors, axial bodies and D2PAK parts are excluded (`excluded_by_constraints_detail` key `form factor`). A package with a class (`SOT-227`, `0805`) decides the class. A part whose class cannot be read stays, `unverified: ["form factor"]`, below the verified ones. Only distributor text is read, never datasheets. A resistor that states no power gets it from its series when the part number names it (Arcol `HS25`, TE `THS50`, Vishay `RH-50`, Bourns `PWR263S-35`, Caddock `MP930`); a stated power always wins.
@@ -81,6 +83,27 @@ Examples, checked live on 2026-10-07:
 - `22uF X7R 0201 100V`: every distributor comes back empty with a hint, for example `No in-stock 22uF capacitor in package 0201 at LCSC; capacitance and package are never relaxed. No substitutes are returned; try another package or value.`
 
 `kina.search.hard-constraints` changes the list of a family; see [CONFIGURATION.md](CONFIGURATION.md).
+
+### Fans
+
+`fan`, `fans`, `blower` or `blowers` make a fan request. In a fan request `axial` and `radial` name the fan type; in every other request they still mean leaded capacitor and diode bodies (THT). KINA reads the type (axial, tube-axial; radial, centrifugal, blower, squirrel cage), AC or DC, the frame size (`40x40x10`, `40x40x10mm`, `120mm`, `92x92x25`), the supply voltage, the current, the speed, the airflow, the static pressure, the noise, the bearing and the features (PWM, tacho, locked rotor, auto restart, 3-wire, 4-wire, IP rating).
+
+| Attribute | Written as | Matched |
+|---|---|---|
+| Fan type | `axial`, `tube-axial`; `radial`, `centrifugal`, `blower`; `DC`, `AC` | hard: an axial request never returns a blower and the reverse; a part that states no type is kept and listed in `unverified` |
+| Frame size | `40x40x10`, `40x40x10mm`, `40 mm`, `120mm`, `92x92x25` | hard: width and length within 0.5 mm, the depth within 1 mm when the request states it; a bare `120mm` fixes width and length only |
+| Voltage | `12V`, `24V DC`, `5V`, `230V AC` | exact within 2 %: a 24 V fan is no 12 V fan |
+| Current | `0.2A`, `200mA` | a maximum: a fan drawing more is below spec |
+| Speed | `3000rpm`, `3000 RPM`, `3k rpm`, `2800 r/min` | within 15 %; outside it a mismatch, never an exclusion |
+| Airflow | `40 CFM`, `1.2 m3/min`, `70 m³/h`, `600 l/min` | a minimum; shown as `68 m³/h (40 CFM)` |
+| Static pressure | `50 Pa`, `2.5 mmH2O`, `2.5 mmAq`, `0.1 inH2O` | a minimum; shown as `24.5 Pa (2.5 mmH2O)` |
+| Noise | `25 dBA`, `25dB(A)` | a maximum |
+| Bearing | ball, dual ball, sleeve, fluid dynamic, hydro, rifle, Vapo | a preference: a different one is a mismatch, never an exclusion |
+| Features | PWM, tacho, FG, 4-wire, IP55, auto restart, locked rotor | score only |
+
+A part whose text says fan and names no radial word is axial (Mouser `DC Fans`, JLCPCB `Cooling fan`). Mouser sends no fan attributes: KINA reads its category and description (`DC Fans Axial Fan, 40x40x10mm, 12VDC, 9.9CFM, 0.25"H2O, Vapo`). TME has the richest data (`Kind of fan`, `Fan dimensions`, `Supply voltage`, `Fan efficiency`, `Static pressure`, `Rotational rate/speed`, `Kind of Bearing`). Most in-stock JLCPCB fans have no description, so their voltage and frame size are unverified.
+
+Checked live on 2026-10-07: `40x40x10 fan 12V` returned only 40x40x10 mm 12 V fans at TME (34, all exact matches) and Mouser (40, one `40x40x10.6mm`; three ebm-papst fans state `10-14VDC`, a range, so their voltage is unverified and they come last). LCSC left out 3 fans of another frame and 2 of another voltage; its 21 other fans have no description and come back unverified. `radial blower 24V` returned only blowers: Mouser left out 34 axial fans (`{"fan type": 34}`), TME 4 parts of another voltage; LCSC's fans all read as axial, so it returned none with a hint. `fan 5V 3000rpm` put the 3200 rpm TME fan and the 3000 rpm Mouser fan first; faster fans follow with `speed: 5000 rpm instead of 3000 rpm`.
 
 ## MCP tools
 

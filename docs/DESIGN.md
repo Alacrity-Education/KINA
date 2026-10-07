@@ -414,8 +414,8 @@ lifetime in a request is a minimum rating (section 3.4) and a DCR limit a maximu
 parts that print `25V` and silently misses the 35 V and 50 V parts that satisfy the request. For every non-connector
 query `DistributorPhraser.withoutRatings` removes these values from the user's text (single words such as `25V`,
 `105°C`, `2000h`; a number and its unit `25 V`; the labelled forms `Isat 8A`, `DCR < 20mΩ`, `low DCR`, `-40~105°C`;
-not when fewer than two words would remain). Regulator and Zener voltages and fuse currents are specifications and
-stay. A package the user labelled as metric (`2012 metric`, `3216M`) is sent as its imperial code (`0805`, `1206`;
+not when fewer than two words would remain). Regulator and Zener voltages, fuse currents and a fan's supply voltage are
+specifications and stay; a fan's current, airflow, static pressure and noise never go into a phrase. A package the user labelled as metric (`2012 metric`, `3216M`) is sent as its imperial code (`0805`, `1206`;
 `Recognizers.imperial`). The phrase is sent to all three distributors; LCSC additionally gets the minimum voltage, current and power as
 rating terms (`22uF X7R 1206 MLCC >=25V`) that its database checks exactly (section 9.3). Ranking then prefers the
 exact rating over higher ones (section 3.4).
@@ -459,6 +459,19 @@ USB fallback (TME, Mouser): the type and gender words only (`USB C socket`, `USB
 `micro USB receptacle SMD` (50), `USB type C plug` (50; with `24 pos` only 1), TME `USB C socket charging` (50, all
 6-pin) and `USB C socket waterproof` (27). The new TME phrases with `SMT`/`THT` and the Mouser `USB type A ...`
 phrases could not be sent verbatim through the stack (it runs the previous phraser) and are not verified live.
+
+**Fan requests** (`DistributorPhraser.fanPhrase`, family `fan`, section 3.4 "Fans") are written in each distributor's
+fan wording: the type words, the frame size, the supply voltage (exact for fans, so it stays) and the bearing. The
+speed never goes in (a 15 % window is no word), nor do the ratings. A request that names neither AC nor DC and asks
+for at most 60 V is phrased as a DC fan (AC fans run from mains). The ladder loosens the bearing (and reports the speed
+with it); the type, the frame size and the voltage stay in every phrase. Verified live on 2026-10-07 (one search per
+distributor and query): every phrase below found fans that meet the request, so no ladder step ran.
+
+| Distributor | Fan rules | `40x40x10 fan 12V` | `radial blower 24V` |
+|---|---|---|---|
+| LCSC | the JLCPCB category `"Cooling fan"` alone (a few dozen fans are in stock and most have no description: a voltage term found none and the database search relaxed to any part stating `24V`, a varistor among them); the ranker reads the rest | `"Cooling fan"` | `"Cooling fan"` |
+| TME | `fan`, `DC`/`AC`, `axial` or `blower` (TME writes `Fan: DC; blower; 24VDC; 75x75x30mm`), the voltage, the frame (`40x40x10`, a bare size as `120x120`), `<bearing> bearing`; 40 characters | `fan DC axial 12V 40x40x10` | `fan DC blower 24V` |
+| Mouser | axial: `DC fan` / `AC fan` / `fan`, the frame, the voltage (its categories are `DC Fans`, `AC Fans`, `Blowers & Centrifugal Fans`); radial: `blower`, the voltage, the frame width (`50mm`); `<bearing> bearing` | `DC fan 40x40x10 12V` | `blower 24V` |
 
 Each distributor entry reports the phrase as `distributor_query` (null when the user's text was sent verbatim);
 `fallback_query` is the relaxed phrase that produced the parts after the first one found nothing that meets the
@@ -547,7 +560,9 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
   (TME category `SMD N channel transistors`, description `Transistor: N-MOSFET`), the specialisation wins (`mosfet`),
   and a description naming a gate driver wins over a transistor category (Mouser lists the TI LMG and Infineon IGI60
   half-bridges with integrated driver under `GaN FETs`). Gate drivers and MOSFETs are different families, so the type
-  check excludes gate drivers from a MOSFET request and the reverse (like crystals and oscillators)
+  check excludes gate drivers from a MOSFET request and the reverse (like crystals and oscillators). `fan`, `fans`,
+  `blower`, `blowers` name the fan family (`axial fan`, `cooling fan`, `DC fan` included) at the lowest priority, so
+  `fan connector` stays a connector and `fan driver mosfet` a MOSFET
 - value with SI prefix and unit, including RKM notation (`4k7`, `4u7`, `10R`, `2R2`):
   capacitance (`pF nF uF µF mF F`), resistance (`Ω ohm R`, `k`, `M`, `m`), inductance (`nH uH mH H`),
   voltage (`V`, `kV`, `mV`; KEMET's truncated `10Volt`, `10Vol`, `6.3Vo` at Mouser), current (`A`, `mA`, `uA`), power
@@ -585,6 +600,8 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
   request states an output voltage
 - connector attributes (`search.ConnectorRecognizer`, `ParsedQuery.Connector`, see below)
 - the technology of a passive (`search.TechnologyVocabulary`, `ParsedQuery.technology`, see below)
+- the fan attributes of a fan request (`search.FanVocabulary`, `ParsedQuery.Fan`; "Fans" below): type, supply, frame
+  size, bearing and features, and the fan units of speed, airflow, static pressure and noise
 - remaining tokens are free text keywords.
 
 Tolerances and values also accept a leading-dot decimal (`.1%`, `±.5%`, `.1W`, `.5k`): Mouser writes
@@ -699,6 +716,58 @@ it only in the category: `Capacitors / Tantalum Capacitors`), then the series or
 (`TGHG`, `TGHPV`) are thick film. TME's `Type of resistor: power` and its `LPR` / `AHP` series name no technology and
 get none, never a guessed one; a technology request against such a part stays unverified.
 
+**Fans** (`search.FanVocabulary`, `ParsedQuery.Fan`, family `fan`, policy family `fan`; 2026-10-07). The vocabulary
+is read in texts of the fan family only. In such a text `axial` and `radial` are the fan type and never set the
+mounting (`FanVocabulary.claims`); in every other text they stay the through-hole mounting words of capacitor and
+diode bodies (Mouser `Radial Leaded`). A fan is neither SMD nor THT: `mounting` stays null unless the request states
+it (TME `Mounting: screw` and flange words are ignored).
+
+- **Type** (`fan_type`): `axial` (`axial`, `tube-axial`), `radial` (`radial`, `centrifugal`, `blower`, `squirrel
+  cage`). A part whose text says fan and names no radial word is axial (Mouser `DC Fans`, JLCPCB `Cooling fan`, TME
+  `Kind of fan: axial`); Mouser `Blowers & Centrifugal Fans` and TME `Kind of fan: blower` are radial. A request's type
+  is only what it says: `fan 5V` takes both. **Supply** (`fan_supply`): `DC` (`DC`, `VDC`, `brushless`) or `AC`
+  (`AC`, `VAC`); TME `Type of fan: DC`.
+- **Frame size** (`frame_size`, `ParsedQuery.Frame`): `40x40x10`, `40x40x10mm`, `40 x 40 x 10 mm`,
+  `25mm×25mm×10mm`, `50*50*20mm` (width, length, depth); two equal numbers are width and length, two different ones a
+  square frame and its depth (Mouser `120x38mm` is 120x120x38mm, `Blowers 50x15 mm` 50x50x15mm); TME's round blower
+  `Ø97x33mm` is 97x97x33mm; a bare `120mm` or `40 mm` (20 to 250 mm, fan requests only) states width and length only.
+  Sizes outside 15 to 300 mm are no frame. Width and length match within 0.5 mm (in either order), the depth within
+  1 mm when both state one (a nominal 10 mm fan measures 10 to 10.6 mm; `40x40x20mm` is no `40x40x10mm`).
+- **Bearing** (`bearing`): `ball` (`dual ball`, `twin ball`, `2Ball`, `BB`), `sleeve` (TME `slide`), `fluid dynamic`
+  (`FDB`, `hydro`, `hydraulic`, ADDA `Hypro`), `rifle`, `magnetic` (`maglev`), `vapo` (Sunon's Vapo bearing).
+- **Features** (`fan_features`, the part's `Features`): `PWM`; `tacho` (`tach`, `tachometer`, `FG`, `speed sensor`,
+  TME `Signal output: F type`); `locked rotor` (`lock sensor`, `rotor lock`, `alarm`, TME `R type`); `auto restart`
+  (TME `autorestart`); `2-wire`, `3-wire`, `4-wire` (`3 wire`, `4 pin`, TME `leads x3`, Mouser `4x Lead Wires`); the IP
+  rating (`IP55`).
+- **Units** (`@Unit` on `PartAttribute`, fan texts only, so `10pA` stays a current and `80dB` of an op amp no noise):
+  speed in rpm (`3000rpm`, `3000 RPM`, `3k rpm`, `r/min`; shown `3000 rpm`); airflow in m³/h from `CFM` (×1.699011),
+  `m³/h`, `m3/h`, `m³/min` (×60), `l/min` (×0.06), shown `68 m³/h (40 CFM)`; static pressure in Pa from `Pa`, `kPa`,
+  `mmH2O`, `mmH₂O`, `mmAq` (×9.80665), `inH2O` and Mouser `0.25"H2O` (×249.089), shown `24.5 Pa (2.5 mmH2O)`; noise in
+  dBA (`25 dBA`, `25dB(A)`, a bare `dB`). A speed range is its upper end, the rated speed (TME `0...2000rpm` of a PWM
+  fan). TME writes `13.52m<sup>3</sup>/h`, `4.83mm H<sub>2</sub>O` and `4200
+  (±10%)rpm`; the tags and the tolerance are dropped before reading. One display rule whatever unit the text used.
+
+| Attribute | Match | Policy |
+|---|---|---|
+| fan type (and AC or DC when both state it) | different type or supply: conflict | hard (`fan type`); a part that states neither is unverified |
+| frame size | width, length within 0.5 mm, depth within 1 mm when both state it | hard (`frame size`) |
+| supply voltage | exact within 2 % (`EXACT_VOLTAGE`: a 24 V fan is no 12 V fan); TME `Supply voltage` before its `Operating voltage` range; a part that states a range only (`10-14VDC`) is unverified | hard (`voltage`) |
+| current | a maximum (`MAX_CURRENT`): a fan drawing more is below spec | rating, `allow_below_spec` |
+| noise | a maximum | rating |
+| airflow, static pressure | minimums | rating |
+| speed | within 15 %; outside it a mismatch (`speed: 5000 rpm instead of 3000 rpm`), never an exclusion | relaxable for fans (ladder order 7) |
+| bearing | equal; a different one is a mismatch | relaxable for fans (ladder order 8) |
+| features | share of the requested features the part states | score only (`FAN_FEATURES`, a preference) |
+
+Form factor, package and technology do not apply to fans. `parsed` shows `fan_type`, `fan_supply`, `frame_size`,
+`bearing` and `fan_features`, the values as constraints (`speed`, `airflow`, `static_pressure`, `noise` beside
+`voltage` and `current`). A part's canonical attributes add `FanType`, `FanSupply`, `FrameSize`, `Bearing`, `Speed`,
+`Airflow`, `StaticPressure`, `Noise` and `Features`. Hints describe a fan request by its words
+(`ConstraintKind.describes`): `No in-stock 12V DC axial 40x40x10mm fan at MOUSER; frame size, voltage and fan type are
+never relaxed.` Not read from distributor data: Mouser's search API sends no fan attributes (everything comes from
+the category and the description, which often leaves out the speed and the noise); most in-stock JLCPCB fans have an
+empty description, so their voltage and frame are unverified and their type is the axial default of `Cooling fan`.
+
 **Attribute sources** (`domain.PartAttribute`, the `@Source` and `@Unit` annotations; user decision 2026-10-07).
 Every attribute KINA reads from a part is a constant of `PartAttribute`, with its sources declared on it. A source
 names the lower-case distributor attribute names (`names`), the distributors and families it applies to
@@ -801,7 +870,7 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `DescribedWord` | `fan` |  |
 | `BEARING` |  | `VocabularyWord` | `fan` | `kind of bearing`, `bearing`, `bearing type`, `type of bearing` |
 |  |  | `DescribedWord` | `fan` |  |
-| `FAN_FEATURES` |  | `MergedWords` | `fan` | `additional functions`, `signal output`, `leads`, `features`, `control`, `output signal` |
+| `FAN_FEATURES` |  | `MergedWords` | `fan` | `additional functions`, `signal output`, `leads`, `ip rating`, `features`, `control`, `output signal` |
 | `ELEMENTS` |  | `ElementsCount` | `ARRAYS` | `elements`, `number of elements`, `number of resistors`, `number of capacitors`, `number of lines`, `number of channels`, `number of bits` |
 | `ESR` |  | `OhmsAtFrequency` |  | `esr`, `esr (equivalent series resistance)`, `equivalent series resistance`, `esr max`, `esr (max)`, `max esr`, `esr max.` |
 |  |  | `OhmsAtKeyPrefix` |  | `esr ` |
@@ -979,7 +1048,8 @@ closeness preference of the ratings (`W_RATING_EXCESS`) stays for every rating.
 
 **Below spec** (`Assessment.belowSpec`, `belowSpecDistance`): every stated rating is a hard limit. A part whose
 **known** voltage, current (an inductor's rated current), saturation current, power, maximum temperature or lifetime is
-below the request, or whose DCR is above a stated maximum, is below spec. By default it is excluded before ranking and
+below the request, or whose DCR is above a stated maximum, is below spec. For a fan the current and the noise are
+maximums (a fan drawing more or louder than requested is below spec) and the airflow and static pressure minimums. By default it is excluded before ranking and
 counted in `excluded_below_spec` (the third audit saw 22uF X7R 1206 parts at 6.3 to 16 V returned for a 25 V request,
 and 10 mA to 3 A beads for a 6 A request). With `allow_below_spec` (MCP and REST parameter, default false) it is
 returned with `below_spec: true` and its `mismatches`, in the last tier, ordered by its distance from the target:
@@ -1002,7 +1072,9 @@ them. Change a rule on the constant, not in the ranker.
   weight). Each kind has one general declaration without `families`: the strategy when a family does not make the
   kind hard. Family-specific declarations name the `PolicyFamily` constants (`allFamilies = true` for every family).
   Resolution: the family's own declaration, then the `allFamilies` one, then the general one; `kina.search.hard-constraints.<family>` then replaces a
-  family's declared table (listed kinds `NEVER`, the others their general strategy).
+  family's declared table (listed kinds `NEVER`, the others their general strategy). A family may also declare
+  `LADDER` for a kind that is soft elsewhere (`ConstraintKind.relaxedStrategy`: the speed and bearing of a fan); the
+  ladder holds every kind with a `LADDER` declaration, at most one per kind.
 - `@Overshoot(ratio, perOctave, maxOctaves, families)` (repeatable, on an `AT_LEAST` rating) declares a score penalty
   for a rating far above the request ("Rating overshoot" above); resolved like `@Relax`: the family's own declaration,
   then the general one.
@@ -1021,12 +1093,17 @@ them. Change a rule on the constant, not in the ranker.
   `COMPATIBLE`. The comparators use the component vocabularies of the search package through `MatchContext` (package
   equivalence, technology compatibility, form factor classes, USB standards, connector types), so `domain` does not
   depend on `search`.
-- Kinds that share a label are one attribute matched differently by request: `EXACT_VOLTAGE` (the Zener and fixed
-  regulator voltage, exact within 2 %, hard for diodes, regulators and the default family) and `VOLTAGE_RATING` (a
-  minimum everywhere else); `CURRENT` and `EXACT_CURRENT` (a fuse); `MAX_DCR` (the maximum DCR rating), `DCR` (the
+- Kinds that share a label are one attribute matched differently by request: `EXACT_VOLTAGE` (the Zener, fixed
+  regulator and fan voltage, exact within 2 %, hard for diodes, regulators, fans and the default family) and
+  `VOLTAGE_RATING` (a minimum everywhere else); `CURRENT`, `EXACT_CURRENT` (a fuse) and `MAX_CURRENT` (a fan, a
+  maximum). A numeric kind declared for some families is that measure's rule for them and the general kind leaves
+  them alone; `isExactRating` is true only for an exact one (it stays in a phrase), `isMinimumRating` only where the
+  measure is a minimum (LCSC `>=` terms); `MAX_DCR` (the maximum DCR rating), `DCR` (the
   relaxable DCR preference name) and `LOW_DCR` (the "low DCR" score preference); the connector and USB variants of
   gender, orientation and mounting. The policy names are the labels of the kinds that are `NEVER` for some family or
   `LADDER`.
+- `describes(query)` gives the words a hint describes the request with for a kind (a fan's `DC axial` and
+  `40x40x10mm`); null for the kinds the description names otherwise.
 
 **Component families** (`domain.ComponentFamily`). Every family the parser can name is one constant with its label (the
 `family` of a request and the `Family` attribute), its parent (`schottky`, `zener`, `tvs` and `led` specialise `diode`,
@@ -1091,7 +1168,7 @@ The checks, in this order (the first conflict names the part's entry in the deta
   capacitance is the load capacitance; else capacitance, resistance, inductance, impedance; the frequency also when
   the family is unknown) within 1 %, an impedance also at the same test frequency when both state one. Reported by its
   kind (`capacitance`, `frequency`...).
-- **voltage**: the exact voltage of a Zener diode or a regulator within 2 %, against the voltages the part states as
+- **voltage**: the exact voltage of a Zener diode, a regulator or a fan within 2 %, against the voltages the part states as
   its specification (`Features.voltages`: the output or Zener voltage attribute, else every single voltage of the
   description, because JLCPCB lists values unlabelled and sorted as text, `1.1V@(800mA) 15V 1A 3.3V` for an
   AMS1117-3.3; ranges `25.1V~28.9V`, `1.8V - 3.3V` and conditioned values `100nA@0.8V` are left out). A regulator's
@@ -1115,6 +1192,8 @@ The checks, in this order (the first conflict names the part's entry in the deta
   has one, else the class its words name) against the part's class, `FormFactor.compatible` false. A part whose class
   cannot be read stays; it is `unverified: ["form factor"]` when the request's words named the class (a class implied
   only by the package adds nothing: the package is already unverified), and ranks below every verified part.
+- **fan type**: a known type (axial, radial) or supply (DC, AC) that differs from the request's. **frame size**:
+  `ParsedQuery.Frame.matches` false (section "Fans").
 - **connector type** (`ConnectorRecognizer.typesMatch` false), **positions**, **pitch** (0.03 mm), **gender**: known
   and different. **usb type**: different USB types, or a non-USB connector; **pin configuration**: a stated (not
   implied) configuration against the part's canonical one (17P is 16); **usb standard**: a lower class or a
@@ -1690,8 +1769,9 @@ read it from the distributor's data; empty with `allow_below_spec`), `out_of_sto
 `query_terms_dropped`, `constraints_relaxed` (they replace the former `relaxed`), `exact_matches` (null when the query
 was not understood), `requested_part_found` (section 3.4 "Requested part numbers") and `hint` (when the entry has no
 parts for an understood query and no `error`, and when a requested part number is not among the parts) are described
-in sections 3.2 and 3.4. `parsed` also carries `polarity` and `subtype` when stated or implied and `part_numbers` when
-the query names part numbers (section 3.4).
+in sections 3.2 and 3.4. `parsed` also carries `polarity` and `subtype` when stated or implied, `part_numbers` when
+the query names part numbers, and for a fan request `fan_type`, `fan_supply`, `frame_size`, `bearing` and
+`fan_features` (section 3.4 "Fans").
 
 `rank` orders the list. `score` is the blend of rank-normalised scores (section 3.3), relative to the other candidates,
 so the last of four exact matches can show `0.00`; a reader took that for "does not fit", so `score` is returned with
@@ -2282,7 +2362,9 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 - Vocabulary mapping before querying: a double-quoted phrase is one term. Connector category phrases (quoted, or the
   words `female header(s)`, `female pin header`, `pin header(s)`, `terminal block`, `screw terminal`, `IC socket`) are
   matched as a column filter, e.g. `"Second Category" : "Female Header"` (matches `Female Headers` and
-  `Pin Header & Female Header`), `"Second Category" : ("IC Socket" OR "Transistor Socket")`. Mounting:
+  `Pin Header & Female Header`), `"Second Category" : ("IC Socket" OR "Transistor Socket")`; the fan phrase
+  `"Cooling fan"` matches the `Industrial Control Electrical / Cooling fan` rows (45, 26 in stock on 2026-10-07; the
+  158 `Cooling Fan` rows had no stock). Mounting:
   `THT`, `PTH`, `through hole` -> `("Through Hole" OR "Plugin" OR "THT")`; `SMD`, `SMT`, `surface mount` ->
   `("SMD" OR "SMT" OR "Surface Mount")`. Orientation: `right angle`, `90°`, `90 degree`, `angled`, `horizontal` ->
   `"Right Angle"` (a THT term is then dropped: JLCPCB right-angle THT headers never say "Through Hole");

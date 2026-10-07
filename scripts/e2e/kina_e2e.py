@@ -54,6 +54,11 @@ SOT227_QUERY = "300W 10 ohm power resistor SOT-227 heatsink"
 # part numbers in a query (DESIGN.md 3.4 "Requested part numbers"), checked against LCSC (no quota): the named part
 # first and requested_part_found true; an unknown part number false with a hint naming it
 MPN_QUERY = ("1N4148W SOD-123", "1N4148W")
+# fans (DESIGN.md 3.4 "Fans"), checked against LCSC (no quota): the JLCPCB "Cooling fan" category, the frame size, the
+# exact supply voltage and the fan type are hard, the speed is a mismatch outside 15 %
+FAN_QUERY = "40x40x10 fan 12V"
+FAN_SPEED_QUERY = "fan 5V 3000rpm"
+BLOWER_QUERY = "radial blower 24V"
 LIFETIME_QUERY = "electrolytic capacitor 470uF 35V 105°C 5000h THT"
 MISSING_MPN_QUERY = ("ZQX48213Q switching diode SOD-123", "ZQX48213Q")
 REDIRECT_URI = "http://localhost:6274/callback"
@@ -746,6 +751,7 @@ def suite_rest(base: str, token: str, rec: Recorder):
         rec.check(f"rest: '{query}' returns only {wanted}s (crystals and oscillators are never mixed)",
                   resp.status == 200 and families and all(f == wanted for f in families)
                   and not shape_problems(body), f"families {sorted(set(map(str, families)))}", resp.millis)
+    fan_checks(api, auth, rec)
     q = urllib.parse.urlencode({"q": FALLBACK_QUERY, "max_results": 20, "distributors": "LCSC"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)
     body = resp.json() if resp.status == 200 else {}
@@ -820,6 +826,51 @@ def suite_rest(base: str, token: str, rec: Recorder):
     resp = api.get("/api/v1/distributors", headers=bearer("kina_" + "q" * 43))
     rec.check("rest: invalid token -> 401", resp.status == 401 and 'error="invalid_token"' in resp.header(
         "WWW-Authenticate"), resp.header("WWW-Authenticate"))
+
+
+def fan_checks(api: Client, auth: dict, rec: Recorder):
+    """Fan requests against LCSC (a local database, no quota): category phrase, hard frame size, voltage and type."""
+    q = urllib.parse.urlencode({"q": FAN_QUERY, "max_results": 50, "distributors": "LCSC", "detail": "full"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    parts = lcsc.get("parts", [])
+    frames = sorted({str(p.get("attributes", {}).get("FrameSize")) for p in parts})
+    volts = sorted({str(p.get("attributes", {}).get("Voltage")) for p in parts})
+    rec.check(f"rest: LCSC '{FAN_QUERY}' sends \"Cooling fan\", returns fans of no other frame or voltage",
+              resp.status == 200 and body.get("parsed", {}).get("frame_size") == "40x40x10mm"
+              and lcsc.get("distributor_query") == '"Cooling fan"'
+              and all(p.get("attributes", {}).get("Family") == "fan" for p in parts)
+              and set(frames) <= {"40x40x10mm", "None"} and set(volts) <= {"12V", "None"}
+              and (lcsc.get("excluded_by_constraints_detail") or {}).get("frame size", 0) > 0
+              and not shape_problems(body),
+              f"returned {len(parts)} of {lcsc.get('fetched')}, excluded {lcsc.get('excluded_by_constraints_detail')}, "
+              f"frames {frames}, voltages {volts}", resp.millis)
+    q = urllib.parse.urlencode({"q": FAN_SPEED_QUERY, "max_results": 50, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    parts = lcsc.get("parts", [])
+    speed = [p["mpn"] for p in parts if any(m.startswith("speed:") for m in p.get("mismatches", []))]
+    rec.check(f"rest: LCSC '{FAN_SPEED_QUERY}' keeps faster fans as a speed mismatch (never excluded)",
+              resp.status == 200 and body.get("parsed", {}).get("speed") == "3000 rpm" and speed
+              and "speed" not in (lcsc.get("excluded_by_constraints_detail") or {})
+              and all(p.get("attributes", {}).get("Voltage") in ("5V", None) for p in parts)
+              and not shape_problems(body),
+              f"returned {len(parts)}, speed mismatches {speed[:3]}, excluded "
+              f"{lcsc.get('excluded_by_constraints_detail')}", resp.millis)
+    q = urllib.parse.urlencode({"q": BLOWER_QUERY, "max_results": 20, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    types = sorted({str(p.get("attributes", {}).get("FanType")) for p in lcsc.get("parts", [])})
+    rec.check(f"rest: LCSC '{BLOWER_QUERY}' never returns an axial fan (fan type is hard)",
+              resp.status == 200 and body.get("parsed", {}).get("fan_type") == "radial"
+              and set(types) <= {"radial", "None"}
+              and (lcsc.get("excluded_by_constraints_detail") or {}).get("fan type", 0) > 0
+              and (lcsc.get("parts") or "fan type" in (lcsc.get("hint") or "")) and not shape_problems(body),
+              f"types {types}, excluded {lcsc.get('excluded_by_constraints_detail')}, hint {lcsc.get('hint')!r}",
+              resp.millis)
 
 
 def suite_metrics(base: str, metrics_base: str, token: str, rec: Recorder):

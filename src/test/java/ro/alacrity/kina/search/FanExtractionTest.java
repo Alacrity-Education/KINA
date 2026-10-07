@@ -35,6 +35,8 @@ class FanExtractionTest {
             // "Rotational rate/speed: 4200 (±10%)rpm"
             "120mm-axial-fan-12v-pwm | TME | PMD1212PMB1-A(2).GN | Speed=4200 rpm;FrameSize=120x120x38mm;"
                     + "Current=1.6A;Bearing=ball",
+            // a PWM fan's speed range "0...2000rpm" is its rated speed, 2000 rpm; "Leads: 4pin", "IP rating: IP68"
+            "120mm-axial-fan-12v-pwm | TME | AK-FN109 | Speed=2000 rpm;Features=PWM, tacho, 4-wire, IP68",
             "radial-blower-24v | TME | PF75302B1-1B00U-A99 | FanType=radial;FanSupply=DC;FrameSize=75x75x30mm;"
                     + "Voltage=24V;Speed=3400 rpm;Airflow=26.3 m³/h (15.5 CFM);Bearing=ball",
             // "Signal output: F type" is a tacho signal, "leads x3" a 3-wire fan

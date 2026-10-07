@@ -39,9 +39,9 @@ public class KinaMcpTools {
             distributor.
             Write the query like a part request, component type plus the parameters that matter: "10uF X7R 0805 MLCC \
             25V", "4k7 1% 0603 resistor", "SOT-23 N-channel MOSFET 30V", "power inductor 3.3uH Isat 8A DCR < \
-            20mOhm", "uP1966E GaN half bridge gate driver".
+            20mOhm", "uP1966E GaN half bridge gate driver", "40x40x10 fan 12V 3000rpm".
             Ratings (voltage, current, power, temperature, lifetime) are minimums: 25V also returns 35V and 50V \
-            parts, after the 25V ones. A part whose known rating is below the request is never returned (counted in \
+            parts, after the 25V ones (a fan's supply voltage is exact, its current and noise are maximums). A part whose known rating is below the request is never returned (counted in \
             excluded_below_spec); pass allow_below_spec=true to see such parts, flagged below_spec and listed last.
             Hard constraints are never relaxed or substituted: the value, package, mounting, technology, component \
             type and polarity, connector type, gender, positions and pitch. A part that contradicts one is left out; \

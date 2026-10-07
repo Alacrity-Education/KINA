@@ -67,6 +67,8 @@ class FanParserTest {
             "fan 3k rpm                 | speed           | 3000      | 3000 rpm",
             "fan 3krpm                  | speed           | 3000      | 3000 rpm",
             "fan 2800 r/min             | speed           | 2800      | 2800 rpm",
+            "fan 0...2000rpm            | speed           | 2000      | 2000 rpm",
+            "fan 1000-2000 rpm          | speed           | 2000      | 2000 rpm",
             "fan 40 CFM                 | airflow         | 67.96044  | 68 m³/h (40 CFM)",
             "fan 40cfm                  | airflow         | 67.96044  | 68 m³/h (40 CFM)",
             "fan 1.2 m3/min             | airflow         | 72        | 72 m³/h (42.4 CFM)",

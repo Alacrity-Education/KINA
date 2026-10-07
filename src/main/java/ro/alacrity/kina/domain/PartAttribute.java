@@ -335,7 +335,8 @@ public enum PartAttribute {
     BEARING(null, "Bearing", Vocabulary.BEARING),
 
     /** A fan's features (PWM, tacho, locked rotor, auto restart, 2/3/4-wire, IP rating): every name counts. */
-    @Source(names = {"additional functions", "signal output", "leads", "features", "control", "output signal"},
+    @Source(names = {"additional functions", "signal output", "leads", "ip rating", "features", "control",
+            "output signal"},
             families = FAN, logic = MergedWords.class)
     FAN_FEATURES(null, "Features", Vocabulary.FAN_FEATURES),
 
