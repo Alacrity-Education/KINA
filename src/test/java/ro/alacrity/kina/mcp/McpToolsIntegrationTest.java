@@ -18,8 +18,7 @@ import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.metrics.KinaMetrics;
-import ro.alacrity.kina.metrics.MetricKey;
-import ro.alacrity.kina.metrics.MetricNames;
+import ro.alacrity.kina.metrics.Metric;
 import ro.alacrity.kina.metrics.MetricsStore;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -249,36 +248,32 @@ class McpToolsIntegrationTest {
     @Test
     void toolCallsAndSearchesAreCounted() {
         MetricsStore store = metrics.store();
-        long searches = store.sum(MetricNames.SEARCHES);
-        long queries = store.sum(MetricNames.SEARCH_QUERIES);
-        long toolCalls = store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts"));
-        long batchCalls = store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts_batch"));
+        long searches = store.sum(Metric.SEARCHES);
+        long queries = store.sum(Metric.SEARCH_QUERIES);
+        long toolCalls = store.get(Metric.TOOL_CALLS.key("search_parts"));
+        long batchCalls = store.get(Metric.TOOL_CALLS.key("search_parts_batch"));
         // the type tag is the parser family: "100nF ..." is a capacitor, "ratelimit metrics" has no type
-        long mouserOk = store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "ok",
-                "type", "capacitor"));
-        long rateLimited = store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome",
-                "rate_limited", "type", "unknown"));
-        long returned = store.get(MetricKey.of(MetricNames.PARTS_RETURNED, "distributor", "MOUSER", "type",
-                "capacitor"));
-        Map<String, Long> byType = store.sumBy(MetricNames.SEARCH_QUERIES, "type");
+        long mouserOk = store.get(Metric.DISTRIBUTOR_CALLS.key("MOUSER", "ok", "capacitor"));
+        long rateLimited = store.get(Metric.DISTRIBUTOR_CALLS.key("MOUSER", "rate_limited", "unknown"));
+        long returned = store.get(Metric.PARTS_RETURNED.key("MOUSER", "capacitor"));
+        Map<String, Long> byType = store.sumBy(Metric.SEARCH_QUERIES, "type");
 
         call("search_parts", "{\"query\":\"100nF X7R 0805 metrics\",\"max_results\":3,\"distributors\":[\"mouser\"]}");
         call("search_parts", "{\"query\":\"ratelimit metrics\",\"distributors\":[\"mouser\"]}");
         call("search_parts_batch", "{\"queries\":[{\"query\":\"100nF 0805 a\"},{\"query\":\"100nF 0805 b\"}],"
                 + "\"distributors\":[\"mouser\"]}");
 
-        assertThat(store.sum(MetricNames.SEARCHES)).isEqualTo(searches + 3);
-        assertThat(store.sum(MetricNames.SEARCH_QUERIES)).isEqualTo(queries + 4);
-        assertThat(store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts"))).isEqualTo(toolCalls + 2);
-        assertThat(store.get(MetricKey.of(MetricNames.TOOL_CALLS, "tool", "search_parts_batch")))
+        assertThat(store.sum(Metric.SEARCHES)).isEqualTo(searches + 3);
+        assertThat(store.sum(Metric.SEARCH_QUERIES)).isEqualTo(queries + 4);
+        assertThat(store.get(Metric.TOOL_CALLS.key("search_parts"))).isEqualTo(toolCalls + 2);
+        assertThat(store.get(Metric.TOOL_CALLS.key("search_parts_batch")))
                 .isEqualTo(batchCalls + 1);
-        assertThat(store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER", "outcome", "ok",
-                "type", "capacitor"))).isEqualTo(mouserOk + 3);
-        assertThat(store.get(MetricKey.of(MetricNames.DISTRIBUTOR_CALLS, "distributor", "MOUSER",
-                "outcome", "rate_limited", "type", "unknown"))).isEqualTo(rateLimited + 1);
-        assertThat(store.get(MetricKey.of(MetricNames.PARTS_RETURNED, "distributor", "MOUSER", "type", "capacitor")))
+        assertThat(store.get(Metric.DISTRIBUTOR_CALLS.key("MOUSER", "ok", "capacitor"))).isEqualTo(mouserOk + 3);
+        assertThat(store.get(Metric.DISTRIBUTOR_CALLS.key("MOUSER", "rate_limited", "unknown")))
+                .isEqualTo(rateLimited + 1);
+        assertThat(store.get(Metric.PARTS_RETURNED.key("MOUSER", "capacitor")))
                 .isGreaterThanOrEqualTo(returned + 3);
-        Map<String, Long> byTypeAfter = store.sumBy(MetricNames.SEARCH_QUERIES, "type");
+        Map<String, Long> byTypeAfter = store.sumBy(Metric.SEARCH_QUERIES, "type");
         assertThat(byTypeAfter.get("capacitor")).isEqualTo(byType.getOrDefault("capacitor", 0L) + 3);
         assertThat(byTypeAfter.get("unknown")).isEqualTo(byType.getOrDefault("unknown", 0L) + 1);
 

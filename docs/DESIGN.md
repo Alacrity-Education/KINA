@@ -1371,8 +1371,10 @@ the database gauges every 30 s with a few `count(*)` queries and reads the JLCPC
 Several KINA instances sharing one database would each keep their own counts, and the larger value would win in the
 table; run one instance per database.
 
-**Instrumentation.** `KinaMetrics` is the facade; business code makes one call per event and never fails because of a
-metric. Classes default to `KinaMetrics.NOOP` and get the bean through a setter, so tests that build them by hand need
+**Instrumentation.** `metrics.Metric` declares every meter once: its Micrometer name, type, help text and tag keys
+(`MetricDocumentationTest` checks the table above against it). `KinaMetrics` is the facade; business code makes one
+call per event, passes only the tag values (`DISTRIBUTOR_CALLS.key(distributor, outcome, type)`) and never fails
+because of a metric. Classes default to `KinaMetrics.NOOP` and get the bean through a setter, so tests that build them by hand need
 no metrics. Points: `PartSearchService` (request and batch, from the assembled response), `PageCollector` (one call
 per page), `StockRefresher` (stock refresh outcomes), `RateLimitRetry` (a process-wide `RateLimitRetry.Listener` for
 rate-limit responses and waits, because the clients create their retry objects themselves), `CrossEncoderPartRanker` (model runs), `PartCacheRepository.upsertAll`

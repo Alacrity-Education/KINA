@@ -149,7 +149,7 @@ From `src/main/java/ro/alacrity/kina/distributor/`:
 
 - **Mouser** (`MouserApi`, `MouserClient`): `/search/keyword` with `InStock`, `records` = min(50, `max-results-per-search`); `/search/partnumber` with `Exact`, one part per lookup, and up to 10 joined with `|` for stock refresh. 5 s connect, 10 s read timeout.
 - **TME** (`TmeApi`, `TmeClient`): one `/products/search` page (phrase, `filter[in_stock]`, `limit` up to 100), then `/products/data`, `/products/parameters` and `/products/files` for the page's symbols in parallel, 50 per call. So one TME search page costs **4 HTTP calls** (more above 50 symbols). `/products?mpns[]` is used for MPN lookups.
-- **Metrics:** `kina_distributor_calls_total` counts *fetches of a search query* per distributor (`MetricNames.DISTRIBUTOR_CALLS`), not HTTP requests. A TME fetch is 4 or more HTTP calls; a Mouser fetch can be several pages plus refresh calls. It cannot be used to account a quota as it stands. `kina_distributor_rate_limited_responses_total` is counted per HTTP call.
+- **Metrics:** `kina_distributor_calls_total` counts *fetches of a search query* per distributor (`Metric.DISTRIBUTOR_CALLS`), not HTTP requests. A TME fetch is 4 or more HTTP calls; a Mouser fetch can be several pages plus refresh calls. It cannot be used to account a quota as it stands. `kina_distributor_rate_limited_responses_total` is counted per HTTP call.
 - **Cache today:** 2 165 Mouser and 2 643 TME rows in `cached_parts`, 11 MB in total (about 2.3 KB per row with indexes and TOAST). Average stored payload about 1.6 KB.
 
 ## 4. Design options

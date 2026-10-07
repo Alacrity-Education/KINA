@@ -92,12 +92,12 @@ class MetricsPersistenceTest {
     @Test
     void theApplicationRestoredItsCountersAtStartup() {
         assertThat(persistence.isRestored()).isTrue();
-        long before = metrics.store().sum(MetricNames.TOOL_CALLS);
+        long before = metrics.store().sum(Metric.TOOL_CALLS);
         metrics.toolCall("ping", () -> "ok");
 
         assertThat(persistence.save()).isPositive();
         Long saved = jdbc.sql("SELECT sum(value) FROM metrics_counters WHERE name = ?")
-                .param(MetricNames.TOOL_CALLS).query(Long.class).single();
+                .param(Metric.TOOL_CALLS.meterName()).query(Long.class).single();
         assertThat(saved).isEqualTo(before + 1);
     }
 
@@ -105,24 +105,26 @@ class MetricsPersistenceTest {
     void cacheWritesCountNewAndRefreshedRows() {
         String a = prefix + "A";
         String b = prefix + "B";
-        long added = metrics.store().get(MetricKey.of(MetricNames.CACHE_PARTS_ADDED, "distributor", "TME"));
-        long refreshed = metrics.store().get(MetricKey.of(MetricNames.CACHE_PARTS_REFRESHED, "distributor", "TME"));
+        long added = metrics.store().get(Metric.CACHE_PARTS_ADDED.key("TME"));
+        long refreshed = metrics.store().get(Metric.CACHE_PARTS_REFRESHED.key("TME"));
 
         partCache.upsertAll(List.of(part(a)));
         partCache.upsertAll(List.of(part(a), part(b)));
 
-        assertThat(metrics.store().get(MetricKey.of(MetricNames.CACHE_PARTS_ADDED, "distributor", "TME")))
+        assertThat(metrics.store().get(Metric.CACHE_PARTS_ADDED.key("TME")))
                 .isEqualTo(added + 2);
-        assertThat(metrics.store().get(MetricKey.of(MetricNames.CACHE_PARTS_REFRESHED, "distributor", "TME")))
+        assertThat(metrics.store().get(Metric.CACHE_PARTS_REFRESHED.key("TME")))
                 .isEqualTo(refreshed + 1);
 
         gauges.refresh();
         long rows = jdbc.sql("SELECT count(*) FROM cached_parts WHERE distributor = 'TME'").query(Long.class).single();
-        assertThat(registry.get(MetricNames.CACHE_PARTS).tag("distributor", "TME").gauge().value()).isEqualTo(rows);
-        assertThat(registry.get(MetricNames.CACHE_PARTS_FRESH).tag("distributor", "TME").gauge().value())
+        assertThat(registry.get(Metric.CACHE_PARTS.meterName()).tag("distributor", "TME").gauge().value())
                 .isEqualTo(rows);
-        assertThat(registry.get(MetricNames.CACHE_PARTS_STALE).tag("distributor", "TME").gauge().value()).isZero();
-        assertThat(registry.get(MetricNames.CACHE_PARTS_STALE_STOCK).tag("distributor", "TME").gauge().value())
+        assertThat(registry.get(Metric.CACHE_PARTS_FRESH.meterName()).tag("distributor", "TME").gauge().value())
+                .isEqualTo(rows);
+        assertThat(registry.get(Metric.CACHE_PARTS_STALE.meterName()).tag("distributor", "TME").gauge().value())
+                .isZero();
+        assertThat(registry.get(Metric.CACHE_PARTS_STALE_STOCK.meterName()).tag("distributor", "TME").gauge().value())
                 .isZero();
 
         // stock older than the ttl: still in stock, stale stock; a sold-out row is kept for its metadata only
@@ -130,13 +132,13 @@ class MetricsPersistenceTest {
                 .param(a).update();
         partCache.markSoldOut(Distributor.TME, b);
         gauges.refresh();
-        assertThat(registry.get(MetricNames.CACHE_PARTS_FRESH).tag("distributor", "TME").gauge().value())
+        assertThat(registry.get(Metric.CACHE_PARTS_FRESH.meterName()).tag("distributor", "TME").gauge().value())
                 .isEqualTo(rows - 2);
-        assertThat(registry.get(MetricNames.CACHE_PARTS_STALE).tag("distributor", "TME").gauge().value())
+        assertThat(registry.get(Metric.CACHE_PARTS_STALE.meterName()).tag("distributor", "TME").gauge().value())
                 .isEqualTo(2);
-        assertThat(registry.get(MetricNames.CACHE_PARTS_STALE_STOCK).tag("distributor", "TME").gauge().value())
+        assertThat(registry.get(Metric.CACHE_PARTS_STALE_STOCK.meterName()).tag("distributor", "TME").gauge().value())
                 .isEqualTo(1);
-        assertThat(registry.get(MetricNames.USERS_KNOWN).gauge().value()).isPositive(); // the development admin
+        assertThat(registry.get(Metric.USERS_KNOWN.meterName()).gauge().value()).isPositive(); // the development admin
     }
 
     /**
@@ -181,8 +183,7 @@ class MetricsPersistenceTest {
                     .containsEntry("kina.distributor.duration:count|distributor=TME", "7")
                     .hasSize(8);
             // the rewritten tags are the canonical form the application uses for the same series
-            assertThat(once).containsKey("kina.distributor.calls|" + MetricKey.of(MetricNames.DISTRIBUTOR_CALLS,
-                    "distributor", "MOUSER", "outcome", "ok", "type", "unknown").tags());
+            assertThat(once).containsKey("kina.distributor.calls|" + Metric.DISTRIBUTOR_CALLS.key("MOUSER", "ok", "unknown").tags());
         });
     }
 

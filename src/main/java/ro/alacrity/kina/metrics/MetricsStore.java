@@ -93,6 +93,16 @@ public class MetricsStore {
         return out;
     }
 
+    /** Sum over every series of {@code metric}. */
+    public long sum(Metric metric) {
+        return sum(metric.meterName());
+    }
+
+    /** Sums of {@code metric} grouped by the value of the tag {@code tagKey}, sorted by that value. */
+    public Map<String, Long> sumBy(Metric metric, String tagKey) {
+        return sumBy(metric.meterName(), tagKey);
+    }
+
     /** A consistent-enough copy of every value, sorted by key (each value is read atomically). */
     public Map<MetricKey, Long> snapshot() {
         Map<MetricKey, Long> out = new TreeMap<>();
@@ -132,7 +142,7 @@ public class MetricsStore {
         if (registry != null && registered.add(key)) {
             try {
                 FunctionCounter.builder(name, created, AtomicLong::doubleValue)
-                        .description(MetricNames.description(name))
+                        .description(Metric.help(name))
                         .tags(key.micrometerTags())
                         .register(registry);
             } catch (RuntimeException e) {
@@ -158,7 +168,7 @@ public class MetricsStore {
             try {
                 FunctionTimer.builder(key.name(), created, c -> c.count().get(), c -> c.nanos().get(),
                                 TimeUnit.NANOSECONDS)
-                        .description(MetricNames.description(key.name()))
+                        .description(Metric.help(key.name()))
                         .tags(key.micrometerTags())
                         .register(registry);
             } catch (RuntimeException e) {

@@ -20,16 +20,16 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS;
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_FRESH;
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_STALE;
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_STALE_STOCK;
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_SEARCHES;
-import static ro.alacrity.kina.metrics.MetricNames.JLCPCB_DATABASE_AGE;
-import static ro.alacrity.kina.metrics.MetricNames.JLCPCB_DATABASE_PARTS;
-import static ro.alacrity.kina.metrics.MetricNames.TOKENS_ACTIVE;
-import static ro.alacrity.kina.metrics.MetricNames.USERS_KNOWN;
-import static ro.alacrity.kina.metrics.MetricNames.USERS_REVOKED;
+import static ro.alacrity.kina.metrics.Metric.CACHE_PARTS;
+import static ro.alacrity.kina.metrics.Metric.CACHE_PARTS_FRESH;
+import static ro.alacrity.kina.metrics.Metric.CACHE_PARTS_STALE;
+import static ro.alacrity.kina.metrics.Metric.CACHE_PARTS_STALE_STOCK;
+import static ro.alacrity.kina.metrics.Metric.CACHE_SEARCHES;
+import static ro.alacrity.kina.metrics.Metric.JLCPCB_DATABASE_AGE;
+import static ro.alacrity.kina.metrics.Metric.JLCPCB_DATABASE_PARTS;
+import static ro.alacrity.kina.metrics.Metric.TOKENS_ACTIVE;
+import static ro.alacrity.kina.metrics.Metric.USERS_KNOWN;
+import static ro.alacrity.kina.metrics.Metric.USERS_REVOKED;
 
 /**
  * Gauges of what the database holds (DESIGN.md 3.7), not persisted: cache rows per distributor (all; fresh: in stock
@@ -72,33 +72,32 @@ public final class MetricsGauges {
             register(registry, CACHE_PARTS_STALE_STOCK, staleStock, d);
             register(registry, CACHE_SEARCHES, searches, d);
         }
-        gauge(registry, USERS_KNOWN, usersKnown, null);
-        gauge(registry, USERS_REVOKED, usersRevoked, null);
-        gauge(registry, TOKENS_ACTIVE, tokensActive, null);
+        gauge(registry, USERS_KNOWN, usersKnown);
+        gauge(registry, USERS_REVOKED, usersRevoked);
+        gauge(registry, TOKENS_ACTIVE, tokensActive);
         // read on every scrape: the JLCPCB status is in memory
-        Gauge.builder(JLCPCB_DATABASE_PARTS, this, MetricsGauges::jlcpcbParts)
-                .description(MetricNames.description(JLCPCB_DATABASE_PARTS))
+        Gauge.builder(JLCPCB_DATABASE_PARTS.meterName(), this, MetricsGauges::jlcpcbParts)
+                .description(JLCPCB_DATABASE_PARTS.help())
                 .register(registry);
-        Gauge.builder(JLCPCB_DATABASE_AGE, this, MetricsGauges::jlcpcbAgeSeconds)
-                .description(MetricNames.description(JLCPCB_DATABASE_AGE))
-                .baseUnit("seconds")
+        Gauge.builder(JLCPCB_DATABASE_AGE.meterName(), this, MetricsGauges::jlcpcbAgeSeconds)
+                .description(JLCPCB_DATABASE_AGE.help())
+                .baseUnit(JLCPCB_DATABASE_AGE.baseUnit())
                 .register(registry);
     }
 
-    private static void register(MeterRegistry registry, String name, Map<Distributor, AtomicLong> holders,
+    private static void register(MeterRegistry registry, Metric metric, Map<Distributor, AtomicLong> holders,
                                  Distributor distributor) {
         AtomicLong holder = new AtomicLong();
         holders.put(distributor, holder);
-        Gauge.builder(name, holder, AtomicLong::doubleValue)
-                .description(MetricNames.description(name))
+        Gauge.builder(metric.meterName(), holder, AtomicLong::doubleValue)
+                .description(metric.help())
                 .tag("distributor", distributor.name())
                 .register(registry);
     }
 
-    private static void gauge(MeterRegistry registry, String name, AtomicLong holder, String unit) {
-        Gauge.builder(name, holder, AtomicLong::doubleValue)
-                .description(MetricNames.description(name))
-                .baseUnit(unit)
+    private static void gauge(MeterRegistry registry, Metric metric, AtomicLong holder) {
+        Gauge.builder(metric.meterName(), holder, AtomicLong::doubleValue)
+                .description(metric.help())
                 .register(registry);
     }
 

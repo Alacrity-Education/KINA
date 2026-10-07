@@ -16,31 +16,31 @@ import ro.alacrity.kina.search.QueryParser;
 import java.util.Locale;
 import java.util.function.Supplier;
 
-import static ro.alacrity.kina.metrics.MetricNames.API_REQUESTS;
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_ADDED;
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_PARTS_REFRESHED;
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_SEARCH_LOOKUPS;
-import static ro.alacrity.kina.metrics.MetricNames.CACHE_STOCK_REFRESHES;
-import static ro.alacrity.kina.metrics.MetricNames.CROSS_ENCODER_CANDIDATES;
-import static ro.alacrity.kina.metrics.MetricNames.CROSS_ENCODER_DURATION;
-import static ro.alacrity.kina.metrics.MetricNames.CROSS_ENCODER_EXECUTIONS;
-import static ro.alacrity.kina.metrics.MetricNames.DISTRIBUTOR_CALLS;
-import static ro.alacrity.kina.metrics.MetricNames.DISTRIBUTOR_DURATION;
-import static ro.alacrity.kina.metrics.MetricNames.JLCPCB_DOWNLOADS;
-import static ro.alacrity.kina.metrics.MetricNames.LOGINS;
-import static ro.alacrity.kina.metrics.MetricNames.LOGIN_DENIED;
-import static ro.alacrity.kina.metrics.MetricNames.MEMBERSHIP_RECHECKS;
-import static ro.alacrity.kina.metrics.MetricNames.OAUTH_TOKENS_ISSUED;
-import static ro.alacrity.kina.metrics.MetricNames.PARTS_FETCHED;
-import static ro.alacrity.kina.metrics.MetricNames.PARTS_RETURNED;
-import static ro.alacrity.kina.metrics.MetricNames.RANKING_FALLBACK;
-import static ro.alacrity.kina.metrics.MetricNames.RATE_LIMITED_RESPONSES;
-import static ro.alacrity.kina.metrics.MetricNames.RATE_LIMIT_WAITS;
-import static ro.alacrity.kina.metrics.MetricNames.SEARCHES;
-import static ro.alacrity.kina.metrics.MetricNames.SEARCH_DURATION;
-import static ro.alacrity.kina.metrics.MetricNames.SEARCH_QUERIES;
-import static ro.alacrity.kina.metrics.MetricNames.TOOL_CALLS;
-import static ro.alacrity.kina.metrics.MetricNames.TOOL_ERRORS;
+import static ro.alacrity.kina.metrics.Metric.API_REQUESTS;
+import static ro.alacrity.kina.metrics.Metric.CACHE_PARTS_ADDED;
+import static ro.alacrity.kina.metrics.Metric.CACHE_PARTS_REFRESHED;
+import static ro.alacrity.kina.metrics.Metric.CACHE_SEARCH_LOOKUPS;
+import static ro.alacrity.kina.metrics.Metric.CACHE_STOCK_REFRESHES;
+import static ro.alacrity.kina.metrics.Metric.CROSS_ENCODER_CANDIDATES;
+import static ro.alacrity.kina.metrics.Metric.CROSS_ENCODER_DURATION;
+import static ro.alacrity.kina.metrics.Metric.CROSS_ENCODER_EXECUTIONS;
+import static ro.alacrity.kina.metrics.Metric.DISTRIBUTOR_CALLS;
+import static ro.alacrity.kina.metrics.Metric.DISTRIBUTOR_DURATION;
+import static ro.alacrity.kina.metrics.Metric.JLCPCB_DOWNLOADS;
+import static ro.alacrity.kina.metrics.Metric.LOGINS;
+import static ro.alacrity.kina.metrics.Metric.LOGIN_DENIED;
+import static ro.alacrity.kina.metrics.Metric.MEMBERSHIP_RECHECKS;
+import static ro.alacrity.kina.metrics.Metric.OAUTH_TOKENS_ISSUED;
+import static ro.alacrity.kina.metrics.Metric.PARTS_FETCHED;
+import static ro.alacrity.kina.metrics.Metric.PARTS_RETURNED;
+import static ro.alacrity.kina.metrics.Metric.RANKING_FALLBACK;
+import static ro.alacrity.kina.metrics.Metric.RATE_LIMITED_RESPONSES;
+import static ro.alacrity.kina.metrics.Metric.RATE_LIMIT_WAITS;
+import static ro.alacrity.kina.metrics.Metric.SEARCHES;
+import static ro.alacrity.kina.metrics.Metric.SEARCH_DURATION;
+import static ro.alacrity.kina.metrics.Metric.SEARCH_QUERIES;
+import static ro.alacrity.kina.metrics.Metric.TOOL_CALLS;
+import static ro.alacrity.kina.metrics.Metric.TOOL_ERRORS;
 
 /**
  * The instrumentation facade (DESIGN.md 3.7): one short call per event from the business code, which never fails
@@ -82,8 +82,8 @@ public class KinaMetrics implements RateLimitRetry.Listener {
     /** One single search answered in {@code nanos}. */
     public void searchCompleted(SearchResponse response, long nanos) {
         safely(() -> {
-            store.increment(MetricKey.of(SEARCHES));
-            store.record(MetricKey.of(SEARCH_DURATION), nanos);
+            store.increment(SEARCHES.key());
+            store.record(SEARCH_DURATION.key(), nanos);
             query(response);
         });
     }
@@ -91,8 +91,8 @@ public class KinaMetrics implements RateLimitRetry.Listener {
     /** One batch answered in {@code nanos}: one search request, one query per result. */
     public void batchCompleted(BatchSearchResponse response, long nanos) {
         safely(() -> {
-            store.increment(MetricKey.of(SEARCHES));
-            store.record(MetricKey.of(SEARCH_DURATION), nanos);
+            store.increment(SEARCHES.key());
+            store.record(SEARCH_DURATION.key(), nanos);
             if (response != null) {
                 response.results().forEach(this::query);
             }
@@ -101,7 +101,7 @@ public class KinaMetrics implements RateLimitRetry.Listener {
 
     private void query(SearchResponse response) {
         String type = typeOf(response);
-        store.increment(MetricKey.of(SEARCH_QUERIES, "type", type));
+        store.increment(SEARCH_QUERIES.key(type));
         if (response == null) {
             return;
         }
@@ -110,17 +110,15 @@ public class KinaMetrics implements RateLimitRetry.Listener {
                 continue;
             }
             String distributor = result.distributor().name();
-            store.increment(MetricKey.of(DISTRIBUTOR_CALLS, "distributor", distributor,
-                    "outcome", result.error() == null ? "ok" : result.error(), "type", type));
+            store.increment(DISTRIBUTOR_CALLS.key(distributor, result.error() == null ? "ok" : result.error(), type));
             CacheStatus cache = result.cache();
             if (cache != null && cache != CacheStatus.NOT_APPLICABLE) {
-                store.increment(MetricKey.of(CACHE_SEARCH_LOOKUPS, "distributor", distributor,
-                        "status", cache.jsonValue(), "type", type));
+                store.increment(CACHE_SEARCH_LOOKUPS.key(distributor, cache.jsonValue(), type));
             }
-            store.add(MetricKey.of(PARTS_RETURNED, "distributor", distributor, "type", type), result.returned());
+            store.add(PARTS_RETURNED.key(distributor, type), result.returned());
         }
         if (response.ranking() == RankingMode.FALLBACK) {
-            store.increment(MetricKey.of(RANKING_FALLBACK, "reason", fallbackReason(response.rankingNote())));
+            store.increment(RANKING_FALLBACK.key(fallbackReason(response.rankingNote())));
         }
     }
 
@@ -175,19 +173,19 @@ public class KinaMetrics implements RateLimitRetry.Listener {
     public void distributorPage(Distributor distributor, String family, long nanos, int parts) {
         safely(() -> {
             String name = distributor.name();
-            store.record(MetricKey.of(DISTRIBUTOR_DURATION, "distributor", name), nanos);
-            store.add(MetricKey.of(PARTS_FETCHED, "distributor", name, "type", typeOf(family)), parts);
+            store.record(DISTRIBUTOR_DURATION.key(name), nanos);
+            store.add(PARTS_FETCHED.key(name, typeOf(family)), parts);
         });
     }
 
     @Override
     public void rateLimited(Distributor distributor) {
-        safely(() -> store.increment(MetricKey.of(RATE_LIMITED_RESPONSES, "distributor", distributor.name())));
+        safely(() -> store.increment(RATE_LIMITED_RESPONSES.key(distributor.name())));
     }
 
     @Override
     public void waited(Distributor distributor) {
-        safely(() -> store.increment(MetricKey.of(RATE_LIMIT_WAITS, "distributor", distributor.name())));
+        safely(() -> store.increment(RATE_LIMIT_WAITS.key(distributor.name())));
     }
 
     // ---- cache ----------------------------------------------------------------------------------------------------
@@ -195,8 +193,8 @@ public class KinaMetrics implements RateLimitRetry.Listener {
     /** Rows written to {@code cached_parts}: {@code added} new ones, {@code refreshed} overwritten ones. */
     public void cachePartsWritten(Distributor distributor, long added, long refreshed) {
         safely(() -> {
-            store.add(MetricKey.of(CACHE_PARTS_ADDED, "distributor", distributor.name()), added);
-            store.add(MetricKey.of(CACHE_PARTS_REFRESHED, "distributor", distributor.name()), refreshed);
+            store.add(CACHE_PARTS_ADDED.key(distributor.name()), added);
+            store.add(CACHE_PARTS_REFRESHED.key(distributor.name()), refreshed);
         });
     }
 
@@ -205,8 +203,7 @@ public class KinaMetrics implements RateLimitRetry.Listener {
         if (parts <= 0) {
             return;
         }
-        safely(() -> store.add(MetricKey.of(CACHE_STOCK_REFRESHES, "distributor", distributor.name(), "outcome",
-                outcome), parts));
+        safely(() -> store.add(CACHE_STOCK_REFRESHES.key(distributor.name(), outcome), parts));
     }
 
     // ---- ranking --------------------------------------------------------------------------------------------------
@@ -214,9 +211,9 @@ public class KinaMetrics implements RateLimitRetry.Listener {
     /** One cross-encoder run that scored {@code candidates} parts in {@code nanos}. */
     public void crossEncoderRun(int candidates, long nanos) {
         safely(() -> {
-            store.increment(MetricKey.of(CROSS_ENCODER_EXECUTIONS));
-            store.add(MetricKey.of(CROSS_ENCODER_CANDIDATES), candidates);
-            store.record(MetricKey.of(CROSS_ENCODER_DURATION), nanos);
+            store.increment(CROSS_ENCODER_EXECUTIONS.key());
+            store.add(CROSS_ENCODER_CANDIDATES.key(), candidates);
+            store.record(CROSS_ENCODER_DURATION.key(), nanos);
         });
     }
 
@@ -224,42 +221,42 @@ public class KinaMetrics implements RateLimitRetry.Listener {
 
     /** Runs one MCP tool call, counting it and, when it throws, its error. */
     public <T> T toolCall(String tool, Supplier<T> call) {
-        safely(() -> store.increment(MetricKey.of(TOOL_CALLS, "tool", tool)));
+        safely(() -> store.increment(TOOL_CALLS.key(tool)));
         try {
             return call.get();
         } catch (RuntimeException e) {
-            safely(() -> store.increment(MetricKey.of(TOOL_ERRORS, "tool", tool)));
+            safely(() -> store.increment(TOOL_ERRORS.key(tool)));
             throw e;
         }
     }
 
     /** One REST API request, {@code endpoint} being the matched path pattern. */
     public void apiRequest(String endpoint) {
-        safely(() -> store.increment(MetricKey.of(API_REQUESTS, "endpoint", endpoint)));
+        safely(() -> store.increment(API_REQUESTS.key(endpoint)));
     }
 
     // ---- security -------------------------------------------------------------------------------------------------
 
     public void loginSucceeded() {
-        safely(() -> store.increment(MetricKey.of(LOGINS, "outcome", "ok")));
+        safely(() -> store.increment(LOGINS.key("ok")));
     }
 
     /** A refused login; {@code reason} is the {@code /login-denied} reason code. */
     public void loginDenied(String reason) {
         safely(() -> {
-            store.increment(MetricKey.of(LOGINS, "outcome", "denied"));
-            store.increment(MetricKey.of(LOGIN_DENIED, "reason", reason));
+            store.increment(LOGINS.key("denied"));
+            store.increment(LOGIN_DENIED.key(reason));
         });
     }
 
     /** An access token issued by {@code /oauth/token} for {@code grant} ({@code authorization_code}, ...). */
     public void oauthTokenIssued(String grant) {
-        safely(() -> store.increment(MetricKey.of(OAUTH_TOKENS_ISSUED, "grant", grant)));
+        safely(() -> store.increment(OAUTH_TOKENS_ISSUED.key(grant)));
     }
 
     /** A membership re-check that asked the identity provider, by outcome ({@code member}, {@code not_member}...). */
     public void membershipRecheck(String outcome) {
-        safely(() -> store.increment(MetricKey.of(MEMBERSHIP_RECHECKS, "outcome",
+        safely(() -> store.increment(MEMBERSHIP_RECHECKS.key(
                 outcome == null ? null : outcome.toLowerCase(Locale.ROOT))));
     }
 
@@ -267,7 +264,7 @@ public class KinaMetrics implements RateLimitRetry.Listener {
 
     /** A finished JLCPCB download attempt: {@code ok}, {@code failed} or {@code interrupted}. */
     public void jlcpcbDownload(String outcome) {
-        safely(() -> store.increment(MetricKey.of(JLCPCB_DOWNLOADS, "outcome", outcome)));
+        safely(() -> store.increment(JLCPCB_DOWNLOADS.key(outcome)));
     }
 
     // ---- reading --------------------------------------------------------------------------------------------------

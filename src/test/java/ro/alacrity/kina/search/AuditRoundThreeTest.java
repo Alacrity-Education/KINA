@@ -24,8 +24,7 @@ import ro.alacrity.kina.domain.ResponseDetail;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
 import ro.alacrity.kina.metrics.KinaMetrics;
-import ro.alacrity.kina.metrics.MetricKey;
-import ro.alacrity.kina.metrics.MetricNames;
+import ro.alacrity.kina.metrics.Metric;
 import ro.alacrity.kina.metrics.MetricsStore;
 import ro.alacrity.kina.search.RankingService.RankOptions;
 import ro.alacrity.kina.search.RankingService.RankedPart;
@@ -770,11 +769,9 @@ class AuditRoundThreeTest {
 
         service.search(request(query, 2, false, Distributor.MOUSER));
 
-        assertThat(store.get(MetricKey.of(MetricNames.CACHE_STOCK_REFRESHES, "distributor", "MOUSER", "outcome",
-                "ok"))).isEqualTo(2);
-        assertThat(store.get(MetricKey.of(MetricNames.CACHE_STOCK_REFRESHES, "distributor", "MOUSER", "outcome",
-                "out_of_stock"))).isEqualTo(1);
-        assertThat(store.sum(MetricNames.PARTS_FETCHED)).isZero();   // served from the cache: no page was fetched
+        assertThat(store.get(Metric.CACHE_STOCK_REFRESHES.key("MOUSER", "ok"))).isEqualTo(2);
+        assertThat(store.get(Metric.CACHE_STOCK_REFRESHES.key("MOUSER", "out_of_stock"))).isEqualTo(1);
+        assertThat(store.sum(Metric.PARTS_FETCHED)).isZero();   // served from the cache: no page was fetched
 
         // a cache miss fetches a page of three parts from the distributor
         cachedSearches.clear();
@@ -790,7 +787,7 @@ class AuditRoundThreeTest {
 
         service.search(request(query, 2, false, Distributor.MOUSER));
 
-        assertThat(store.sum(MetricNames.PARTS_FETCHED)).isEqualTo(3);
+        assertThat(store.sum(Metric.PARTS_FETCHED)).isEqualTo(3);
     }
 
     // ---- 6. get_part attributes of can capacitors; 12. datasheets, currencies ---------------------------------------------

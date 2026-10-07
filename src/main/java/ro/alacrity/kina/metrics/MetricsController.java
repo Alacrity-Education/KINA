@@ -45,13 +45,13 @@ public class MetricsController {
         metrics.store().snapshot().forEach((key, value) -> {
             String name = key.name();
             if (name.endsWith(MetricsStore.COUNT)) {
-                counters.add(new CounterValue(MetricNames.prometheusName(base(name), true) + "_count", key.tagMap(),
+                counters.add(new CounterValue(Metric.prometheusName(base(name), true) + "_count", key.tagMap(),
                         value));
             } else if (name.endsWith(MetricsStore.NANOS)) {
-                counters.add(new CounterValue(MetricNames.prometheusName(base(name), true) + "_sum", key.tagMap(),
+                counters.add(new CounterValue(Metric.prometheusName(base(name), true) + "_sum", key.tagMap(),
                         value / 1e9));
             } else {
-                counters.add(new CounterValue(MetricNames.prometheusName(name, false), key.tagMap(), value));
+                counters.add(new CounterValue(Metric.prometheusName(name, false), key.tagMap(), value));
             }
         });
         return new SummaryResponse(metrics.summary(), counters);
