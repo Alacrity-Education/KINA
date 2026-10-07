@@ -30,12 +30,12 @@ class ConstraintTableDocumentationTest {
     /** The effective default table: per family the hard kinds (check order) and the ladder kinds (ladder order). */
     static Map<String, List<List<String>>> rendered() {
         Map<String, List<List<String>>> table = new LinkedHashMap<>();
-        for (String family : PolicyFamily.ALL) {
+        for (PolicyFamily family : PolicyFamily.values()) {
             List<String> hard = ConstraintKind.policyKinds().stream()
                     .filter(k -> k.strategy(family) == RelaxStrategy.NEVER).map(ConstraintKind::label).toList();
             List<String> relaxable = ConstraintKind.ladder().stream()
                     .filter(k -> k.strategy(family) == RelaxStrategy.LADDER).map(ConstraintKind::label).toList();
-            table.put(family, List.of(hard, relaxable));
+            table.put(family.key(), List.of(hard, relaxable));
         }
         return table;
     }

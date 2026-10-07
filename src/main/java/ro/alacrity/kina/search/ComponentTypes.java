@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
+import ro.alacrity.kina.domain.ComponentFamily;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.util.regex.Pattern;
@@ -108,17 +109,8 @@ class ComponentTypes {
      * {@link #regulatorSubtype} for regulators, else null.
      */
     static String subtype(String family, String text) {
-        if ("diode".equals(family)) {
-            return diodeSubtype(text);
-        }
-        if ("regulator".equals(family)) {
-            return regulatorSubtype(text);
-        }
-        return null;
-    }
-
-    /** True for families whose parts have a polarity (transistors and MOSFETs). */
-    static boolean polarised(String family) {
-        return "mosfet".equals(family) || "transistor".equals(family);
+        ComponentFamily f = ComponentFamily.of(family);
+        return f == ComponentFamily.DIODE ? diodeSubtype(text)
+                : f == ComponentFamily.REGULATOR ? regulatorSubtype(text) : null;
     }
 }

@@ -8,6 +8,7 @@ import ro.alacrity.kina.domain.MatchMode;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartFeatures;
+import ro.alacrity.kina.domain.PolicyFamily;
 import ro.alacrity.kina.domain.RelaxStrategy;
 
 import java.util.ArrayList;
@@ -190,7 +191,7 @@ public class DeterministicRanker {
     Assessment assess(ParsedQuery query, Part part, ParametricExtractor.Features f) {
         SearchMatchContext context = new SearchMatchContext(query, f);
         Match.Scope scope = Match.Scope.of(query);
-        String family = ConstraintPolicy.policyFamily(query);
+        PolicyFamily family = PolicyFamily.of(query);
         double score = 0;
         double possible = 0;
         double preference = 0;   // score-only adjustments, not part of the match grade
@@ -285,7 +286,7 @@ public class DeterministicRanker {
     }
 
     /** A miss costs the declared {@code cost} of the family's {@link ro.alacrity.kina.domain.Relax} when it has one. */
-    private static double cost(ConstraintKind kind, String family, double points) {
+    private static double cost(ConstraintKind kind, PolicyFamily family, double points) {
         double cost = kind.cost(family);
         return points < 0 && cost >= 0 ? -cost : points;
     }

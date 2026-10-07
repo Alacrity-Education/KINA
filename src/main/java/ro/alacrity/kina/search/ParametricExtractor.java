@@ -1,6 +1,8 @@
 package ro.alacrity.kina.search;
 
 import org.springframework.stereotype.Component;
+import ro.alacrity.kina.domain.ComponentFamily;
+import ro.alacrity.kina.domain.ComponentFamily.Trait;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.PartFeatures;
@@ -142,14 +144,6 @@ public class ParametricExtractor {
             "reverse voltage (vr)", "vds - drain-source breakdown voltage", "drain source voltage (vdss)",
             "drain to source voltage (vdss)", "vz - zener voltage", "voltage - zener (nom) (vz)",
             "vrwm - reverse standoff voltage", "reverse stand-off voltage (vrwm)", "voltage - reverse standoff (typ)");
-    /**
-     * Families whose unlabelled description voltages are read as the largest one (DESIGN.md 3.4 "Voltage of transistors
-     * and diodes"): JLCPCB lists a MOSFET's gate threshold, gate-source limit and drain-source rating unlabelled and
-     * text-sorted ({@code 1.45V 1.4W 30V} for AO3400A), a diode's forward and reverse voltage likewise, so the first
-     * voltage is often the threshold. Zener, TVS and LED voltages are specifications and keep the first value;
-     * regulators keep "any stated voltage" ({@link Features#voltages()}).
-     */
-    static final Set<String> LARGEST_VOLTAGE_FAMILIES = Set.of("transistor", "mosfet", "diode", "schottky");
     /** Below this a description voltage is never a transistor's or diode's rating (a threshold or forward voltage). */
     static final double MIN_PLAUSIBLE_RATING_VOLTS = 3.0;
 
@@ -404,7 +398,7 @@ public class ParametricExtractor {
         String explicitFamily = category.familyExplicit() ? category.family()
                 : description.familyExplicit() ? description.family() : null;
         if (category.familyExplicit() && description.familyExplicit() && category.family() != null
-                && category.family().equals(Recognizers.parentFamily(description.family()))) {
+                && category.family().equals(ComponentFamily.parentOf(description.family()))) {
             // the description names a specialisation of the category's family (TME "SMD N channel transistors" with
             // "Transistor: N-MOSFET"): the more specific family wins
             explicitFamily = description.family();
@@ -414,9 +408,9 @@ public class ParametricExtractor {
             // a half-bridge with an integrated driver under "GaN FETs" is a gate driver
             explicitFamily = description.family();
         }
-        if (category.familyExplicit() && description.familyExplicit() && category.family() != null
-                && FREQUENCY_FAMILIES.contains(category.family()) && description.family() != null
-                && FREQUENCY_FAMILIES.contains(description.family())
+        if (category.familyExplicit() && description.familyExplicit()
+                && ComponentFamily.has(category.family(), Trait.FREQUENCY_VALUED)
+                && ComponentFamily.has(description.family(), Trait.FREQUENCY_VALUED)
                 && Recognizers.familiesIn(lastCategorySegment(part.category())).containsAll(FREQUENCY_FAMILIES)) {
             // a category naming both kinds (TME "Resonators and Generators"): the description decides
             // ("Crystal; 16MHz" is a crystal, "Generator: quartz; 16MHz" an oscillator)
@@ -480,8 +474,7 @@ public class ParametricExtractor {
         if (Recognizers.inductive(family)) {
             values.remove(ParsedQuery.RESISTANCE);   // an inductor's or ferrite bead's ohm value is DCR or impedance
         }
-        if (family != null && !fromAttributes.contains(ParsedQuery.VOLTAGE)
-                && LARGEST_VOLTAGE_FAMILIES.contains(family)) {
+        if (!fromAttributes.contains(ParsedQuery.VOLTAGE) && ComponentFamily.has(family, Trait.LARGEST_VOLTAGE)) {
             ratingFromLargestVoltage(part.description(), family, values);
         }
         Map<String, String> details = new LinkedHashMap<>();
@@ -505,7 +498,7 @@ public class ParametricExtractor {
         }
 
         String packageName = packageOf(part, attrs, family, description);
-        if (family != null && FREQUENCY_FAMILIES.contains(family) && !Recognizers.isCrystalSize(packageName)
+        if (ComponentFamily.has(family, Trait.FREQUENCY_VALUED) && !Recognizers.isCrystalSize(packageName)
                 && (packageName == null || !Recognizers.isRecognisedPackage(packageName))) {
             // TME "Body dimensions: 3.2x2.5x0.8mm" (no case code): the size code of a crystal is its body in mm
             String size = crystalSize(part, attrs);
@@ -588,7 +581,7 @@ public class ParametricExtractor {
             putIfNotNull(details, FEATURES, PassiveDetails.features(part, attrs, family));
         }
         String typeText = typeText(part, attrs);
-        String polarity = ComponentTypes.polarised(family) ? ComponentTypes.polarity(typeText) : null;
+        String polarity = ComponentFamily.has(family, Trait.POLARISED) ? ComponentTypes.polarity(typeText) : null;
         String subtype = connector == null ? ComponentTypes.subtype(family, typeText) : null;
         List<Double> voltages = List.of();
         if (ConstraintKind.isExactRating(ParsedQuery.VOLTAGE, family)) {
@@ -673,7 +666,9 @@ public class ParametricExtractor {
                 .orElse(found.isEmpty() ? null : found.getFirst());
     }
 
-    private static final Set<String> FREQUENCY_FAMILIES = Set.of("crystal", "oscillator");
+    /** The frequency-valued families, both named by a category such as TME "Resonators and Generators". */
+    private static final Set<String> FREQUENCY_FAMILIES = Set.of(ComponentFamily.CRYSTAL.label(),
+            ComponentFamily.OSCILLATOR.label());
     /** Attributes that state the kind of a semiconductor (TME {@code Type of transistor}, {@code Type of diode}...). */
     private static final List<String> TYPE_NAMES = List.of("type of transistor", "type of diode",
             "kind of voltage regulator", "type of voltage regulator", "transistor polarity", "polarity",
@@ -1155,13 +1150,12 @@ public class ParametricExtractor {
         if (part.packageName() != null && !part.packageName().isBlank() && !part.packageName().strip().equals("-")) {
             return part.packageName().trim();   // stated by the distributor, even if not recognised: never overridden
         }
-        return family != null && CHIP_FAMILIES.contains(family)
+        return ComponentFamily.has(family, Trait.PASSIVE)
                 ? packageFromPartNumber(part.manufacturerPartNumber(), part.manufacturer()) : null;
     }
 
     // ---------------------------------------------------------------- package from the part number
 
-    private static final Set<String> CHIP_FAMILIES = Set.of("resistor", "capacitor", "inductor", "ferrite");
     /**
      * Series whose part number is {@code <series><imperial chip code>...} ({@code TNPW0805...}, {@code RC0805FR-07...},
      * {@code CRGCQ0805...}). Mined from the JLCPCB database (2026-10-05): every row of these prefixes with a chip

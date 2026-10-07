@@ -1,6 +1,8 @@
 package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
+import ro.alacrity.kina.domain.ComponentFamily;
+import ro.alacrity.kina.domain.ComponentFamily.Trait;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.PartFeatures;
 
@@ -16,6 +18,28 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static ro.alacrity.kina.domain.ComponentFamily.CAPACITOR;
+import static ro.alacrity.kina.domain.ComponentFamily.COMPARATOR;
+import static ro.alacrity.kina.domain.ComponentFamily.CONNECTOR;
+import static ro.alacrity.kina.domain.ComponentFamily.CRYSTAL;
+import static ro.alacrity.kina.domain.ComponentFamily.DIODE;
+import static ro.alacrity.kina.domain.ComponentFamily.FERRITE;
+import static ro.alacrity.kina.domain.ComponentFamily.FUSE;
+import static ro.alacrity.kina.domain.ComponentFamily.INDUCTOR;
+import static ro.alacrity.kina.domain.ComponentFamily.LED;
+import static ro.alacrity.kina.domain.ComponentFamily.MCU;
+import static ro.alacrity.kina.domain.ComponentFamily.MOSFET;
+import static ro.alacrity.kina.domain.ComponentFamily.OPAMP;
+import static ro.alacrity.kina.domain.ComponentFamily.OSCILLATOR;
+import static ro.alacrity.kina.domain.ComponentFamily.REGULATOR;
+import static ro.alacrity.kina.domain.ComponentFamily.RELAY;
+import static ro.alacrity.kina.domain.ComponentFamily.RESISTOR;
+import static ro.alacrity.kina.domain.ComponentFamily.SCHOTTKY;
+import static ro.alacrity.kina.domain.ComponentFamily.SWITCH;
+import static ro.alacrity.kina.domain.ComponentFamily.TRANSISTOR;
+import static ro.alacrity.kina.domain.ComponentFamily.TVS;
+import static ro.alacrity.kina.domain.ComponentFamily.ZENER;
 
 /**
  * Text recognisers shared by {@link QueryParser} and {@link ParametricExtractor} (DESIGN.md section 3.4): component
@@ -137,46 +161,46 @@ class Recognizers {
     }
 
     /** The gate driver family (half-bridge, low-side, isolated drivers; GaN power stages). */
-    static final String GATE_DRIVER = "gate driver";
+    static final String GATE_DRIVER = ComponentFamily.GATE_DRIVER.label();
 
     private static final Map<String, FamilyWord> FAMILY_WORDS = new LinkedHashMap<>();
 
     static {
-        family(2, false, "capacitor", "capacitor", "capacitors", "cap", "caps");
-        family(2, true, "capacitor", "mlcc");
-        family(2, false, "resistor", "resistor", "resistors", "res");
-        family(2, false, "inductor", "inductor", "inductors", "choke", "chokes");
-        family(3, false, "ferrite", "ferrite", "ferrites");
-        family(1, false, "diode", "diode", "diodes", "rectifier", "rectifiers");
-        family(3, false, "schottky", "schottky");
-        family(3, false, "zener", "zener");
-        family(3, false, "led", "led", "leds");
-        family(3, false, "mosfet", "mosfet", "mosfets", "fet", "fets", "hemt", "hemts");
+        family(2, false, CAPACITOR, "capacitor", "capacitors", "cap", "caps");
+        family(2, true, CAPACITOR, "mlcc");
+        family(2, false, RESISTOR, "resistor", "resistors", "res");
+        family(2, false, INDUCTOR, "inductor", "inductors", "choke", "chokes");
+        family(3, false, FERRITE, "ferrite", "ferrites");
+        family(1, false, DIODE, "diode", "diodes", "rectifier", "rectifiers");
+        family(3, false, SCHOTTKY, "schottky");
+        family(3, false, ZENER, "zener");
+        family(3, false, LED, "led", "leds");
+        family(3, false, MOSFET, "mosfet", "mosfets", "fet", "fets", "hemt", "hemts");
         // TME writes "Transistor: N-MOSFET" / "P-MOSFET"; the polarity stays a keyword
-        family(3, true, "mosfet", "n-mosfet", "p-mosfet");
-        family(1, false, "transistor", "transistor", "transistors");
-        family(1, true, "transistor", "bjt", "npn", "pnp");
-        family(3, true, "regulator", "ldo");
-        family(2, false, "regulator", "regulator", "regulators");
-        family(3, false, "opamp", "opamp", "opamps");
-        family(3, false, "comparator", "comparator", "comparators");
-        family(2, false, "mcu", "mcu", "mcus");
+        family(3, true, MOSFET, "n-mosfet", "p-mosfet");
+        family(1, false, TRANSISTOR, "transistor", "transistors");
+        family(1, true, TRANSISTOR, "bjt", "npn", "pnp");
+        family(3, true, REGULATOR, "ldo");
+        family(2, false, REGULATOR, "regulator", "regulators");
+        family(3, false, OPAMP, "opamp", "opamps");
+        family(3, false, COMPARATOR, "comparator", "comparators");
+        family(2, false, MCU, "mcu", "mcus");
         // crystals (passive resonators) and oscillators (active, with a supply) are different families, never mixed
-        family(2, false, "crystal", "crystal", "crystals", "xtal", "xtals", "resonator", "resonators");
-        family(3, false, "oscillator", "oscillator", "oscillators", "xo", "tcxo", "vcxo", "ocxo", "spxo",
+        family(2, false, CRYSTAL, "crystal", "crystals", "xtal", "xtals", "resonator", "resonators");
+        family(3, false, OSCILLATOR, "oscillator", "oscillators", "xo", "tcxo", "vcxo", "ocxo", "spxo",
                 "vctcxo", "tcxos", "vcxos", "ocxos");
         // TME "Generator: quartz; 16MHz; SMD" (an oscillator), category "Resonators and Generators"
-        family(3, false, "oscillator", "generator", "generators");
-        family(2, false, "connector", "connector", "connectors");
-        family(2, false, "fuse", "fuse", "fuses", "polyfuse");
-        family(3, false, "tvs", "tvs");
-        family(3, true, "tvs", "esd");
-        family(2, false, "relay", "relay", "relays");
-        family(2, false, "switch", "switch", "switches");
+        family(3, false, OSCILLATOR, "generator", "generators");
+        family(2, false, CONNECTOR, "connector", "connectors");
+        family(2, false, FUSE, "fuse", "fuses", "polyfuse");
+        family(3, false, TVS, "tvs");
+        family(3, true, TVS, "esd");
+        family(2, false, RELAY, "relay", "relays");
+        family(2, false, SWITCH, "switch", "switches");
         // gate drivers, GaN power stages and half-bridges with an integrated driver (PHRASES make them one token; the
         // spaced forms serve the lexical family check of part texts); they win over "MOSFET", "FET", "transistor"
-        family(4, false, GATE_DRIVER, "gate-driver", "power-stage", "half-bridge-driver", "gate driver",
-                "gate drivers", "power stage");
+        family(4, false, ComponentFamily.GATE_DRIVER, "gate-driver", "power-stage", "half-bridge-driver",
+                "gate driver", "gate drivers", "power stage");
     }
 
 
@@ -185,7 +209,7 @@ class Recognizers {
      * driver that Mouser lists under {@code GaN FETs} is a gate driver.
      */
     private static final Map<String, Set<String>> OVERRIDES_CATEGORY = Map.of(GATE_DRIVER,
-            Set.of("mosfet", "transistor"));
+            Set.of(MOSFET.label(), TRANSISTOR.label()));
 
     /** True when a description naming {@code descriptionFamily} decides over a category naming {@code categoryFamily}. */
     static boolean overridesCategory(String descriptionFamily, String categoryFamily) {
@@ -197,9 +221,9 @@ class Recognizers {
     private static final Map<String, String> SPELLED = Map.of("gate-driver", "gate driver", "power-stage",
             "power stage", "half-bridge-driver", "half-bridge driver");
 
-    private static void family(int priority, boolean keep, String family, String... words) {
+    private static void family(int priority, boolean keep, ComponentFamily family, String... words) {
         for (String w : words) {
-            FAMILY_WORDS.put(w, new FamilyWord(family, priority, keep));
+            FAMILY_WORDS.put(w, new FamilyWord(family.label(), priority, keep));
         }
     }
 
@@ -242,22 +266,6 @@ class Recognizers {
         return out;
     }
 
-    /**
-     * True when a request of family {@code wanted} accepts a part of family {@code actual}: the same family, or one is
-     * the generic family of the other ({@code diode} and {@code schottky}, {@code transistor} and {@code mosfet}).
-     * Unknown families never conflict. Crystals and oscillators are different families.
-     */
-    static boolean compatibleFamilies(String wanted, String actual) {
-        if (wanted == null || actual == null || wanted.equals(actual)) {
-            return true;
-        }
-        return wanted.equals(parentFamily(actual)) || actual.equals(parentFamily(wanted));
-    }
-
-    /** Families that are a specialisation of a generic family ({@code schottky} is a {@code diode}). */
-    private static final Map<String, String> FAMILY_PARENT = Map.of(
-            "schottky", "diode", "zener", "diode", "tvs", "diode", "led", "diode", "mosfet", "transistor");
-
     private static final Pattern DIODE_MPN = Pattern.compile("(?i)^1n\\d{3,4}[a-z]{0,2}$");
 
     /** Lower-case words that name a family, used for lexical family detection. */
@@ -271,12 +279,8 @@ class Recognizers {
         return words;
     }
 
-    static String parentFamily(String family) {
-        return family == null ? null : FAMILY_PARENT.get(family);
-    }
-
     private static boolean frequencyFamily(String family) {
-        return "crystal".equals(family) || "oscillator".equals(family);
+        return ComponentFamily.has(family, Trait.FREQUENCY_VALUED);
     }
 
     // ------------------------------------------------------------------ dielectric / mounting
@@ -701,7 +705,7 @@ class Recognizers {
 
     /** Inductors and ferrite beads (an ohm value is impedance or DC resistance there, never a nominal resistance). */
     static boolean inductive(String family) {
-        return "inductor".equals(family) || "ferrite".equals(family);
+        return ComponentFamily.has(family, Trait.INDUCTIVE);
     }
 
     /**
@@ -927,7 +931,7 @@ class Recognizers {
 
     /** Families whose ohm value is an on-resistance ({@link #RDS_ON}): MOSFETs and transistors. */
     static boolean rdsOnFamily(String family) {
-        return "mosfet".equals(family) || "transistor".equals(family);
+        return ComponentFamily.has(family, Trait.POLARISED);
     }
 
     /** Characters stripped around a word before it is read as a value ({@code (16V,} -&gt; {@code 16V}). */
@@ -1080,7 +1084,7 @@ class Recognizers {
             String t = token.toLowerCase(Locale.ROOT);
             FamilyWord fw = FAMILY_WORDS.get(t);
             if (fw == null && DIODE_MPN.matcher(t).matches()) {
-                fw = new FamilyWord("diode", 0, true);
+                fw = new FamilyWord(DIODE.label(), 0, true);
             }
             if (fw != null && fw.priority() > priority) {
                 family = fw.family();

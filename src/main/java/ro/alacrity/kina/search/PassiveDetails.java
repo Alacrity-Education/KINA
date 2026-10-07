@@ -1,6 +1,8 @@
 package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
+import ro.alacrity.kina.domain.ComponentFamily;
+import ro.alacrity.kina.domain.ComponentFamily.Trait;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 
@@ -24,11 +26,6 @@ import java.util.regex.Pattern;
 @UtilityClass
 class PassiveDetails {
 
-    /** Families whose arrays and networks are told apart from single elements. */
-    static final Set<String> ARRAY_FAMILIES = Set.of("resistor", "capacitor", "ferrite");
-    /** Families that get dimensions, qualification and features. */
-    static final Set<String> PASSIVE_FAMILIES = Set.of("resistor", "capacitor", "inductor", "ferrite");
-
     // ---------------------------------------------------------------- arrays and networks
 
     private static final List<String> ELEMENT_NAMES = List.of("elements", "number of elements", "number of resistors",
@@ -48,7 +45,7 @@ class PassiveDetails {
      * (or a family where arrays are not told apart). Common-mode chokes and filters are never arrays here.
      */
     static Integer elements(Part part, Map<String, String> attrs, String family) {
-        if (family == null || !ARRAY_FAMILIES.contains(family)) {
+        if (!ComponentFamily.has(family, Trait.ARRAYS)) {
             return null;
         }
         String text = join(part.description(), part.category(), part.packageName());
@@ -234,7 +231,7 @@ class PassiveDetails {
      * (LCSC {@code SMD,D6.3xL5.8mm}) or the description (TME {@code Ø6.3x5.8mm}). Null when none states them.
      */
     static String dimensions(Part part, Map<String, String> attrs, String family) {
-        if (family == null || !PASSIVE_FAMILIES.contains(family)) {
+        if (!ComponentFamily.has(family, Trait.PASSIVE)) {
             return null;
         }
         for (String name : DIMENSION_NAMES) {
@@ -349,7 +346,7 @@ class PassiveDetails {
 
     /** Comma-separated features ({@code "low ESR"}, {@code "shielded"}...) of a passive part, else null. */
     static String features(Part part, Map<String, String> attrs, String family) {
-        if (family == null || !PASSIVE_FAMILIES.contains(family)) {
+        if (!ComponentFamily.has(family, Trait.PASSIVE)) {
             return null;
         }
         StringBuilder text = new StringBuilder(part.description() == null ? "" : part.description());

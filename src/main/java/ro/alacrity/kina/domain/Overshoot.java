@@ -31,8 +31,8 @@ public @interface Overshoot {
     /** Octaves above {@link #ratio()} at which the penalty is complete. */
     double maxOctaves() default 2.0;
 
-    /** The policy families ({@link PolicyFamily}) of this declaration; empty for the general one. */
-    String[] families() default {};
+    /** The policy families of this declaration; empty for the general one. */
+    PolicyFamily[] families() default {};
 
     /** Container of repeated {@link Overshoot} declarations. */
     @Documented

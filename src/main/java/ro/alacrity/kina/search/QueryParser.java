@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.springframework.stereotype.Component;
+import ro.alacrity.kina.domain.ComponentFamily;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.util.Collections;
@@ -54,7 +55,7 @@ public class QueryParser {
         String packageName = analysis.packageName();
         List<String> keywords = analysis.keywords();
         if (connector == null) {
-            polarity = family == null || ComponentTypes.polarised(family) ? ComponentTypes.polarity(original) : null;
+            polarity = family == null || ComponentFamily.has(family, ComponentFamily.Trait.POLARISED) ? ComponentTypes.polarity(original) : null;
             if (family == null && polarity != null) {
                 // "SOT-23 N-channel 30V": the polarity names the family
                 family = ComponentTypes.NPN.equals(polarity) || ComponentTypes.PNP.equals(polarity) ? "transistor"

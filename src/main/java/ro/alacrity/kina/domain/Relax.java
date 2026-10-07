@@ -9,9 +9,9 @@ import java.lang.annotation.Target;
 
 /**
  * The relaxation policy of a {@link ConstraintKind} constant (DESIGN.md 3.2 and 3.4). A constant carries one general
- * declaration (no {@link #families()}): the strategy when a family does not make the kind hard. Family-specific
- * declarations override it for the families they list ({@link #ALL} for every family). Resolution: the family's own
- * declaration, then {@link #ALL}, then the general one; {@code kina.search.hard-constraints.<family>} replaces the
+ * declaration (no {@link #families()}, not {@link #allFamilies()}): the strategy when a family does not make the kind
+ * hard. Family-specific declarations override it for the families they list ({@link #allFamilies()} for every family).
+ * Resolution: the family's own declaration, then the {@link #allFamilies()} one, then the general one; {@code kina.search.hard-constraints.<family>} replaces the
  * declared table of a family (listed kinds {@link RelaxStrategy#NEVER}, the others their general strategy).
  */
 @Documented
@@ -19,9 +19,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Repeatable(Relax.List.class)
 public @interface Relax {
-
-    /** {@link #families()} entry for every policy family. */
-    String ALL = "*";
 
     RelaxStrategy strategy();
 
@@ -31,8 +28,11 @@ public @interface Relax {
     /** Score cost of a relaxed mismatch; -1 uses the {@link Match#weight()}. */
     double cost() default -1;
 
-    /** The policy families ({@link PolicyFamily}) this declaration applies to; empty for the general declaration. */
-    String[] families() default {};
+    /** The policy families this declaration applies to; empty for the general declaration. */
+    PolicyFamily[] families() default {};
+
+    /** True for a declaration that applies to every policy family not named by another declaration. */
+    boolean allFamilies() default false;
 
     /** Container of repeated {@link Relax} declarations. */
     @Documented

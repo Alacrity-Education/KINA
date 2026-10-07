@@ -53,23 +53,8 @@ record SearchMatchContext(ParsedQuery query, PartFeatures part, Set<ConstraintKi
     }
 
     @Override
-    public boolean compatibleFamilies(String wanted, String actual) {
-        return Recognizers.compatibleFamilies(wanted, actual);
-    }
-
-    @Override
-    public String parentFamily(String family) {
-        return Recognizers.parentFamily(family);
-    }
-
-    @Override
     public Set<String> familyWords(String family) {
         return Recognizers.familyWords(family);
-    }
-
-    @Override
-    public boolean arrayFamily(String family) {
-        return PassiveDetails.ARRAY_FAMILIES.contains(family);
     }
 
     @Override

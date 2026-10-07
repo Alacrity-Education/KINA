@@ -58,21 +58,20 @@ public final class ConstraintPolicy {
     /** Constraints the relaxation may loosen when they are not hard, in ladder order (DESIGN.md 3.2). */
     public static final List<String> RELAXABLE = ConstraintKind.ladder().stream().map(ConstraintKind::label).toList();
 
-    // ---- policy families
-    public static final String RESISTOR = PolicyFamily.RESISTOR;
-    public static final String CAPACITOR = PolicyFamily.CAPACITOR;
-    public static final String INDUCTOR = PolicyFamily.INDUCTOR;
+    // ---- policy families, by their configuration key
+    public static final String RESISTOR = PolicyFamily.RESISTOR.key();
+    public static final String CAPACITOR = PolicyFamily.CAPACITOR.key();
+    public static final String INDUCTOR = PolicyFamily.INDUCTOR.key();
     /** Every other family, and requests whose family is not known. */
-    public static final String DEFAULT = PolicyFamily.DEFAULT;
+    public static final String DEFAULT = PolicyFamily.DEFAULT.key();
 
     /** The decided table (user decision 2026-10-07): the hard constraints per family, read from the declarations. */
     public static final Map<String, List<String>> DEFAULT_HARD = defaults();
 
     private static Map<String, List<String>> defaults() {
         Map<String, List<String>> m = new LinkedHashMap<>();
-        for (String family : PolicyFamily.ALL) {
-            m.put(family, ConstraintKind.policyKinds().stream()
-                    .filter(k -> k.strategy(family) == RelaxStrategy.NEVER).map(ConstraintKind::label).toList());
+        for (PolicyFamily family : PolicyFamily.values()) {
+            m.put(family.key(), declaredHard(family).stream().map(ConstraintKind::label).toList());
         }
         return Collections.unmodifiableMap(m);
     }
@@ -90,15 +89,16 @@ public final class ConstraintPolicy {
     /** The declared defaults with the families in {@code overrides} replaced. */
     private ConstraintPolicy(Map<String, Set<ConstraintKind>> overrides) {
         Map<String, Set<ConstraintKind>> m = new LinkedHashMap<>();
-        for (String family : PolicyFamily.ALL) {
-            Set<ConstraintKind> kinds = overrides.containsKey(family) ? overrides.get(family)
+        for (PolicyFamily family : PolicyFamily.values()) {
+            Set<ConstraintKind> kinds = overrides.containsKey(family.key()) ? overrides.get(family.key())
                     : declaredHard(family);
-            m.put(family, kinds.isEmpty() ? Set.of() : Collections.unmodifiableSet(EnumSet.copyOf(kinds)));
+            m.put(family.key(), kinds.isEmpty() ? Set.of() : Collections.unmodifiableSet(EnumSet.copyOf(kinds)));
         }
         this.hard = Collections.unmodifiableMap(m);
     }
 
-    private static Set<ConstraintKind> declaredHard(String family) {
+    /** The kinds a family's declarations make hard, in check order. */
+    private static Set<ConstraintKind> declaredHard(PolicyFamily family) {
         Set<ConstraintKind> kinds = EnumSet.noneOf(ConstraintKind.class);
         ConstraintKind.policyKinds().stream().filter(k -> k.strategy(family) == RelaxStrategy.NEVER)
                 .forEach(kinds::add);
@@ -114,7 +114,9 @@ public final class ConstraintPolicy {
             return DEFAULTS;
         }
         Map<String, Set<ConstraintKind>> table = new LinkedHashMap<>();
-        PolicyFamily.ALL.forEach(family -> table.put(family, declaredHard(family)));
+        for (PolicyFamily family : PolicyFamily.values()) {
+            table.put(family.key(), declaredHard(family));
+        }
         List<String> strict = search.strictConstraints();
         if (strict != null) {
             log.warn("kina.search.strict-constraints (KINA_STRICT_CONSTRAINTS) is deprecated, use "
@@ -126,12 +128,13 @@ public final class ConstraintPolicy {
             }
         }
         search.hardConstraints().forEach((rawFamily, rawNames) -> {
-            String family = rawFamily.strip().toLowerCase(Locale.ROOT);
-            if (!PolicyFamily.ALL.contains(family)) {
+            PolicyFamily policyFamily = PolicyFamily.byKey(rawFamily.strip());
+            if (policyFamily == null) {
                 log.warn("kina.search.hard-constraints: unknown family '{}' ignored (known: {})", rawFamily,
-                        PolicyFamily.ALL);
+                        DEFAULT_HARD.keySet());
                 return;
             }
+            String family = policyFamily.key();
             Set<ConstraintKind> kinds = EnumSet.noneOf(ConstraintKind.class);
             for (String raw : rawNames == null ? List.<String>of() : rawNames) {
                 String name = raw == null ? "" : raw.strip().toLowerCase(Locale.ROOT).replace('-', ' ')
@@ -151,7 +154,7 @@ public final class ConstraintPolicy {
 
     /** The policy family of a request: its component family, {@code usb} for USB connectors, else {@code default}. */
     public static String policyFamily(ParsedQuery query) {
-        return PolicyFamily.of(query);
+        return PolicyFamily.of(query).key();
     }
 
     /** The hard kinds of the request's family. */
@@ -186,7 +189,7 @@ public final class ConstraintPolicy {
     /** The table as configured, family by family (for documentation and {@code list_distributors}). */
     public Map<String, Set<String>> table() {
         Map<String, Set<String>> out = new LinkedHashMap<>();
-        PolicyFamily.ALL.forEach(family -> out.put(family, names(hard.get(family))));
+        hard.forEach((family, kinds) -> out.put(family, names(kinds)));
         return out;
     }
 

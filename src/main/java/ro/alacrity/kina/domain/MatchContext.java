@@ -36,17 +36,8 @@ public interface MatchContext {
     /** Display form of a form factor class. */
     String formFactorLabel(String formFactor);
 
-    /** True when a request of family {@code wanted} accepts a part of family {@code actual}. */
-    boolean compatibleFamilies(String wanted, String actual);
-
-    /** The generic family of a specialised one ({@code schottky} -&gt; {@code diode}), else null. */
-    String parentFamily(String family);
-
     /** Lower-case words that name a family. */
     Set<String> familyWords(String family);
-
-    /** True for families that have arrays and networks (resistors, capacitors, ferrite beads). */
-    boolean arrayFamily(String family);
 
     /** {@code "4"}, or {@code "array"} when the element count is not stated. */
     String elementsDisplay(Integer elements);

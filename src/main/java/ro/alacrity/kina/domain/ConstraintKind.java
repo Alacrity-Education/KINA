@@ -1,7 +1,10 @@
 package ro.alacrity.kina.domain;
 
+import ro.alacrity.kina.domain.ComponentFamily.Trait;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -9,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static ro.alacrity.kina.domain.Match.Scope.CONNECTOR;
 import static ro.alacrity.kina.domain.Match.Scope.PART;
@@ -60,7 +64,7 @@ public enum ConstraintKind {
      * specialised diode, a fixed against an adjustable regulator. Scored as the family signal.
      */
     @Relax(strategy = SOFT)
-    @Relax(strategy = NEVER, families = Relax.ALL)
+    @Relax(strategy = NEVER, allFamilies = true)
     @Match(mode = CUSTOM, weight = 0.05, order = 28, report = 17)
     TYPE("type", ParsedQuery::family, PartFeatures::family) {
         @Override
@@ -134,7 +138,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {DIODE, REGULATOR, DEFAULT})
     @Match(mode = CUSTOM, tolerance = 0.02, weight = 0.10, group = Match.RATING, order = 16, report = 7)
-    EXACT_VOLTAGE("voltage", ParsedQuery.VOLTAGE, "regulator", "zener") {
+    EXACT_VOLTAGE("voltage", ParsedQuery.VOLTAGE, ComponentFamily.REGULATOR, ComponentFamily.ZENER) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
             Boolean same = exactVoltage(c);
@@ -175,7 +179,7 @@ public enum ConstraintKind {
      * for parts; connector and USB requests score it as {@link #CONNECTOR_MOUNTING} and {@link #USB_MOUNTING}.
      */
     @Relax(strategy = SOFT)
-    @Relax(strategy = NEVER, families = Relax.ALL)
+    @Relax(strategy = NEVER, allFamilies = true)
     @Match(mode = EQUAL, weight = 0.05, scope = PART, order = 23, report = 15)
     MOUNTING("mounting", ParsedQuery::mounting, PartFeatures::mounting) {
         @Override
@@ -580,7 +584,7 @@ public enum ConstraintKind {
     /** The current of a fuse, within 2 %. */
     @Relax(strategy = SOFT)
     @Match(mode = WITHIN, tolerance = 0.02, weight = 0.10, group = Match.RATING, order = 17, report = 8)
-    EXACT_CURRENT("current", ParsedQuery.CURRENT, "fuse"),
+    EXACT_CURRENT("current", ParsedQuery.CURRENT, ComponentFamily.FUSE),
 
     /** A minimum saturation current (I_sat) of an inductor. */
     @Relax(strategy = BELOW_SPEC)
@@ -627,8 +631,7 @@ public enum ConstraintKind {
      */
     @Relax(strategy = PREFERENCE)
     @Match(mode = CUSTOM, weight = 0.04, inGrade = false, order = 29)
-    LOW_RDS_ON("rds(on)", q -> "mosfet".equals(q.family()) || "transistor".equals(q.family()) ? Boolean.TRUE : null,
-            f -> null) {
+    LOW_RDS_ON("rds(on)", q -> ComponentFamily.has(q.family(), Trait.POLARISED) ? Boolean.TRUE : null, f -> null) {
         @Override
         public Outcome score(MatchContext c, double weight) {
             Double r = c.part().value(ParsedQuery.RESISTANCE);
@@ -745,15 +748,13 @@ public enum ConstraintKind {
     static final double LOW_DCR_REFERENCE_OHM = 0.01;
     /** On-resistance at which the {@link #LOW_RDS_ON} preference is half its weight. */
     static final double LOW_RDS_ON_REFERENCE_OHM = 0.01;
-    /** Families whose diodes are specialised (a standard rectifier is none of them). */
-    private static final Set<String> DIODE_KINDS = Set.of("schottky", "zener", "tvs", "led");
     private static final List<String> PRIMARY_KINDS = List.of(ParsedQuery.CAPACITANCE, ParsedQuery.RESISTANCE,
             ParsedQuery.INDUCTANCE, ParsedQuery.IMPEDANCE);
 
     private final String label;
     /** The {@link ParsedQuery} constraint kind of a numeric attribute, else null. */
     private final String measure;
-    /** The families an exact rating applies to; empty for every family no exact rating of the measure claims. */
+    /** The family labels an exact rating applies to; empty for every family no exact rating of the measure claims. */
     private final Set<String> onlyFor;
     private final Function<ParsedQuery, Object> wanted;
     private final Function<PartFeatures, Object> actual;
@@ -771,10 +772,10 @@ public enum ConstraintKind {
     }
 
     /** A numeric constraint of {@code measure}; with {@code onlyFor}, an exact rating of those families. */
-    ConstraintKind(String label, String measure, String... onlyFor) {
+    ConstraintKind(String label, String measure, ComponentFamily... onlyFor) {
         this.label = label;
         this.measure = measure;
-        this.onlyFor = Set.of(onlyFor);
+        this.onlyFor = Arrays.stream(onlyFor).map(ComponentFamily::label).collect(Collectors.toUnmodifiableSet());
         this.wanted = null;
         this.actual = null;
     }
@@ -840,7 +841,7 @@ public enum ConstraintKind {
     }
 
     private void validate() {
-        long general = relax.stream().filter(r -> r.families().length == 0).count();
+        long general = relax.stream().filter(ConstraintKind::isGeneral).count();
         if (general != 1) {
             throw new IllegalStateException(this + " needs exactly one general @Relax, has " + general);
         }
@@ -887,8 +888,11 @@ public enum ConstraintKind {
         return general().strategy();
     }
 
-    /** The declared strategy for a policy family: its own declaration, then {@link Relax#ALL}, then the general one. */
-    public RelaxStrategy strategy(String family) {
+    /**
+     * The declared strategy for a policy family: its own declaration, then the {@link Relax#allFamilies()} one, then
+     * the general one.
+     */
+    public RelaxStrategy strategy(PolicyFamily family) {
         return declaration(family).strategy();
     }
 
@@ -898,53 +902,39 @@ public enum ConstraintKind {
     }
 
     /** The declared cost of a relaxed mismatch for a policy family, -1 for the {@link Match#weight()}. */
-    public double cost(String family) {
+    public double cost(PolicyFamily family) {
         return declaration(family).cost();
     }
 
     private Relax general() {
-        return relax.stream().filter(r -> r.families().length == 0).findFirst().orElseThrow();
+        return relax.stream().filter(ConstraintKind::isGeneral).findFirst().orElseThrow();
     }
 
-    private Relax declaration(String family) {
-        Relax wildcard = null;
-        for (Relax r : relax) {
-            for (String f : r.families()) {
-                if (f.equals(family)) {
-                    return r;
-                }
-                if (Relax.ALL.equals(f)) {
-                    wildcard = r;
-                }
-            }
-        }
-        return wildcard != null ? wildcard : general();
+    private static boolean isGeneral(Relax r) {
+        return r.families().length == 0 && !r.allFamilies();
+    }
+
+    private Relax declaration(PolicyFamily family) {
+        return relax.stream().filter(r -> List.of(r.families()).contains(family)).findFirst()
+                .or(() -> relax.stream().filter(Relax::allFamilies).findFirst())
+                .orElseGet(this::general);
     }
 
     /**
      * The {@link Overshoot} declaration for a policy family (its own, else the general one), null when the kind
      * declares none.
      */
-    public Overshoot overshoot(String family) {
-        Overshoot general = null;
-        for (Overshoot o : overshoot) {
-            if (o.families().length == 0) {
-                general = o;
-            }
-            for (String f : o.families()) {
-                if (f.equals(family)) {
-                    return o;
-                }
-            }
-        }
-        return general;
+    public Overshoot overshoot(PolicyFamily family) {
+        return overshoot.stream().filter(o -> List.of(o.families()).contains(family)).findFirst()
+                .or(() -> overshoot.stream().filter(o -> o.families().length == 0).findFirst())
+                .orElse(null);
     }
 
     /**
      * The overshoot penalty of a part rated {@code actual} for a request of {@code wanted} in a policy family: 0 up to
      * the declared ratio, then {@link Overshoot#perOctave()} per octave above it, up to {@link Overshoot#maxOctaves()}.
      */
-    public double overshootPenalty(String family, double wanted, double actual) {
+    public double overshootPenalty(PolicyFamily family, double wanted, double actual) {
         Overshoot o = overshoot(family);
         if (o == null || wanted <= 0 || actual <= wanted * o.ratio()) {
             return 0;
@@ -1109,7 +1099,7 @@ public enum ConstraintKind {
      */
     public static String primaryKind(ParsedQuery query) {
         String family = query.family();
-        boolean frequencyFamily = "crystal".equals(family) || "oscillator".equals(family);
+        boolean frequencyFamily = ComponentFamily.has(family, Trait.FREQUENCY_VALUED);
         if (!frequencyFamily) {
             for (String kind : PRIMARY_KINDS) {
                 if (query.constraint(kind) != null) {
@@ -1123,7 +1113,8 @@ public enum ConstraintKind {
 
     /** True when the request is a crystal with a capacitance: its load capacitance. */
     public static boolean isLoadCapacitance(ParsedQuery query) {
-        return "crystal".equals(query.family()) && query.constraint(ParsedQuery.CAPACITANCE) != null;
+        return ComponentFamily.CRYSTAL.label().equals(query.family())
+                && query.constraint(ParsedQuery.CAPACITANCE) != null;
     }
 
     /**
@@ -1219,10 +1210,10 @@ public enum ConstraintKind {
         String wanted = c.query().family();
         String actual = c.part().family();
         if (actual != null) {
-            if (actual.equals(wanted) || wanted.equals(c.parentFamily(actual))) {
+            if (actual.equals(wanted) || wanted.equals(ComponentFamily.parentOf(actual))) {
                 return 1;
             }
-            if (actual.equals(c.parentFamily(wanted))) {
+            if (actual.equals(ComponentFamily.parentOf(wanted))) {
                 return 0;   // generic part family, e.g. "diode" for a "schottky" request: neutral
             }
             return -1;
@@ -1245,19 +1236,23 @@ public enum ConstraintKind {
         PartFeatures f = c.part();
         String wanted = q.family();
         String actual = f.family();
-        if (!c.compatibleFamilies(wanted, actual)) {
+        if (!ComponentFamily.compatible(wanted, actual)) {
             return true;
         }
-        if ("diode".equals(wanted) && ParsedQuery.STANDARD.equals(q.subtype()) && actual != null
-                && DIODE_KINDS.contains(actual)) {
+        String diode = ComponentFamily.DIODE.label();
+        if (diode.equals(wanted) && ParsedQuery.STANDARD.equals(q.subtype()) && specialisedDiode(actual)) {
             return true;
         }
-        if (wanted != null && DIODE_KINDS.contains(wanted) && "diode".equals(actual)
-                && ParsedQuery.STANDARD.equals(f.subtype())) {
+        if (specialisedDiode(wanted) && diode.equals(actual) && ParsedQuery.STANDARD.equals(f.subtype())) {
             return true;
         }
-        return "regulator".equals(wanted) && q.subtype() != null && f.subtype() != null
+        return ComponentFamily.REGULATOR.label().equals(wanted) && q.subtype() != null && f.subtype() != null
                 && !q.subtype().equals(f.subtype());
+    }
+
+    /** A Schottky, Zener, TVS or LED family (a standard rectifier is none of them). */
+    private static boolean specialisedDiode(String family) {
+        return ComponentFamily.DIODE.label().equals(ComponentFamily.parentOf(family));
     }
 
     private static boolean hybrid(PartFeatures f) {
@@ -1267,7 +1262,7 @@ public enum ConstraintKind {
     /** A single-element request (resistors, capacitors, ferrite beads) against an array or network. */
     private static boolean singleWantedArrayFound(MatchContext c) {
         ParsedQuery q = c.query();
-        return q.elements() == null && c.part().elements() != null && q.family() != null && c.arrayFamily(q.family());
+        return q.elements() == null && c.part().elements() != null && ComponentFamily.has(q.family(), Trait.ARRAYS);
     }
 
     /** The connector attributes of a USB request, else null. */

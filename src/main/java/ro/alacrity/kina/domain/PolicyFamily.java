@@ -1,53 +1,50 @@
 package ro.alacrity.kina.domain;
 
-import lombok.experimental.UtilityClass;
-
-import java.util.List;
+import java.util.Locale;
 
 /**
- * The policy families of the hard-constraint table (DESIGN.md 3.4): the keys of
- * {@code kina.search.hard-constraints} and of {@link Relax#families()}.
+ * The policy families of the hard-constraint table (DESIGN.md 3.4), in table order: the entries of
+ * {@link Relax#families()} and {@link Overshoot#families()}; their {@link #key()} is the key of
+ * {@code kina.search.hard-constraints}.
  */
-@UtilityClass
-public class PolicyFamily {
+public enum PolicyFamily {
 
-    public static final String RESISTOR = "resistor";
-    public static final String CAPACITOR = "capacitor";
-    public static final String INDUCTOR = "inductor";
-    public static final String FERRITE = "ferrite";
-    public static final String CRYSTAL = "crystal";
-    public static final String OSCILLATOR = "oscillator";
+    RESISTOR, CAPACITOR, INDUCTOR, FERRITE, CRYSTAL, OSCILLATOR,
     /** Diodes of every kind: standard, Schottky, Zener, TVS, LED. */
-    public static final String DIODE = "diode";
+    DIODE,
     /** Transistors and MOSFETs. */
-    public static final String TRANSISTOR = "transistor";
-    public static final String REGULATOR = "regulator";
-    public static final String CONNECTOR = "connector";
-    public static final String USB = "usb";
+    TRANSISTOR,
+    REGULATOR, CONNECTOR, USB,
     /** Every other family, and requests whose family is not known. */
-    public static final String DEFAULT = "default";
+    DEFAULT;
 
-    /** Every policy family, in table order. */
-    public static final List<String> ALL = List.of(RESISTOR, CAPACITOR, INDUCTOR, FERRITE, CRYSTAL, OSCILLATOR, DIODE,
-            TRANSISTOR, REGULATOR, CONNECTOR, USB, DEFAULT);
+    /** The configuration and wire name ({@code resistor}, {@code usb}, {@code default}). */
+    public String key() {
+        return name().toLowerCase(Locale.ROOT);
+    }
 
-    /** The policy family of a request: its component family, {@link #USB} for USB connectors, else {@link #DEFAULT}. */
-    public static String of(ParsedQuery query) {
+    /** The family of a configuration key (any case), null when none has it. */
+    public static PolicyFamily byKey(String key) {
+        for (PolicyFamily family : values()) {
+            if (family.key().equalsIgnoreCase(key)) {
+                return family;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The policy family of a request: {@link #USB} or {@link #CONNECTOR} for a connector request, else the policy
+     * family of its component family ({@link ComponentFamily#policy()}), {@link #DEFAULT} when that is not known.
+     */
+    public static PolicyFamily of(ParsedQuery query) {
         if (query == null) {
             return DEFAULT;
         }
         if (query.isConnector()) {
             return query.connector().isUsb() ? USB : CONNECTOR;
         }
-        String family = query.family();
-        if (family == null) {
-            return DEFAULT;
-        }
-        return switch (family) {
-            case RESISTOR, CAPACITOR, INDUCTOR, FERRITE, CRYSTAL, OSCILLATOR, REGULATOR, CONNECTOR -> family;
-            case "diode", "schottky", "zener", "tvs", "led" -> DIODE;
-            case "transistor", "mosfet" -> TRANSISTOR;
-            default -> DEFAULT;
-        };
+        ComponentFamily family = ComponentFamily.of(query.family());
+        return family == null ? DEFAULT : family.policy();
     }
 }

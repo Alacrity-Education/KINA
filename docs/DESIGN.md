@@ -32,7 +32,8 @@ ro.alacrity.kina
 ├── KinaApplication
 ├── config/          KinaProperties (@ConfigurationProperties("kina")), HTTP client beans, Jackson, forwarded headers
 ├── domain/          Distributor, Part, PriceBreak, ParsedQuery, SearchRequest, SearchResponse DTOs, RankingMode,
-│                    ConstraintKind (@Relax, @Match, RelaxStrategy, MatchMode), PolicyFamily, PartFeatures, MatchContext
+│                    ConstraintKind (@Relax, @Match, RelaxStrategy, MatchMode), ComponentFamily, PolicyFamily,
+│                    PartFeatures, MatchContext
 ├── distributor/     DistributorClient, DistributorSearchPage, DistributorException, DistributorRegistry
 │   ├── mouser/      MouserClient, MouserProperties, response records, MouserPartMapper
 │   ├── tme/         TmeClient, TmeTokenManager, TmeProperties, response records, TmePartMapper
@@ -858,8 +859,8 @@ them. Change a rule on the constant, not in the ranker.
   minimum above the request is preferred less the further it is) and `PREFERENCE` (score only, never in the grade, for
   example `low dcr`). `cost` is the score cost of a relaxed miss (-1, the default everywhere, uses the `@Match`
   weight). Each kind has one general declaration without `families`: the strategy when a family does not make the
-  kind hard. Family-specific declarations name the families (`Relax.ALL` for every family). Resolution: the family's
-  own declaration, then `Relax.ALL`, then the general one; `kina.search.hard-constraints.<family>` then replaces a
+  kind hard. Family-specific declarations name the `PolicyFamily` constants (`allFamilies = true` for every family).
+  Resolution: the family's own declaration, then the `allFamilies` one, then the general one; `kina.search.hard-constraints.<family>` then replaces a
   family's declared table (listed kinds `NEVER`, the others their general strategy).
 - `@Overshoot(ratio, perOctave, maxOctaves, families)` (repeatable, on an `AT_LEAST` rating) declares a score penalty
   for a rating far above the request ("Rating overshoot" above); resolved like `@Relax`: the family's own declaration,
@@ -885,6 +886,14 @@ them. Change a rule on the constant, not in the ranker.
   gender, orientation and mounting. The policy names are the labels of the kinds that are `NEVER` for some family or
   `LADDER`.
 
+**Component families** (`domain.ComponentFamily`). Every family the parser can name is one constant with its label (the
+`family` of a request and the `Family` attribute), its parent (`schottky`, `zener`, `tvs` and `led` specialise `diode`,
+`mosfet` specialises `transistor`), its policy family and its traits: `PASSIVE` (resistors, capacitors, inductors,
+ferrite beads: chip package codes, form factor classes, dimensions, qualification, features), `ARRAYS` (resistors,
+capacitors, ferrite beads), `INDUCTIVE` (inductors, ferrite beads), `FREQUENCY_VALUED` (crystals, oscillators),
+`LARGEST_VOLTAGE` and `POLARISED` (transistors and MOSFETs: polarity and on-resistance). The words that name a family
+stay in `Recognizers`; `ComponentFamilyTest` checks that they name exactly the declared families.
+
 **Hard constraints** (declared on `ConstraintKind` with `@Relax`, read by `search.ConstraintPolicy`; user decision
 2026-10-07; they replace the former strict constraints). A hard constraint is never relaxed: when the request states it and the part's **known** value
 contradicts it, the part is excluded before ranking and counted in `excluded_by_constraints` and, under the first
@@ -895,7 +904,8 @@ reason to exclude: the ladder may loosen it (section 3.2), the part lists the mi
 constraint in `constraints_relaxed`. The decided table (`ConstraintPolicy.DEFAULT_HARD`) is rendered from the
 declarations below; `ConstraintTableDocumentationTest` renders it again and fails when this copy differs. The policy
 family of a request (`PolicyFamily.of`) is its family, `diode` for Schottky, Zener, TVS and LED, `transistor` for
-MOSFETs, `usb` for USB connectors and `default` for any other or unknown family. Hard kinds are listed in check order,
+MOSFETs, `usb` for USB connectors and `default` for any other or unknown family; each `domain.ComponentFamily` declares
+its policy family. Hard kinds are listed in check order,
 relaxable ones in ladder order. Every other policy kind is soft for the family: it is ranked and graded, a miss is a
 mismatch, it never excludes a part and the ladder has no step for it (for example the value of a diode). The notes on
 each kind (resistance, capacitance, "a higher USB standard is accepted"...) are in the checks below.
@@ -943,7 +953,7 @@ The checks, in this order (the first conflict names the part's entry in the deta
   description, because JLCPCB lists values unlabelled and sorted as text, `1.1V@(800mA) 15V 1A 3.3V` for an
   AMS1117-3.3; ranges `25.1V~28.9V`, `1.8V - 3.3V` and conditioned values `100nA@0.8V` are left out). A regulator's
   `Output voltage` and a Zener's `Zener voltage` attribute come before any other voltage attribute.
-  **Voltage of transistors and diodes** (`ParametricExtractor.LARGEST_VOLTAGE_FAMILIES`: transistor, MOSFET, diode,
+  **Voltage of transistors and diodes** (the `LARGEST_VOLTAGE` trait of `ComponentFamily`: transistor, MOSFET, diode,
   Schottky): when no attribute states the voltage, the rating (Vds, Vrrm) is the **largest** single voltage of the
   description, not the first. JLCPCB lists a MOSFET's gate threshold before its drain-source rating when that sorts
   first as text (`1.45V 1.4W 30V` for AO3400A, `1 N-channel 1.2V ... 20V` for SI2302, `±20V` after `60V` for 2N7002),
@@ -1295,9 +1305,10 @@ numbers, only counts with the bounded tags below.
 
 **Metrics.** Prefix `kina_`. The distributor tag is the enum name (`LCSC`, `TME`, `MOUSER`). The `type` tag of the
 search counters is the component type of the query: the parser family (`ParsedQuery.family()`, section 3.4) in lower
-case, one of `capacitor`, `resistor`, `inductor`, `ferrite`, `diode`, `schottky`, `zener`, `led`, `mosfet`,
-`transistor`, `regulator`, `opamp`, `comparator`, `mcu`, `crystal`, `oscillator`, `connector`, `fuse`, `tvs`, `relay`,
-`switch` (the families of `Recognizers`, `QueryParser.families()`), or `unknown` when the parser recognised no family.
+case, one of `resistor`, `capacitor`, `inductor`, `ferrite`, `crystal`, `oscillator`, `diode`, `schottky`, `zener`,
+`tvs`, `led`, `transistor`, `mosfet`, `gate driver`, `regulator`, `opamp`, `comparator`, `mcu`, `connector`, `fuse`,
+`relay`, `switch` (the labels of `domain.ComponentFamily`, `QueryParser.families()`), or `unknown` when the parser
+recognised no family.
 No other value is possible (connector and USB sub-types are not tags), so the tag set stays bounded.
 
 | Metric | Type | Tags | Meaning |

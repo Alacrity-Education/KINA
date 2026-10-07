@@ -1,6 +1,8 @@
 package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
+import ro.alacrity.kina.domain.ComponentFamily;
+import ro.alacrity.kina.domain.ComponentFamily.Trait;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.util.List;
@@ -47,9 +49,6 @@ public class FormFactor {
     /** Every class, in documentation order. */
     public static final List<String> CLASSES = List.of(CHIP, THROUGH_HOLE, CHASSIS, POWER_PACKAGE, POWER_SMD);
 
-    /** Families whose form factor KINA reads (null family included). */
-    static final Set<String> FAMILIES = Set.of("resistor", "capacitor", "inductor", "ferrite");
-
     /** Chip codes beyond {@link Recognizers#isChipCode} that name chip resistors (wide-terminal and power chips). */
     private static final Set<String> EXTRA_CHIP_CODES = Set.of("1225", "2728", "4527", "0612", "1218");
 
@@ -72,7 +71,7 @@ public class FormFactor {
 
     /** True when KINA reads a form factor for {@code family} (passives, and an unknown family). */
     public static boolean applies(String family) {
-        return family == null || FAMILIES.contains(family);
+        return family == null || ComponentFamily.has(family, Trait.PASSIVE);
     }
 
     /** The class a package names ({@code SOT-227} -&gt; power_package, {@code 0805} -&gt; chip), or null. */
