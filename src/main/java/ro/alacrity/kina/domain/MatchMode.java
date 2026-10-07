@@ -18,6 +18,9 @@ public enum MatchMode {
     /** The same value within the relative {@link Match#tolerance()}. */
     WITHIN,
 
+    /** A feature the request names: a part that has it earns the weight, one without it earns nothing. */
+    FEATURE,
+
     /**
      * A graded comparison by the constant's own comparator: 1 same or compatible, -1 a different known value, a value
      * between for a partial match, 0 when not comparable.

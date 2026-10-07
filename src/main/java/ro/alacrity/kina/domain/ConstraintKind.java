@@ -1,6 +1,7 @@
 package ro.alacrity.kina.domain;
 
 import ro.alacrity.kina.domain.ComponentFamily.Trait;
+import ro.alacrity.kina.domain.ParsedQuery.Connector;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import static ro.alacrity.kina.domain.MatchMode.COMPATIBLE;
 import static ro.alacrity.kina.domain.MatchMode.CUSTOM;
 import static ro.alacrity.kina.domain.MatchMode.EQUAL;
 import static ro.alacrity.kina.domain.MatchMode.EQUAL_IGNORE_CASE;
+import static ro.alacrity.kina.domain.MatchMode.FEATURE;
 import static ro.alacrity.kina.domain.MatchMode.WITHIN;
 import static ro.alacrity.kina.domain.PolicyFamily.CAPACITOR;
 import static ro.alacrity.kina.domain.PolicyFamily.CRYSTAL;
@@ -327,7 +329,7 @@ public enum ConstraintKind {
             if (wanted == null) {
                 return Outcome.NOT_STATED;
             }
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector actual = c.part().connector();
             if (actual == null) {
                 return Outcome.UNKNOWN;
             }
@@ -341,7 +343,7 @@ public enum ConstraintKind {
         @Override
         public Verdict conflict(MatchContext c) {
             String wanted = wantedUsbType(c);
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector actual = c.part().connector();
             if (wanted == null || actual == null) {
                 return Verdict.MATCH;
             }
@@ -361,17 +363,17 @@ public enum ConstraintKind {
     PIN_CONFIGURATION("pin configuration", q -> usb(q) == null ? null : wantedPins(q), f -> null) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
-            ParsedQuery.Connector c = usb(q);
+            Connector c = usb(q);
             return c != null && c.pinConfiguration() != null && !c.pinConfigurationImplied();
         }
 
         @Override
         public Outcome score(MatchContext c, double weight) {
-            ParsedQuery.Connector wanted = usb(c.query());
+            Connector wanted = usb(c.query());
             if (wanted == null || wanted.pinConfiguration() == null && wanted.positions() == null) {
                 return Outcome.NOT_STATED;
             }
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector actual = c.part().connector();
             Integer actualPins = actual == null ? null : actualPins(c, actual);
             if (actualPins == null) {
                 return Outcome.UNKNOWN;
@@ -382,8 +384,8 @@ public enum ConstraintKind {
 
         @Override
         public Verdict conflict(MatchContext c) {
-            ParsedQuery.Connector wanted = usb(c.query());
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector wanted = usb(c.query());
+            Connector actual = c.part().connector();
             if (wanted == null || actual == null || wanted.pinConfigurationImplied()) {
                 return Verdict.MATCH;
             }
@@ -401,14 +403,14 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.USB)
     @Match(mode = CUSTOM, weight = 0.20, scope = USB, order = 3)
-    USB_STANDARD("usb standard", q -> usb(q) == null ? null : usb(q).usbStandard(), f -> null) {
+    USB_STANDARD("usb standard", usbWanted(Connector::usbStandard), f -> null) {
         @Override
         public Outcome score(MatchContext c, double weight) {
             String wanted = (String) wanted(c.query());
             if (wanted == null || !c.knownUsbStandard(wanted)) {
                 return Outcome.NOT_STATED;
             }
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector actual = c.part().connector();
             if (actual == null) {
                 return Outcome.UNKNOWN;
             }
@@ -425,7 +427,7 @@ public enum ConstraintKind {
         @Override
         public Verdict conflict(MatchContext c) {
             String wanted = (String) wanted(c.query());
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector actual = c.part().connector();
             if (wanted == null || actual == null || !c.knownUsbStandard(wanted)) {
                 return Verdict.MATCH;
             }
@@ -438,23 +440,23 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.CONNECTOR)
     @Match(mode = CUSTOM, weight = 0.10, scope = CONNECTOR, order = 7)
-    CONNECTOR_TYPE("connector type", q -> other(q) == null ? null : other(q).type(), f -> null) {
+    CONNECTOR_TYPE("connector type", otherWanted(Connector::type), f -> null) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
-            ParsedQuery.Connector c = other(q);
+            Connector c = other(q);
             return c != null && c.type() != null && !ParsedQuery.CONNECTOR.equals(c.type());
         }
 
         @Override
         public Outcome score(MatchContext c, double weight) {
-            ParsedQuery.Connector wanted = other(c.query());
+            Connector wanted = other(c.query());
             if (wanted == null) {
                 return Outcome.NOT_STATED;
             }
             String type = wanted.type();
             boolean specific = type != null && !ParsedQuery.CONNECTOR.equals(type) && !ParsedQuery.HEADER.equals(type)
                     && !ParsedQuery.USB.equals(type);
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector actual = c.part().connector();
             Boolean same = actual == null ? null : c.connectorTypesMatch(type, actual.type());
             if (same == null) {
                 return specific ? Outcome.UNKNOWN : Outcome.NOT_STATED;
@@ -465,8 +467,8 @@ public enum ConstraintKind {
 
         @Override
         public Verdict conflict(MatchContext c) {
-            ParsedQuery.Connector wanted = other(c.query());
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector wanted = other(c.query());
+            Connector actual = c.part().connector();
             return wanted != null && actual != null
                     && c.connectorTypesMatch(wanted.type(), actual.type()) == Boolean.FALSE
                     ? Verdict.CONFLICT : Verdict.MATCH;
@@ -477,15 +479,13 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.CONNECTOR)
     @Match(mode = EQUAL, weight = 0.30, scope = CONNECTOR, order = 1, report = 19)
-    POSITIONS("positions", q -> other(q) == null ? null : other(q).positions(),
-            f -> f.connector() == null ? null : f.connector().positions()),
+    POSITIONS("positions", otherWanted(Connector::positions), partConnector(Connector::positions)),
 
     /** The contact pitch, within 0.03 mm (2.54 mm == 0.1"). */
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.CONNECTOR)
     @Match(mode = CUSTOM, weight = 0.15, scope = CONNECTOR, order = 6, report = 21)
-    PITCH("pitch", q -> other(q) == null ? null : other(q).pitchMm(),
-            f -> f.connector() == null ? null : f.connector().pitchMm()) {
+    PITCH("pitch", otherWanted(Connector::pitchMm), partConnector(Connector::pitchMm)) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
             return grade(Math.abs((Double) wanted - (Double) actual) <= PITCH_TOLERANCE_MM);
@@ -502,8 +502,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {PolicyFamily.CONNECTOR, PolicyFamily.USB})
     @Match(mode = EQUAL, weight = 0.20, scope = CONNECTOR, order = 4, report = 20)
-    GENDER("gender", q -> q.connector() == null ? null : q.connector().gender(),
-            f -> f.connector() == null ? null : f.connector().gender()) {
+    GENDER("gender", anyWanted(Connector::gender), partConnector(Connector::gender)) {
         @Override
         public String mismatch(MatchContext c) {
             return other(c.query()) == null ? null : super.mismatch(c);
@@ -513,8 +512,8 @@ public enum ConstraintKind {
     /** Right angle or vertical; for USB connectors scored as {@link #USB_ORIENTATION}. */
     @Relax(strategy = LADDER, order = 3)
     @Match(mode = EQUAL, weight = 0.15, scope = CONNECTOR, order = 5, report = 22)
-    ORIENTATION("orientation", q -> q.connector() == null ? null : q.connector().orientation(),
-            f -> f.connector() == null ? null : f.connector().orientation()) {
+    ORIENTATION("orientation", anyWanted(Connector::orientation),
+            partConnector(Connector::orientation)) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
             return false;
@@ -643,8 +642,7 @@ public enum ConstraintKind {
     /** Rows of a connector: a different row count costs the weight, the same earns nothing. */
     @Relax(strategy = SOFT)
     @Match(mode = CUSTOM, weight = 0.10, scope = CONNECTOR, order = 2)
-    ROWS("rows", q -> other(q) == null ? null : other(q).rows(),
-            f -> f.connector() == null ? null : f.connector().rows()) {
+    ROWS("rows", otherWanted(Connector::rows), partConnector(Connector::rows)) {
         @Override
         public Outcome score(MatchContext c, double weight) {
             Object wanted = wanted(c.query());
@@ -660,8 +658,8 @@ public enum ConstraintKind {
     SINGLE_ROW("rows", q -> null, f -> null) {
         @Override
         public Outcome score(MatchContext c, double weight) {
-            ParsedQuery.Connector wanted = other(c.query());
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector wanted = other(c.query());
+            Connector actual = c.part().connector();
             return wanted != null && actual != null && wanted.rows() == null && wanted.positions() != null
                     && actual.rows() != null && actual.rows() > 1 && c.isHeader(wanted.type())
                     ? Outcome.uncounted(-weight) : Outcome.NOT_STATED;
@@ -683,8 +681,7 @@ public enum ConstraintKind {
     /** Gender of a USB connector. */
     @Relax(strategy = SOFT)
     @Match(mode = EQUAL, weight = 0.15, scope = USB, order = 4)
-    USB_GENDER("gender", q -> usb(q) == null ? null : usb(q).gender(),
-            f -> f.connector() == null ? null : f.connector().gender()),
+    USB_GENDER("gender", usbWanted(Connector::gender), partConnector(Connector::gender)),
 
     /**
      * Mounting of a USB connector: a requested mid-mount / hybrid / top-mount style against the part's style, else
@@ -695,11 +692,11 @@ public enum ConstraintKind {
     USB_MOUNTING("mounting", q -> null, f -> null) {
         @Override
         public Outcome score(MatchContext c, double weight) {
-            ParsedQuery.Connector wanted = usb(c.query());
+            Connector wanted = usb(c.query());
             if (wanted == null || wanted.mountingStyle() == null && c.query().mounting() == null) {
                 return Outcome.NOT_STATED;
             }
-            ParsedQuery.Connector actual = c.part().connector();
+            Connector actual = c.part().connector();
             Double m = actual == null ? null
                     : usbMounting(wanted.mountingStyle(), c.query().mounting(), actual, c.part().mounting());
             return m == null ? Outcome.UNKNOWN : Outcome.counted(weight * m, weight);
@@ -709,38 +706,23 @@ public enum ConstraintKind {
     /** Orientation of a USB connector. */
     @Relax(strategy = SOFT)
     @Match(mode = EQUAL, weight = 0.05, scope = USB, order = 6)
-    USB_ORIENTATION("orientation", q -> usb(q) == null ? null : usb(q).orientation(),
-            f -> f.connector() == null ? null : f.connector().orientation()),
+    USB_ORIENTATION("orientation", usbWanted(Connector::orientation),
+            partConnector(Connector::orientation)),
 
     /** A requested waterproof USB connector: earned when the part is. */
     @Relax(strategy = SOFT)
-    @Match(mode = CUSTOM, weight = 0.03, scope = USB, order = 7)
-    WATERPROOF(ParsedQuery.WATERPROOF, q -> null, f -> null) {
-        @Override
-        public Outcome score(MatchContext c, double weight) {
-            return feature(c, weight, ParsedQuery.WATERPROOF);
-        }
-    },
+    @Match(mode = FEATURE, weight = 0.03, scope = USB, order = 7)
+    WATERPROOF(ParsedQuery.WATERPROOF),
 
     /** A requested board lock: earned when the part has one. */
     @Relax(strategy = SOFT)
-    @Match(mode = CUSTOM, weight = 0.03, scope = USB, order = 8)
-    BOARD_LOCK(ParsedQuery.BOARD_LOCK, q -> null, f -> null) {
-        @Override
-        public Outcome score(MatchContext c, double weight) {
-            return feature(c, weight, ParsedQuery.BOARD_LOCK);
-        }
-    },
+    @Match(mode = FEATURE, weight = 0.03, scope = USB, order = 8)
+    BOARD_LOCK(ParsedQuery.BOARD_LOCK),
 
     /** A requested power-only USB connector: earned when the part is one. */
     @Relax(strategy = SOFT)
-    @Match(mode = CUSTOM, weight = 0.03, scope = USB, order = 9)
-    POWER_ONLY(ParsedQuery.POWER_ONLY, q -> null, f -> null) {
-        @Override
-        public Outcome score(MatchContext c, double weight) {
-            return feature(c, weight, ParsedQuery.POWER_ONLY);
-        }
-    };
+    @Match(mode = FEATURE, weight = 0.03, scope = USB, order = 9)
+    POWER_ONLY(ParsedQuery.POWER_ONLY);
 
     /** Absolute tolerance for "same pitch" in millimetres (2.54 == 0.1" == 2.540). */
     public static final double PITCH_TOLERANCE_MM = 0.03;
@@ -769,6 +751,12 @@ public enum ConstraintKind {
         this.onlyFor = Set.of();
         this.wanted = wanted;
         this.actual = actual;
+    }
+
+    /** A USB feature ({@link ParsedQuery#WATERPROOF}...): wanted when the request names it, the part has it or not. */
+    ConstraintKind(String usbFeature) {
+        this(usbFeature, q -> usb(q) != null && usb(q).hasFeature(usbFeature) ? Boolean.TRUE : null,
+                f -> f.connector() != null && f.connector().hasFeature(usbFeature));
     }
 
     /** A numeric constraint of {@code measure}; with {@code onlyFor}, an exact rating of those families. */
@@ -1029,6 +1017,7 @@ public enum ConstraintKind {
             case AT_LEAST -> grade(number(actual) >= number(wanted) * (1 - tolerance));
             case AT_MOST -> grade(number(actual) <= number(wanted) * (1 + tolerance));
             case WITHIN -> grade(sameValue(number(wanted), number(actual), tolerance));
+            case FEATURE -> (Boolean) actual ? 1.0 : 0.0;
             case COMPATIBLE, CUSTOM -> throw new IllegalStateException(this + " declares its own comparison");
         };
     }
@@ -1159,7 +1148,7 @@ public enum ConstraintKind {
      * part's style (a part that does not say is unknown); else SMD/THT against the part's mounting, where a hybrid part
      * (SMD signal pins, through-hole shell legs) counts half for either.
      */
-    public static Double usbMounting(String wantedStyle, String wantedMounting, ParsedQuery.Connector actual,
+    public static Double usbMounting(String wantedStyle, String wantedMounting, Connector actual,
                                      String partMounting) {
         String actualStyle = actual.mountingStyle();
         if (wantedStyle != null && actualStyle != null) {
@@ -1266,60 +1255,71 @@ public enum ConstraintKind {
     }
 
     /** The connector attributes of a USB request, else null. */
-    private static ParsedQuery.Connector usb(ParsedQuery q) {
+    private static Connector usb(ParsedQuery q) {
         return q.connector() != null && q.connector().isUsb() ? q.connector() : null;
     }
 
     /** The connector attributes of a request for another connector, else null. */
-    private static ParsedQuery.Connector other(ParsedQuery q) {
+    private static Connector other(ParsedQuery q) {
         return q.connector() != null && !q.connector().isUsb() ? q.connector() : null;
     }
 
     /** The USB type of a USB request: as stated, else implied by its connector type; null when neither says. */
     private static String wantedUsbType(MatchContext c) {
-        ParsedQuery.Connector wanted = usb(c.query());
+        Connector wanted = usb(c.query());
         return wanted == null ? null : usbType(c, wanted);
     }
 
     /** The stated pin configuration or positions of a USB request (for statedness; compared canonically). */
     private static Integer wantedPins(ParsedQuery q) {
-        ParsedQuery.Connector c = usb(q);
+        Connector c = usb(q);
         return c.pinConfiguration() != null ? c.pinConfiguration() : c.positions();
     }
 
-    private static String usbType(MatchContext c, ParsedQuery.Connector connector) {
+    private static String usbType(MatchContext c, Connector connector) {
         return connector.usbType() != null ? connector.usbType() : c.usbTypeOf(connector.type());
     }
 
     /** The canonical pin configuration of a USB request. */
-    private static Integer wantedPins(MatchContext c, ParsedQuery.Connector wanted) {
+    private static Integer wantedPins(MatchContext c, Connector wanted) {
         Integer pins = wanted.pinConfiguration() != null ? wanted.pinConfiguration()
                 : c.usbConfiguration(usbType(c, wanted), wanted.positions());
         return pins != null ? pins : wanted.positions();
     }
 
     /** The canonical pin configuration of a USB part, read with the request's USB type. */
-    private static Integer actualPins(MatchContext c, ParsedQuery.Connector actual) {
-        ParsedQuery.Connector wanted = usb(c.query());
+    private static Integer actualPins(MatchContext c, Connector actual) {
+        Connector wanted = usb(c.query());
         return actual.pinConfiguration() != null ? actual.pinConfiguration()
                 : c.usbConfiguration(usbType(c, wanted), actual.positions());
     }
 
     /** A part that is a connector of another kind (a pin header, an RJ45 jack). */
-    private static boolean otherConnector(ParsedQuery.Connector actual) {
+    private static boolean otherConnector(Connector actual) {
         return !actual.isUsb() && actual.type() != null && !ParsedQuery.CONNECTOR.equals(actual.type());
     }
 
-    private static boolean powerOnly(ParsedQuery.Connector actual) {
+    private static boolean powerOnly(Connector actual) {
         return actual.hasFeature(ParsedQuery.POWER_ONLY) && actual.usbStandard() == null;
     }
 
-    private static Outcome feature(MatchContext c, double weight, String feature) {
-        ParsedQuery.Connector wanted = usb(c.query());
-        if (wanted == null || !wanted.hasFeature(feature)) {
-            return Outcome.NOT_STATED;
-        }
-        ParsedQuery.Connector actual = c.part().connector();
-        return Outcome.counted(actual != null && actual.hasFeature(feature) ? weight : 0, weight);
+    /** An attribute of a USB request ({@code null} for any other request). */
+    private static Function<ParsedQuery, Object> usbWanted(Function<Connector, Object> attribute) {
+        return q -> usb(q) == null ? null : attribute.apply(usb(q));
+    }
+
+    /** An attribute of a request for a connector other than USB ({@code null} for any other request). */
+    private static Function<ParsedQuery, Object> otherWanted(Function<Connector, Object> attribute) {
+        return q -> other(q) == null ? null : attribute.apply(other(q));
+    }
+
+    /** An attribute of any connector request ({@code null} for a part request). */
+    private static Function<ParsedQuery, Object> anyWanted(Function<Connector, Object> attribute) {
+        return q -> q.connector() == null ? null : attribute.apply(q.connector());
+    }
+
+    /** An attribute of the part's connector details ({@code null} when it has none). */
+    private static Function<PartFeatures, Object> partConnector(Function<Connector, Object> attribute) {
+        return f -> f.connector() == null ? null : attribute.apply(f.connector());
     }
 }

@@ -867,6 +867,7 @@ them. Change a rule on the constant, not in the ranker.
   then the general one.
 - `@Match(mode, tolerance, weight, group, inGrade, scope, order, report)` declares the comparison. `MatchMode`:
   `EQUAL`, `EQUAL_IGNORE_CASE`, `AT_LEAST` and `AT_MOST` (relative `tolerance`), `WITHIN` (relative `tolerance`),
+  `FEATURE` (a USB feature the request names: a part that has it earns the weight, one without it earns nothing),
   `COMPATIBLE` (a graded comparison such as the technology) and `CUSTOM` (the constant's own comparator: the type and
   family, the package, form factor, elements, connector and USB rules). A match earns `weight`, a miss loses it, an
   attribute the part does not state is unverified. The ratings form the group `rating`: its weight (0.10) is shared
