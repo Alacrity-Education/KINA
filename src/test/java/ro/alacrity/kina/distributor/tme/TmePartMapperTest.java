@@ -61,7 +61,7 @@ class TmePartMapperTest {
         assertThat(part.prices()).extracting(PriceBreak::quantity).isSorted();
         assertThat(part.datasheetUrl()).isEqualTo("https://www.tme.eu/Document/7da762c1dbaf553c64ad9c40d3603826/mlcc_samsung.pdf");
         assertThat(part.photoUrl()).startsWith("https://ce8dc832c.cloudimg.io/v7/_cdn_/DA/F2/B0/00/1/733101_1.jpg?width=640");
-        assertThat(part.productUrl()).isEqualTo("https://www.tme.eu/en/details/CL21B106KPQNNNE/");
+        assertThat(part.productUrl()).isEqualTo("https://www.tme.eu/en/details/cl21b106kpqnnne/");
         assertThat(part.attributes()).contains(
                 entry("Manufacturer", "SAMSUNG"),
                 entry("Capacitance", "10µF"),
@@ -102,7 +102,7 @@ class TmePartMapperTest {
         // GRM21BR71A106KE51L only has LNK (link .txt) and YTB documents: the TME product page stands in
         assertThat(TmePartMapper.datasheetUrl(files.get("GRM21BR71A106KE51L"))).isNull();
         Part noSheet = map("GRM21BR71A106KE51L").orElseThrow();
-        assertThat(noSheet.datasheetUrl()).isEqualTo("https://www.tme.eu/en/details/GRM21BR71A106KE51L/");
+        assertThat(noSheet.datasheetUrl()).isEqualTo("https://www.tme.eu/en/details/grm21br71a106ke51l/");
         assertThat(noSheet.extra()).containsEntry("datasheet_source", "product_page");
         assertThat(TmePartMapper.datasheetUrl(files.get("CS2012X7R106K160NR")))
                 .isEqualTo("https://www.tme.eu/Document/15a3409220a9cd1969199d6f4e29e942/CS.pdf");
@@ -148,7 +148,7 @@ class TmePartMapperTest {
         assertThat(part.manufacturerPartNumber()).isEqualTo("BC847B");
         assertThat(part.extra()).containsEntry("product_status", List.of());
         assertThat(part.prices()).isEmpty();
-        assertThat(part.datasheetUrl()).isEqualTo("https://www.tme.eu/en/details/BC847B-DIO/");
+        assertThat(part.datasheetUrl()).isEqualTo("https://www.tme.eu/en/details/bc847b-dio/");
     }
 
     @Test
@@ -219,9 +219,17 @@ class TmePartMapperTest {
         assertThat(part.photoUrl()).isNull();
         assertThat(part.minimumOrderQuantity()).isNull();
         assertThat(part.attributes()).isEmpty();
-        assertThat(part.productUrl()).isEqualTo("https://www.tme.eu/en/details/ABC%2F1/");
+        assertThat(part.productUrl()).isEqualTo("https://www.tme.eu/en/details/abc_1/");
         assertThat(part.prices()).extracting(PriceBreak::quantity).containsExactly(1, 100);
         assertThat(part.extra()).containsEntry("special_prices", true).doesNotContainKey("tax_rate");
+    }
+
+    @Test
+    void productUrlUsesTheLowerCaseSymbolWithUnderscoresForSlashes() {
+        assertThat(TmePartMapper.productUrl("DTMSS-20/0.010/20V"))
+                .isEqualTo("https://www.tme.eu/en/details/dtmss-20_0.010_20v/");
+        assertThat(TmePartMapper.productUrl("1N4148")).isEqualTo("https://www.tme.eu/en/details/1n4148/");
+        assertThat(TmePartMapper.productUrl("ABC 1")).isEqualTo("https://www.tme.eu/en/details/abc%201/");
     }
 
     private static TmeResponses.Parameter param(String name, String... values) {

@@ -267,6 +267,45 @@ class PartsApiTest {
     }
 
     @Test
+    void lookupByQueryParametersAcceptsEncodedSlashes() {
+        when(lookupService.lookup(Distributor.TME, "DTMSS-20/0.010/20V", false, 1, ResponseDetail.FULL))
+                .thenReturn(PartLookupResponse.found(Distributor.TME, "DTMSS-20/0.010/20V", CacheStatus.HIT,
+                        PartResponse.from(part())));
+        when(lookupService.lookup(Distributor.TME, "ABC/1", true, 5, ResponseDetail.FULL))
+                .thenReturn(PartLookupResponse.notFound(Distributor.TME, "ABC/1", CacheStatus.BYPASSED, null));
+
+        // a URI variable is encoded strictly: the request carries part_number=DTMSS-20%2F0.010%2F20V
+        client.get().uri("/api/v1/parts/lookup?distributor=TME&part_number={pn}", "DTMSS-20/0.010/20V")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.part_number").isEqualTo("CL21B106KPQNNNE")
+                .jsonPath("$.prices.length()").isEqualTo(3);
+        verify(lookupService).lookup(Distributor.TME, "DTMSS-20/0.010/20V", false, 1, ResponseDetail.FULL);
+
+        client.get().uri("/api/v1/parts/lookup?distributor=tme&part_number=ABC/1&bypass_cache=true&quantity=5")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectHeader().contentTypeCompatibleWith(PROBLEM)
+                .expectBody()
+                .jsonPath("$.part_number").isEqualTo("ABC/1")
+                .jsonPath("$.reason").isEqualTo("not_found");
+
+        client.get().uri("/api/v1/parts/lookup?distributor=arrow&part_number=X1")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody().jsonPath("$.type").isEqualTo("urn:kina:problem:unknown-distributor");
+        client.get().uri("/api/v1/parts/lookup?distributor=TME")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentTypeCompatibleWith(PROBLEM);
+        client.get().uri("/api/v1/parts/lookup?distributor=TME&part_number={pn}", " ")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentTypeCompatibleWith(PROBLEM);
+    }
+
+    @Test
     void getPartOutOfStockIs404WithReasonAndIdentity() {
         when(lookupService.lookup(Distributor.MOUSER, "ERA6AEB5361V", false, 1, ResponseDetail.FULL))
                 .thenReturn(PartLookupResponse.outOfStock(Distributor.MOUSER, "ERA6AEB5361V", CacheStatus.MISS,

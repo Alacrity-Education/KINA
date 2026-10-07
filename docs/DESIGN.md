@@ -1700,7 +1700,7 @@ Tool parameter names are the Java parameter names (`-parameters`), so the tool m
 |---|---|
 | `GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=` | `SearchResponse`; `quantity` 1..10 000 000 (default 1), `detail` `compact` (default) or `full` |
 | `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case: `queries[{query, max_results, quantity}]`, `distributors`, `bypass_cache`, `detail`), returns `{results: [...]}` |
-| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; an MPN works as for `get_part`; a part listed without stock is returned with `stock` 0 and `availability.status` `out_of_stock`; 404 problem with `reason` `not_found` or `out_of_stock` (identity only: then also `identity`) |
+| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=` and `GET /api/v1/parts/lookup?distributor=&part_number=&bypass_cache=&quantity=&detail=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded (Tomcat rejects an encoded `%2F` in a path; the query form takes it); an MPN works as for `get_part`; a part listed without stock is returned with `stock` 0 and `availability.status` `out_of_stock`; 404 problem with `reason` `not_found` or `out_of_stock` (identity only: then also `identity`) |
 | `GET /api/v1/distributors` | same as `list_distributors` |
 | `GET /api/v1/metrics/summary` | key counters and every persisted counter and timer as JSON (section 3.7) |
 | `GET /actuator/health`, `GET /actuator/info`, `GET /actuator/prometheus` | management port only (`KINA_METRICS_PORT`, 9090), no authentication (section 3.7); not served on the main port |
@@ -2175,7 +2175,11 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   `prices.tax{type,rate}`. Stock = `stock_quantity`; drop when <= 0.
 - Parameters: `GET {base}/products/parameters?symbols[]=...&country=RO` (batch of up to 50) ->
   `data.elements[{symbol, parameters.elements[{id,name,values[{id,value}]}]}]`; map name -> values joined with `", "`.
-- `productUrl = https://www.tme.eu/en/details/<symbol>/`, `datasheetUrl` = first `/products/files` document with
+- `productUrl = https://www.tme.eu/en/details/<segment>/`, where `<segment>` is the symbol in lower case with every `/`
+  replaced by `_`, then encoded as a path segment (`DTMSS-20/0.010/20V` gives `.../details/dtmss-20_0.010_20v/`). TME
+  resolves this short form; an encoded `%2F` gives a 404 (verified 2026-10-07). The API returns no product page URL,
+  so it is built. Migration V13 rewrites TME rows cached with `%2F` (`productUrl`, and `datasheetUrl` when it was the
+  product page). `datasheetUrl` = first `/products/files` document with
   `type == "DTE"` (prefer PDF; one call per page, <= 50 symbols), else the first document whose file name or URL says
   `datasheet` / `data sheet`, else the product page (`productUrl`), whose documentation section links the
   manufacturer's files; `extra.datasheet_source` is `dte`, `document` or `product_page`. Verified live 2026-10-06: TME

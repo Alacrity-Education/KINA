@@ -82,8 +82,29 @@ public class PartsController {
                                 @Max(SearchRequest.MAX_QUANTITY) Integer quantity,
                                 @RequestParam(name = "detail", required = false) String detail,
                                 Authentication authentication) {
-        Distributor d = Distributor.parse(distributor);
         String number = partNumber.startsWith("/") ? partNumber.substring(1) : partNumber;
+        return lookup(distributor, number, bypassCache, quantity, detail, authentication);
+    }
+
+    /**
+     * {@code GET /api/v1/parts/lookup?distributor=&part_number=&bypass_cache=&quantity=&detail=}: the same lookup as
+     * {@link #getPart} with the part number in a query parameter, so a TME symbol containing {@code /} also works
+     * encoded ({@code %2F}), which Tomcat rejects in a path.
+     */
+    @GetMapping("/lookup")
+    public PartResponse lookupPart(@RequestParam("distributor") String distributor,
+                                   @RequestParam("part_number") String partNumber,
+                                   @RequestParam(name = "bypass_cache", defaultValue = "false") boolean bypassCache,
+                                   @RequestParam(name = "quantity", required = false) @Min(1)
+                                   @Max(SearchRequest.MAX_QUANTITY) Integer quantity,
+                                   @RequestParam(name = "detail", required = false) String detail,
+                                   Authentication authentication) {
+        return lookup(distributor, partNumber, bypassCache, quantity, detail, authentication);
+    }
+
+    private PartResponse lookup(String distributor, String number, boolean bypassCache, Integer quantity,
+                                String detail, Authentication authentication) {
+        Distributor d = Distributor.parse(distributor);
         if (number.isBlank()) {
             throw new IllegalArgumentException("part number must not be blank");
         }

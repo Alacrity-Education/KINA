@@ -174,8 +174,14 @@ class TmePartMapper {
                 priceBreaks(data.prices()));
     }
 
+    /**
+     * TME's product page: the first path segment is the symbol lower-cased with every {@code /} replaced by {@code _}
+     * ({@code DTMSS-20/0.010/20V} is {@code dtmss-20_0.010_20v}); an encoded {@code %2F} gives a 404. The API returns
+     * no page URL, so it is built here. Migration V13 rewrites rows cached with the old form.
+     */
     static String productUrl(String symbol) {
-        return "https://www.tme.eu/en/details/" + UriUtils.encodePathSegment(symbol, StandardCharsets.UTF_8) + "/";
+        String segment = symbol.toLowerCase(Locale.ROOT).replace('/', '_');
+        return "https://www.tme.eu/en/details/" + UriUtils.encodePathSegment(segment, StandardCharsets.UTF_8) + "/";
     }
 
     /**

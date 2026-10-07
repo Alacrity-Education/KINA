@@ -49,7 +49,7 @@ Optional live tests: `KINA_CROSS_ENCODER_TEST_MODEL_DIR=<model dir> ./mvnw test 
 | `web` | Thymeleaf tabs: `SearchPageController` (`/`, runs `PartSearchService.search`, view models in `SearchView`), `McpPageController` (`/connect`, connect instructions and tokens; `kina.tokens.ui-enabled=false` turns static tokens off), `StatusPageController` (`/status`), `LoginErrorController` (`/login-denied`), `PublicUrlResolver` (public origin; all emitted URLs go through it). |
 | `metrics` | `Metric` (every meter's name, type, help and tag keys; the DESIGN.md 3.7 table is checked against it), `KinaMetrics` facade and `MetricsStore` (in-memory counters, saved to `metrics_counters` every 30 s and restored on startup), gauges from repositories, `/actuator/prometheus` on the management port (`KINA_METRICS_PORT`, no authentication), `/api/v1/metrics/summary`. |
 
-SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V12). Templates: `src/main/resources/templates`.
+SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V13). Templates: `src/main/resources/templates`.
 
 ## Conventions
 

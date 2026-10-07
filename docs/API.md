@@ -310,7 +310,16 @@ Get one part by distributor part number. The part number is the rest of the path
 curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/parts/lcsc/C15850
 ```
 
-Returns one `PartResponse` (without `rank`, `score` and `match`, prices trimmed to 3 brackets). The part number can also be the manufacturer part number; spelling differences in hyphens and spaces are ignored (`ERA6AEB5361V` finds Mouser `667-ERA-6AEB5361V`; `HCMA0703 2R2 R` is sent as `HCMA0703-2R2-R`, then `HCMA07032R2R`, and a part number TME refuses as invalid input is `not_found`). A part the distributor lists without ships-now stock is returned too, with `stock` 0 and `availability.status` `out_of_stock` (you asked for this part explicitly). It returns 404 when the part is not available: the problem has `reason` `not_found` (the distributor does not know it) or `out_of_stock` (listed without stock, but the distributor gives only its identity, for example a Mouser catalogue part without a Mouser number; `identity` then gives `part_number`, `manufacturer`, `mpn` and `description`). Lookup failures return 503, 429, 504 or 502 (see below). On a rate limit the call waits and retries for up to 2 minutes; 429 means the limit outlasted that. The response has no `rate_limit_waited_ms`.
+### `GET /api/v1/parts/lookup?distributor=&part_number=`
+
+The same lookup with the distributor and the part number as query parameters (`bypass_cache`, `quantity` and `detail` as above). Same response and errors as the path form. Use it for TME symbols that contain `/` (such as `DTMSS-20/0.010/20V`): the server rejects an encoded `%2F` in a path with 400, but not in a query parameter.
+
+```bash
+curl -s -G -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/parts/lookup \
+  --data-urlencode distributor=TME --data-urlencode part_number=DTMSS-20/0.010/20V
+```
+
+Both forms return one `PartResponse` (without `rank`, `score` and `match`, prices trimmed to 3 brackets). The part number can also be the manufacturer part number; spelling differences in hyphens and spaces are ignored (`ERA6AEB5361V` finds Mouser `667-ERA-6AEB5361V`; `HCMA0703 2R2 R` is sent as `HCMA0703-2R2-R`, then `HCMA07032R2R`, and a part number TME refuses as invalid input is `not_found`). A part the distributor lists without ships-now stock is returned too, with `stock` 0 and `availability.status` `out_of_stock` (you asked for this part explicitly). It returns 404 when the part is not available: the problem has `reason` `not_found` (the distributor does not know it) or `out_of_stock` (listed without stock, but the distributor gives only its identity, for example a Mouser catalogue part without a Mouser number; `identity` then gives `part_number`, `manufacturer`, `mpn` and `description`). Lookup failures return 503, 429, 504 or 502 (see below). On a rate limit the call waits and retries for up to 2 minutes; 429 means the limit outlasted that. The response has no `rate_limit_waited_ms`.
 
 ### `GET /api/v1/distributors`
 
