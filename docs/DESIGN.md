@@ -483,12 +483,19 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
 `QueryParser.parse(String) -> ParsedQuery` extracts, case-insensitively:
 
 - component family keywords: capacitor/MLCC/cap, resistor/res, inductor, ferrite, diode/rectifier, Schottky,
-  Zener, LED, MOSFET/FET (TME `N-MOSFET`/`P-MOSFET`, kept as keywords), transistor/BJT/NPN/PNP, LDO/regulator,
+  Zener, LED, MOSFET/FET/HEMT (TME `N-MOSFET`/`P-MOSFET`, kept as keywords), transistor/BJT/NPN/PNP, LDO/regulator,
   op amp/opamp, comparator, MCU, crystal/xtal/resonator, oscillator/XO/TCXO/VCXO/OCXO/SPXO and TME's `generator`
   (two families, never mixed: `crystal oscillator` is an oscillator, priority decides), connector, fuse, TVS/ESD,
-  relay, switch. A part's family comes
+  relay, switch, and `gate driver`: `gate driver`, `MOSFET driver`, `IGBT driver`, `half-bridge driver` (Mouser `Half
+  Bridge Gate Dvr`, `HALF BRDG DRVR`, `Iso 1/2 Bridge Drv`), `power stage` / `ePower stage` (EPC), and a `half-bridge`
+  whose text also says `driver` (`GaN half-bridge with integrated driver`). The gate driver words win over `MOSFET`,
+  `FET` and `transistor` (`MOSFET gate driver` is a gate driver); `driver` alone names no family (`LED driver` stays an
+  LED request). Distributor phrases spell the family as `gate driver` / `power stage`. A part's family comes
   from its category, else its description; when the description names a specialisation of the category's family
-  (TME category `SMD N channel transistors`, description `Transistor: N-MOSFET`), the specialisation wins (`mosfet`)
+  (TME category `SMD N channel transistors`, description `Transistor: N-MOSFET`), the specialisation wins (`mosfet`),
+  and a description naming a gate driver wins over a transistor category (Mouser lists the TI LMG and Infineon IGI60
+  half-bridges with integrated driver under `GaN FETs`). Gate drivers and MOSFETs are different families, so the type
+  check excludes gate drivers from a MOSFET request and the reverse (like crystals and oscillators)
 - value with SI prefix and unit, including RKM notation (`4k7`, `4u7`, `10R`, `2R2`):
   capacitance (`pF nF uF µF mF F`), resistance (`Ω ohm R`, `k`, `M`, `m`), inductance (`nH uH mH H`),
   voltage (`V`, `kV`, `mV`; KEMET's truncated `10Volt`, `10Vol`, `6.3Vo` at Mouser), current (`A`, `mA`, `uA`), power
@@ -531,9 +538,10 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
 Tolerances and values also accept a leading-dot decimal (`.1%`, `±.5%`, `.1W`, `.5k`): Mouser writes
 `Thin Film Resistors - SMD 5.36Kohms .1% 25ppm`. `JlcpcbQuery` adds the zero (`.1%` -> `0.1%`, JLCPCB's wording).
 
-**Technology** (`search.TechnologyVocabulary`, resistors, capacitors and inductors only; the family must be known, from
-a family word or a value). Canonical values and the wording recognised in queries and parts (mined 2026-10-05 from the
-JLCPCB database, live TME parameters and Mouser categories):
+**Technology** (`search.TechnologyVocabulary`, resistors, capacitors and inductors: the construction; MOSFETs,
+transistors and gate drivers: the semiconductor; the family must be known, from a family word or a value). Canonical
+values and the wording recognised in queries and parts (mined 2026-10-05 from the JLCPCB database, live TME parameters
+and Mouser categories; transistors 2026-10-07 from Mouser):
 
 | Family | Technology | Wording |
 |---|---|---|
@@ -550,9 +558,19 @@ JLCPCB database, live TME parameters and Mouser categories):
 | capacitor | `film`, `polypropylene`, `polyester`, `PPS` | `film`; `polypropylene`, `MKP`, `CBB`; `polyester`, `PET`, `polyethylene terephthalate`, `mylar`, `MKT`; `PPS` |
 | capacitor | `supercapacitor` | `supercapacitor`, `super capacitor`, `ultracapacitor`, `supercap`, `EDLC` |
 | inductor | `wirewound`, `multilayer`, `thin film` | `wire-wound`, TME `Type of inductor: wire`; `multilayer`, `multi-layer`; `thin film` |
+| MOSFET, transistor, gate driver | `GaN` | `GaN`, `eGaN`, `CoolGaN`, `GaNFast`, `DrGaN`, `gallium nitride`, `GaN-on-SiC` / `GaN-on-Si` (GaN); Mouser category `GaN FETs`. A part number such as `GAN140-650EBEZ` is no technology word. For a gate driver it names the switches it drives |
+| MOSFET, transistor, gate driver | `SiC` | `SiC`, `silicon carbide`; Mouser category `SiC MOSFETs` |
+| MOSFET, transistor, gate driver | `silicon` | `silicon`, `Si MOSFET`, `Si FET`, Mouser `Technology: Si`. A plain `MOSFETs` category names no semiconductor (unknown, not silicon) |
 
 "Ferrite" is not a technology: the word names the ferrite-bead family. The recognised words leave the free-text
-keywords. TCR is deliberately not parsed.
+keywords. TCR is deliberately not parsed. The technology is hard for transistors (the `transistor` policy family:
+MOSFETs and transistors) and for the default family (gate drivers among others): a GaN request excludes a known SiC or
+silicon part, and a part that names no semiconductor stays, unverified.
+
+**On-resistance of MOSFETs** (`Recognizers.RDS_ON`, MOSFET and transistor families only): `3.2 milliohm`,
+`270 mohm`, `120mOhm`, `58mΩ@2.5V` (JLCPCB, the value at its gate voltage), `70-m?` and `170/248-m?` (Mouser prints
+`?` where the ohm sign was; of a list the first value) are the part's `Resistance` (R_DS(on)); a bare `m` (`2.6m`,
+`185 m`) is too ambiguous and stays unread. Mouser `Rds On - Drain-Source Resistance` is read as an attribute.
 
 **Connectors.** A query is a connector request (`ParsedQuery.isConnector()`, family `connector`) when it contains
 connector words (a type below, `connector`, `header`, `socket`, `plug`, `jack`, `receptacle`, `dupont`, `JST`...) and
@@ -604,7 +622,8 @@ values normalised to base units as `double`), the free-text tokens and `elements
 part's description and attribute values, so parts from all three distributors expose comparable
 `Capacitance`, `Resistance`, `Inductance`, `Voltage`, `Current`, `Power`, `Tolerance`, `Dielectric`,
 `Package` (imperial, section "Packages are imperial"), `Mounting` keys, `Technology` for resistors, capacitors and
-inductors, `Polarity` for transistors (`N-channel`, `P-channel`, `NPN`, `PNP`, `complementary`), `Subtype` (`standard`
+inductors (the construction) and for MOSFETs, transistors and gate drivers (`GaN`, `SiC`, `silicon`), `Resistance` of a
+MOSFET (its on-resistance, above), `Polarity` for transistors (`N-channel`, `P-channel`, `NPN`, `PNP`, `complementary`), `Subtype` (`standard`
 for a rectifier or switching diode of the generic diode family, `fixed` or `adjustable` for a regulator), and
 `Impedance` (ferrite beads, `120ohm @100MHz`), `SaturationCurrent`, `DCR`, `MaxTemperature` (`105°C`),
 `OperatingTemperature` (`-55...155°C`, below), `Lifetime` (`2000h @105°C`) and `FormFactor` (section "Form factor"
@@ -835,7 +854,7 @@ each kind (resistance, capacitance, "a higher USB standard is accepted"...) are 
 | `crystal` | `type`, `value`, `load capacitance`, `mounting` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `oscillator` | `type`, `value`, `mounting` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `diode` | `type`, `voltage`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
-| `transistor` | `type`, `polarity`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `transistor` | `type`, `polarity`, `package`, `mounting`, `technology` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `regulator` | `type`, `voltage`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `connector` | `type`, `package`, `mounting`, `connector type`, `positions`, `pitch`, `gender` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `usb` | `type`, `mounting`, `usb type`, `pin configuration`, `usb standard`, `gender` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |

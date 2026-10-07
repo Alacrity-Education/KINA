@@ -11,9 +11,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Construction technology of passives (DESIGN.md 3.4 "Technology"), shared by {@link QueryParser},
- * {@link ParametricExtractor}, {@link DeterministicRanker} and {@link DistributorPhraser}. Only applies to the families
- * resistor, capacitor and inductor, where the words are unambiguous. Stateless and thread-safe.
+ * Construction technology of passives and the semiconductor of transistors (DESIGN.md 3.4 "Technology"), shared by
+ * {@link QueryParser}, {@link ParametricExtractor}, {@link DeterministicRanker} and {@link DistributorPhraser}. Only
+ * applies to the families resistor, capacitor and inductor (the construction) and MOSFET, transistor and gate driver
+ * (GaN, SiC, silicon), where the words are unambiguous. Stateless and thread-safe.
  *
  * <p>Wording mined on 2026-10-05: JLCPCB descriptions ({@code Thin Film Resistor}, {@code Thick Film Resistor},
  * {@code Metal Film Resistor}, {@code Carbon Film Resistor}, {@code Metal foil resistor}, {@code Current Sense Resistor},
@@ -63,6 +64,12 @@ public class TechnologyVocabulary {
     public static final String SUPERCAPACITOR = "supercapacitor";
     // inductors
     public static final String MULTILAYER = "multilayer";
+    // transistors, MOSFETs and gate drivers: the semiconductor
+    /** Gallium nitride (GaN FETs and HEMTs, eGaN, CoolGaN, GaNFast; a GaN gate driver drives GaN switches). */
+    public static final String GAN = "GaN";
+    /** Silicon carbide (SiC MOSFETs). */
+    public static final String SIC = "SiC";
+    public static final String SILICON = "silicon";
 
     /** A recognised technology mention: canonical value and the span in the searched text. */
     public record Match(String technology, int start, int end) {
@@ -115,6 +122,18 @@ public class TechnologyVocabulary {
             rule("wire[- ]?wound", WIREWOUND),
             rule("multi[- ]?layer", MULTILAYER));
 
+    /**
+     * Transistor, MOSFET and gate driver rules (wording seen live at Mouser on 2026-10-07: categories {@code GaN FETs},
+     * {@code SiC MOSFETs}; descriptions {@code EPC eGaN FET}, {@code CoolGaN Transistor}, {@code GaNFast},
+     * {@code Integrated DrGaN}, {@code GaN-on-SiC HEMT}, {@code LEGACY GAN SYSTEMS}). GaN first, so {@code GaN-on-SiC}
+     * is GaN. Silicon only when the words say so ({@code silicon}, {@code Si MOSFET}); a plain {@code MOSFETs}
+     * category names no semiconductor.
+     */
+    private static final List<Rule> TRANSISTOR = List.of(
+            rule("(?:e|cool|dr)?gan(?:fast)?(?:[- ]on[- ](?:si|sic|silicon))?|gallium[- ]nitride", GAN),
+            rule("silicon[- ]carbide|sic", SIC),
+            rule("silicon|si[- ](?:mosfets?|fets?|transistors?)", SILICON));
+
     private static final Set<String> FILM_KINDS = Set.of(POLYPROPYLENE, POLYESTER, PPS);
     /** Polymer kinds a bare "polymer" request accepts. */
     private static final Set<String> POLYMER_KINDS = Set.of(ALUMINIUM_POLYMER, TANTALUM_POLYMER);
@@ -131,11 +150,15 @@ public class TechnologyVocabulary {
             case "resistor" -> RESISTOR;
             case "capacitor" -> CAPACITOR;
             case "inductor" -> INDUCTOR;
+            case "mosfet", "transistor", "gate driver" -> TRANSISTOR;
             default -> List.of();
         };
     }
 
-    /** True when {@code family} has a technology vocabulary (resistor, capacitor, inductor). */
+    /**
+     * True when {@code family} has a technology vocabulary (resistor, capacitor, inductor; MOSFET, transistor and gate
+     * driver: GaN, SiC, silicon).
+     */
     public static boolean applies(String family) {
         return !rules(family).isEmpty();
     }
@@ -210,6 +233,9 @@ public class TechnologyVocabulary {
         if (("inductor".equals(family) || "resistor".equals(family))
                 && value.strip().toLowerCase(Locale.ROOT).equals("wire")) {
             return WIREWOUND;
+        }
+        if (rules(family) == TRANSISTOR && value.strip().equalsIgnoreCase("si")) {
+            return SILICON;   // Mouser "Technology: Si"
         }
         return of(value, family);
     }

@@ -67,7 +67,16 @@ class Recognizers {
             Map.entry(Pattern.compile("(?i)\\bthr(?:ough|u)[- ]hole\\b"), "through-hole"),
             Map.entry(Pattern.compile("(?i)\\bsurface[- ]mount(?:ed)?\\b"), "SMD"),
             Map.entry(Pattern.compile("(?i)\\b([np])[- ]channel\\b"), "$1-channel"),
-            Map.entry(Pattern.compile("(?i)\\bmicro[- ]?controllers?\\b"), "mcu"));
+            Map.entry(Pattern.compile("(?i)\\bmicro[- ]?controllers?\\b"), "mcu"),
+            // gate drivers (Mouser "Gate Drivers", "Half Bridge Gate Dvr", "HALF BRDG DRVR", "Iso 1/2 Bridge Drv",
+            // "MOSFET DRIVER"; EPC "ePower Stage", "Half-Bridge Power Stage"): one token each, see FAMILY_WORDS
+            Map.entry(Pattern.compile("(?i)(?<![\\p{L}\\d])(?:half|1/2|h)[- ]?(?:bridge|brdg|brg)[- ]+"
+                    + "(?:(?:gate|mosfet|fet|gan)[- ]+)?(?:drivers?|drvrs?|drv|dvr)\\b"), "gate-driver"),
+            Map.entry(Pattern.compile("(?i)\\b(?:gate|mosfet|igbt|fet)[- ](?:drivers?|drvrs?|dvr)\\b"), "gate-driver"),
+            Map.entry(Pattern.compile("(?i)\\b(?:e?power|drgan)[- ]?stages?\\b"), "power-stage"),
+            // a GaN half-bridge with an integrated driver (TI LMG, Infineon IGI60 under "GaN FETs") is a gate driver
+            Map.entry(Pattern.compile("(?i)\\bhalf[- ]?bridges?\\b(?=.*\\b(?:drivers?|drvrs?|drv)\\b)"),
+                    "half-bridge-driver"));
 
     /** Cache key normalisation: trim, collapse whitespace, lower-case, NFKC, µ-&gt;u, Ω-&gt;ohm. */
     static String normalizeKey(String text) {
@@ -127,6 +136,9 @@ class Recognizers {
     private record FamilyWord(String family, int priority, boolean keepAsKeyword) {
     }
 
+    /** The gate driver family (half-bridge, low-side, isolated drivers; GaN power stages). */
+    static final String GATE_DRIVER = "gate driver";
+
     private static final Map<String, FamilyWord> FAMILY_WORDS = new LinkedHashMap<>();
 
     static {
@@ -139,7 +151,7 @@ class Recognizers {
         family(3, false, "schottky", "schottky");
         family(3, false, "zener", "zener");
         family(3, false, "led", "led", "leds");
-        family(3, false, "mosfet", "mosfet", "mosfets", "fet", "fets");
+        family(3, false, "mosfet", "mosfet", "mosfets", "fet", "fets", "hemt", "hemts");
         // TME writes "Transistor: N-MOSFET" / "P-MOSFET"; the polarity stays a keyword
         family(3, true, "mosfet", "n-mosfet", "p-mosfet");
         family(1, false, "transistor", "transistor", "transistors");
@@ -161,7 +173,29 @@ class Recognizers {
         family(3, true, "tvs", "esd");
         family(2, false, "relay", "relay", "relays");
         family(2, false, "switch", "switch", "switches");
+        // gate drivers, GaN power stages and half-bridges with an integrated driver (PHRASES make them one token; the
+        // spaced forms serve the lexical family check of part texts); they win over "MOSFET", "FET", "transistor"
+        family(4, false, GATE_DRIVER, "gate-driver", "power-stage", "half-bridge-driver", "gate driver",
+                "gate drivers", "power stage");
     }
+
+
+    /**
+     * Families a part's description may name over the family of its category: a GaN half-bridge with an integrated
+     * driver that Mouser lists under {@code GaN FETs} is a gate driver.
+     */
+    private static final Map<String, Set<String>> OVERRIDES_CATEGORY = Map.of(GATE_DRIVER,
+            Set.of("mosfet", "transistor"));
+
+    /** True when a description naming {@code descriptionFamily} decides over a category naming {@code categoryFamily}. */
+    static boolean overridesCategory(String descriptionFamily, String categoryFamily) {
+        return descriptionFamily != null && categoryFamily != null
+                && OVERRIDES_CATEGORY.getOrDefault(descriptionFamily, Set.of()).contains(categoryFamily);
+    }
+
+    /** How a phrase token of {@code PHRASES} is written in a distributor phrase ({@link #familyToken}). */
+    private static final Map<String, String> SPELLED = Map.of("gate-driver", "gate driver", "power-stage",
+            "power stage", "half-bridge-driver", "half-bridge driver");
 
     private static void family(int priority, boolean keep, String family, String... words) {
         for (String w : words) {
@@ -180,7 +214,7 @@ class Recognizers {
         for (String token : tokenize(prepare(text))) {
             FamilyWord word = FAMILY_WORDS.get(token.toLowerCase(Locale.ROOT));
             if (word != null && word.family().equals(family)) {
-                return token;
+                return SPELLED.getOrDefault(token, token);
             }
         }
         return null;
@@ -883,6 +917,19 @@ class Recognizers {
         return new Labelled(values, text.toString(), preferences);
     }
 
+    /**
+     * The on-resistance of a MOSFET or transistor in milliohm: {@code 3.2 milliohm}, {@code 270 mohm}, {@code 120mOhm},
+     * {@code 70-m?} and {@code 170/248-m?} (Mouser prints {@code ?} where the ohm sign was; of a list the first value).
+     * A bare {@code m} ({@code 2.6m}, {@code 185 m}) is too ambiguous and stays unread.
+     */
+    private static final Pattern RDS_ON = Pattern.compile("(?<![\\p{L}\\d.])" + NUMBER
+            + "(?:\\s?/\\s?\\d+(?:\\.\\d+)?)*\\s?-?\\s?(?:(?i:milli-?ohms?)|m\\?|m(?i:ohms?))(?![\\p{L}\\d])");
+
+    /** Families whose ohm value is an on-resistance ({@link #RDS_ON}): MOSFETs and transistors. */
+    static boolean rdsOnFamily(String family) {
+        return "mosfet".equals(family) || "transistor".equals(family);
+    }
+
     /** Characters stripped around a word before it is read as a value ({@code (16V,} -&gt; {@code 16V}). */
     private static final String WORD_PUNCTUATION = "([{,;:)]}";
     private static final Pattern WORD = Pattern.compile("\\S+");
@@ -1023,7 +1070,8 @@ class Recognizers {
     static Analysis analyze(String text, String familyHint) {
         String prepared = text == null ? "" : prepare(text);
         Labelled labelled = labelled(prepared);
-        List<String> tokens = text == null ? List.of() : tokenize(labelled.residual());
+        String residual = labelled.residual();
+        List<String> tokens = text == null ? List.of() : tokenize(residual);
 
         // pass 1: explicit family (highest priority wins, first on ties)
         String family = null;
@@ -1046,6 +1094,16 @@ class Recognizers {
 
         // pass 2: everything else
         Map<String, Value> values = new LinkedHashMap<>();
+        if (text != null && rdsOnFamily(family)) {
+            // R_DS(on) spelled "3.2 milliohm", "170/248-m?" (Mouser's lost ohm sign), "120mOhm": the resistance
+            Matcher r = RDS_ON.matcher(residual);
+            if (r.find()) {
+                values.put(ParsedQuery.RESISTANCE, of(ParsedQuery.RESISTANCE, Double.parseDouble(r.group(1)) * 1e-3));
+                StringBuilder blanked = new StringBuilder(residual);
+                blank(blanked, r.start(), r.end());
+                tokens = tokenize(blanked.toString());
+            }
+        }
         List<Read> ohms = new ArrayList<>();       // resolved after the family is final (impedance / DCR / resistance)
         List<Read> currents = new ArrayList<>();   // inductors: several unlabelled currents (JLCPCB lists two)
         String dielectric = null;

@@ -201,11 +201,12 @@ public enum ConstraintKind {
     },
 
     /**
-     * The construction technology (thin film vs thick film, tantalum vs ceramic...): same or compatible +, a different
-     * known one -, a known but not comparable one earns nothing (and is unknown for the check).
+     * The construction technology (thin film vs thick film, tantalum vs ceramic...) or the semiconductor of a transistor
+     * or gate driver (GaN vs SiC vs silicon): same or compatible +, a different known one -, a known but not comparable
+     * one earns nothing (and is unknown for the check).
      */
     @Relax(strategy = SOFT)
-    @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, INDUCTOR, DEFAULT})
+    @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, INDUCTOR, TRANSISTOR, DEFAULT})
     @Match(mode = COMPATIBLE, weight = 0.15, order = 15, report = 6)
     TECHNOLOGY("technology", ParsedQuery::technology, PartFeatures::technology) {
         @Override

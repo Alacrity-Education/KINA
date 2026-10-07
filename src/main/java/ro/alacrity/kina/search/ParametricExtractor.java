@@ -130,7 +130,9 @@ public class ParametricExtractor {
 
     private static final List<String> CAPACITANCE_NAMES = List.of("capacitance", "capacitance value", "nominal capacitance",
             "load capacitance", "load capacitance (cl)");
-    private static final List<String> RESISTANCE_NAMES = List.of("resistance", "resistance value", "nominal resistance");
+    /** Resistance; for a MOSFET its on-resistance (Mouser {@code Rds On - Drain-Source Resistance}). */
+    private static final List<String> RESISTANCE_NAMES = List.of("resistance", "resistance value", "nominal resistance",
+            "rds on - drain-source resistance", "drain-source on resistance", "on-state resistance", "rds(on)");
     private static final List<String> INDUCTANCE_NAMES = List.of("inductance", "nominal inductance");
     private static final List<String> FREQUENCY_NAMES = List.of("frequency", "nominal frequency", "oscillation frequency");
     /** Preferred voltage ratings (Mouser "Voltage Rating DC", TME "Operating voltage", LCSC "Voltage Rated"). */
@@ -405,6 +407,11 @@ public class ParametricExtractor {
                 && category.family().equals(Recognizers.parentFamily(description.family()))) {
             // the description names a specialisation of the category's family (TME "SMD N channel transistors" with
             // "Transistor: N-MOSFET"): the more specific family wins
+            explicitFamily = description.family();
+        }
+        if (category.familyExplicit() && description.familyExplicit()
+                && Recognizers.overridesCategory(description.family(), category.family())) {
+            // a half-bridge with an integrated driver under "GaN FETs" is a gate driver
             explicitFamily = description.family();
         }
         if (category.familyExplicit() && description.familyExplicit() && category.family() != null

@@ -48,7 +48,7 @@ class ConstraintPolicyTest {
 
     // ---------------------------------------------------------------- the table
 
-    /** The table read from the {@code @Relax} declarations equals the table of 0.5.0 (a literal copy). */
+    /** The table read from the {@code @Relax} declarations equals the decided one (0.5.0, technology hard for transistors since 2026-10-07). */
     @Test
     void theDeclaredTableIsTheDecidedOne() {
         Map<String, List<String>> decided = new java.util.LinkedHashMap<>();
@@ -61,7 +61,7 @@ class ConstraintPolicyTest {
         decided.put("crystal", List.of("type", "value", "load capacitance", "mounting"));
         decided.put("oscillator", List.of("type", "value", "mounting"));
         decided.put("diode", List.of("type", "voltage", "package", "mounting"));
-        decided.put("transistor", List.of("type", "polarity", "package", "mounting"));
+        decided.put("transistor", List.of("type", "polarity", "package", "mounting", "technology"));
         decided.put("regulator", List.of("type", "voltage", "package", "mounting"));
         decided.put("connector", List.of("type", "connector type", "gender", "positions", "pitch", "package",
                 "mounting"));
