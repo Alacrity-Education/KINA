@@ -5,7 +5,9 @@ import ro.alacrity.kina.domain.ComponentFamily;
 import ro.alacrity.kina.domain.ComponentFamily.Trait;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.ParsedQuery;
+import ro.alacrity.kina.domain.PartAttribute;
 import ro.alacrity.kina.domain.PartFeatures;
+import ro.alacrity.kina.domain.PartSource;
 import ro.alacrity.kina.domain.Part;
 
 import java.util.LinkedHashMap;
@@ -142,13 +144,9 @@ public class ParametricExtractor {
 
     // ---------------------------------------------------------------- distributor attribute names (lower-case)
 
-    private static final List<String> CAPACITANCE_NAMES = List.of("capacitance", "capacitance value", "nominal capacitance",
-            "load capacitance", "load capacitance (cl)");
     /** Resistance; for a MOSFET its on-resistance (Mouser {@code Rds On - Drain-Source Resistance}). */
     private static final List<String> RESISTANCE_NAMES = List.of("resistance", "resistance value", "nominal resistance",
             "rds on - drain-source resistance", "drain-source on resistance", "on-state resistance", "rds(on)");
-    private static final List<String> INDUCTANCE_NAMES = List.of("inductance", "nominal inductance");
-    private static final List<String> FREQUENCY_NAMES = List.of("frequency", "nominal frequency", "oscillation frequency");
     /** Preferred voltage ratings (Mouser "Voltage Rating DC", TME "Operating voltage", LCSC "Voltage Rated"). */
     private static final List<String> VOLTAGE_NAMES = List.of("voltage rating dc", "voltage rating - dc", "voltage rating",
             "voltage rated", "rated voltage", "voltage - rated", "operating voltage", "dc voltage rating", "voltage",
@@ -205,10 +203,6 @@ public class ParametricExtractor {
             "(?i)(\\d+(?:[.,]\\d+)?)\\s*(?:h|hrs?|hours?)(?![a-z])(?:\\s*@\\s*\\+?(\\d{2,3})\\s*°?\\s*C)?");
     private static final Pattern SIGNED_NUMBER = Pattern.compile("[-+−]?\\s?\\d+(?:\\.\\d+)?");
     private static final Pattern KEY_FREQUENCY = Pattern.compile("(?i)(\\d+(?:\\.\\d+)?)\\s*([kmg]?)hz");
-    private static final List<String> POWER_NAMES = List.of("power rating", "power", "power(watts)", "power (watts)",
-            "pd - power dissipation", "power dissipation (pd)", "power dissipation");
-    private static final List<String> TOLERANCE_NAMES = List.of("tolerance", "resistance tolerance", "capacitance tolerance",
-            "inductance tolerance");
     private static final List<String> DIELECTRIC_NAMES = List.of("dielectric", "temperature coefficient",
             "temperature characteristic", "temperature characteristics", "dielectric material", "tempco");
     private static final List<String> PACKAGE_INCH_NAMES = List.of("case code - in", "case - inch", "case code (inch)",
@@ -408,12 +402,8 @@ public class ParametricExtractor {
         Recognizers.Analysis description = Recognizers.analyze(part.description(),
                 category.familyExplicit() ? category.family() : null);
 
-        Map<String, String> attrs = new LinkedHashMap<>();
-        part.attributes().forEach((k, v) -> {
-            if (k != null && v != null && !v.isBlank()) {
-                attrs.putIfAbsent(k.trim().toLowerCase(Locale.ROOT), v);
-            }
-        });
+        PartSource source = PartSource.of(part);
+        Map<String, String> attrs = source.attributes();
 
         String explicitFamily = category.familyExplicit() ? category.family()
                 : description.familyExplicit() ? description.family() : null;
@@ -437,17 +427,20 @@ public class ParametricExtractor {
             explicitFamily = description.family();
         }
         final String valueFamily = explicitFamily;
+        SearchExtractionContext ctx = new SearchExtractionContext(source, description, valueFamily, c -> {
+            throw new IllegalStateException("the part family is not read through the context yet");
+        });
 
         Map<String, Recognizers.Value> values = new LinkedHashMap<>();
         boolean inductive = Recognizers.inductive(valueFamily);
-        attributeValue(attrs, CAPACITANCE_NAMES, ParsedQuery.CAPACITANCE, valueFamily, values);
+        declaredValue(ctx, PartAttribute.CAPACITANCE, values);
         if (inductive) {
             inductiveAttributes(attrs, valueFamily, values);
         } else {
             attributeValue(attrs, RESISTANCE_NAMES, ParsedQuery.RESISTANCE, valueFamily, values);
         }
-        attributeValue(attrs, INDUCTANCE_NAMES, ParsedQuery.INDUCTANCE, valueFamily, values);
-        attributeValue(attrs, FREQUENCY_NAMES, ParsedQuery.FREQUENCY, valueFamily, values);
+        declaredValue(ctx, PartAttribute.INDUCTANCE, values);
+        declaredValue(ctx, PartAttribute.FREQUENCY, values);
         if ("regulator".equals(valueFamily)) {
             attributeValue(attrs, OUTPUT_VOLTAGE_NAMES, ParsedQuery.VOLTAGE, valueFamily, values);
         } else if ("zener".equals(valueFamily)) {
@@ -469,8 +462,8 @@ public class ParametricExtractor {
                 }
             });
         }
-        attributeValue(attrs, POWER_NAMES, ParsedQuery.POWER, valueFamily, values);
-        attributeValue(attrs, TOLERANCE_NAMES, ParsedQuery.TOLERANCE, valueFamily, values);
+        declaredValue(ctx, PartAttribute.POWER, values);
+        declaredValue(ctx, PartAttribute.TOLERANCE, values);
         lifetimeAttribute(attrs, values);
         temperatureAttribute(attrs, values);
         Set<String> fromAttributes = Set.copyOf(values.keySet());
@@ -1399,6 +1392,15 @@ public class ParametricExtractor {
                     return;
                 }
             }
+        }
+    }
+
+    /** The value of a declared attribute ({@link PartAttribute} sources), unless one is known already. */
+    private static void declaredValue(SearchExtractionContext ctx, PartAttribute attribute,
+                                      Map<String, Recognizers.Value> values) {
+        PartAttribute.Reading r = ctx.reading(attribute);
+        if (r != null) {
+            values.putIfAbsent(attribute.kind(), (Recognizers.Value) r.value());
         }
     }
 

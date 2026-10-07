@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ComponentFamily;
 import ro.alacrity.kina.domain.ComponentFamily.Trait;
 import ro.alacrity.kina.domain.ParsedQuery;
+import ro.alacrity.kina.domain.PartAttribute;
 import ro.alacrity.kina.domain.PartFeatures;
 
 import java.math.BigDecimal;
@@ -575,7 +576,7 @@ class Recognizers {
      * ({@code H}) are told apart by case, see {@link #value}.
      */
     private static final Pattern P_UNIT_VALUE = Pattern.compile(
-            "^(\\d+(?:\\.\\d+)?|\\.\\d+)(meg|kilo|[pnumkgPNUMKG]?)(f|ohms?|r|h|v|vdc|vac|volts?|vol|vo|a|w|watts?|hz)$",
+            "^(\\d+(?:\\.\\d+)?|\\.\\d+)(meg|kilo|[pnumkgPNUMKG]?)(" + unitAlternation() + ")$",
             Pattern.CASE_INSENSITIVE);
     /** Hours: {@code 2000h} (lower-case h only), {@code 2000hrs}, {@code 1000 hours}, {@code 5000Hrs}. */
     private static final Pattern P_HOURS = Pattern.compile("^(\\d+(?:\\.\\d+)?)(h|[hH](?:rs?|RS?|ours?|OURS?))$");
@@ -592,6 +593,18 @@ class Recognizers {
     private static final Pattern P_TOLERANCE = Pattern.compile("^±?(\\d+(?:\\.\\d+)?|\\.\\d+)%$");
     /** Below this many hours an upper-case {@code H} without prefix stays a henry value even for a capacitor. */
     private static final double MIN_LIFETIME_HOURS = 100;
+
+    /**
+     * The unit spellings of a value token: the {@code @Unit} symbols declared on {@link PartAttribute} ({@code f};
+     * {@code ohm}, {@code ohms}, {@code r}; {@code h}; {@code v}, {@code vdc}, {@code vac}, {@code volt}, {@code volts},
+     * KEMET {@code vol} and {@code vo}; {@code a}; {@code w}, {@code watt}, {@code watts}; {@code hz}), longest first.
+     */
+    private static String unitAlternation() {
+        return String.join("|", PartAttribute.unitSymbols().keySet().stream()
+                .sorted(java.util.Comparator.comparingInt(String::length).reversed()
+                        .thenComparing(java.util.Comparator.naturalOrder()))
+                .toList());
+    }
 
     /** Parses a tolerance token ("±5%", "1%", ".1%") to percent, or null. */
     static Double tolerance(String token) {
@@ -640,15 +653,7 @@ class Recognizers {
                     && number >= MIN_LIFETIME_HOURS) {
                 return of(ParsedQuery.LIFETIME, number);   // Mouser "105C 3000H" on a capacitor
             }
-            String kind = switch (unit) {
-                case "f" -> ParsedQuery.CAPACITANCE;
-                case "ohm", "ohms", "r" -> ParsedQuery.RESISTANCE;
-                case "h" -> ParsedQuery.INDUCTANCE;
-                case "v", "vdc", "vac", "volt", "volts", "vol", "vo" -> ParsedQuery.VOLTAGE;   // KEMET "10Vol", "6.3Vo"
-                case "a" -> ParsedQuery.CURRENT;
-                case "w", "watt", "watts" -> ParsedQuery.POWER;
-                default -> ParsedQuery.FREQUENCY;
-            };
+            String kind = PartAttribute.unitSymbols().get(unit);   // the declared @Unit symbols
             Double multiplier = multiplier(prefix, kind);
             return multiplier == null ? null : of(kind, number * multiplier);
         }
