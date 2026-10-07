@@ -1075,6 +1075,8 @@ class Recognizers {
 
     /** The reverse voltage most LED descriptions list beside the forward voltage: never read as the forward voltage. */
     private static final double LED_REVERSE_VOLTAGE = 5.0;
+    /** Above this an LED description's voltage is an ESD rating, no forward voltage (COB modules reach about 40 V). */
+    private static final double LED_MAX_FORWARD_VOLTAGE = 60.0;
 
     /** A value with the token it was read from. */
     private record Read(Value value, String token) {
@@ -1233,9 +1235,10 @@ class Recognizers {
         labelled.values().forEach(values::putIfAbsent);
         if (text != null && LedVocabulary.LED.equals(family) && values.containsKey(ParsedQuery.VOLTAGE)) {
             // the voltage an LED text states is its forward voltage (JLCPCB lists it unlabelled: "120° 2.3V 20mA"),
-            // except 5V, the reverse voltage JLCPCB lists for most LEDs ("100mA 150mW 5V 940nm")
+            // except 5V, the reverse voltage JLCPCB lists for most LEDs ("100mA 150mW 5V 940nm"), and an ESD rating
+            // ("2000V")
             singleValues(text, ParsedQuery.VOLTAGE, family).stream()
-                    .filter(v -> Math.abs(v - LED_REVERSE_VOLTAGE) > 1e-9).findFirst()
+                    .filter(v -> Math.abs(v - LED_REVERSE_VOLTAGE) > 1e-9 && v <= LED_MAX_FORWARD_VOLTAGE).findFirst()
                     .ifPresent(v -> values.putIfAbsent(ParsedQuery.FORWARD_VOLTAGE, of(ParsedQuery.FORWARD_VOLTAGE, v)));
         }
         if (values.containsKey(ParsedQuery.LIFETIME)) {

@@ -41,6 +41,8 @@ Details of how KINA reads a request, what it returns and how it ranks. The overv
   - Examples: `USB-C receptacle 16 pin SMD USB 2.0`, `USB Type-C 24 pin USB 3.1 receptacle horizontal`, `micro USB B receptacle 5 pin SMD`, `USB-C 6 pin power only`, `waterproof USB-C receptacle IP67`, `mid-mount USB-C 16P`.
   - Pin counts are normalised. Some distributors count 1 or 2 shell or mounting pins, so a 16-pin connector can be listed as 17P or 18P. KINA keeps the reported `Positions` and adds the canonical `PinConfiguration`. Ranking compares configurations, so a 17P listing fully matches a 16-pin request, and a "17 pin" request finds 16-pin parts.
 - Fans and blowers: type (axial or radial), frame size and supply voltage are hard, current and noise are maximums, airflow and static pressure minimums (CFM, m³/h, m³/min, l/min; Pa, mmH2O, inH2O), the speed matches within 15 %; see [Fans](#fans).
+- LEDs: colour, LED type (plain, addressable; strips and receivers are never LEDs), wavelength (within 10 nm), package (LED names such as 5050 and 2835 stay as written, 5mm and 3mm lamps) and mounting are hard; forward voltage is a maximum, current and luminous intensity minimums; colour temperature, viewing angle and lens are relaxable; see [LEDs](#leds).
+- Switches: switch type (tactile, pushbutton, toggle, slide, rocker, DIP, rotary, keylock, snap action, reed...), contacts (SPST, SPDT, DPDT, NO, NC), function (momentary, latching, ON-OFF-ON), termination class (PCB, solder lug, quick connect, wire leads, screw), size, panel cut-out and positions are hard; current, voltage (AC or DC), IP code and life are minimums; the force is relaxable; see [Switches](#switches).
 - Batch search of up to 20 queries in one call.
 - Graceful rate limits: when Mouser or TME answer with a rate limit, KINA waits and retries instead of failing at once, for up to 2 minutes per request (`kina.search.max-request-duration`). `rate_limit_waited_ms` in each distributor entry says how long it waited.
 - Ranking: deterministic parametric ranker blended 50/50 by rank with an in-process cross-encoder (ONNX Runtime, CPU, no extra container, nothing leaves the host), with a 5 s budget per query and an automatic fallback (`ranking: "fallback"`). Search never fails because of the model.
@@ -62,13 +64,15 @@ Decided by the product owner on 2026-10-07. A hard constraint is never relaxed: 
 | Ferrite bead | impedance at its frequency, package, mounting, single element, type | tolerance, DCR preference |
 | Crystal | frequency, load capacitance (exact), mounting, type (never an oscillator) | package, tolerance |
 | Oscillator (XO, TCXO, VCXO, OCXO, MEMS) | frequency, mounting, type (never a crystal) | package |
-| Diode | type (Schottky, standard rectifier or switching, Zener, TVS, LED), Zener voltage (exact), package, mounting | none |
+| Diode | type (Schottky, standard rectifier or switching, Zener, TVS; an LED request has a row of its own), Zener voltage (exact), package, mounting | none |
+| LED | LED type (plain or addressable; never a strip, laser, receiver, display or driver), colour, wavelength (within 10 nm), package, mounting, type | lens, viewing angle (within 15°), colour temperature (within 300 K) |
 | Transistor, MOSFET | type (never a gate driver), polarity (N-channel, P-channel, NPN, PNP; an N+P pair is its own type), technology (GaN, SiC, silicon), package, mounting | none |
 | Gate driver (gate driver, half-bridge driver, GaN power stage, half-bridge with integrated driver) | type (never a MOSFET), technology (GaN, SiC, silicon: the switches it drives), value, package, mounting, voltage, form factor | |
 | Regulator | type (fixed or adjustable; a stated output voltage means fixed), output voltage (exact), package, mounting | none |
 | Connector | connector type, gender, positions, pitch, package, mounting | orientation |
 | USB connector | USB type, stated pin configuration (normalised: 17P is 16), USB standard (a higher one is accepted), gender, mounting | orientation |
 | Fan, blower | fan type (axial or radial; AC or DC when both state it), frame size, supply voltage (exact), mounting, type | speed (within 15 %), bearing |
+| Switch | switch type (never a switch IC or a Hall sensor), contacts, function, termination class, size, panel cut-out, positions, illumination (when asked), package, mounting, type | force (within 20 %) |
 | Any other part | value, package, mounting, technology, form factor, single element, polarity, exact voltage, type | |
 
 The form factor is a short list of classes: `chip` (chip packages, and resistors listed as SMD without a body package), `through_hole` (axial, radial, leaded bodies), `chassis` (chassis, heatsink, bolt or screw mount, aluminium housed), `power_package` (SOT-227, TO-220, TO-247, TO-218, TO-126) and `power_smd` (TO-263/D2PAK, TO-252/DPAK). Write `heatsink`, `chassis mount` or `aluminium housed` to ask for a chassis part: chassis and power-package parts qualify, chip resistors, axial bodies and D2PAK parts are excluded (`excluded_by_constraints_detail` key `form factor`). A package with a class (`SOT-227`, `0805`) decides the class. A part whose class cannot be read stays, `unverified: ["form factor"]`, below the verified ones. Only distributor text is read, never datasheets. A resistor that states no power gets it from its series when the part number names it (Arcol `HS25`, TE `THS50`, Vishay `RH-50`, Bourns `PWR263S-35`, Caddock `MP930`); a stated power always wins.
@@ -104,6 +108,52 @@ Examples, checked live on 2026-10-07:
 A part whose text says fan and names no radial word is axial (Mouser `DC Fans`, JLCPCB `Cooling fan`). Mouser sends no fan attributes: KINA reads its category and description (`DC Fans Axial Fan, 40x40x10mm, 12VDC, 9.9CFM, 0.25"H2O, Vapo`). TME has the richest data (`Kind of fan`, `Fan dimensions`, `Supply voltage`, `Fan efficiency`, `Static pressure`, `Rotational rate/speed`, `Kind of Bearing`). Most in-stock JLCPCB fans have no description, so their voltage and frame size are unverified.
 
 Checked live on 2026-10-07: `40x40x10 fan 12V` returned only 40x40x10 mm 12 V fans at TME (34, all exact matches) and Mouser (40, one `40x40x10.6mm`; three ebm-papst fans state `10-14VDC`, a range, so their voltage is unverified and they come last). LCSC left out 3 fans of another frame and 2 of another voltage; its 21 other fans have no description and come back unverified. `radial blower 24V` returned only blowers: Mouser left out 34 axial fans (`{"fan type": 34}`), TME 4 parts of another voltage; LCSC's fans all read as axial, so it returned none with a hint. `fan 5V 3000rpm` put the 3200 rpm TME fan and the 3000 rpm Mouser fan first; faster fans follow with `speed: 5000 rpm instead of 3000 rpm`.
+
+### LEDs
+
+`LED`, `LEDs`, `indicator`, `IR emitter`, `IRED` and the addressable controllers (`WS2812`, `WS2812B`, `SK6812`, `APA102`, `NeoPixel`) make an LED request. `SMD LED` and `THT LED` set the mounting, `PCB LED` and `status LED` name a plain LED.
+
+| Attribute | Written as | Matched |
+|---|---|---|
+| Colour | `red`, `green`, `blue`, `yellow`, `amber`, `orange`, `pink`, `purple`, `yellow green`, `white`, `warm white`, `neutral white`, `cool white`, `UV`, `IR`, `RGB`, `RGBW`, `bicolor` | hard: a red request returns red LEDs only; `white` takes every white, `green` yellow green, `yellow` and `amber` each other; RGB is a type of its own. A part that states no colour is kept and listed in `unverified` |
+| LED type | `addressable`, `WS2812B`, `high power`, `LED strip`, `blinking` | hard: a request that names no type returns plain LEDs (indicator, high power), never an addressable LED, a strip, a laser, a receiver, a display, a driver or a blinking LED |
+| Wavelength | `625nm`, `470 nm` | hard within 10 nm; it implies the colour (620 to 645 nm red, 585 to 600 yellow, 515 to 540 green, 460 to 480 blue, 395 to 410 UV, 840 to 950 IR) |
+| Package | `0603`, `0805`, `1206`; `3528`, `5050`, `2835`, `3014`, `5730`, `3030`, `PLCC-2`; `3mm`, `5mm`, `T-1 3/4`, `2x5x7` | hard; LED names are never converted as metric chip codes |
+| Forward voltage | `2.0V`, `Vf 3.2V` | a maximum: an LED that needs more is below spec |
+| Current | `20mA`, `If 20 mA`, `350mA` | a minimum: a 30 mA LED works at 20 mA |
+| Luminous intensity, flux | `200mcd`, `2000 mcd`, `20 lm` | minimums |
+| Colour temperature | `3000K`, `6500 K` | within 300 K; outside it a mismatch, never an exclusion |
+| Viewing angle | `120°`, `30 deg`, `120 degrees` | within 15°; outside it a mismatch |
+| Lens | `clear`, `water clear`, `diffused`, `milky`, `frosted`, `tinted` | a preference: a mismatch, never an exclusion |
+| Orientation | `right angle`, `side view`, `reverse mount`, `top view` | a preference |
+
+TME has the richest LED data (`LED colour`, `LED lens`, `Luminosity`, `Wavelength`, `Operating voltage`, `LED diameter`, `Colour temperature`). Mouser sends no LED attributes: KINA reads its categories (`Single Colour LEDs`, `Multi-Colour LEDs`, `White LEDs`, `Infrared Emitters`) and descriptions. JLCPCB writes the colour, the wavelength, the forward voltage and the intensity unlabelled in the description (`120° 2.3V 20mA 225mcd 620nm~630nm 625nm Red Water Clear`); a lens colour (`Blue Frosted White Lens`) is no colour of the light, and the 5V reverse voltage is no forward voltage.
+
+Checked live on 2026-10-07: `0603 red LED 20mA` returned only red 0603 LEDs at LCSC (47), TME (41; 9 parts rated below 20 mA left out) and Mouser (45; two bi-colour and two 0201 parts left out). `IR LED 940nm 5mm` returned 940 nm 5 mm emitters everywhere (Mouser's `Infrared Emitters` with `T-1 3/4` and `+/-17deg` read as 5 mm and 34°). `RGB LED 5050` left out addressable LEDs and LED tapes: TME answered with tapes only (`{"led type": 60}`), Mouser kept 4 plain RGB LEDs. Mouser answered `LED 5mm white diffused` mostly with 5050 power LEDs, which the package check leaves out.
+
+### Switches
+
+`switch`, `switches` and the type words (`tactile`, `tact`, `pushbutton`, `push button`, `toggle`, `rocker`, `micro switch`, `keylock`, `DIP switch`) make a switch request. `switching regulator`, `switch mode`, `analog switch`, `load switch`, `Ethernet switch` and `Hall switch` do not; a switch IC or a Hall sensor is never returned for a switch request. `MOSFET to switch a load` stays a MOSFET request.
+
+| Attribute | Written as | Matched |
+|---|---|---|
+| Switch type | `tactile`, `pushbutton`, `toggle`, `slide`, `rocker`, `DIP`, `rotary`, `keylock`, `micro switch` (snap action, limit switch), `reed`, `membrane`, `detector`, `navigation` | hard: a tactile request never returns a toggle; `pushbutton` covers tactile and panel pushbuttons unless `tactile` or `panel` narrows it |
+| Contacts | `SPST`, `SPDT`, `DPDT`, `3PDT`, `SP3T`, `2P2T`, `SPST-NO`, `1 Form A`, `1 Form C`, `1xNO`, `normally open` | hard; SPST-NO and SPST-NC differ when the request says NO or NC |
+| Function | `momentary`, `latching`, `push-push`, `ON-OFF`, `ON-ON`, `ON-OFF-ON`, `(ON)-OFF-(ON)` | hard; brackets mark a momentary position |
+| Termination | `SMD`, `THT`, `PCB` (PCB); `solder lug`, `for wire soldering`, `quick connect`, `faston`, `wire leads`, `screw terminals`, `panel mount` | hard: a PCB request never returns a panel switch with solder lugs and the reverse |
+| Size | `6x6`, `6x6x4.3`, `12x12`, `4.3mm height`, `tactile 12mm` | hard: within 0.5 mm |
+| Panel cut-out | `12mm`, `16mm hole`, `Ø22mm` (pushbutton, toggle, rocker, keylock, panel) | hard: within 0.1 mm |
+| Positions | `8 position`, `8 pos`, `8-way` | hard (a DIP switch's number of switches, a rotary switch's positions) |
+| Illumination | `illuminated`, `LED`, `red LED`, `blue ring` | hard when asked; the colour is a preference |
+| Current, voltage | `50mA`, `3A`, `12V`, `250VAC`, `30 VDC` | minimums; AC or DC when stated is part of the match: a 12 VDC rating never satisfies 250 VAC |
+| IP code | `IP67`, `IP65`, `IPX7`, `sealed`, `waterproof` (IP67) | a minimum in both digits: IP67 satisfies IP65 |
+| Life | `100000 cycles`, `100,000 cycles`, `100k cycles` | a minimum |
+| Force | `160gf`, `1.6N` | within 20 %; outside it a mismatch, never an exclusion |
+| Orientation | `right angle`, `side actuated`, `vertical`, `top actuated` | a preference |
+
+TME states switches fully (`Type of switch`, `Contacts configuration`, `Switching method`, `Leads`, `Mounting`, `Body dimensions`, AC and DC contact ratings, `Poles number` of a DIP switch, `Mechanical durability`, `Operating Force`, `IP rating`, `Illumination`). Mouser sends no switch attributes: KINA reads its categories and descriptions (`Tactile Switches 6X6X4.3mm 160gF`, `Toggle Switches SPDT Off-None-On Solder Lug`). Many JLCPCB tactile switches have no description: their package field `SMD-4P,6x6mm` gives the mounting and the size.
+
+Checked live on 2026-10-07: `SPDT toggle switch panel mount solder lug` returned only SPDT toggles with solder lugs (or a termination they do not state) at TME (26; 24 PCB, screw or quick connect toggles left out) and Mouser (48); LCSC returned none with a hint: JLCPCB's toggles are PCB switches. `DIP switch 8 position` returned 8-switch DIP switches at TME (50) and Mouser (45; five coded rotary switches left out); JLCPCB's DIP switches do not state the count, so it stays unverified there. `tactile switch 6x6 SMD` returned 6x6 mm SMD tactile switches at LCSC and Mouser (50 each); TME found none with the first wording (it writes `Microswitch TACT`, now part of its phrase).
 
 ## MCP tools
 

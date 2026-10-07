@@ -29,7 +29,9 @@ import java.util.regex.Pattern;
  * </ul>
  *
  * <p>Fan requests ({@link #fanPhrase}) are rewritten in each distributor's fan wording (type words, frame size,
- * supply voltage, bearing).
+ * supply voltage, bearing), LED requests ({@link #ledPhrase}) in its LED wording (type and colour words, package,
+ * lens), switch requests ({@link #switchPhrase}) in its switch wording (type, contacts, function, size or cut-out,
+ * positions, mounting).
  *
  * <p>USB connector requests ({@link #usbPhrase}) never carry the pin count: distributors list some Type-C receptacles
  * with their shell pins (17P/18P for a 16-pin part, {@code PIN: 17}, {@code 17 Positions}), so a count in the phrase
@@ -57,6 +59,14 @@ public class DistributorPhraser {
         }
         if (isFan(query)) {
             String phrase = fanPhrase(distributor, query, Set.of());
+            return phrase == null || QueryParser.normalizeKey(phrase).equals(query.normalizedKey()) ? null : phrase;
+        }
+        if (isLed(query) || isSwitch(query)) {
+            String phrase = isLed(query) ? ledPhrase(distributor, query, Set.of())
+                    : switchPhrase(distributor, query, Set.of());
+            if (phrase != null && distributor == Distributor.LCSC) {
+                phrase = (phrase + " " + lcscRatings(query)).strip();
+            }
             return phrase == null || QueryParser.normalizeKey(phrase).equals(query.normalizedKey()) ? null : phrase;
         }
         if (!query.isConnector()) {
@@ -163,6 +173,8 @@ public class DistributorPhraser {
             // the parametric core, or a fan's phrase (type words, frame size, voltage, bearing), without what it drops
             java.util.function.Function<Set<String>, String> coreWithout = isFan(query)
                     ? drop -> fanPhrase(distributor, query, drop)
+                    : isLed(query) ? drop -> ledPhrase(distributor, query, drop)
+                    : isSwitch(query) ? drop -> switchPhrase(distributor, query, drop)
                     : drop -> CorePhrases.corePhrase(query, distributor, drop);
             core = coreWithout.apply(Set.of());
             if (core == null) {
@@ -806,6 +818,163 @@ public class DistributorPhraser {
         String display = frame.display();
         String words = display.substring(0, display.length() - 2);
         return words.contains("x") ? words : words + "x" + words;
+    }
+
+    // ---------------------------------------------------------------- LEDs
+
+    /** The controller an addressable LED request names ({@code WS2812B}, {@code SK6812}, {@code APA102}). */
+    private static final Pattern CONTROLLER = Pattern.compile("(?i)(?<![\\p{L}\\d])(?:ws28\\d\\d|sk68\\d\\d|apa10\\d)"
+            + "[a-z]{0,2}(?![\\p{L}\\d])");
+
+    /** True for an LED request ({@link LedVocabulary}). */
+    static boolean isLed(ParsedQuery query) {
+        return query != null && !query.isConnector() && LedVocabulary.LED.equals(query.family());
+    }
+
+    /**
+     * The phrase of an LED request (DESIGN.md 3.2 "Distributor phrasing"): the type and colour words, the package and
+     * the lens unless {@code drop} holds {@code lens}; never a rating, the viewing angle or the colour temperature (a
+     * window is no word), and the wavelength only for an IR or UV emitter (their colour word is weak). Mouser
+     * {@code LED 0603 red}, {@code RGB LED 5050}, {@code infrared emitter 940nm 5mm}; TME {@code LED 0603 red},
+     * {@code LED RGB 5050}, {@code IR transmitter 5mm 940nm} (its {@code LED; SMD; 0603; red} and {@code IR
+     * transmitter; 5mm; 940nm} wording, at most {@value #TME_MAX_LENGTH} characters); LCSC the JLCPCB category
+     * ({@code "LED Indication - Discrete"}, {@code "Infrared LED Emitters"}, {@code "RGB LEDs"},
+     * {@code "Ultraviolet LEDs"}), the package and the colour ({@code "LED Indication - Discrete" 0603 Red}).
+     */
+    static String ledPhrase(Distributor distributor, ParsedQuery q, Set<String> drop) {
+        ParsedQuery.Led led = q.led() == null ? ParsedQuery.Led.builder().build() : q.led();
+        String colour = led.colour();
+        boolean ir = "IR".equals(colour);
+        boolean uv = "UV".equals(colour);
+        boolean rgb = "RGB".equals(colour) || "RGBW".equals(colour);
+        String type = led.type();
+        java.util.regex.Matcher named = CONTROLLER.matcher(q.originalText() == null ? "" : q.originalText());
+        String controller = named.find() ? named.group().toUpperCase(Locale.ROOT) : null;
+        String typeWords = ParsedQuery.Led.ADDRESSABLE.equals(type) ? (controller != null ? controller : "addressable")
+                : type == null || ParsedQuery.Led.INDICATOR.equals(type) ? null : type;
+        String pkg = q.packageName();
+        String lens = led.lens() == null || drop.contains(ConstraintKind.LENS.label()) ? null : led.lens();
+        ParsedQuery.Constraint wavelength = q.constraint(ParsedQuery.WAVELENGTH);
+        String nm = (ir || uv) && wavelength != null ? wavelength.display() : null;
+        String colourWord = ir || uv || rgb || colour == null || colour.contains("colour") ? null : colour;
+        List<String> tokens = new ArrayList<>();
+        switch (distributor) {
+            case LCSC -> {
+                tokens.add(ir ? "\"Infrared LED Emitters\"" : uv ? "\"Ultraviolet LEDs\""
+                        : rgb || ParsedQuery.Led.ADDRESSABLE.equals(type) ? "\"RGB LEDs\""
+                        : "\"LED Indication - Discrete\"");
+                tokens.add(pkg);
+                tokens.add(colourWord == null ? null : capitalise(colourWord));
+                return join(tokens, Integer.MAX_VALUE);
+            }
+            case TME -> {
+                if (ir) {
+                    tokens.add("IR transmitter");
+                } else {
+                    tokens.add("LED");
+                    tokens.add(rgb ? colour : uv ? "UV" : null);
+                }
+                tokens.add(typeWords);
+                tokens.add(pkg);
+                tokens.add(colourWord);
+                tokens.add(nm);
+                tokens.add(lens);
+                return join(tokens, TME_MAX_LENGTH);
+            }
+            default -> {
+                if (ir) {
+                    tokens.add("infrared emitter");
+                    tokens.add(nm);
+                } else {
+                    tokens.add(typeWords);
+                    tokens.add(rgb ? colour + " LED" : uv ? "UV LED" : "LED");
+                    tokens.add(nm);
+                }
+                tokens.add(pkg);
+                tokens.add(colourWord);
+                tokens.add(lens);
+                return join(tokens, Integer.MAX_VALUE);
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- switches
+
+    /** True for a switch request ({@link SwitchVocabulary}). */
+    static boolean isSwitch(ParsedQuery query) {
+        return query != null && !query.isConnector() && SwitchVocabulary.SWITCH.equals(query.family());
+    }
+
+    /** Mouser and TME words of each switch type; LCSC its JLCPCB "Second Category". */
+    private static final java.util.Map<String, List<String>> SWITCH_WORDS = java.util.Map.ofEntries(
+            // TME writes "Microswitch TACT" and "Microswitch SNAP ACTION"
+            java.util.Map.entry("tactile", List.of("tactile switch", "microswitch TACT", "\"Tactile Switches\"")),
+            java.util.Map.entry("pushbutton", List.of("pushbutton switch", "push-button switch",
+                    "\"Pushbutton Switches\"")),
+            java.util.Map.entry("toggle", List.of("toggle switch", "toggle switch", "\"Toggle Switches\"")),
+            java.util.Map.entry("slide", List.of("slide switch", "slide switch", "\"Slide Switches\"")),
+            java.util.Map.entry("rocker", List.of("rocker switch", "rocker switch", "\"Rocker Switches\"")),
+            java.util.Map.entry("DIP", List.of("DIP switch", "DIP-SWITCH", "\"DIP Switches\"")),
+            java.util.Map.entry("rotary", List.of("rotary switch", "rotary switch", "\"Rotary Switches\"")),
+            java.util.Map.entry("keylock", List.of("keylock switch", "key switch", "\"Keylock Switches\"")),
+            java.util.Map.entry("snap action", List.of("snap action switch", "microswitch SNAP ACTION",
+                    "\"Limit Switches\"")),
+            java.util.Map.entry("reed", List.of("reed switch", "reed switch", "\"Reed Switches\"")),
+            java.util.Map.entry("detector", List.of("detector switch", "detector switch", "detector switch")),
+            java.util.Map.entry("navigation", List.of("navigation switch", "navigation switch",
+                    "\"Navigation Switches\"")),
+            java.util.Map.entry("membrane", List.of("membrane switch", "membrane switch", "membrane switch")));
+
+    /**
+     * The phrase of a switch request (DESIGN.md 3.2 "Distributor phrasing"): the type words, the contact
+     * configuration, the function (Mouser; TME only its position pattern), the body size or (Mouser) the panel
+     * cut-out, the positions of a DIP or rotary switch, a panel termination's words (Mouser) and the mounting; never a
+     * rating or the force. Mouser {@code tactile switch 6x6 SMD}, {@code toggle switch SPDT solder lug},
+     * {@code pushbutton switch SPST momentary 12mm}, {@code DIP switch 8 position}; TME {@code microswitch TACT 6x6 SMT},
+     * {@code toggle switch SPDT}, {@code DIP-SWITCH 8} (at most {@value #TME_MAX_LENGTH} characters); LCSC the JLCPCB
+     * category, the contacts, the size and the mounting ({@code "Tactile Switches" 6x6 SMD}).
+     */
+    static String switchPhrase(Distributor distributor, ParsedQuery q, Set<String> drop) {
+        ParsedQuery.Switch sw = q.sw() == null ? ParsedQuery.Switch.builder().build() : q.sw();
+        List<String> words = sw.type() == null ? null : SWITCH_WORDS.get(sw.type());
+        String contacts = sw.contacts() == null ? null : sw.contacts().display();
+        String size = sw.size() == null ? null : sw.size().display().replace("mm", "");
+        String hole = sw.holeDiameter() == null ? null
+                : java.math.BigDecimal.valueOf(sw.holeDiameter()).stripTrailingZeros().toPlainString() + "mm";
+        String function = sw.function();
+        String pattern = function != null && function.contains("ON") ? function : null;
+        String mounting = q.mounting();
+        List<String> tokens = new ArrayList<>();
+        switch (distributor) {
+            case LCSC -> {
+                tokens.add(words == null ? "switch" : words.get(2));
+                tokens.add(contacts);
+                tokens.add(size == null ? null : size + "mm");
+                tokens.add(mounting);
+                return join(tokens, Integer.MAX_VALUE);
+            }
+            case TME -> {
+                tokens.add(words == null ? "switch" : words.get(1));
+                tokens.add(contacts);
+                tokens.add(pattern);
+                tokens.add(size);
+                tokens.add(sw.positions() == null ? null : sw.positions().toString());
+                tokens.add("SMD".equals(mounting) ? "SMT" : mounting);
+                return join(tokens, TME_MAX_LENGTH);
+            }
+            default -> {
+                tokens.add(words == null ? "switch" : words.get(0));
+                tokens.add(contacts);
+                tokens.add(function);
+                tokens.add(size != null ? size : hole);
+                tokens.add(sw.positions() == null ? null : sw.positions() + " position");
+                String t = sw.termination();
+                tokens.add(t == null || ParsedQuery.Switch.PCB.equals(t) || ParsedQuery.Switch.PANEL.equals(t) ? null
+                        : t);
+                tokens.add(mounting);
+                return join(tokens, Integer.MAX_VALUE);
+            }
+        }
     }
 
     // ---------------------------------------------------------------- keyword core

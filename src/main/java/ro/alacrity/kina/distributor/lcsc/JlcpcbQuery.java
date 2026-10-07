@@ -148,7 +148,24 @@ public record JlcpcbQuery(List<Term> terms) {
             Map.entry("fpc", List.of("FPC")),
             Map.entry("d-sub", List.of("D-Sub")),
             Map.entry("dc power", List.of("DC Power")),
-            Map.entry("cooling fan", List.of("Cooling fan")));
+            Map.entry("cooling fan", List.of("Cooling fan")),
+            // LEDs (DESIGN.md 9.3): the in-stock JLCPCB categories of discrete, infrared, RGB and UV LEDs
+            Map.entry("led indication - discrete", List.of("LED Indication - Discrete", "Light Emitting Diodes (LED)")),
+            Map.entry("infrared led emitters", List.of("Infrared LED Emitters", "Infrared (IR) LEDs")),
+            Map.entry("rgb leds", List.of("RGB LEDs")),
+            Map.entry("ultraviolet leds", List.of("Ultraviolet LEDs", "Ultra Violet LEDs")),
+            // switches (DESIGN.md 9.3): the in-stock JLCPCB switch categories
+            Map.entry("tactile switches", List.of("Tactile Switches", "Tactile Switch/Push Button Switch")),
+            Map.entry("pushbutton switches", List.of("Pushbutton Switches", "Push Switches", "Push Button Switch")),
+            Map.entry("toggle switches", List.of("Toggle Switches")),
+            Map.entry("slide switches", List.of("Slide Switches")),
+            Map.entry("rocker switches", List.of("Rocker Switches")),
+            Map.entry("dip switches", List.of("DIP Switches")),
+            Map.entry("rotary switches", List.of("Rotary Switches", "Rotary Coding Switch")),
+            Map.entry("keylock switches", List.of("Keylock Switches")),
+            Map.entry("limit switches", List.of("Limit Switches", "Microswitches", "Micro switch")),
+            Map.entry("reed switches", List.of("Reed Switches")),
+            Map.entry("navigation switches", List.of("Navigation Switches", "Multi-Directional Switches")));
     static final String CATEGORY_COLUMN = "Second Category";
 
     private static final List<String> THT = List.of("Through Hole", "Plugin", "THT");

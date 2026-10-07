@@ -59,6 +59,10 @@ MPN_QUERY = ("1N4148W SOD-123", "1N4148W")
 FAN_QUERY = "40x40x10 fan 12V"
 FAN_SPEED_QUERY = "fan 5V 3000rpm"
 BLOWER_QUERY = "radial blower 24V"
+# LEDs and switches (DESIGN.md 3.4 "LEDs", "Switches"), checked against LCSC (no quota): the JLCPCB category phrase,
+# the colour and package of an LED, the type, size and mounting of a tactile switch are hard
+LED_QUERY = "0603 red LED 20mA"
+SWITCH_QUERY = "tactile switch 6x6 SMD"
 LIFETIME_QUERY = "electrolytic capacitor 470uF 35V 105°C 5000h THT"
 MISSING_MPN_QUERY = ("ZQX48213Q switching diode SOD-123", "ZQX48213Q")
 REDIRECT_URI = "http://localhost:6274/callback"
@@ -752,6 +756,7 @@ def suite_rest(base: str, token: str, rec: Recorder):
                   resp.status == 200 and families and all(f == wanted for f in families)
                   and not shape_problems(body), f"families {sorted(set(map(str, families)))}", resp.millis)
     fan_checks(api, auth, rec)
+    led_and_switch_checks(api, auth, rec)
     q = urllib.parse.urlencode({"q": FALLBACK_QUERY, "max_results": 20, "distributors": "LCSC"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)
     body = resp.json() if resp.status == 200 else {}
@@ -870,6 +875,40 @@ def fan_checks(api: Client, auth: dict, rec: Recorder):
               and (lcsc.get("excluded_by_constraints_detail") or {}).get("fan type", 0) > 0
               and (lcsc.get("parts") or "fan type" in (lcsc.get("hint") or "")) and not shape_problems(body),
               f"types {types}, excluded {lcsc.get('excluded_by_constraints_detail')}, hint {lcsc.get('hint')!r}",
+              resp.millis)
+
+
+def led_and_switch_checks(api: Client, auth: dict, rec: Recorder):
+    """An LED and a switch request against LCSC (a local database, no quota): category phrase and hard attributes."""
+    q = urllib.parse.urlencode({"q": LED_QUERY, "max_results": 30, "distributors": "LCSC", "detail": "full"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    parts = lcsc.get("parts", [])
+    colours = sorted({str(p.get("attributes", {}).get("LedColour")) for p in parts})
+    packages = sorted({str(p.get("attributes", {}).get("Package")) for p in parts})
+    rec.check(f"rest: LCSC '{LED_QUERY}' sends the LED category, returns red 0603 LEDs only",
+              resp.status == 200 and body.get("parsed", {}).get("family") == "led"
+              and (body.get("parsed", {}).get("led") or {}).get("colour") == "red"
+              and lcsc.get("distributor_query") == '"LED Indication - Discrete" 0603 Red >=20mA'
+              and parts and all(p.get("attributes", {}).get("Family") == "led" for p in parts)
+              and set(colours) <= {"red", "None"} and set(packages) == {"0603"} and not shape_problems(body),
+              f"returned {len(parts)} of {lcsc.get('fetched')}, colours {colours}, packages {packages}, "
+              f"excluded {lcsc.get('excluded_by_constraints_detail')}", resp.millis)
+    q = urllib.parse.urlencode({"q": SWITCH_QUERY, "max_results": 30, "distributors": "LCSC", "detail": "full"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    parts = lcsc.get("parts", [])
+    types = sorted({str(p.get("attributes", {}).get("SwitchType")) for p in parts})
+    sizes = sorted({str(p.get("attributes", {}).get("SwitchSize")) for p in parts})
+    mountings = sorted({str(p.get("attributes", {}).get("Mounting")) for p in parts})
+    rec.check(f"rest: LCSC '{SWITCH_QUERY}' sends the tactile category, returns 6x6 SMD tactile switches only",
+              resp.status == 200 and (body.get("parsed", {}).get("switch") or {}).get("type") == "tactile"
+              and lcsc.get("distributor_query") == '"Tactile Switches" 6x6mm SMD'
+              and parts and set(types) == {"tactile"} and all(s.startswith("6x6") or s == "None" for s in sizes)
+              and set(mountings) <= {"SMD", "None"} and not shape_problems(body),
+              f"returned {len(parts)} of {lcsc.get('fetched')}, types {types}, sizes {sizes}, mounting {mountings}",
               resp.millis)
 
 

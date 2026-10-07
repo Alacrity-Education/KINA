@@ -473,6 +473,47 @@ distributor and query): every phrase below found fans that meet the request, so 
 | TME | `fan`, `DC`/`AC`, `axial` or `blower` (TME writes `Fan: DC; blower; 24VDC; 75x75x30mm`), the voltage, the frame (`40x40x10`, a bare size as `120x120`), `<bearing> bearing`; 40 characters | `fan DC axial 12V 40x40x10` | `fan DC blower 24V` |
 | Mouser | axial: `DC fan` / `AC fan` / `fan`, the frame, the voltage (its categories are `DC Fans`, `AC Fans`, `Blowers & Centrifugal Fans`); radial: `blower`, the voltage, the frame width (`50mm`); `<bearing> bearing` | `DC fan 40x40x10 12V` | `blower 24V` |
 
+**LED requests** (`DistributorPhraser.ledPhrase`, family `led`, section 3.4 "LEDs") are written in each distributor's
+LED wording: the type and colour words, the package and the lens. The wavelength goes in for IR and UV emitters only
+(their colour word is weak); ratings, the viewing angle and the colour temperature never do. The ladder loosens the
+lens; the colour, the type and the package stay in every phrase. LCSC gets the minimum current as a rating term.
+
+| Distributor | LED rules | `0603 red LED 20mA` | `IR LED 940nm 5mm` |
+|---|---|---|---|
+| LCSC | the JLCPCB category (`"LED Indication - Discrete"`, `"Infrared LED Emitters"`, `"RGB LEDs"`, `"Ultraviolet LEDs"`), the package, the colour | `"LED Indication - Discrete" 0603 Red >=20mA` | `"Infrared LED Emitters" 5mm` |
+| TME | `LED` (`IR transmitter` for IR), `RGB`/`UV`, the controller or type word, the package, the colour, the wavelength of IR and UV, the lens; 40 characters | `LED 0603 red` | `IR transmitter 5mm 940nm` |
+| Mouser | `LED` (`RGB LED`, `UV LED`, `infrared emitter`), the controller or type word, the package, the colour, the lens | `LED 0603 red` | `infrared emitter 940nm 5mm` |
+
+Verified live on 2026-10-07 (one search per query and distributor; TME paged up to three pages), counts replayed with
+the final rules on the recorded parts (`fixtures/leds`): `0603 red LED 20mA` returned 47 LCSC, 41 TME (9 rated below
+20 mA) and 45 Mouser LEDs, all red 0603 (2 bi-colour and 2 0201 Mouser parts left out); `IR LED 940nm 5mm` every
+fetched part (32, 29, 26); `0805 blue LED 470nm` 48, 20 and 20. Two phrases need a better wording that was not found
+yet: TME answered `LED RGB 5050` with LED tapes only (60, all left out, `{"led type": 60}`), and Mouser answered `LED
+5mm white diffused` mostly with 5050 white power LEDs (36 left out by the package, 10 returned unverified); its keyword
+search does not weigh `5mm`.
+
+**Switch requests** (`DistributorPhraser.switchPhrase`, family `switch`, section 3.4 "Switches") are written in each
+distributor's switch wording: the type words, the contacts, the function, the size or (Mouser) the cut-out, the
+positions, a panel termination (Mouser) and the mounting. Ratings and the force never go in. The ladder loosens the
+force only, which is in no phrase: the type, the contacts, the function and the termination are never loosened.
+
+| Distributor | Switch rules | `tactile switch 6x6 SMD` | `SPDT toggle switch panel mount solder lug` |
+|---|---|---|---|
+| LCSC | the JLCPCB category (`"Tactile Switches"`, `"Toggle Switches"`, `"Pushbutton Switches"`, `"Slide Switches"`, `"DIP Switches"`, `"Rocker Switches"`, `"Rotary Switches"`, `"Keylock Switches"`, `"Limit Switches"`, `"Reed Switches"`), the contacts, the size, the mounting | `"Tactile Switches" 6x6mm SMD` | `"Toggle Switches" SPDT` |
+| TME | `microswitch TACT`, `microswitch SNAP ACTION`, `toggle switch`, `push-button switch`, `slide switch`, `DIP-SWITCH`...; the contacts, a position pattern (`ON-OFF-ON`), the size, the positions, `SMT`/`THT`; 40 characters | `microswitch TACT 6x6 SMT` | `toggle switch SPDT` |
+| Mouser | `tactile switch`, `toggle switch`, `pushbutton switch`, `DIP switch`, `snap action switch`...; the contacts, the function, the size or the cut-out (`12mm`), `N position`, `solder lug` / `quick connect` / `wire leads` / `screw`, the mounting | `tactile switch 6x6 SMD` | `toggle switch SPDT solder lug` |
+
+Verified live on 2026-10-07 (one search per query and distributor), counts replayed with the final rules on the
+recorded parts (`fixtures/switches`): `toggle switch SPDT solder lug` (Mouser 48 of 50: two keylock and pushbutton
+switches left out), `toggle switch SPDT` (TME 26 of 50: 24 PCB, screw or quick connect toggles left out),
+`pushbutton switch SPST momentary 12mm` (Mouser 7 of 11), `push-button switch SPST` (TME 24 of 50: termination,
+function, cut-out and type), `DIP switch 8 position` (Mouser 45 of 50: five coded rotary switches left out),
+`DIP-SWITCH 8` (TME 50, every one 8 switches), `slide switch SPDT THT` (LCSC 50, TME 50, Mouser 47). TME found nothing
+for `tactile switch 6x6 SMT`: it writes tactile switches as `Microswitch TACT`, so the phrase is now `microswitch TACT
+6x6 SMT` (not verified live). At LCSC the toggle and pushbutton requests return nothing with a hint: JLCPCB's toggles
+and pushbuttons are PCB switches, not panel switches with solder lugs. JLCPCB DIP switches state their number of
+switches only as a bare number, so it stays unverified.
+
 Each distributor entry reports the phrase as `distributor_query` (null when the user's text was sent verbatim);
 `fallback_query` is the relaxed phrase that produced the parts after the first one found nothing that meets the
 request.
@@ -807,7 +848,7 @@ specialisation of the diode with a policy row of its own. The vocabulary is read
   needs, the brightest it is binned at); a wavelength or colour temperature range (`620nm~630nm`, TME `2700-3200K`) as
   its centre (`625nm`, `2950 K`); a half angle (Vishay `+/-17deg.`) as the full viewing angle (`34°`). The radiant
   intensity of an IR emitter (`3mW/sr@IF=20mA`) is dropped, and a 5V in an LED's description is its reverse voltage,
-  never the forward voltage (JLCPCB `100mA 150mW 5V 940nm`).
+  never the forward voltage (JLCPCB `100mA 150mW 5V 940nm`), nor is a voltage above 60 V (an ESD rating, `2000V`).
 - **Family words**: `led`, `leds`; `indicator` at the lowest priority (`panel indicator`); the controllers `WS2812`,
   `WS2812B`, `WS2813`, `WS2815`, `SK6812`, `APA102`, `NeoPixel` (kept as keywords); `IR emitter`, `infrared emitter`
   and `IRED` (Mouser `Infrared Emitters`, `IR EMITTR`, `IREMITTER`). A description that names only the generic family of
@@ -1987,8 +2028,10 @@ read it from the distributor's data; empty with `allow_below_spec`), `out_of_sto
 was not understood), `requested_part_found` (section 3.4 "Requested part numbers") and `hint` (when the entry has no
 parts for an understood query and no `error`, and when a requested part number is not among the parts) are described
 in sections 3.2 and 3.4. `parsed` also carries `polarity` and `subtype` when stated or implied, `part_numbers` when
-the query names part numbers, and for a fan request `fan_type`, `fan_supply`, `frame_size`, `bearing` and
-`fan_features` (section 3.4 "Fans").
+the query names part numbers, for a fan request `fan_type`, `fan_supply`, `frame_size`, `bearing` and
+`fan_features` (section 3.4 "Fans"), for an LED request `led` (`colour`, `lens`, `type`, `orientation`; section 3.4
+"LEDs") and for a switch request `switch` (`type`, `contacts`, `function`, `termination`, `size`, `hole_diameter`,
+`positions`, `illuminated`, `illumination_colour`, `orientation`, `voltage_supply`; section 3.4 "Switches").
 
 `rank` orders the list. `score` is the blend of rank-normalised scores (section 3.3), relative to the other candidates,
 so the last of four exact matches can show `0.00`; a reader took that for "does not fit", so `score` is returned with
@@ -2581,7 +2624,13 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   matched as a column filter, e.g. `"Second Category" : "Female Header"` (matches `Female Headers` and
   `Pin Header & Female Header`), `"Second Category" : ("IC Socket" OR "Transistor Socket")`; the fan phrase
   `"Cooling fan"` matches the `Industrial Control Electrical / Cooling fan` rows (45, 26 in stock on 2026-10-07; the
-  158 `Cooling Fan` rows had no stock). Mounting:
+  158 `Cooling Fan` rows had no stock); the LED phrases `"LED Indication - Discrete"` (also `Light Emitting Diodes
+  (LED)`), `"Infrared LED Emitters"` (`Infrared (IR) LEDs`), `"RGB LEDs"` (also matches `RGB LEDs(Built-in IC)`) and
+  `"Ultraviolet LEDs"`, and the switch phrases `"Tactile Switches"`, `"Pushbutton Switches"` (`Push Switches`), `"Toggle
+  Switches"`, `"Slide Switches"`, `"Rocker Switches"`, `"DIP Switches"`, `"Rotary Switches"` (`Rotary Coding Switch`),
+  `"Keylock Switches"`, `"Limit Switches"` (`Microswitches`), `"Reed Switches"` and `"Navigation Switches"` match the
+  in-stock JLCPCB categories of the same names (6 611 `LED Indication - Discrete`, 13 496 `Tactile Switches` rows in
+  stock on 2026-10-07). Mounting:
   `THT`, `PTH`, `through hole` -> `("Through Hole" OR "Plugin" OR "THT")`; `SMD`, `SMT`, `surface mount` ->
   `("SMD" OR "SMT" OR "Surface Mount")`. Orientation: `right angle`, `90°`, `90 degree`, `angled`, `horizontal` ->
   `"Right Angle"` (a THT term is then dropped: JLCPCB right-angle THT headers never say "Through Hole");
