@@ -147,7 +147,8 @@ public record JlcpcbQuery(List<Term> terms) {
             Map.entry("idc connectors", List.of("IDC Connector")),
             Map.entry("fpc", List.of("FPC")),
             Map.entry("d-sub", List.of("D-Sub")),
-            Map.entry("dc power", List.of("DC Power")));
+            Map.entry("dc power", List.of("DC Power")),
+            Map.entry("cooling fan", List.of("Cooling fan")));
     static final String CATEGORY_COLUMN = "Second Category";
 
     private static final List<String> THT = List.of("Through Hole", "Plugin", "THT");

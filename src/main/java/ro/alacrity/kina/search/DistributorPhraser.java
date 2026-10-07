@@ -28,6 +28,9 @@ import java.util.regex.Pattern;
  *   <li>Mouser (keyword): {@code female header 6 pos right angle}, {@code male header 40 pos 2.54mm vertical}.</li>
  * </ul>
  *
+ * <p>Fan requests ({@link #fanPhrase}) are rewritten in each distributor's fan wording (type words, frame size,
+ * supply voltage, bearing).
+ *
  * <p>USB connector requests ({@link #usbPhrase}) never carry the pin count: distributors list some Type-C receptacles
  * with their shell pins (17P/18P for a 16-pin part, {@code PIN: 17}, {@code 17 Positions}), so a count in the phrase
  * would exclude them; the ranker sorts by the canonical configuration instead. Type, gender, mounting, standard and
@@ -51,6 +54,10 @@ public class DistributorPhraser {
     public static String phrase(Distributor distributor, ParsedQuery query) {
         if (query == null) {
             return null;
+        }
+        if (isFan(query)) {
+            String phrase = fanPhrase(distributor, query, Set.of());
+            return phrase == null || QueryParser.normalizeKey(phrase).equals(query.normalizedKey()) ? null : phrase;
         }
         if (!query.isConnector()) {
             // minimum ratings never go into a phrase: "25V" would only match parts that print 25V (DESIGN.md 3.2);
@@ -153,7 +160,11 @@ public class DistributorPhraser {
                     && (c.isUsb() || distributor == Distributor.TME);
             steps.add(new Relaxation(core, orientationDropped ? List.of(orientation) : List.of()));
         } else {
-            core = CorePhrases.corePhrase(query, distributor, Set.of());
+            // the parametric core, or a fan's phrase (type words, frame size, voltage, bearing), without what it drops
+            java.util.function.Function<Set<String>, String> coreWithout = isFan(query)
+                    ? drop -> fanPhrase(distributor, query, drop)
+                    : drop -> CorePhrases.corePhrase(query, distributor, drop);
+            core = coreWithout.apply(Set.of());
             if (core == null) {
                 steps.add(new Relaxation(keywordCore(query), List.of()));
             } else {
@@ -179,7 +190,7 @@ public class DistributorPhraser {
                     if (!dielectric || query.dielectric() != null) {
                         relaxed.add(constraint);
                     }
-                    steps.add(new Relaxation(CorePhrases.corePhrase(query, distributor, drop), relaxed));
+                    steps.add(new Relaxation(coreWithout.apply(drop), relaxed));
                 }
             }
         }
@@ -712,6 +723,89 @@ public class DistributorPhraser {
 
     private static String ipRating(ParsedQuery.Connector c) {
         return c.features().stream().filter(f -> f.startsWith("IP")).findFirst().orElse(null);
+    }
+
+    // ---------------------------------------------------------------- fans
+
+    /** True for a fan request ({@link FanVocabulary}). */
+    static boolean isFan(ParsedQuery query) {
+        return query != null && !query.isConnector() && FanVocabulary.FAN.equals(query.family());
+    }
+
+    /** Below this supply voltage a fan request without AC or DC is phrased as a DC fan (AC fans run from mains). */
+    private static final double DC_FAN_MAX_VOLTS = 60;
+
+    /**
+     * The phrase of a fan request (DESIGN.md 3.2 "Distributor phrasing"): the type words, the frame size, the supply
+     * voltage (exact for fans, so it stays) and the bearing unless {@code drop} holds {@code bearing}; never the
+     * speed (a 15 % window is no word) or a rating. Mouser {@code DC fan 40x40x10 12V} (its categories are DC Fans,
+     * AC Fans and Blowers), a blower {@code blower 12V 50mm}; TME {@code fan DC axial 12V 40x40x10} (its description
+     * wording {@code Fan: DC; axial; 12VDC; 40x40x10mm}, at most {@value #TME_MAX_LENGTH} characters), a blower
+     * {@code fan DC blower 24V}; LCSC the JLCPCB category {@code "Cooling fan"} only. A request that names
+     * neither AC nor DC and asks for at most {@value #DC_FAN_MAX_VOLTS} V is phrased as a DC fan.
+     */
+    static String fanPhrase(Distributor distributor, ParsedQuery q, Set<String> drop) {
+        ParsedQuery.Fan fan = q.fan() == null ? ParsedQuery.Fan.builder().build() : q.fan();
+        ParsedQuery.Constraint voltage = q.constraint(ParsedQuery.VOLTAGE);
+        String supply = fan.supply() != null ? fan.supply()
+                : voltage != null && voltage.value() <= DC_FAN_MAX_VOLTS ? ParsedQuery.DC : null;
+        boolean radial = ParsedQuery.RADIAL.equals(fan.type());
+        ParsedQuery.Frame frame = fan.frame();
+        String bearing = fan.bearing() == null || drop.contains(ConstraintKind.BEARING.label()) ? null
+                : fan.bearing() + " bearing";
+        List<String> tokens = new ArrayList<>();
+        switch (distributor) {
+            case LCSC -> {
+                // the category alone: JLCPCB has a few dozen fans in stock, most with an empty description, so a
+                // voltage term would find none and the database search would relax to any part stating the voltage;
+                // the ranker reads the rest
+                return "\"Cooling fan\"";
+            }
+            case TME -> {
+                tokens.add("fan");
+                if (supply != null) {
+                    tokens.add(supply);
+                }
+                tokens.add(radial ? "blower" : ParsedQuery.AXIAL);
+                if (voltage != null) {
+                    tokens.add(voltage.display());
+                }
+                if (frame != null) {
+                    tokens.add(frameWords(frame));
+                }
+                tokens.add(bearing);
+                return join(tokens, TME_MAX_LENGTH);
+            }
+            default -> {
+                if (radial) {
+                    tokens.add("blower");
+                    if (voltage != null) {
+                        tokens.add(voltage.display());
+                    }
+                    if (frame != null) {
+                        tokens.add(java.math.BigDecimal.valueOf(frame.width()).stripTrailingZeros().toPlainString()
+                                + "mm");
+                    }
+                } else {
+                    tokens.add(supply != null ? supply + " fan" : "fan");
+                    if (frame != null) {
+                        tokens.add(frameWords(frame));
+                    }
+                    if (voltage != null) {
+                        tokens.add(voltage.display());
+                    }
+                }
+                tokens.add(bearing);
+                return join(tokens, Integer.MAX_VALUE);
+            }
+        }
+    }
+
+    /** A frame size as distributors print it, without the unit: {@code 40x40x10}, {@code 120x120}. */
+    private static String frameWords(ParsedQuery.Frame frame) {
+        String display = frame.display();
+        String words = display.substring(0, display.length() - 2);
+        return words.contains("x") ? words : words + "x" + words;
     }
 
     // ---------------------------------------------------------------- keyword core

@@ -100,7 +100,7 @@ class FanVocabulary {
 
     /** Bearing words, most specific first, and their canonical name. */
     private static final List<Map.Entry<Pattern, String>> BEARINGS = List.of(
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:dual|double|two|2)[- ]?balls?" + AFTER), "ball"),
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:(?:dual|double|two|twin|2)[- ]?balls?|twin[- ]bearings?)" + AFTER), "ball"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:fluid[- ]dynamic|fluid|fdb|hydro(?:dynamic|lic)?|hypro"
                     + "|hydraulic)" + AFTER), "fluid dynamic"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:ball|bb)" + AFTER), "ball"),

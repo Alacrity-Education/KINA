@@ -38,8 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>The master covers the vocabulary it was captured with: the policy families and constraint names of
  * {@link #CAPTURED_FAMILIES} and {@link #CAPTURED_NAMES}. Families and names added later (fans, 0.13) are left out of
- * the tables and name lists here and covered by their own tests ({@code FanTest}); every query and part of the master
- * must still give the same results.
+ * the tables and name lists here and covered by their own tests ({@code FanParserTest}, {@code FanExtractionTest},
+ * {@code FanRankingTest}); every query and part of the master must still give the same results.
  *
  * <p>Scores are compared as {@link Double#toString} strings, so they must stay bit-identical. On a mismatch the
  * current dump is written to {@code target/golden/constraints-actual.jsonl}. To recapture (only for an intended
