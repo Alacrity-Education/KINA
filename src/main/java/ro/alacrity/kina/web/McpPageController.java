@@ -26,13 +26,17 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Token web UI (DESIGN.md section 6): list the current user's access tokens, create one (plaintext shown exactly once),
- * revoke. Server-rendered Thymeleaf, CSRF-protected forms, no JavaScript. Static tokens are for scripts and for Claude
- * Code on machines without a browser; Claude itself connects through OAuth. {@code kina.tokens.ui-enabled=false}
- * replaces the page with an explanation and makes {@code POST /tokens} a 404.
+ * The MCP tab of the web UI (DESIGN.md section 6, "Web UI"), {@code GET /connect}: how to connect Claude, and the
+ * current user's access tokens: create one (plaintext shown exactly once), revoke. Server-rendered Thymeleaf,
+ * CSRF-protected forms, no JavaScript. Static tokens are for scripts and for Claude Code on machines without a browser;
+ * Claude itself connects through OAuth. {@code kina.tokens.ui-enabled=false} replaces the tab with an explanation and
+ * makes {@code POST /tokens} a 404. The tab is not at {@code /mcp}: that path is the MCP endpoint on the machine chain.
  */
 @Controller
-public class TokenPageController {
+public class McpPageController {
+
+    /** The path of the MCP tab. */
+    public static final String PATH = "/connect";
 
     static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'").withZone(ZoneOffset.UTC);
 
@@ -49,12 +53,11 @@ public class TokenPageController {
         }
     }
 
-    @GetMapping("/")
+    @GetMapping(PATH)
     public ModelAndView index(Authentication authentication) {
-        KinaPrincipal user = user(authentication);
+        KinaPrincipal user = WebTabs.user(authentication);
         if (!properties.tokens().uiEnabled()) {
-            ModelAndView view = new ModelAndView("tokens/disabled");
-            view.addObject("user", user.displayName());
+            ModelAndView view = WebTabs.view("mcp/disabled", WebTabs.MCP, user);
             view.addObject("mcpUrl", urls.mcpUrl());
             return view;
         }
@@ -67,7 +70,7 @@ public class TokenPageController {
         if (!properties.tokens().uiEnabled()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        KinaPrincipal user = user(authentication);
+        KinaPrincipal user = WebTabs.user(authentication);
         String trimmed = name == null ? "" : name.strip();
         if (trimmed.isEmpty()) {
             return indexView(user, "Please enter a name for the token.", name, HttpStatus.BAD_REQUEST);
@@ -79,8 +82,7 @@ public class TokenPageController {
         IssuedToken issued = tokens.create(user.userId(), trimmed, null, null);
         response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
         response.setHeader(HttpHeaders.PRAGMA, "no-cache");
-        ModelAndView view = new ModelAndView("tokens/created");
-        view.addObject("user", user.displayName());
+        ModelAndView view = WebTabs.view("mcp/created", WebTabs.MCP, user);
         view.addObject("name", issued.token().name());
         view.addObject("token", issued.plaintext());
         view.addObject("expires", TIME.format(issued.token().expiresAt()));
@@ -91,18 +93,17 @@ public class TokenPageController {
 
     @PostMapping("/tokens/{id}/revoke")
     public String revoke(@PathVariable("id") UUID id, Authentication authentication, RedirectAttributes redirect) {
-        KinaPrincipal user = user(authentication);
+        KinaPrincipal user = WebTabs.user(authentication);
         if (tokens.revoke(user.userId(), id)) {
             redirect.addFlashAttribute("message", "Token revoked.");
         }
-        return "redirect:/";
+        return "redirect:" + PATH;
     }
 
     private ModelAndView indexView(KinaPrincipal user, String error, String name, HttpStatus status) {
         Instant now = Instant.now();
         List<TokenRow> rows = tokens.list(user.userId()).stream().map(token -> row(token, now)).toList();
-        ModelAndView view = new ModelAndView("tokens/index");
-        view.addObject("user", user.displayName());
+        ModelAndView view = WebTabs.view("mcp/index", WebTabs.MCP, user);
         view.addObject("tokens", rows);
         view.addObject("error", error);
         view.addObject("name", name);
@@ -116,10 +117,5 @@ public class TokenPageController {
         return new TokenRow(token.id(), token.name(), token.tokenPrefix() + "…", TIME.format(token.createdAt()),
                 TIME.format(token.expiresAt()), token.lastUsedAt() == null ? "never" : TIME.format(token.lastUsedAt()),
                 token.status(now), token.oauthClientId() != null);
-    }
-
-    private static KinaPrincipal user(Authentication authentication) {
-        return KinaPrincipal.from(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not signed in"));
     }
 }

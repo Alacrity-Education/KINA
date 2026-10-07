@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @DevModeIntegrationTest
-class TokenPageControllerTest {
+class McpPageControllerTest {
 
     static final Pattern TOKEN = Pattern.compile("kina_[A-Za-z0-9_-]{43}");
 
@@ -35,7 +35,7 @@ class TokenPageControllerTest {
 
     @Test
     void indexRendersForDevAdmin() throws Exception {
-        MockHttpServletResponse response = mvc.perform(get("/")).andReturn().getResponse();
+        MockHttpServletResponse response = mvc.perform(get("/connect")).andReturn().getResponse();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getContentAsString())
                 .contains("Access tokens")
@@ -44,7 +44,25 @@ class TokenPageControllerTest {
                 .contains("http://localhost/mcp")
                 // TME API terms 8.7: the notice wherever TME data is shown (DESIGN.md 3.2 "Attributions": the web footer only)
                 .contains("Data powered by TME.eu Data – no guarantee of data accuracy")
-                .contains("Product data provided by Mouser Electronics");
+                .contains("Product data provided by Mouser Electronics")
+                .contains("<a href=\"/connect\" aria-current=\"page\" class=\"active\">MCP</a>")
+                .contains("<a href=\"/\">Search</a>")
+                .contains("<a href=\"/status\">Status</a>");
+    }
+
+    @Test
+    void rootIsTheSearchTab() throws Exception {
+        for (String path : new String[]{"/", "/search"}) {
+            MockHttpServletResponse response = mvc.perform(get(path)).andReturn().getResponse();
+            assertThat(response.getStatus()).as(path).isEqualTo(200);
+            assertThat(response.getContentAsString()).as(path)
+                    .contains("<a href=\"/\" aria-current=\"page\" class=\"active\">Search</a>")
+                    .contains("<a href=\"/connect\">MCP</a>")
+                    .contains("name=\"q\"")
+                    .contains("name=\"distributors\"")
+                    .contains("Connect KINA")
+                    .doesNotContain("Create token");
+        }
     }
 
     @Test
@@ -63,7 +81,7 @@ class TokenPageControllerTest {
                 .contains("shown only once");
         assertThat(tokens.validate(plaintext)).isPresent();
 
-        String index = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
+        String index = mvc.perform(get("/connect")).andReturn().getResponse().getContentAsString();
         assertThat(index).contains(name).contains(plaintext.substring(0, 12)).doesNotContain(plaintext);
     }
 
@@ -91,7 +109,7 @@ class TokenPageControllerTest {
         MockHttpServletResponse response = mvc.perform(post("/tokens/" + issued.token().id() + "/revoke").with(csrf()))
                 .andReturn().getResponse();
         assertThat(response.getStatus()).isEqualTo(302);
-        assertThat(response.getRedirectedUrl()).isEqualTo("/");
+        assertThat(response.getRedirectedUrl()).isEqualTo("/connect");
         assertThat(tokens.validate(issued.plaintext())).isEmpty();
         assertThat(tokens.list(users.devAdmin().id())).filteredOn(t -> t.id().equals(issued.token().id()))
                 .singleElement().extracting((AccessToken t) -> t.status(Instant.now())).isEqualTo("revoked");

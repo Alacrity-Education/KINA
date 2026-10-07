@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <th:block th:replace="~{fragments :: pageHead('Search')}"></th:block>
+</head>
+<body>
+<header th:replace="~{fragments :: pageHeader(${user})}"></header>
+<main class="wide">
+    <div class="card">
+        <h1>Search parts</h1>
+        <form method="get" th:action="@{/}" id="search-form">
+            <div class="row">
+                <input type="text" name="q" maxlength="300" required autofocus
+                       placeholder="e.g. 10k 0603 resistor 1%" aria-label="Part description" th:value="${q}">
+                <button type="submit" id="search-button">Search</button>
+            </div>
+            <div class="options">
+                <fieldset>
+                    <legend>Distributors</legend>
+                    <label th:each="d : ${distributorOptions}">
+                        <input type="checkbox" name="distributors" th:value="${d.name}" th:checked="${d.checked}">
+                        <span th:text="${d.name}">LCSC</span>
+                        <span class="muted" th:unless="${d.configured}">(not configured)</span>
+                    </label>
+                </fieldset>
+            </div>
+        </form>
+        <p class="muted" th:if="${tokensEnabled}">Connect KINA to Claude: add a custom connector with the URL
+            <code th:text="${mcpUrl}">https://kina.example.com/mcp</code>. Details and static tokens are in the
+            <a th:href="@{/connect}">MCP</a> tab.</p>
+        <p class="muted" th:unless="${tokensEnabled}">Connect KINA through Claude: add a custom connector with the URL
+            <code th:text="${mcpUrl}">https://kina.example.com/mcp</code>. Static tokens are disabled on this
+            server.</p>
+    </div>
+</main>
+<footer th:replace="~{fragments :: pageFooter}"></footer>
+</body>
+</html>

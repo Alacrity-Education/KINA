@@ -19,6 +19,28 @@
             header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;
                      border-bottom: 1px solid var(--line); background: var(--card); }
             header strong { font-size: 17px; letter-spacing: .5px; }
+            header { gap: 16px; flex-wrap: wrap; }
+            nav.tabs { display: flex; gap: 4px; flex: 1; }
+            nav.tabs a { padding: 6px 12px; border-radius: 6px; color: var(--fg); text-decoration: none; }
+            nav.tabs a:hover { background: var(--bg); }
+            nav.tabs a.active { background: var(--accent); color: #fff; }
+            main.wide { max-width: 1280px; }
+            input[type=number], select { font: inherit; padding: 6px 8px; border: 1px solid var(--line);
+                                         border-radius: 6px; background: var(--bg); color: var(--fg); }
+            fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; margin: 0; }
+            legend { font-size: 13px; color: var(--muted); padding: 0 4px; }
+            .options { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; margin-top: 12px; }
+            .options label { margin-right: 10px; white-space: nowrap; }
+            .chips { display: flex; gap: 4px; flex-wrap: wrap; }
+            .chip { font-size: 12px; padding: 1px 7px; border: 1px solid var(--line); border-radius: 10px;
+                    background: var(--bg); white-space: nowrap; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+            .grid .card { margin-bottom: 0; padding: 14px; }
+            dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 0; }
+            dl.kv dt { color: var(--muted); font-size: 13px; }
+            dl.kv dd { margin: 0; word-break: break-word; }
+            td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+            table.parts td { vertical-align: top; font-size: 14px; }
             main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
             .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px;
                     margin-bottom: 20px; }
@@ -56,6 +78,14 @@
 <body>
 <header th:fragment="pageHeader(user)">
     <strong>KINA</strong>
+    <nav class="tabs" th:if="${tab != null}" aria-label="Sections">
+        <a th:href="@{/}" th:classappend="${tab == 'search'} ? 'active'"
+           th:attr="aria-current=${tab == 'search'} ? 'page'">Search</a>
+        <a th:href="@{/connect}" th:classappend="${tab == 'mcp'} ? 'active'"
+           th:attr="aria-current=${tab == 'mcp'} ? 'page'">MCP</a>
+        <a th:href="@{/status}" th:classappend="${tab == 'status'} ? 'active'"
+           th:attr="aria-current=${tab == 'status'} ? 'page'">Status</a>
+    </nav>
     <span class="muted" th:if="${user != null}" th:text="'Signed in as ' + ${user}">Signed in as user</span>
 </header>
 <footer th:fragment="pageFooter">

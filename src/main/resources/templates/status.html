@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <th:block th:replace="~{fragments :: pageHead('Status')}"></th:block>
+</head>
+<body>
+<header th:replace="~{fragments :: pageHeader(${user})}"></header>
+<main class="wide">
+    <div class="card">
+        <h1>System</h1>
+        <dl class="kv">
+            <dt>Version</dt><dd id="version" th:text="${system.version}">0.9.0</dd>
+            <dt>Mode</dt><dd th:text="${system.mode}">prod</dd>
+            <dt>Public URL</dt><dd th:text="${system.baseUrl}">https://kina.example.com</dd>
+            <dt>Uptime</dt><dd th:text="${system.uptime}">1h 2m</dd>
+            <dt>JVM memory</dt>
+            <dd th:text="${#numbers.formatInteger(system.memoryUsedMb, 1, 'COMMA')} + ' MB in use of '
+                         + ${#numbers.formatInteger(system.memoryMaxMb, 1, 'COMMA')} + ' MB'">100 MB</dd>
+        </dl>
+        <p class="muted">Reload the page to refresh.</p>
+    </div>
+</main>
+<footer th:replace="~{fragments :: pageFooter}"></footer>
+</body>
+</html>
