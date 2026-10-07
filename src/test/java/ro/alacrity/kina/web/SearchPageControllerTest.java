@@ -26,9 +26,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,7 +87,7 @@ class SearchPageControllerTest {
 
     @Test
     void searchRendersTheCountsAndThePartsTable() throws Exception {
-        when(searchService.search(any())).thenReturn(response("10k 0603 resistor",
+        when(searchService.search(any(), anyBoolean())).thenReturn(response("10k 0603 resistor",
                 part("Resistor 10k 0603", "https://www.tme.eu/en/details/RC0603FR-0710KL/")));
 
         MockHttpServletResponse response = mvc.perform(get("/").queryParam("q", " 10k 0603 resistor ")
@@ -93,7 +97,7 @@ class SearchPageControllerTest {
                 .andReturn().getResponse();
 
         verify(searchService).search(new SearchRequest("10k 0603 resistor", 5,
-                Set.of(Distributor.TME, Distributor.MOUSER), true, 250, ResponseDetail.COMPACT, false));
+                Set.of(Distributor.TME, Distributor.MOUSER), true, 250, ResponseDetail.COMPACT, false), true);
         assertThat(response.getStatus()).isEqualTo(200);
         String page = response.getContentAsString();
         assertThat(page)
@@ -118,7 +122,7 @@ class SearchPageControllerTest {
 
     @Test
     void distributorTextIsEscapedAndOnlyHttpLinksAreRendered() throws Exception {
-        when(searchService.search(any())).thenReturn(response("10k resistor",
+        when(searchService.search(any(), anyBoolean())).thenReturn(response("10k resistor",
                 part("<script>alert('x')</script> 10k", "javascript:alert(1)")));
 
         String page = mvc.perform(get("/").queryParam("q", "10k resistor")).andReturn().getResponse()
@@ -127,6 +131,58 @@ class SearchPageControllerTest {
         assertThat(page).contains("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt; 10k")
                 .doesNotContain("<script>alert(")
                 .doesNotContain("javascript:alert");
+    }
+
+    static SearchResponse single(Distributor distributor, String photoUrl) {
+        Part part = part("MLCC 10uF 25V X7R 0805", "https://example.invalid/p").toBuilder()
+                .distributor(distributor).manufacturerPartNumber("CL21B106KAYQNNE").build();
+        PartResponse p = PartResponse.of(part, 1, 0.9, 1.0, 1, ResponseDetail.COMPACT, Map.of())
+                .toBuilder().photoUrl(photoUrl).build();
+        DistributorResult r = DistributorResult.builder().distributor(distributor).fetched(1).returned(1)
+                .cache(CacheStatus.HIT).parts(List.of(p)).build();
+        return new SearchResponse("10uF X7R 0805", ParsedQueryResponse.from(new QueryParser().parse("10uF X7R 0805")),
+                RankingMode.BLENDED, null, List.of(r));
+    }
+
+    @Test
+    void aDistributorPhotoIsLinkedAsTheRowThumbnail() throws Exception {
+        when(searchService.search(any(), anyBoolean())).thenReturn(single(Distributor.MOUSER,
+                "//www.mouser.com/images/samsung/images/MLCC_0805.jpg"));
+
+        String page = mvc.perform(get("/").queryParam("q", "10uF X7R 0805")).andReturn().getResponse()
+                .getContentAsString();
+
+        verify(searchService).search(any(), eq(true));
+        assertThat(page).contains("<th class=\"thumb\"></th>").doesNotContain("example.jpg");
+        Matcher img = Pattern.compile("<td class=\"thumb\"><img[^>]*></td>")
+                .matcher(page);
+        assertThat(img.find()).isTrue();
+        assertThat(img.group())
+                .contains("src=\"https://www.mouser.com/images/samsung/images/MLCC_0805.jpg\"",
+                        "alt=\"CL21B106KAYQNNE\"", "loading=\"lazy\"", "decoding=\"async\"",
+                        "referrerpolicy=\"no-referrer\"")
+                .doesNotContain("width=", "height=");
+    }
+
+    @Test
+    void aPartWithoutPhotoHasNoThumbnail() throws Exception {
+        when(searchService.search(any(), anyBoolean())).thenReturn(single(Distributor.LCSC, null));
+
+        String page = mvc.perform(get("/").queryParam("q", "10uF X7R 0805")).andReturn().getResponse()
+                .getContentAsString();
+
+        assertThat(page).contains("class=\"part-row\"", "CL21B106KAYQNNE")
+                .doesNotContain("<img", "class=\"thumb\"");
+    }
+
+    @Test
+    void onlyHttpPhotosAreRendered() throws Exception {
+        when(searchService.search(any(), anyBoolean())).thenReturn(single(Distributor.TME, "javascript:alert(1)"));
+
+        String page = mvc.perform(get("/").queryParam("q", "10uF X7R 0805")).andReturn().getResponse()
+                .getContentAsString();
+
+        assertThat(page).doesNotContain("<img", "javascript:alert", "class=\"thumb\"");
     }
 
     @Test
@@ -149,7 +205,7 @@ class SearchPageControllerTest {
 
     @Test
     void aFailingSearchRendersTheError() throws Exception {
-        when(searchService.search(any())).thenThrow(new IllegalStateException("boom"));
+        when(searchService.search(any(), anyBoolean())).thenThrow(new IllegalStateException("boom"));
         MockHttpServletResponse response = mvc.perform(get("/").queryParam("q", "10k")).andReturn().getResponse();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getContentAsString()).contains("The search failed").doesNotContain("boom");

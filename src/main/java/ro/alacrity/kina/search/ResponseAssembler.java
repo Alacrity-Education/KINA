@@ -33,8 +33,9 @@ final class ResponseAssembler {
     @Autowired private StockRefresher staleness;
     @Autowired private Clock clock;
 
+    /** {@code photos}: also fill {@code photo_url} in compact detail (the web Search tab's thumbnails). */
     SearchResponse assemble(Prepared prepared, Map<Distributor, Fetched> fetched,
-                            RankedResults ranked, String note) {
+                            RankedResults ranked, String note, boolean photos) {
         SearchRequest request = prepared.request();
         ParsedQuery parsed = prepared.parsed();
         ConstraintPolicy policy = ConstraintPolicy.of(ranking);
@@ -58,10 +59,11 @@ final class ResponseAssembler {
                 RankedPart rp = top.get(i);
                 Map<String, String> canonical = request.detail() == ResponseDetail.FULL ? null
                         : extractor.extract(rp.part());
-                parts.add(PartResponse.of(rp.part(), new PartResponse.Ranking(i + 1, roundScore(rp.score()),
-                                rp.match(), rp.mismatches(), rp.unverified(), rp.belowSpec()),
+                PartResponse part = PartResponse.of(rp.part(), new PartResponse.Ranking(i + 1,
+                                roundScore(rp.score()), rp.match(), rp.mismatches(), rp.unverified(), rp.belowSpec()),
                         request.quantity(), request.detail(), canonical, lowStockThreshold,
-                        staleness.isStale(rp.part(), now), now));
+                        staleness.isStale(rp.part(), now), now);
+                parts.add(photos ? part.toBuilder().photoUrl(rp.part().photoUrl()).build() : part);
             }
             Integer exact = understood
                     ? (int) top.stream().filter(r -> r.exact() && r.part().stock() > 0).count() : null;

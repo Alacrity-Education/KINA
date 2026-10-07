@@ -53,7 +53,7 @@ import java.util.Map;
         "manufacturer_id", "mpn", "description", "category", "package", "stock", "stock_as_of", "stale", "min_order_qty",
         "order_multiple", "prices", "ordered_quantity", "unit_price_at_quantity", "total_price", "availability",
         "lifecycle", "mismatches", "unverified", "datasheet_url", "photo_url", "product_url", "attributes", "extra"})
-@Builder
+@Builder(toBuilder = true)
 public record PartResponse(
         @JsonProperty("rank") Integer rank,
         @JsonProperty("score") @JsonInclude(JsonInclude.Include.NON_NULL) Double score,

@@ -91,6 +91,14 @@ public class PartSearchService {
 
     /** Runs one search. Never fails because of a distributor; rejects a blank query. */
     public SearchResponse search(SearchRequest request) {
+        return search(request, false);
+    }
+
+    /**
+     * As {@link #search(SearchRequest)}; {@code photos} also fills {@code photo_url} in compact detail. Only the web
+     * Search tab asks for it (its thumbnails); the MCP tools and the REST API keep the documented compact shape.
+     */
+    public SearchResponse search(SearchRequest request, boolean photos) {
         Prepared prepared = prepare(request);
         Deadline deadline = requestDeadline();
         long started = System.nanoTime();
@@ -103,7 +111,7 @@ public class PartSearchService {
                     (fetchedAt - started) / 1_000_000, summary(fetched), (System.nanoTime() - fetchedAt) / 1_000_000,
                     ranked.mode().jsonValue());
         }
-        SearchResponse response = assembler.assemble(prepared, fetched, ranked, ranked.note());
+        SearchResponse response = assembler.assemble(prepared, fetched, ranked, ranked.note(), photos);
         metrics.searchCompleted(response, System.nanoTime() - started);
         return response;
     }
@@ -165,7 +173,7 @@ public class PartSearchService {
                 note = ranked.note();
             }
             results.add(assembler.assemble(p, fetched.get(i), stockRefresher.refresh(p, ranked, requestDeadline),
-                    note));
+                    note, false));
         }
         BatchSearchResponse response = new BatchSearchResponse(results);
         metrics.batchCompleted(response, System.nanoTime() - started);

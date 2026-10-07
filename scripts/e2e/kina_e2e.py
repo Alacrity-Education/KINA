@@ -302,6 +302,17 @@ def suite_ui(base: str, rec: Recorder) -> str | None:
     rows = len(re.findall(r'<tr class="part-row"', found.text))
     rec.check("ui: an LCSC search renders result rows", found.status == 200 and rows >= 1
               and 'class="card distributor-result"' in found.text, f"status {found.status}, {rows} rows", found.millis)
+    rec.check("ui: LCSC rows have no thumbnail column", found.status == 200 and "<img" not in found.text
+              and 'class="thumb"' not in found.text, f"status {found.status}")
+    # SEARCH_QUERY is the query the mcp and rest suites run at Mouser: a cache hit, so no Mouser quota is spent
+    photos = web.get("/?" + urllib.parse.urlencode({"q": SEARCH_QUERY, "distributors": "MOUSER",
+                                                   "max_results": 5}))
+    imgs = re.findall(r'<td class="thumb"><img [^>]*>', photos.text)
+    linked = [i for i in imgs if 'referrerpolicy="no-referrer"' in i and re.search(r'src="https://', i)]
+    rec.check("ui: a cached Mouser search links the distributor photos as thumbnails", photos.status == 200
+              and len(linked) >= 1,
+              f"status {photos.status}, {len(linked)} of {len(imgs)} thumbnails, "
+              f"cache hit {'cache hit' in photos.text}", photos.millis)
     escaped = web.get("/?" + urllib.parse.urlencode({"q": "<script>alert(1)</script> 10k resistor",
                                                     "distributors": "LCSC", "max_results": 1}))
     rec.check("ui: the query is echoed escaped", escaped.status == 200 and "<script>alert(1)" not in escaped.text

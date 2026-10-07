@@ -90,7 +90,7 @@ public class SearchPageController {
             }
             SearchRequest request = request(form, maxResults, quantity, detail, checked);
             long started = System.nanoTime();
-            SearchResponse response = searchService.search(request);
+            SearchResponse response = searchService.search(request, true);
             view.addObject("result", response);
             view.addObject("elapsedMs", (System.nanoTime() - started) / 1_000_000);
             view.addObject("parsedItems", SearchView.parsedItems(response.parsed()));

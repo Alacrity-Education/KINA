@@ -326,6 +326,22 @@ class PartSearchServiceTest {
     }
 
     @Test
+    void photosAreFilledInCompactDetailOnlyWhenAskedFor() {
+        FakeClient mouser = new FakeClient(Distributor.MOUSER).records(3, i -> part(Distributor.MOUSER, "M" + i)
+                .toBuilder().photoUrl("https://www.mouser.com/images/m" + i + ".jpg").build());
+        service(List.of(mouser));
+
+        PartResponse plain = result(service.search(request(1, Distributor.MOUSER)), Distributor.MOUSER).parts()
+                .getFirst();
+        PartResponse withPhoto = result(service.search(request(1, Distributor.MOUSER), true), Distributor.MOUSER)
+                .parts().getFirst();
+
+        assertThat(plain.photoUrl()).isNull();
+        assertThat(withPhoto.photoUrl()).isEqualTo("https://www.mouser.com/images/m0.jpg");
+        assertThat(withPhoto.toBuilder().photoUrl(null).build()).isEqualTo(plain);
+    }
+
+    @Test
     void shortCachedListThatCannotServeMaxResultsIsExtendedFromItsNextOffset() {
         // the first raw page (50 records) holds only 10 parts with ships-now stock
         FakeClient mouser = new FakeClient(Distributor.MOUSER)

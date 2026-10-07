@@ -1774,7 +1774,11 @@ otherwise the request's forwarded origin. All metadata, redirect URIs and `resou
   and renders the parsed query, the ranking mode and note, the elapsed time, one card per distributor (cache status,
   error, counts, exclusions with their detail, `distributor_query`, hints) and the parts table (rank, match, part
   number linked to `product_url`, MPN, manufacturer, description, stock, the three price brackets, availability,
-  lifecycle, datasheet link, attributes; `full` adds the raw attributes and `extra`). A blank query or a bad value
+  lifecycle, datasheet link, attributes; `full` adds the raw attributes and `extra`). A first column shows the
+  distributor's product photo (`photo_url`, in both detail levels on this page only, through
+  `PartSearchService.search(request, true)`) as a square thumbnail as tall as the row's text, capped at 96 px: the
+  `<img>` links the http(s) URL straight from the distributor with `referrerpolicy="no-referrer"` and KINA never
+  downloads, proxies or stores it; LCSC has no photo, so its table has no such column. A blank query or a bad value
   renders an error with status 400; a failing search renders a generic error. Every distributor value is escaped
   (`th:text`, never `th:utext`), and links are rendered only for `http`/`https` URLs. A few lines of inline JavaScript
   show "Searching..." on submit; nothing else needs JavaScript.

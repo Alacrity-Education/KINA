@@ -123,6 +123,7 @@
                 <table class="parts">
                     <thead>
                     <tr>
+                        <th class="thumb" th:if="${s.images}"></th>
                         <th class="num">#</th>
                         <th class="num">Match</th>
                         <th>Part</th>
@@ -135,6 +136,10 @@
                     </thead>
                     <tbody>
                     <tr class="part-row" th:each="row : ${s.rows}" th:with="p=${row.part}">
+                        <td class="thumb" th:if="${s.images}"><img th:if="${row.imageUrl != null}"
+                                th:src="${row.imageUrl}" th:alt="${p.mpn}" loading="lazy" decoding="async"
+                                referrerpolicy="no-referrer" src="https://www.mouser.com/images/example.jpg"
+                                alt="0603WAF1002T5E"></td>
                         <td class="num" th:text="${p.rank}">1</td>
                         <td class="num">
                             <span th:text="${row.match != null} ? ${row.match} : '-'">1.00</span>

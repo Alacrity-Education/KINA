@@ -41,6 +41,13 @@
             dl.kv dd { margin: 0; word-break: break-word; }
             td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
             table.parts td { vertical-align: top; font-size: 14px; }
+            /* Thumbnail: the text cells set the row height; the photo is absolutely positioned, so it never stretches
+               the row, and is a square as tall as the row's content box, capped at 96px. A table column cannot be as
+               wide as each row is tall, so the column is fixed at the cap (96px plus padding). */
+            table.parts .thumb { width: 108px; min-width: 108px; padding: 0; }
+            table.parts td.thumb { position: relative; overflow: hidden; }
+            table.parts td.thumb img { position: absolute; top: 8px; left: 6px; height: calc(100% - 16px);
+                                       max-height: 96px; max-width: 96px; aspect-ratio: 1 / 1; object-fit: contain; }
             main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
             .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px;
                     margin-bottom: 20px; }

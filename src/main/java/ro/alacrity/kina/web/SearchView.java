@@ -26,12 +26,15 @@ public class SearchView {
     public record Item(String label, String value) {
     }
 
-    /** One distributor card and its parts table. */
-    public record Section(DistributorResult result, List<Item> facts, List<PartRow> rows) {
+    /** One distributor card and its parts table; {@code images}: some row has a photo (the thumbnail column). */
+    public record Section(DistributorResult result, List<Item> facts, List<PartRow> rows, boolean images) {
     }
 
-    /** One row of the parts table. */
-    public record PartRow(PartResponse part, String match, String productUrl, String datasheetUrl,
+    /**
+     * One row of the parts table. {@code imageUrl} is the distributor's product photo (null for LCSC and whenever it is
+     * not an http(s) URL); the page links it straight from the distributor, KINA never downloads or stores it.
+     */
+    public record PartRow(PartResponse part, String match, String productUrl, String datasheetUrl, String imageUrl,
                           List<String> prices, String order, List<Item> attributes, List<Item> details) {
     }
 
@@ -84,7 +87,7 @@ public class SearchView {
             add(facts, "rate-limit wait", r.rateLimitWaitedMs() + " ms");
         }
         List<PartRow> rows = r.parts().stream().map(SearchView::row).toList();
-        return new Section(r, facts, rows);
+        return new Section(r, facts, rows, rows.stream().anyMatch(row -> row.imageUrl() != null));
     }
 
     static PartRow row(PartResponse p) {
@@ -113,7 +116,7 @@ public class SearchView {
             extra.forEach((k, v) -> add(details, k, v));
         }
         return new PartRow(p, p.match() == null ? null : String.format(Locale.ROOT, "%.2f", p.match()),
-                safeUrl(p.productUrl()), safeUrl(p.datasheetUrl()), prices, order, attributes, details);
+                safeUrl(p.productUrl()), safeUrl(p.datasheetUrl()), imageUrl(p.photoUrl()), prices, order, attributes, details);
     }
 
     static String price(PriceResponse price) {
@@ -129,6 +132,15 @@ public class SearchView {
         String u = url.strip();
         String lower = u.toLowerCase(Locale.ROOT);
         return lower.startsWith("https://") || lower.startsWith("http://") ? u : null;
+    }
+
+    /** As {@link #safeUrl(String)}, with a protocol-relative URL ({@code //host/...}) read as https. */
+    static String imageUrl(String url) {
+        if (url == null) {
+            return null;
+        }
+        String u = url.strip();
+        return safeUrl(u.startsWith("//") ? "https:" + u : u);
     }
 
     private static String currency(List<PriceResponse> prices) {

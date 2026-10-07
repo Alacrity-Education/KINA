@@ -139,7 +139,7 @@ curl -s localhost:8080/actuator/health      # {"status":"UP"}
 curl -s localhost:8080/api/v1/distributors  # same data as the list_distributors tool
 ```
 
-Open http://localhost:8080 for the web UI. It has three tabs: Search runs a part search in the browser, MCP shows how to connect Claude and holds your static tokens, and Status shows the distributors, the ranking model, the cache (also by component type) and the usage counters.
+Open http://localhost:8080 for the web UI. It has three tabs: Search runs a part search in the browser (TME and Mouser rows show the distributor's product photo, linked from the distributor and never stored by KINA; LCSC has none), MCP shows how to connect Claude and holds your static tokens, and Status shows the distributors, the ranking model, the cache (also by component type) and the usage counters.
 
 Call the `list_distributors` tool and look for LCSC `available: true`, TME and Mouser `configured: true`, and `ranking.ready: true`. The default mode is `dev`: no login, every request runs as a fake admin. Never expose `dev` mode to the internet. For anything public set `KINA_MODE=prod` (see [Security](#security)).
 
