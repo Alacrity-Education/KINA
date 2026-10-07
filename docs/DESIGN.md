@@ -468,8 +468,8 @@ constraint `RankedResults.excludedDetail`, section 3.4 "Hard constraints"); part
 `allowBelowSpec`), and -16 (`RankingService.REQUESTED_TIER`) when the query names it by part number (section 3.4
 "Requested part numbers"): the requested part comes first in its distributor whatever its score, and is reported with
 score 1.0; it is still excluded by a hard constraint or a rating below the request like any other part (a rule, not a
-weight). The quantity, MOQ, low-stock and lifecycle penalties (section 3.4) are subtracted from the
-deterministic score and **again from the final score** (blended or not), so the model cannot hide them. Every ordering
+weight). The quantity, MOQ, low-stock and lifecycle penalties and the voltage overshoot (section 3.4) are subtracted
+from the deterministic score and **again from the final score** (blended or not), so the model cannot hide them. Every ordering
 (deterministic, blended, fallback) sorts by tier first, so a part with an unverified constraint or too little stock
 never ranks above a complete match with enough stock, whatever the model says; within the below-spec tier the order
 is the distance from the target (closest first), never the blend. `score` is then made non-increasing down the list.
@@ -740,10 +740,12 @@ with `@Match`, see "Declarative constraint model" below; the constant is named i
 | load capacitance (`LOAD_CAPACITANCE`) | 0.10 | a crystal request with a capacitance: same within 1 % -> +0.10, different -> -0.10 (excluded), unknown -> unverified |
 | dielectric (`DIELECTRIC`) | 0.15 | exact; `C0G` == `NP0`; mismatch -> -0.15 |
 | technology (`TECHNOLOGY`) | 0.15 | the query names a technology: same -> +0.15; a different known technology -> -0.15; unknown -> 0. Compatible (+): a `film` request and a polypropylene/polyester/PPS part, a `tantalum` or `polymer` request and a tantalum polymer part, a `current sense` request and a metal strip/metal foil part. Neutral (0): a polypropylene request and a part that only says `film`, a tantalum polymer request and a `tantalum` part, a `current sense` request and any other construction |
-| ratings, group `rating`: voltage, current (an inductor's rated current), saturation current, power, temperature, lifetime; DCR | 0.10 | shared between the stated ratings. Minimums: part >= requested -> full; lower -> -0.10; a higher rating keeps full credit in the match grade but loses up to `DeterministicRanker.W_RATING_EXCESS` (0.05) of score, `0.05 * min(1, log2(part / requested) / 2)`, so 25 V > 35 V > 50 V > 100 V for a 25 V request. DCR is a maximum (part <= requested). Regulator and Zener voltages and fuse currents must match within 2 %. Saturation current is compared with the part's saturation current only: a part that does not state it scores 0 |
+| ratings, group `rating`: voltage, current (an inductor's rated current), saturation current, power, temperature, lifetime; DCR | 0.10 | shared between the stated ratings. Minimums: part >= requested -> full; lower -> -0.10; a higher rating keeps full credit in the match grade but loses up to `DeterministicRanker.W_RATING_EXCESS` (0.05) of score, `0.05 * min(1, log2(part / requested) / 2)`, so 25 V > 35 V > 50 V > 100 V for a 25 V request. A voltage far above the request also pays the **overshoot** penalty (below). DCR is a maximum (part <= requested). Regulator and Zener voltages and fuse currents must match within 2 %. Saturation current is compared with the part's saturation current only: a part that does not state it scores 0 |
 | mounting (non-connector requests, `MOUNTING`) | 0.05 | SMD/THT same +0.05, different -0.05 |
 | form factor named by the request's words (`FORM_FACTOR`) | 0.10 | `FormFactor.compatible`: +0.10, another known class -0.10 (excluded anyway), unknown -> unverified (`form factor`). A class implied only by the package is not scored again |
 | low DCR preference (`LOW_DCR`) | up to 0.04 | `0.04 / (1 + DCR / 10 mΩ)`, score only: lower DCR ranks higher among otherwise equal parts |
+| on-resistance preference (`LOW_RDS_ON`, MOSFET and transistor requests) | up to 0.04 | `0.04 / (1 + R_DS(on) / 10 mΩ)`, score only, always on for these families: a lower on-resistance ranks higher among the parts that meet the request; a part that states none earns nothing |
+| voltage overshoot (`@Overshoot` on `VOLTAGE_RATING`) | -0.25 per octave, at most -0.50 | a voltage rating above 2x the request (above 3x for capacitors) loses `0.25 * min(2, log2(part / (ratio * requested)))`, score only; see "Rating overshoot" |
 | tolerance (`TOLERANCE`) | 0.10 | part tolerance <= requested -> full; looser -> -0.10 |
 | family (`TYPE`): the same or a more specific family, or a family word in the part text | 0.05 | a different known family -0.05; the generic family (a `diode` part for a `schottky` request) 0 |
 | lexical: share of free-text tokens found in mpn/description/attributes | 0.10 | score only, never part of the match grade |
@@ -787,6 +789,18 @@ The distributor entry's `exact_matches` counts the returned parts with `match` 1
 spec (null when the query was not understood): every typed constraint of the request (family, value, tolerance,
 ratings, package, mounting, technology, dielectric, polarity, subtype, elements, form factor) met and verified.
 
+**Rating overshoot** (`domain.Overshoot`, declared on `ConstraintKind.VOLTAGE_RATING`; user decision 2026-10-07). A
+part whose voltage rating is far above the request meets it (ratings are minimums, `match` stays 1.0, the part is
+never excluded) but ranks below parts closer to the request: above `ratio` times the requested voltage it loses
+`perOctave` (0.25) of score per octave beyond the ratio, up to `maxOctaves` (2) octaves, so at most 0.5. The ratio is
+declared per policy family on the kind: `@Overshoot(ratio = 2.0)` for every family and `@Overshoot(ratio = 3.0,
+families = CAPACITOR)` (MLCC derating makes 2x to 3x normal practice). The penalty is taken from the deterministic score
+(after its clamp) and again from the final score, like the quantity penalties (section 3.3), so the model cannot undo
+it: for `GaN FET 100V` the 600 V `IGI60L1111B1MXUMA1` (-0.40) ranks below every 100 V to 200 V part (before, only the
+closeness preference, at most 0.05, separated it from the 100 V parts, so the model could lift it above them; the
+parts that state no voltage still rank after it, by tier). `Assessment.overshoot` carries it. The small
+closeness preference of the ratings (`W_RATING_EXCESS`) stays for every rating.
+
 **Below spec** (`Assessment.belowSpec`, `belowSpecDistance`): every stated rating is a hard limit. A part whose
 **known** voltage, current (an inductor's rated current), saturation current, power, maximum temperature or lifetime is
 below the request, or whose DCR is above a stated maximum, is below spec. By default it is excluded before ranking and
@@ -813,6 +827,9 @@ them. Change a rule on the constant, not in the ranker.
   kind hard. Family-specific declarations name the families (`Relax.ALL` for every family). Resolution: the family's
   own declaration, then `Relax.ALL`, then the general one; `kina.search.hard-constraints.<family>` then replaces a
   family's declared table (listed kinds `NEVER`, the others their general strategy).
+- `@Overshoot(ratio, perOctave, maxOctaves, families)` (repeatable, on an `AT_LEAST` rating) declares a score penalty
+  for a rating far above the request ("Rating overshoot" above); resolved like `@Relax`: the family's own declaration,
+  then the general one.
 - `@Match(mode, tolerance, weight, group, inGrade, scope, order, report)` declares the comparison. `MatchMode`:
   `EQUAL`, `EQUAL_IGNORE_CASE`, `AT_LEAST` and `AT_MOST` (relative `tolerance`), `WITHIN` (relative `tolerance`),
   `COMPATIBLE` (a graded comparison such as the technology) and `CUSTOM` (the constant's own comparator: the type and

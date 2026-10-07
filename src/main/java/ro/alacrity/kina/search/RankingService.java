@@ -382,7 +382,8 @@ public class RankingService {
                     String key = PartKey.of(p);
                     double penalty = penalty(p, qty);
                     assessments.put(key, a);
-                    penalties.put(key, penalty);
+                    // the overshoot is in the deterministic score already; the final score loses it again
+                    penalties.put(key, penalty + a.overshoot());
                     det.put(key, Math.clamp(a.score() - penalty, 0.0, 1.0));
                     distances.put(key, a.isBelowSpec() ? a.belowSpecDistance() : 0.0);
                     // the part the query names by part number comes first (DESIGN.md 3.3, "requested part first")

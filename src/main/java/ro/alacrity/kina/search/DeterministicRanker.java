@@ -71,9 +71,13 @@ public class DeterministicRanker {
      * @param belowSpec         rating kinds whose known value is below the request (a DCR above its maximum)
      * @param belowSpecDistance how far below: the sum of {@code |ln(part / requested)|} over {@code belowSpec}
      * @param shortfalls        the failed ratings of {@code belowSpec} with the part's and the requested value
+     * @param overshoot         the rating overshoot penalty already taken from {@code score}
+     *                          ({@link ro.alacrity.kina.domain.Overshoot}); the ranking takes it from the final score
+     *                          again
      */
     public record Assessment(double score, Double match, List<String> mismatches, List<String> unverified,
-                             List<String> belowSpec, double belowSpecDistance, List<Shortfall> shortfalls) {
+                             List<String> belowSpec, double belowSpecDistance, List<Shortfall> shortfalls,
+                             double overshoot) {
 
         public Assessment {
             mismatches = mismatches == null ? List.of() : List.copyOf(mismatches);
@@ -84,7 +88,7 @@ public class DeterministicRanker {
 
         public Assessment(double score, Double match, List<String> mismatches, List<String> unverified,
                           List<String> belowSpec, double belowSpecDistance) {
-            this(score, match, mismatches, unverified, belowSpec, belowSpecDistance, List.of());
+            this(score, match, mismatches, unverified, belowSpec, belowSpecDistance, List.of(), 0);
         }
 
         public Assessment(double score, double match, List<String> mismatches) {
@@ -194,6 +198,7 @@ public class DeterministicRanker {
         List<String> belowSpec = new ArrayList<>();
         List<Shortfall> shortfalls = new ArrayList<>();
         double belowSpecDistance = 0;
+        double overshoot = 0;   // a rating far above the request (score only, also taken from the final score)
         Map<String, Integer> groupSizes = groupSizes(query, scope);
 
         for (ConstraintKind kind : ConstraintKind.scored()) {
@@ -231,6 +236,7 @@ public class DeterministicRanker {
                         && partValue > wanted * (1 + match.tolerance())) {
                     double octaves = Math.log(partValue / wanted) / Math.log(2);
                     preference -= W_RATING_EXCESS * Math.min(1.0, octaves / RATING_EXCESS_OCTAVES) / stated;
+                    overshoot += kind.overshootPenalty(family, wanted, partValue);
                 }
                 continue;
             }
@@ -261,8 +267,9 @@ public class DeterministicRanker {
             long found = query.keywords().stream().filter(k -> f.text().contains(k)).count();
             score += W_LEXICAL * found / query.keywords().size();
         }
-        return new Assessment(Math.clamp(score + preference + tieBreak(part), 0.0, 1.0), match, mismatches(query, f),
-                unverified, belowSpec, belowSpecDistance, shortfalls);
+        double base = Math.clamp(score + preference + tieBreak(part), 0.0, 1.0);
+        return new Assessment(Math.max(0.0, base - overshoot), match, mismatches(query, f), unverified, belowSpec,
+                belowSpecDistance, shortfalls, overshoot);
     }
 
     /** How many members of each {@link Match#group()} the request states. */

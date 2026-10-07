@@ -561,9 +561,15 @@ public enum ConstraintKind {
 
     // ---------------------------------------------------------------- ratings (not in the policy table)
 
-    /** A minimum voltage rating (every family without an exact voltage). */
+    /**
+     * A minimum voltage rating (every family without an exact voltage). Far above the request it costs score
+     * ({@link Overshoot}): above 2x the requested voltage, above 3x for capacitors (MLCC derating makes 2x to 3x normal
+     * practice; user decision 2026-10-07).
+     */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 16, report = 7)
+    @Overshoot(ratio = 2.0)
+    @Overshoot(ratio = 3.0, families = CAPACITOR)
     VOLTAGE_RATING("voltage", ParsedQuery.VOLTAGE),
 
     /** A minimum (rated) current (every family but fuses). */
@@ -612,6 +618,22 @@ public enum ConstraintKind {
             Double dcr = c.part().value(ParsedQuery.DCR);
             return wanted(c.query()) != null && dcr != null && dcr >= 0
                     ? Outcome.counted(weight / (1 + dcr / LOW_DCR_REFERENCE_OHM), weight) : Outcome.NOT_STATED;
+        }
+    },
+
+    /**
+     * MOSFETs and transistors: a lower on-resistance (the part's {@code Resistance}, R_DS(on)) ranks higher,
+     * {@code weight / (1 + R / 10 mOhm)} among parts that meet the request (score only, never in the match grade).
+     */
+    @Relax(strategy = PREFERENCE)
+    @Match(mode = CUSTOM, weight = 0.04, inGrade = false, order = 29)
+    LOW_RDS_ON("rds(on)", q -> "mosfet".equals(q.family()) || "transistor".equals(q.family()) ? Boolean.TRUE : null,
+            f -> null) {
+        @Override
+        public Outcome score(MatchContext c, double weight) {
+            Double r = c.part().value(ParsedQuery.RESISTANCE);
+            return wanted(c.query()) != null && r != null && r >= 0
+                    ? Outcome.counted(weight / (1 + r / LOW_RDS_ON_REFERENCE_OHM), weight) : Outcome.NOT_STATED;
         }
     },
 
@@ -721,6 +743,8 @@ public enum ConstraintKind {
     public static final double PITCH_TOLERANCE_MM = 0.03;
     /** DC resistance at which the {@link #LOW_DCR} preference is half its weight. */
     static final double LOW_DCR_REFERENCE_OHM = 0.01;
+    /** On-resistance at which the {@link #LOW_RDS_ON} preference is half its weight. */
+    static final double LOW_RDS_ON_REFERENCE_OHM = 0.01;
     /** Families whose diodes are specialised (a standard rectifier is none of them). */
     private static final Set<String> DIODE_KINDS = Set.of("schottky", "zener", "tvs", "led");
     private static final List<String> PRIMARY_KINDS = List.of(ParsedQuery.CAPACITANCE, ParsedQuery.RESISTANCE,
@@ -736,6 +760,7 @@ public enum ConstraintKind {
     // read from the annotations (static initialiser)
     private List<Relax> relax;
     private Match match;
+    private List<Overshoot> overshoot;
 
     ConstraintKind(String label, Function<ParsedQuery, Object> wanted, Function<PartFeatures, Object> actual) {
         this.label = label;
@@ -775,6 +800,7 @@ public enum ConstraintKind {
             }
             k.relax = List.of(field.getAnnotationsByType(Relax.class));
             k.match = field.getAnnotation(Match.class);
+            k.overshoot = List.of(field.getAnnotationsByType(Overshoot.class));
             k.validate();
         }
         List<ConstraintKind> policy = new ArrayList<>();
@@ -824,6 +850,10 @@ public enum ConstraintKind {
         }
         if (match != null && !match.group().isEmpty() && measure == null) {
             throw new IllegalStateException(this + ": a group member needs a measure");
+        }
+        if (!overshoot.isEmpty() && (match == null || match.mode() != AT_LEAST
+                || overshoot.stream().filter(o -> o.families().length == 0).count() != 1)) {
+            throw new IllegalStateException(this + ": @Overshoot needs an AT_LEAST rating and one general declaration");
         }
     }
 
@@ -889,6 +919,38 @@ public enum ConstraintKind {
             }
         }
         return wildcard != null ? wildcard : general();
+    }
+
+    /**
+     * The {@link Overshoot} declaration for a policy family (its own, else the general one), null when the kind
+     * declares none.
+     */
+    public Overshoot overshoot(String family) {
+        Overshoot general = null;
+        for (Overshoot o : overshoot) {
+            if (o.families().length == 0) {
+                general = o;
+            }
+            for (String f : o.families()) {
+                if (f.equals(family)) {
+                    return o;
+                }
+            }
+        }
+        return general;
+    }
+
+    /**
+     * The overshoot penalty of a part rated {@code actual} for a request of {@code wanted} in a policy family: 0 up to
+     * the declared ratio, then {@link Overshoot#perOctave()} per octave above it, up to {@link Overshoot#maxOctaves()}.
+     */
+    public double overshootPenalty(String family, double wanted, double actual) {
+        Overshoot o = overshoot(family);
+        if (o == null || wanted <= 0 || actual <= wanted * o.ratio()) {
+            return 0;
+        }
+        double octaves = Math.log(actual / (wanted * o.ratio())) / Math.log(2);
+        return o.perOctave() * Math.min(o.maxOctaves(), octaves);
     }
 
     /** True for kinds a family can make hard or the ladder can loosen: the names of the policy table. */

@@ -12,9 +12,13 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.mock;
 
-/** Ranking rules of the GaN audit (DESIGN.md 3.3 and 3.4): the requested part first. */
+/**
+ * Ranking rules of the GaN audit (DESIGN.md 3.3 and 3.4): the requested part first, the voltage overshoot penalty
+ * (above 2x the request, above 3x for capacitors) and the R_DS(on) preference.
+ */
 class GanRankingTest {
 
     private final QueryParser parser = new QueryParser();
@@ -80,5 +84,79 @@ class GanRankingTest {
         assertThat(ranked.belowSpecDetailBy(Distributor.MOUSER)).hasSize(RankingService.MAX_BELOW_SPEC_DETAIL)
                 .extracting(b -> b.mpn() + "=" + b.partValue() + "<" + b.requested())
                 .containsExactly("A80=80V<100V", "A65=65V<100V", "A60=60V<100V", "A40=40V<100V", "A30=30V<100V");
+    }
+
+    // ---- voltage overshoot
+
+    private DeterministicRanker.Assessment assess(String query, Part part) {
+        return new DeterministicRanker(extractor).assess(parser.parse(query), part);
+    }
+
+    private static Part mlcc(String volts) {
+        return RankingFixtures.mouser("C-" + volts, "ACME", "Multilayer Ceramic Capacitors MLCC - SMD/SMT 10uF "
+                + volts + " X7R 10% 0805", "Multilayer Ceramic Capacitors MLCC - SMD/SMT", null, Map.of());
+    }
+
+    @Test
+    void aCapacitorIsPenalisedOnlyAbove3xTheRequestedVoltage() {
+        assertThat(assess("10uF 25V X7R 0805", mlcc("50V")).overshoot()).isZero();   // 2x
+        assertThat(assess("10uF 25V X7R 0805", mlcc("75V")).overshoot()).isZero();   // 3x
+        DeterministicRanker.Assessment hundred = assess("10uF 25V X7R 0805", mlcc("100V"));   // 4x
+        assertThat(hundred.overshoot()).isCloseTo(0.25 * Math.log(4.0 / 3) / Math.log(2), within(1e-12));
+        assertThat(hundred.match()).isEqualTo(1.0);   // still a full match: ratings are minimums
+        assertThat(hundred.isBelowSpec()).isFalse();
+        assertThat(hundred.score()).isLessThan(assess("10uF 25V X7R 0805", mlcc("75V")).score());
+    }
+
+    @Test
+    void everyOtherFamilyIsPenalisedAbove2xGrowingPerOctaveUpToACap() {
+        assertThat(assess("GaN FET 100V", fet("V200", "EPC eGaN FET,200 V")).overshoot()).isZero();   // 2x
+        assertThat(assess("GaN FET 100V", fet("V300", "EPC eGaN FET,300 V")).overshoot())
+                .isCloseTo(0.25 * Math.log(1.5) / Math.log(2), within(1e-12));
+        assertThat(assess("GaN FET 100V", fet("V600", "CoolGaN 600 V G5")).overshoot())
+                .isCloseTo(0.25 * Math.log(3) / Math.log(2), within(1e-12));
+        assertThat(assess("GaN FET 100V", fet("V1200", "CoolGaN 1200 V")).overshoot()).isEqualTo(0.5);   // capped
+        assertThat(assess("GaN FET 100V", fet("V1200", "CoolGaN 1200 V")).match()).isEqualTo(1.0);
+        // only the voltage declares an overshoot: a 10x current costs the small closeness preference only
+        assertThat(assess("inductor 10uH 1A", RankingFixtures.mouser("L10", "ACME",
+                "Fixed Inductors 10uH 10A", "Fixed Inductors", null, Map.of())).overshoot()).isZero();
+    }
+
+    @Test
+    void a600VPartRanksBelowThe100To200VPartsEvenWhenTheModelPrefersIt() throws Exception {
+        Part v100 = fet("V100", "EPC eGaN FET,100 V");
+        Part v200 = fet("V200", "EPC eGaN FET,200 V");
+        Part v600 = fet("V600", "CoolGaN 600 V G5");
+        // deterministic
+        assertThat(order("GaN FET 100V", List.of(v600, v200, v100))).containsExactly("V100", "V200", "V600");
+        // blended: the model puts the 600 V part first
+        KinaProperties props = RankingFixtures.properties();
+        PartRanker model = mock(PartRanker.class);
+        org.mockito.Mockito.when(model.rank(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any())).thenReturn(Map.of(ro.alacrity.kina.domain.PartKey.of(v600), 9.0,
+                ro.alacrity.kina.domain.PartKey.of(v200), 5.0, ro.alacrity.kina.domain.PartKey.of(v100), 1.0));
+        RankingService blended = new RankingService(props, new DeterministicRanker(extractor), model, () -> null,
+                new RankingScoreCache(Duration.ofHours(1)));
+        RankedResults ranked = blended.rank(parser.parse("GaN FET 100V"),
+                Map.of(Distributor.MOUSER, List.of(v600, v200, v100)), Duration.ofSeconds(5));
+        assertThat(ranked.mode()).isEqualTo(ro.alacrity.kina.domain.RankingMode.BLENDED);
+        assertThat(ranked.byDistributor().get(Distributor.MOUSER)).extracting(r -> r.part().manufacturerPartNumber())
+                .last().isEqualTo("V600");
+    }
+
+    // ---- R_DS(on) preference
+
+    @Test
+    void aLowerOnResistanceRanksHigherAmongMosfetsThatMeetTheRequest() {
+        Part low = fet("LOW", "EPC eGaN FET,100 V, 1.8 milliohm at 5 V");
+        Part high = fet("HIGH", "EPC eGaN FET,100 V, 5 milliohm at 5 V");
+        Part none = fet("NONE", "EPC eGaN FET,100 V");
+        assertThat(order("GaN FET 100V", List.of(none, high, low))).containsExactly("LOW", "HIGH", "NONE");
+        DeterministicRanker.Assessment a = assess("GaN FET 100V", low);
+        assertThat(a.match()).isEqualTo(assess("GaN FET 100V", none).match()).isEqualTo(1.0);   // score only
+        assertThat(a.score()).isGreaterThan(assess("GaN FET 100V", high).score());
+        // not for other families: a resistor's resistance is its value, not a preference
+        assertThat(ro.alacrity.kina.domain.ConstraintKind.LOW_RDS_ON.wanted(parser.parse("10k 0603 resistor")))
+                .isNull();
     }
 }

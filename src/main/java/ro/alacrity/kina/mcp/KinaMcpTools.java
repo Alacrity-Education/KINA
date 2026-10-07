@@ -55,7 +55,10 @@ public class KinaMcpTools {
             were found by keywords only and match is null; rephrase, or use get_part for a part number.
             Ratings are hard minimums: voltage, current (an inductor's rated current; write Isat or "saturation" for \
             the saturation current), power, maximum temperature (105C) and lifetime (2000h) accept any part rated at \
-            least that high, so a 25V request also returns 35V and 50V parts, ranked after an equal 25V part. A \
+            least that high, so a 25V request also returns 35V and 50V parts, ranked after an equal 25V part; a \
+            voltage above 2x the request (3x for capacitors) ranks clearly lower (a 600V part after the 100-200V \
+            parts of a 100V request) but is still returned with match 1.0. For MOSFETs a lower on-resistance \
+            (Resistance, R_DS(on)) ranks a little higher. A \
             DCR limit ("DCR < 20mOhm") is a maximum; "low DCR" is a preference (lower DCR ranks higher). A part \
             whose known rating is below the request is never returned by default (counted in excluded_below_spec); \
             pass allow_below_spec=true to see such parts, flagged below_spec: true and listed after every part that \

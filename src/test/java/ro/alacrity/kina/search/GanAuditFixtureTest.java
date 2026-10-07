@@ -100,6 +100,10 @@ class GanAuditFixtureTest {
     }
 
     SearchResponse search(DistributorClient mouser, String query, boolean allowBelowSpec) {
+        return search(mouser, query, allowBelowSpec, 5);
+    }
+
+    SearchResponse search(DistributorClient mouser, String query, boolean allowBelowSpec, int maxResults) {
         KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
         ParametricExtractor extractor = new ParametricExtractor();
         RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
@@ -107,8 +111,8 @@ class GanAuditFixtureTest {
         PartSearchService service = new PartSearchService(props, new DistributorRegistry(List.of(mouser)),
                 new QueryParser(), extractor, ranking, mock(PartCacheRepository.class),
                 mock(SearchCacheRepository.class), clock);
-        return service.search(new SearchRequest(query, 5, Set.of(Distributor.MOUSER), false, 1, ResponseDetail.FULL,
-                allowBelowSpec));
+        return service.search(new SearchRequest(query, maxResults, Set.of(Distributor.MOUSER), false, 1,
+                ResponseDetail.FULL, allowBelowSpec));
     }
 
     static DistributorResult mouser(SearchResponse response) {
@@ -208,5 +212,32 @@ class GanAuditFixtureTest {
         assertThat(mouser.requestedPartFound()).isFalse();
         assertThat(mouser.hint()).isEqualTo(
                 "EPC23101 is not listed in stock at MOUSER; the parts below are keyword matches.");
+    }
+
+    // ---- EPC2302 GaN FET 100V: the 600 V half-bridge below the 100 V parts
+
+    @Test
+    void epc2302_the600VPartRanksBelowThe100VParts() {
+        DistributorResult mouser = mouser(search(new RecordedMouser("mouser-keyword-epc2302.json"),
+                "EPC2302 GaN FET 100V", false, 50));
+        List<String> order = mpns(mouser);
+        // the three 100 V parts first, then the 600 V half-bridge (match 1.0: ratings are minimums), then the parts
+        // that state no voltage (unverified, a lower tier); Mouser's "2.6m" / "185 m" stay unread
+        assertThat(order.subList(0, 3)).containsExactlyInAnyOrder("IGKA23S101SXTSA1", "RTP100E005G1FL-TR",
+                "RTP100E2P6G1FL-TR");
+        assertThat(order.get(3)).isEqualTo("IGI60L1111B1MXUMA1");
+        PartResponse v600 = mouser.parts().get(3);
+        assertThat(v600.match()).isEqualTo(1.0);
+        assertThat(v600.attributes()).containsEntry("Voltage", "600V");
+        assertThat(mouser.parts().subList(0, 3)).allSatisfy(p -> {
+            assertThat(p.attributes()).containsEntry("Voltage", "100V").doesNotContainKey("Resistance");
+            assertThat(p.score()).isGreaterThan(v600.score());
+        });
+        assertThat(mouser.parts().subList(4, mouser.parts().size())).allSatisfy(p ->
+                assertThat(p.unverified()).contains("voltage"));
+        // the RF HEMTs rated 48 V are below spec, named with their rating
+        assertThat(mouser.excludedBelowSpec()).isPositive();
+        assertThat(mouser.excludedBelowSpecDetail()).extracting(BelowSpecPart::rating).containsOnly("voltage");
+        assertThat(mouser.requestedPartFound()).isFalse();   // EPC2302 is not in the keyword results
     }
 }
