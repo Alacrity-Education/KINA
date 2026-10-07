@@ -101,16 +101,22 @@ The change:
 - `enrich` records which keys it added (`Part.derivedAttributes`, not serialised). The cache repository writes the
   part without them, so new rows hold the distributor's attributes only. Every read path already enriches, so derived
   values are always those of the running extractor.
-- Rows written before the change mix raw and derived keys, and nothing says which is which. `enrich` drops the keys
-  that only KINA writes (`Family`, `Subtype`, `FormFactor`, `Elements`, `RatedCurrent`, `SaturationCurrent`,
-  `MaxTemperature`, `RippleCurrent`, `OperatingTemperature`, `ConnectorType` and the USB keys) before it derives, so
-  those are fresh for old rows too. Keys a distributor may also send (`Capacitance`, `Tolerance`, `Mounting`,
-  `Package`...) are kept as they are: dropping them could lose distributor data. Old rows are served as before; they
-  become fully raw when they are fetched again.
+- Rows written before the change mix raw and derived keys, and nothing says which is which. Migration V11 removes the
+  keys that only KINA writes (`Family`, `Subtype`, `FormFactor`, `Elements`, `RatedCurrent`, `SaturationCurrent`,
+  `MaxTemperature`, `RippleCurrent`, `OperatingTemperature`, `ConnectorType` and the USB keys) from those rows, so
+  they are derived afresh too. Keys a distributor may also send (`Capacitance`, `Tolerance`, `Mounting`,
+  `Package`...) stay: dropping them could lose distributor data. Such rows become fully raw when they are fetched
+  again.
 - In-process results do not change: `enrich(enrich(raw))` equals `enrich(raw)` as before, and ranking still runs on
   the enriched part.
 
-A test covers an old row (payload with a stale `Family`) served with `detail=full`.
+A test covers an old row (payload with a stale `Family`) served with `detail=full`, before and after V11.
+
+First attempt, abandoned: `enrich` itself dropped those keys from any payload. That moved 2,393 golden pairs, because
+the golden pool is made of enriched eval-set payloads (legacy-shaped rows), and derived values feed back into the
+ranking (they are part of the text the lexical family check reads). So the clean-up of old rows is done once in the
+database, and `enrich` keeps its behaviour for payloads without the marker. The ranking of an old row in production
+does move after V11, to what a fresh fetch of the same part gives; that is the intended fix.
 
 ## New: shared accessors in `ConstraintKind`: implement
 
@@ -120,10 +126,23 @@ the generic connector type that scores but does not count). Grouping the connect
 enums would break the single check order and score order that the one enum gives. Two kinds of repetition can go:
 
 - Nine constants spell `q -> other(q) == null ? null : other(q).x()` and
-  `f -> f.connector() == null ? null : f.connector().x()`. Two helpers (`otherWanted`, `usbWanted`, `partConnector`)
-  take a method reference instead.
-- `WATERPROOF`, `BOARD_LOCK` and `POWER_ONLY` repeat the same `score` override. A constructor that takes the feature
-  name removes the three bodies.
+  `f -> f.connector() == null ? null : f.connector().x()`. Four helpers (`otherWanted`, `usbWanted`, `anyWanted`,
+  `partConnector`) take a method reference instead.
+- `WATERPROOF`, `BOARD_LOCK` and `POWER_ONLY` repeat the same `score` override. A `FEATURE` match mode and a
+  constructor that takes the feature name remove the three bodies.
+
+## Outcome (2026-10-07)
+
+| Commit | Item | Lines of the touched main files, before to after |
+|---|---|---|
+| `dab9dd4` | 1 (and the trait part of 6) | 5996 to 6102 (`ComponentFamily` +147; nine sets, a switch and three `MatchContext` methods removed) |
+| `15a954a` | `ConstraintKind` accessors | 1354 to 1357 (`ConstraintKind` 1325 to 1325; repetition replaced by four helpers and `MatchMode.FEATURE`) |
+| `29ecbaf` | 5 | 827 to 889 (`Metric` 165 replaces `MetricNames` 109; call sites shorter) |
+| `e767c78` | 7 | 1810 to 1874 (plus migration V11) |
+
+None of the items made the code shorter; each one moved a rule to one declared place, and three of them added a test
+that ties a DESIGN.md list to the declaration (`ComponentFamilyTest`, `MetricDocumentationTest`) or the migration to
+the code (`CachedAttributesTest`). `ConstraintGoldenTest` is unchanged and passes after every commit.
 
 ## Known oddities (reported, not changed)
 
