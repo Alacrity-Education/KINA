@@ -1,0 +1,304 @@
+capacitance
+capacitance value
+nominal capacitance
+load capacitance
+load capacitance (cl)
+resistance
+resistance value
+nominal resistance
+rds on - drain-source resistance
+drain-source on resistance
+on-state resistance
+rds(on)
+inductance
+nominal inductance
+frequency
+nominal frequency
+oscillation frequency
+voltage rating dc
+voltage rating - dc
+voltage rating
+voltage rated
+rated voltage
+voltage - rated
+operating voltage
+dc voltage rating
+voltage
+output voltage
+voltage - output
+voltage - output (min/fixed)
+vr - reverse voltage
+reverse voltage (vr)
+vds - drain-source breakdown voltage
+drain source voltage (vdss)
+drain to source voltage (vdss)
+vz - zener voltage
+voltage - zener (nom) (vz)
+vrwm - reverse standoff voltage
+reverse stand-off voltage (vrwm)
+voltage - reverse standoff (typ)
+output voltage (fixed)
+fixed output voltage
+zener voltage
+zener voltage (vz)
+voltage - zener
+current rating
+rated current
+current
+current - output
+output current
+id - continuous drain current
+continuous drain current (id)
+if - forward current
+io - average rectified current
+current - average rectified (io)
+average rectified current (io)
+ic - continuous collector current
+collector current (ic)
+current rating (amps)
+operating current
+maximum dc current
+max. dc current
+dc current
+current - max
+irms
+i rms
+rated current (irms)
+saturation current
+isat
+current - saturation
+current - saturation (isat)
+saturation current (isat)
+isat (max)
+saturation current max.
+dc resistance
+dc resistance (dcr)
+dcr
+maximum dc resistance
+max. dc resistance
+dc resistance max
+dc resistance (dcr) (max)
+resistance - dc
+dc resistance (max)
+test frequency
+impedance test frequency
+measuring frequency
+service life
+lifetime
+life time
+load life
+endurance
+useful life
+lifetime @ temp.
+life
+operating life
+maximum operating temperature
+max. operating temperature
+operating temperature
+operating temperature range
+temperature range
+power rating
+power
+power(watts)
+power (watts)
+pd - power dissipation
+power dissipation (pd)
+power dissipation
+tolerance
+resistance tolerance
+capacitance tolerance
+inductance tolerance
+dielectric
+temperature coefficient
+temperature characteristic
+temperature characteristics
+dielectric material
+tempco
+case code - in
+case - inch
+case code (inch)
+package (inch)
+imperial size
+case code - inch
+case code - mm
+case - mm
+case code (mm)
+metric size
+package (mm)
+package / case
+package/case
+package
+case
+supplier device package
+package type
+case / package
+case/package
+housing
+mounting
+mounting style
+mounting type
+mounting method
+termination style
+montage
+electrical mounting
+type of resistor
+type of capacitor
+type of inductor
+kind of capacitor
+kind of resistor
+technology
+composition
+construction
+resistor type
+capacitor type
+inductor type
+type of connector
+connector type
+connector
+product
+product type
+type
+kind of connector
+gender
+contact gender
+connector gender
+number of pins
+number of positions
+positions
+no. of positions
+number of contacts
+number of ways
+number of circuits
+pins
+number of rows
+rows
+no. of rows
+connector pinout layout
+pinout layout
+layout
+contacts pitch
+pitch
+contact pitch
+pitch - mating
+raster
+spatial orientation
+mounting angle
+orientation
+angle
+termination orientation
+manufacturer series
+series
+version
+usb version
+usb standard
+data transfer rate
+data rate
+connector variant
+connectors application
+ip rating
+ingress protection
+type of transistor
+type of diode
+kind of voltage regulator
+type of voltage regulator
+transistor polarity
+polarity
+channel type
+output type
+regulator type
+transistor type
+diode type
+configuration
+number of channels
+body dimensions
+dimensions
+size / dimension
+size
+case size
+body size
+elements
+number of elements
+number of resistors
+number of capacitors
+number of lines
+number of bits
+ripplecurrent
+ripple current
+rated ripple current
+ripple current (max)
+max ripple current
+current - ripple
+ripple current @ high frequency
+ripple current @ low frequency
+esr
+esr (equivalent series resistance)
+equivalent series resistance
+esr max
+esr (max)
+max esr
+esr max.
+impedance
+impedance max
+max. impedance
+impedance (max)
+max impedance
+dimension
+diameter
+body diameter
+case diameter
+height
+body height
+height - seated (max)
+case height
+length
+impedance at 100mhz
+impedance at 1 ghz
+esr at 100khz
+esr 100khz
+impedance 100khz
+impedance tolerance
+ripple current at 120hz
+kind of ferrite
+type of resistor network
+max. off-state voltage
+breakdown voltage
+supply voltage
+gate-source voltage
+drain-source voltage
+max voltage
+leakage current
+drain current
+load current
+maximum current
+max. operating current
+peak current
+Capacitance
+Voltage
+Current
+RatedCurrent
+SaturationCurrent
+DCR
+Power
+Impedance
+Lifetime
+MaxTemperature
+Tolerance
+Dielectric
+Package
+Mounting
+Technology
+ConnectorType
+Gender
+Positions
+Rows
+Pitch
+Orientation
+Series
+UsbType
+UsbStandard
+Elements
+RippleCurrent
+ESR
+Dimensions
+Case
+OperatingTemperature
