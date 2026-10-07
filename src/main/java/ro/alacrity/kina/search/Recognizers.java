@@ -7,8 +7,6 @@ import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.PartAttribute;
 import ro.alacrity.kina.domain.PartFeatures;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -748,89 +746,15 @@ class Recognizers {
         if (condition == null) {
             return of(kind, value);
         }
-        String suffix = ParsedQuery.LIFETIME.equals(kind) ? " @" + format(condition) + "°C"
-                : " @" + display(ParsedQuery.FREQUENCY, condition);
-        return new Value(kind, value, display(kind, value) + suffix, condition);
+        return new Value(kind, value, PartAttribute.display(kind, value, condition), condition);
     }
-
-    private record Prefix(String symbol, double multiplier) {
-    }
-
-    private static final List<Prefix> CAP_PREFIXES = List.of(new Prefix("p", 1e-12), new Prefix("n", 1e-9),
-            new Prefix("u", 1e-6), new Prefix("m", 1e-3), new Prefix("", 1));
-    private static final List<Prefix> RES_PREFIXES = List.of(new Prefix("m", 1e-3), new Prefix("", 1),
-            new Prefix("k", 1e3), new Prefix("M", 1e6), new Prefix("G", 1e9));
-    private static final List<Prefix> IND_PREFIXES = List.of(new Prefix("n", 1e-9), new Prefix("u", 1e-6),
-            new Prefix("m", 1e-3), new Prefix("", 1));
-    private static final List<Prefix> SMALL_PREFIXES = List.of(new Prefix("u", 1e-6), new Prefix("m", 1e-3),
-            new Prefix("", 1), new Prefix("k", 1e3));
-    private static final List<Prefix> FREQ_PREFIXES = List.of(new Prefix("", 1), new Prefix("k", 1e3),
-            new Prefix("M", 1e6), new Prefix("G", 1e9));
-    private static final List<Prefix> NO_PREFIXES = List.of(new Prefix("", 1));
-    private static final List<Prefix> POWER_PREFIXES = List.of(new Prefix("", 1), new Prefix("k", 1e3));
 
     /**
-     * Compact human form: "10uF", "4.7kohm", "16V", "0.125W", "250W", "1.5kW", "12MHz", "5%", "105°C", "2000h". Power is
-     * in watts below 1 kW and in kilowatts from 1 kW.
+     * Compact human form: "10uF", "4.7kohm", "16V", "0.125W", "250W", "1.5kW", "12MHz", "5%", "105°C", "2000h", by the
+     * {@code @Unit} declared on {@link PartAttribute} (base unit, prefixes, display rule).
      */
     static String display(String kind, double value) {
-        if (kind.equals(ParsedQuery.TOLERANCE)) {
-            return format(value) + "%";
-        }
-        List<Prefix> prefixes;
-        String unit;
-        switch (kind) {
-            case ParsedQuery.CAPACITANCE -> {
-                prefixes = CAP_PREFIXES;
-                unit = "F";
-            }
-            case ParsedQuery.RESISTANCE, ParsedQuery.IMPEDANCE, ParsedQuery.DCR -> {
-                prefixes = RES_PREFIXES;
-                unit = "ohm";
-            }
-            case ParsedQuery.INDUCTANCE -> {
-                prefixes = IND_PREFIXES;
-                unit = "H";
-            }
-            case ParsedQuery.VOLTAGE -> {
-                prefixes = SMALL_PREFIXES;
-                unit = "V";
-            }
-            case ParsedQuery.CURRENT, ParsedQuery.SATURATION_CURRENT -> {
-                prefixes = SMALL_PREFIXES;
-                unit = "A";
-            }
-            case ParsedQuery.POWER -> {
-                prefixes = POWER_PREFIXES;   // watts below 1 kW ("250W", "0.5W"), kilowatts from 1 kW
-                unit = "W";
-            }
-            case ParsedQuery.TEMPERATURE -> {
-                prefixes = NO_PREFIXES;
-                unit = "°C";
-            }
-            case ParsedQuery.LIFETIME -> {
-                prefixes = NO_PREFIXES;
-                unit = "h";
-            }
-            default -> {
-                prefixes = FREQ_PREFIXES;
-                unit = "Hz";
-            }
-        }
-        if (value == 0) {
-            return "0" + unit;
-        }
-        Prefix chosen = prefixes.getFirst();
-        for (Prefix p : prefixes) {
-            if (Math.abs(value) >= p.multiplier() * (1 - 1e-9)) {
-                chosen = p;
-            }
-        }
-        return format(value / chosen.multiplier()) + chosen.symbol() + unit;
-    }
-
-    private static String format(double v) {
-        return new BigDecimal(v).round(new MathContext(6)).stripTrailingZeros().toPlainString();
+        return PartAttribute.display(kind, value);
     }
 
     // ------------------------------------------------------------------ labelled values (spans)

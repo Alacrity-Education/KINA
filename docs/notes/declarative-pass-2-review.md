@@ -57,6 +57,13 @@ output voltage before the voltage rating for regulators, the Zener voltage for Z
 
 Item 7 does not need this item: deriving at read time calls the existing extractor.
 
+Outcome (2026-10-07, user decision): implemented after all, as `domain.PartAttribute` with `@Source` and `@Unit`
+(DESIGN.md 3.4 "Attribute sources"). The pitfalls above shaped it. The attributes are a parallel enum, not new
+`ConstraintKind` constants, so the policy tables do not change. The custom code is one named logic class per concern in
+`domain.extract`. The call order is declared as precedence. The distributor names now live in `domain`, and the logic
+reaches the search recognisers through the narrow `ExtractionContext`. Rules that need several sources or the resolved
+family at once stay in `ParametricExtractor`. `ExtractionGoldenTest` showed no difference.
+
 ## 3. Distributor dialect: defer
 
 The note counted 21 branches. After the split, the caching rule is a strategy already (`LcscRetriever` against

@@ -25,7 +25,9 @@ import java.util.regex.Pattern;
 /**
  * Derives comparable parametric attributes from a {@link Part} (DESIGN.md section 3.4) using the same recognisers as
  * {@link QueryParser}. Distributor-provided values (package field, Mouser ProductAttributes, TME parameters, LCSC
- * attributes) take precedence over description parsing. Stateless and thread-safe.
+ * attributes) take precedence over description parsing. The attribute names, units, logic and precedence are declared
+ * on {@link PartAttribute} ({@code @Source}, {@code @Unit}); this class runs them and keeps the rules that combine
+ * several sources. Stateless and thread-safe.
  *
  * <p>Comparable keys: {@value #CAPACITANCE}, {@value #RESISTANCE}, {@value #INDUCTANCE}, {@value #IMPEDANCE},
  * {@value #FREQUENCY}, {@value #VOLTAGE}, {@value #CURRENT} ({@value #RATED_CURRENT} for inductors and ferrite beads),
@@ -102,27 +104,6 @@ public class ParametricExtractor {
     public static final String FORM_FACTOR = "FormFactor";
     /** Operating temperature range as printed by the distributor, normalised ("-55...155°C"). */
     public static final String OPERATING_TEMPERATURE = "OperatingTemperature";
-
-    /** Comparable key per {@link ParsedQuery} value kind, in output order. */
-    private static final Map<String, String> KIND_KEYS = orderedKindKeys();
-
-    private static Map<String, String> orderedKindKeys() {
-        Map<String, String> m = new LinkedHashMap<>();
-        m.put(ParsedQuery.CAPACITANCE, CAPACITANCE);
-        m.put(ParsedQuery.RESISTANCE, RESISTANCE);
-        m.put(ParsedQuery.INDUCTANCE, INDUCTANCE);
-        m.put(ParsedQuery.IMPEDANCE, IMPEDANCE);
-        m.put(ParsedQuery.FREQUENCY, FREQUENCY);
-        m.put(ParsedQuery.VOLTAGE, VOLTAGE);
-        m.put(ParsedQuery.CURRENT, CURRENT);
-        m.put(ParsedQuery.SATURATION_CURRENT, SATURATION_CURRENT);
-        m.put(ParsedQuery.DCR, DCR);
-        m.put(ParsedQuery.POWER, POWER);
-        m.put(ParsedQuery.TEMPERATURE, MAX_TEMPERATURE);
-        m.put(ParsedQuery.LIFETIME, LIFETIME);
-        m.put(ParsedQuery.TOLERANCE, TOLERANCE);
-        return m;
-    }
 
     /**
      * Every canonical key {@link #extract} can produce: the {@code compact} response detail returns only these and
@@ -208,12 +189,13 @@ public class ParametricExtractor {
         Features f = features(part);
         Map<String, String> out = new LinkedHashMap<>();
         boolean inductive = Recognizers.inductive(f.family());
-        KIND_KEYS.forEach((kind, key) -> {
-            Recognizers.Value v = f.values().get(kind);
+        for (PartAttribute attribute : PartAttribute.VALUES) {
+            Recognizers.Value v = f.values().get(attribute.kind());
             if (v != null) {
-                out.put(inductive && ParsedQuery.CURRENT.equals(kind) ? RATED_CURRENT : key, v.display());
+                // an inductor's or ferrite bead's current is its rated current
+                out.put(inductive && attribute == PartAttribute.CURRENT ? RATED_CURRENT : attribute.key(), v.display());
             }
-        });
+        }
         putIfNotNull(out, DIELECTRIC, f.dielectric());
         putIfNotNull(out, PACKAGE, f.packageName());
         putIfNotNull(out, MOUNTING, f.mounting());
@@ -286,13 +268,11 @@ public class ParametricExtractor {
      * given.
      */
     private static boolean sameQuantity(String key, String raw, String canonical) {
-        String kind = KIND_KEYS.entrySet().stream().filter(e -> e.getValue().equals(key)).map(Map.Entry::getKey)
-                .findFirst().orElse(null);
-        if (!ParsedQuery.POWER.equals(kind)) {
+        if (PartAttribute.ofKey(key) != PartAttribute.POWER) {
             return false;
         }
-        Recognizers.Value a = Recognizers.firstValue(raw, kind, null);
-        Recognizers.Value b = Recognizers.firstValue(canonical, kind, null);
+        Recognizers.Value a = Recognizers.firstValue(raw, ParsedQuery.POWER, null);
+        Recognizers.Value b = Recognizers.firstValue(canonical, ParsedQuery.POWER, null);
         return a != null && b != null && a.condition() == null
                 && ConstraintKind.sameValue(b.value(), a.value(), 1e-9);
     }

@@ -696,6 +696,116 @@ it only in the category: `Capacitors / Tantalum Capacitors`), then the series or
 (`TGHG`, `TGHPV`) are thick film. TME's `Type of resistor: power` and its `LPR` / `AHP` series name no technology and
 get none, never a guessed one; a technology request against such a part stays unverified.
 
+**Attribute sources** (`domain.PartAttribute`, the `@Source` and `@Unit` annotations; user decision 2026-10-07).
+Every attribute KINA reads from a part is a constant of `PartAttribute`, with its sources declared on it. A source
+names the lower-case distributor attribute names (`names`), the distributors and families it applies to
+(`distributors`, `families` as exact families, `traits`, `exceptTraits`), its `precedence` (lower first) and its
+`logic`. `ParametricExtractor.features` reads every numeric attribute in one loop: the applicable sources in
+precedence order, and the first that reads a value wins. The default logic (`AttributeLogic.Simple`) looks the names up
+and parses the value in the attribute's unit. Every custom rule is a small named class in `domain.extract`
+(`ImpedanceAtFrequency`, `LargestVoltage`, `SeriesPower`, `TemperatureRange`, `ElementsCount`...). These classes use
+only domain types and `domain.ExtractionContext`, a narrow interface of nine methods (parse a value, build a value,
+the single values of a text, a word of a vocabulary, the connector words of a text, a series power, what the
+description says, the part's family, another attribute of the part). `search.SearchExtractionContext` implements it,
+so `domain` does not depend on `search`.
+
+The numeric attributes are read with the value family: the family the category or description names. The other
+attributes are read with the part's family, which the values decide when no family is named (a capacitance makes a
+capacitor). The order that matters is declared as precedence: a regulator's output voltage and a Zener's Zener voltage
+come before the voltage ratings; the named attributes come before the scan of any attribute named with `voltage` or
+`current`; the attributes come before the description; for a transistor or diode the largest unlabelled voltage of the
+description replaces the description's voltage; a resistor series' wattage comes last. Some rules need several sources
+or the resolved family at once. They stay in `ParametricExtractor` and read the declared names: the technology merge,
+the USB details, a crystal's body size and a can capacitor's size as the package, the connector assembly with the
+description and category, a capacitor's current (always its ripple current) and the mounting fallbacks (the category's
+wording, the package prefix).
+
+`@Unit` declares the symbols of a value token (`Recognizers` reads them from the declarations), the base unit and
+prefixes of the display form, and the display rule (`ValueDisplay`: prefixed by default, `Percent`,
+`HoursAtTemperature`). An attribute without symbols is parsed in the unit of the attribute that owns them (`DCR` in ohm)
+and keeps its own kind. Add a new distributor spelling to the source's `names`, not to the extractor.
+`ExtractionTableDocumentationTest` checks this table against the declarations, and `ExtractionGoldenTest` holds the
+extraction of 0.6.0 (every evaluation part, and probe parts for every attribute name alone and in pairs).
+
+| Attribute | Unit | Source (precedence order) | Applies to | Names |
+|---|---|---|---|---|
+| `CAPACITANCE` | `F` from `f` | `Simple` |  | `capacitance`, `capacitance value`, `nominal capacitance`, `load capacitance`, `load capacitance (cl)` |
+|  |  | `Described` |  |  |
+| `RESISTANCE` | `ohm` from `ohm`, `ohms`, `r` | `Simple` | not `INDUCTIVE` | `resistance`, `resistance value`, `nominal resistance`, `rds on - drain-source resistance`, `drain-source on resistance`, `on-state resistance`, `rds(on)` |
+|  |  | `Described` | not `INDUCTIVE` |  |
+| `INDUCTANCE` | `H` from `h` | `Simple` |  | `inductance`, `nominal inductance` |
+|  |  | `Described` |  |  |
+| `IMPEDANCE` | `ohm` | `ImpedanceAtFrequency` | `ferrite` | `impedance` |
+|  |  | `Described` |  |  |
+| `FREQUENCY` | `Hz` from `hz` | `Simple` |  | `frequency`, `nominal frequency`, `oscillation frequency` |
+|  |  | `Described` |  |  |
+| `VOLTAGE` | `V` from `v`, `vdc`, `vac`, `volt`, `volts`, `vol`, `vo` | `Simple` | `regulator` | `output voltage`, `voltage - output`, `voltage - output (min/fixed)`, `output voltage (fixed)`, `fixed output voltage` |
+|  |  | `Simple` | `zener` | `vz - zener voltage`, `zener voltage`, `voltage - zener (nom) (vz)`, `zener voltage (vz)`, `voltage - zener` |
+|  |  | `Simple` |  | `voltage rating dc`, `voltage rating - dc`, `voltage rating`, `voltage rated`, `rated voltage`, `voltage - rated`, `operating voltage`, `dc voltage rating`, `voltage`, `output voltage`, `voltage - output`, `voltage - output (min/fixed)`, `vr - reverse voltage`, `reverse voltage (vr)`, `vds - drain-source breakdown voltage`, `drain source voltage (vdss)`, `drain to source voltage (vdss)`, `vz - zener voltage`, `voltage - zener (nom) (vz)`, `vrwm - reverse standoff voltage`, `reverse stand-off voltage (vrwm)`, `voltage - reverse standoff (typ)` |
+|  |  | `KeyContaining` |  | `voltage`; not `forward`, `clamp`, `breakdown`, `input`, `supply`, `isolation`, `threshold`, `gate`, `ripple`, `dropout`, `temperature`, `coefficient`, `offset` |
+|  |  | `LargestVoltage` |  |  |
+| `CURRENT` | `A` from `a` | `Simple` | `INDUCTIVE` | `rated current`, `current rating`, `operating current`, `maximum dc current`, `max. dc current`, `dc current`, `current - max`, `current rating (amps)`, `irms`, `i rms`, `rated current (irms)`, `current` |
+|  |  | `Simple` |  | `current rating`, `rated current`, `current`, `current - output`, `output current`, `id - continuous drain current`, `continuous drain current (id)`, `if - forward current`, `io - average rectified current`, `current - average rectified (io)`, `average rectified current (io)`, `ic - continuous collector current`, `collector current (ic)`, `current rating (amps)` |
+|  |  | `KeyContaining` |  | `current`; not `leakage`, `reverse current`, `surge`, `quiescent`, `supply`, `peak`, `bias`, `offset`, `standby`, `pulse`, `trip`, `saturation`, `ripple` |
+|  |  | `Described` |  |  |
+| `SATURATION_CURRENT` | `A` | `Simple` | `INDUCTIVE` | `saturation current`, `isat`, `current - saturation`, `current - saturation (isat)`, `saturation current (isat)`, `isat (max)`, `saturation current max.` |
+|  |  | `Described` |  |  |
+| `DCR` | `ohm` | `Simple` | `INDUCTIVE` | `dc resistance`, `dc resistance (dcr)`, `dcr`, `maximum dc resistance`, `max. dc resistance`, `dc resistance max`, `dc resistance (dcr) (max)`, `resistance - dc`, `resistance`, `dc resistance (max)` |
+|  |  | `Described` |  |  |
+| `POWER` | `W` from `w`, `watt`, `watts` | `Simple` |  | `power rating`, `power`, `power(watts)`, `power (watts)`, `pd - power dissipation`, `power dissipation (pd)`, `power dissipation` |
+|  |  | `Described` |  |  |
+|  |  | `SeriesPower` |  |  |
+| `TEMPERATURE` | `°C` | `MaxTemperature` |  | `maximum operating temperature`, `max. operating temperature`, `operating temperature`, `operating temperature range`, `temperature range` |
+|  |  | `Described` |  |  |
+| `LIFETIME` | `h` (HoursAtTemperature) | `LifetimeAtTemperature` |  | `service life`, `lifetime`, `life time`, `load life`, `endurance`, `useful life`, `lifetime @ temp.`, `life`, `operating life` |
+|  |  | `Described` |  |  |
+| `TOLERANCE` | `%` (Percent) | `Simple` |  | `tolerance`, `resistance tolerance`, `capacitance tolerance`, `inductance tolerance` |
+|  |  | `Described` |  |  |
+| `TEST_FREQUENCY` |  | `Simple` |  | `test frequency`, `impedance test frequency`, `frequency`, `measuring frequency` |
+| `RIPPLE_CURRENT` |  | `Simple` |  | `ripplecurrent`, `ripple current`, `rated ripple current`, `ripple current (max)`, `max ripple current`, `current - ripple`, `ripple current @ high frequency`, `ripple current @ low frequency`, `operating current`, `current rating`, `rated current`, `current` |
+|  |  | `KeyContaining` |  | `ripple` |
+| `DIELECTRIC` |  | `DielectricCode` |  | `dielectric`, `temperature coefficient`, `temperature characteristic`, `temperature characteristics`, `dielectric material`, `tempco` |
+|  |  | `Described` |  |  |
+| `PACKAGE` |  | `PackageField` |  |  |
+|  |  | `PackageCode` |  | `case code - in`, `case - inch`, `case code (inch)`, `package (inch)`, `imperial size`, `case code - inch` |
+|  |  | `MetricPackageCode` |  | `case code - mm`, `case - mm`, `case code (mm)`, `metric size`, `package (mm)` |
+|  |  | `PackageCode` |  | `package / case`, `package/case`, `package`, `case`, `supplier device package`, `package type`, `case / package`, `case/package`, `housing` |
+|  |  | `Described` |  |  |
+|  |  | `RawPackageField` |  |  |
+|  |  | `PartNumberPackage` | `PASSIVE` |  |
+| `MOUNTING` |  | `MountingWord` |  | `mounting`, `mounting style`, `mounting type`, `mounting method`, `termination style`, `montage`, `electrical mounting` |
+|  |  | `Described` |  |  |
+|  |  | `PackageFieldMounting` |  |  |
+| `TECHNOLOGY` |  | `Simple` |  | `type of resistor`, `type of capacitor`, `type of inductor`, `kind of capacitor`, `kind of resistor`, `technology`, `composition`, `construction`, `resistor type`, `capacitor type`, `inductor type` |
+| `SEMICONDUCTOR_TYPE` |  | `Simple` |  | `type of transistor`, `type of diode`, `kind of voltage regulator`, `type of voltage regulator`, `transistor polarity`, `polarity`, `channel type`, `output type`, `regulator type`, `transistor type`, `diode type`, `configuration`, `number of channels`, `technology` |
+| `CRYSTAL_BODY` |  | `Simple` |  | `body dimensions`, `dimensions`, `size / dimension`, `size`, `case size`, `body size` |
+| `OPERATING_TEMPERATURE` |  | `TemperatureRange` |  | `operating temperature`, `operating temperature range`, `temperature range` |
+|  |  | `DescriptionTemperatureRange` |  |  |
+| `ELEMENTS` |  | `ElementsCount` | `ARRAYS` | `elements`, `number of elements`, `number of resistors`, `number of capacitors`, `number of lines`, `number of channels`, `number of bits` |
+| `ESR` |  | `OhmsAtFrequency` |  | `esr`, `esr (equivalent series resistance)`, `equivalent series resistance`, `esr max`, `esr (max)`, `max esr`, `esr max.` |
+|  |  | `OhmsAtKeyPrefix` |  | `esr ` |
+| `CAPACITOR_IMPEDANCE` |  | `OhmsAtFrequency` |  | `impedance`, `impedance max`, `max. impedance`, `impedance (max)`, `max impedance` |
+|  |  | `OhmsAtKeyPrefix` |  | `impedance `; not `tolerance` |
+| `DIMENSIONS` |  | `Dimensions` | `PASSIVE` | `dimensions`, `body dimensions`, `size / dimension`, `size`, `case size`, `body size`, `dimension` |
+|  |  | `CanDimensions` | `PASSIVE` |  |
+|  |  | `PackageFieldDimensions` | `PASSIVE` |  |
+|  |  | `DescriptionDimensions` | `PASSIVE` |  |
+| `DIAMETER` |  | `Millimetres` |  | `diameter`, `body diameter`, `case diameter` |
+| `HEIGHT` |  | `Millimetres` |  | `height`, `body height`, `height - seated (max)`, `case height`, `length` |
+| `CONNECTOR_TYPE` |  | `ConnectorTypeWord` |  | `type of connector`, `connector type`, `connector`, `product`, `product type`, `type` |
+| `GENDER` |  | `StatedGender` |  |  |
+|  |  | `GenderWord` |  | `kind of connector`, `gender`, `contact gender`, `connector gender` |
+| `POSITIONS` |  | `FirstInteger` |  | `number of pins`, `number of positions`, `positions`, `no. of positions`, `number of contacts`, `number of ways`, `number of circuits`, `pins` |
+|  |  | `LayoutPositions` |  |  |
+| `ROWS` |  | `FirstInteger` |  | `number of rows`, `rows`, `no. of rows` |
+|  |  | `LayoutRows` |  |  |
+| `PINOUT_LAYOUT` |  | `Simple` |  | `connector pinout layout`, `pinout layout`, `layout` |
+| `PITCH` |  | `PitchValue` |  | `contacts pitch`, `pitch`, `contact pitch`, `pitch - mating`, `raster` |
+| `ORIENTATION` |  | `ConnectorOrientation` |  | `spatial orientation`, `mounting angle`, `orientation`, `angle`, `termination orientation` |
+| `SERIES` |  | `ShortSeries` |  | `manufacturer series`, `series` |
+| `USB_DETAILS` |  | `Simple` |  | `type of connector`, `version`, `usb version`, `usb standard`, `data transfer rate`, `data rate`, `connector variant`, `connectors application`, `ip rating`, `ingress protection`, `electrical mounting`, `mounting style` |
+| `USB_RATE` |  | `Simple` |  | `data transfer rate`, `data rate` |
+
 **Thermal fields** (distributor text only, never datasheets): `MaxTemperature` is the largest number of an operating
 temperature attribute (Mouser `Maximum Operating Temperature`, TME `Max. operating temperature`, then TME `Operating
 temperature`), else the upper end of a range or a single temperature in the description (LCSC `-55℃~+155℃`, Mouser
@@ -709,7 +819,7 @@ when neither states one, the series of a resistor's part number names it (`Resis
 Dale `RH` (`RH-50`, `RH0254R700`), Ohmite `TEH70` / `TEH100`, Bourns `PWR220T-20` (20 W) / `PWR263S-35`, Caddock
 `MP915`, `MP925`, `MP930`, `MP9100`, and `LPS0300` / `LPS0800` (300 W / 800 W). Ohmite `TGH` names no wattage.
 
-**Descriptive details of passives** (`PassiveDetails`, canonical keys that are reported but not scored, except
+**Descriptive details of passives** (`PassiveDetails` and the `PartAttribute` sources, canonical keys that are reported but not scored, except
 `Elements`): `Elements` (arrays and networks, section "Arrays" below); for capacitors `RippleCurrent` (a capacitor's
 current is always its ripple current and never `Current`: TME lists it as `Operating current`, 0.24 A on Panasonic
 `EEEFK1C101P`, which the second audit's compact view mislabelled `Current: 240mA`; Mouser `Ripple Current`), `ESR` and
@@ -726,7 +836,7 @@ impedance`, `high ripple current`, `long life`, `low DCR`, `high current`, `shie
 `get_part` returns the full attribute set by default (`detail=full`: these canonical keys plus every raw distributor
 attribute, `photo_url` and `extra`); searches stay compact.
 
-**Package from the part number.** A resistor, capacitor, inductor or ferrite part whose package field, attributes and
+**Package from the part number** (`domain.extract.PartNumberPackage`, the last source of `PACKAGE`). A resistor, capacitor, inductor or ferrite part whose package field, attributes and
 description name no package (Mouser keyword results often carry none: `Thin Film Resistors - SMD 5.36Kohms .1% 25ppm`)
 gets `Package` from its MPN when the MPN starts with a known series followed by an imperial chip code
 (`0201 0402 0603 0805 1206 1210 1812 2010 2512`): Vishay `CRCW`, `TNPW`, `TNPU`, `RCP`, `RCS`, `RCG`, `RCWE`, `MCT`,
@@ -1037,7 +1147,7 @@ within 0.2 mm in diameter and length. Live 2026-10-07: TME lists the Ferrocore `
 electrolytic contradict it; a part that says only `polymer` is not comparable; a bare `polymer` request accepts
 aluminium polymer and tantalum polymer; hybrid polymer neither matches nor contradicts an aluminium request.
 
-**Arrays** (`PassiveDetails.elements`, the `Elements` attribute; resistors, capacitors and ferrite beads; never for
+**Arrays** (`domain.extract.ElementsCount`, the `Elements` attribute; resistors, capacitors and ferrite beads; never for
 common-mode chokes and filters): the count from an attribute (`Number of elements`, `Number of resistors`, `Number of
 lines`, `Number of channels`...), from the text (`4 lines`, `4 elements`, `8 resistors`; JLCPCB networks
 `0603x4`, `0402x8` in the package or description: the chip code directly followed by `x` and the count, with no letter

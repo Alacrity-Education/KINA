@@ -178,13 +178,13 @@ public enum PartAttribute {
     TEMPERATURE(ParsedQuery.TEMPERATURE, "MaxTemperature"),
 
     /** The rated lifetime in hours with its test temperature ({@code 2000h @105°C}). */
-    @Unit(base = "h")
+    @Unit(base = "h", display = ValueDisplay.HoursAtTemperature.class)
     @Source(names = {"service life", "lifetime", "life time", "load life", "endurance", "useful life",
             "lifetime @ temp.", "life", "operating life"}, logic = LifetimeAtTemperature.class)
     @Source(precedence = 9, logic = Described.class)
     LIFETIME(ParsedQuery.LIFETIME, "Lifetime"),
 
-    @Unit(base = "%")
+    @Unit(base = "%", display = ValueDisplay.Percent.class)
     @Source(names = {"tolerance", "resistance tolerance", "capacitance tolerance", "inductance tolerance"})
     @Source(precedence = 9, logic = Described.class)
     TOLERANCE(ParsedQuery.TOLERANCE, "Tolerance"),
@@ -422,6 +422,27 @@ public enum PartAttribute {
         return null;
     }
 
+    /**
+     * The display form of a value of a {@link ParsedQuery} kind in its declared unit ({@code 10uF}, {@code 250W}); a
+     * kind without a unit is displayed as a frequency.
+     */
+    public static String display(String kind, double value) {
+        Unit unit = unitOrFrequency(kind);
+        return Declarations.display(unit).display(value, unit);
+    }
+
+    /** As {@link #display(String, double)}, with the test condition when not null ({@code 120ohm @100MHz}). */
+    public static String display(String kind, double value, Double condition) {
+        Unit unit = unitOrFrequency(kind);
+        ValueDisplay display = Declarations.display(unit);
+        return display.display(value, unit) + (condition == null ? "" : display.condition(condition));
+    }
+
+    private static Unit unitOrFrequency(String kind) {
+        Unit unit = unitOf(kind);
+        return unit != null ? unit : FREQUENCY.unit();
+    }
+
     /** The {@link ParsedQuery} kind of each unit symbol ({@code "vdc"} -&gt; voltage), in declaration order. */
     public static Map<String, String> unitSymbols() {
         return Declarations.SYMBOLS;
@@ -497,6 +518,7 @@ public enum PartAttribute {
     private static final class Declarations {
 
         private static final Map<Class<? extends AttributeLogic>, AttributeLogic> LOGIC = new ConcurrentHashMap<>();
+        private static final Map<Class<? extends ValueDisplay>, ValueDisplay> DISPLAYS = new ConcurrentHashMap<>();
         static final Map<PartAttribute, Unit> UNITS = new EnumMap<>(PartAttribute.class);
         static final Map<PartAttribute, List<Declared>> SOURCES = new EnumMap<>(PartAttribute.class);
         static final Map<String, String> SYMBOLS;
@@ -530,13 +552,16 @@ public enum PartAttribute {
             }
         }
 
-        private static AttributeLogic instance(Class<? extends AttributeLogic> type) {
+        static ValueDisplay display(Unit unit) {
+            return DISPLAYS.computeIfAbsent(unit.display(), Declarations::instance);
+        }
+
+        private static <T> T instance(Class<? extends T> type) {
             try {
                 return type.getDeclaredConstructor().newInstance();
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException
                      | InvocationTargetException e) {
-                throw new IllegalStateException("attribute logic " + type.getName() + " needs a public no-arg constructor",
-                        e);
+                throw new IllegalStateException(type.getName() + " needs a public no-arg constructor", e);
             }
         }
     }
