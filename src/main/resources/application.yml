@@ -99,5 +99,9 @@ kina:
                                 PRODUCT_BLOCKED, INVALID, "BLOCKED_FOR_ZBL_*"] }
   metrics:
     save-interval: 30s           # counters saved to metrics_counters, database gauges recomputed (DESIGN.md 3.7)
+    backfill:                    # moves type="unknown" counts to the types the database shows (DESIGN.md 3.7)
+      cron: "${KINA_METRICS_BACKFILL_CRON:0 0 6 * * *}"     # daily at 06:00, JVM time zone; also once at the first start
+      enabled: ${KINA_METRICS_BACKFILL_ENABLED:true}
+      batch-size: 2000           # rows re-typed per UPDATE
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
             auto-download: true }

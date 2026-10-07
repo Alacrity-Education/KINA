@@ -52,6 +52,10 @@ public enum Metric {
     MEMBERSHIP_RECHECKS("kina.membership.rechecks", Type.COUNTER,
             "Group membership re-checks at the identity provider by outcome", "outcome"),
     JLCPCB_DOWNLOADS("kina.jlcpcb.downloads", Type.COUNTER, "JLCPCB database downloads by outcome", "outcome"),
+    METRICS_BACKFILL_RUNS("kina.metrics.backfill.runs", Type.COUNTER, "Metrics backfill runs by outcome (ok, failed)",
+            "outcome"),
+    METRICS_BACKFILL_MOVED("kina.metrics.backfill.moved", Type.COUNTER,
+            "Counts the metrics backfill moved from type=unknown to a typed series, by counter name", "name"),
 
     // ---- timers (count and total time persisted) ------------------------------------------------------------------
     SEARCH_DURATION("kina.search.duration", Type.TIMER, "Time to answer a search request (single or batch)"),
@@ -76,7 +80,9 @@ public enum Metric {
     TOKENS_ACTIVE("kina.tokens.active", Type.GAUGE, "Access tokens neither revoked nor expired"),
     JLCPCB_DATABASE_PARTS("kina.jlcpcb.database.parts", Type.GAUGE, "Parts in the JLCPCB database (0 when unknown)"),
     JLCPCB_DATABASE_AGE("kina.jlcpcb.database.age", Type.GAUGE,
-            "Age of the JLCPCB database download (0 when unknown)");
+            "Age of the JLCPCB database download (0 when unknown)"),
+    METRICS_BACKFILL_LAST_RUN("kina.metrics.backfill.last.run", Type.GAUGE,
+            "End of the last successful metrics backfill run, Unix epoch (0 when never)");
 
     /** The meter types. */
     public enum Type { COUNTER, TIMER, GAUGE }
@@ -130,9 +136,9 @@ public enum Metric {
         return MetricKey.of(meterName, pairs);
     }
 
-    /** The base unit of a gauge ({@code seconds} for the JLCPCB age), else null. */
+    /** The base unit of a gauge ({@code seconds} for the JLCPCB age and the last backfill run), else null. */
     public String baseUnit() {
-        return this == JLCPCB_DATABASE_AGE ? "seconds" : null;
+        return this == JLCPCB_DATABASE_AGE || this == METRICS_BACKFILL_LAST_RUN ? "seconds" : null;
     }
 
     /**

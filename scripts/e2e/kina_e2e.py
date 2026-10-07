@@ -807,6 +807,17 @@ def suite_metrics(base: str, metrics_base: str, token: str, rec: Recorder):
              "kina_parts_fetched_total", "kina_cache_search_lookups_total")
     untyped = [line for line in text.splitlines() if line.startswith(typed) and "type=\"" not in line]
     rec.check("metrics: the search counters carry the type tag", not untyped, str(untyped[:3]))
+    cache_gauges = ("kina_cache_parts{", "kina_cache_searches{")
+    untyped = [line for line in text.splitlines() if line.startswith(cache_gauges) and "type=\"" not in line]
+    rec.check("metrics: kina_cache_parts and kina_cache_searches carry distributor and type",
+              not untyped and "kina_cache_searches{distributor=\"MOUSER\",type=\"unknown\"}" in text,
+              str(untyped[:3]))
+    # the backfill runs once at the first start of a database, then daily (DESIGN.md 3.7 "Backfill")
+    last_run = [line for line in text.splitlines() if line.startswith("kina_metrics_backfill_last_run_seconds ")]
+    ran = bool(last_run) and float(last_run[0].split()[-1]) > 0
+    rec.check("metrics: the metrics backfill ran (runs_total, last_run_seconds)", ran
+              and "kina_metrics_backfill_runs_total{outcome=\"ok\"}" in text,
+              last_run[0] if last_run else "kina_metrics_backfill_last_run_seconds missing")
     resp = api.get("/actuator/prometheus")
     rec.check("metrics: the main port does not serve /actuator/prometheus", resp.status != 200
               and "kina_" not in resp.text, f"status {resp.status}")

@@ -29,6 +29,21 @@ class MetricsStoreTest {
     }
 
     @Test
+    void moveNeverTakesMoreThanTheSourceHoldsAndKeepsTheSum() {
+        MetricKey unknown = Metric.PARTS_FETCHED.key("TME", "unknown");
+        MetricKey capacitor = Metric.PARTS_FETCHED.key("TME", "capacitor");
+        store.add(unknown, 5);
+
+        assertThat(store.move(unknown, capacitor, 3)).isEqualTo(3);
+        assertThat(store.move(unknown, capacitor, 10)).as("capped").isEqualTo(2);
+        assertThat(store.move(unknown, capacitor, 1)).isZero();
+        assertThat(store.move(Metric.PARTS_FETCHED.key("MOUSER", "unknown"), capacitor, 1)).as("no source").isZero();
+        assertThat(store.get(unknown)).isZero();
+        assertThat(store.get(capacitor)).isEqualTo(5);
+        assertThat(registry.get("kina.parts.fetched").tag("type", "capacitor").functionCounter().count()).isEqualTo(5);
+    }
+
+    @Test
     void tagValuesAreSanitised() {
         MetricKey key = MetricKey.of("x", "endpoint", "/a,b=c", "reason", null);
 

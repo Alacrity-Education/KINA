@@ -33,7 +33,7 @@ public record KinaProperties(
 
     @ConstructorBinding
     public KinaProperties {
-        metrics = metrics == null ? new Metrics(Duration.ofSeconds(30)) : metrics;
+        metrics = metrics == null ? new Metrics(Duration.ofSeconds(30), null) : metrics;
     }
 
     /** Without {@code metrics} (tests that build the tree by hand): the defaults. */
@@ -287,8 +287,33 @@ public record KinaProperties(
      *
      * @param saveInterval how often the counters are saved to {@code metrics_counters} and the database gauges are
      *                     recomputed (read by the {@code @Scheduled} methods through the same property)
+     * @param backfill     the daily metrics backfill ({@code MetricsBackfill})
      */
-    public record Metrics(@DefaultValue("30s") Duration saveInterval) {
+    public record Metrics(@DefaultValue("30s") Duration saveInterval, @DefaultValue Backfill backfill) {
+
+        public Metrics {
+            backfill = backfill == null ? new Backfill(null, true, 2000) : backfill;
+        }
+    }
+
+    /**
+     * {@code kina.metrics.backfill.*} (DESIGN.md 3.7 "Backfill").
+     *
+     * @param cron      when the backfill runs, a Spring cron expression in the JVM's default time zone (read by the
+     *                  {@code @Scheduled} method through the same property)
+     * @param enabled   false: neither the daily run nor the run at startup
+     * @param batchSize rows read and re-typed per UPDATE
+     */
+    public record Backfill(@DefaultValue("0 0 6 * * *") String cron, @DefaultValue("true") boolean enabled,
+                           @DefaultValue("2000") int batchSize) {
+
+        public Backfill {
+            cron = cron == null || cron.isBlank() ? "0 0 6 * * *" : cron;
+            if (batchSize <= 0) {
+                throw new IllegalArgumentException("kina.metrics.backfill.batch-size must be positive, not "
+                        + batchSize);
+            }
+        }
     }
 
     /**

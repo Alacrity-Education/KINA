@@ -1469,6 +1469,9 @@ No other value is possible (connector and USB sub-types are not tags), so the ta
 | `kina_jlcpcb_database_parts` | gauge | | parts in the JLCPCB database (0 when unknown) |
 | `kina_jlcpcb_database_age_seconds` | gauge | | age of the JLCPCB download (0 when unknown) |
 | `kina_jlcpcb_downloads_total` | counter | `outcome` | JLCPCB downloads: `ok`, `failed`, `interrupted` |
+| `kina_metrics_backfill_runs_total` | counter | `outcome` | metrics backfill runs ("Backfill" below): `ok`, `failed` |
+| `kina_metrics_backfill_moved_total` | counter | `name` | counts the backfill moved from `type="unknown"` to a typed series, by counter (`kina.search.queries`, `kina.distributor.calls`, `kina.cache.search.lookups`, `kina.parts.fetched`) |
+| `kina_metrics_backfill_last_run_seconds` | gauge | | end of the last successful backfill run as a Unix time (0 when never) |
 
 The timers (`kina_search_duration_seconds`, `kina_distributor_duration_seconds`) and `kina_searches_total` (a batch
 mixes types) have no `type` tag. Counts recorded before 0.5 have no type: migration V9 moved them to `type="unknown"`

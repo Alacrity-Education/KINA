@@ -54,6 +54,29 @@ public class MetricsStore {
         cell(key).incrementAndGet();
     }
 
+    /**
+     * Moves up to {@code amount} from the counter {@code from} to the counter {@code to} (the metrics backfill,
+     * DESIGN.md 3.7): never more than {@code from} holds, so it never goes below zero, and the sum of both is
+     * unchanged. Returns the amount moved.
+     */
+    public long move(MetricKey from, MetricKey to, long amount) {
+        AtomicLong source = values.get(from);
+        if (amount <= 0 || source == null || from.equals(to)) {
+            return 0;
+        }
+        while (true) {
+            long current = source.get();
+            long taken = Math.min(current, amount);
+            if (taken <= 0) {
+                return 0;
+            }
+            if (source.compareAndSet(current, current - taken)) {
+                cell(to).addAndGet(taken);
+                return taken;
+            }
+        }
+    }
+
     /** Records one timed event of {@code nanos} on the timer {@code key} (a key without the suffixes). */
     public void record(MetricKey key, long nanos) {
         TimerCells cells = timer(key);
