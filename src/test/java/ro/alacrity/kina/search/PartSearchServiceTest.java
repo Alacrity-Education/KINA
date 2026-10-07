@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.CachedSearch;
 import ro.alacrity.kina.cache.PartCacheRepository;
@@ -10,7 +11,6 @@ import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
-import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.domain.BatchSearchRequest;
 import ro.alacrity.kina.domain.BatchSearchResponse;
@@ -268,7 +268,7 @@ class PartSearchServiceTest {
             return new RankedResults(out, RankingMode.BLENDED, null);
         });
 
-        service = new PartSearchService(props, new DistributorRegistry(List.copyOf(clients)), new QueryParser(),
+        service = new PartSearchService(props, TestWiring.registry(List.copyOf(clients)), new QueryParser(),
                 new ParametricExtractor(), ranking, partCache, searchCache, clock);
         return service;
     }
@@ -935,7 +935,7 @@ class PartSearchServiceTest {
         // the first ranking call consumes the whole batch budget
         RankingService slow = rankingThatSleepsOnFirstCall(Duration.ofMillis(700));
         service = new PartSearchService(RankingFixtures.properties("kina.ranking.batch-timeout", "600ms"),
-                new DistributorRegistry(List.of(lcsc)), new QueryParser(), new ParametricExtractor(), slow,
+                TestWiring.registry(List.of(lcsc)), new QueryParser(), new ParametricExtractor(), slow,
                 mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
 
         BatchSearchResponse response = service.searchBatch(BatchSearchRequest.of(List.of(
@@ -963,7 +963,7 @@ class PartSearchServiceTest {
         ParametricExtractor extractor = new ParametricExtractor();
         RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
                 mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
-        service = new PartSearchService(props, new DistributorRegistry(List.of(lcsc)), new QueryParser(), extractor,
+        service = new PartSearchService(props, TestWiring.registry(List.of(lcsc)), new QueryParser(), extractor,
                 ranking, mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
 
         BatchSearchResponse response = service.searchBatch(BatchSearchRequest.of(List.of(
@@ -1138,7 +1138,7 @@ class PartSearchServiceTest {
         ParametricExtractor extractor = new ParametricExtractor();
         RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
                 mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
-        service = new PartSearchService(props, new DistributorRegistry(List.copyOf(clients)), new QueryParser(),
+        service = new PartSearchService(props, TestWiring.registry(List.copyOf(clients)), new QueryParser(),
                 extractor, ranking, mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
         return service.search(new SearchRequest(query, 10, Set.of(), false, 1, detail));
     }

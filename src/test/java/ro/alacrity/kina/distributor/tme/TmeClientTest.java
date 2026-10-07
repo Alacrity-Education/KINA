@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
@@ -29,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +62,11 @@ class TmeClientTest {
     private TmeClient client(KinaProperties.Tme properties) {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        return new TmeClient(properties, builder.build(), CLOCK, Runnable::run, time.retry(Distributor.TME, 0.5));
+        Executor direct = Runnable::run;
+        return TestWiring.wire(new TmeClient(),
+                "properties", TestWiring.properties(new KinaProperties.Distributors(null, properties)),
+                "restClient", builder.build(), "clock", CLOCK, "executor", direct,
+                "retry", time.retry(Distributor.TME, 0.5));
     }
 
     private static String json(Object value) {

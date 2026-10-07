@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataAccessResourceFailureException;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.lcsc.JlcpcbDatabaseManager.Decision;
 
@@ -52,9 +53,10 @@ class JlcpcbDatabaseManagerTest {
         KinaProperties.Jlcpcb config = new KinaProperties.Jlcpcb(dir, LIBRARY, "http://example.invalid/",
                 Duration.ofDays(5), Duration.ofHours(1), 200, true);
         file = config.databaseFile().toAbsolutePath().normalize();
-        search = new JlcpcbSqliteSearch(file);
-        manager = new JlcpcbDatabaseManager(config, downloader, repository, search, true,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+        search = TestWiring.sqliteSearch(file);
+        manager = TestWiring.wire(new JlcpcbDatabaseManager(), "properties", TestWiring.properties(config),
+                "downloader", downloader, "repository", repository, "search", search,
+                "clock", Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @AfterEach

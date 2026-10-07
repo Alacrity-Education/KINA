@@ -1,11 +1,11 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorClient;
-import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.distributor.PartLookupResult;
@@ -142,7 +142,7 @@ class GanAuditFixtureTest {
         ParametricExtractor extractor = new ParametricExtractor();
         RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
                 mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
-        PartSearchService service = new PartSearchService(props, new DistributorRegistry(List.of(mouser)),
+        PartSearchService service = new PartSearchService(props, TestWiring.registry(List.of(mouser)),
                 new QueryParser(), extractor, ranking, partCache, mock(SearchCacheRepository.class), clock);
         return service.search(new SearchRequest(query, maxResults, Set.of(Distributor.MOUSER), false, 1,
                 ResponseDetail.FULL, allowBelowSpec));

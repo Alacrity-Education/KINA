@@ -1,6 +1,6 @@
 package ro.alacrity.kina.distributor.lcsc;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -10,10 +10,9 @@ import java.util.Optional;
 
 /** {@code jlcpcb_database} (single row, id = 1). */
 @Repository
-@RequiredArgsConstructor
 public class JlcpcbDatabaseRepository {
 
-    private final JdbcClient jdbc;
+    @Autowired private JdbcClient jdbc;
 
     public Optional<JlcpcbDatabaseInfo> find() {
         return jdbc.sql("""

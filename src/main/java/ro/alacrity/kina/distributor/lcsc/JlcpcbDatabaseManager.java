@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.lcsc;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,41 +45,23 @@ public class JlcpcbDatabaseManager {
     /** What {@link #evaluate()} concluded. */
     enum Decision { UP_TO_DATE, DOWNLOAD }
 
-    private final KinaProperties.Jlcpcb config;
-    private final JlcpcbDownloader downloader;
-    private final JlcpcbDatabaseRepository repository;
-    private final JlcpcbSqliteSearch search;
-    private final boolean autoDownload;
-    private final Clock clock;
+    @Autowired private KinaProperties properties;
+    @Autowired private JlcpcbDownloader downloader;
+    @Autowired private JlcpcbDatabaseRepository repository;
+    @Autowired private JlcpcbSqliteSearch search;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
+    private Clock clock = Clock.systemUTC();
+    private KinaProperties.Jlcpcb config;
 
     private final AtomicBoolean downloading = new AtomicBoolean();
     private final Object checkLock = new Object();
     private volatile Thread downloadThread;
     private volatile JlcpcbDatabaseInfo current;
     private volatile String lastError;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
 
-    @Autowired
-    public JlcpcbDatabaseManager(KinaProperties properties, JlcpcbDownloader downloader,
-            JlcpcbDatabaseRepository repository, JlcpcbSqliteSearch search) {
-        this(properties.jlcpcb(), downloader, repository, search, properties.jlcpcb().autoDownload(),
-                Clock.systemUTC());
-    }
-
-    JlcpcbDatabaseManager(KinaProperties.Jlcpcb config, JlcpcbDownloader downloader,
-            JlcpcbDatabaseRepository repository, JlcpcbSqliteSearch search, boolean autoDownload, Clock clock) {
-        this.config = config;
-        this.downloader = downloader;
-        this.repository = repository;
-        this.search = search;
-        this.autoDownload = autoDownload;
-        this.clock = clock;
-    }
-
-    /** Counts download outcomes (DESIGN.md 3.7). */
-    @Autowired
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
+    @PostConstruct
+    void init() {
+        config = properties.jlcpcb();
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -99,7 +82,7 @@ public class JlcpcbDatabaseManager {
     public void check() {
         try {
             if (evaluate() == Decision.DOWNLOAD) {
-                if (autoDownload) {
+                if (config.autoDownload()) {
                     startDownload();
                 } else {
                     log.info("JLCPCB database needs a download but kina.jlcpcb.auto-download is false");

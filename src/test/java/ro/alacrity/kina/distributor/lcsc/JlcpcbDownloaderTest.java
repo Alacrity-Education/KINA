@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import ro.alacrity.kina.TestWiring;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -86,7 +87,7 @@ class JlcpcbDownloaderTest {
         Files.createDirectories(dataDir);
         Files.writeString(target, "old database");   // replaced by the install
 
-        JlcpcbDownloader downloader = new JlcpcbDownloader(Duration.ofSeconds(30), Duration.ZERO);
+        JlcpcbDownloader downloader = downloader();
         JlcpcbDownloader.DownloadedDatabase downloaded = downloader.download(baseUrl, LIBRARY, dataDir);
 
         assertThat(downloaded.file()).isEqualTo(dataDir.resolve("tmp").resolve(LIBRARY));
@@ -101,7 +102,7 @@ class JlcpcbDownloaderTest {
 
         assertThat(downloaded.file()).doesNotExist();
         assertThat(target).hasSameBinaryContentAs(dir.resolve("source.db"));
-        JlcpcbSqliteSearch search = new JlcpcbSqliteSearch(target);
+        JlcpcbSqliteSearch search = TestWiring.sqliteSearch(target);
         assertThat(search.findByLcsc("C1525")).isPresent();
         search.close();
     }
@@ -114,7 +115,7 @@ class JlcpcbDownloaderTest {
         failuresBeforeSuccess.put(LIBRARY + ".zip.001", 3);
 
         Path dataDir = dir.resolve("data");
-        JlcpcbDownloader downloader = new JlcpcbDownloader(Duration.ofSeconds(30), Duration.ZERO);
+        JlcpcbDownloader downloader = downloader();
         assertThatThrownBy(() -> downloader.download(baseUrl, LIBRARY, dataDir))
                 .isInstanceOf(IOException.class).hasMessageContaining("after 3 attempts");
         assertThat(requests.get(LIBRARY + ".zip.001").get()).isEqualTo(3);
@@ -130,7 +131,7 @@ class JlcpcbDownloaderTest {
         files.put(LIBRARY + ".zip.001", zipOf(notSqlite));
 
         Path dataDir = dir.resolve("data");
-        JlcpcbDownloader downloader = new JlcpcbDownloader(Duration.ofSeconds(30), Duration.ZERO);
+        JlcpcbDownloader downloader = downloader();
         assertThatThrownBy(() -> downloader.download(baseUrl, LIBRARY, dataDir)).isInstanceOf(IOException.class);
         assertThat(dataDir.resolve("tmp").resolve(LIBRARY)).doesNotExist();
         assertThat(dataDir.resolve("tmp").resolve(LIBRARY + ".zip")).doesNotExist();
@@ -138,7 +139,7 @@ class JlcpcbDownloaderTest {
 
     @Test
     void missingSentinelFails() {
-        JlcpcbDownloader downloader = new JlcpcbDownloader(Duration.ofSeconds(30), Duration.ZERO);
+        JlcpcbDownloader downloader = downloader();
         assertThatThrownBy(() -> downloader.download(baseUrl, LIBRARY, dir.resolve("data")))
                 .isInstanceOf(IOException.class).hasMessageContaining("404");
     }
@@ -151,5 +152,10 @@ class JlcpcbDownloaderTest {
             zip.closeEntry();
         }
         return bytes.toByteArray();
+    }
+
+    static JlcpcbDownloader downloader() {
+        return TestWiring.wire(new JlcpcbDownloader(), "chunkTimeout", Duration.ofSeconds(30),
+                "retryDelay", Duration.ZERO);
     }
 }

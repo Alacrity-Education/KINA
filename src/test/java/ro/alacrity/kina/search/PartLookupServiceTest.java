@@ -2,12 +2,12 @@ package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
-import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.domain.Availability;
 import ro.alacrity.kina.domain.Distributor;
@@ -43,7 +43,7 @@ class PartLookupServiceTest {
 
     PartLookupService service(DistributorClient... clients) {
         service = new PartLookupService(RankingFixtures.properties("kina.search.distributor-timeout", "300ms"),
-                new DistributorRegistry(List.of(clients)), new ParametricExtractor(), cache,
+                TestWiring.registry(List.of(clients)), new ParametricExtractor(), cache,
                 Clock.fixed(NOW, ZoneOffset.UTC));
         return service;
     }

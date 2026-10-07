@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.lcsc;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.sqlite.Function;
@@ -116,17 +117,14 @@ public class JlcpcbSqliteSearch {
     record Predicate(String where, List<Object> params, boolean hasMatch) {
     }
 
-    private final Path databaseFile;
+    @Autowired private KinaProperties properties;
+    private Path databaseFile;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private Connection connection;   // guarded by lock
 
-    @Autowired
-    public JlcpcbSqliteSearch(KinaProperties properties) {
-        this(properties.jlcpcb().databaseFile());
-    }
-
-    public JlcpcbSqliteSearch(Path databaseFile) {
-        this.databaseFile = databaseFile.toAbsolutePath().normalize();
+    @PostConstruct
+    void init() {
+        databaseFile = properties.jlcpcb().databaseFile().toAbsolutePath().normalize();
     }
 
     public Path databaseFile() {

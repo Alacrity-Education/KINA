@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.distributor.lcsc.JlcpcbSqliteSearch.MatchMode;
 import ro.alacrity.kina.distributor.lcsc.JlcpcbSqliteSearch.Result;
 
@@ -25,7 +26,7 @@ class JlcpcbSqliteSearchTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        search = new JlcpcbSqliteSearch(JlcpcbTestDatabase.create(dir.resolve("parts-fts5.db")));
+        search = TestWiring.sqliteSearch(JlcpcbTestDatabase.create(dir.resolve("parts-fts5.db")));
     }
 
     @AfterEach
@@ -73,7 +74,7 @@ class JlcpcbSqliteSearchTest {
                 JlcpcbTestDatabase.row("C1002", "Diodes", "Zener", "BZT52", "SOD-123", "M", "Basic", "Zener diode", "1-:0.1", "3000"),
                 JlcpcbTestDatabase.row("C1003", "Diodes", "Zener", "BZT52", "SOD-123", "M", "Basic", "Zener diode", "1-:0.1", "200"),
                 JlcpcbTestDatabase.row("C1004", "Diodes", "Zener", "BZT52", "SOD-123", "M", "Basic", "Zener diode", "1-:0.1", "0")));
-        search = new JlcpcbSqliteSearch(file);
+        search = TestWiring.sqliteSearch(file);
 
         Result result = search.search("zener SOD-123", 0, 50);
         assertThat(lcsc(result)).containsExactly("C1002", "C1003", "C1001");
@@ -109,7 +110,7 @@ class JlcpcbSqliteSearchTest {
 
     private void useConnectorDatabase() throws SQLException {
         search.close();
-        search = new JlcpcbSqliteSearch(JlcpcbTestDatabase.create(dir.resolve("connectors.db"),
+        search = TestWiring.sqliteSearch(JlcpcbTestDatabase.create(dir.resolve("connectors.db"),
                 JlcpcbTestDatabase.withConnectors()));
     }
 
@@ -268,7 +269,7 @@ class JlcpcbSqliteSearchTest {
 
     @Test
     void unavailableWithoutFileAndReopensAfterSwap() throws Exception {
-        JlcpcbSqliteSearch missing = new JlcpcbSqliteSearch(dir.resolve("missing.db"));
+        JlcpcbSqliteSearch missing = TestWiring.sqliteSearch(dir.resolve("missing.db"));
         assertThat(missing.isAvailable()).isFalse();
         assertThatThrownBy(() -> missing.search("resistor", 0, 10)).isInstanceOf(IllegalStateException.class);
 
@@ -299,7 +300,7 @@ class JlcpcbSqliteSearchTest {
 
     private void useUsbDatabase() throws SQLException {
         search.close();
-        search = new JlcpcbSqliteSearch(JlcpcbTestDatabase.create(dir.resolve("usb.db"), JlcpcbTestDatabase.withUsb()));
+        search = TestWiring.sqliteSearch(JlcpcbTestDatabase.create(dir.resolve("usb.db"), JlcpcbTestDatabase.withUsb()));
     }
 
     @Test

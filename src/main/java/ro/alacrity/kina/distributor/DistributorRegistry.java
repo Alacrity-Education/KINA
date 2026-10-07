@@ -1,5 +1,7 @@
 package ro.alacrity.kina.distributor;
 
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.domain.Distributor;
 
@@ -15,11 +17,13 @@ import java.util.Set;
 @Component
 public class DistributorRegistry {
 
+    @Autowired private List<DistributorClient> beans;
     private final Map<Distributor, DistributorClient> clients = new EnumMap<>(Distributor.class);
 
-    public DistributorRegistry(List<DistributorClient> clients) {
-        for (DistributorClient client : clients) {
-            DistributorClient previous = this.clients.putIfAbsent(client.distributor(), client);
+    @PostConstruct
+    void index() {
+        for (DistributorClient client : beans) {
+            DistributorClient previous = clients.putIfAbsent(client.distributor(), client);
             if (previous != null) {
                 throw new IllegalStateException("Two DistributorClient beans for " + client.distributor()
                         + ": " + previous.getClass().getName() + " and " + client.getClass().getName());

@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.lcsc;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
@@ -24,13 +25,8 @@ public class LcscClient implements DistributorClient {
 
     static final int MAX_PAGE_SIZE = 200;
 
-    private final JlcpcbSqliteSearch search;
-    private final Clock clock;
-
-    public LcscClient(JlcpcbSqliteSearch search) {
-        this.search = search;
-        this.clock = Clock.systemUTC();
-    }
+    @Autowired private JlcpcbSqliteSearch search;
+    private final Clock clock = Clock.systemUTC();
 
     @Override
     public Distributor distributor() {

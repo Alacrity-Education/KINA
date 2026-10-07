@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.tme;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -56,30 +57,21 @@ public class TmeClient implements DistributorClient {
     static final int MIN_PHRASE_LENGTH = 2;
     static final int MAX_PHRASE_LENGTH = 40;
 
-    private final KinaProperties.Tme properties;
-    private final TmeApi api;
-    private final Clock clock;
-    private final Executor executor;
+    @Autowired private KinaProperties properties;
+    private RestClient restClient = defaultRestClient();
+    private Clock clock = Clock.systemUTC();
+    private Executor executor = task -> Thread.ofVirtual().name("tme-fetch").start(task);
+    private RateLimitRetry retry = new RateLimitRetry(Distributor.TME);
     private final AtomicBoolean filesDisabled = new AtomicBoolean(false);
+    private KinaProperties.Tme config;
+    private TmeApi api;
 
-    @Autowired
-    public TmeClient(KinaProperties properties) {
-        this(properties.distributors().tme(), defaultRestClient(), Clock.systemUTC(),
-                task -> Thread.ofVirtual().name("tme-fetch").start(task));
-    }
-
-    TmeClient(KinaProperties.Tme properties, RestClient restClient, Clock clock, Executor executor) {
-        this(properties, restClient, clock, executor, new RateLimitRetry(Distributor.TME));
-    }
-
-    TmeClient(KinaProperties.Tme properties, RestClient restClient, Clock clock, Executor executor,
-              RateLimitRetry retry) {
-        this.properties = properties;
-        this.clock = clock;
-        this.executor = executor;
-        TmeTokenManager tokens = new TmeTokenManager(restClient, properties.baseUrl(),
-                nullToEmpty(properties.token()), nullToEmpty(properties.secret()), clock, retry);
-        this.api = new TmeApi(restClient, tokens, properties.baseUrl(), properties.language(), retry);
+    @PostConstruct
+    void init() {
+        config = properties.distributors().tme();
+        TmeTokenManager tokens = new TmeTokenManager(restClient, config.baseUrl(),
+                nullToEmpty(config.token()), nullToEmpty(config.secret()), clock, retry);
+        api = new TmeApi(restClient, tokens, config.baseUrl(), config.language(), retry);
     }
 
     static RestClient defaultRestClient() {
@@ -99,12 +91,12 @@ public class TmeClient implements DistributorClient {
 
     @Override
     public boolean isConfigured() {
-        return properties.isConfigured();
+        return config.isConfigured();
     }
 
     @Override
     public int maxPageSize() {
-        return Math.clamp(properties.maxResultsPerSearch(), 1, TmeApi.MAX_SEARCH_LIMIT);
+        return Math.clamp(config.maxResultsPerSearch(), 1, TmeApi.MAX_SEARCH_LIMIT);
     }
 
     @Override
@@ -126,7 +118,7 @@ public class TmeClient implements DistributorClient {
         int page = safeOffset / pageSize + 1;
         int skip = safeOffset % pageSize;
 
-        TmeResponses.SearchResponse response = api.search(phrase, properties.country(), pageSize, page, deadline);
+        TmeResponses.SearchResponse response = api.search(phrase, config.country(), pageSize, page, deadline);
         TmeResponses.SearchData data = response.data();
         List<TmeResponses.Product> elements = data == null || data.products() == null
                 || data.products().elements() == null ? List.of() : data.products().elements();
@@ -169,7 +161,7 @@ public class TmeClient implements DistributorClient {
         List<String> variants = PartLookupResult.variants(symbol);
         List<TmeResponses.Product> products = List.of();
         for (String variant : variants) {
-            products = refusedAsMissing(() -> api.products(List.of(variant), properties.country(), deadline)).stream()
+            products = refusedAsMissing(() -> api.products(List.of(variant), config.country(), deadline)).stream()
                     .filter(p -> p.symbol() != null && (p.symbol().equalsIgnoreCase(variant)
                             || PartLookupResult.samePartNumber(symbol, p.symbol())))
                     .limit(1)
@@ -184,7 +176,7 @@ public class TmeClient implements DistributorClient {
             mpns = new ArrayList<>(new LinkedHashSet<>(mpns));
             mpns.removeIf(String::isBlank);
             List<String> candidates = mpns;
-            products = refusedAsMissing(() -> api.productsByMpn(candidates, properties.country(), deadline)).stream()
+            products = refusedAsMissing(() -> api.productsByMpn(candidates, config.country(), deadline)).stream()
                     .filter(p -> PartLookupResult.samePartNumber(symbol, p.symbol())
                             || p.manufacturerSymbols() != null && p.manufacturerSymbols().stream()
                             .anyMatch(m -> PartLookupResult.samePartNumber(symbol, m)))
@@ -218,7 +210,7 @@ public class TmeClient implements DistributorClient {
             return Map.of();
         }
         Map<String, ro.alacrity.kina.distributor.StockUpdate> out = new HashMap<>();
-        for (TmeResponses.ProductData data : api.data(wanted, properties.country(), properties.currency(), deadline)) {
+        for (TmeResponses.ProductData data : api.data(wanted, config.country(), config.currency(), deadline)) {
             ro.alacrity.kina.distributor.StockUpdate update = TmePartMapper.stockUpdate(data);
             if (update != null) {
                 out.putIfAbsent(data.symbol(), update);
@@ -263,9 +255,9 @@ public class TmeClient implements DistributorClient {
             return List.of();
         }
         CompletableFuture<List<TmeResponses.ProductData>> dataFuture =
-                async(() -> api.data(symbols, properties.country(), properties.currency(), deadline));
+                async(() -> api.data(symbols, config.country(), config.currency(), deadline));
         CompletableFuture<List<TmeResponses.ProductParameters>> parametersFuture =
-                async(() -> api.parameters(symbols, properties.country(), deadline));
+                async(() -> api.parameters(symbols, config.country(), deadline));
         CompletableFuture<Map<String, TmePartMapper.Datasheet>> datasheetsFuture =
                 async(() -> datasheets(symbols, deadline));
 
@@ -282,7 +274,7 @@ public class TmeClient implements DistributorClient {
                 continue;
             }
             Optional<Part> part = TmePartMapper.toPart(product, data.get(symbol), parameters.get(symbol),
-                    datasheets.get(symbol), now, properties.excludedStatuses());
+                    datasheets.get(symbol), now, config.excludedStatuses());
             if (part.isEmpty() && listed) {
                 part = TmePartMapper.toListedPart(product, data.get(symbol), parameters.get(symbol),
                         datasheets.get(symbol), now);
@@ -303,7 +295,7 @@ public class TmeClient implements DistributorClient {
         }
         try {
             Map<String, TmePartMapper.Datasheet> result = new HashMap<>();
-            for (TmeResponses.ProductFiles files : api.files(symbols, properties.country(), deadline)) {
+            for (TmeResponses.ProductFiles files : api.files(symbols, config.country(), deadline)) {
                 TmePartMapper.Datasheet sheet = TmePartMapper.datasheet(files);
                 if (files.symbol() != null && sheet != null) {
                     result.putIfAbsent(files.symbol(), sheet);

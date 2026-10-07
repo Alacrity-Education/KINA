@@ -10,7 +10,6 @@ import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
-import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.distributor.StockUpdate;
 import ro.alacrity.kina.domain.Availability;
@@ -24,7 +23,6 @@ import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.domain.ResponseDetail;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
-import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.metrics.Metric;
 import ro.alacrity.kina.metrics.MetricsStore;
 import ro.alacrity.kina.search.RankingService.RankOptions;
@@ -231,7 +229,7 @@ class AuditRoundThreeTest {
         }).when(searchCache).delete(any(), anyString());
         RankingService ranking = new RankingService(props, deterministic, new RankingServiceTest.FakeRanker(),
                 () -> RankingServiceTest.READY, new RankingScoreCache(props.ranking().scoreCacheTtl()));
-        service = new PartSearchService(props, new DistributorRegistry(List.copyOf(clients)), parser, extractor,
+        service = new PartSearchService(props, TestWiring.registry(List.copyOf(clients)), parser, extractor,
                 ranking, partCache, searchCache, Clock.fixed(NOW, ZoneOffset.UTC));
         return service;
     }

@@ -2,6 +2,7 @@ package ro.alacrity.kina.distributor.lcsc;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
@@ -23,7 +24,7 @@ class LcscClientTest {
 
     @Test
     void unavailableUntilDownloaded() {
-        LcscClient client = new LcscClient(new JlcpcbSqliteSearch(dir.resolve("parts-fts5.db")));
+        LcscClient client = TestWiring.lcscClient(TestWiring.sqliteSearch(dir.resolve("parts-fts5.db")));
         assertThat(client.distributor()).isEqualTo(Distributor.LCSC);
         assertThat(client.isConfigured()).isTrue();
         assertThat(client.maxPageSize()).isEqualTo(200);
@@ -37,8 +38,8 @@ class LcscClientTest {
 
     @Test
     void searchesAndPages() throws Exception {
-        JlcpcbSqliteSearch search = new JlcpcbSqliteSearch(JlcpcbTestDatabase.create(dir.resolve("parts-fts5.db")));
-        LcscClient client = new LcscClient(search);
+        JlcpcbSqliteSearch search = TestWiring.sqliteSearch(JlcpcbTestDatabase.create(dir.resolve("parts-fts5.db")));
+        LcscClient client = TestWiring.lcscClient(search);
 
         DistributorSearchPage first = client.search("resistor", 0, 2);
         assertThat(first.parts()).hasSize(2);
@@ -67,9 +68,9 @@ class LcscClientTest {
     void lookupTellsOutOfStockFromNotFoundAndMatchesManufacturerPartNumbers() throws Exception {
         List<JlcpcbRow> rows = new ArrayList<>(JlcpcbTestDatabase.SAMPLE);
         rows.addAll(THIN_FILM);
-        JlcpcbSqliteSearch search = new JlcpcbSqliteSearch(JlcpcbTestDatabase.create(dir.resolve("parts-fts5.db"),
+        JlcpcbSqliteSearch search = TestWiring.sqliteSearch(JlcpcbTestDatabase.create(dir.resolve("parts-fts5.db"),
                 rows));
-        LcscClient client = new LcscClient(search);
+        LcscClient client = TestWiring.lcscClient(search);
 
         PartLookupResult byNumber = client.lookup("C2075020", Deadline.immediate());
         assertThat(byNumber.status()).isEqualTo(PartLookupResult.Status.OUT_OF_STOCK);

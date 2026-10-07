@@ -52,22 +52,12 @@ public class JlcpcbDownloader {
     public record DownloadedDatabase(Path file, JlcpcbDatabaseValidator.Metadata metadata) {
     }
 
-    private final HttpClient http;
-    private final Duration chunkTimeout;
-    private final Duration retryDelay;
-
-    public JlcpcbDownloader() {
-        this(CHUNK_TIMEOUT, Duration.ofSeconds(5));
-    }
-
-    JlcpcbDownloader(Duration chunkTimeout, Duration retryDelay) {
-        this.http = HttpClient.newBuilder()
-                .connectTimeout(CONNECT_TIMEOUT)
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build();
-        this.chunkTimeout = chunkTimeout;
-        this.retryDelay = retryDelay;
-    }
+    private final HttpClient http = HttpClient.newBuilder()
+            .connectTimeout(CONNECT_TIMEOUT)
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build();
+    private Duration chunkTimeout = CHUNK_TIMEOUT;
+    private Duration retryDelay = Duration.ofSeconds(5);
 
     /** {@code parts-fts5.db} -&gt; {@code chunk_num_fts5.txt}; {@code current-parts-fts5.db} -&gt; {@code chunk_num_current_parts_fts5.txt}. */
     static String sentinelName(String library) {

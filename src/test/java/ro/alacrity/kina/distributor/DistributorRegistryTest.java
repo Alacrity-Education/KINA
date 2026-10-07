@@ -1,6 +1,7 @@
 package ro.alacrity.kina.distributor;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.domain.Distributor;
 
 import java.util.List;
@@ -22,7 +23,7 @@ class DistributorRegistryTest {
 
     @Test
     void resolvesConfiguredDistributors() {
-        DistributorRegistry registry = new DistributorRegistry(
+        DistributorRegistry registry = TestWiring.registry(
                 List.of(client(Distributor.MOUSER, true), client(Distributor.TME, false)));
 
         assertThat(registry.configured()).containsExactly(Distributor.MOUSER);
@@ -36,7 +37,7 @@ class DistributorRegistryTest {
 
     @Test
     void rejectsDuplicateClients() {
-        assertThatThrownBy(() -> new DistributorRegistry(
+        assertThatThrownBy(() -> TestWiring.registry(
                 List.of(client(Distributor.TME, true), client(Distributor.TME, true))))
                 .isInstanceOf(IllegalStateException.class);
     }

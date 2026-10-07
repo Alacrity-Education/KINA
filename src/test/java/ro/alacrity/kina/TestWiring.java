@@ -9,10 +9,15 @@ import org.springframework.boot.context.properties.source.MapConfigurationProper
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ReflectionUtils;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.DistributorClient;
+import ro.alacrity.kina.distributor.DistributorRegistry;
+import ro.alacrity.kina.distributor.lcsc.JlcpcbSqliteSearch;
+import ro.alacrity.kina.distributor.lcsc.LcscClient;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.metrics.MetricsStore;
 
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -61,6 +66,33 @@ public class TestWiring {
         source.putIfAbsent("kina.public-base-url", "");
         return new Binder(new MapConfigurationPropertySource(source))
                 .bindOrCreate("kina", Bindable.of(KinaProperties.class));
+    }
+
+    /** {@link KinaProperties} with only {@code kina.distributors.*} set (null distributors take the defaults). */
+    public KinaProperties properties(KinaProperties.Distributors distributors) {
+        return new KinaProperties(null, null, null, null, null, null, null, distributors, null);
+    }
+
+    /** {@link KinaProperties} with only {@code kina.jlcpcb.*} set. */
+    public KinaProperties properties(KinaProperties.Jlcpcb jlcpcb) {
+        return new KinaProperties(null, null, null, null, null, null, null, null, jlcpcb);
+    }
+
+    /** A {@link DistributorRegistry} over {@code clients}. */
+    public DistributorRegistry registry(List<? extends DistributorClient> clients) {
+        return wire(new DistributorRegistry(), "beans", List.copyOf(clients));
+    }
+
+    /** A {@link JlcpcbSqliteSearch} on {@code file} ({@code kina.jlcpcb.data-dir} and {@code library}). */
+    public JlcpcbSqliteSearch sqliteSearch(Path file) {
+        Path absolute = file.toAbsolutePath();
+        return wire(new JlcpcbSqliteSearch(), "properties", properties("kina.jlcpcb.data-dir",
+                absolute.getParent().toString(), "kina.jlcpcb.library", absolute.getFileName().toString()));
+    }
+
+    /** An {@link LcscClient} on {@code search}. */
+    public LcscClient lcscClient(JlcpcbSqliteSearch search) {
+        return wire(new LcscClient(), "search", search);
     }
 
     /** A {@link MetricsStore} registering on {@code registry}; null keeps the values in memory only. */

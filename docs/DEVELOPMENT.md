@@ -161,8 +161,8 @@ Gotchas:
 - `Part` is the cache payload (`cached_parts.payload`): default camelCase JSON, round-trip tested.
 - Response wire format is snake_case and pinned by `ResponseJsonTest`; `RankingMode` and `CacheStatus` serialise lower-case.
 - Rate-limit tests never sleep for real: `ro.alacrity.kina.distributor.FakeTime` (test sources) is the ticker, wall clock
-  and `RateLimitRetry.Sleeper` in one, and `FakeTime.retry(distributor, 0.5)` builds a jitter-free policy to inject via
-  the package-private `MouserApi`/`TmeClient` constructors. The client methods without a `Deadline` never wait on a rate
+  and `RateLimitRetry.Sleeper` in one, and `FakeTime.retry(distributor, 0.5)` builds a jitter-free policy to inject through
+  the package-private `MouserApi` constructor or the `retry` field of `TmeClient` (`TestWiring.wire`). The client methods without a `Deadline` never wait on a rate
   limit, so tests calling them see `RATE_LIMITED` at once.
 - MCP: annotations live in `org.springframework.ai.mcp.annotation`; tool beans are plain `@Component`s scanned
   automatically. Tool results are serialised to JSON text content by the MCP server's own Jackson 3 mapper.

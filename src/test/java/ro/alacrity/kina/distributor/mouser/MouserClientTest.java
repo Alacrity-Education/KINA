@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
@@ -59,8 +60,9 @@ class MouserClientTest {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
         MouserApi api = new MouserApi(builder, BASE + "/", API_KEY, time.retry(Distributor.MOUSER, 0.5));
-        return new MouserClient(new KinaProperties.Mouser(API_KEY, BASE, maxResultsPerSearch, 1), api,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+        return TestWiring.wire(new MouserClient(), "properties", TestWiring.properties(new KinaProperties.Distributors(
+                new KinaProperties.Mouser(API_KEY, BASE, maxResultsPerSearch, 1), null)),
+                "api", api, "clock", Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     private static final String TOO_MANY_REQUESTS_BODY = """
@@ -463,10 +465,9 @@ class MouserClientTest {
     @Test
     void notConfiguredWithoutApiKey() {
         for (String key : new String[] {null, "", "   "}) {
-            MouserClient unconfigured = new MouserClient(
-                    new KinaProperties(null, null, null, null, null, null, null,
-                            new KinaProperties.Distributors(new KinaProperties.Mouser(key, BASE, 50, 1), null), null),
-                    RestClient.builder());
+            MouserClient unconfigured = TestWiring.wire(new MouserClient(), "properties", TestWiring.properties(
+                            new KinaProperties.Distributors(new KinaProperties.Mouser(key, BASE, 50, 1), null)),
+                    "restClientBuilder", RestClient.builder());
 
             assertThat(unconfigured.isConfigured()).isFalse();
             assertThat(unconfigured.distributor()).isEqualTo(Distributor.MOUSER);
@@ -477,10 +478,9 @@ class MouserClientTest {
 
     @Test
     void configuredWithApiKey() {
-        MouserClient configured = new MouserClient(
-                new KinaProperties(null, null, null, null, null, null, null,
-                        new KinaProperties.Distributors(new KinaProperties.Mouser("k", BASE, 50, 1), null), null),
-                RestClient.builder());
+        MouserClient configured = TestWiring.wire(new MouserClient(), "properties", TestWiring.properties(
+                        new KinaProperties.Distributors(new KinaProperties.Mouser("k", BASE, 50, 1), null)),
+                "restClientBuilder", RestClient.builder());
 
         assertThat(configured.isConfigured()).isTrue();
     }

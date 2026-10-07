@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.bean.override.convention.TestBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.TestcontainersConfiguration;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
@@ -48,7 +49,7 @@ class McpToolsIntegrationTest {
     DistributorRegistry distributorRegistry;
 
     static DistributorRegistry distributorRegistry() {
-        return new DistributorRegistry(List.of(MOUSER));
+        return TestWiring.registry(List.of(MOUSER));
     }
 
     @Autowired

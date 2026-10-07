@@ -1,5 +1,6 @@
 package ro.alacrity.kina.distributor.mouser;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,25 +34,20 @@ public class MouserClient implements DistributorClient {
     /** Mouser rejects {@code records} above 50. */
     static final int MAX_PAGE_SIZE = 50;
 
-    private final KinaProperties.Mouser properties;
-    private final MouserApi api;
+    @Autowired private KinaProperties properties;
+    @Autowired private RestClient.Builder restClientBuilder;
     private final MouserPartMapper mapper = new MouserPartMapper();
-    private final Clock clock;
+    private Clock clock = Clock.systemUTC();
+    private KinaProperties.Mouser config;
+    /** Built from the configuration unless a test supplied one. */
+    private MouserApi api;
 
-    @Autowired
-    public MouserClient(KinaProperties properties, RestClient.Builder restClientBuilder) {
-        this(properties.distributors().mouser(),
-                properties.distributors().mouser().isConfigured()
-                        ? MouserApi.create(restClientBuilder, properties.distributors().mouser().baseUrl(),
-                        properties.distributors().mouser().apiKey().strip())
-                        : null,
-                Clock.systemUTC());
-    }
-
-    MouserClient(KinaProperties.Mouser properties, MouserApi api, Clock clock) {
-        this.properties = properties;
-        this.api = api;
-        this.clock = clock;
+    @PostConstruct
+    void init() {
+        config = properties.distributors().mouser();
+        if (api == null && config.isConfigured()) {
+            api = MouserApi.create(restClientBuilder, config.baseUrl(), config.apiKey().strip());
+        }
     }
 
     @Override
@@ -61,7 +57,7 @@ public class MouserClient implements DistributorClient {
 
     @Override
     public boolean isConfigured() {
-        return api != null && properties.isConfigured();
+        return api != null && config.isConfigured();
     }
 
     /**
@@ -219,7 +215,7 @@ public class MouserClient implements DistributorClient {
     }
 
     private int pageLimit() {
-        int configured = properties.maxResultsPerSearch();
+        int configured = config.maxResultsPerSearch();
         return configured > 0 ? Math.min(configured, MAX_PAGE_SIZE) : MAX_PAGE_SIZE;
     }
 

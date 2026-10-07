@@ -2,6 +2,7 @@ package ro.alacrity.kina.distributor.lcsc;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import ro.alacrity.kina.TestWiring;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -20,7 +21,7 @@ class JlcpcbRealDatabaseManualTest {
     void searchesRealDatabase() throws Exception {
         Path file = Path.of(System.getenv("KINA_JLCPCB_TEST_DB"));
         System.out.println(JlcpcbDatabaseValidator.validate(file));
-        JlcpcbSqliteSearch search = new JlcpcbSqliteSearch(file);
+        JlcpcbSqliteSearch search = TestWiring.sqliteSearch(file);
         try {
             for (String q : List.of("10uF X7R 0805", "100nF 0402 capacitor", "10k resistor 0805", "4k7 0603",
                     "10k ohm 1% 0603", "1k 5%", "AMS1117-3.3", "3V3 LDO regulator SOT-223", "STM32F103C8T6",

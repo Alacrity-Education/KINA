@@ -7,13 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.TestcontainersConfiguration;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.CachedSearch;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.distributor.Deadline;
-import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.PartLookupResult;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
@@ -131,7 +131,7 @@ class RequestedPartCacheTest {
             var props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
             RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
                     mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
-            service = new PartSearchService(props, new DistributorRegistry(List.of(mouser)), new QueryParser(),
+            service = new PartSearchService(props, TestWiring.registry(List.of(mouser)), new QueryParser(),
                     extractor, ranking, partCache, searchCache, clock);
         }
         return service.search(new SearchRequest(query, 5, Set.of(Distributor.MOUSER), false));

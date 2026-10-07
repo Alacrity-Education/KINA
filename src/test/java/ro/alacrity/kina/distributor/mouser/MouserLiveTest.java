@@ -4,11 +4,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.web.client.RestClient;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.domain.Part;
-
-import java.time.Clock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,8 +25,9 @@ class MouserLiveTest {
     void searchesTheLiveApi() {
         String key = System.getenv("MOUSER_API_KEY").strip();
         String base = "https://api.mouser.com/api/v1";
-        MouserClient client = new MouserClient(new KinaProperties.Mouser(key, base, 50, 1),
-                MouserApi.create(RestClient.builder(), base, key), Clock.systemUTC());
+        MouserClient client = TestWiring.wire(new MouserClient(), "properties",
+                TestWiring.properties(new KinaProperties.Distributors(new KinaProperties.Mouser(key, base, 50, 1), null)),
+                "api", MouserApi.create(RestClient.builder(), base, key));
 
         // offset 1 -> startingRecord 2: expect the 2nd and 3rd results of "10uF X7R 0805"
         DistributorSearchPage page = client.search("10uF X7R 0805", 1, 2);
