@@ -16,7 +16,7 @@ The mcp and rest suites need a static bearer token; it is created through the to
 automatically) or taken from KINA_TOKEN. Tokens are never printed, only their 12-character prefix.
 
 Distributor quota: on a cold cache the suites make 2 Mouser calls (one search, one new batch query); reruns within the
-cache TTL make none. REST searches are restricted to LCSC and TME.
+cache TTL make none. REST searches are restricted to LCSC and TME (the part-number and below-spec checks use LCSC only).
 """
 
 from __future__ import annotations
@@ -51,6 +51,11 @@ OSCILLATOR_QUERY = "16MHz oscillator 3225"
 # SOT-227 request never returns chip resistors
 CHASSIS_QUERY = "25W 100 ohm aluminium housed chassis mount resistor"
 SOT227_QUERY = "300W 10 ohm power resistor SOT-227 heatsink"
+# part numbers in a query (DESIGN.md 3.4 "Requested part numbers"), checked against LCSC (no quota): the named part
+# first and requested_part_found true; an unknown part number false with a hint naming it
+MPN_QUERY = ("1N4148W SOD-123", "1N4148W")
+LIFETIME_QUERY = "electrolytic capacitor 470uF 35V 105°C 5000h THT"
+MISSING_MPN_QUERY = ("ZQX48213Q switching diode SOD-123", "ZQX48213Q")
 REDIRECT_URI = "http://localhost:6274/callback"
 # data notices every response lists for the distributors whose parts it returns (DESIGN.md 3.2 "Attributions")
 ATTRIBUTIONS = {
@@ -207,13 +212,21 @@ def summarize_search(response: dict) -> dict:
                                             ("total_results", "fetched", "excluded_by_constraints",
                                              "excluded_below_spec", "returned", "cache", "error", "fallback_query",
                                              "constraints_relaxed", "query_terms_dropped", "exact_matches",
-                                             "excluded_by_constraints_detail", "hint")}
+                                             "excluded_by_constraints_detail", "hint", "requested_part_found",
+                                             "excluded_below_spec_detail")}
                          for d in response.get("distributors", [])},
     }
 
 
 DISTRIBUTOR_FIELDS = ("fetched", "excluded_by_constraints", "excluded_below_spec", "returned", "query_terms_dropped",
-                      "constraints_relaxed", "exact_matches", "out_of_stock_matches", "excluded_by_constraints_detail")
+                      "constraints_relaxed", "exact_matches", "out_of_stock_matches", "excluded_by_constraints_detail",
+                      "requested_part_found", "excluded_below_spec_detail")
+
+
+def requests_part(number: str, part: dict) -> bool:
+    """A part is the requested one when its MPN or distributor number starts with it (letters and digits)."""
+    norm = lambda v: re.sub(r"[^0-9A-Za-z]", "", v or "").upper()
+    return any(norm(v).startswith(norm(number)) for v in (part.get("mpn"), part.get("part_number")))
 
 
 def shape_problems(response: dict) -> list[str]:
@@ -232,7 +245,9 @@ def shape_problems(response: dict) -> list[str]:
         if "relaxed" in d:
             problems.append(f"{name}: the removed field relaxed is still there")
         left = d.get("fetched", 0) - d.get("excluded_by_constraints", 0) - d.get("excluded_below_spec", 0)
-        if d.get("returned", 0) > left or d.get("returned") != len(d.get("parts", [])) or left < 0:
+        # a part named by part number and listed without stock (stock 0) is returned too, never counted in fetched
+        listed = [p for p in d.get("parts", []) if p.get("stock", 1) <= 0]
+        if d.get("returned", 0) - len(listed) > left or d.get("returned") != len(d.get("parts", [])) or left < 0:
             problems.append(f"{name}: counts do not add up {[d.get(k) for k in DISTRIBUTOR_FIELDS[:4]]}")
         problems += [f"{name}: {p.get('part_number')} has no stock_as_of" for p in d.get("parts", [])
                      if not p.get("stock_as_of")]
@@ -249,8 +264,28 @@ def shape_problems(response: dict) -> list[str]:
         if sum(detail.values()) != d.get("excluded_by_constraints", 0):
             problems.append(f"{name}: excluded_by_constraints_detail {detail} does not add up to "
                             f"{d.get('excluded_by_constraints')}")
-        # a hint exactly when an understood query found nothing at a distributor that answered
-        wants_hint = response.get("query_understood") is True and not d.get("parts") and not d.get("error")
+        # stock 0 only for a part the query names, out_of_stock, after every part in stock (DESIGN.md 2)
+        numbers = response.get("parsed", {}).get("part_numbers") or []
+        for p in listed:
+            if not any(requests_part(n, p) for n in numbers) \
+                    or p.get("availability", {}).get("status") != "out_of_stock":
+                problems.append(f"{name}: {p.get('part_number')} has stock 0 but was not requested by part number")
+        if listed and d["parts"][-len(listed):] != listed:
+            problems.append(f"{name}: a part listed without stock ranks above a part in stock")
+        found = d.get("requested_part_found")
+        if (found is None) != (not numbers or (bool(d.get("error")) and not d.get("parts"))):
+            problems.append(f"{name}: requested_part_found {found!r} for part numbers {numbers}")
+        detail_below = d.get("excluded_below_spec_detail")
+        if not isinstance(detail_below, list) or len(detail_below) > 5 or (d.get("excluded_below_spec", 0) == 0
+                                                                           and detail_below):
+            problems.append(f"{name}: excluded_below_spec_detail {detail_below!r} for "
+                            f"{d.get('excluded_below_spec')} below spec")
+        elif any(set(e) != {"part_number", "mpn", "rating", "part_value", "requested"} for e in detail_below):
+            problems.append(f"{name}: excluded_below_spec_detail entries {detail_below!r}")
+        # a hint exactly when an understood query found nothing at a distributor that answered, or a part number
+        # the query names is not among the parts in stock
+        wants_hint = (response.get("query_understood") is True and not d.get("parts") and not d.get("error")) \
+            or found is False
         if wants_hint != bool(d.get("hint")):
             problems.append(f"{name}: hint {d.get('hint')!r} for {len(d.get('parts', []))} parts")
     return problems
@@ -598,6 +633,21 @@ def suite_rest(base: str, token: str, rec: Recorder):
     rec.check(f"rest: '{RATED_QUERY}' returns nothing below 25 V by default", resp.status == 200 and parts
               and not low and not shape_problems(body), f"{len(parts)} parts, below spec {low}, "
               + "; ".join(shape_problems(body)), resp.millis)
+    # the parts left out below spec are named with the failed rating (LCSC checks voltage, current and power in its
+    # database, so a lifetime and a temperature are what it leaves to the ranker)
+    q = urllib.parse.urlencode({"q": LIFETIME_QUERY, "max_results": 5, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    detail = lcsc.get("excluded_below_spec_detail") or []
+    rec.check(f"rest: '{LIFETIME_QUERY}' names the parts left out below spec (excluded_below_spec_detail)",
+              resp.status == 200 and lcsc.get("excluded_below_spec", 0) > 0
+              and len(detail) == min(5, lcsc.get("excluded_below_spec", 0))
+              and all(e.get("rating") in ("lifetime", "temperature", "voltage", "current") and e.get("part_value")
+                      and e.get("requested") for e in detail) and not shape_problems(body),
+              f"excluded_below_spec {lcsc.get('excluded_below_spec')}, detail "
+              + ", ".join(f"{e.get('mpn')} {e.get('rating')} {e.get('part_value')} < {e.get('requested')}"
+                          for e in detail[:3]), resp.millis)
     q = urllib.parse.urlencode({"q": RATED_QUERY, "max_results": 50, "distributors": "LCSC",
                                 "allow_below_spec": "true"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)
@@ -605,6 +655,29 @@ def suite_rest(base: str, token: str, rec: Recorder):
     flags = [bool(p.get("below_spec")) for p in parts]
     rec.check("rest: allow_below_spec lists flagged parts after the compliant ones", resp.status == 200
               and flags == sorted(flags), f"{flags.count(True)} of {len(parts)} flagged below_spec", resp.millis)
+
+    # a part number in the query: the named part first, requested_part_found; an unknown one: false and a hint
+    query, number = MPN_QUERY
+    q = urllib.parse.urlencode({"q": query, "max_results": 5, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    first = (lcsc.get("parts") or [{}])[0]
+    rec.check(f"rest: '{query}' -> part_numbers [{number}], requested part first, requested_part_found true",
+              resp.status == 200 and body.get("parsed", {}).get("part_numbers") == [number]
+              and requests_part(number, first) and lcsc.get("requested_part_found") is True
+              and not shape_problems(body), f"first {first.get('mpn')}, found {lcsc.get('requested_part_found')}; "
+              + "; ".join(shape_problems(body)), resp.millis)
+    query, number = MISSING_MPN_QUERY
+    q = urllib.parse.urlencode({"q": query, "max_results": 5, "distributors": "LCSC"})
+    resp = api.get("/api/v1/parts/search?" + q, headers=auth)
+    body = resp.json() if resp.status == 200 else {}
+    lcsc = next(iter(body.get("distributors", [])), {})
+    rec.check(f"rest: '{query}' -> requested_part_found false, hint naming {number}",
+              resp.status == 200 and lcsc.get("requested_part_found") is False
+              and (lcsc.get("hint") or "").startswith(number + " is not listed in stock at LCSC")
+              and not shape_problems(body), f"hint {lcsc.get('hint')!r}; " + "; ".join(shape_problems(body)),
+              resp.millis)
 
     q = urllib.parse.urlencode({"q": NONSENSE_QUERY, "max_results": 3, "distributors": "LCSC"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)
