@@ -46,7 +46,6 @@ CORS is enabled (any origin, no credentials) for `/mcp`, `/.well-known/**`, `/oa
 | `ranking` | string | `blended` (deterministic score blended 50/50 by rank with the in-process cross-encoder) or `fallback` (deterministic order only). |
 | `ranking_note` | string or null | Why the ranking fell back. Always present, null when `ranking` is `blended`. See [Ranking notes](#ranking-notes). |
 | `currencies` | array of strings | The price currencies in this response, sorted, for example `["EUR", "USD"]`. LCSC prices are USD (the JLCPCB database), TME and Mouser prices EUR (the account currency). KINA never converts prices, so compare across distributors with care. |
-| `attributions` | array of strings | The data notice of every distributor whose parts this response returns: TME `Data powered by TME.eu Data – no guarantee of data accuracy` (TME's API terms require it wherever TME data is shown), Mouser `Product data provided by Mouser Electronics`, LCSC `LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)`. Show the TME notice with TME data. |
 | `distributors` | array | One `DistributorResult` per searched distributor. |
 
 ### Ranking notes
@@ -442,7 +441,7 @@ List the tools with `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`. The author
 
 ### `search_parts`
 
-Search electronic components across distributors and return ranked, in-stock offers. Only stock that ships now is returned, except a part the query names by its part number (see [Part numbers in a query](#part-numbers-in-a-query)): when the distributor lists it without stock it is still returned, last, with `stock` 0 and `availability.status` `out_of_stock`. Results are cached for 3 days (a search that found nothing, for only 1 hour); calling again with a larger `max_results` is served from the cache. Component data stays cached after that; stock and prices older than 24 hours are refreshed before they are returned, and older than 3 days without a refresh they are flagged `stale`. The response lists the distributors' data notices in `attributions`.
+Search electronic components across distributors and return ranked, in-stock offers. Only stock that ships now is returned, except a part the query names by its part number (see [Part numbers in a query](#part-numbers-in-a-query)): when the distributor lists it without stock it is still returned, last, with `stock` 0 and `availability.status` `out_of_stock`. Results are cached for 3 days (a search that found nothing, for only 1 hour); calling again with a larger `max_results` is served from the cache. Component data stays cached after that; stock and prices older than 24 hours are refreshed before they are returned, and older than 3 days without a refresh they are flagged `stale`.
 
 ```json
 {
@@ -514,8 +513,7 @@ Current details of one part by distributor part number (the `part_number` of a s
 Returns:
 
 ```json
-{"found": true, "distributor": "LCSC", "part_number": "C15850", "cache": "not_applicable", "error": null, "reason": null, "part": {"...": "PartResponse"},
- "attributions": ["LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)"]}
+{"found": true, "distributor": "LCSC", "part_number": "C15850", "cache": "not_applicable", "error": null, "reason": null, "part": {"...": "PartResponse"}}
 ```
 
 A part the distributor lists without ships-now stock is returned (you asked for it explicitly): `found: true`, `reason: "out_of_stock"`, `identity`, and `part` with `stock` 0, the prices as listed and `availability.status` `out_of_stock`. KINA keeps its component data in the cache but never serves it to a search that does not name it.
@@ -524,11 +522,10 @@ A part the distributor lists without ships-now stock is returned (you asked for 
 
 ```json
 {"found": false, "distributor": "MOUSER", "part_number": "ERA6AEB5361V", "cache": "miss", "error": null, "reason": "out_of_stock",
- "identity": {"part_number": "667-ERA-6AEB5361V", "manufacturer": "Panasonic", "mpn": "ERA-6AEB5361V", "description": "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"}, "part": null,
- "attributions": ["Product data provided by Mouser Electronics"]}
+ "identity": {"part_number": "667-ERA-6AEB5361V", "manufacturer": "Panasonic", "mpn": "ERA-6AEB5361V", "description": "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"}, "part": null}
 ```
 
-The lookup failed: `error` carries the failure code and `reason` is null. On a rate limit the call waits and retries for up to 2 minutes before it reports `rate_limited`. The response has no waited-time field. `cache` is `hit`, `miss`, `bypassed` or `not_applicable`. `attributions` holds the distributor's data notice when the response carries a part or an identity, else it is empty. A cached TME or Mouser part whose stock and prices are older than 3 days and cannot be refreshed is looked up live; if that fails too (or the distributor is not configured), the cached part is returned with `stale: true`. An unknown distributor name is a tool error.
+The lookup failed: `error` carries the failure code and `reason` is null. On a rate limit the call waits and retries for up to 2 minutes before it reports `rate_limited`. The response has no waited-time field. `cache` is `hit`, `miss`, `bypassed` or `not_applicable`. A cached TME or Mouser part whose stock and prices are older than 3 days and cannot be refreshed is looked up live; if that fails too (or the distributor is not configured), the cached part is returned with `stale: true`. An unknown distributor name is a tool error.
 
 ### `list_distributors`
 

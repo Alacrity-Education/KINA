@@ -68,7 +68,7 @@ A request goes through five stages. Only the first and the third are models of t
    - TME and Mouser first look up the PostgreSQL cache by an exact key: the normalised query text plus the distributor. A hit serves the cached part list. A miss calls the distributor API, pages until a part meets the hard constraints, climbs the relaxation ladder (dielectric, then package where the family allows it, then tolerance; ratings are never relaxed) when nothing does, and stores the parts and the search list. Rate limits are waited out inside the 2-minute request deadline.
 3. **Rank.** The deterministic ranker scores every candidate, excludes parts that contradict a hard constraint, marks parts below a requested rating and gives each part a `match` grade. The in-process cross-encoder (MiniLM) then re-scores the deterministic top candidates and the two orders are blended half and half by rank. Without the model the deterministic order is returned as the fallback. The model only re-orders what retrieval found; it plays no part in the cache.
 4. **Refresh stock.** Parts about to be returned whose stock and prices are older than 24 hours are refreshed at the distributor in batches. Beyond the 3-day limit a part that could not be refreshed is returned with `stale: true`.
-5. **Assemble.** The top results per distributor, compact or full detail, the three smallest price brackets, `exact_matches`, the exclusion counts, hints, attributions and the metrics.
+5. **Assemble.** The top results per distributor, compact or full detail, the three smallest price brackets, `exact_matches`, the exclusion counts, hints and the metrics.
 
 ## Features
 
@@ -90,7 +90,7 @@ A request goes through five stages. Only the first and the third are models of t
 - **Polite to rate limits.** KINA waits and retries on rate limits, inside a 2-minute deadline per request, instead of failing at once.
 - **Access control.** OAuth 2.1 for Claude, OIDC login, group-gated access that is checked again at every refresh and on bearer requests (a removed member is cut off within about an hour), and static tokens for scripts.
 
-- **Credits its sources.** Every response lists the distributors' data notices in `attributions`, including TME's required "Data powered by TME.eu Data – no guarantee of data accuracy"; see [Distributor terms](docs/OPERATIONS.md#distributor-terms) for TME's deletion rule and the Mouser caching caveat.
+- **Credits its sources.** The distributors' data notices are shown in the footer of the web UI, including TME's required "Data powered by TME.eu Data – no guarantee of data accuracy". Responses do not carry them. See [Distributor terms](docs/OPERATIONS.md#distributor-terms) for TME's deletion rule and the Mouser caching caveat.
 
 Details of every behaviour are in [docs/SEARCH.md](docs/SEARCH.md).
 

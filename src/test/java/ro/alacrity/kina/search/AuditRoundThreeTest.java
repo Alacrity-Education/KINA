@@ -986,7 +986,6 @@ class AuditRoundThreeTest {
             assertThat(p.stale()).isTrue();
             assertThat(p.availability().status()).isEqualTo(Availability.STALE);
         });
-        assertThat(response.attributions()).containsExactly("Product data provided by Mouser Electronics");
     }
 
     @Test
@@ -1018,7 +1017,7 @@ class AuditRoundThreeTest {
         service(List.of(lcsc));
         assertThat(service.isStale(old, NOW)).isFalse();
         SearchResponse response = service.search(request(MLCC_QUERY, 2, false, Distributor.LCSC));
-        assertThat(response.attributions())
-                .containsExactly("LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)");
+        assertThat(result(response, Distributor.LCSC).parts()).isNotEmpty()
+                .allSatisfy(p -> assertThat(p.stale()).isNull());
     }
 }

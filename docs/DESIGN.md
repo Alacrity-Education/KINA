@@ -175,8 +175,8 @@ component is kept, what it says about stock and price expires.
   is `forever` for every distributor. The per-distributor value is the compliance switch: an operator who receives a
   notice from a distributor sets a duration (`MOUSER=3d`) and the purge applies it from then on. The research report
   `docs/research/cache-fill-2026-10-07.md` quotes an excerpt of Mouser's terms that restricts storing its content;
-  the operator has decided to store until notified. TME's attribution notice and its rule that stored data is deleted
-  when API access ends still apply (OPERATIONS.md "Distributor terms").
+  the operator has decided to store until notified. TME's attribution notice (shown in the web footer) and its rule
+  that stored data is deleted when API access ends still apply (OPERATIONS.md "Distributor terms").
 - **Search lists** (`cached_searches`) are fresh for `kina.cache.ttl` (default `3d`, was `5d` before 2026-10-07);
   anything younger is fresh. Exception: a list that is **empty** is fresh only for `kina.cache.empty-result-ttl`
   (default `1h`, the shorter of the two applies), so a transient distributor glitch or a newly stocked part is not
@@ -400,11 +400,13 @@ and it ranks first. A part number whose outcome a fresh cached search holds cost
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
 
-**Attributions**: every search response lists in `attributions` the notice of each distributor whose parts it returns
-(`Distributor.attribution()`, enum order), `get_part` the notice of the distributor when it returns a part or an
-identity: TME `Data powered by TME.eu Data – no guarantee of data accuracy` (exact text, required by TME's API terms
-wherever TME data is shown), Mouser `Product data provided by Mouser Electronics`, LCSC `LCSC parts from the JLCPCB
-parts database (kicad-jlcpcb-tools)`. The web UI shows all three in the footer of every page.
+**Attributions**: the web UI shows the distributors' data notices in the footer of every page: TME `Data powered by
+TME.eu Data – no guarantee of data accuracy` (exact text, required by TME's API terms wherever TME data is shown),
+Mouser `Product data provided by Mouser Electronics`, LCSC `LCSC parts from the JLCPCB parts database
+(kicad-jlcpcb-tools)` (`Distributor.attribution()` holds the same texts). Search and `get_part` responses (MCP and
+REST) do not carry them, and the tool descriptions do not mention them: the notices filled the context of the agents
+that call KINA. KINA is an internal application, and the web notice covers relaying the message to users (decision of
+2026-10-07).
 
 **Ratings are never part of a keyword phrase.** A voltage, current, saturation current, power, temperature or
 lifetime in a request is a minimum rating (section 3.4) and a DCR limit a maximum: a keyword search for `25V` only finds
@@ -1568,7 +1570,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 |---|---|---|
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`), `allow_below_spec` (bool, default false, section 3.4 "Below spec") | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | `{ "results": [SearchResponse...] }` |
-| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part, attributions}`; `found: false` instead of a tool error with `reason` `not_found` (unknown), or with `error` (and `reason` null) when the lookup failed. `reason` `out_of_stock`: listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, and, when the distributor gives the part's data, `part` with `stock` 0, prices as listed and `availability.status` `out_of_stock` (`found: true`: the part number was requested explicitly, section 2); a Mouser catalogue part without a Mouser part number (`N/A`) has the identity only (`found: false`). The listed part is cached with `in_stock = false` and never served from the cache. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
+| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown), or with `error` (and `reason` null) when the lookup failed. `reason` `out_of_stock`: listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, and, when the distributor gives the part's data, `part` with `stock` 0, prices as listed and `availability.status` `out_of_stock` (`found: true`: the part number was requested explicitly, section 2); a Mouser catalogue part without a Mouser part number (`N/A`) has the identity only (`found: false`). The listed part is cached with `in_stock = false` and never served from the cache. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
 | `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
@@ -1582,7 +1584,6 @@ parameters; descriptions are read by the LLM, keep them precise):
   "ranking": "blended",
   "ranking_note": null,
   "currencies": ["EUR"],
-  "attributions": ["Product data provided by Mouser Electronics"],
   "distributors": [
     {
       "distributor": "MOUSER",
@@ -1622,9 +1623,7 @@ queries"; then `hint` says what to change, every `match` and `exact_matches` is 
 query, when distributors returned nothing: which hard constraints could not be met there, section 3.2 "Empty after the
 hard set"; omitted otherwise),
 `currencies` (the distinct price currencies of the returned parts, sorted; LCSC USD, TME and Mouser EUR; KINA never
-converts prices) and `attributions` (the notice of every distributor whose parts the response returns, enum order,
-section 3.2 "Attributions"; `get_part` carries the same field with the distributor's notice when it returns a part or
-an identity, else an empty list).
+converts prices). Responses carry no distributor notices; the web footer shows them (section 3.2 "Attributions").
 
 **Detail** (`ResponseDetail`, `detail`): `compact` (default for the searches; `get_part` and its REST endpoint default
 to `full`) returns per part `rank`, `match`, `below_spec` (only when true), `mismatches` and `unverified`

@@ -144,10 +144,7 @@ public class KinaMcpTools {
             ranking = "blended" (deterministic parametric score blended with a cross-encoder relevance model) \
             or "fallback" (deterministic only; ranking_note says why).
             Results are cached for 3 days: calling again with the same query and a larger max_results is served \
-            from the cache, and only fetches more from a distributor when the cache holds too few parts.
-            attributions lists the data notice of every distributor whose parts the response contains, e.g. "Data \
-            powered by TME.eu Data – no guarantee of data accuracy"; when you show TME data to the user, show the \
-            TME notice with it.""";
+            from the cache, and only fetches more from a distributor when the cache holds too few parts.""";
 
     static final String BATCH_DESCRIPTION = """
             Run several component searches at once (1-20 queries, e.g. every line of a BOM: give each its quantity). \
@@ -256,7 +253,7 @@ public class KinaMcpTools {
             search_parts result: LCSC "C15850", TME symbol, Mouser part number such as "603-CC0805KRX7R9BB104"). \
             A manufacturer part number also works (compared ignoring case, spaces and hyphens, so ERA6AEB5361V \
             finds Mouser's ERA-6AEB5361V); part.part_number is then the distributor's own number. \
-            Returns {found, distributor, part_number, cache, error, reason, part, attributions}; part has every attribute the \
+            Returns {found, distributor, part_number, cache, error, reason, part}; part has every attribute the \
             distributor gives (detail "full" is the default here: canonical keys such as RippleCurrent, ESR, \
             Impedance, Dimensions, Qualification and Features plus the raw distributor attributes, photo_url and \
             the extra fields; pass detail "compact" for the canonical attributes only) and stock_as_of. found is \
@@ -269,8 +266,7 @@ public class KinaMcpTools {
             ordered_quantity, unit_price_at_quantity and total_price. Mouser/TME data comes from the cache unless \
             bypass_cache is true; stock and prices older than a day are refreshed first, and when they are older \
             than 3 days and neither a refresh nor a live lookup succeeds the part carries stale: true and \
-            availability.status "stale". attributions holds the distributor's data notice (show TME's with TME \
-            data).""",
+            availability.status "stale".""",
             annotations = @McpTool.McpAnnotations(title = "Get one part", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = true))
     public PartLookupResponse getPart(

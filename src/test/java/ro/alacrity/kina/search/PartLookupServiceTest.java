@@ -357,7 +357,6 @@ class PartLookupServiceTest {
         assertThat(response.part().stale()).isNull();
         assertThat(response.part().availability().status()).isNotEqualTo("stale");
         assertThat(mouser.calls).isEmpty();   // no live lookup within the ttl
-        assertThat(response.attributions()).containsExactly("Product data provided by Mouser Electronics");
     }
 
     @Test
@@ -389,8 +388,6 @@ class PartLookupServiceTest {
         PartLookupResponse response = service.lookup(Distributor.TME, "T1", false);
 
         assertThat(response.part().stale()).isTrue();
-        assertThat(response.attributions())
-                .containsExactly("Data powered by TME.eu Data – no guarantee of data accuracy");
         assertThatThrownBy(() -> service.lookup(Distributor.TME, "unknown", false))
                 .isInstanceOfSatisfying(DistributorException.class,
                         e -> assertThat(e.errorCode()).isEqualTo("not_configured"));

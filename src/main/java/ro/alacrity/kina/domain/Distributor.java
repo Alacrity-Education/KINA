@@ -3,15 +3,12 @@ package ro.alacrity.kina.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
 import java.util.Locale;
 
 /**
- * The distributors KINA can search. LCSC is served from the JLCPCB parts database. Each carries the attribution that
- * every response showing its data lists in {@code attributions} (DESIGN.md 4; TME's wording is required by its API
- * terms).
+ * The distributors KINA can search. LCSC is served from the JLCPCB parts database. Each carries its data notice, which
+ * the footer of every web page shows (DESIGN.md 3.2 "Attributions"; TME's wording is required by its API terms).
+ * Search and lookup responses do not carry it.
  */
 public enum Distributor {
     LCSC("LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)"),
@@ -27,14 +24,6 @@ public enum Distributor {
     /** The notice to show wherever this distributor's data is shown. */
     public String attribution() {
         return attribution;
-    }
-
-    /** The attributions of {@code distributors}, in enum order, each once. */
-    public static List<String> attributions(Collection<Distributor> distributors) {
-        if (distributors == null || distributors.isEmpty()) {
-            return List.of();
-        }
-        return EnumSet.copyOf(distributors).stream().map(Distributor::attribution).toList();
     }
 
     /**

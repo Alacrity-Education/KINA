@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import ro.alacrity.kina.cache.CacheStatus;
 
-import java.util.List;
-
 /**
  * Result of a single part lookup ({@code get_part}). {@code found} is false (and {@code part} null) when the
  * distributor does not know the part ({@code reason} {@code not_found}) or when the lookup failed ({@code error} then
@@ -27,11 +25,8 @@ import java.util.List;
  *                    description; no stock, no prices), else null (omitted)
  * @param part        the part (prices trimmed to the 3 smallest brackets; stock 0 for {@value #OUT_OF_STOCK}), null
  *                    when not found
- * @param attributions the distributor's notice ({@link Distributor#attribution()}) when the response carries its data
- *                    (a part or an identity), else empty
  */
-@JsonPropertyOrder({"found", "distributor", "part_number", "cache", "error", "reason", "identity", "part",
-        "attributions"})
+@JsonPropertyOrder({"found", "distributor", "part_number", "cache", "error", "reason", "identity", "part"})
 public record PartLookupResponse(
         @JsonProperty("found") boolean found,
         @JsonProperty("distributor") Distributor distributor,
@@ -40,21 +35,8 @@ public record PartLookupResponse(
         @JsonProperty("error") String error,
         @JsonProperty("reason") String reason,
         @JsonProperty("identity") @JsonInclude(JsonInclude.Include.NON_NULL) Identity identity,
-        @JsonProperty("part") PartResponse part,
-        @JsonProperty("attributions") List<String> attributions
+        @JsonProperty("part") PartResponse part
 ) {
-
-    public PartLookupResponse {
-        attributions = attributions != null ? List.copyOf(attributions)
-                : distributor != null && (part != null || identity != null)
-                ? List.of(distributor.attribution()) : List.of();
-    }
-
-    /** A response whose attributions follow from what it carries. */
-    public PartLookupResponse(boolean found, Distributor distributor, String partNumber, CacheStatus cache,
-                              String error, String reason, Identity identity, PartResponse part) {
-        this(found, distributor, partNumber, cache, error, reason, identity, part, null);
-    }
 
     public static final String OUT_OF_STOCK = "out_of_stock";
     public static final String NOT_FOUND = "not_found";

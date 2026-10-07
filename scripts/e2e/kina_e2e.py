@@ -57,12 +57,8 @@ MPN_QUERY = ("1N4148W SOD-123", "1N4148W")
 LIFETIME_QUERY = "electrolytic capacitor 470uF 35V 105°C 5000h THT"
 MISSING_MPN_QUERY = ("ZQX48213Q switching diode SOD-123", "ZQX48213Q")
 REDIRECT_URI = "http://localhost:6274/callback"
-# data notices every response lists for the distributors whose parts it returns (DESIGN.md 3.2 "Attributions")
-ATTRIBUTIONS = {
-    "LCSC": "LCSC parts from the JLCPCB parts database (kicad-jlcpcb-tools)",
-    "TME": "Data powered by TME.eu Data \u2013 no guarantee of data accuracy",
-    "MOUSER": "Product data provided by Mouser Electronics",
-}
+# TME's data notice, shown in the footer of every web page; responses do not carry it (DESIGN.md 3.2 "Attributions")
+TME_NOTICE = "Data powered by TME.eu Data \u2013 no guarantee of data accuracy"
 JLCPCB_MIN_PARTS = 7_000_000
 
 
@@ -232,13 +228,11 @@ def requests_part(number: str, part: dict) -> bool:
 def shape_problems(response: dict) -> list[str]:
     """Fields of the third audit round (DESIGN.md 3.2 "Counts", 4) and the arithmetic between the counts."""
     problems = []
-    for key in ("query_understood", "currencies", "attributions"):
+    for key in ("query_understood", "currencies"):
         if key not in response:
             problems.append(f"no {key}")
-    with_parts = [d.get("distributor") for d in response.get("distributors", []) if d.get("parts")]
-    wanted = [ATTRIBUTIONS[n] for n in ("LCSC", "TME", "MOUSER") if n in with_parts]
-    if response.get("attributions") != wanted:
-        problems.append(f"attributions {response.get('attributions')} instead of {wanted}")
+    if "attributions" in response:
+        problems.append("attributions present (the web footer carries the notices)")
     for d in response.get("distributors", []):
         name = d.get("distributor")
         problems += [f"{name}: no {k}" for k in DISTRIBUTOR_FIELDS if k not in d]
@@ -300,7 +294,7 @@ def suite_ui(base: str, rec: Recorder) -> str | None:
     csrf = re.search(r'name="_csrf" value="([^"]+)"', resp.text)
     rec.check("ui: GET / renders the token page", resp.status == 200 and "Access tokens" in resp.text and csrf,
               f"status {resp.status}", resp.millis)
-    rec.check("ui: the footer shows the TME data notice (TME terms 8.7)", ATTRIBUTIONS["TME"] in resp.text,
+    rec.check("ui: the footer shows the TME data notice (TME terms 8.7)", TME_NOTICE in resp.text,
               "footer present" if "<footer" in resp.text else "no footer")
     if not csrf:
         return None
@@ -414,10 +408,10 @@ def suite_mcp(base: str, token: str, rec: Recorder):
                   "extra" in got and bool(got.get("stock_as_of")) and len(got.get("attributes", {})) > 4,
                   f"{len(got.get('attributes', {}))} attributes, datasheet_source "
                   f"{(got.get('extra') or {}).get('datasheet_source')}")
-        rec.check("mcp: get_part carries the TME attribution and no stale flag on fresh data",
-                  part.get("attributions") == [ATTRIBUTIONS["TME"]] and got.get("stale") is None
+        rec.check("mcp: get_part has no stale flag on fresh data and no attributions field",
+                  "attributions" not in part and got.get("stale") is None
                   and (got.get("availability") or {}).get("status") != "stale",
-                  f"attributions {part.get('attributions')}, stale {got.get('stale')}")
+                  f"stale {got.get('stale')}")
         rec.data["tme_symbol"] = symbol
     else:
         rec.check("mcp: get_part TME", False, "no TME part in the search result")

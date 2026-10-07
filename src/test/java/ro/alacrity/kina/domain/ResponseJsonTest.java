@@ -40,7 +40,7 @@ class ResponseJsonTest {
         assertThat(json).contains("\"query_understood\":true", "\"currencies\":[\"EUR\"]", "\"excluded_below_spec\":0",
                 "\"query_terms_dropped\":[]", "\"constraints_relaxed\":[]", "\"stock_as_of\":\"2026-10-05T00:00:00Z\"")
                 .doesNotContain("\"relaxed\"", "\"hint\"", "\"below_spec\"", "\"unverified\"", "\"stale\"");
-        assertThat(json).contains("\"attributions\":[\"Product data provided by Mouser Electronics\"]");
+        assertThat(json).doesNotContain("attributions");
         assertThat(json).contains("\"ranking\":\"blended\"", "\"ranking_note\":null", "\"total_results\":113",
                 "\"cache\":\"hit\"", "\"part_number\":\"603-CC0805\"", "\"mpn\":\"CC0805MKX7R7BB106\"",
                 "\"package\":\"0805\"", "\"min_order_qty\":1", "\"order_multiple\":1", "\"datasheet_url\":",
@@ -67,9 +67,7 @@ class ResponseJsonTest {
                         + "Last known stock: 500.\"}");
         PartLookupResponse lookup = PartLookupResponse.found(Distributor.TME, "CL21B106KAYQNNE", CacheStatus.HIT,
                 PartResponse.from(part));
-        assertThat(mapper.writeValueAsString(lookup))
-                .contains("\"attributions\":[\"Data powered by TME.eu Data – no guarantee of data accuracy\"]");
-        assertThat(PartLookupResponse.notFound(Distributor.TME, "X", CacheStatus.MISS, null).attributions()).isEmpty();
+        assertThat(mapper.writeValueAsString(lookup)).doesNotContain("attributions");
     }
 
     @Test
