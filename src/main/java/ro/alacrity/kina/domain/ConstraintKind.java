@@ -33,6 +33,7 @@ import static ro.alacrity.kina.domain.PolicyFamily.DIODE;
 import static ro.alacrity.kina.domain.PolicyFamily.FAN;
 import static ro.alacrity.kina.domain.PolicyFamily.FERRITE;
 import static ro.alacrity.kina.domain.PolicyFamily.INDUCTOR;
+import static ro.alacrity.kina.domain.PolicyFamily.LED;
 import static ro.alacrity.kina.domain.PolicyFamily.OSCILLATOR;
 import static ro.alacrity.kina.domain.PolicyFamily.REGULATOR;
 import static ro.alacrity.kina.domain.PolicyFamily.RESISTOR;
@@ -172,7 +173,7 @@ public enum ConstraintKind {
      * cannot read is unverified, never a conflict.
      */
     @Relax(strategy = LADDER, order = 1)
-    @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, FERRITE, DIODE, TRANSISTOR, REGULATOR,
+    @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, FERRITE, DIODE, LED, TRANSISTOR, REGULATOR,
             PolicyFamily.CONNECTOR, DEFAULT})
     @Match(mode = CUSTOM, weight = 0.20, order = 11, report = 4)
     PACKAGE("package", ParsedQuery::packageName, PartFeatures::packageName) {
@@ -379,6 +380,63 @@ public enum ConstraintKind {
         @Override
         public String describes(ParsedQuery q) {
             return q.fan() == null || q.fan().frame() == null ? null : q.fan().frame().display();
+        }
+    },
+
+    /**
+     * The kind of LED: a plain request takes indicator and high power LEDs, never an addressable LED (WS2812, SK6812,
+     * APA102) and never a part that is no discrete emitter (strip, laser, receiver, display, driver); an addressable
+     * request takes addressable LEDs only. Every LED request states it (a plain emitter unless it names another).
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = LED)
+    @Match(mode = CUSTOM, weight = 0.10, order = 38, report = 30)
+    LED_TYPE("led type", q -> q.led() == null ? null : q.led().requestedType(),
+            f -> f.led() == null ? null : f.led().type()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return ParsedQuery.Led.typeGrade((String) wanted, (String) actual);
+        }
+
+        @Override
+        public boolean namedInHint(ParsedQuery q) {
+            return q.led() != null && q.led().type() != null;
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return namedInHint(q) ? q.led().type() : null;
+        }
+    },
+
+    /**
+     * The colour of an LED: a hard type (a red request returns red LEDs only); {@code white} takes warm, neutral and
+     * cool white, {@code green} yellow green, {@code yellow} and {@code amber} each other; RGB is a type of its own. A
+     * part that states no colour is unverified.
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = LED)
+    @Match(mode = CUSTOM, weight = 0.20, order = 39, report = 31)
+    COLOUR("colour", q -> q.led() == null ? null : q.led().colour(), f -> f.led() == null ? null : f.led().colour()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return ParsedQuery.Led.colourGrade((String) wanted, (String) actual);
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return (String) wanted(q);
+        }
+    },
+
+    /** The wavelength of an LED within {@value #WAVELENGTH_TOLERANCE_NM} nm (dominant or peak, as the part states). */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = LED)
+    @Match(mode = CUSTOM, weight = 0.10, order = 40, report = 32)
+    WAVELENGTH("wavelength", ParsedQuery.WAVELENGTH) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return grade(Math.abs(number(actual) - number(wanted)) <= WAVELENGTH_TOLERANCE_NM + 1e-9);
         }
     },
 
@@ -647,6 +705,40 @@ public enum ConstraintKind {
     BEARING("bearing", q -> q.fan() == null ? null : q.fan().bearing(),
             f -> f.fan() == null ? null : f.fan().bearing()),
 
+    /** The lens of an LED (clear, diffused, tinted): a preference the ladder may loosen for LEDs. */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = LADDER, order = 9, families = LED)
+    @Match(mode = EQUAL, weight = 0.05, order = 41, report = 33)
+    LENS("lens", q -> q.led() == null ? null : q.led().lens(), f -> f.led() == null ? null : f.led().lens()),
+
+    /**
+     * The viewing angle of an LED within {@value #VIEWING_ANGLE_TOLERANCE_DEGREES} degrees: outside it a mismatch,
+     * never an exclusion; the ladder may loosen it for LEDs.
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = LADDER, order = 10, families = LED)
+    @Match(mode = CUSTOM, weight = 0.05, order = 42, report = 34)
+    VIEWING_ANGLE("viewing angle", ParsedQuery.VIEWING_ANGLE) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return grade(Math.abs(number(actual) - number(wanted)) <= VIEWING_ANGLE_TOLERANCE_DEGREES + 1e-9);
+        }
+    },
+
+    /**
+     * The colour temperature of a white LED within {@value #COLOUR_TEMPERATURE_TOLERANCE_K} K: outside it a mismatch,
+     * never an exclusion; the ladder may loosen it for LEDs.
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = LADDER, order = 11, families = LED)
+    @Match(mode = CUSTOM, weight = 0.10, order = 43, report = 35)
+    COLOUR_TEMPERATURE("colour temperature", ParsedQuery.COLOUR_TEMPERATURE) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return grade(Math.abs(number(actual) - number(wanted)) <= COLOUR_TEMPERATURE_TOLERANCE_K + 1e-9);
+        }
+    },
+
     // ---------------------------------------------------------------- ratings (not in the policy table)
 
     /**
@@ -715,6 +807,21 @@ public enum ConstraintKind {
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 36, report = 29)
     NOISE("noise", ParsedQuery.NOISE),
 
+    /** The forward voltage of an LED: a request value is a maximum (an LED that needs more is below spec). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 44, report = 36)
+    FORWARD_VOLTAGE("forward voltage", ParsedQuery.FORWARD_VOLTAGE),
+
+    /** A minimum luminous intensity of an LED (mcd, cd). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 45, report = 37)
+    LUMINOUS_INTENSITY("luminous intensity", ParsedQuery.LUMINOUS_INTENSITY),
+
+    /** A minimum luminous flux of an LED (lm). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 46, report = 38)
+    LUMINOUS_FLUX("luminous flux", ParsedQuery.LUMINOUS_FLUX),
+
     // ---------------------------------------------------------------- preferences and connector-only signals
 
     /** "low DCR": a lower DC resistance ranks higher, {@code weight / (1 + DCR / 10 mOhm)} (score only). */
@@ -764,6 +871,14 @@ public enum ConstraintKind {
             return Outcome.counted(weight * found / w.size(), weight);
         }
     },
+
+    /**
+     * The orientation of a part that is no connector: an LED's right angle (side view), reverse mount or vertical (top
+     * view). A preference: a different one is a mismatch, never an exclusion.
+     */
+    @Relax(strategy = SOFT)
+    @Match(mode = EQUAL, weight = 0.05, scope = PART, order = 47, report = 39)
+    PART_ORIENTATION("orientation", ConstraintKind::partOrientation, ConstraintKind::partOrientation),
 
     /** Rows of a connector: a different row count costs the weight, the same earns nothing. */
     @Relax(strategy = SOFT)
@@ -850,6 +965,12 @@ public enum ConstraintKind {
     @Match(mode = FEATURE, weight = 0.03, scope = USB, order = 9)
     POWER_ONLY(ParsedQuery.POWER_ONLY);
 
+    /** Largest difference in nanometres between two wavelengths that are the same. */
+    public static final double WAVELENGTH_TOLERANCE_NM = 10;
+    /** Largest difference in degrees between two viewing angles that are the same. */
+    public static final double VIEWING_ANGLE_TOLERANCE_DEGREES = 15;
+    /** Largest difference in kelvin between two colour temperatures that are the same. */
+    public static final double COLOUR_TEMPERATURE_TOLERANCE_K = 300;
     /** Absolute tolerance for "same pitch" in millimetres (2.54 == 0.1" == 2.540). */
     public static final double PITCH_TOLERANCE_MM = 0.03;
     /** DC resistance at which the {@link #LOW_DCR} preference is half its weight. */
@@ -1405,6 +1526,16 @@ public enum ConstraintKind {
         }
         return ComponentFamily.REGULATOR.label().equals(wanted) && q.subtype() != null && f.subtype() != null
                 && !q.subtype().equals(f.subtype());
+    }
+
+    /** The orientation of an LED request (null for every other request). */
+    private static Object partOrientation(ParsedQuery q) {
+        return q.led() == null ? null : q.led().orientation();
+    }
+
+    /** The orientation of an LED part (null for every other part). */
+    private static Object partOrientation(PartFeatures f) {
+        return f.led() == null ? null : f.led().orientation();
     }
 
     /** The fan attributes of a request or part when they state the type or the supply, else null. */

@@ -19,5 +19,15 @@ public enum Vocabulary {
     /** A fan's bearing ({@code ball}, {@code sleeve}, {@code fluid dynamic}, {@code vapo}...). */
     BEARING,
     /** A fan's features, comma separated ({@code PWM, tacho, auto restart}). */
-    FAN_FEATURES
+    FAN_FEATURES,
+    /** The colour of an LED's light ({@code red}, {@code warm white}, {@code RGB}); a lens colour is none. */
+    LED_COLOUR,
+    /** An LED's lens ({@code clear}, {@code diffused}, {@code tinted}). */
+    LENS,
+    /** The LED type; a text that names none is an indicator LED ({@code addressable}, {@code receiver}...). */
+    LED_TYPE,
+    /** An LED's orientation ({@code right angle}, {@code reverse mount}, {@code vertical}). */
+    LED_ORIENTATION,
+    /** An LED package name ({@code 5050}, {@code PLCC-4}, {@code 5mm}). */
+    LED_PACKAGE
 }

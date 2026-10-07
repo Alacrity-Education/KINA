@@ -19,7 +19,8 @@ import java.util.Map;
  * ("chassis") when the words ask for a chassis or heatsink mounted part; {@code part_numbers} ({@code ["uP1966E"]}) when it
  * names part numbers (DESIGN.md 3.4 "Requested part numbers"); for a fan request {@code fan_type} ("axial", "radial"),
  * {@code fan_supply} ("DC", "AC"), {@code frame_size} ("40x40x10mm"), {@code bearing} ("ball") and
- * {@code fan_features} ({@code ["PWM"]}) when stated (DESIGN.md 3.4 "Fans").
+ * {@code fan_features} ({@code ["PWM"]}) when stated (DESIGN.md 3.4 "Fans"); for an LED request {@code led}
+ * ({@link LedResponse}: colour, lens, type, orientation; DESIGN.md 3.4 "LEDs").
  * Constraints are flattened into the object by kind using their display form; absent values are omitted.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -42,14 +43,15 @@ public record ParsedQueryResponse(
         @JsonProperty("fan_supply") String fanSupply,
         @JsonProperty("frame_size") String frameSize,
         @JsonProperty("bearing") String bearing,
-        @JsonProperty("fan_features") List<String> fanFeatures
+        @JsonProperty("fan_features") List<String> fanFeatures,
+        @JsonProperty("led") LedResponse led
 ) {
 
     /** A parsed query without connector attributes and technology. */
     public ParsedQueryResponse(String family, Map<String, String> constraints, String dielectric, String packageName,
                                String mounting, List<String> keywords) {
         this(family, constraints, dielectric, packageName, mounting, null, keywords, null, null, null, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     public static ParsedQueryResponse from(ParsedQuery query) {
@@ -64,7 +66,25 @@ public record ParsedQueryResponse(
                 query.partNumbers().isEmpty() ? null : query.partNumbers(),
                 fan == null ? null : fan.type(), fan == null ? null : fan.supply(),
                 fan == null || fan.frame() == null ? null : fan.frame().display(), fan == null ? null : fan.bearing(),
-                fan == null || fan.features().isEmpty() ? null : fan.features());
+                fan == null || fan.features().isEmpty() ? null : fan.features(), LedResponse.from(query.led()));
+    }
+
+    /**
+     * The {@code parsed.led} object of an LED request, e.g. {@code {"colour":"red","lens":"diffused"}}: the colour of
+     * the light, the lens, the LED type it names ({@code addressable}; a plain emitter when omitted) and the
+     * orientation ({@code right angle}). Omitted for other requests; empty for an LED request that names none of them.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record LedResponse(
+            @JsonProperty("colour") String colour,
+            @JsonProperty("lens") String lens,
+            @JsonProperty("type") String type,
+            @JsonProperty("orientation") String orientation
+    ) {
+
+        static LedResponse from(ParsedQuery.Led led) {
+            return led == null ? null : new LedResponse(led.colour(), led.lens(), led.type(), led.orientation());
+        }
     }
 
     /**

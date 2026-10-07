@@ -34,7 +34,8 @@ public enum ComponentFamily {
     SCHOTTKY("schottky", DIODE, LARGEST_VOLTAGE),
     ZENER("zener", DIODE),
     TVS("tvs", DIODE),
-    LED("led", DIODE),
+    /** Light-emitting diodes: a specialisation of the diode with a policy row of its own (colour, LED type). */
+    LED("led", DIODE, PolicyFamily.LED),
     /** The generic transistor (bipolar, or of unknown kind). */
     TRANSISTOR("transistor", PolicyFamily.TRANSISTOR, POLARISED, LARGEST_VOLTAGE),
     MOSFET("mosfet", TRANSISTOR, POLARISED, LARGEST_VOLTAGE),

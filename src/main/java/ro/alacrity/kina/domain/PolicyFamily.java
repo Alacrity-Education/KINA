@@ -10,8 +10,10 @@ import java.util.Locale;
 public enum PolicyFamily {
 
     RESISTOR, CAPACITOR, INDUCTOR, FERRITE, CRYSTAL, OSCILLATOR,
-    /** Diodes of every kind: standard, Schottky, Zener, TVS, LED. */
+    /** Diodes: standard, Schottky, Zener, TVS. */
     DIODE,
+    /** Light-emitting diodes (a diode specialisation with a row of its own). */
+    LED,
     /** Transistors and MOSFETs. */
     TRANSISTOR,
     REGULATOR, CONNECTOR, USB,

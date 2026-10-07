@@ -768,6 +768,61 @@ never relaxed.` Not read from distributor data: Mouser's search API sends no fan
 the category and the description, which often leaves out the speed and the noise); most in-stock JLCPCB fans have an
 empty description, so their voltage and frame are unverified and their type is the axial default of `Cooling fan`.
 
+**LEDs** (`search.LedVocabulary`, `ParsedQuery.Led`, family `led`, policy family `led`; 2026-10-07). An LED is a
+specialisation of the diode with a policy row of its own. The vocabulary is read in texts of the LED family only.
+
+- **Colour** (`parsed.led.colour`, the part's `Colour`): `red`, `green` (`emerald`, `pure`), `blue` (`royal`),
+  `yellow`, `amber`, `orange`, `pink`, `purple`, `yellow green`, `white`, `warm white`, `neutral white` (`natural`),
+  `cool white` (`cold`, `pure white`, `daylight`), `UV` (`ultraviolet`, `UVA`), `IR` (`infrared`), `RGB` (`full
+  colour`), `RGBW`, `bi-colour`, `tri-colour`. A lens colour is no colour of the light: JLCPCB `Blue Frosted White Lens`
+  is a blue LED, `White Yellow Lens` a white one. Two colours in a part's text make a bi-colour LED, red, green and
+  blue an RGB one (Mouser `Red, Green, Blue`). A wavelength without a colour word implies the colour band: 620 to 645 nm
+  red, 585 to 600 nm yellow, 515 to 540 nm green, 460 to 480 nm blue, 395 to 410 nm UV, 840 to 950 nm IR.
+- **Lens** (`lens`): `clear` (`water clear`, `transparent`), `diffused` (`milky`, `frosted`), `tinted` (`tinted`, a
+  coloured lens such as `Red Lens`). Diffused wins over tinted (`Frosted Red Lens` is diffused).
+- **LED type** (`type`, the part's `LedType`): `addressable` (`WS2812`, `SK6812`, `APA102`, `NeoPixel`, JLCPCB
+  `RGB LEDs(Built-in IC)`), `high power` (`high power`, `power LED`, `1W star`), `indicator` (the part default), and no
+  discrete emitter: `strip` (`LED strip`), `laser`, `receiver` (photodiode, phototransistor, IR receiver, optocoupler),
+  `display` (segment display, dot matrix), `driver` (LED driver ICs). A request that names no type asks for a plain
+  emitter: indicator and high power LEDs. `indicator`, `status` and `PCB LED` name no type of a request.
+- **Orientation** (`orientation`): `right angle` (`side view`, `side emitting`), `reverse mount`, `vertical` (`top
+  view`, JLCPCB `Top-mount`).
+- **Package**: chip codes stay imperial (`0402` to `1206`, section "Packages"). LED package names are never metric chip
+  codes: `3528`, `5050`, `2835`, `3014`, `5730`, `5630`, `3030`, `3535`, `2020`, `4014`, `7030`, `1515` (JLCPCB
+  `SMD5050-6P` is `5050`, TME `5050,PLCC6` is `5050`), `PLCC-2`, `PLCC-4`, `PLCC-6`. Through-hole lamps: `1.8mm`,
+  `3mm`, `5mm`, `8mm`, `10mm` and the rectangular `2x5x7mm`; `T-1 3/4` is `5mm`, `T-1` is `3mm`, JLCPCB `Plugin,D=5mm`
+  is `5mm`. A lamp is THT and an LED size code SMD when nothing else gives the mounting. JLCPCB lists the body
+  dimensions of SMD LEDs as bare `5mm 5mm`, so a part's description names a lamp only next to a through-hole word
+  (`5mm round lamp head`). An LED package name and a `PLCC-n` package are not compared (a `5050` LED is often listed as
+  `PLCC-6`): the package is then unverified.
+- **Units** (`@Unit` on `PartAttribute`, LED texts only): wavelength in nm (`625nm`, `470 nm`); colour temperature in
+  K (`3000K`, `6500 K`, shown `3000 K`); luminous intensity in cd (`200mcd`, `1.25cd`, shown `200mcd`); luminous flux
+  in lm (`20lm`); viewing angle in degrees (`120°`, `120 deg`, `30 degrees`, shown `120°`; never a temperature in an LED
+  text). A voltage of an LED request is the forward voltage (`2.0V`, `Vf 3.2V`). Ranges: TME `1.8÷2.6V` and
+  `30÷60mcd`, JLCPCB `1.8V~2.4V` and `630mcd~1.25cd` are read as their upper end (the most an LED needs, the brightest
+  it is binned at); a wavelength range (`620nm~630nm`) as its centre (`625nm`). The radiant intensity of an IR emitter
+  (`3mW/sr@IF=20mA`) is dropped.
+
+| Attribute | Match | Policy |
+|---|---|---|
+| LED type | plain (indicator, high power), addressable, or no emitter; a different one is a conflict | hard (`led type`); every LED request states it |
+| colour | `white` takes every white, `green` yellow green, `yellow` and `amber` each other; RGB, RGBW, bi-colour and tri-colour only themselves; a warm, neutral or cool white request against a part that says `white` only is unverified | hard (`colour`); a part without a colour is unverified |
+| wavelength | within 10 nm | hard (`wavelength`) when the request states it |
+| package, mounting | as for every family (LED package names above) | hard |
+| forward voltage | a maximum (`FORWARD_VOLTAGE`): an LED that needs more is below spec | rating |
+| forward current | a minimum (a 30 mA LED works at 20 mA) | rating |
+| luminous intensity, luminous flux | minimums | rating |
+| colour temperature | within 300 K; outside it a mismatch, never an exclusion | relaxable for LEDs (ladder order 11) |
+| viewing angle | within 15 degrees; outside it a mismatch | relaxable for LEDs (ladder order 10) |
+| lens | equal; a different one is a mismatch | relaxable for LEDs (ladder order 9) |
+| orientation | equal; a different one is a mismatch (`PART_ORIENTATION`) | soft, never excludes |
+
+`parsed.led` shows `colour`, `lens`, `type` and `orientation`; the values are constraints (`wavelength`,
+`colour_temperature`, `forward_voltage`, `current`, `luminous_intensity`, `luminous_flux`, `viewing_angle`). A part's
+canonical attributes add `Colour`, `Lens`, `LedType`, `Orientation`, `Wavelength`, `ColourTemperature`,
+`ForwardVoltage`, `LuminousIntensity`, `LuminousFlux` and `ViewingAngle`; `Voltage` stays the voltage the part states
+(for an LED usually its forward voltage, for an IR emitter sometimes its reverse voltage).
+
 **Attribute sources** (`domain.PartAttribute`, the `@Source` and `@Unit` annotations; user decision 2026-10-07).
 Every attribute KINA reads from a part is a constant of `PartAttribute`, with its sources declared on it. A source
 names the lower-case distributor attribute names (`names`), the distributors and families it applies to
@@ -842,6 +897,18 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `Described` | `fan` |  |
 | `NOISE` | `dBA` from `dba`, `db` in `fan` (Spaced) | `Simple` | `fan` | `noise level`, `noise`, `acoustic noise`, `sound level`, `sound pressure level`, `noise (dba)` |
 |  |  | `Described` | `fan` |  |
+| `WAVELENGTH` | `nm` from `nm` in `led` | `Simple` | `led` | `dominant wavelength`, `wavelength`, `wavelength - dominant`, `wavelength/color temperature`, `peak wavelength`, `wavelength - peak`, `peak emission wavelength` |
+|  |  | `Described` | `led` |  |
+| `COLOUR_TEMPERATURE` | `K` from `k` in `led` (Spaced) | `Simple` | `led` | `colour temperature`, `color temperature`, `cct`, `wavelength/color temperature`, `color temperature - cct` |
+|  |  | `Described` | `led` |  |
+| `FORWARD_VOLTAGE` | `V` | `Simple` | `led` | `vf - forward voltage`, `forward voltage`, `forward voltage (vf)`, `voltage - forward (vf) (typ)`, `vf`, `forward voltage typ.` |
+|  |  | `Described` | `led` |  |
+| `LUMINOUS_INTENSITY` | `cd` from `cd` in `led` | `Simple` | `led` | `luminous intensity`, `luminous intensity (iv)`, `millicandela rating`, `luminous intensity iv`, `iv` |
+|  |  | `Described` | `led` |  |
+| `LUMINOUS_FLUX` | `lm` from `lm` in `led` | `Simple` | `led` | `luminous flux`, `luminous flux @ current/temperature`, `flux @ 25°c, current - test`, `luminous flux (typ)` |
+|  |  | `Described` | `led` |  |
+| `VIEWING_ANGLE` | `°` from `deg` in `led` | `Simple` | `led` | `viewing angle`, `view angle`, `angle of radiation`, `viewing angle (2θ1/2)`, `beam angle` |
+|  |  | `Described` | `led` |  |
 | `TEST_FREQUENCY` |  | `Simple` |  | `test frequency`, `impedance test frequency`, `frequency`, `measuring frequency` |
 | `RIPPLE_CURRENT` |  | `Simple` |  | `ripplecurrent`, `ripple current`, `rated ripple current`, `ripple current (max)`, `max ripple current`, `current - ripple`, `ripple current @ high frequency`, `ripple current @ low frequency`, `operating current`, `current rating`, `rated current`, `current` |
 |  |  | `KeyContaining` |  | `ripple` |
@@ -849,9 +916,11 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `Described` |  |  |
 | `PACKAGE` |  | `PackageField` |  |  |
 |  |  | `PackageCode` |  | `case code - in`, `case - inch`, `case code (inch)`, `package (inch)`, `imperial size`, `case code - inch` |
+|  |  | `LedPackage` | `led` | `package / case`, `case`, `package`, `case / package`, `lamp size`, `size` |
 |  |  | `MetricPackageCode` |  | `case code - mm`, `case - mm`, `case code (mm)`, `metric size`, `package (mm)` |
 |  |  | `PackageCode` |  | `package / case`, `package/case`, `package`, `case`, `supplier device package`, `package type`, `case / package`, `case/package`, `housing` |
 |  |  | `Described` |  |  |
+|  |  | `DescribedWord` | `led` |  |
 |  |  | `RawPackageField` |  |  |
 |  |  | `PartNumberPackage` | `PASSIVE` |  |
 | `MOUNTING` |  | `MountingWord` |  | `mounting`, `mounting style`, `mounting type`, `mounting method`, `termination style`, `montage`, `electrical mounting` |
@@ -871,6 +940,13 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 | `BEARING` |  | `VocabularyWord` | `fan` | `kind of bearing`, `bearing`, `bearing type`, `type of bearing` |
 |  |  | `DescribedWord` | `fan` |  |
 | `FAN_FEATURES` |  | `MergedWords` | `fan` | `additional functions`, `signal output`, `leads`, `ip rating`, `features`, `control`, `output signal` |
+| `COLOUR` |  | `VocabularyWord` | `led` | `illumination color`, `led colour`, `led color`, `colour of light`, `colour of led`, `emitted colour`, `emitted color`, `color`, `colour` |
+|  |  | `DescribedWord` | `led` |  |
+| `LENS` |  | `VocabularyWord` | `led` | `lens`, `lens color/style`, `lens colour`, `lens color`, `lens type`, `lens style`, `lens transparency` |
+|  |  | `DescribedWord` | `led` |  |
+| `LED_TYPE` |  | `MergedWords` | `led` | `product`, `product type`, `type of led`, `kind of led`, `led type`, `type` |
+| `LED_ORIENTATION` |  | `VocabularyWord` | `led` | `orientation`, `mounting angle`, `emitting direction`, `view` |
+|  |  | `DescribedWord` | `led` |  |
 | `ELEMENTS` |  | `ElementsCount` | `ARRAYS` | `elements`, `number of elements`, `number of resistors`, `number of capacitors`, `number of lines`, `number of channels`, `number of bits` |
 | `ESR` |  | `OhmsAtFrequency` |  | `esr`, `esr (equivalent series resistance)`, `equivalent series resistance`, `esr max`, `esr (max)`, `max esr`, `esr max.` |
 |  |  | `OhmsAtKeyPrefix` |  | `esr ` |
@@ -1107,7 +1183,7 @@ them. Change a rule on the constant, not in the ranker.
 
 **Component families** (`domain.ComponentFamily`). Every family the parser can name is one constant with its label (the
 `family` of a request and the `Family` attribute), its parent (`schottky`, `zener`, `tvs` and `led` specialise `diode`,
-`mosfet` specialises `transistor`), its policy family and its traits: `PASSIVE` (resistors, capacitors, inductors,
+`mosfet` specialises `transistor`; `led` has a policy row of its own), its policy family and its traits: `PASSIVE` (resistors, capacitors, inductors,
 ferrite beads: chip package codes, form factor classes, dimensions, qualification, features), `ARRAYS` (resistors,
 capacitors, ferrite beads), `INDUCTIVE` (inductors, ferrite beads), `FREQUENCY_VALUED` (crystals, oscillators),
 `LARGEST_VOLTAGE` and `POLARISED` (transistors and MOSFETs: polarity and on-resistance). The words that name a family
@@ -1122,7 +1198,7 @@ the attribute stays, unverified and ranked below complete matches (section 3.3);
 reason to exclude: the ladder may loosen it (section 3.2), the part lists the miss in `mismatches` and the response the
 constraint in `constraints_relaxed`. The decided table (`ConstraintPolicy.DEFAULT_HARD`) is rendered from the
 declarations below; `ConstraintTableDocumentationTest` renders it again and fails when this copy differs. The policy
-family of a request (`PolicyFamily.of`) is its family, `diode` for Schottky, Zener, TVS and LED, `transistor` for
+family of a request (`PolicyFamily.of`) is its family, `diode` for Schottky, Zener and TVS, `transistor` for
 MOSFETs, `usb` for USB connectors and `default` for any other or unknown family; each `domain.ComponentFamily` declares
 its policy family. Hard kinds are listed in check order,
 relaxable ones in ladder order. Every other policy kind is soft for the family: it is ranked and graded, a miss is a
@@ -1138,6 +1214,7 @@ each kind (resistance, capacitance, "a higher USB standard is accepted"...) are 
 | `crystal` | `type`, `value`, `load capacitance`, `mounting` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `oscillator` | `type`, `value`, `mounting` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `diode` | `type`, `voltage`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `led` | `type`, `package`, `mounting`, `led type`, `colour`, `wavelength` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr`, `lens`, `viewing angle`, `colour temperature` |
 | `transistor` | `type`, `polarity`, `package`, `mounting`, `technology` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `regulator` | `type`, `voltage`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `connector` | `type`, `package`, `mounting`, `connector type`, `positions`, `pitch`, `gender` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |

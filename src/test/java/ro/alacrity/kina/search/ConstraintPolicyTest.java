@@ -62,6 +62,7 @@ class ConstraintPolicyTest {
         decided.put("crystal", List.of("type", "value", "load capacitance", "mounting"));
         decided.put("oscillator", List.of("type", "value", "mounting"));
         decided.put("diode", List.of("type", "voltage", "package", "mounting"));
+        decided.put("led", List.of("type", "package", "mounting", "led type", "colour", "wavelength"));   // LEDs, 0.13
         decided.put("transistor", List.of("type", "polarity", "package", "mounting", "technology"));
         decided.put("regulator", List.of("type", "voltage", "package", "mounting"));
         decided.put("connector", List.of("type", "connector type", "gender", "positions", "pitch", "package",
@@ -76,11 +77,12 @@ class ConstraintPolicyTest {
             assertThat(policy.table().get(family)).as(family).isEqualTo(java.util.Set.copyOf(names));
         });
         assertThat(ConstraintPolicy.RELAXABLE).containsExactly("dielectric", "package", "tolerance", "orientation",
-                "tcr", "esr", "dcr", "speed", "bearing");
+                "tcr", "esr", "dcr", "speed", "bearing", "lens", "viewing angle", "colour temperature");
         assertThat(ConstraintPolicy.NAMES).containsExactlyInAnyOrder("value", "package", "mounting", "technology",
                 "elements", "type", "polarity", "voltage", "load capacitance", "connector type", "gender",
                 "positions", "pitch", "usb type", "pin configuration", "usb standard", "form factor", "dielectric",
-                "tolerance", "orientation", "tcr", "esr", "dcr", "fan type", "frame size", "speed", "bearing");
+                "tolerance", "orientation", "tcr", "esr", "dcr", "fan type", "frame size", "speed", "bearing",
+                "led type", "colour", "wavelength", "lens", "viewing angle", "colour temperature");
     }
 
     @Test
@@ -91,7 +93,7 @@ class ConstraintPolicyTest {
             assertThat(t.get(family)).as(family).contains("value", "mounting", "type");
         }
         // the package is hard, except for inductors, crystals and oscillators
-        for (String family : List.of("resistor", "capacitor", "ferrite", "diode", "transistor", "regulator",
+        for (String family : List.of("resistor", "capacitor", "ferrite", "diode", "led", "transistor", "regulator",
                 "connector", "default")) {
             assertThat(t.get(family)).as(family).contains("package");
         }
@@ -473,7 +475,7 @@ class ConstraintPolicyTest {
         assertThat(configured.hardFor(parser.parse("22uF 1206 MLCC"))).isEqualTo(
                 java.util.Set.copyOf(ConstraintPolicy.DEFAULT_HARD.get("capacitor")));
         ConstraintPolicy odd = ConstraintPolicy.from(RankingFixtures.properties(
-                "kina.search.hard-constraints.capacitor", "value,colour").search());
+                "kina.search.hard-constraints.capacitor", "value,flavour").search());
         assertThat(odd.hardFor(parser.parse("22uF 1206 MLCC"))).containsExactly("value");
         // the deprecated strict-constraints still removes mounting, technology or elements when missing
         ConstraintPolicy legacy = ConstraintPolicy.from(RankingFixtures.properties(

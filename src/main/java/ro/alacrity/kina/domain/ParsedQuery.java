@@ -46,6 +46,8 @@ import java.util.Map;
  *                     with it is the requested part (DESIGN.md 3.4 "Requested part numbers"); empty when none
  * @param fan          the fan attributes of a fan request (family {@code "fan"}: type, supply, frame size, bearing,
  *                     features; DESIGN.md 3.4 "Fans"), else null
+ * @param led          the LED attributes of an LED request (family {@code "led"}: colour, lens, LED type, orientation;
+ *                     DESIGN.md 3.4 "LEDs"), else null
  */
 @Builder(toBuilder = true)
 public record ParsedQuery(
@@ -65,7 +67,8 @@ public record ParsedQuery(
         String subtype,
         String formFactor,
         List<String> partNumbers,
-        Fan fan
+        Fan fan,
+        Led led
 ) {
 
     /** {@link #elements()} of a request for an array or network whose element count is not stated. */
@@ -97,7 +100,18 @@ public record ParsedQuery(
     public static final String STATIC_PRESSURE = "static_pressure";
     /** Acoustic noise of a fan, in dBA; a maximum. */
     public static final String NOISE = "noise";
-
+    /** Dominant (or peak) wavelength of an LED, in nanometres; within 10 nm (DESIGN.md 3.4 "LEDs"). */
+    public static final String WAVELENGTH = "wavelength";
+    /** Correlated colour temperature of a white LED, in kelvin; within 300 K, relaxable. */
+    public static final String COLOUR_TEMPERATURE = "colour_temperature";
+    /** Forward voltage of an LED, in volt; a request value is a maximum (the part must not need more). */
+    public static final String FORWARD_VOLTAGE = "forward_voltage";
+    /** Luminous intensity of an LED, in candela; a minimum. */
+    public static final String LUMINOUS_INTENSITY = "luminous_intensity";
+    /** Luminous flux of an LED, in lumen; a minimum. */
+    public static final String LUMINOUS_FLUX = "luminous_flux";
+    /** Viewing angle of an LED, in degrees; within 15 degrees, a preference. */
+    public static final String VIEWING_ANGLE = "viewing_angle";
     /** Fan types ({@link Fan#type()}): an axial fan, a radial (centrifugal) fan or blower. */
     public static final String AXIAL = "axial";
     public static final String RADIAL = "radial";
@@ -165,7 +179,7 @@ public record ParsedQuery(
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
         this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -176,7 +190,7 @@ public record ParsedQuery(
     public boolean understood() {
         return family != null || !constraints.isEmpty() || dielectric != null || packageName != null
                 || mounting != null || technology != null || connector != null || elements != null
-                || formFactor != null || fan != null;
+                || formFactor != null || fan != null || led != null;
     }
 
     /** True when the query names a part number ({@link #partNumbers}). */
@@ -325,6 +339,74 @@ public record ParsedQuery(
 
         private static String number(double v) {
             return java.math.BigDecimal.valueOf(v).stripTrailingZeros().toPlainString();
+        }
+    }
+
+    /**
+     * LED attributes of a query or a part (DESIGN.md 3.4 "LEDs"). Every field is null when unknown.
+     *
+     * @param colour      the colour of the light: {@code red}, {@code green}, {@code blue}, {@code yellow},
+     *                    {@code amber}, {@code orange}, {@code pink}, {@code purple}, {@code yellow green},
+     *                    {@code white}, {@code warm white}, {@code neutral white}, {@code cool white}, {@code UV},
+     *                    {@code IR}, {@code RGB}, {@code RGBW}, {@code bi-colour}, {@code tri-colour}
+     * @param lens        {@code clear}, {@code diffused} or {@code tinted}
+     * @param type        the kind of LED: {@code indicator} and {@code high power} (plain emitters),
+     *                    {@code addressable} (with an integrated controller: WS2812, SK6812, APA102), or no discrete
+     *                    emitter: {@code strip}, {@code laser}, {@code receiver}, {@code display}, {@code driver};
+     *                    a request that names none asks for a plain emitter ({@link #requestedType()})
+     * @param orientation {@code right angle} (side view), {@code reverse mount} or {@code vertical} (top view)
+     */
+    @Builder(toBuilder = true)
+    public record Led(String colour, String lens, String type, String orientation) {
+
+        /** The type of a request that names none: a plain emitter (indicator or high power). */
+        public static final String PLAIN = "LED";
+        public static final String INDICATOR = "indicator";
+        public static final String HIGH_POWER = "high power";
+        public static final String ADDRESSABLE = "addressable";
+
+        /** True when no attribute is known. */
+        public boolean isEmpty() {
+            return colour == null && lens == null && type == null && orientation == null;
+        }
+
+        /** The type a request asks for: the one it names, else {@link #PLAIN}. */
+        public String requestedType() {
+            return type == null ? PLAIN : type;
+        }
+
+        /**
+         * 1 when a part of LED type {@code actual} answers a request for {@code wanted}, -1 when it does not: a plain
+         * request takes indicator and high power LEDs, never an addressable LED, a strip, a laser, a receiver, a
+         * display or a driver; any other request takes its own type only.
+         */
+        public static double typeGrade(String wanted, String actual) {
+            boolean plainWanted = PLAIN.equals(wanted) || INDICATOR.equals(wanted) || HIGH_POWER.equals(wanted);
+            boolean plainActual = INDICATOR.equals(actual) || HIGH_POWER.equals(actual);
+            return (plainWanted ? plainActual : wanted.equals(actual)) ? 1 : -1;
+        }
+
+        /**
+         * 1 when a part of colour {@code actual} answers a request for {@code wanted}, -1 when it does not, null when
+         * the part's white is not specific enough for a warm, neutral or cool white request. {@code white} takes every
+         * white, {@code green} takes yellow green, {@code yellow} and {@code amber} take each other.
+         */
+        public static Double colourGrade(String wanted, String actual) {
+            if (wanted.equals(actual)) {
+                return 1.0;
+            }
+            if ("white".equals(wanted) && actual.endsWith(" white")) {
+                return 1.0;
+            }
+            if (wanted.endsWith(" white") && "white".equals(actual)) {
+                return null;
+            }
+            if ("green".equals(wanted) && "yellow green".equals(actual)
+                    || ("yellow".equals(wanted) || "amber".equals(wanted))
+                    && ("yellow".equals(actual) || "amber".equals(actual))) {
+                return 1.0;
+            }
+            return -1.0;
         }
     }
 

@@ -51,6 +51,9 @@ public interface PartFeatures {
     /** The fan attributes of a fan (type, supply, frame size, bearing, features), else null. */
     ParsedQuery.Fan fan();
 
+    /** The LED attributes of an LED (colour, lens, LED type, orientation), else null. */
+    ParsedQuery.Led led();
+
     /** The voltages the part states as its specification (Zener voltage, output voltages), never null. */
     List<Double> voltages();
 

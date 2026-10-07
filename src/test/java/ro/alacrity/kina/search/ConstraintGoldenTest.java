@@ -39,7 +39,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>The master covers the vocabulary it was captured with: the policy families and constraint names of
  * {@link #CAPTURED_FAMILIES} and {@link #CAPTURED_NAMES}. Families and names added later (fans, 0.13) are left out of
  * the tables and name lists here and covered by their own tests ({@code FanParserTest}, {@code FanExtractionTest},
- * {@code FanRankingTest}); every query and part of the master must still give the same results.
+ * {@code FanRankingTest}); every query and part of the master must still give the same results. The one exception
+ * is {@link #REMODELLED_QUERIES}: the queries of a family whose request vocabulary was modelled after the capture (an
+ * LED request has had a colour, an LED type and a policy row of its own since 0.13). Their records (the query line and
+ * its sampled pairs) are left out of the comparison and covered by the family's own tests ({@code LedParserTest},
+ * {@code LedRankingTest}); a query that changes because of a new family word still fails.
  *
  * <p>Scores are compared as {@link Double#toString} strings, so they must stay bit-identical. On a mismatch the
  * current dump is written to {@code target/golden/constraints-actual.jsonl}. To recapture (only for an intended
@@ -80,6 +84,9 @@ class ConstraintGoldenTest {
             "pitch", "polarity", "positions", "tcr", "technology", "tolerance", "type", "usb standard", "usb type",
             "value", "voltage");
 
+    /** The queries of re-modelled families, left out of the comparison (LEDs, 0.13). */
+    static final List<String> REMODELLED_QUERIES = List.of("LED 0603 red");
+
     private final QueryParser parser = new QueryParser();
     private final ParametricExtractor extractor = new ParametricExtractor();
     private final DeterministicRanker ranker = TestWiring.deterministicRanker(extractor);
@@ -97,6 +104,8 @@ class ConstraintGoldenTest {
             assertThat(in).as("golden resource %s (capture with -Dkina.golden.write=true)", RESOURCE).isNotNull();
             expected = new String(in.readAllBytes(), StandardCharsets.UTF_8).lines().toList();
         }
+        expected = compared(expected);
+        actual = compared(actual);
         if (!expected.equals(actual)) {
             Path out = Path.of("target/golden/constraints-actual.jsonl");
             Files.createDirectories(out.getParent());
@@ -106,6 +115,15 @@ class ConstraintGoldenTest {
         for (int i = 0; i < expected.size(); i++) {
             assertThat(MAPPER.readTree(actual.get(i))).as("line %d", i + 1).isEqualTo(MAPPER.readTree(expected.get(i)));
         }
+    }
+
+    /** The lines compared: every line but the records of {@link #REMODELLED_QUERIES}. */
+    private static List<String> compared(List<String> lines) {
+        return lines.stream().filter(line -> {
+            JsonNode node = MAPPER.readTree(line);
+            JsonNode query = node.has("text") ? node.get("text") : node.get("query");
+            return query == null || !REMODELLED_QUERIES.contains(query.asString());
+        }).toList();
     }
 
     // ---------------------------------------------------------------- the dump
