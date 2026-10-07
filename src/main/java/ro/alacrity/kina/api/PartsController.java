@@ -4,8 +4,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,11 +34,10 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/v1/parts")
 @Slf4j
-@RequiredArgsConstructor
 public class PartsController {
 
-    private final PartSearchService searchService;
-    private final PartLookupService lookupService;
+    @Autowired private PartSearchService searchService;
+    @Autowired private PartLookupService lookupService;
 
     /**
      * {@code GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=

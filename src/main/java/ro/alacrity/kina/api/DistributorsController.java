@@ -1,6 +1,6 @@
 package ro.alacrity.kina.api;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,11 +11,10 @@ import ro.alacrity.kina.search.DistributorStatusService;
 /** {@code GET /api/v1/distributors}: same payload as the {@code list_distributors} MCP tool. */
 @RestController
 @RequestMapping("/api/v1/distributors")
-@RequiredArgsConstructor
 public class DistributorsController {
 
-    private final DistributorStatusService statusService;
-    private final KinaMetrics metrics;
+    @Autowired private DistributorStatusService statusService;
+    @Autowired private KinaMetrics metrics;
 
     @GetMapping
     public DistributorStatusResponse list() {

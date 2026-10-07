@@ -1,6 +1,7 @@
 package ro.alacrity.kina.web;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -35,15 +36,9 @@ public class TokenPageController {
 
     static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'").withZone(ZoneOffset.UTC);
 
-    private final AccessTokenService tokens;
-    private final PublicUrlResolver urls;
-    private final boolean uiEnabled;
-
-    public TokenPageController(AccessTokenService tokens, PublicUrlResolver urls, KinaProperties properties) {
-        this.tokens = tokens;
-        this.urls = urls;
-        this.uiEnabled = properties.tokens().uiEnabled();
-    }
+    @Autowired private AccessTokenService tokens;
+    @Autowired private PublicUrlResolver urls;
+    @Autowired private KinaProperties properties;
 
     /** One row of the token table, pre-formatted for display. */
     public record TokenRow(UUID id, String name, String prefix, String created, String expires, String lastUsed,
@@ -57,7 +52,7 @@ public class TokenPageController {
     @GetMapping("/")
     public ModelAndView index(Authentication authentication) {
         KinaPrincipal user = user(authentication);
-        if (!uiEnabled) {
+        if (!properties.tokens().uiEnabled()) {
             ModelAndView view = new ModelAndView("tokens/disabled");
             view.addObject("user", user.displayName());
             view.addObject("mcpUrl", urls.mcpUrl());
@@ -69,7 +64,7 @@ public class TokenPageController {
     @PostMapping("/tokens")
     public ModelAndView create(@RequestParam(name = "name", required = false) String name,
                                Authentication authentication, HttpServletResponse response) {
-        if (!uiEnabled) {
+        if (!properties.tokens().uiEnabled()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
         KinaPrincipal user = user(authentication);

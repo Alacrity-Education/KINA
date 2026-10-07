@@ -2,7 +2,7 @@ package ro.alacrity.kina.web;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,10 +17,9 @@ import ro.alacrity.kina.security.OidcAccessPolicy;
  * failing provider cannot cause a redirect loop.
  */
 @Controller
-@RequiredArgsConstructor
 public class LoginErrorController {
 
-    private final KinaProperties properties;
+    @Autowired private KinaProperties properties;
 
     /**
      * The identity provider authenticated the user but KINA refused them (DESIGN.md 7.1). {@code reason} is one of

@@ -193,28 +193,11 @@ public class KinaMcpTools {
             the results still refresh the cache. Mouser has a small daily API quota, so use it only when fresh data \
             matters. No effect on LCSC (served from a local JLCPCB database).""";
 
-    private final String version;
-    private final PartSearchService searchService;
-    private final PartLookupService lookupService;
-    private final DistributorStatusService statusService;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
-
-    /** Explicit constructor: the {@code @Value} parameter must not rely on Lombok copying field annotations. */
-    public KinaMcpTools(@Value("${spring.ai.mcp.server.version:dev}") String version,
-                        PartSearchService searchService,
-                        PartLookupService lookupService,
-                        DistributorStatusService statusService) {
-        this.version = version;
-        this.searchService = searchService;
-        this.lookupService = lookupService;
-        this.statusService = statusService;
-    }
-
-    /** Counts every tool call and failure (DESIGN.md 3.7). */
-    @Autowired
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
-    }
+    @Value("${spring.ai.mcp.server.version:dev}") private String version;
+    @Autowired private PartSearchService searchService;
+    @Autowired private PartLookupService lookupService;
+    @Autowired private DistributorStatusService statusService;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
 
     @McpTool(name = "ping", description = "Health check. Returns {\"status\":\"ok\",\"version\":...} when the KINA MCP server is reachable.",
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true,
