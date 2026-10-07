@@ -135,8 +135,7 @@ final class StockRefresher {
             changed |= ordered != kept;
             out.put(distributor, List.copyOf(ordered));
         }
-        return changed ? new RankedResults(out, ranked.mode(), ranked.note(), ranked.excluded(),
-                ranked.excludedBelowSpec(), ranked.excludedDetail()) : ranked;
+        return changed ? ranked.withParts(out) : ranked;
     }
 
     /**

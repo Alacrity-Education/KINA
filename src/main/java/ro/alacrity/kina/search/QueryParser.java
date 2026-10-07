@@ -18,7 +18,8 @@ import java.util.Set;
  * mounting, connector attributes ({@link ConnectorRecognizer}: type, gender, positions, rows, pitch, orientation), the
  * technology of a passive ({@link TechnologyVocabulary}: thin film, tantalum, multilayer...), labelled values
  * (saturation current, DC resistance, lifetime, operating temperature, the impedance of a ferrite bead), preferences
- * ("low DCR") and the remaining free-text keywords. Stateless and thread-safe.
+ * ("low DCR"), the part numbers it names ({@link PartNumbers}) and the remaining free-text keywords. Stateless and
+ * thread-safe.
  *
  * <p>When no family keyword is present the family is inferred from the value kind (capacitance or dielectric -&gt;
  * capacitor, resistance -&gt; resistor, inductance -&gt; inductor).
@@ -87,6 +88,7 @@ public class QueryParser {
                 .preferences(analysis.preferences())
                 .elements(connector != null ? null : requestedElements(original))
                 .formFactor(connector != null ? null : FormFactor.ofRequestWords(original, family))
+                .partNumbers(PartNumbers.in(original, keywords))
                 .build();
     }
 

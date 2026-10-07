@@ -1,0 +1,103 @@
+{
+ "Errors": [],
+ "SearchResults": {
+  "NumberOfResult": 1,
+  "Parts": [
+   {
+    "Availability": "3685 In Stock",
+    "DataSheetUrl": "",
+    "Description": "",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/efficientpowerconversion/images/uP1966E_SPL.jpg",
+    "Category": null,
+    "LeadTime": "30 Days",
+    "LifecycleStatus": "New at Mouser",
+    "Manufacturer": "EPC",
+    "ManufacturerPartNumber": "UP1966E",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "65-UP1966E",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,02 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,15 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,13 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "1,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,95 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/EPC/UP1966E?qs=vcFyY%252BOcAygBfFAz19iK6A%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "3685",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542310000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542310030"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -46,7 +46,14 @@ import java.util.Map;
  * @param exactMatches  returned parts whose constraints are all verified and met ({@code match} 1.0, no
  *                      {@code unverified}); null when the query was not understood
  * @param hint          when the distributor returned nothing for an understood query (no error): which hard
- *                      constraints could not be met and that no substitutes are returned; else null (omitted)
+ *                      constraints could not be met and that no substitutes are returned; when a part number the
+ *                      query names is not among the parts ({@code requestedPartFound} false): that it is not listed in
+ *                      stock there, or why it was left out; else null (omitted)
+ * @param requestedPartFound null when the query names no part number ({@code parsed.part_numbers}) or the distributor
+ *                      failed; true when a returned part is the requested one for every part number (its MPN or
+ *                      distributor part number equals it or starts with it); false otherwise, with a {@code hint}
+ * @param excludedBelowSpecDetail up to 5 of the {@code excludedBelowSpec} parts, closest to the request first: part
+ *                      number, MPN and the failed rating with the part's and the requested value; empty when none
  */
 @Builder
 public record DistributorResult(
@@ -67,13 +74,16 @@ public record DistributorResult(
         @JsonProperty("query_terms_dropped") List<String> queryTermsDropped,
         @JsonProperty("constraints_relaxed") List<String> constraintsRelaxed,
         @JsonProperty("exact_matches") Integer exactMatches,
-        @JsonProperty("hint") @JsonInclude(JsonInclude.Include.NON_NULL) String hint
+        @JsonProperty("hint") @JsonInclude(JsonInclude.Include.NON_NULL) String hint,
+        @JsonProperty("requested_part_found") Boolean requestedPartFound,
+        @JsonProperty("excluded_below_spec_detail") List<BelowSpecPart> excludedBelowSpecDetail
 ) {
 
     public DistributorResult {
         parts = parts == null ? List.of() : List.copyOf(parts);
         queryTermsDropped = queryTermsDropped == null ? List.of() : List.copyOf(queryTermsDropped);
         constraintsRelaxed = constraintsRelaxed == null ? List.of() : List.copyOf(constraintsRelaxed);
+        excludedBelowSpecDetail = excludedBelowSpecDetail == null ? List.of() : List.copyOf(excludedBelowSpecDetail);
         excludedByConstraintsDetail = excludedByConstraintsDetail == null ? Map.of()
                 : java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(excludedByConstraintsDetail));
     }

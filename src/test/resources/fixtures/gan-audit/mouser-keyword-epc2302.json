@@ -1,0 +1,5399 @@
+{
+ "Errors": [],
+ "SearchResults": {
+  "NumberOfResult": 370,
+  "Parts": [
+   {
+    "Availability": "1728 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN140-650EBE/SOT8074/DFN8080-",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GAN080-650EBEZ_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN140-650EBEZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN140-650EBEZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,81 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,80 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,80 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "2,20 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "2,00 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN140-650EBEZ?qs=3Rah4i%252BhyCGNKpjYED1QvQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1728",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "250 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANC070-650TBH/SOT8136/TOLL",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANC035-650TBHZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANC070-650TBHZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANC070-650TBHZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,95 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,59 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,36 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,12 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "2,07 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "1,74 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANC070-650TBHZ?qs=dhCoiiGcT1KIUkWhgSYtBQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "250",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Japan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "240 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANC035-650UTH/SOT8155/TOLT",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANC035-650UTHZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANC035-650UTHZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANC035-650UTHZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1300"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,26 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,66 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "4,29 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,15 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,43 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANC035-650UTHZ?qs=dhCoiiGcT1KXpzYH72eAIQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "240",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Japan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "250 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANC070-650UTH/SOT8155/TOLT",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANC035-650UTHZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANC070-650UTHZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANC070-650UTHZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1300"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,45 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,86 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,61 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,90 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANC070-650UTHZ?qs=dhCoiiGcT1IMTdVQbFNeaQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "250",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Japan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "238 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANC035-650TBH/SOT8136/TOLL",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANC035-650TBHZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANC035-650TBHZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANC035-650TBHZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,20 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,52 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "4,16 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,13 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,68 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "3,32 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANC035-650TBHZ?qs=dhCoiiGcT1LV%2FCf%2Fao8gNw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "238",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Japan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "240 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANC070-650WSH/SOT429/TO247-3",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANC070-650WSHQ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANC070-650WSHQ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANC070-650WSHQ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "30"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,40 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,84 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 120,
+      "Price": "2,26 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 510,
+      "Price": "2,11 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1020,
+      "Price": "2,08 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2520,
+      "Price": "2,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5010,
+      "Price": "1,98 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANC070-650WSHQ?qs=dhCoiiGcT1LFmBQ30CYWLA%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "240",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Japan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "239 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANC035-650VSH/SOT8071/TO247-4",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANC035-650VSHQ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANC035-650VSHQ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANC035-650VSHQ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "30"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,27 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,55 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 120,
+      "Price": "3,59 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 510,
+      "Price": "3,58 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANC035-650VSHQ?qs=dhCoiiGcT1Kf2RrDHyQbuw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "239",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Japan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2385 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE140-700BBA/SOT428/DPAK",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE140-700BBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE140-700BBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE140-700BBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "3,99 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,95 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,63 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,55 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "1,29 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE140-700BBAZ?qs=2FehpBK1j94K8s44OuM2iQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2385",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2289 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE350-700BBA/SOT428/DPAK",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE350-700BBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE350-700BBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE350-700BBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,30 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,32 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,01 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,851 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,803 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,656 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,615 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE350-700BBAZ?qs=2FehpBK1j95bURZfW45CpQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2289",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1904 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE350-650FBA/SOT8075/DFN5060",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE350-650FBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE350-650FBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE350-650FBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,24 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,10 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "0,989 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,788 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,769 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,656 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,615 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE350-650FBAZ?qs=2FehpBK1j965RjiLk1lDcg%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1904",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2071 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANB8R0-040CBA/SOT8087/WLCSP16",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANB8R0-040CBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANB8R0-040CBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANB8R0-040CBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,02 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "0,912 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,728 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,704 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,605 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,559 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANB8R0-040CBAZ?qs=efUn273yAhckTcV2UsF4Ww%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2071",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2346 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE190-700BBA/SOT428/DPAK",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE190-700BBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE190-700BBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE190-700BBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "3,34 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,69 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,62 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,35 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,28 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "1,06 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE190-700BBAZ?qs=2FehpBK1j97jJkQ6QJTxMA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2346",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2373 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN190-650FBE/SOT8075/DFN5060-",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GAN140-650FBEZ_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN190-650FBEZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN190-650FBEZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,25 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,06 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,75 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,63 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "1,20 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN190-650FBEZ?qs=3Rah4i%252BhyCG124lWJZf06w%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2373",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2149 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANB4R8-040CBA/SOT8086/WLCSP22",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/ITP_771-GANB4R8-040CBAZ_t.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANB4R8-040CBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANB4R8-040CBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,67 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,32 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,20 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,963 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,946 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,809 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,783 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANB4R8-040CBAZ?qs=2wMNvWM5ZX7wTpQiPnGLTA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2149",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1775 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN080-650EBE/SOT8074/DFN8080-",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GAN080-650EBEZ_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN080-650EBEZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN080-650EBEZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "7,11 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,85 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,53 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,45 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,16 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "2,93 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN080-650EBEZ?qs=3Rah4i%252BhyCGYYTu6c3MHfw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1775",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2009 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANB012-040CBA/SOT8088/WLCSP12",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANB012-040CBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANB012-040CBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANB012-040CBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,75 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "0,77 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "0,721 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,572 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,554 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,445 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,398 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25000,
+      "Price": "0,391 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANB012-040CBAZ?qs=2FehpBK1j9691UGjVp%2FQAQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2009",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1987 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANB1R2-040QBA/SOT8092/VQFN16",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANB1R2-040QBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANB1R2-040QBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANB1R2-040QBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "7,48 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,07 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,74 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,69 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,38 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "3,13 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANB1R2-040QBAZ?qs=2FehpBK1j96t1FHuXEztNw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1987",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2448 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE240-700BBA/SOT428/DPAK",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE240-700BBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE240-700BBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE240-700BBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "3,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,52 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,41 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,18 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,14 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,937 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,928 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE240-700BBAZ?qs=2FehpBK1j97uoP9MP8oYpA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2448",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "314 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN111-650WSB/SOT429/TO-247",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/sot429-3_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN111-650WSBQ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN111-650WSBQ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "30"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "10,81 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,06 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 120,
+      "Price": "5,02 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 510,
+      "Price": "4,80 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN111-650WSBQ?qs=IKkN%2F947nfBSj%2FfQplrewQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "314",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1453 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE2R7-100CBA/SOT8089/WLCSP22",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE2R7-100CBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE2R7-100CBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE2R7-100CBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,64 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,41 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,18 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,85 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1500,
+      "Price": "1,85 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE2R7-100CBAZ?qs=2FehpBK1j960PNVsPHFnKQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1453",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "988 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE7R0-100CBA/SOT8090/WLCSP6",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE7R0-100CBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE7R0-100CBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE7R0-100CBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,33 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,14 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,823 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,795 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1500,
+      "Price": "0,724 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "0,65 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 9000,
+      "Price": "0,649 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE7R0-100CBAZ?qs=2FehpBK1j946W%2FQJYFtvtQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "988",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1840 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN7R0-150LBE/SOT8073/FCLGA",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GAN7R0-150LBEZ_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN7R0-150LBEZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN7R0-150LBEZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "3,35 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,76 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,57 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,32 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,29 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "1,12 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN7R0-150LBEZ?qs=3Rah4i%252BhyCG9ftWcAfuxkQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1840",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "496 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN039-650NTB/SOT8005/CCPAK121",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GAN039-650NTBJ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN039-650NTBJ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN039-650NTBJ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "13,00 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "7,61 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "6,46 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN039-650NTBJ?qs=IKkN%2F947nfBSaOcDxZ%252BlSQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "496",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "531 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN190-650EBE/SOT8074/DFN8080-",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GAN080-650EBEZ_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN190-650EBEZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN190-650EBEZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,65 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,18 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,84 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,44 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "1,27 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN190-650EBEZ?qs=3Rah4i%252BhyCGR6U5TfvRrtw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "531",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2457 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE1R8-100QBA/SOT8091/VQFN7",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE1R8-100QBAZ_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE1R8-100QBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE1R8-100QBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "9,14 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "5,07 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "4,81 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "4,40 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "4,08 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE1R8-100QBAZ?qs=2FehpBK1j97DgEhDBGZw%252BQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2457",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "11 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN140-650FBE/SOT8075/DFN5060-",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GAN140-650FBEZ_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN140-650FBEZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN140-650FBEZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "6,06 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,62 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,97 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,67 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "2,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "1,87 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN140-650FBEZ?qs=3Rah4i%252BhyCHEen1UWH7%2Fog%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "11",
+    "AvailabilityOnOrder": [
+     {
+      "Quantity": 2500,
+      "Date": "2026-11-03T00:00:00"
+     }
+    ],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "711 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN039-650NBB/SOT8000/CCPAK121",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/CCPAK1212-13_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN039-650NBBHP",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN039-650NBBHP",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "13,00 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "7,61 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "6,46 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN039-650NBBHP?qs=ST9lo4GX8V2J9hdr9ZSloA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "REACH-SVHC": [
+     "Lead (7439-92-1)"
+    ],
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "711",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "560 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN3R2-100CBE/SOT8072/WLCSP8",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GAN3R2-100CBEAZ_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN3R2-100CBEAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN3R2-100CBEAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,28 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,22 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,01 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,75 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,50 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1500,
+      "Price": "1,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "1,48 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN3R2-100CBEAZ?qs=3Rah4i%252BhyCGCdd4XaWDeeg%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "560",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "119 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GAN041-650WSB/SOT429/TO-247",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/Nexperia_SOT429_TO-247-3_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "28 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GAN041-650WSBQ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GAN041-650WSBQ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "30"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "10,29 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "7,55 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "6,45 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "6,26 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "6,02 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 30,
+      "Price": "7,55 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GAN041-650WSBQ?qs=KUoIvG%2F9IlZ8fonS3RiU8Q%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.000123
+    },
+    "AvailabilityInStock": "119",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2067 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs GANE3R9-150QBA/SOT8091/VQFN7",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/nexperia/images/GANE3R9-_VQFN_7_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "112 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Nexperia",
+    "ManufacturerPartNumber": "GANE3R9-150QBAZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "771-GANE3R9-150QBAZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,27 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,55 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "4,21 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,86 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "3,58 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Nexperia/GANE3R9-150QBAZ?qs=2wMNvWM5ZX6apnXG90NyGg%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2067",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "711 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/829/1/CGHV1F006S.pdf",
+    "Description": "GaN FETs GaN HEMT DC-18GHz, 6 Watt",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/wolfspeed/images/CGHV1F006S_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "182 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "MACOM",
+    "ManufacturerPartNumber": "CGHV1F006S",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "941-CGHV1F006S",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "250"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "77,44 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "62,14 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "56,25 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "56,25 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/MACOM/CGHV1F006S?qs=nZCw0MZkbzZQ%2F%2F6h5xudxw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.001449231
+    },
+    "AvailabilityInStock": "711",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "32 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/829/1/CGH40006S.pdf",
+    "Description": "GaN FETs GaN HEMT DC-6.0GHz, 6 Watt",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/wolfspeed/images/CGH40006S_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "182 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "MACOM",
+    "ManufacturerPartNumber": "CGH40006S",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "941-CGH40006S",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "200"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "52,22 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "45,00 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "42,22 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "40,57 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 200,
+      "Price": "37,33 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/MACOM/CGH40006S?qs=2kOmHSv6VfQT4oF%2Fq28P%252Bw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.002898462
+    },
+    "AvailabilityInStock": "32",
+    "AvailabilityOnOrder": [
+     {
+      "Quantity": 3600,
+      "Date": "2026-10-23T00:00:00"
+     }
+    ],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399901"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "778 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/829/1/CG2H40045.pdf",
+    "Description": "GaN FETs GaN HEMT DC-4.0GHz, 45 Watt",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/wolfspeed/images/CG2H40045F_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "182 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "MACOM",
+    "ManufacturerPartNumber": "CG2H40045F",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "941-CG2H40045F",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tray"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "20"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "382,79 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "323,07 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 20,
+      "Price": "321,28 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/MACOM/CG2H40045F?qs=chTDxNqvsykTcsTxBPz0pA%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.009105
+    },
+    "AvailabilityInStock": "778",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "United States"
+     }
+    ]
+   },
+   {
+    "Availability": "18 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/912/1/CGH55030.pdf",
+    "Description": "GaN FETs GaN HEMT 5.5-5.8GHz, 30 Watt",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/wolfspeed/images/CGH55030F1_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "50 Days",
+    "LifecycleStatus": "Factory Special Order",
+    "Manufacturer": "MACOM",
+    "ManufacturerPartNumber": "CGH55030F1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "941-CGH55030F1",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tray"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "206,25 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "177,20 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/MACOM/CGH55030F1?qs=kSQU7otX9tae5lEsSfwOVg%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.007452727
+    },
+    "AvailabilityInStock": "18",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "8541290100"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "85412999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "123 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1081/1/T2G6001528_Q3_Data_Sheet.pdf",
+    "Description": "GaN FETs DC-6.0GHz 18 Watt 28V GaN",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/qorvo/images/T2G6000528_Q3_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Qorvo",
+    "ManufacturerPartNumber": "T2G6001528-Q3",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "772-T2G6001528-Q3",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tray"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "100"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "207,64 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "205,59 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "140,81 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Qorvo/T2G6001528-Q3?qs=1vfYvNkoS0XOYSUl5YO%2F9A%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.006735769
+    },
+    "AvailabilityInStock": "123",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "130 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1081/1/QPD0060_Data_Sheet.pdf",
+    "Description": "GaN FETs DC-3.6GHz GaN 90W 48V",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/qorvo/images/QPD0060_DSL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "126 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Qorvo",
+    "ManufacturerPartNumber": "QPD0060",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "772-QPD0060",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "100"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "149,59 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "125,13 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "115,32 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "104,63 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "QPD0060TR7"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Qorvo/QPD0060?qs=5aG0NVq1C4yzcVSAyrK3yA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "130",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "11 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs 750W,65V,Pre-matched,1.2-1.4GHz,Earl",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/qorvo/images/QPD1028_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Qorvo",
+    "ManufacturerPartNumber": "QPD1028",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "772-QPD1028",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Waffle"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "18"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2.392,05 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Qorvo/QPD1028?qs=TCDPyi3sCW0H6rcLOSSMOw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "11",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "140 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/829/1/CGH27030.pdf",
+    "Description": "GaN FETs GaN HEMT DC-6.0GHz, 30 Watt",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/wolfspeed/images/CGH27030S_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "182 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "MACOM",
+    "ManufacturerPartNumber": "CGH27030S",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "941-CGH27030S",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "250"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "80,82 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "67,50 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "65,08 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "65,08 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/MACOM/CGH27030S?qs=QCeblM2RIWhoUahwY7df9g%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "140",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "8541290100"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "85412999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "101 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/829/1/CGH27015.pdf",
+    "Description": "GaN FETs GaN HEMT VHF-3.0GHz, 15 Watt",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/wolfspeed/images/CGH27015F_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "182 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "MACOM",
+    "ManufacturerPartNumber": "CGH27015F",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "941-CGH27015F",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tray"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "50"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "113,99 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "96,15 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "89,01 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/MACOM/CGH27015F?qs=QCeblM2RIWh5BM0DWLPI9w%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.004825833
+    },
+    "AvailabilityInStock": "101",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "25 In Stock",
+    "DataSheetUrl": "",
+    "Description": "GaN FETs Unmatched Discrete GaN-on-SiC HEMT 30W PSAT at 50V or 19W PSAT at 28V",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/guerrillarf/images/GRF5226_DSL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "192 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Guerrilla RF",
+    "ManufacturerPartNumber": "GRF0020",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "459-GRF0020",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "50"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "136,46 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "129,62 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 50,
+      "Price": "129,62 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "119,41 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Guerrilla-RF/GRF0020?qs=%252BHhoWzUJg4LMWJEcY2v85g%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "25",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "82 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/catalog/specsheets/Qorvo_QPD1010_Product_Data_Sheet_Rev.G.pdf",
+    "Description": "GaN FETs DC-4GHz 10W 28-50V SSG 25dB PAE 70% GaN",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/QFN_16_EP_t.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Qorvo",
+    "ManufacturerPartNumber": "QPD1010",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "772-QPD1010",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Waffle"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "50"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "65,40 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "54,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 50,
+      "Price": "48,24 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Qorvo/QPD1010?qs=1cUJgmOA5Ae15kmTrPujsQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.0023
+    },
+    "AvailabilityInStock": "82",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399901"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2100 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1166/1/REN_RTP100E2P6G1FL_DST_20260922.pdf",
+    "Description": "GaN FETs 100V 2.6m LV GaN FET in 5x6 RQFN",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/renesas/images/RTP100E2P6G19876_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "154 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Renesas Electronics",
+    "ManufacturerPartNumber": "RTP100E2P6G1FL-TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "227-RTP100E2P6G1FLTR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,33 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,85 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,12 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,78 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,72 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "1,45 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 6000,
+      "Price": "1,40 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Renesas-Electronics/RTP100E2P6G1FL-TR?qs=bDnubaabCY%2FZSEns4l1vJg%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2100",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290085"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "53 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/829/1/GTVA262701FA.pdf",
+    "Description": "GaN FETs 270W GaN HEMT 48V 2496 to 2690MHz",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/macomtechnologysolutions/images/H-87265J-2_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "0 Days",
+    "LifecycleStatus": "Factory Special Order",
+    "Manufacturer": "MACOM",
+    "ManufacturerPartNumber": "GTVA262701FA-V2-R0",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "941-GTVA262701FAV2R0",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "50"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "176,79 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "150,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "149,20 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 50,
+      "Price": "149,20 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "GTVA262701FA-V2-R2"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/MACOM/GTVA262701FA-V2-R0?qs=T3oQrply3y96kw8SeLyZCg%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "53",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2100 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1166/1/REN_RTP100E005G1FL_DST_20260922.pdf",
+    "Description": "GaN FETs 100V 5m LV GaN FET in 3x3 RQFN",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/renesas/images/RTP100E0059876_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "154 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Renesas Electronics",
+    "ManufacturerPartNumber": "RTP100E005G1FL-TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "227-RTP100E005G1FLTR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,93 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,90 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,32 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,10 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,06 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "0,894 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 6000,
+      "Price": "0,861 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Renesas-Electronics/RTP100E005G1FL-TR?qs=bDnubaabCY%2FqZxmkdQ6hgQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2100",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290095"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "9 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/829/1/GTVA126001ECFC.pdf",
+    "Description": "GaN FETs GaN HEMT 50V 1.2-1.4GHz 600W",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/creeinc/images/H-36248-2_t.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "182 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "MACOM",
+    "ManufacturerPartNumber": "GTVA126001EC-V1-R0",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "941-GTVA126001ECV1R0",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "50"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "988,11 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 50,
+      "Price": "988,11 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/MACOM/GTVA126001EC-V1-R0?qs=vLWxofP3U2xHLMqBvm%252Bu%2FA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "9",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290055"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "3900 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/infineon_igka23s101s_datasheet_en.pdf",
+    "Description": "GaN FETs CoolGaN Transistor 100 V G3 in WLCSP 0.9x0.9, 185 m",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/IGKA23S101SXTSA1_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "154 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "IGKA23S101SXTSA1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-IGKA23S101SXTSA1",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "4000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,88 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,20 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "0,808 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,655 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,587 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,549 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 4000,
+      "Price": "0,52 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 8000,
+      "Price": "0,475 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/IGKA23S101SXTSA1?qs=AeBljyeJo%252BhORP8xtbigjA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "3900",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Germany"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "3009 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/GS-065-011-2-L-DS-Rev-220712.pdf",
+    "Description": "GaN FETs LEGACY GAN SYSTEMS",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/gansystems/images/PDFN-6_t.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "126 Days",
+    "LifecycleStatus": "End of Life",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "GS-065-011-2-L-TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "499-GS-065-011-2-LTR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,50 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,60 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,65 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,36 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "2,08 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "1,97 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 6000,
+      "Price": "1,90 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/GS-065-011-2-L-TR?qs=e8oIoAS2J1S2CQDrpAqVDA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "726-IGL65R140D2XUMA1",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "3009",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "4 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/catalog/specsheets/Qorvo_02-24-2026_QPD2560L.pdf",
+    "Description": "GaN FETs 1-1.5GHz,300W,NI-650",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/qorvo/images/QPD2560L_SPL.JPG",
+    "Category": "GaN FETs",
+    "LeadTime": "84 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Qorvo",
+    "ManufacturerPartNumber": "QPD2560L",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "772-QPD2560L",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "25"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "842,55 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "834,21 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Qorvo/QPD2560L?qs=vcFyY%252BOcAygWshcKwgKzrw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "4",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2437 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/GS-065-011-1-L-DS-Rev-220708.pdf",
+    "Description": "GaN FETs LEGACY GAN SYSTEMS",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/gansystems/images/PDFN-6_t.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "126 Days",
+    "LifecycleStatus": "End of Life",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "GS-065-011-1-L-MR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "499-GS-065-011-1-L",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "250"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,96 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,60 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,10 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "2,10 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,93 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,87 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/GS-065-011-1-L-MR?qs=zW32dvEIR3sxWMIEfpBGRA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "726-IGLR65R140D2XUMA",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.00233750000001
+    },
+    "AvailabilityInStock": "2437",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "2655 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/infineon_igi60l1111b1m_datasheet_en.pdf",
+    "Description": "GaN FETs CoolGaN Drive HB 600 V G5",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/IGI60L1111B1MXUMA1_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "126 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "IGI60L1111B1MXUMA1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-IGI60L1111B1MXUM",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,84 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,16 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,00 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "3,21 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/IGI60L1111B1MXUMA1?qs=CoAU%2FpHVZXxwzdCJSs%252B1iw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2655",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Austria"
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -40,6 +40,10 @@ import java.util.Map;
  *                     mount and aluminium housed; {@code search.FormFactor}), null when none; a package with a form
  *                     factor (SOT-227, 0805) is read from {@link #packageName} instead. A hard constraint for
  *                     resistors, capacitors, inductors and the default family (DESIGN.md 3.4)
+ * @param partNumbers  the part-number-shaped tokens of the query as sent ({@code uP1966E}, {@code EPC2302}): letters
+ *                     and digits mixed, at least 5 characters, no value, unit, package or vocabulary word
+ *                     ({@code search.PartNumbers}); a part whose MPN or distributor part number equals one or starts
+ *                     with it is the requested part (DESIGN.md 3.4 "Requested part numbers"); empty when none
  */
 @Builder(toBuilder = true)
 public record ParsedQuery(
@@ -57,7 +61,8 @@ public record ParsedQuery(
         Integer elements,
         String polarity,
         String subtype,
-        String formFactor
+        String formFactor,
+        List<String> partNumbers
 ) {
 
     /** {@link #elements()} of a request for an array or network whose element count is not stated. */
@@ -135,13 +140,14 @@ public record ParsedQuery(
         constraints = constraints == null ? Map.of() : constraints;
         keywords = keywords == null ? List.of() : List.copyOf(keywords);
         preferences = preferences == null ? List.of() : List.copyOf(preferences);
+        partNumbers = partNumbers == null ? List.of() : List.copyOf(partNumbers);
     }
 
     /** A query without connector attributes. */
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
         this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     /**
@@ -153,6 +159,11 @@ public record ParsedQuery(
         return family != null || !constraints.isEmpty() || dielectric != null || packageName != null
                 || mounting != null || technology != null || connector != null || elements != null
                 || formFactor != null;
+    }
+
+    /** True when the query names a part number ({@link #partNumbers}). */
+    public boolean namesPartNumber() {
+        return !partNumbers.isEmpty();
     }
 
     /** True when the query states the preference ({@link #LOW_DCR}). */

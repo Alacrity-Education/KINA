@@ -1,0 +1,5488 @@
+{
+ "Errors": [],
+ "SearchResults": {
+  "NumberOfResult": 298,
+  "Parts": [
+   {
+    "Availability": "1361 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 600 V half-bridge enhancement mode GaN HEMT with high voltage driver",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/MASTERGAN4L_DSL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN4LTR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN4LTR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,34 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,52 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "3,32 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "3,07 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "3,06 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MASTERGAN4L"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN4LTR?qs=Imq1NPwxi76ZVash56ONdg%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "511-MASTERGAN4L",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1361",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1168 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 600 V half-bridge enhancement mode GaN HEMT with high voltage driver",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/MASTERGAN1L_DSL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN1LTR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN1LTR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,47 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "4,22 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,94 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "3,87 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "3,86 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MASTERGAN1L"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN1LTR?qs=Imq1NPwxi77qAc6sk1FBlQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "511-MASTERGAN1L",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1168",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2883 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers High power density 600V Half bridge driver with two enhancement mode GaN HEMTs",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/MASTERGAN2_SPL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN2TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN2TR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "6,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "5,01 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "4,53 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "4,15 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "3,96 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,95 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,84 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "3,74 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MASTERGAN2"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN2TR?qs=81r%252BiQLm7BQvt0htY1lJdA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "511-MASTERGAN2",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2883",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "700 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 650 V enhancement mode GaN High power density half-bridge with high voltage driver",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/MASTERGAN7TR_SPL.JPG",
+    "Category": "Gate Drivers",
+    "LeadTime": "182 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN7TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN7TR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "6,02 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,62 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "4,27 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,89 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "3,73 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,67 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,66 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "3,44 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN7TR?qs=dhCoiiGcT1KBJ0K6E8QhYg%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.00015
+    },
+    "AvailabilityInStock": "700",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Singapore"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "461 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers High power density 600 V Half bridge driver with two enhancement mode GaN HEMTs",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/QFN-31_DSL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN3TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN3TR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,82 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,93 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "3,74 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "3,73 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MASTERGAN3"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN3TR?qs=QNEnbhJQKvbXh6ApV8VWJQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "SuggestedReplacement": "511-MASTERGAN3",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "461",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "5 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/erboard_series_with_different_gate_drive_solutions_for_coolgan_transistors_650v_g5_usermanual_en.pdf",
+    "Description": "Power Management IC Development Tools Half-bridge daughter board with CoolGaN Transistor 650 V G5 in TOLL and bootstrap driver IC",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/KITHBGANBTRCTLLATOBO1_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "365 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "KITHBGANBTRCTLLATOBO1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-KITHBGANBTRCTLLA",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "110,97 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/KITHBGANBTRCTLLATOBO1?qs=dhCoiiGcT1I0OklPxOUWHg%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "5",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8543700000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8543709860"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854370000"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "6 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/erboard_series_with_different_gate_drive_solutions_for_coolgan_transistors_650v_g5_usermanual_en.pdf",
+    "Description": "Power Management IC Development Tools Half-bridge daughter board with CoolGaN Transistor 650 V G5 in TOLL and bootstrap driver IC with miller-clamp function",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/KITHBGANBTMLTLLATOBO1_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "365 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "KITHBGANBTMLTLLATOBO1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-KITHBGANBTMLTLLA",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "92,79 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/KITHBGANBTMLTLLATOBO1?qs=dhCoiiGcT1IeezP6HZYxSQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "6",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8543700000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8543709860"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854370000"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "405 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 650 V enhancement mode GaN High power density half-bridge with high voltage driver",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/MASTERGAN6TR_SPL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN6TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN6TR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,25 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,81 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "5,31 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "5,15 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "5,07 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "5,00 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "4,60 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN6TR?qs=4dK74SdgGtwzDTtkoTE%252BnA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.000194
+    },
+    "AvailabilityInStock": "405",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Singapore"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "34 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Power Management IC Development Tools Half-bridge evaluation board with 100 V CoolGaN power transistor & gate driver",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/EVAL7136U100VGANCTOBO1_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "365 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "EVAL7136U100VGANCTOBO1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-EVAL7136U100VGAN",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "132,82 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/EVAL7136U100VGANCTOBO1?qs=bN4HulGPsrHaoW1eGjBeOQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "34",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "9030820000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8543709990"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "9030820000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "9030820000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "9030820000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "9030820100"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": null
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": null
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": null
+     }
+    ]
+   },
+   {
+    "Availability": "366 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers High power density 600V half-bridge driver with two enhancement mode GaN HEMTs",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/ITP_511-MASTERGAN1_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN1",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tray"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1560"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "9,89 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "7,71 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "7,17 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "6,57 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "6,21 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "6,11 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "5,38 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MASTERGAN1TR"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN1?qs=hWgE7mdIu5TUQlvSzk235A%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.00012
+    },
+    "AvailabilityInStock": "366",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "112 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers High power density 600V half-bridge driver with two enhancement mode GaN HEMTs",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/ITP_511-MASTERGAN4_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN4",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN4",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tray"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1560"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "7,74 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "5,97 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,53 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "5,04 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "4,57 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,45 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "4,19 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "4,15 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MASTERGAN4TR"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN4?qs=DRkmTr78QAQaFVLu3dcgnA%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.00015
+    },
+    "AvailabilityInStock": "112",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "58 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Power Management IC Development Tools BOOSTXL-3PHGANINV",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/BOOSTXL-3PHGANINV_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "84 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "BOOSTXL-3PHGANINV",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-BOOSTXL3PHGANINV",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "60,26 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/BOOSTXL-3PHGANINV?qs=HXFqYaX1Q2zhyuwaJ9MJkQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "Not Applicable",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.140616
+    },
+    "AvailabilityInStock": "58",
+    "AvailabilityOnOrder": [
+     {
+      "Quantity": 56,
+      "Date": "2027-01-07T00:00:00"
+     },
+     {
+      "Quantity": 58,
+      "Date": "2027-04-16T00:00:00"
+     }
+    ],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "5",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8543909000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8473301180"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": ""
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8473300499"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "5 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Power Management IC Development Tools Demonstration board for MASTERGAN1 high power density half-bridge high voltage d",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/EVALMASTERGAN1_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "EVALMASTERGAN1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-EVALMASTERGAN1",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Bulk"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "114,84 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/EVALMASTERGAN1?qs=hWgE7mdIu5SdN7mfVrtpjg%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.07
+    },
+    "AvailabilityInStock": "5",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "5",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "9030820000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8543709990"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "9030820000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "9030820000"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "902300000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "9030820000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "9030820100"
+     },
+     {
+      "ComplianceName": "BRHTS",
+      "ComplianceValue": "90230000"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Italy"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Italy"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "4 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Power Management IC Development Tools Demonstration board for MASTERGAN5 high power density half-bridge high voltage d",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/EVALMASTERGAN5_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "EVALMASTERGAN5",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-EVALMASTERGAN5",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Bulk"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "129,47 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/EVALMASTERGAN5?qs=QNEnbhJQKvbcVpE%2Fa5VU9A%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "4",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "9030890100"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Italy"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Italy"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "172 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers High power density 600V Half bridge driver with two enhancement mode GaN HEMTs",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/ITP_511-MASTERGAN2_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN2",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN2",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tray"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1560"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "9,77 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "7,77 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "7,22 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "6,60 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "5,19 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MASTERGAN2TR"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN2?qs=81r%252BiQLm7BS1QBr81XZaLQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.00015
+    },
+    "AvailabilityInStock": "172",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "7 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/erboard_series_with_different_gate_drive_solutions_for_coolgan_transistors_650v_g5_usermanual_en.pdf",
+    "Description": "Power Management IC Development Tools Half-bridge daughter board with CoolGaN Transistor 650 V G5 in DFN8x8 and dual-channel bootstrap driver IC",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/KITHBGANBTRCPFNATOBO1_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "365 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "KITHBGANBTRCPFNATOBO1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-KITHBGANBTRCPFNA",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "110,96 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/KITHBGANBTRCPFNATOBO1?qs=dhCoiiGcT1KWTz2CBAWmjA%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "No",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "7",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8543709860"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "7 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/erboard_series_with_different_gate_drive_solutions_for_coolgan_transistors_650v_g5_usermanual_en.pdf",
+    "Description": "Power Management IC Development Tools Half-bridge daughter board with CoolGaN Transistor 650 V G5 in DFN8x8 package and bootstrap driver IC with miller-clamp function",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/KITHBGANBTMLPFNATOBO1_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "365 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "KITHBGANBTMLPFNATOBO1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-KITHBGANBTMLPFNA",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "94,74 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/KITHBGANBTMLPFNATOBO1?qs=dhCoiiGcT1Igu78PMTimag%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "No",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "7",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8543709860"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "5 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/erboard_series_with_different_gate_drive_solutions_for_coolgan_transistors_650v_g5_usermanual_en.pdf",
+    "Description": "Power Management IC Development Tools Half-bridge daughter board with ISO aux power and CoolGaN Transistor 650 V G5 in DFN8x8 package",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/KITHBGANISOPFNATOBO1_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "365 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "KITHBGANISOPFNATOBO1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-KITHBGANISOPFNAT",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "161,19 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/KITHBGANISOPFNATOBO1?qs=dhCoiiGcT1Kexiir0O2Yew%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "No",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "5",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8543709860"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Taiwan"
+     }
+    ]
+   },
+   {
+    "Availability": "62 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers High power density 600 V half-bridge driver with two enhancement mode GaN power",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/QFN-31_DSL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "MASTERGAN5",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-MASTERGAN5",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tray"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1560"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "6,40 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,95 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "4,58 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,98 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,86 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,77 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MASTERGAN5TR"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/MASTERGAN5?qs=QNEnbhJQKvaCmBSOnH%252BB7w%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "62",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "4 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Power Management IC Development Tools LMG3411EVM-029 HALF BRIDGE",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/LMG3411EVM-029_SPL.jpg",
+    "Category": "Power Management IC Development Tools",
+    "LeadTime": "84 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "LMG3411EVM-029",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-LMG3411EVM-029",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "264,13 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "IWR1443FQAGABLR"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/LMG3411EVM-029?qs=byeeYqUIh0MxaLsQk2RbXA%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "Not Applicable",
+    "REACH-SVHC": [
+     "Lead (7439-92-1)"
+    ],
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.23303
+    },
+    "AvailabilityInStock": "4",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "5",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8543709990"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8473302000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8473301180"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8473300401"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "United States"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "33522 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers Half Bridge Gate Dvr",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/SO_8_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "224 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "onsemi",
+    "ManufacturerPartNumber": "FAN7380MX",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "512-FAN7380MX",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "0,751 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "0,655 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "0,597 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "0,544 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,526 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,508 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "0,476 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/onsemi/FAN7380MX?qs=Qe1jOhZwee1V4TGQYUTgKA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.000143
+    },
+    "AvailabilityInStock": "33522",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "3000",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542319000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "8542390990"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Czech Republic"
+     }
+    ]
+   },
+   {
+    "Availability": "3620 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1014/1/7B871E689514EB23BA76529A70A4EE28D7EAD93B4F2A29E429C2E7EDD44EF7CE.pdf",
+    "Description": "Galvanically Isolated Gate Drivers Iso 1/2 Bridge Drv w PWM input UVLO 4.5V",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/adi/images/ITP_ADI_SOIC-16_RI-16-2_t.jpg",
+    "Category": "Galvanically Isolated Gate Drivers",
+    "LeadTime": "0 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Analog Devices",
+    "ManufacturerPartNumber": "ADUM4221-1ARIZ-RL",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "584-ADUM4221-1ARIZ-R",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,05 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,29 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,72 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "5,31 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "5,11 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,96 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "4,83 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "4,64 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "ADUM4221-1ARIZ"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Analog-Devices/ADUM4221-1ARIZ-RL?qs=DPoM0jnrROV52RNPfUBhRQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "584-ADUM4221-1ARIZ",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "3620",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "2896",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "13551 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1014/1/7B871E689514EB23BA76529A70A4EE28D7EAD93B4F2A29E429C2E7EDD44EF7CE.pdf",
+    "Description": "Galvanically Isolated Gate Drivers Iso 1/2 Bridge Drv w PWM input UVLO 7.5V",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/adi/images/ITP_ADI_SOIC-16_RI-16-2_t.jpg",
+    "Category": "Galvanically Isolated Gate Drivers",
+    "LeadTime": "0 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Analog Devices",
+    "ManufacturerPartNumber": "ADUM4221-1BRIZ-RL",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "584-ADUM4221-1BRIZ-R",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,31 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,54 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,85 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "5,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "5,42 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "4,64 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "ADUM4221-1BRIZ"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Analog-Devices/ADUM4221-1BRIZ-RL?qs=DPoM0jnrROXy9Eic7bTXuQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "584-ADUM4221-1BRIZ",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "13551",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "10840",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "6296 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 700V HALF BRIDGE D",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/DFN_10_EP_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "217 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "onsemi",
+    "ManufacturerPartNumber": "NCP51530BMNTWG",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "863-NCP51530BMNTWG",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "4000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,33 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "0,98 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "0,886 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "0,783 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "0,735 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,706 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,697 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "0,654 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 4000,
+      "Price": "0,607 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/onsemi/NCP51530BMNTWG?qs=%252BEew9%252B0nqrDCl5YmbLa9bA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.000109736
+    },
+    "AvailabilityInStock": "6296",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "United States"
+     }
+    ]
+   },
+   {
+    "Availability": "9054 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 700V HALF BRIDGE DRIVER",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/ITP_SOIC_8_new_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "175 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "onsemi",
+    "ManufacturerPartNumber": "NCP51530BDR2G",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "863-NCP51530BDR2G",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,16 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "0,843 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "0,703 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "0,646 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "0,602 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,585 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,57 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,538 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/onsemi/NCP51530BDR2G?qs=y6ZabgHbY%252ByFUyMlMHTOtQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "9054",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "2500",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "United States"
+     }
+    ]
+   },
+   {
+    "Availability": "4233 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1014/1/7B871E689514EB23BA76529A70A4EE28D7EAD93B4F2A29E429C2E7EDD44EF7CE.pdf",
+    "Description": "Galvanically Isolated Gate Drivers Iso 1/2 Bridge Drv w PWM input UVLO 7.5V",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/adi/images/ITP_ADI_SOIC-16_RI-16-2_t.jpg",
+    "Category": "Galvanically Isolated Gate Drivers",
+    "LeadTime": "0 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Analog Devices",
+    "ManufacturerPartNumber": "ADUM4221-1BRIZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "584-ADUM4221-1BRIZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tube"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "37"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,15 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,31 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,80 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 111,
+      "Price": "5,35 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 259,
+      "Price": "5,10 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 518,
+      "Price": "4,95 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1036,
+      "Price": "4,83 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2516,
+      "Price": "4,64 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "ADUM4221-1BRIZ-RL"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Analog-Devices/ADUM4221-1BRIZ?qs=DPoM0jnrROUVNkW6olBEmQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "584-ADUM4221-1BRIZ-R",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "4233",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "3386",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1055 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 2.5-A to 3.5-A 120- V half bridge gate d A 595-UCC27289DR",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/soic-8_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "84 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "UCC27289D",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-UCC27289D",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tube"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "75"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,18 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,63 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "1,36 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 75,
+      "Price": "1,28 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 300,
+      "Price": "1,23 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 525,
+      "Price": "1,11 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "UCC27289DR"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/UCC27289D?qs=eP2BKZSCXI69QYApGJUSmw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "595-UCC27289DR",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1055",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Mexico"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "239 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 650-V 170/248-m? GaN half-bridge for ACF",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/VQFN-RRG-40_SPL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "LMG2610RRGT",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-LMG2610RRGT",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "250"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "13,30 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "10,53 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "9,83 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "9,12 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "8,69 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "8,31 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "8,22 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/LMG2610RRGT?qs=rQFj71Wb1eU%252Bwz3d5zCU5w%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "REACH-SVHC": [
+     "Lead (7439-92-1)"
+    ],
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "239",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "8288 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers AUTO HALF BRIDGE MOSFET DRIVER WITH LS DRAIN",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/allegromicrosystems/images/LP-24_package_SPL.JPG",
+    "Category": "Gate Drivers",
+    "LeadTime": "252 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Allegro MicroSystems",
+    "ManufacturerPartNumber": "A89503KLPTR-5",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "250-A89503KLPTR-5",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "4000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,04 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,07 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "2,83 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,56 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "2,43 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "2,29 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "2,24 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 4000,
+      "Price": "2,20 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Allegro-MicroSystems/A89503KLPTR-5?qs=pUKx8fyJudCm%252BGPu4GA%2Fhw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "8288",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542310000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542310030"
+     },
+     {
+      "ComplianceName": "BRHTS",
+      "ComplianceValue": ""
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1516 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers Hi-Volt Half Bridge",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/SOIC_8_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "L6571BD",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-L6571BD",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tube"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "3,50 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,65 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "2,39 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,19 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "2,07 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,96 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "1,90 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "L6571BD013TR"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/L6571BD?qs=m1mLs7xZQgORTEK6FXlfmw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.0001246
+    },
+    "AvailabilityInStock": "1516",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "8542390990"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "85423999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "621 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1014/1/7B871E689514EB23BA76529A70A4EE28D7EAD93B4F2A29E429C2E7EDD44EF7CE.pdf",
+    "Description": "Galvanically Isolated Gate Drivers Iso 1/2 Bridge Drv wPWM input UVLO 11.6V",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/adi/images/ITP_ADI_SOIC-16_RI-16-2_t.jpg",
+    "Category": "Galvanically Isolated Gate Drivers",
+    "LeadTime": "0 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Analog Devices",
+    "ManufacturerPartNumber": "ADUM4221-1CRIZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "584-ADUM4221-1CRIZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tube"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "37"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,41 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,54 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "6,08 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 111,
+      "Price": "5,56 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 259,
+      "Price": "5,27 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "ADUM4221-1CRIZ-RL"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Analog-Devices/ADUM4221-1CRIZ?qs=DPoM0jnrROX1Zx52x3HA6Q%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "584-ADUM4221-1CRIZ-R",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "621",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "496",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1224 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers Automotive 3-A 120- V half bridge driver",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/ITP_TI_SOIC-8_D_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "UCC27282QDQ1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-UCC27282QDQ1",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tube"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "75"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "3,29 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "2,10 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 75,
+      "Price": "2,00 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 300,
+      "Price": "1,93 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 525,
+      "Price": "1,90 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "UCC27282QDRQ1"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/UCC27282QDQ1?qs=bAKSY%2FctAC5mavLE05ocrw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "1224",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Mexico"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "1392 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers Automotive 4-A 27-V half bridge gate dr",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/ITP_TI_SOIC-8_D_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "TPS28225TDRQ1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-TPS28225TDRQ1",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,98 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,46 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "1,33 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,20 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "1,13 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,05 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "1,01 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,989 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/TPS28225TDRQ1?qs=zEQ6BYqA5vGU9q2mes8pJA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 7.59e-05
+    },
+    "AvailabilityInStock": "1392",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399901"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Mexico"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "4731 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers Hi-Volt Half Bridge",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/stmicroelectronics/images/SOIC_8_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "364 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "STMicroelectronics",
+    "ManufacturerPartNumber": "L6571BD013TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "511-L6571BD-TR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,81 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,34 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "1,22 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "1,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,998 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,955 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,86 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,845 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "L6571BD"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/STMicroelectronics/L6571BD013TR?qs=NkZ%2FYKF3iDJFVavf4PY3CQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "511-L6571BD",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.0001246
+    },
+    "AvailabilityInStock": "4731",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "8542390990"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "85423999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "7975 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers AUTOMOTIVE HALF BRIDGE MOSFET DRIVER WITH 5V COMPATIBLE IO",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/allegromicrosystems/images/LP-24_package_SPL.JPG",
+    "Category": "Gate Drivers",
+    "LeadTime": "252 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Allegro MicroSystems",
+    "ManufacturerPartNumber": "A4928KLPTR-T",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "250-A4928KLPTR-T",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "4000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,34 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,31 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "3,05 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,77 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "2,63 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,55 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "2,51 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "2,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 4000,
+      "Price": "2,30 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Allegro-MicroSystems/A4928KLPTR-T?qs=pUKx8fyJudBWSeB9HpQJ2g%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "7975",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542310000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542310030"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "236 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 600-V 70-m? GaN with integrated driver a A 595-LMG3411R070RWHR",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/TI_QFN_32_SPL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "LMG3411R070RWHT",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-LMG3411R070RWHT",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "250"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "19,57 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "15,68 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "14,70 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "13,63 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "12,86 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "12,72 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "LMG3411R070RWHR"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/LMG3411R070RWHT?qs=byeeYqUIh0PHxkYsIXrrEQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "REACH-SVHC": [
+     "Lead (7439-92-1)"
+    ],
+    "SuggestedReplacement": "595-LMG3411R070RWHR",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.0001882
+    },
+    "AvailabilityInStock": "236",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "8039 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/282/1/05_85V_Half_Bridge_MOSFET_Driver_with_Adaptive_Dead_Time_and_Shoot_Through_Protection_DS20005853.pdf",
+    "Description": "Gate Drivers 85V Half Bridge MOSFET Driver",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/TDFN_10_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "88 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Microchip Technology",
+    "ManufacturerPartNumber": "MIC4605-1YMT-TR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "998-MIC4605-1YMT-TR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "5000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "0,963 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "0,808 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,74 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Microchip-Technology/MIC4605-1YMT-TR?qs=U6T8BxXiZAUHFz0uFz0uJQ%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 5e-05
+    },
+    "AvailabilityInStock": "8039",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399901"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "7437 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1166/1/REN_hip2100_DST_20010410.pdf",
+    "Description": "Gate Drivers HIP2100IBZVERSION 100V HALF BRDG DRVR",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/ITP_SOIC_8_new_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "238 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Renesas / Intersil",
+    "ManufacturerPartNumber": "HIP2100IBZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "968-HIP2100IBZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tube"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "980"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,46 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,79 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "3,59 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,35 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "3,25 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,18 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 980,
+      "Price": "3,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2940,
+      "Price": "3,06 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "HIP2100IBZT"
+     },
+     {
+      "APMfrPN": " HIP2100IBZT7A"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Renesas-Intersil/HIP2100IBZ?qs=9OuAwqlOLJHed%252BtdqMxHPg%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 7.2e-05
+    },
+    "AvailabilityInStock": "7437",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541500000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "7103 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/5961/1/permission_denied.txt.pdf",
+    "Description": "Power Management Specialised - PMIC GaNFast Single 650V 120mOhm PQFN 56",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/navitassemiconductor/images/NV61-series_SPL.jpg",
+    "Category": "Power Management Specialised - PMIC",
+    "LeadTime": "182 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Navitas Semiconductor",
+    "ManufacturerPartNumber": "NV6117",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "740-NV6117",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "5000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,18 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,95 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "3,64 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,29 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "3,14 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,04 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,00 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "2,97 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "2,92 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "NV6117-RA"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Navitas-Semiconductor/NV6117?qs=rQFj71Wb1eVL%252BtzRsD2STw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "7103",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "7551 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 625V,0.65/0.35A sink/source current, Half Bridge Gate-Drive w variable Deadtime",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/SO_14_SPL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "onsemi",
+    "ManufacturerPartNumber": "FAN7383MX",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "512-FAN7383MX",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,20 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "0,877 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "0,795 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "0,703 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "0,66 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "0,635 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,582 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "0,556 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 6000,
+      "Price": "0,544 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/onsemi/FAN7383MX?qs=8YYpzd7qSxJqY%2FRJ2MQSYg%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.0002183
+    },
+    "AvailabilityInStock": "7551",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542319000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8542311000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Korea, Republic of"
+     }
+    ]
+   },
+   {
+    "Availability": "3424 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 1A Peak Half Bridge",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/ITP_TI_SOIC-8_D_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "LM5109BMA/NOPB",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "926-LM5109BMA/NOPB",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tube"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "95"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,12 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "0,811 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "0,646 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 95,
+      "Price": "0,605 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 285,
+      "Price": "0,587 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 570,
+      "Price": "0,571 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1045,
+      "Price": "0,563 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "LM5109BMAX/NOPB"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/LM5109BMA-NOPB?qs=QbsRYf82W3FY%2FpE5h2Xoaw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.000143
+    },
+    "AvailabilityInStock": "3424",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "703 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 600-V 150-m? GaN wit h integrated driver A 595-LMG3411R150RWHT",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/VQFN-32_DSL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "LMG3411R150RWHR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-LMG3411R150RWHR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,11 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,31 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,86 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "5,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "5,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,99 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "4,87 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "4,59 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "LMG3411R150RWHT"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/LMG3411R150RWHR?qs=vLWxofP3U2y8TmzD5vH12A%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "REACH-SVHC": [
+     "Lead (7439-92-1)"
+    ],
+    "SuggestedReplacement": "595-LMG3411R150RWHT",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "703",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "7903 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/3802/1/A4926_Datasheet.pdf",
+    "Description": "Gate Drivers AUTO HALF BRIDGE W ADVANCED DIAGNOSTICS",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/allegromicrosystems/images/LP-20_package_SPL.JPG",
+    "Category": "Gate Drivers",
+    "LeadTime": "252 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Allegro MicroSystems",
+    "ManufacturerPartNumber": "A4926KLPTR-T",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "250-A4926KLPTR-T",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "4000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "2,73 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,06 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "1,88 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,69 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "1,60 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,57 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "1,50 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "1,45 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 4000,
+      "Price": "1,34 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Allegro-MicroSystems/A4926KLPTR-T?qs=pUKx8fyJudBFjNtu5peFXw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "7903",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542310000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542310030"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2140 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers High Current Intgrtd Half Bridge Driver",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/monolithicpowersystemsmps/images/SOIC_8_NEW_SPL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "206 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Monolithic Power Systems (MPS)",
+    "ManufacturerPartNumber": "MP8040DN-LF-Z",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "946-MP8040DNLFZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "1,85 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "1,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "1,25 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "1,12 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "1,05 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "1,01 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "0,98 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "0,937 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 5000,
+      "Price": "0,92 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "MP8040DN-LF-P"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Monolithic-Power-Systems-MPS/MP8040DN-LF-Z?qs=rC7bBWoQAAkt5gBjVCz7DA%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2140",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542319000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399901"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2655 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/infineon_igi60l1111b1m_datasheet_en.pdf",
+    "Description": "GaN FETs CoolGaN Drive HB 600 V G5",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/IGI60L1111B1MXUMA1_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "126 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "IGI60L1111B1MXUMA1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-IGI60L1111B1MXUM",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,84 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,16 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,00 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,49 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "3,21 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/IGI60L1111B1MXUMA1?qs=CoAU%2FpHVZXxwzdCJSs%252B1iw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2655",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Austria"
+     }
+    ]
+   },
+   {
+    "Availability": "2922 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/1014/1/83E7CADBA7E6B1E75B1DBE6E4EB61B312AA03DD85D7D35CBC70486B5A97684AF.pdf",
+    "Description": "Galvanically Isolated Gate Drivers 1/2 Bridge Drv Iso Logic Input UVLO11.6V",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/adi/images/ITP_ADI_SOIC-16_RI-16-2_t.jpg",
+    "Category": "Galvanically Isolated Gate Drivers",
+    "LeadTime": "0 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Analog Devices",
+    "ManufacturerPartNumber": "ADUM4221-2CRIZ-RL",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "584-UM4221-2CRIZ-RL",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "1000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,33 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,53 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,91 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "5,51 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "5,24 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,99 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "4,87 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "4,76 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "ADUM4221-2CRIZ"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Analog-Devices/ADUM4221-2CRIZ-RL?qs=zW32dvEIR3soTvPs55Zu9A%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2922",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SalesMaximumOrderQty": "2337",
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "6516 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 75V 1.25A PEAK HALF BRDG DRVR",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/ITP_SOIC_8_new_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "238 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Renesas / Intersil",
+    "ManufacturerPartNumber": "ISL6700IBZ-T",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "968-ISL6700IBZ-T",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "4,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "3,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "2,84 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,77 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "2,47 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "ISL6700IBZ"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Renesas-Intersil/ISL6700IBZ-T?qs=9fLuogzTs8LYET5hSbhBZw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 7.2e-05
+    },
+    "AvailabilityInStock": "6516",
+    "AvailabilityOnOrder": [
+     {
+      "Quantity": 7500,
+      "Date": "2026-11-03T00:00:00"
+     },
+     {
+      "Quantity": 10000,
+      "Date": "2027-05-31T00:00:00"
+     }
+    ],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542319000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399901"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "292 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 600-V 150-m? GaN wit h integrated driver A 595-LMG3410R150RWHT",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/texasinstruments/images/VQFN-32_DSL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "140 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Texas Instruments",
+    "ManufacturerPartNumber": "LMG3410R150RWHR",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "595-LMG3410R150RWHR",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "2000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "8,11 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,31 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,86 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "5,37 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "5,09 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,99 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "4,87 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2000,
+      "Price": "4,59 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "LMG3410R150RWHT"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Texas-Instruments/LMG3410R150RWHR?qs=mAH9sUMRCtsIKfdPif%2F5dw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant By Exemption",
+    "REACH-SVHC": [
+     "Lead (7439-92-1)"
+    ],
+    "SuggestedReplacement": "595-LMG3410R150RWHT",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "292",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Philippines"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "3507 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers 80V H BRDG FET DRVR",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/mouserelectronics/images/SOIC_16_N_t.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "238 Days",
+    "LifecycleStatus": null,
+    "Manufacturer": "Renesas / Intersil",
+    "ManufacturerPartNumber": "HIP4082IBZ",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "968-HIP4082IBZ",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Tube"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "960"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "5,95 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,42 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "4,15 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,85 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "3,72 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,59 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 960,
+      "Price": "3,58 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": [
+     {
+      "APMfrPN": "HIP4082IBZT"
+     }
+    ],
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Renesas-Intersil/HIP4082IBZ?qs=cbl4%252BYHJGOFqyxQPpXFZFw%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 0.00014
+    },
+    "AvailabilityInStock": "3507",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8542390000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854239099"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "China"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "Availability": "2463 In Stock",
+    "DataSheetUrl": "https://www.mouser.com/datasheet/3/70/1/infineon_igi60l2727b1m_datasheet_en.pdf",
+    "Description": "GaN FETs 270 mohm / 600 V GaN transistor in half-bridge configuration with integrated level-shift gate driver and bootstrap diode",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/infineon/images/IGI60L2727B1MXUMA981_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "280 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "Infineon Technologies",
+    "ManufacturerPartNumber": "IGI60L2727B1MXUMA1",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "726-IGI60L2727B1MXUM",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "3,99 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "2,80 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "2,41 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "2,34 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "2,27 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "2,25 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/Infineon-Technologies/IGI60L2727B1MXUMA1?qs=7%2F6SraaimPRzVgoqsuwy1w%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "2463",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Thailand"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Malaysia"
+     }
+    ]
+   }
+  ]
+ }
+}

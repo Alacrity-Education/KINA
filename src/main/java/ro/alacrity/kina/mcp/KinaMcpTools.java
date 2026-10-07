@@ -40,10 +40,17 @@ public class KinaMcpTools {
             Write the query like a part request: component type plus the parameters that matter, e.g. \
             "10uF X7R 0805 MLCC 25V", "4k7 1% 0603 resistor", "thin film resistor 5.36k 0805 0.1%", \
             "SOT-23 N-channel MOSFET 30V", "LDO 3.3V SOT-23-5", "power inductor 3.3uH 6A Isat 8A DCR < 20mOhm", \
-            "120 ohm 100MHz 0603 ferrite bead", or a manufacturer part number. Values, tolerance, ratings, \
-            dielectric, package, mounting (SMD/THT) and the technology of a passive (thin film, thick film, metal \
-            film, wirewound, current sense; ceramic, tantalum, tantalum polymer, aluminium polymer, polymer, \
-            electrolytic, film; multilayer...) are parsed and used for ranking (see "parsed" in the result). \
+            "120 ohm 100MHz 0603 ferrite bead", "GaN half bridge gate driver 100V", or a manufacturer part number. \
+            Values, tolerance, ratings, dielectric, package, mounting (SMD/THT), the technology of a passive (thin \
+            film, thick film, metal film, wirewound, current sense; ceramic, tantalum, tantalum polymer, aluminium \
+            polymer, polymer, electrolytic, film; multilayer...) and the semiconductor of a MOSFET, transistor or \
+            gate driver (GaN, SiC, silicon) are parsed and used for ranking (see "parsed" in the result). \
+            A part number in the query (letters and digits mixed, e.g. "uP1966E GaN half bridge gate driver") is \
+            listed in parsed.part_numbers: the part whose MPN or distributor part number equals it (or starts with \
+            it) is returned first in its distributor if it meets the hard constraints and ratings, and \
+            requested_part_found says per distributor whether it is among the in-stock parts (null when the query \
+            names no part number); when false, the hint says whether the part is not listed in stock there or why \
+            it was left out, and the other parts are keyword matches, not the requested part. \
             query_understood = false (with a hint) means no component type or parameter was recognised: the parts \
             were found by keywords only and match is null; rephrase, or use get_part for a part number.
             Ratings are hard minimums: voltage, current (an inductor's rated current; write Isat or "saturation" for \
@@ -60,7 +67,9 @@ public class KinaMcpTools {
             frequency, a crystal's or oscillator's frequency), mounting (SMD/THT), technology, the package (except \
             for inductors, crystals and oscillators) and the component type: crystals and oscillators (XO, TCXO, \
             VCXO, MEMS) are never mixed; Schottky, standard rectifier/switching, Zener and TVS diodes are different \
-            types; N-channel vs P-channel and NPN vs PNP; fixed vs adjustable regulators and the exact output \
+            types; MOSFETs and gate drivers (including GaN power stages and half-bridges with an integrated \
+            driver) are different types; N-channel vs P-channel and NPN vs PNP; GaN vs SiC vs silicon; fixed vs \
+            adjustable regulators and the exact output \
             voltage; the Zener voltage and a crystal's load capacitance are exact; for connectors the type, gender, \
             positions and pitch, for USB connectors the type and the stated pin count (a higher USB standard is \
             accepted, a lower one is not); a bead array or resistor network for a single-element request (write \
@@ -85,7 +94,9 @@ public class KinaMcpTools {
             gets the order price.
             Results are grouped per distributor. Each distributor entry has: total_results = matches the distributor \
             reported (can be far more than returned); fetched = in-stock parts KINA received for the query before \
-            any exclusion; excluded_by_constraints and excluded_below_spec = parts of fetched left out; returned = \
+            any exclusion; excluded_by_constraints and excluded_below_spec = parts of fetched left out; \
+            excluded_below_spec_detail = up to 5 of the below-spec parts, closest first, each with part_number, \
+            mpn and the failed rating (rating, part_value as the distributor states it, requested); returned = \
             parts in this response (at most max_results and fetched minus the exclusions); out_of_stock_matches = \
             matches the distributor has but cannot ship now (not part of fetched); cache = hit | partial | miss | \
             bypassed | not_applicable (LCSC is a local database) | stale (the live search failed, error is set, and \

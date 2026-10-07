@@ -1,0 +1,129 @@
+{
+ "Errors": [],
+ "SearchResults": {
+  "NumberOfResult": 1,
+  "Parts": [
+   {
+    "Availability": "500 In Stock",
+    "DataSheetUrl": "",
+    "Description": "Gate Drivers EPC eGaN IC, 80 V, 15 A Integrated DrGaN Symetrical Half-Bridge Power Stage",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/efficientpowerconversion/images/EPC2152_SPL.jpg",
+    "Category": "Gate Drivers",
+    "LeadTime": "142 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "EPC",
+    "ManufacturerPartNumber": "EPC2152",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "65-EPC2152",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "500"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "7,87 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "6,11 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 25,
+      "Price": "5,68 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "5,19 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 250,
+      "Price": "5,03 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "4,82 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "4,65 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 2500,
+      "Price": "4,54 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/EPC/EPC2152?qs=6avfeC6zeS5o6b%2Fph1rygw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 1.4e-05
+    },
+    "AvailabilityInStock": "500",
+    "AvailabilityOnOrder": [
+     {
+      "Quantity": 2500,
+      "Date": "2026-12-24T00:00:00"
+     }
+    ],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8542399000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8542390090"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8542399999"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Taiwan"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   }
+  ]
+ }
+}

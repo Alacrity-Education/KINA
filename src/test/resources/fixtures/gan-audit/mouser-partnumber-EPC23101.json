@@ -1,0 +1,85 @@
+{
+ "Errors": [],
+ "SearchResults": {
+  "NumberOfResult": 2,
+  "Parts": [
+   {
+    "Availability": "None",
+    "DataSheetUrl": "",
+    "Description": "",
+    "FactoryStock": "0",
+    "ImagePath": null,
+    "Category": null,
+    "LeadTime": "0 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "EPC",
+    "ManufacturerPartNumber": "EPC23101",
+    "Min": "3000",
+    "Mult": "1",
+    "MouserPartNumber": "65-EPC23101-ES",
+    "ProductAttributes": [],
+    "PriceBreaks": [
+     {
+      "Quantity": 3000,
+      "Price": "4,25 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/EPC/EPC23101?qs=dhCoiiGcT1JcAZ6PpWSxuQ%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": "0",
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   },
+   {
+    "DataSheetUrl": "",
+    "Description": "",
+    "FactoryStock": null,
+    "ImagePath": null,
+    "Category": null,
+    "LeadTime": "0 Days",
+    "LifecycleStatus": "New Product",
+    "Manufacturer": "EPC",
+    "ManufacturerPartNumber": "EPC23101",
+    "Min": "0",
+    "Mult": "0",
+    "MouserPartNumber": "N/A",
+    "ProductAttributes": [],
+    "PriceBreaks": [],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/EPC/EPC23101?qs=LnCj936TGbVPQpyGzfPVwg%3D%3D",
+    "Reeling": false,
+    "ROHSStatus": "",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "AvailabilityInStock": null,
+    "AvailabilityOnOrder": [],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "RestrictionMessage": "Mouser does not presently sell this product in your region.",
+    "ProductCompliance": [],
+    "TradeCompliance": []
+   }
+  ]
+ }
+}

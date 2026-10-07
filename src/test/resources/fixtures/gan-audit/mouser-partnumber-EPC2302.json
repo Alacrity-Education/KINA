@@ -1,0 +1,147 @@
+{
+ "Errors": [],
+ "SearchResults": {
+  "NumberOfResult": 1,
+  "Parts": [
+   {
+    "DataSheetUrl": "",
+    "Description": "GaN FETs EPC eGaN FET,100 V, 1.8 milliohm  at  5 V, 3 mm x 5 mm QFN",
+    "FactoryStock": "0",
+    "ImagePath": "https://www.mouser.com/images/efficientpowerconversion/images/EPC2302_SPL.jpg",
+    "Category": "GaN FETs",
+    "LeadTime": "242 Days",
+    "LifecycleStatus": "New at Mouser",
+    "Manufacturer": "EPC",
+    "ManufacturerPartNumber": "EPC2302",
+    "Min": "1",
+    "Mult": "1",
+    "MouserPartNumber": "65-EPC2302",
+    "ProductAttributes": [
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Reel"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "Cut Tape"
+     },
+     {
+      "AttributeName": "Packaging",
+      "AttributeValue": "MouseReel",
+      "AttributeCost": "A MouseReel™ fee of 5,00 € will be added and calculated in your basket. All MouseReel™ orders are non-cancellable and non-returnable."
+     },
+     {
+      "AttributeName": "Standard Pack Qty",
+      "AttributeValue": "3000"
+     }
+    ],
+    "PriceBreaks": [
+     {
+      "Quantity": 1,
+      "Price": "7,67 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 10,
+      "Price": "4,25 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 100,
+      "Price": "3,90 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 500,
+      "Price": "3,84 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 1000,
+      "Price": "3,41 €",
+      "Currency": "EUR"
+     },
+     {
+      "Quantity": 3000,
+      "Price": "3,10 €",
+      "Currency": "EUR"
+     }
+    ],
+    "AlternatePackagings": null,
+    "ProductDetailUrl": "https://ro.mouser.com/en/ProductDetail/EPC/EPC2302?qs=6avfeC6zeS7dSOCkasbTvw%3D%3D",
+    "Reeling": true,
+    "ROHSStatus": "RoHS Compliant",
+    "SuggestedReplacement": "",
+    "MultiSimBlue": 0,
+    "UnitWeightKg": {
+     "UnitWeight": 3.13e-05
+    },
+    "AvailabilityInStock": "0",
+    "AvailabilityOnOrder": [
+     {
+      "Quantity": 2957,
+      "Date": "2026-11-06T00:00:00"
+     },
+     {
+      "Quantity": 6000,
+      "Date": "2027-01-13T00:00:00"
+     },
+     {
+      "Quantity": 30000,
+      "Date": "2027-07-27T00:00:00"
+     }
+    ],
+    "InfoMessages": [],
+    "SurchargeMessages": null,
+    "ProductCompliance": [
+     {
+      "ComplianceName": "TARIC",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CNHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "CAHTS",
+      "ComplianceValue": "8541290000"
+     },
+     {
+      "ComplianceName": "USHTS",
+      "ComplianceValue": "8541290065"
+     },
+     {
+      "ComplianceName": "JPHTS",
+      "ComplianceValue": "854129000"
+     },
+     {
+      "ComplianceName": "KRHTS",
+      "ComplianceValue": "8541299000"
+     },
+     {
+      "ComplianceName": "MXHTS",
+      "ComplianceValue": "8541299900"
+     },
+     {
+      "ComplianceName": "ECCN",
+      "ComplianceValue": "EAR99"
+     }
+    ],
+    "TradeCompliance": [
+     {
+      "ComplianceName": "Country of Origin",
+      "ComplianceValue": "Malaysia"
+     },
+     {
+      "ComplianceName": "Assembly Country of Origin",
+      "ComplianceValue": "Not available"
+     },
+     {
+      "ComplianceName": "Country of Diffusion",
+      "ComplianceValue": "Not available"
+     }
+    ]
+   }
+  ]
+ }
+}

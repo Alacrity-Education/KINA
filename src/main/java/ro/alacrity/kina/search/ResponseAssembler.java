@@ -80,6 +80,16 @@ final class ResponseAssembler {
                 detail.forEach((k, v) -> emptyExcluded.merge(k, v, Integer::sum));
                 emptyBelowSpec += ranked.excludedBelowSpecBy(distributor);
             }
+            Boolean requestedFound = null;
+            if (parsed.namesPartNumber() && !(f.error() != null && top.isEmpty())) {
+                List<String> missing = parsed.partNumbers().stream()
+                        .filter(n -> top.stream().noneMatch(r -> PartNumbers.requests(n, r.part()))).toList();
+                requestedFound = missing.isEmpty();
+                String requestedHint = missing.isEmpty() ? null
+                        : requestedHint(distributor, missing, ranked.excludedRequestedBy(distributor), top.isEmpty(),
+                        request.allowBelowSpec());
+                hint = requestedHint == null ? hint : hint == null ? requestedHint : requestedHint + " " + hint;
+            }
             results.add(DistributorResult.builder()
                     .distributor(distributor)
                     .totalResults(f.totalResults())
@@ -99,6 +109,8 @@ final class ResponseAssembler {
                     .constraintsRelaxed(actuallyRelaxed(relaxable(parsed, f.constraintsRelaxed(), policy), top))
                     .exactMatches(exact)
                     .hint(hint)
+                    .requestedPartFound(requestedFound)
+                    .excludedBelowSpecDetail(ranked.belowSpecDetailBy(distributor))
                     .build());
         }
         String hint = !understood ? SearchResponse.NOT_UNDERSTOOD_HINT
@@ -106,6 +118,33 @@ final class ResponseAssembler {
                 : policy.hint(parsed, empty, emptyExcluded, emptyBelowSpec, request.allowBelowSpec());
         return new SearchResponse(parsed.originalText(), ParsedQueryResponse.from(parsed), ranked.mode(), note,
                 results, understood, hint, SearchResponse.currenciesOf(results));
+    }
+
+    /**
+     * The hint of a distributor whose parts do not include a part number the query names (DESIGN.md 3.4 "Requested
+     * part numbers"): per missing part number, why it was left out when the distributor listed it ({@code EPC2218 is
+     * listed at MOUSER but was left out: voltage 80V below 100V}), else that it is not listed in stock there; then what
+     * the parts are.
+     */
+    static String requestedHint(Distributor distributor, List<String> missing,
+                                List<RankingService.ExcludedRequest> leftOut, boolean nothingReturned,
+                                boolean allowBelowSpec) {
+        List<String> sentences = new ArrayList<>();
+        for (String number : missing) {
+            RankingService.ExcludedRequest why = leftOut.stream().filter(e -> e.partNumber().equals(number))
+                    .findFirst().orElse(null);
+            if (why == null) {
+                sentences.add(number + " is not listed in stock at " + distributor.name());
+                continue;
+            }
+            String part = why.part().manufacturerPartNumber() != null ? why.part().manufacturerPartNumber()
+                    : why.part().distributorPartNumber();
+            boolean rating = why.reason().contains(" below ") || why.reason().contains(" above ");
+            sentences.add(number + " is listed at " + distributor.name() + " (" + part + ") but was left out: "
+                    + (rating ? why.reason() + (allowBelowSpec ? "" : " (pass \"allow_below_spec\": true to see it)")
+                    : "it contradicts the requested " + why.reason()));
+        }
+        return String.join("; ", sentences) + (nothingReturned ? "." : "; the parts below are keyword matches.");
     }
 
     /**

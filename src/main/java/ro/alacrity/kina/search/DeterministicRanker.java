@@ -70,14 +70,21 @@ public class DeterministicRanker {
      * @param unverified        stated constraints the part does not state ({@code "current"}, {@code "package"}...)
      * @param belowSpec         rating kinds whose known value is below the request (a DCR above its maximum)
      * @param belowSpecDistance how far below: the sum of {@code |ln(part / requested)|} over {@code belowSpec}
+     * @param shortfalls        the failed ratings of {@code belowSpec} with the part's and the requested value
      */
     public record Assessment(double score, Double match, List<String> mismatches, List<String> unverified,
-                             List<String> belowSpec, double belowSpecDistance) {
+                             List<String> belowSpec, double belowSpecDistance, List<Shortfall> shortfalls) {
 
         public Assessment {
             mismatches = mismatches == null ? List.of() : List.copyOf(mismatches);
             unverified = unverified == null ? List.of() : List.copyOf(unverified);
             belowSpec = belowSpec == null ? List.of() : List.copyOf(belowSpec);
+            shortfalls = shortfalls == null ? List.of() : List.copyOf(shortfalls);
+        }
+
+        public Assessment(double score, Double match, List<String> mismatches, List<String> unverified,
+                          List<String> belowSpec, double belowSpecDistance) {
+            this(score, match, mismatches, unverified, belowSpec, belowSpecDistance, List.of());
         }
 
         public Assessment(double score, double match, List<String> mismatches) {
@@ -97,6 +104,13 @@ public class DeterministicRanker {
         public boolean complete() {
             return mismatches.isEmpty() && unverified.isEmpty();
         }
+    }
+
+    /**
+     * A rating the part is known to fail: the rating ({@code voltage}), the part's value ({@code 80V}) and the
+     * requested one ({@code 100V}); a DCR above its maximum likewise.
+     */
+    public record Shortfall(String rating, String partValue, String requested) {
     }
 
     /**
@@ -178,6 +192,7 @@ public class DeterministicRanker {
         double preference = 0;   // score-only adjustments, not part of the match grade
         List<String> unverified = new ArrayList<>();
         List<String> belowSpec = new ArrayList<>();
+        List<Shortfall> shortfalls = new ArrayList<>();
         double belowSpecDistance = 0;
         Map<String, Integer> groupSizes = groupSizes(query, scope);
 
@@ -208,6 +223,8 @@ public class DeterministicRanker {
                 boolean bound = kind.generalStrategy() == RelaxStrategy.BELOW_SPEC;
                 if (!ok && bound && wanted > 0 && partValue > 0) {
                     belowSpec.add(kind.reported(query));
+                    shortfalls.add(new Shortfall(kind.reported(query), actual.display(),
+                            ((ParsedQuery.Constraint) kind.wanted(query)).display()));
                     belowSpecDistance += Math.abs(Math.log(partValue / wanted));
                 }
                 if (ok && bound && match.mode() == MatchMode.AT_LEAST && wanted > 0
@@ -245,7 +262,7 @@ public class DeterministicRanker {
             score += W_LEXICAL * found / query.keywords().size();
         }
         return new Assessment(Math.clamp(score + preference + tieBreak(part), 0.0, 1.0), match, mismatches(query, f),
-                unverified, belowSpec, belowSpecDistance);
+                unverified, belowSpec, belowSpecDistance, shortfalls);
     }
 
     /** How many members of each {@link Match#group()} the request states. */

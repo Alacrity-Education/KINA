@@ -461,10 +461,14 @@ cross-encoder is a second signal in a 50/50 **rank** blend, the deterministic or
 **Before ranking** (`RankingService.rank(query, fetched, budget, RankOptions(quantity, allowBelowSpec))`): parts whose
 known attribute contradicts a hard constraint are removed and counted per distributor (`excluded_by_constraints`, per
 constraint `RankedResults.excludedDetail`, section 3.4 "Hard constraints"); parts with a known rating below the request are removed and counted
-(`excluded_below_spec`) unless `allowBelowSpec` (section 3.4 "Below spec"). Every remaining part gets a tier: 0 for a
+(`excluded_below_spec`, the five closest per distributor in `excluded_below_spec_detail`) unless `allowBelowSpec`
+(section 3.4 "Below spec"). Every remaining part gets a tier: 0 for a
 **complete** match (no mismatch, nothing unverified), +1 for a part with a mismatch or an unverified constraint
 (including an unstated hard attribute), +4 when its stock is below `quantity`, +8 when it is below spec (only with
-`allowBelowSpec`). The quantity, MOQ, low-stock and lifecycle penalties (section 3.4) are subtracted from the
+`allowBelowSpec`), and -16 (`RankingService.REQUESTED_TIER`) when the query names it by part number (section 3.4
+"Requested part numbers"): the requested part comes first in its distributor whatever its score, and is reported with
+score 1.0; it is still excluded by a hard constraint or a rating below the request like any other part (a rule, not a
+weight). The quantity, MOQ, low-stock and lifecycle penalties (section 3.4) are subtracted from the
 deterministic score and **again from the final score** (blended or not), so the model cannot hide them. Every ordering
 (deterministic, blended, fallback) sorts by tier first, so a part with an unverified constraint or too little stock
 never ranks above a complete match with enough stock, whatever the model says; within the below-spec tier the order
@@ -1001,6 +1005,21 @@ Before, the penalty only lowered the deterministic score, whose rank-normalised 
 it is now also subtracted from the final score, so a supply-constrained or last-time-buy part always loses score
 against an otherwise equal active part (`AuditRoundThreeTest`).
 
+**Requested part numbers** (`search.PartNumbers`, `ParsedQuery.partNumbers`, `parsed.part_numbers`). A free-text
+keyword that is part-number shaped is a requested part number, kept as sent (`uP1966E`): letters and digits mixed, at
+least 5 characters, at least one letter and two digits, no decimal number, and not a standard, interface or quantity
+word (`RS485`, `AEC-Q200`, `IP67`, `USB3`, `DDR4`, `2-channel`, `1000pcs`, `100ppm`, `24AWG`, a range such as
+`100-240V`); values, units, packages, dielectrics and family words are already taken by the parser. A part is the
+requested one when its MPN or distributor part number equals the token or starts with it, compared on letters and
+digits only (`PartLookupResult.normalize`: `EPC2218` requests `EPC2218A`, `ERA-6AEB5361V` and `ERA6AEB5361V` are
+equal). It ranks first in its distributor (section 3.3). Each distributor entry reports `requested_part_found`: null
+when the query names no part number (or the distributor failed and returned nothing), true when a returned in-stock
+part is the requested one for every part number, false otherwise; false comes with a `hint` per missing part number:
+`EPC23101 is not listed in stock at MOUSER; the parts below are keyword matches.`, or, when the distributor listed it
+but it was left out, why: `EPC2218 is listed at MOUSER (EPC2218A) but was left out: voltage 80V below 100V (pass
+"allow_below_spec": true to see it).` (a hard constraint: `... it contradicts the requested type`). The part number
+also stays a keyword (lexical score). A query that is only a part number is still not understood (below).
+
 **Keyword-only queries** (`ParsedQuery.understood()`): when the parser recognises no family and no typed constraint
 (value, rating, tolerance, dielectric, package, mounting, technology, connector attribute, element count), e.g.
 `asdfqwerty zz9` or a bare part number, the response has `query_understood: false` and a `hint`, every part's `match`
@@ -1352,10 +1371,12 @@ parameters; descriptions are read by the LLM, keep them precise):
       "excluded_by_constraints": 0,
       "excluded_by_constraints_detail": {},
       "excluded_below_spec": 0,
+      "excluded_below_spec_detail": [],
       "out_of_stock_matches": 0,
       "query_terms_dropped": [],
       "constraints_relaxed": [],
-      "exact_matches": 7
+      "exact_matches": 7,
+      "requested_part_found": null
     }
   ]
 }
@@ -1399,10 +1420,15 @@ availability status: it is a `lifecycle` (section 3.4).
 and the parts come from the query's expired cached list, section 3.2 "Cache model").
 `fetched`, `excluded_by_constraints`, `excluded_by_constraints_detail` (per hard constraint, each part under its first
 conflict, `{"capacitance": 12, "package": 3}`; empty object when nothing was excluded), `excluded_below_spec`,
-`out_of_stock_matches` (null when unknown), `query_terms_dropped`, `constraints_relaxed` (they replace the former
-`relaxed`), `exact_matches` (null when the query was not understood) and `hint` (only when the entry has no parts for an
-understood query and no `error`) are described in sections 3.2 and 3.4. `parsed` also carries `polarity` and `subtype`
-when stated or implied (section 3.4).
+`excluded_below_spec_detail` (up to 5 of the `excluded_below_spec` parts, closest to the request first, each
+`{"part_number", "mpn", "rating", "part_value", "requested"}`, e.g. `{"part_number": "65-EPC2218A", "mpn": "EPC2218A",
+"rating": "voltage", "part_value": "80V", "requested": "100V"}`; the first failed rating of each part, the value as KINA
+read it from the distributor's data; empty with `allow_below_spec`), `out_of_stock_matches` (null when unknown),
+`query_terms_dropped`, `constraints_relaxed` (they replace the former `relaxed`), `exact_matches` (null when the query
+was not understood), `requested_part_found` (section 3.4 "Requested part numbers") and `hint` (when the entry has no
+parts for an understood query and no `error`, and when a requested part number is not among the parts) are described
+in sections 3.2 and 3.4. `parsed` also carries `polarity` and `subtype` when stated or implied and `part_numbers` when
+the query names part numbers (section 3.4).
 
 `rank` orders the list. `score` is the blend of rank-normalised scores (section 3.3), relative to the other candidates,
 so the last of four exact matches can show `0.00`; a reader took that for "does not fit", so `score` is returned with

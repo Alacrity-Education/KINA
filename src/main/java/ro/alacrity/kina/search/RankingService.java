@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Availability;
+import ro.alacrity.kina.domain.BelowSpecPart;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
@@ -125,12 +126,22 @@ public class RankingService {
      */
     public record RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note,
                                 Map<Distributor, Integer> excluded, Map<Distributor, Integer> excludedBelowSpec,
-                                Map<Distributor, Map<String, Integer>> excludedDetail) {
+                                Map<Distributor, Map<String, Integer>> excludedDetail,
+                                Map<Distributor, List<BelowSpecPart>> belowSpecDetail,
+                                Map<Distributor, List<ExcludedRequest>> excludedRequested) {
 
         public RankedResults {
             excluded = excluded == null ? Map.of() : Map.copyOf(excluded);
             excludedBelowSpec = excludedBelowSpec == null ? Map.of() : Map.copyOf(excludedBelowSpec);
             excludedDetail = excludedDetail == null ? Map.of() : Map.copyOf(excludedDetail);
+            belowSpecDetail = belowSpecDetail == null ? Map.of() : Map.copyOf(belowSpecDetail);
+            excludedRequested = excludedRequested == null ? Map.of() : Map.copyOf(excludedRequested);
+        }
+
+        public RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note,
+                             Map<Distributor, Integer> excluded, Map<Distributor, Integer> excludedBelowSpec,
+                             Map<Distributor, Map<String, Integer>> excludedDetail) {
+            this(byDistributor, mode, note, excluded, excludedBelowSpec, excludedDetail, null, null);
         }
 
         public RankedResults(Map<Distributor, List<RankedPart>> byDistributor, RankingMode mode, String note,
@@ -162,10 +173,45 @@ public class RankingService {
             return excludedBelowSpec.getOrDefault(distributor, 0);
         }
 
-        RankedResults withExcluded(Map<Distributor, Integer> counts, Map<Distributor, Integer> belowSpec,
-                                   Map<Distributor, Map<String, Integer>> detail) {
-            return new RankedResults(byDistributor, mode, note, counts, belowSpec, detail);
+        /**
+         * Up to {@value #MAX_BELOW_SPEC_DETAIL} parts of {@code distributor} removed for a rating below the request,
+         * closest to the request first ({@code excluded_below_spec_detail}).
+         */
+        public List<BelowSpecPart> belowSpecDetailBy(Distributor distributor) {
+            return belowSpecDetail.getOrDefault(distributor, List.of());
         }
+
+        /** Parts of {@code distributor} that the query names by part number but that were left out, with why. */
+        public List<ExcludedRequest> excludedRequestedBy(Distributor distributor) {
+            return excludedRequested.getOrDefault(distributor, List.of());
+        }
+
+        RankedResults withExcluded(Map<Distributor, Integer> counts, Map<Distributor, Integer> belowSpec,
+                                   Map<Distributor, Map<String, Integer>> detail,
+                                   Map<Distributor, List<BelowSpecPart>> belowSpecParts,
+                                   Map<Distributor, List<ExcludedRequest>> requested) {
+            return new RankedResults(byDistributor, mode, note, counts, belowSpec, detail, belowSpecParts, requested);
+        }
+
+        /** The same results with other ranked lists (stock refresh, annotation); every count is kept. */
+        RankedResults withParts(Map<Distributor, List<RankedPart>> parts) {
+            return new RankedResults(parts, mode, note, excluded, excludedBelowSpec, excludedDetail, belowSpecDetail,
+                    excludedRequested);
+        }
+    }
+
+    /** Entries of {@code excluded_below_spec_detail} per distributor. */
+    static final int MAX_BELOW_SPEC_DETAIL = 5;
+
+    /**
+     * A part the query names by part number ({@link PartNumbers}) that was left out before ranking.
+     *
+     * @param partNumber the query's part number that names it, as sent
+     * @param part       the part
+     * @param reason     why, in plain words: the hard constraint it contradicts ({@code type}) or the failed rating
+     *                   ({@code voltage 80V below 100V})
+     */
+    public record ExcludedRequest(String partNumber, Part part, String reason) {
     }
 
     /**
@@ -304,6 +350,8 @@ public class RankingService {
         Map<Distributor, Integer> excluded = new EnumMap<>(Distributor.class);
         Map<Distributor, Integer> excludedBelowSpec = new EnumMap<>(Distributor.class);
         Map<Distributor, Map<String, Integer>> detail = new EnumMap<>(Distributor.class);
+        Map<Distributor, List<BelowSpecCandidate>> belowSpecLeftOut = new EnumMap<>(Distributor.class);
+        Map<Distributor, List<ExcludedRequest>> requestedLeftOut = new EnumMap<>(Distributor.class);
         Map<Distributor, List<Part>> sorted = new EnumMap<>(Distributor.class);
         int qty = opts.quantity();
         boolean understood = query.understood();
@@ -312,15 +360,22 @@ public class RankingService {
                 List<Part> kept = new ArrayList<>();
                 for (Part p : dedupe(parts)) {
                     ConstraintPolicy.Result check = safeCheck(query, p);
+                    List<String> naming = PartNumbers.requestedBy(query, p);
                     if (check.conflict()) {
                         excluded.merge(distributor, 1, Integer::sum);
                         detail.computeIfAbsent(distributor, d -> new LinkedHashMap<>())
                                 .merge(check.reason(), 1, Integer::sum);
+                        naming.forEach(n -> requestedLeftOut.computeIfAbsent(distributor, d -> new ArrayList<>())
+                                .add(new ExcludedRequest(n, p, check.reason())));
                         continue;
                     }
                     DeterministicRanker.Assessment a = safeAssess(query, p);
                     if (a.isBelowSpec() && !opts.allowBelowSpec()) {
                         excludedBelowSpec.merge(distributor, 1, Integer::sum);
+                        belowSpecLeftOut.computeIfAbsent(distributor, d -> new ArrayList<>())
+                                .add(new BelowSpecCandidate(p, a));
+                        naming.forEach(n -> requestedLeftOut.computeIfAbsent(distributor, d -> new ArrayList<>())
+                                .add(new ExcludedRequest(n, p, shortfallText(a))));
                         continue;
                     }
                     kept.add(p);
@@ -330,7 +385,9 @@ public class RankingService {
                     penalties.put(key, penalty);
                     det.put(key, Math.clamp(a.score() - penalty, 0.0, 1.0));
                     distances.put(key, a.isBelowSpec() ? a.belowSpecDistance() : 0.0);
-                    tiers.put(key, (a.isBelowSpec() ? 8 : 0) + (p.stock() < qty ? 4 : 0) + (a.complete() ? 0 : 1));
+                    // the part the query names by part number comes first (DESIGN.md 3.3, "requested part first")
+                    tiers.put(key, (naming.isEmpty() ? 0 : REQUESTED_TIER) + (a.isBelowSpec() ? 8 : 0)
+                            + (p.stock() < qty ? 4 : 0) + (a.complete() ? 0 : 1));
                 }
                 kept.sort(byScore(tiers, distances, det, det));
                 sorted.put(distributor, kept);
@@ -341,29 +398,34 @@ public class RankingService {
             tiers.clear();
             distances.clear();
             input.forEach((distributor, parts) -> sorted.put(distributor, dedupe(parts)));
-            return annotate(fallback(sorted, det, "ranking failed: " + e.getClass().getSimpleName()),
-                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail);
+            return annotate(fallback(sorted, det, tiers, "ranking failed: " + e.getClass().getSimpleName()),
+                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail,
+                    belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
         }
 
         if (!config.crossEncoder().enabled()) {
-            return annotate(fallback(sorted, det, "cross-encoder disabled"), assessments, understood)
-                    .withExcluded(excluded, excludedBelowSpec, detail);
+            return annotate(fallback(sorted, det, tiers, "cross-encoder disabled"), assessments, understood)
+                    .withExcluded(excluded, excludedBelowSpec, detail,
+                    belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
         }
         if (sorted.values().stream().allMatch(List::isEmpty)) {
             return new RankedResults(emptyLists(sorted), RankingMode.BLENDED, null, excluded, excludedBelowSpec,
-                    detail);
+                    detail, belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
         }
         try {
             return annotate(blendedRanking(query, sorted, det, tiers, distances, penalties, deadline, effective),
-                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail);
+                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail,
+                    belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
         } catch (RankingException e) {
             log.info("ranking fallback for '{}': {}", query.normalizedKey(), e.getMessage());
-            return annotate(fallback(sorted, det, e.getMessage()), assessments, understood)
-                    .withExcluded(excluded, excludedBelowSpec, detail);
+            return annotate(fallback(sorted, det, tiers, e.getMessage()), assessments, understood)
+                    .withExcluded(excluded, excludedBelowSpec, detail,
+                    belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
         } catch (RuntimeException e) {
             log.warn("ranking fallback after unexpected error", e);
-            return annotate(fallback(sorted, det, "cross-encoder failed: " + e.getClass().getSimpleName()),
-                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail);
+            return annotate(fallback(sorted, det, tiers, "cross-encoder failed: " + e.getClass().getSimpleName()),
+                    assessments, understood).withExcluded(excluded, excludedBelowSpec, detail,
+                    belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
         }
     }
 
@@ -571,8 +633,7 @@ public class RankingService {
                             a.unverified(), a.isBelowSpec());
                 })
                 .toList()));
-        return new RankedResults(out, results.mode(), results.note(), results.excluded(), results.excludedBelowSpec(),
-                results.excludedDetail());
+        return results.withParts(out);
     }
 
     /**
@@ -601,20 +662,57 @@ public class RankingService {
         List<RankedPart> out = new ArrayList<>(ordered.size());
         double previous = Double.MAX_VALUE;
         for (RankedPart r : ordered) {
-            double score = Math.min(r.score(), previous);
+            // a part named by part number leads with the full score; the others keep theirs below it
+            double score = tiers.getOrDefault(PartKey.of(r.part()), 0) < 0 ? 1.0
+                    : Math.min(r.score(), previous);
             out.add(score == r.score() ? r : r.withScore(score));
             previous = score;
         }
         return List.copyOf(out);
     }
 
-    private static RankedResults fallback(Map<Distributor, List<Part>> sorted, Map<String, Double> det, String note) {
+    private static RankedResults fallback(Map<Distributor, List<Part>> sorted, Map<String, Double> det,
+                                          Map<String, Integer> tiers, String note) {
         Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);
         // the parts are already in tier order: only keep the scores non-increasing
         sorted.forEach((distributor, parts) -> out.put(distributor, descending(parts.stream()
                 .map(p -> new RankedPart(p, det.getOrDefault(PartKey.of(p), 0.0)))
-                .toList(), Map.of(), Map.of())));
+                .toList(), tiers, Map.of())));
         return new RankedResults(out, RankingMode.FALLBACK, note);
+    }
+
+    /** Tier offset of a part the query names by part number: before every other part of its distributor. */
+    static final int REQUESTED_TIER = -16;
+
+    /** A part left out below spec, with its assessment (for {@code excluded_below_spec_detail}). */
+    private record BelowSpecCandidate(Part part, DeterministicRanker.Assessment assessment) {
+    }
+
+    /** The {@value #MAX_BELOW_SPEC_DETAIL} parts per distributor closest to the request, each with its first failure. */
+    private static Map<Distributor, List<BelowSpecPart>> belowSpecDetail(
+            Map<Distributor, List<BelowSpecCandidate>> leftOut) {
+        Map<Distributor, List<BelowSpecPart>> out = new EnumMap<>(Distributor.class);
+        leftOut.forEach((distributor, candidates) -> out.put(distributor, candidates.stream()
+                .filter(c -> !c.assessment().shortfalls().isEmpty())
+                .sorted(Comparator.comparingDouble(c -> c.assessment().belowSpecDistance()))
+                .limit(MAX_BELOW_SPEC_DETAIL)
+                .map(c -> {
+                    DeterministicRanker.Shortfall first = c.assessment().shortfalls().getFirst();
+                    return new BelowSpecPart(c.part().distributorPartNumber(), c.part().manufacturerPartNumber(),
+                            first.rating(), first.partValue(), first.requested());
+                })
+                .toList()));
+        return out;
+    }
+
+    /** {@code voltage 80V below 100V} (a DCR: {@code dcr 40mohm above 20mohm}). */
+    private static String shortfallText(DeterministicRanker.Assessment a) {
+        if (a.shortfalls().isEmpty()) {
+            return "a rating below the request";
+        }
+        DeterministicRanker.Shortfall s = a.shortfalls().getFirst();
+        return s.rating() + " " + s.partValue() + (ParsedQuery.DCR.equals(s.rating()) ? " above " : " below ")
+                + s.requested();
     }
 
     /**
