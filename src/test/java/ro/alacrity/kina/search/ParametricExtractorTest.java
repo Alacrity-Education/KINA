@@ -143,8 +143,21 @@ class ParametricExtractorTest {
                 .containsEntry("Voltage", "25V")
                 .containsEntry("Package", "0805")
                 .containsEntry("Family", "capacitor");
-        assertThat(enriched).usingRecursiveComparison().ignoringFields("attributes").isEqualTo(MOUSER_MLCC);
+        assertThat(enriched).usingRecursiveComparison().ignoringFields("attributes", "derivedAttributes")
+                .isEqualTo(MOUSER_MLCC);
         assertThat(MOUSER_MLCC.attributes()).doesNotContainKey("Voltage");
+        // the added keys are listed, so the cache stores the distributor's attributes only
+        assertThat(enriched.derivedAttributes()).containsExactlyInAnyOrder("Voltage", "Package", "Mounting", "Family",
+                "Technology");
+        assertThat(enriched.asStored().attributes()).isEqualTo(MOUSER_MLCC.attributes());
+        assertThat(enriched.asStored().derivedAttributes()).isEmpty();
+    }
+
+    @Test
+    void enrichingAnEnrichedPartDerivesTheSameAttributesAgain() {
+        Part enriched = extractor.enrich(MOUSER_MLCC);
+        assertThat(extractor.enrich(enriched)).isEqualTo(enriched);
+        assertThat(extractor.enrich(enriched.asStored())).isEqualTo(enriched);
     }
 
     // ---------------------------------------------------------------- connectors

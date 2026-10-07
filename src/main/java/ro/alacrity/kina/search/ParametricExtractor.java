@@ -9,6 +9,7 @@ import ro.alacrity.kina.domain.PartFeatures;
 import ro.alacrity.kina.domain.Part;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -127,6 +128,17 @@ public class ParametricExtractor {
             "Pitch", "Orientation", "Series", "UsbType", "UsbStandard", "UsbSpeedGbps", "PinConfiguration",
             "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features", ELEMENTS, RIPPLE_CURRENT, ESR, DIMENSIONS,
             QUALIFICATION, CASE, POLARITY, SUBTYPE, FORM_FACTOR, OPERATING_TEMPERATURE);
+
+    /**
+     * Canonical keys no distributor sends (verified against the recorded TME and Mouser responses; LCSC parts have no
+     * attributes): in a cached payload they can only be derived values. Migration V11 removed them from the rows cached
+     * before the payload left the derived attributes out (a {@code Family} of {@code mosfet} cached before the gate
+     * driver family existed); keys a distributor may send as well ({@code Capacitance}, {@code Mounting}...) stayed.
+     * {@code CachedAttributesTest} checks that the migration lists exactly these.
+     */
+    static final Set<String> DERIVED_ONLY_KEYS = Set.of(FAMILY, SUBTYPE, FORM_FACTOR, ELEMENTS, RATED_CURRENT,
+            SATURATION_CURRENT, MAX_TEMPERATURE, RIPPLE_CURRENT, OPERATING_TEMPERATURE, CONNECTOR_TYPE, USB_TYPE,
+            USB_STANDARD, USB_SPEED, PIN_CONFIGURATION, SHIELD_PINS, MOUNTING_STYLE);
 
     // ---------------------------------------------------------------- distributor attribute names (lower-case)
 
@@ -348,20 +360,28 @@ public class ParametricExtractor {
     }
 
     /**
-     * Copy of the part whose {@code attributes} additionally contain the comparable keys of {@link #extract(Part)}.
-     * Existing distributor attributes are kept unchanged (also when they use the same key name).
+     * Copy of the part whose {@code attributes} additionally contain the comparable keys of {@link #extract(Part)},
+     * derived by this extractor (DESIGN.md 3.2 "Cache model"). Distributor attributes are kept unchanged (also when
+     * they use the same key name); the keys added are listed in {@link Part#derivedAttributes()}, so the cache stores
+     * the part without them ({@link Part#asStored()}) and every read derives them again. The attributes an earlier
+     * {@code enrich} listed are derived again, never kept, so enriching an enriched part gives the same part.
      */
     public Part enrich(Part part) {
-        Map<String, String> attributes = new LinkedHashMap<>(part.attributes());
-        extract(part).forEach((key, value) -> {
+        Map<String, String> own = new LinkedHashMap<>(part.attributes());
+        own.keySet().removeAll(part.derivedAttributes());
+        Part base = part.toBuilder().attributes(own).derivedAttributes(Set.of()).build();
+        Map<String, String> attributes = new LinkedHashMap<>(own);
+        Set<String> derived = new LinkedHashSet<>();
+        extract(base).forEach((key, value) -> {
             String raw = attributes.get(key);
             if (raw == null) {
                 attributes.put(key, value);
+                derived.add(key);
             } else if (!raw.equals(value) && sameQuantity(key, raw, value)) {
                 attributes.put(key, value);   // TME "Power: 0.25kW" is shown in the canonical form "250W"
             }
         });
-        return part.toBuilder().attributes(attributes).build();
+        return base.toBuilder().attributes(attributes).derivedAttributes(derived).build();
     }
 
     /**

@@ -183,6 +183,15 @@ component is kept, what it says about stock and price expires.
   hidden for days. An expired list is searched again normally; the parts it finds are upserted, which replaces the
   payload of a known part (the refetched metadata is current; attributes are not merged, so a value the extractor no
   longer derives cannot survive) and keeps `metadata_fetched_at` current.
+- **Derived attributes are never stored.** The payload holds the distributor's attributes only:
+  `ParametricExtractor.enrich` lists the keys it adds (`Part.derivedAttributes`, not serialised) and every write stores
+  `Part.asStored()`.
+  Every read enriches again, so `detail=full` and the ranking always show the values of the running extractor, also
+  for a part cached long ago. Rows cached before this rule carried both; migration V11 removed the keys only KINA
+  writes (`ParametricExtractor.DERIVED_ONLY_KEYS`: `Family`, `Subtype`, `FormFactor`, `Elements`, `RatedCurrent`,
+  `SaturationCurrent`, `MaxTemperature`, `RippleCurrent`, `OperatingTemperature`, `ConnectorType` and the USB keys)
+  from them. Derived values under a name a distributor may also send (`Capacitance`, `Mounting`, `Package`...) stay
+  in such a row, read as distributor attributes, until the part is fetched again.
 - **Stock and prices** carry their own age, `cached_parts.stock_fetched_at` (= `Part.fetchedAt`, reported as
   `stock_as_of`). Older than `kina.cache.stock-ttl` (default `24h`): refreshed before the part is returned (step 5).
   When the refresh fails or the distributor is not configured, the part is returned as it is while its figures are at
@@ -321,8 +330,9 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    another package or value.` The response-level `hint` says the same for every distributor that came back empty (only
    for an understood query; a distributor with an `error` gets no hint).
    TME's 40-character phrase limit is applied by the client as for any query.
-   Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is cached or
-   ranked (Mouser and LCSC deliver almost no parametric attributes).
+   Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is ranked
+   (Mouser and LCSC deliver almost no parametric attributes); the cache stores it without the derived attributes
+   ("Cache model").
 3. Upsert the newly fetched parts into `cached_parts` (payload = JSON of `Part`, `stock_fetched_at =
    metadata_fetched_at = part.fetchedAt`, `in_stock = true`; an existing row's `metadata_fetched_at` never moves back) and
    the ordered part-number list + `total_results` + `exhausted` + `next_offset` + `fallback_query` +
@@ -1720,7 +1730,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V10__cached_search_requested_parts.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V11__cached_parts_derived_attributes.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -1828,6 +1838,12 @@ ALTER TABLE cached_searches ADD COLUMN constraints_relaxed JSONB;
 -- part_numbers), listed (no ships-now stock; its cached_parts row has in_stock = false) or not_found. NULL = nothing
 -- looked up (older rows, queries without part numbers). It lives as long as the list (fetched_at is unchanged)
 ALTER TABLE cached_searches ADD COLUMN requested_parts JSONB;
+-- V11__cached_parts_derived_attributes.sql (section 3.2 "Cache model"): payloads hold the distributor's attributes
+-- only; the rows written before lose the keys only KINA writes (ParametricExtractor.DERIVED_ONLY_KEYS)
+UPDATE cached_parts
+   SET payload = jsonb_set(payload, '{attributes}', (payload -> 'attributes') - ARRAY['Family', 'Subtype', ...])
+ WHERE jsonb_typeof(payload -> 'attributes') = 'object'
+   AND (payload -> 'attributes') <> (payload -> 'attributes') - ARRAY['Family', 'Subtype', ...];
 
 -- V4__group_authorisation.sql (section 7.1 to 7.3)
 ALTER TABLE users

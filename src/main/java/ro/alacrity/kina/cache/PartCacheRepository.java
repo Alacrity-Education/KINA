@@ -93,8 +93,8 @@ public class PartCacheRepository {
      * the cache can never serve a part without ships-now stock. {@code stock_fetched_at} and
      * {@code metadata_fetched_at} are the part's own {@link Part#fetchedAt()} (the clock's now when that is null), so
      * re-upserting a part that was loaded from the cache does not make it look fresher than it is; the metadata
-     * timestamp never moves back. The new payload replaces the old one (the refetched metadata is current; attributes
-     * the extractor no longer derives must not survive).
+     * timestamp never moves back. The new payload replaces the old one (the refetched metadata is current). Every
+     * write stores {@link Part#asStored()}: the distributor's attributes, never the derived ones.
      */
     public void upsertAll(Collection<Part> parts) {
         if (parts == null || parts.isEmpty()) {
@@ -113,7 +113,7 @@ public class PartCacheRepository {
             }
             Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
             rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
-                    jsonMapper.writeValueAsString(part), utc(fetchedAt), utc(fetchedAt)});
+                    jsonMapper.writeValueAsString(part.asStored()), utc(fetchedAt), utc(fetchedAt)});
             written.computeIfAbsent(part.distributor(), d -> new LinkedHashSet<>()).add(part.distributorPartNumber());
         }
         Map<Distributor, Long> existing = countExisting(written);
@@ -148,7 +148,7 @@ public class PartCacheRepository {
             }
             Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
             rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
-                    jsonMapper.writeValueAsString(part), utc(fetchedAt), utc(fetchedAt)});
+                    jsonMapper.writeValueAsString(part.asStored()), utc(fetchedAt), utc(fetchedAt)});
         }
         if (!rows.isEmpty()) {
             jdbcTemplate.batchUpdate(UPSERT_LISTED, rows);
@@ -186,7 +186,7 @@ public class PartCacheRepository {
             if (part.stock() <= 0) {
                 continue;
             }
-            rows.add(new Object[] {jsonMapper.writeValueAsString(part),
+            rows.add(new Object[] {jsonMapper.writeValueAsString(part.asStored()),
                     utc(part.fetchedAt() != null ? part.fetchedAt() : now), part.distributor().name(),
                     part.distributorPartNumber()});
         }

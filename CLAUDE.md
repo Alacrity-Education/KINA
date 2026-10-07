@@ -48,7 +48,7 @@ Optional live tests: `KINA_CROSS_ENCODER_TEST_MODEL_DIR=<model dir> ./mvnw test 
 | `web` | `TokenPageController` (Thymeleaf token UI; `kina.tokens.ui-enabled=false` turns static tokens off), `LoginErrorController` (`/login-denied`), `PublicUrlResolver` (public origin; all emitted URLs go through it). |
 | `metrics` | `Metric` (every meter's name, type, help and tag keys; the DESIGN.md 3.7 table is checked against it), `KinaMetrics` facade and `MetricsStore` (in-memory counters, saved to `metrics_counters` every 30 s and restored on startup), gauges from repositories, `/actuator/prometheus` on the management port (`KINA_METRICS_PORT`, no authentication), `/api/v1/metrics/summary`. |
 
-SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V10). Templates: `src/main/resources/templates`.
+SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V11). Templates: `src/main/resources/templates`.
 
 ## Conventions
 
@@ -64,6 +64,7 @@ SQL migrations: `src/main/resources/db/migration` (Flyway, V1 to V10). Templates
 - Every external call has an explicit connect and read timeout. A distributor error is isolated to that distributor and becomes the `error` code in its result entry.
 - Stock rule: only ships-now stock. Never construct, cache, rank or return a `Part` with stock of 0 or less, with one exception: a part requested explicitly by its part number (a part-number token in the search query, or `get_part`) that the distributor lists without stock is built by the distributor lookup with stock 0, returned with `availability.status: "out_of_stock"`, ranked after every in-stock part, and cached with `in_stock = false`. It is never served to a keyword or parametric search (DESIGN.md 2).
 - Prices are stored complete and trimmed to the 3 smallest brackets only when building responses.
+- Cached parts store the distributor's attributes only (`Part.asStored()`); `ParametricExtractor.enrich` derives the rest on every read. Never write a derived attribute to `cached_parts`.
 - MCP tool parameters are snake_case Java parameter names (compiled with `-parameters`).
 - LLM-facing descriptions in `KinaMcpTools` are part of the product; keep them precise.
 - The ranking model runs in-process. Never send part data to a third-party inference service.
