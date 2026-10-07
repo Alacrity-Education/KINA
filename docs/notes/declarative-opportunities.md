@@ -4,6 +4,7 @@ Status: approved for a second pass. The first step, the `ConstraintKind` enum wi
 3.2 and 3.4), is being implemented, followed by the `PartSearchService` split. After both land, the applicability of
 the items below is reviewed again against the new code and the ones that improve readability are implemented
 (decision of 2026-10-07). Every step must stay behaviour-preserving and be checked with the golden test.
+The second pass reviewed every item: see `declarative-pass-2-review.md` for the decisions.
 
 ## The golden test (keep it)
 
