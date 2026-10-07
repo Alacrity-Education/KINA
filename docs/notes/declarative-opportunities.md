@@ -52,4 +52,11 @@ re-capture to make a refactor pass.
 6. **Recognisers per family.** The polarity, diode-subtype and regulator-subtype patterns in `ComponentTypes` and the
    array detection in `PassiveDetails` are per-family recognisers; declare them on the family enum (item 1).
 
+7. **Derived attributes computed at read time.** `ParametricExtractor.enrich` writes derived attributes (`Family`,
+   `Technology`, `Resistance` from the text...) into `Part.attributes` at fetch time, and the cache keeps that payload
+   forever. When the extractor improves, cached parts keep the old derived values in `detail=full` while ranking and
+   compact detail use fresh ones (seen 2026-10-07: IGI60L2727 cached as `Family: mosfet` after the gate-driver family
+   was added). Store the distributor's raw attributes only and derive at read time (the extraction-on-`ConstraintKind`
+   item makes this cheap), or version the derivation and re-derive on read when the version changed.
+
 Already strategies, not worth touching: `RateLimitRetry`, the per-distributor cache retention, `OidcAccessPolicy`.
