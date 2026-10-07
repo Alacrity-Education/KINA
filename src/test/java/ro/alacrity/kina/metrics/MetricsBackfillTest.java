@@ -210,6 +210,26 @@ class MetricsBackfillTest {
     }
 
     @Test
+    void aShortUnknownSeriesIsSharedInProportionToWhatEachTypeLacks() {
+        MetricKey a = PARTS_FETCHED.key("TME", "capacitor");
+        MetricKey b = PARTS_FETCHED.key("TME", "resistor");
+        MetricKey c = PARTS_FETCHED.key("TME", "tvs");
+        Map<MetricKey, Long> deltas = Map.of(a, 6L, b, 3L, c, 1L);
+
+        assertThat(MetricsBackfill.share(20, deltas)).isEqualTo(deltas);
+        assertThat(MetricsBackfill.share(5, deltas)).containsExactlyInAnyOrderEntriesOf(Map.of(a, 3L, b, 2L, c, 0L));
+        assertThat(MetricsBackfill.share(0, deltas).values()).containsOnly(0L);
+
+        // the database: 3 capacitors and 2 resistors at Mouser, but only 1 unknown count to share
+        seedCache();
+        store.add(PARTS_FETCHED.key("MOUSER", "unknown"), 1);
+        jdbc.sql("UPDATE cached_parts SET distributor = 'MOUSER'").update();
+        backfill.run().orElseThrow();
+        assertThat(store.get(PARTS_FETCHED.key("MOUSER", "capacitor"))).isEqualTo(1);
+        assertThat(store.snapshot()).doesNotContainKey(PARTS_FETCHED.key("MOUSER", "resistor"));
+    }
+
+    @Test
     void theStartupRunNeedsTheMarker() {
         assertThat(backfill.neverCompleted()).isTrue();
         backfill.run().orElseThrow();

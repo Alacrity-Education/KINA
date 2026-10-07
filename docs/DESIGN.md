@@ -1518,9 +1518,10 @@ never on a request thread; one instance per database, as for the counters. A run
    {distributor, type}` = cached parts of that distributor and type. `kina.parts.returned`, the other outcomes and
    statuses, and LCSC (its searches are not cached in PostgreSQL) cannot be derived and are left alone.
 3. For each target, `held = max(current value of the typed series, attributed)`, where `attributed` is what the
-   backfill moved into that series before (`metrics_backfill`, section 8). When `target > held`, it moves
-   `min(target - held, value of the unknown series)` from the `type="unknown"` series with the same other tags to the
-   typed one. Counting what the series already holds keeps live counts from being matched twice: a search typed at
+   backfill moved into that series before (`metrics_backfill`, section 8). When `target > held`, the typed series
+   wants `target - held` from the `type="unknown"` series with the same other tags. Each unknown series gives what
+   is wanted from it, but never more than it holds: when it holds less, it is shared in proportion to what each
+   typed series wants (`MetricsBackfill.share`, largest remainders first), so no type wins by its name. Counting what the series already holds keeps live counts from being matched twice: a search typed at
    the time it ran already counted its row. A target that shrank (purged rows) moves nothing. Nothing is ever
    subtracted from a typed series, the sum over `type` never changes, and a second run moves nothing.
 4. Applies the moves with `MetricsPersistence.transfer`, under the lock of the regular save: `MetricsStore.move`

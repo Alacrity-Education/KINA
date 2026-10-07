@@ -19,6 +19,7 @@ import ro.alacrity.kina.domain.Distributor;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -189,14 +190,20 @@ public class MetricsBackfill {
 
         Map<MetricKey, Long> targets = targets();
         Map<MetricKey, Long> attributed = attributed();
-        List<MetricsPersistence.Transfer> transfers = new ArrayList<>();
+        Map<MetricKey, Map<MetricKey, Long>> wanted = new TreeMap<>();
         targets.forEach((key, target) -> {
             // what the counter holds already (counted live, or moved by an earlier run) counts against the target
             long held = Math.max(store.get(key), attributed.getOrDefault(key, 0L));
             if (target > held) {
-                transfers.add(new MetricsPersistence.Transfer(unknownOf(key), key, target - held));
+                wanted.computeIfAbsent(unknownOf(key), k -> new TreeMap<>()).put(key, target - held);
             }
         });
+        List<MetricsPersistence.Transfer> transfers = new ArrayList<>();
+        wanted.forEach((unknown, deltas) -> share(store.get(unknown), deltas).forEach((key, amount) -> {
+            if (amount > 0) {
+                transfers.add(new MetricsPersistence.Transfer(unknown, key, amount));
+            }
+        }));
         Map<MetricKey, Long> moved = new TreeMap<>();
         persistence.transfer(transfers, amounts -> {
             for (int i = 0; i < transfers.size(); i++) {
@@ -220,6 +227,36 @@ public class MetricsBackfill {
                     .param(COMPLETED).update();
         });
         return new Report(retypedSearches, retypedParts, moved, (System.nanoTime() - start) / 1_000_000);
+    }
+
+    /**
+     * Splits {@code pool} (what one unknown series holds) over the typed series that want {@code deltas}: each gets
+     * its delta when the pool covers them all, else a share proportional to its delta (largest remainders first, ties
+     * in key order), so no type is favoured by its name.
+     */
+    static Map<MetricKey, Long> share(long pool, Map<MetricKey, Long> deltas) {
+        long sum = deltas.values().stream().mapToLong(Long::longValue).sum();
+        if (sum <= pool) {
+            return deltas;
+        }
+        Map<MetricKey, Long> out = new TreeMap<>();
+        Map<MetricKey, Long> remainders = new TreeMap<>();
+        long given = 0;
+        for (Map.Entry<MetricKey, Long> e : deltas.entrySet()) {
+            BigInteger scaled = BigInteger.valueOf(e.getValue())
+                    .multiply(BigInteger.valueOf(Math.max(0, pool)));
+            BigInteger[] qr = scaled.divideAndRemainder(BigInteger.valueOf(sum));
+            out.put(e.getKey(), qr[0].longValue());
+            remainders.put(e.getKey(), qr[1].longValue());
+            given += qr[0].longValue();
+        }
+        long left = Math.max(0, pool) - given;
+        List<MetricKey> order = new ArrayList<>(remainders.keySet());
+        order.sort((a, b) -> Long.compare(remainders.get(b), remainders.get(a)));
+        for (int i = 0; i < left && i < order.size(); i++) {
+            out.merge(order.get(i), 1L, Long::sum);
+        }
+        return out;
     }
 
     /**
