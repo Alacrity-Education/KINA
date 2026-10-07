@@ -42,50 +42,16 @@ public class TokenController extends OAuthEndpointSupport {
     public static final String GRANT_REFRESH_TOKEN = "refresh_token";
     public static final String REFRESH_TOKEN_PREFIX = "kina_rt_";
 
-    private final ClientAuthenticator clientAuthenticator;
-    private final AuthorizationCodeRepository codes;
-    private final RefreshTokenRepository refreshTokens;
-    private final AccessTokenService accessTokens;
-    private final OAuthClientRepository clients;
-    private final MembershipVerifier membership;
-    private final TransactionTemplate transactions;
-    private final Duration accessTokenValidity;
-    private final Duration refreshTokenValidity;
-    private final Clock clock;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
-
-    @Autowired
-    public TokenController(ClientAuthenticator clientAuthenticator, AuthorizationCodeRepository codes,
-                           RefreshTokenRepository refreshTokens, AccessTokenService accessTokens,
-                           OAuthClientRepository clients, MembershipVerifier membership,
-                           TransactionTemplate transactions, KinaProperties properties) {
-        this(clientAuthenticator, codes, refreshTokens, accessTokens, clients, membership, transactions,
-                properties.oauth().accessTokenValidity(), properties.oauth().refreshTokenValidity(),
-                Clock.systemUTC());
-    }
-
-    TokenController(ClientAuthenticator clientAuthenticator, AuthorizationCodeRepository codes,
-                    RefreshTokenRepository refreshTokens, AccessTokenService accessTokens,
-                    OAuthClientRepository clients, MembershipVerifier membership,
-                    TransactionTemplate transactions, Duration accessTokenValidity, Duration refreshTokenValidity,
-                    Clock clock) {
-        this.clientAuthenticator = clientAuthenticator;
-        this.codes = codes;
-        this.refreshTokens = refreshTokens;
-        this.accessTokens = accessTokens;
-        this.clients = clients;
-        this.membership = membership;
-        this.transactions = transactions;
-        this.accessTokenValidity = accessTokenValidity;
-        this.refreshTokenValidity = refreshTokenValidity;
-        this.clock = clock;
-    }
-
-    /** Counts issued tokens per grant type (DESIGN.md 3.7). */
-    @Autowired
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
-    }
+    @Autowired private ClientAuthenticator clientAuthenticator;
+    @Autowired private AuthorizationCodeRepository codes;
+    @Autowired private RefreshTokenRepository refreshTokens;
+    @Autowired private AccessTokenService accessTokens;
+    @Autowired private OAuthClientRepository clients;
+    @Autowired private MembershipVerifier membership;
+    @Autowired private TransactionTemplate transactions;
+    @Autowired private KinaProperties properties;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
+    private final Clock clock = Clock.systemUTC();
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record TokenResponse(@JsonProperty("access_token") String accessToken,
@@ -204,13 +170,13 @@ public class TokenController extends OAuthEndpointSupport {
 
     private TokenResponse issueInTransaction(OAuthClient client, UUID userId, String scope, Instant now) {
         IssuedToken access = accessTokens.create(userId, "MCP: " + client.displayName(), scope, client.clientId(),
-                accessTokenValidity);
+                properties.oauth().accessTokenValidity());
         clients.touchLastUsed(client.clientId(), now);
         String refreshPlaintext = null;
         if (client.grantTypes().contains(GRANT_REFRESH_TOKEN)) {
             refreshPlaintext = REFRESH_TOKEN_PREFIX + SecureTokens.randomBase64Url(32);
             refreshTokens.insert(new RefreshToken(SecureTokens.sha256Hex(refreshPlaintext), client.clientId(), userId,
-                    access.token().id(), scope, now, now.plus(refreshTokenValidity), null));
+                    access.token().id(), scope, now, now.plus(properties.oauth().refreshTokenValidity()), null));
         }
         long expiresIn = Duration.between(now, access.token().expiresAt()).toSeconds();
         return new TokenResponse(access.plaintext(), "Bearer", Math.max(expiresIn, 0), refreshPlaintext, scope);

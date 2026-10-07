@@ -1,6 +1,6 @@
 package ro.alacrity.kina.oauth;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -14,13 +14,12 @@ import java.util.UUID;
 
 /** {@code oauth_authorization_codes}: single-use authorization codes, stored as SHA-256 hex. */
 @Repository
-@RequiredArgsConstructor
 public class AuthorizationCodeRepository {
 
     /** Expired codes are purged this long after expiry. */
     private static final Duration RETENTION = Duration.ofDays(1);
 
-    private final JdbcClient jdbc;
+    @Autowired private JdbcClient jdbc;
 
     public record AuthorizationCode(String codeHash, String clientId, UUID userId, String redirectUri, String scope,
                                     String resource, String codeChallenge, String codeChallengeMethod,

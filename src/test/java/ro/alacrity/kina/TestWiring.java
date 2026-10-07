@@ -3,14 +3,20 @@ package ro.alacrity.kina;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import lombok.experimental.UtilityClass;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ReflectionUtils;
+import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.metrics.MetricsStore;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Builds beans by hand for unit tests, the way Spring would: the bean's no-arg constructor, its {@code @Autowired}
@@ -44,6 +50,17 @@ public class TestWiring {
             ReflectionUtils.invokeMethod(method, bean);
         }
         return bean;
+    }
+
+    /** Binds {@link KinaProperties} from {@code kina.*} key and value pairs on top of the defaults. */
+    public KinaProperties properties(String... keysAndValues) {
+        Map<String, String> source = new LinkedHashMap<>();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            source.put(keysAndValues[i], keysAndValues[i + 1]);
+        }
+        source.putIfAbsent("kina.public-base-url", "");
+        return new Binder(new MapConfigurationPropertySource(source))
+                .bindOrCreate("kina", Bindable.of(KinaProperties.class));
     }
 
     /** A {@link MetricsStore} registering on {@code registry}; null keeps the values in memory only. */

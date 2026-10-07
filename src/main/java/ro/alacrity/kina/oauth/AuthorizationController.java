@@ -2,6 +2,7 @@ package ro.alacrity.kina.oauth;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -49,24 +50,11 @@ public class AuthorizationController {
     static final List<String> FORWARDED_PARAMETERS = List.of("response_type", "client_id", "redirect_uri",
             "code_challenge", "code_challenge_method", "scope", "state", "resource");
 
-    private final OAuthClientLookup clients;
-    private final AuthorizationCodeRepository codes;
-    private final PublicUrlResolver urls;
-    private final MembershipVerifier membership;
-    private final boolean autoApproveTrustedClients;
-    private final Duration accessTokenValidity;
-    private final Duration refreshTokenValidity;
-
-    public AuthorizationController(OAuthClientLookup clients, AuthorizationCodeRepository codes,
-                                   PublicUrlResolver urls, MembershipVerifier membership, KinaProperties properties) {
-        this.clients = clients;
-        this.codes = codes;
-        this.urls = urls;
-        this.membership = membership;
-        this.autoApproveTrustedClients = properties.oauth().autoApproveTrustedClients();
-        this.accessTokenValidity = properties.oauth().accessTokenValidity();
-        this.refreshTokenValidity = properties.oauth().refreshTokenValidity();
-    }
+    @Autowired private OAuthClientLookup clients;
+    @Autowired private AuthorizationCodeRepository codes;
+    @Autowired private PublicUrlResolver urls;
+    @Autowired private MembershipVerifier membership;
+    @Autowired private KinaProperties properties;
 
     /** A validated authorization request. */
     record AuthorizationRequest(OAuthClient client, String redirectUri, String codeChallenge,
@@ -131,8 +119,8 @@ public class AuthorizationController {
             view.addObject("metadataHost", request.client().isMetadataDocumentClient()
                     ? URI.create(request.client().clientId()).getHost() : null);
             view.addObject("loopbackRedirect", ClientMetadataDocument.isLoopbackRedirect(request.redirectUri()));
-            view.addObject("accessTokenValidity", human(accessTokenValidity));
-            view.addObject("refreshTokenValidity", human(refreshTokenValidity));
+            view.addObject("accessTokenValidity", human(properties.oauth().accessTokenValidity()));
+            view.addObject("refreshTokenValidity", human(properties.oauth().refreshTokenValidity()));
             return view;
         } catch (ErrorPageException e) {
             return errorPage(e.getMessage());
@@ -183,7 +171,7 @@ public class AuthorizationController {
      * considerations), so loopback redirects keep the consent page.
      */
     private boolean autoApproves(AuthorizationRequest request) {
-        return autoApproveTrustedClients && request.client().isMetadataDocumentClient()
+        return properties.oauth().autoApproveTrustedClients() && request.client().isMetadataDocumentClient()
                 && !ClientMetadataDocument.isLoopbackRedirect(request.redirectUri());
     }
 

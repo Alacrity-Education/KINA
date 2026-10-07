@@ -1,9 +1,11 @@
 package ro.alacrity.kina.oauth;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,7 +14,7 @@ class RegistrationRateLimiterTest {
     @Test
     void allowsTheLimitPerMinuteThenAsksToRetry() {
         AtomicLong clock = new AtomicLong(0);
-        RegistrationRateLimiter limiter = new RegistrationRateLimiter(3, clock::get);
+        RegistrationRateLimiter limiter = limiter(3, clock::get);
         assertThat(limiter.tryAcquire("1.2.3.4")).isEmpty();
         assertThat(limiter.tryAcquire("1.2.3.4")).isEmpty();
         assertThat(limiter.tryAcquire("1.2.3.4")).isEmpty();
@@ -29,7 +31,7 @@ class RegistrationRateLimiterTest {
     @Test
     void bucketsArePerClientAndRefillToTheLimitOnly() {
         AtomicLong clock = new AtomicLong(0);
-        RegistrationRateLimiter limiter = new RegistrationRateLimiter(2, clock::get);
+        RegistrationRateLimiter limiter = limiter(2, clock::get);
         limiter.tryAcquire("a");
         limiter.tryAcquire("a");
         assertThat(limiter.tryAcquire("a")).isPresent();
@@ -43,9 +45,15 @@ class RegistrationRateLimiterTest {
 
     @Test
     void zeroDisablesTheLimit() {
-        RegistrationRateLimiter limiter = new RegistrationRateLimiter(0, () -> 0L);
+        RegistrationRateLimiter limiter = limiter(0, () -> 0L);
         for (int i = 0; i < 1000; i++) {
             assertThat(limiter.tryAcquire("x")).isEmpty();
         }
+    }
+
+    static RegistrationRateLimiter limiter(int perMinute, LongSupplier nanoTime) {
+        return TestWiring.wire(new RegistrationRateLimiter(),
+                "properties", TestWiring.properties("kina.oauth.register-rate-limit-per-minute", "" + perMinute),
+                "nanoTime", nanoTime);
     }
 }

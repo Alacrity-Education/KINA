@@ -1,6 +1,6 @@
 package ro.alacrity.kina.oauth;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -13,10 +13,9 @@ import java.util.UUID;
 
 /** {@code oauth_refresh_tokens}: refresh tokens, stored as SHA-256 hex, rotated on every use. */
 @Repository
-@RequiredArgsConstructor
 public class RefreshTokenRepository {
 
-    private final JdbcClient jdbc;
+    @Autowired private JdbcClient jdbc;
 
     public record RefreshToken(String tokenHash, String clientId, UUID userId, UUID accessTokenId, String scope,
                                Instant createdAt, Instant expiresAt, Instant revokedAt) {

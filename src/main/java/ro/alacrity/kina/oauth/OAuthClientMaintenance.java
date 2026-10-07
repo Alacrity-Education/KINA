@@ -1,6 +1,7 @@
 package ro.alacrity.kina.oauth;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
@@ -19,15 +20,9 @@ import java.time.Instant;
 @Slf4j
 public class OAuthClientMaintenance {
 
-    private final OAuthClientRepository clients;
-    private final Duration retention;
-    private final Clock clock;
-
-    public OAuthClientMaintenance(OAuthClientRepository clients, KinaProperties properties) {
-        this.clients = clients;
-        this.retention = properties.oauth().unusedClientRetention();
-        this.clock = Clock.systemUTC();
-    }
+    @Autowired private OAuthClientRepository clients;
+    @Autowired private KinaProperties properties;
+    private final Clock clock = Clock.systemUTC();
 
     @Scheduled(initialDelayString = "PT15M", fixedDelayString = "P1D")
     public void scheduledCleanup() {
@@ -41,6 +36,7 @@ public class OAuthClientMaintenance {
     /** Deletes unused registered clients; returns how many. */
     public int cleanup() {
         Instant now = clock.instant();
+        Duration retention = properties.oauth().unusedClientRetention();
         int deleted = clients.deleteUnusedRegisteredClients(now.minus(retention), now);
         if (deleted > 0) {
             log.info("Deleted {} dynamically registered OAuth clients unused for {}", deleted, retention);

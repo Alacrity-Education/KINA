@@ -30,7 +30,6 @@ import tools.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -55,6 +54,7 @@ import static ro.alacrity.kina.oauth.OAuthFlowTest.strings;
 @SpringBootTest(properties = {
         "kina.security.mode=dev",
         "kina.oauth.register-rate-limit-per-minute=3",
+        "kina.oauth.trusted-client-metadata-hosts=127.0.0.1",
         "kina.tokens.ui-enabled=false"})
 @AutoConfigureMockMvc
 @Import({TestcontainersConfiguration.class, TestEchoController.Endpoint.class, OAuthHardeningTest.Documents.class})
@@ -94,9 +94,10 @@ class OAuthHardeningTest {
 
         @Bean
         @Primary
-        ClientMetadataDocumentResolver testClientMetadataDocumentResolver(OAuthClientRepository clients) {
-            return new ClientMetadataDocumentResolver(clients, List.of("127.0.0.1"), Duration.ofHours(1),
-                    ClientMetadataDocumentResolver.defaultHttpClient(), true, Clock.systemUTC());
+        ClientMetadataDocumentResolver testClientMetadataDocumentResolver() {
+            ClientMetadataDocumentResolver resolver = new ClientMetadataDocumentResolver();
+            resolver.allowHttp = true;
+            return resolver;
         }
     }
 

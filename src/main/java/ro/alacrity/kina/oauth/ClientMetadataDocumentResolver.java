@@ -2,6 +2,7 @@ package ro.alacrity.kina.oauth;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -44,12 +45,14 @@ public class ClientMetadataDocumentResolver {
     static final Duration TIMEOUT = Duration.ofSeconds(5);
     static final int MAX_BYTES = 1024 * 1024;
 
-    private final OAuthClientRepository clients;
-    private final List<String> trustedHosts;
-    private final HttpClient http;
-    private final boolean allowHttp;
-    private final Clock clock;
-    private final Cache<String, OAuthClient> cache;
+    @Autowired private OAuthClientRepository clients;
+    @Autowired private KinaProperties properties;
+    private final HttpClient http = defaultHttpClient();
+    private final Clock clock = Clock.systemUTC();
+    /** Also accept {@code http://} client ids (tests with an in-process document server only; never in production). */
+    boolean allowHttp;
+    private List<String> trustedHosts;
+    private Cache<String, OAuthClient> cache;
 
     /** An untrusted host, an invalid URL or document, or an unreachable host without a persisted copy. */
     public static final class UnresolvableClientException extends RuntimeException {
@@ -61,24 +64,12 @@ public class ClientMetadataDocumentResolver {
         }
     }
 
-    @Autowired
-    public ClientMetadataDocumentResolver(OAuthClientRepository clients, KinaProperties properties) {
-        this(clients, properties.oauth().trustedClientMetadataHosts(), properties.oauth().clientMetadataCache(),
-                defaultHttpClient(), false, Clock.systemUTC());
-    }
-
-    /**
-     * {@code allowHttp}: also accept {@code http://} client ids (tests with an in-process document server only; never
-     * in production).
-     */
-    public ClientMetadataDocumentResolver(OAuthClientRepository clients, List<String> trustedHosts,
-                                          Duration cacheTtl, HttpClient http, boolean allowHttp, Clock clock) {
-        this.clients = clients;
-        this.trustedHosts = trustedHosts.stream().map(h -> h.strip().toLowerCase(Locale.ROOT)).toList();
-        this.http = http;
-        this.allowHttp = allowHttp;
-        this.clock = clock;
-        this.cache = Caffeine.newBuilder().expireAfterWrite(cacheTtl).maximumSize(1_000).build();
+    @PostConstruct
+    void init() {
+        trustedHosts = properties.oauth().trustedClientMetadataHosts().stream()
+                .map(h -> h.strip().toLowerCase(Locale.ROOT)).toList();
+        cache = Caffeine.newBuilder().expireAfterWrite(properties.oauth().clientMetadataCache()).maximumSize(1_000)
+                .build();
     }
 
     static HttpClient defaultHttpClient() {

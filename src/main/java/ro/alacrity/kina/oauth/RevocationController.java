@@ -1,7 +1,7 @@
 package ro.alacrity.kina.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -23,12 +23,11 @@ import java.util.Optional;
  * other clients are ignored. The response is always 200 once the client is authenticated.
  */
 @RestController
-@RequiredArgsConstructor
 public class RevocationController extends OAuthEndpointSupport {
 
-    private final ClientAuthenticator clientAuthenticator;
-    private final RefreshTokenRepository refreshTokens;
-    private final AccessTokenService accessTokens;
+    @Autowired private ClientAuthenticator clientAuthenticator;
+    @Autowired private RefreshTokenRepository refreshTokens;
+    @Autowired private AccessTokenService accessTokens;
 
     @PostMapping(path = "/oauth/revoke", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<Void> revoke(@RequestParam MultiValueMap<String, String> params,

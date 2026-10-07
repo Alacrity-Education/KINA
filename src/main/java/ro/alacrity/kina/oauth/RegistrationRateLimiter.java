@@ -20,22 +20,12 @@ import java.util.function.LongSupplier;
 @Component
 public class RegistrationRateLimiter {
 
-    private final int perMinute;
-    private final LongSupplier nanoTime;
+    @Autowired private KinaProperties properties;
+    private LongSupplier nanoTime = System::nanoTime;
     private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
             .expireAfterAccess(Duration.ofMinutes(10))
             .maximumSize(100_000)
             .build();
-
-    @Autowired
-    public RegistrationRateLimiter(KinaProperties properties) {
-        this(properties.oauth().registerRateLimitPerMinute(), System::nanoTime);
-    }
-
-    RegistrationRateLimiter(int perMinute, LongSupplier nanoTime) {
-        this.perMinute = perMinute;
-        this.nanoTime = nanoTime;
-    }
 
     private static final class Bucket {
         double tokens;
@@ -52,6 +42,7 @@ public class RegistrationRateLimiter {
      * next request is allowed (for {@code Retry-After}).
      */
     public OptionalLong tryAcquire(String clientKey) {
+        int perMinute = properties.oauth().registerRateLimitPerMinute();
         if (perMinute <= 0) {
             return OptionalLong.empty();
         }

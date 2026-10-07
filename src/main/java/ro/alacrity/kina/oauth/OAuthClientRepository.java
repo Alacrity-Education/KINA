@@ -1,6 +1,6 @@
 package ro.alacrity.kina.oauth;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import tools.jackson.core.type.TypeReference;
@@ -20,7 +20,6 @@ import java.util.Optional;
  * identified by a Client ID Metadata Document ({@code metadata_url} set; refreshed from the document).
  */
 @Repository
-@RequiredArgsConstructor
 public class OAuthClientRepository {
 
     static final JsonMapper JSON = JsonMapper.builder().build();
@@ -33,7 +32,7 @@ public class OAuthClientRepository {
             grant_types::text AS grant_types, response_types::text AS response_types,
             token_endpoint_auth_method, scope, metadata::text AS metadata, created_at, metadata_url""";
 
-    private final JdbcClient jdbc;
+    @Autowired private JdbcClient jdbc;
 
     /**
      * An OAuth client. {@code metadataUrl} is set (and equals {@code clientId}) for clients identified by a Client ID
