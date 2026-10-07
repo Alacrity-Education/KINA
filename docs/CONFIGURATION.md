@@ -222,21 +222,25 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 
 ### Hard constraints (`kina.search.hard-constraints`)
 
-The decided defaults (user decision 2026-10-07; `search.ConstraintPolicy.DEFAULT_HARD`, DESIGN.md 3.4):
+The decided defaults (user decision 2026-10-07). They are declared on `domain.ConstraintKind` with `@Relax` and
+rendered in DESIGN.md 3.4, which a test keeps in sync with the code:
 
 | Family | Hard constraints |
 |---|---|
-| `resistor`, `capacitor` | type, value, package, mounting, technology, elements |
-| `inductor` | type, value, mounting, technology (the package is relaxable) |
+| `resistor`, `capacitor` | type, value, package, mounting, technology, form factor, elements |
+| `inductor` | type, value, mounting, technology, form factor (the package is relaxable) |
 | `ferrite` | type, value, package, mounting, elements |
 | `crystal` | type, value, load capacitance, mounting (the package is relaxable) |
 | `oscillator` | type, value, mounting (the package is relaxable) |
 | `diode` | type, voltage, package, mounting |
 | `transistor` | type, polarity, package, mounting |
 | `regulator` | type, voltage, package, mounting |
-| `connector` | type, connector type, gender, positions, pitch, package, mounting |
-| `usb` | type, usb type, pin configuration, usb standard, gender, mounting |
-| `default` | type, value, package, mounting, technology, elements, polarity, voltage |
+| `connector` | type, package, mounting, connector type, positions, pitch, gender |
+| `usb` | type, mounting, usb type, pin configuration, usb standard, gender |
+| `default` | type, polarity, value, voltage, package, mounting, technology, form factor, elements |
+
+A list replaces the family's hard set: the listed constraints become hard, the others go back to relaxable (dielectric,
+package, tolerance, orientation, tcr, esr, dcr) or to ranked only.
 
 In YAML:
 

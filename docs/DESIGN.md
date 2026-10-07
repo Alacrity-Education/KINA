@@ -31,13 +31,15 @@ Base package: `ro.alacrity.kina`.
 ro.alacrity.kina
 ├── KinaApplication
 ├── config/          KinaProperties (@ConfigurationProperties("kina")), HTTP client beans, Jackson, forwarded headers
-├── domain/          Distributor, Part, PriceBreak, ParsedQuery, SearchRequest, SearchResponse DTOs, RankingMode
+├── domain/          Distributor, Part, PriceBreak, ParsedQuery, SearchRequest, SearchResponse DTOs, RankingMode,
+│                    ConstraintKind (@Relax, @Match, RelaxStrategy, MatchMode), PolicyFamily, PartFeatures, MatchContext
 ├── distributor/     DistributorClient, DistributorSearchPage, DistributorException, DistributorRegistry
 │   ├── mouser/      MouserClient, MouserProperties, response records, MouserPartMapper
 │   ├── tme/         TmeClient, TmeTokenManager, TmeProperties, response records, TmePartMapper
 │   └── lcsc/        JlcpcbDatabaseManager (download/refresh), JlcpcbSqliteSearch, LcscClient, JlcpcbPriceParser
 ├── cache/           PartCacheRepository, SearchCacheRepository, CacheProperties
-├── search/          QueryParser, ParametricExtractor, PassiveDetails, DeterministicRanker, PartRanker, RankingService,
+├── search/          QueryParser, ParametricExtractor, PassiveDetails, DeterministicRanker, ConstraintPolicy,
+│   │                SearchMatchContext, PartRanker, RankingService,
 │   │                RankingScoreCache, PartSearchService, PartLookupService, DistributorStatusService
 │   └── ce/          CrossEncoderPartRanker, CrossEncoderModel (download/load), ModelDownloader, ModelLayout,
 │                    BertTokenizer, ScoringBackend, OnnxScoringBackend
@@ -231,9 +233,11 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    fetch has found **nothing that meets the request** (no in-stock part, or every one excluded) and the deadline has
    not passed, the search is repeated with the next step of `DistributorPhraser.ladder`, stopping at the first one
    that finds a part that meets the request. Only **relaxable** constraints are loosened (`ConstraintPolicy`,
-   section 3.4 "Hard constraints"), in a fixed order (user decisions 2026-10-06 and 2026-10-07): **the dielectric,
-   then the package (only for inductors, crystals and oscillators), then the tolerance; a rating or a hard constraint
-   never** (a rating is not in any phrase and the ranker excludes below-spec parts; a hard constraint stays in every
+   section 3.4 "Hard constraints"), in the order declared on `ConstraintKind`
+   (`@Relax(strategy = LADDER, order = n)`: dielectric, package, tolerance, orientation, tcr, esr, dcr; user decisions
+   2026-10-06 and 2026-10-07). The parametric core has steps for **the dielectric, then the package (only for
+   inductors, crystals and oscillators), then the tolerance**, the connector core leaves out the orientation; **a
+   rating or a hard constraint never** (a rating is not in any phrase and the ranker excludes below-spec parts; a hard constraint stays in every
    parametric phrase and the ranker excludes parts that contradict it). Each step carries what it loosens
    (`DistributorPhraser.Relaxation.relaxed`):
    1. the phrase sent without rating values (normally already the case, see "Distributor phrasing"); loosens nothing;
@@ -699,22 +703,23 @@ height). Not connectors: categories naming cables, adapters, power supplies, hub
 `Plug-in Power Supplies`, `Sensor Cables / Actuator Cables`) unless they say "connector", and TME descriptions that start
 with the product kind (`Adapter;`, `Cable;`, `Hub USB;`, `Power supply`).
 
-`DeterministicRanker.score(ParsedQuery, Part) -> double in [0,1]` (weights configurable in code constants):
+`DeterministicRanker.score(ParsedQuery, Part) -> double in [0,1]` (weights and rules declared on `ConstraintKind`
+with `@Match`, see "Declarative constraint model" below; the constant is named in brackets):
 
 | Signal | Weight | Rule |
 |---|---|---|
-| primary value (C/R/L; ferrite impedance) | 0.30 | exact match within 1% -> full (an impedance also at the same test frequency when both state one); different -> -0.30 penalty; unknown -> 0 |
-| package | 0.20 | `Recognizers.samePackage` (imperial codes; `SOT-23-3L` == `SOT-23` == `TO-236AB`; can sizes within 0.2 mm); mismatch -> -0.20; a package that cannot be read is unverified |
-| polarity (`W_POLARITY`) | 0.10 | the request's polarity: same -> +0.10, different -> -0.10 (excluded anyway), unknown -> unverified |
-| load capacitance (`W_LOAD_CAPACITANCE`) | 0.10 | a crystal request with a capacitance: same within 1 % -> +0.10, different -> -0.10 (excluded), unknown -> unverified |
-| dielectric | 0.15 | exact; `C0G` == `NP0`; mismatch -> -0.15 |
-| technology (`W_TECHNOLOGY`) | 0.15 | the query names a technology: same -> +0.15; a different known technology -> -0.15; unknown -> 0. Compatible (+): a `film` request and a polypropylene/polyester/PPS part, a `tantalum` or `polymer` request and a tantalum polymer part, a `current sense` request and a metal strip/metal foil part. Neutral (0): a polypropylene request and a part that only says `film`, a tantalum polymer request and a `tantalum` part, a `current sense` request and any other construction |
-| ratings: voltage, current (an inductor's rated current), saturation current, power, temperature, lifetime; DCR | 0.10 | shared between the stated ratings. Minimums: part >= requested -> full; lower -> -0.10; a higher rating keeps full credit in the match grade but loses up to `W_RATING_EXCESS` (0.05) of score, `0.05 * min(1, log2(part / requested) / 2)`, so 25 V > 35 V > 50 V > 100 V for a 25 V request. DCR is a maximum (part <= requested). Regulator and Zener voltages and fuse currents must match within 2 %. Saturation current is compared with the part's saturation current only: a part that does not state it scores 0 |
-| mounting (non-connector requests, `W_MOUNTING`) | 0.05 | SMD/THT same +0.05, different -0.05 |
-| form factor named by the request's words (`W_FORM_FACTOR`) | 0.10 | `FormFactor.compatible`: +0.10, another known class -0.10 (excluded anyway), unknown -> unverified (`form factor`). A class implied only by the package is not scored again |
-| low DCR preference (`W_LOW_DCR`) | up to 0.04 | `0.04 / (1 + DCR / 10 mΩ)`, score only: lower DCR ranks higher among otherwise equal parts |
-| tolerance | 0.10 | part tolerance <= requested -> full; looser -> -0.10 |
-| family keyword present in description/category | 0.05 | |
+| primary value (C/R/L; ferrite impedance; `VALUE`) | 0.30 | exact match within 1% -> full (an impedance also at the same test frequency when both state one); different -> -0.30 penalty; unknown -> 0 |
+| package (`PACKAGE`) | 0.20 | `Recognizers.samePackage` (imperial codes; `SOT-23-3L` == `SOT-23` == `TO-236AB`; can sizes within 0.2 mm); mismatch -> -0.20; a package that cannot be read is unverified |
+| polarity (`POLARITY`) | 0.10 | the request's polarity: same -> +0.10, different -> -0.10 (excluded anyway), unknown -> unverified |
+| load capacitance (`LOAD_CAPACITANCE`) | 0.10 | a crystal request with a capacitance: same within 1 % -> +0.10, different -> -0.10 (excluded), unknown -> unverified |
+| dielectric (`DIELECTRIC`) | 0.15 | exact; `C0G` == `NP0`; mismatch -> -0.15 |
+| technology (`TECHNOLOGY`) | 0.15 | the query names a technology: same -> +0.15; a different known technology -> -0.15; unknown -> 0. Compatible (+): a `film` request and a polypropylene/polyester/PPS part, a `tantalum` or `polymer` request and a tantalum polymer part, a `current sense` request and a metal strip/metal foil part. Neutral (0): a polypropylene request and a part that only says `film`, a tantalum polymer request and a `tantalum` part, a `current sense` request and any other construction |
+| ratings, group `rating`: voltage, current (an inductor's rated current), saturation current, power, temperature, lifetime; DCR | 0.10 | shared between the stated ratings. Minimums: part >= requested -> full; lower -> -0.10; a higher rating keeps full credit in the match grade but loses up to `DeterministicRanker.W_RATING_EXCESS` (0.05) of score, `0.05 * min(1, log2(part / requested) / 2)`, so 25 V > 35 V > 50 V > 100 V for a 25 V request. DCR is a maximum (part <= requested). Regulator and Zener voltages and fuse currents must match within 2 %. Saturation current is compared with the part's saturation current only: a part that does not state it scores 0 |
+| mounting (non-connector requests, `MOUNTING`) | 0.05 | SMD/THT same +0.05, different -0.05 |
+| form factor named by the request's words (`FORM_FACTOR`) | 0.10 | `FormFactor.compatible`: +0.10, another known class -0.10 (excluded anyway), unknown -> unverified (`form factor`). A class implied only by the package is not scored again |
+| low DCR preference (`LOW_DCR`) | up to 0.04 | `0.04 / (1 + DCR / 10 mΩ)`, score only: lower DCR ranks higher among otherwise equal parts |
+| tolerance (`TOLERANCE`) | 0.10 | part tolerance <= requested -> full; looser -> -0.10 |
+| family (`TYPE`): the same or a more specific family, or a family word in the part text | 0.05 | a different known family -0.05; the generic family (a `diode` part for a `schottky` request) 0 |
 | lexical: share of free-text tokens found in mpn/description/attributes | 0.10 | score only, never part of the match grade |
 | tie-break bonuses | up to 0.05 | log10(stock) scaled, has price, JLCPCB "Basic"/"Preferred" library |
 
@@ -767,31 +772,71 @@ blended score. Regulator and Zener voltages must match (a different value is a h
 so must fuse currents (a mismatch, not excluded: the decision of 2026-10-07 does not name fuses). An impedance is the primary value of a ferrite bead (matched within 1 %), not a minimum: KINA has no syntax for an
 impedance minimum, so it is never treated as below spec. A rating the part does not state is unverified, not below spec.
 
-**Hard constraints** (`search.ConstraintPolicy`, user decision 2026-10-07; they replace the former strict
-constraints). A hard constraint is never relaxed: when the request states it and the part's **known** value
+**Declarative constraint model** (`domain.ConstraintKind`). Every attribute a request can state and a
+part can match is one constant of the `ConstraintKind` enum. The relaxation policy and the matching rule are declared
+on the constant with two annotations, and the policy, the ladder, the check, the score, the grade and the reporting read
+them. Change a rule on the constant, not in the ranker.
+
+- `@Relax(strategy, order, cost, families)` (repeatable) declares how a kind may be loosened. `RelaxStrategy`:
+  `NEVER` (hard: a known contradicting value excludes the part), `LADDER` (the relaxation ladder may loosen it, in
+  `order`; a miss is a mismatch and is reported in `constraints_relaxed`), `SOFT` (ranked and graded, never excludes,
+  no ladder step), `BELOW_SPEC` (a rating: never relaxed downward, only `allow_below_spec` returns parts below it, a
+  minimum above the request is preferred less the further it is) and `PREFERENCE` (score only, never in the grade, for
+  example `low dcr`). `cost` is the score cost of a relaxed miss (-1, the default everywhere, uses the `@Match`
+  weight). Each kind has one general declaration without `families`: the strategy when a family does not make the
+  kind hard. Family-specific declarations name the families (`Relax.ALL` for every family). Resolution: the family's
+  own declaration, then `Relax.ALL`, then the general one; `kina.search.hard-constraints.<family>` then replaces a
+  family's declared table (listed kinds `NEVER`, the others their general strategy).
+- `@Match(mode, tolerance, weight, group, inGrade, scope, order, report)` declares the comparison. `MatchMode`:
+  `EQUAL`, `EQUAL_IGNORE_CASE`, `AT_LEAST` and `AT_MOST` (relative `tolerance`), `WITHIN` (relative `tolerance`),
+  `COMPATIBLE` (a graded comparison such as the technology) and `CUSTOM` (the constant's own comparator: the type and
+  family, the package, form factor, elements, connector and USB rules). A match earns `weight`, a miss loses it, an
+  attribute the part does not state is unverified. The ratings form the group `rating`: its weight (0.10) is shared
+  equally at run time between the ratings the request states. `inGrade = false` marks a score-only signal. `scope`
+  limits a signal to part, connector or USB requests. `order` is the order of the score and of the `unverified` list,
+  `report` the order of the `mismatches`; the enum order is the check order (the first conflict names the part's entry
+  in `excluded_by_constraints_detail`).
+- Each constant declares how the wanted value is read from `ParsedQuery` and the actual value from `PartFeatures` (a
+  domain interface that `ParametricExtractor.Features` implements), and its comparator when the mode is `CUSTOM` or
+  `COMPATIBLE`. The comparators use the component vocabularies of the search package through `MatchContext` (package
+  equivalence, technology compatibility, form factor classes, USB standards, connector types), so `domain` does not
+  depend on `search`.
+- Kinds that share a label are one attribute matched differently by request: `EXACT_VOLTAGE` (the Zener and fixed
+  regulator voltage, exact within 2 %, hard for diodes, regulators and the default family) and `VOLTAGE_RATING` (a
+  minimum everywhere else); `CURRENT` and `EXACT_CURRENT` (a fuse); `MAX_DCR` (the maximum DCR rating), `DCR` (the
+  relaxable DCR preference name) and `LOW_DCR` (the "low DCR" score preference); the connector and USB variants of
+  gender, orientation and mounting. The policy names are the labels of the kinds that are `NEVER` for some family or
+  `LADDER`.
+
+**Hard constraints** (declared on `ConstraintKind` with `@Relax`, read by `search.ConstraintPolicy`; user decision
+2026-10-07; they replace the former strict constraints). A hard constraint is never relaxed: when the request states it and the part's **known** value
 contradicts it, the part is excluded before ranking and counted in `excluded_by_constraints` and, under the first
 constraint it contradicts, in `excluded_by_constraints_detail` (`ConstraintPolicy.check`). A part that does not state
 the attribute stays, unverified and ranked below complete matches (section 3.3); a package string KINA cannot read
 (`Recognizers.isRecognisedPackage` false, e.g. LCSC `SMD,8.5x8mm`) never contradicts. A relaxable constraint is never a
 reason to exclude: the ladder may loosen it (section 3.2), the part lists the miss in `mismatches` and the response the
-constraint in `constraints_relaxed`. The decided table (`ConstraintPolicy.DEFAULT_HARD`). The policy family of a
-request is its family, `diode` for Schottky, Zener, TVS and LED, `transistor` for MOSFETs, `usb` for USB connectors and
-`default` for any other or unknown family:
+constraint in `constraints_relaxed`. The decided table (`ConstraintPolicy.DEFAULT_HARD`) is rendered from the
+declarations below; `ConstraintTableDocumentationTest` renders it again and fails when this copy differs. The policy
+family of a request (`PolicyFamily.of`) is its family, `diode` for Schottky, Zener, TVS and LED, `transistor` for
+MOSFETs, `usb` for USB connectors and `default` for any other or unknown family. Hard kinds are listed in check order,
+relaxable ones in ladder order. Every other policy kind is soft for the family: it is ranked and graded, a miss is a
+mismatch, it never excludes a part and the ladder has no step for it (for example the value of a diode). The notes on
+each kind (resistance, capacitance, "a higher USB standard is accepted"...) are in the checks below.
 
-| Family | Hard (never relaxed) | Relaxable |
+| Family | Hard (never relaxed) | Relaxable (ladder order) |
 |---|---|---|
-| resistor | type, value (resistance), package, mounting, technology, elements (single), form factor | tolerance (looser), TCR |
-| capacitor | type, value (capacitance), package (a can size within 0.2 mm), mounting, technology, elements, form factor | dielectric, tolerance, ESR |
-| inductor | type, value (inductance), mounting, technology, form factor | package, tolerance, DCR preference |
-| ferrite | type, value (impedance at its test frequency), package, mounting, elements | tolerance, DCR preference |
-| crystal | type (never an oscillator), value (frequency), load capacitance (exact, 1 %), mounting | package, tolerance |
-| oscillator | type (never a crystal), value (frequency), mounting | package |
-| diode | type (Schottky, standard rectifier or switching, Zener, TVS, LED), voltage (Zener, exact), package, mounting | |
-| transistor | type, polarity (N-channel, P-channel, NPN, PNP, complementary), package, mounting | |
-| regulator | type (fixed or adjustable), voltage (output, exact), package, mounting | |
-| connector | type, connector type, gender, positions, pitch, package, mounting | orientation |
-| usb | type, usb type, pin configuration (stated, normalised), usb standard (a higher one is accepted), gender, mounting | orientation |
-| default | type, value, package, mounting, technology, elements, polarity, voltage, form factor | |
+| `resistor` | `type`, `value`, `package`, `mounting`, `technology`, `form factor`, `elements` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `capacitor` | `type`, `value`, `package`, `mounting`, `technology`, `form factor`, `elements` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `inductor` | `type`, `value`, `mounting`, `technology`, `form factor` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `ferrite` | `type`, `value`, `package`, `mounting`, `elements` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `crystal` | `type`, `value`, `load capacitance`, `mounting` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `oscillator` | `type`, `value`, `mounting` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `diode` | `type`, `voltage`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `transistor` | `type`, `polarity`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `regulator` | `type`, `voltage`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `connector` | `type`, `package`, `mounting`, `connector type`, `positions`, `pitch`, `gender` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `usb` | `type`, `mounting`, `usb type`, `pin configuration`, `usb standard`, `gender` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `default` | `type`, `polarity`, `value`, `voltage`, `package`, `mounting`, `technology`, `form factor`, `elements` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 
 Ratings (minimum voltage, current, saturation current, power, temperature, lifetime; maximum DCR) are not in the
 table: they are always hard downward ("Below spec" below) and only `allow_below_spec` returns parts below them.
@@ -812,7 +857,7 @@ The checks, in this order (the first conflict names the part's entry in the deta
   side reads the type attributes (`Type of transistor`, `Type of diode`, `Kind of voltage regulator`...), the category
   and the description, never the MPN.
 - **polarity**: both known and different (an N+P pair is `complementary`, a type of its own).
-- **value**: the primary value (`DeterministicRanker.primaryKind`: the frequency for crystals and oscillators, where a
+- **value**: the primary value (`ConstraintKind.primaryKind`: the frequency for crystals and oscillators, where a
   capacitance is the load capacitance; else capacitance, resistance, inductance, impedance; the frequency also when
   the family is unknown) within 1 %, an impedance also at the same test frequency when both state one. Reported by its
   kind (`capacitance`, `frequency`...).
@@ -846,7 +891,8 @@ The checks, in this order (the first conflict names the part's entry in the deta
   power-only part (`UsbVocabulary.compare` <= 0; a higher class is accepted).
 - a family may also make `dielectric`, `tolerance` (looser) or `orientation` hard.
 
-The table is configurable per family (`kina.search.hard-constraints.<family>`: a list replaces the family's default;
+The table is configurable per family (`kina.search.hard-constraints.<family>`: the listed kinds become `NEVER`, every
+other kind of that family takes its general strategy, so a ladder kind stays relaxable and any other kind becomes soft;
 unknown families and names are ignored with a warning). The deprecated `kina.search.strict-constraints`
 (`KINA_STRICT_CONSTRAINTS`) is still read: `mounting`, `technology` or `elements` missing from a non-empty list are
 removed from every family, with a warning; empty or unset means the defaults. Distributor data is taken as given: KINA
@@ -940,37 +986,37 @@ is null and every `exact_matches` is null, so "no parametric understanding" is d
 (before, arbitrary parts graded 0.5).
 
 For connector queries (`ParsedQuery.isConnector()`) the primary value signal is replaced by connector signals
-(`DeterministicRanker.connectorScore`; constants next to the others). Each applies only when both the query and the
+(the `CONNECTOR`-scoped kinds of `ConstraintKind`). Each applies only when both the query and the
 part know the attribute; an unknown attribute scores 0, never a penalty. Package, dielectric, ratings (e.g. `3A`),
 family, lexical and tie-break signals stay as above.
 
 | Signal | Weight | Rule |
 |---|---|---|
-| positions (`W_POSITIONS`) | 0.30 | same total -> +0.30; different -> -0.30 |
-| rows (`W_ROWS`) | -0.10 | both known and different (`1x6` vs `2x3`: same positions, -0.10); same -> 0 |
-| rows unspecified (`W_ROWS_UNSPECIFIED`) | -0.08 | header query with positions but no rows, part with more than one row (a "6 position header" is usually 1x6) |
-| gender (`W_GENDER`) | 0.20 | same -> +0.20; different -> -0.20 |
-| orientation (`W_ORIENTATION`) | 0.15 | right angle vs vertical: same -> +0.15; different -> -0.15 |
-| pitch (`W_PITCH`) | 0.15 | within 0.03 mm (2.54 mm == 0.1") -> +0.15; different -> -0.15 |
-| connector type (`W_CONNECTOR_TYPE`) | 0.10 | same -> +0.10; different (female header vs pin header vs IC socket) -> -0.10; a gender-less `header` is compatible with pin/female/box headers and `connector`/`usb` with anything (0) |
-| mounting (`W_CONNECTOR_MOUNTING`) | 0.05 | query THT/SMD vs part mounting: same -> +0.05; different -> -0.05 |
+| positions (`POSITIONS`) | 0.30 | same total -> +0.30; different -> -0.30 |
+| rows (`ROWS`) | -0.10 | both known and different (`1x6` vs `2x3`: same positions, -0.10); same -> 0 |
+| rows unspecified (`SINGLE_ROW`) | -0.08 | header query with positions but no rows, part with more than one row (a "6 position header" is usually 1x6) |
+| gender (`GENDER`) | 0.20 | same -> +0.20; different -> -0.20 |
+| orientation (`ORIENTATION`) | 0.15 | right angle vs vertical: same -> +0.15; different -> -0.15 |
+| pitch (`PITCH`) | 0.15 | within 0.03 mm (2.54 mm == 0.1") -> +0.15; different -> -0.15 |
+| connector type (`CONNECTOR_TYPE`) | 0.10 | same -> +0.10; different (female header vs pin header vs IC socket) -> -0.10; a gender-less `header` is compatible with pin/female/box headers and `connector`/`usb` with anything (0) |
+| mounting (`CONNECTOR_MOUNTING`) | 0.05 | query THT/SMD vs part mounting: same -> +0.05; different -> -0.05 |
 
 With these weights, for `female header 1x6 right angle 2.54mm`: 1x6 female right angle (0.90 + family + tie-break) >
 2x3 female right angle (-0.10) > 1x6 female straight (-0.30) > 1x10 female right angle (-0.60) = 1x6 male right angle
 (-0.60, gender and type) > unrelated parts.
 
 USB connector requests (`ParsedQuery.Connector.isUsb()`) use USB signals instead of the connector signals above
-(`DeterministicRanker.usbScore`; other connectors keep the table above). Unknown attributes score 0.
+(the `USB`-scoped kinds of `ConstraintKind`; other connectors keep the table above). Unknown attributes score 0.
 
 | Signal | Weight | Rule |
 |---|---|---|
-| USB type (`W_USB_TYPE`) | 0.30 | Type-C vs Micro-B vs Type-A...: same +0.30, different -0.30 (a Micro-B never outranks a Type-C for a Type-C request); a non-USB connector (pin header, RJ45) -0.30; a generic `usb` on either side: 0 |
-| pin configuration (`W_USB_PINS`) | 0.20 | canonical configuration on both sides (17P/18P == 16, 25P/26P == 24): same +0.20, different -0.20; half (±0.10) when the request only implies it through the standard |
-| USB standard (`W_USB_STANDARD`) | 0.20 | same speed class +0.20; a higher class than requested +0.10; a lower class or a power-only part -0.20; `USB 3.x` (generation not stated) matches any 3.x class; a Gen 2 request against a `USB 3.x` part is unknown |
-| gender (`W_USB_GENDER`) | 0.15 | receptacle vs plug |
-| mounting style (`W_USB_MOUNTING`) | 0.10 | requested mid-mount/hybrid/top-mount vs the part's style (a part that does not say: 0; hybrid vs `Fully SMT`: -); else SMD/THT vs the part's mounting, a hybrid part counts half (+0.05) |
-| orientation (`W_USB_ORIENTATION`) | 0.05 | horizontal/right angle vs vertical |
-| features (`W_USB_FEATURE`) | +0.03 each | waterproof, board lock, power only: requested and present |
+| USB type (`USB_TYPE`) | 0.30 | Type-C vs Micro-B vs Type-A...: same +0.30, different -0.30 (a Micro-B never outranks a Type-C for a Type-C request); a non-USB connector (pin header, RJ45) -0.30; a generic `usb` on either side: 0 |
+| pin configuration (`PIN_CONFIGURATION`) | 0.20 | canonical configuration on both sides (17P/18P == 16, 25P/26P == 24): same +0.20, different -0.20; half (±0.10) when the request only implies it through the standard |
+| USB standard (`USB_STANDARD`) | 0.20 | same speed class +0.20; a higher class than requested +0.10; a lower class or a power-only part -0.20; `USB 3.x` (generation not stated) matches any 3.x class; a Gen 2 request against a `USB 3.x` part is unknown |
+| gender (`USB_GENDER`) | 0.15 | receptacle vs plug |
+| mounting style (`USB_MOUNTING`) | 0.10 | requested mid-mount/hybrid/top-mount vs the part's style (a part that does not say: 0; hybrid vs `Fully SMT`: -); else SMD/THT vs the part's mounting, a hybrid part counts half (+0.05) |
+| orientation (`USB_ORIENTATION`) | 0.05 | horizontal/right angle vs vertical |
+| features (`WATERPROOF`, `BOARD_LOCK`, `POWER_ONLY`) | +0.03 each | waterproof, board lock, power only: requested and present |
 
 For `USB-C receptacle 16 pin SMD USB 2.0`: Type-C 16P = 17P = 18P USB 2.0 receptacle SMD (0.95) > 14P USB 2.0 (0.55) >
 24P USB 3.1 (0.45: wrong pins, higher class) > 6P power only (0.15) > Micro-B 5P (-0.05). For `USB Type-C 24 pin USB

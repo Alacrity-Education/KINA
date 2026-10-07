@@ -12,6 +12,7 @@ An MCP server and REST API (Spring Boot 4.1.1, Java 21) that lets Claude search 
 - Connector vocabulary (types, gender, positions, rows, pitch, orientation, and the per-distributor phrases) lives in `ConnectorRecognizer` and `DistributorPhraser`. Add new connector types there and in the labelled tests, and document the wording in `docs/DESIGN.md` 3.2 and 3.4.
 - USB vocabulary (types, standards and speed classes, pin configurations, features, mounting styles) lives in `UsbVocabulary`. Keep the pin-count normalisation rule (17/18 to 16, 25/26 to 24, 7/8 to 6, 14 stays 14; `Positions` as reported, ranking on `PinConfiguration`) and its tests.
 - Form-factor classes (`chip`, `through_hole`, `chassis`, `power_package`, `power_smd`; a hard constraint) live in `FormFactor`; resistor series codes that imply a power rating (Arcol HS, TE THS, Vishay RH, Ohmite TEH, Bourns PWR, Caddock MP9xx, LPS) live in `ResistorSeries`. Add new series there with a labelled test; part numbers only, never datasheets.
+- The hard/relaxable policy and the matching rules are declared on `ConstraintKind` (`@Relax`: strategy, ladder order, cost, families; `@Match`: mode, tolerance, weight, group, scope, score and report order; the wanted and actual accessors and custom comparators on the constants). Change them there, not in the ranker or `ConstraintPolicy`. The per-family table in `docs/DESIGN.md` 3.4 is checked against the declarations (`ConstraintTableDocumentationTest`); `ConstraintGoldenTest` holds the scores and reports of 0.5.0 (recapture with `-Dkina.golden.write=true` only for an intended behaviour change).
 - `.env.example` documents every environment variable. Keep it in sync with `application.yml`.
 - Group authorisation and the Authentik end-to-end test (`scripts/e2e/authentik/`, needs Docker, about 70 s) are described in `docs/DESIGN.md` 6, 7.1 to 7.3 and `docs/DEVELOPMENT.md`; the admin guide is `docs/OPERATIONS.md` (Authentik setup).
 
@@ -35,10 +36,10 @@ Optional live tests: `KINA_CROSS_ENCODER_TEST_MODEL_DIR=<model dir> ./mvnw test 
 | Package | Role |
 |---|---|
 | `config` | `KinaProperties`, the single `@ConfigurationProperties("kina")` record tree. Extend it; do not bind `kina` twice. |
-| `domain` | Records and enums shared everywhere: `Part`, `PriceBreak`, `ParsedQuery`, requests, response DTOs (snake_case wire format). |
+| `domain` | Records and enums shared everywhere: `Part`, `PriceBreak`, `ParsedQuery`, requests, response DTOs (snake_case wire format). `ConstraintKind` with the `@Relax` and `@Match` annotations (`RelaxStrategy`, `MatchMode`), `PolicyFamily`, `PartFeatures`, `MatchContext`: the constraint model. |
 | `distributor` | `DistributorClient` contract, `DistributorRegistry`, `DistributorException`; subpackages `lcsc` (JLCPCB download, SQLite FTS5 search), `tme`, `mouser`. |
 | `cache` | `PartCacheRepository`, `SearchCacheRepository`, `CacheStatus`, purge job. |
-| `search` | `QueryParser`, `ParametricExtractor`, `DeterministicRanker`, `RankingService` (blend and fallback), `PartSearchService`, `PartLookupService`, `DistributorStatusService`. |
+| `search` | `QueryParser`, `ParametricExtractor`, `DeterministicRanker`, `ConstraintPolicy` (reads the declarations, config override, check, hints), `SearchMatchContext` (the vocabularies behind `MatchContext`), `RankingService` (blend and fallback), `PartSearchService`, `PartLookupService`, `DistributorStatusService`. |
 | `search/ce` | `CrossEncoderPartRanker` (the `PartRanker`), `CrossEncoderModel` (download, load, hourly retry), `ModelDownloader`, `ModelLayout`, `BertTokenizer`, `OnnxScoringBackend`. |
 | `mcp` | `KinaMcpTools`: the `@McpTool` methods (`search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping`). |
 | `api` | `PartsController`, `DistributorsController` under `/api/v1`; `ApiExceptionHandler` (problem+json). |

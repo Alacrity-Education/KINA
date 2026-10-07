@@ -65,7 +65,7 @@ Decided by the product owner on 2026-10-07. A hard constraint is never relaxed: 
 | Regulator | type (fixed or adjustable; a stated output voltage means fixed), output voltage (exact), package, mounting | none |
 | Connector | connector type, gender, positions, pitch, package, mounting | orientation |
 | USB connector | USB type, stated pin configuration (normalised: 17P is 16), USB standard (a higher one is accepted), gender, mounting | orientation |
-| Any other part | value, package, mounting, technology, form factor, type | |
+| Any other part | value, package, mounting, technology, form factor, single element, polarity, exact voltage, type | |
 
 The form factor is a short list of classes: `chip` (chip packages, and resistors listed as SMD without a body package), `through_hole` (axial, radial, leaded bodies), `chassis` (chassis, heatsink, bolt or screw mount, aluminium housed), `power_package` (SOT-227, TO-220, TO-247, TO-218, TO-126) and `power_smd` (TO-263/D2PAK, TO-252/DPAK). Write `heatsink`, `chassis mount` or `aluminium housed` to ask for a chassis part: chassis and power-package parts qualify, chip resistors, axial bodies and D2PAK parts are excluded (`excluded_by_constraints_detail` key `form factor`). A package with a class (`SOT-227`, `0805`) decides the class. A part whose class cannot be read stays, `unverified: ["form factor"]`, below the verified ones. Only distributor text is read, never datasheets. A resistor that states no power gets it from its series when the part number names it (Arcol `HS25`, TE `THS50`, Vishay `RH-50`, Bourns `PWR263S-35`, Caddock `MP930`); a stated power always wins.
 
