@@ -147,6 +147,8 @@ Claude's remote connector needs HTTPS, which KINA does not terminate. Put a reve
 
 **Claude.ai and Claude Desktop.** Add a custom connector with the URL `https://<host>/mcp`, click Connect and sign in with your organisation's login. Claude then holds a 1-hour access token and a 30-day refresh token and renews them by itself. On Team and Enterprise plans an administrator adds the connector once and members click Connect.
 
+**Stop the permission prompts (claude.ai and Claude Desktop).** Open Customize, Connectors, the KINA connector, Tool permissions. Set Always allow for `search_parts`, `search_parts_batch`, `get_part`, `list_distributors` and `ping`. KINA marks these tools as read-only, but Claude still asks before each use until this is set. Each user does this once.
+
 **Claude Code.**
 
 ```bash
@@ -154,6 +156,12 @@ claude mcp add --transport http kina https://<host>/mcp
 ```
 
 Run `/mcp` inside Claude Code, choose to sign in, and approve once in the browser. In `dev` mode `http://localhost:8080/mcp` works without any login.
+
+To stop the permission prompts, add this to your user or project `settings.json`. It allows every KINA tool without asking:
+
+```json
+{"permissions": {"allow": ["mcp__kina"]}}
+```
 
 **Scripts and machines without a browser.** Open the web UI at `https://<host>/`, create a static token (valid 30 days) and send it as a bearer token:
 

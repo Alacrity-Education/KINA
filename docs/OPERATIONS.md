@@ -98,6 +98,13 @@ Then `docker compose up -d`. Sign in with a member account: the web UI should op
 
 No consent page appears for Claude's published identity. Claude Code always shows the Approve page, because it redirects to a local port.
 
+### Permission prompts for the tools
+
+KINA marks all its tools as read-only, but Claude still asks the user before using them until the user allows them. This is Claude's behaviour, and KINA cannot change it.
+
+- claude.ai and Claude Desktop: every tool of a custom connector starts as "Not set". Each user opens Customize, Connectors, the KINA connector, Tool permissions, and sets Always allow for `search_parts`, `search_parts_batch`, `get_part`, `list_distributors` and `ping` (or for the whole tool group). An organisation Owner can add the connector for the team but cannot pre-set the per-tool permissions for users. Tell new users to do this once after they click Connect. Sources: [Use connectors to extend Claude's capabilities](https://support.claude.com/en/articles/11176164-use-connectors-to-extend-claude-s-capabilities) and [Connectors: getting started](https://claude.com/docs/connectors/getting-started).
+- Claude Code: add `{"permissions": {"allow": ["mcp__kina"]}}` to the user or project `settings.json`. The entry allows every tool of the server named `kina`. A single tool is `mcp__kina__search_parts`. Source: [Claude Code permissions](https://code.claude.com/docs/en/permissions).
+
 ### What to expect after removing someone
 
 Remove the user from `ElectronicsEngineer` in Authentik. The user keeps working until the current 1-hour access token ends. At the next refresh KINA asks Authentik again, sees that the group is gone, revokes the user and answers `invalid_grant`. Claude then asks the user to reconnect, and the login is refused. Static tokens follow the same rule through a background re-check.
