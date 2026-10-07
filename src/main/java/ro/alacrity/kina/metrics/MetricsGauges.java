@@ -20,7 +20,9 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static ro.alacrity.kina.metrics.Metric.CACHE_PARTS;
@@ -35,7 +37,8 @@ import static ro.alacrity.kina.metrics.Metric.USERS_KNOWN;
 import static ro.alacrity.kina.metrics.Metric.USERS_REVOKED;
 
 /**
- * Gauges of what the database holds (DESIGN.md 3.7), not persisted: cache rows per distributor (all; fresh: in stock
+ * Gauges of what the database holds (DESIGN.md 3.7), not persisted: cache rows per distributor (all and searches also
+ * per {@code type}, the column written with each row; fresh: in stock
  * with stock and prices younger than {@code kina.cache.ttl}; stale: the rest, kept for their metadata; stale stock: in
  * stock with stock and prices older than the TTL; searches), users and active tokens, recomputed every {@code kina.metrics.save-interval} with a few {@code count(*)}
  * queries (a failed refresh keeps the previous values and is logged once at WARN); the JLCPCB database part count and
@@ -54,11 +57,11 @@ public class MetricsGauges {
     @Autowired private ObjectProvider<JlcpcbDatabaseManager> jlcpcb;
     @Autowired private MeterRegistry registry;
 
-    private final Map<Distributor, AtomicLong> parts = new EnumMap<>(Distributor.class);
+    /** {@code kina_cache_parts} and {@code kina_cache_searches} by distributor and type, registered as they appear. */
+    private final Map<MetricKey, AtomicLong> typed = new ConcurrentHashMap<>();
     private final Map<Distributor, AtomicLong> fresh = new EnumMap<>(Distributor.class);
     private final Map<Distributor, AtomicLong> stale = new EnumMap<>(Distributor.class);
     private final Map<Distributor, AtomicLong> staleStock = new EnumMap<>(Distributor.class);
-    private final Map<Distributor, AtomicLong> searches = new EnumMap<>(Distributor.class);
     private final AtomicLong usersKnown = new AtomicLong();
     private final AtomicLong usersRevoked = new AtomicLong();
     private final AtomicLong tokensActive = new AtomicLong();
@@ -67,11 +70,12 @@ public class MetricsGauges {
     @PostConstruct
     void registerGauges() {
         for (Distributor d : CACHED) {
-            register(registry, CACHE_PARTS, parts, d);
+            // the unknown series always exists, so both names are exported before the first cached row
+            typed(CACHE_PARTS, d.name(), KinaMetrics.UNKNOWN_TYPE);
             register(registry, CACHE_PARTS_FRESH, fresh, d);
             register(registry, CACHE_PARTS_STALE, stale, d);
             register(registry, CACHE_PARTS_STALE_STOCK, staleStock, d);
-            register(registry, CACHE_SEARCHES, searches, d);
+            typed(CACHE_SEARCHES, d.name(), KinaMetrics.UNKNOWN_TYPE);
         }
         gauge(registry, USERS_KNOWN, usersKnown);
         gauge(registry, USERS_REVOKED, usersRevoked);
@@ -94,6 +98,18 @@ public class MetricsGauges {
                 .description(metric.help())
                 .tag("distributor", distributor.name())
                 .register(registry);
+    }
+
+    /** The holder of one typed gauge series, registered the first time it is asked for. */
+    private AtomicLong typed(Metric metric, String distributor, String type) {
+        return typed.computeIfAbsent(metric.key(distributor, type), key -> {
+            AtomicLong holder = new AtomicLong();
+            Gauge.builder(metric.meterName(), holder, AtomicLong::doubleValue)
+                    .description(metric.help())
+                    .tags(key.micrometerTags())
+                    .register(registry);
+            return holder;
+        });
     }
 
     private static void gauge(MeterRegistry registry, Metric metric, AtomicLong holder) {
@@ -134,22 +150,18 @@ public class MetricsGauges {
                         counts.put(d, new long[] {rs.getLong("total"), rs.getLong("fresh"), rs.getLong("stale_stock")});
                     }
                 });
-        Map<Distributor, Long> searchCounts = new EnumMap<>(Distributor.class);
-        jdbc.sql("SELECT distributor, count(*) AS n FROM cached_searches GROUP BY distributor")
-                .query(rs -> {
-                    Distributor d = distributor(rs.getString("distributor"));
-                    if (d != null) {
-                        searchCounts.put(d, rs.getLong("n"));
-                    }
-                });
+        Map<MetricKey, Long> typedCounts = new HashMap<>();
+        typedCounts(typedCounts, CACHE_PARTS, "cached_parts");
+        typedCounts(typedCounts, CACHE_SEARCHES, "cached_searches");
         for (Distributor d : CACHED) {
             long[] c = counts.getOrDefault(d, new long[3]);
-            parts.get(d).set(c[0]);
             fresh.get(d).set(c[1]);
             stale.get(d).set(c[0] - c[1]);
             staleStock.get(d).set(c[2]);
-            searches.get(d).set(searchCounts.getOrDefault(d, 0L));
         }
+        // a type no longer present keeps its series at 0
+        typed.forEach((key, holder) -> holder.set(typedCounts.getOrDefault(key, 0L)));
+        typedCounts.forEach((key, n) -> typed(metricOf(key), key.tag("distributor"), key.tag("type")).set(n));
         jdbc.sql("""
                         SELECT count(*) FILTER (WHERE access_revoked_at IS NULL) AS known,
                                count(*) FILTER (WHERE access_revoked_at IS NOT NULL) AS revoked
@@ -163,6 +175,22 @@ public class MetricsGauges {
                 .query(Long.class)
                 .single();
         tokensActive.set(active == null ? 0 : active);
+    }
+
+    /** Rows of {@code table} per cached distributor and type (NULL and unexpected values count as unknown). */
+    private void typedCounts(Map<MetricKey, Long> out, Metric metric, String table) {
+        jdbc.sql("SELECT distributor, type, count(*) AS n FROM " + table + " GROUP BY distributor, type")
+                .query(rs -> {
+                    Distributor d = distributor(rs.getString("distributor"));
+                    if (d != null && d != Distributor.LCSC) {
+                        out.merge(metric.key(d.name(), KinaMetrics.typeOf(rs.getString("type"))), rs.getLong("n"),
+                                Long::sum);
+                    }
+                });
+    }
+
+    private static Metric metricOf(MetricKey key) {
+        return key.name().equals(CACHE_PARTS.meterName()) ? CACHE_PARTS : CACHE_SEARCHES;
     }
 
     double jlcpcbParts() {

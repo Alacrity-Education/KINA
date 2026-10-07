@@ -797,7 +797,7 @@ def suite_metrics(base: str, metrics_base: str, token: str, rec: Recorder):
               and resp.header("Content-Type").startswith("text/plain"), f"status {resp.status}", resp.millis)
     expected = ["kina_searches_total", "kina_search_queries_total{type=",
                 "kina_tool_calls_total{tool=\"search_parts\"}",
-                "kina_distributor_calls_total{", "kina_cache_parts{distributor=\"TME\"}",
+                "kina_distributor_calls_total{", "kina_cache_parts{distributor=\"TME\",type=",
                 "kina_cache_parts_fresh{", "kina_cache_parts_stale{", "kina_cache_searches{", "kina_users_known",
                 "kina_tokens_active", "kina_jlcpcb_database_parts", "kina_search_duration_seconds_count"]
     missing = [name for name in expected if name not in text]

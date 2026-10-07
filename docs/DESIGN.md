@@ -1447,11 +1447,11 @@ No other value is possible (connector and USB sub-types are not tags), so the ta
 | `kina_cache_parts_added_total` | counter | `distributor` | new `cached_parts` rows |
 | `kina_cache_parts_refreshed_total` | counter | `distributor` | existing `cached_parts` rows fetched again in full and overwritten |
 | `kina_cache_stock_refreshes_total` | counter | `distributor`, `outcome` | cached parts whose stock and prices a refresh asked for (section 3.2 step 5, `get_part`): `ok`, `out_of_stock` (marked sold out), `failed` (the call failed or did not answer for the part) |
-| `kina_cache_parts` | gauge | `distributor` | `cached_parts` rows (Mouser, TME) |
+| `kina_cache_parts` | gauge | `distributor`, `type` | `cached_parts` rows (Mouser, TME) by the row's `type` column; `sum by (distributor)` gives the old total |
 | `kina_cache_parts_fresh` | gauge | `distributor` | rows in stock whose stock and prices are younger than `kina.cache.ttl` |
 | `kina_cache_parts_stale` | gauge | `distributor` | the other rows, kept for their metadata (stock and prices older than `kina.cache.ttl`, or sold out) |
 | `kina_cache_parts_stale_stock` | gauge | `distributor` | rows in stock whose stock and prices are older than `kina.cache.ttl` (returned with `stale: true` unless a refresh succeeds) |
-| `kina_cache_searches` | gauge | `distributor` | `cached_searches` rows |
+| `kina_cache_searches` | gauge | `distributor`, `type` | `cached_searches` rows by the row's `type` column; `sum by (distributor)` gives the old total |
 | `kina_cross_encoder_executions_total` | counter | | cross-encoder (MiniLM) model runs |
 | `kina_cross_encoder_candidates_total` | counter | | candidates scored by the model |
 | `kina_cross_encoder_duration_seconds` | timer | | time of one model run |
@@ -1476,7 +1476,12 @@ mixes types) have no `type` tag. Counts recorded before 0.5 have no type: migrat
 the upgrade.
 
 Spring Boot's own JVM, HTTP server, Hikari and process metrics are exported as well. Gauges cannot end in `_total` in
-the Prometheus exposition format, so the cache gauges are `kina_cache_parts` and `kina_cache_searches`.
+the Prometheus exposition format, so the cache gauges are `kina_cache_parts` and `kina_cache_searches`. These two
+carry the `type` column of the rows (section 8; NULL counts as `unknown`), so every series of each name has both tags
+(Micrometer allows one tag set per name). Dashboards that showed one value per distributor use
+`sum by (distributor) (kina_cache_parts)`. The `unknown` series of each distributor always exists; a type that is no
+longer in the table stays at 0. `kina_cache_parts_fresh`, `_stale` and `_stale_stock` keep the `distributor` tag
+only.
 
 **Persistence.** Counters and timers live in memory (`MetricsStore`: one `AtomicLong` per name and canonical tag
 string, exported as Micrometer `FunctionCounter`s and `FunctionTimer`s). `MetricsPersistence` saves every value that

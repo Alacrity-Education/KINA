@@ -60,7 +60,7 @@ public enum Metric {
     CROSS_ENCODER_DURATION("kina.cross.encoder.duration", Type.TIMER, "Time of one cross-encoder run"),
 
     // ---- gauges (recomputed, not persisted) -----------------------------------------------------------------------
-    CACHE_PARTS("kina.cache.parts", Type.GAUGE, "Rows in cached_parts", "distributor"),
+    CACHE_PARTS("kina.cache.parts", Type.GAUGE, "Rows in cached_parts by component type", "distributor", "type"),
     CACHE_PARTS_FRESH("kina.cache.parts.fresh", Type.GAUGE,
             "Rows in cached_parts in stock with stock and prices younger than kina.cache.ttl", "distributor"),
     CACHE_PARTS_STALE("kina.cache.parts.stale", Type.GAUGE,
@@ -69,7 +69,8 @@ public enum Metric {
     CACHE_PARTS_STALE_STOCK("kina.cache.parts.stale.stock", Type.GAUGE,
             "Rows in cached_parts in stock whose stock and prices are older than kina.cache.ttl (returned with "
                     + "stale: true unless a refresh succeeds)", "distributor"),
-    CACHE_SEARCHES("kina.cache.searches", Type.GAUGE, "Rows in cached_searches", "distributor"),
+    CACHE_SEARCHES("kina.cache.searches", Type.GAUGE, "Rows in cached_searches by component type", "distributor",
+            "type"),
     USERS_KNOWN("kina.users.known", Type.GAUGE, "Users that are not blocked"),
     USERS_REVOKED("kina.users.revoked", Type.GAUGE, "Users blocked by a failed group check"),
     TOKENS_ACTIVE("kina.tokens.active", Type.GAUGE, "Access tokens neither revoked nor expired"),

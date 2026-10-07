@@ -119,8 +119,12 @@ class MetricsPersistenceTest {
 
         gauges.refresh();
         long rows = jdbc.sql("SELECT count(*) FROM cached_parts WHERE distributor = 'TME'").query(Long.class).single();
-        assertThat(registry.get(Metric.CACHE_PARTS.meterName()).tag("distributor", "TME").gauge().value())
-                .isEqualTo(rows);
+        // kina_cache_parts and kina_cache_searches carry the type column of the rows and sum to the row counts
+        assertThat(typedGauge(Metric.CACHE_PARTS, null)).isEqualTo(rows);
+        assertThat(typedGauge(Metric.CACHE_PARTS, "capacitor")).isGreaterThanOrEqualTo(2);
+        long searchRows = jdbc.sql("SELECT count(*) FROM cached_searches WHERE distributor = 'TME'").query(Long.class)
+                .single();
+        assertThat(typedGauge(Metric.CACHE_SEARCHES, null)).isEqualTo(searchRows);
         assertThat(registry.get(Metric.CACHE_PARTS_FRESH.meterName()).tag("distributor", "TME").gauge().value())
                 .isEqualTo(rows);
         assertThat(registry.get(Metric.CACHE_PARTS_STALE.meterName()).tag("distributor", "TME").gauge().value())
@@ -186,6 +190,13 @@ class MetricsPersistenceTest {
             // the rewritten tags are the canonical form the application uses for the same series
             assertThat(once).containsKey("kina.distributor.calls|" + Metric.DISTRIBUTOR_CALLS.key("MOUSER", "ok", "unknown").tags());
         });
+    }
+
+    /** Sum of the TME series of a typed cache gauge, of one type or (null) of all. */
+    double typedGauge(Metric metric, String type) {
+        return registry.get(metric.meterName()).tag("distributor", "TME").gauges().stream()
+                .filter(g -> type == null || type.equals(g.getId().getTag("type")))
+                .mapToDouble(g -> g.value()).sum();
     }
 
     Map<String, String> rows() {
