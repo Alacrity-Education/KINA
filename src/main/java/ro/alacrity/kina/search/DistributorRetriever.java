@@ -4,9 +4,8 @@ import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.domain.Distributor;
-import ro.alacrity.kina.search.PartSearchService.Fetched;
-import ro.alacrity.kina.search.PartSearchService.Prepared;
-import ro.alacrity.kina.search.PartSearchService.Progress;
+import ro.alacrity.kina.search.Fetched;
+import ro.alacrity.kina.search.Prepared;
 
 /**
  * Retrieval of one query from one distributor (DESIGN.md 3.2). Runs on a virtual thread; exceptions escape to the

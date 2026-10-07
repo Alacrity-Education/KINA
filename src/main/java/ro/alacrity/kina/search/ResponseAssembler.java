@@ -45,7 +45,7 @@ final class ResponseAssembler {
         return p == null ? ConstraintPolicy.DEFAULTS : p;
     }
 
-    SearchResponse assemble(PartSearchService.Prepared prepared, Map<Distributor, PartSearchService.Fetched> fetched,
+    SearchResponse assemble(Prepared prepared, Map<Distributor, Fetched> fetched,
                             RankedResults ranked, String note) {
         SearchRequest request = prepared.request();
         ParsedQuery parsed = prepared.parsed();
@@ -58,7 +58,7 @@ final class ResponseAssembler {
         Map<String, Integer> emptyExcluded = new java.util.LinkedHashMap<>();
         int emptyBelowSpec = 0;
         for (Distributor distributor : prepared.distributors()) {
-            PartSearchService.Fetched f = fetched.get(distributor);
+            Fetched f = fetched.get(distributor);
             if (f == null) {
                 continue;
             }

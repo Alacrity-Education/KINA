@@ -40,7 +40,9 @@ ro.alacrity.kina
 ├── cache/           PartCacheRepository, SearchCacheRepository, CacheProperties
 ├── search/          QueryParser, ParametricExtractor, PassiveDetails, DeterministicRanker, ConstraintPolicy,
 │   │                SearchMatchContext, PartRanker, RankingService,
-│   │                RankingScoreCache, PartSearchService, PartLookupService, DistributorStatusService
+│   │                RankingScoreCache, PartSearchService (the sequence), ParallelRetrieval, DistributorRetriever
+│   │                (LcscRetriever, CachedDistributorRetriever), PageCollector, StockRefresher, ResponseAssembler,
+│   │                CorePhrases, Prepared, Fetched, Progress, PartLookupService, DistributorStatusService
 │   └── ce/          CrossEncoderPartRanker, CrossEncoderModel (download/load), ModelDownloader, ModelLayout,
 │                    BertTokenizer, ScoringBackend, OnnxScoringBackend
 ├── mcp/             KinaMcpTools (@McpTool methods)
@@ -174,7 +176,7 @@ component is kept, what it says about stock and price expires.
   most `kina.cache.ttl` (3 days) old; beyond that it is returned with **`stale: true`** (covers stock and prices),
   `availability.status: "stale"` with a note (`Stock and price were last confirmed on 2026-10-01 (4 days ago) and could
   not be refreshed; check them at the distributor before ordering. Last known stock: 500.`), and it ranks below the
-  fresh parts (`PartSearchService.demoteStale`: its score is lowered by `kina.cache.stale-rank-penalty`, default 1.0,
+  fresh parts (`StockRefresher.demoteStale`: its score is lowered by `kina.cache.stale-rank-penalty`, default 1.0,
   reported at least 0, and it is placed before the first fresh part of its group, meeting the request or below spec,
   that scores lower; with 1.0 every stale part ends up after every fresh part of its group). A stale part that a
   refresh shows as sold out is dropped from the results; its row keeps the metadata with `in_stock = false` and is not
@@ -192,11 +194,11 @@ Fetch window per distributor: `window = max(maxResults, kina.search.candidate-wi
 capped by `kina.distributors.<name>.max-results-per-search` (Mouser default 50 = one API call,
 TME default 60, LCSC default 200).
 
-Algorithm (`PartSearchService.fetchDistributor`; every requested distributor runs on its own virtual thread,
+Algorithm (`CachedDistributorRetriever` and `LcscRetriever`, through `DistributorRetriever.retrieve`; `ParallelRetrieval` runs every requested distributor on its own virtual thread,
 bounded by `kina.search.distributor-timeout` of active work; time spent waiting on a rate limit is added to that
 budget, but never beyond the request deadline `kina.search.max-request-duration`, section 3.6):
 
-"Meets the request" (`PartSearchService.meetsRequest`, `RankingService.verdict`): no known attribute contradicts a
+"Meets the request" (`PageCollector.Check`, `RankingService.verdict`): no known attribute contradicts a
 hard constraint (section 3.4 "Hard constraints": the primary value, the package except for inductors, crystals and
 oscillators, mounting, technology, the type...) and no known rating is below the request. A part with a wrong primary
 value is excluded like any other hard conflict (`Verdict.CONSTRAINT`; before 2026-10-07 it was returned; live, TME's
@@ -244,7 +246,7 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    2. the minimal core, a rewording: connector queries the type words with the positions (TME, `pin strips female
       6`; it leaves the orientation out and reports `["orientation"]` when the request states one) or with the written
       pitch and the orientation (Mouser, `female header right angle`, `male header 2.54mm`; loosens nothing); USB the
-      type and gender words (`["orientation"]` when stated); otherwise the parametric core, which loosens nothing (`PartSearchService.corePhrase`):
+      type and gender words (`["orientation"]` when stated); otherwise the parametric core, which loosens nothing (`CorePhrases.corePhrase`):
       the family word as written (`MOSFET`, `MLCC`, `LDO`...), the values that are not ratings (display form; an
       impedance without its test frequency; regulator and Zener voltages stay), the technology in the distributor's
       spelling, the dielectric, the package (imperial; a can size is left out of phrases) and the tolerance, e.g. `"22uF X7R 1206 25V 10% MLCC"` -> `"MLCC 22uF X7R
@@ -276,7 +278,7 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    Mouser `AvailabilityInStock` 0; LCSC counts the rows that match every term but have no stock when that step found
    nothing in stock). `collect` adds them up over every phrase tried (`out_of_stock_matches`, stored in
    `cached_searches.out_of_stock_matches` and reported again on a cache hit). While every match so far is out of
-   stock, up to `PartSearchService.EXTRA_OUT_OF_STOCK_PAGES` (2) pages beyond `max-pages-per-search` are read, then the
+   stock, up to `PageCollector.EXTRA_OUT_OF_STOCK_PAGES` (2) pages beyond `max-pages-per-search` are read, then the
    next relaxation step is tried.
    **Terms dropped and constraints relaxed** (two lists; they replace the former `relaxed`):
    `query_terms_dropped` (informational) lists the stated terms that were not part of the phrase that produced the
@@ -287,9 +289,9 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    every constraint. `constraints_relaxed` lists the constraints actually loosened to obtain the parts: of what the
    relaxation loosened (for Mouser and TME the ladder step, stored as `cached_searches.constraints_relaxed`; for LCSC the
    constraint names of the terms its relaxation dropped, by term kind, every term in `ANY` mode) those the policy lets
-   relax for the request's family (`PartSearchService.relaxable`: a rating or a hard constraint is never reported, even
+   relax for the request's family (`ResponseAssembler.relaxable`: a rating or a hard constraint is never reported, even
    when the LCSC search dropped its term; the ranker excludes the parts that miss it) and **the returned parts really
-   miss** (a mismatch or an unverified constraint of that name, `PartSearchService.actuallyRelaxed`). A
+   miss** (a mismatch or an unverified constraint of that name, `ResponseAssembler.actuallyRelaxed`). A
    step that drops the dielectric and the package may still find parts with the requested dielectric (live: TME
    `10uF 100V X7R 1210 MLCC` relaxed to `MLCC 10uF` and returned a 100 V X7R part in 2220, reported as `["package"]`),
    and the LCSC search drops terms one at a time, so a dropped term is not necessarily the one that failed (the third
@@ -323,7 +325,7 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    `rate_limited` is reported only when the next retry would end after the request deadline. Every distributor entry
    reports `rate_limit_waited_ms` (0 when it did not wait, also on a cache hit). A requested distributor without a configured client reports `not_configured` with
    cache status `not_applicable`; with no `distributors` given only configured ones are searched.
-5. **Stock refresh** (`PartSearchService.refreshStock`, after ranking): cached stock and prices can be older than a
+5. **Stock refresh** (`StockRefresher.refresh`, after ranking): cached stock and prices can be older than a
    day (a fresh list holds parts of any stock age). For Mouser and TME, the parts about to be returned (the top
    `max_results` of the ranked list) whose `fetchedAt` is older than `kina.cache.stock-ttl` (default `24h`) are
    refreshed with one cheap call per batch (`DistributorClient.refreshStock`: TME `/products/data` with up to 50
@@ -1269,8 +1271,8 @@ table; run one instance per database.
 
 **Instrumentation.** `KinaMetrics` is the facade; business code makes one call per event and never fails because of a
 metric. Classes default to `KinaMetrics.NOOP` and get the bean through a setter, so tests that build them by hand need
-no metrics. Points: `PartSearchService` (request and batch, from the assembled response; one call per distributor
-page), `RateLimitRetry` (a process-wide `RateLimitRetry.Listener` for rate-limit responses and waits, because the
+no metrics. Points: `PartSearchService` (request and batch, from the assembled response), `PageCollector` (one call per page),
+`StockRefresher` (stock refresh outcomes), `RateLimitRetry` (a process-wide `RateLimitRetry.Listener` for rate-limit responses and waits, because the
 clients create their retry objects themselves), `CrossEncoderPartRanker` (model runs), `PartCacheRepository.upsertAll`
 (counts the existing rows first to tell added from refreshed), `KinaMcpTools` (`KinaMetrics.toolCall`), an
 interceptor on `/api/**`, `OidcUserSynchronizer`, `TokenController`, `MembershipVerifier.recheck` and

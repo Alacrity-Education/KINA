@@ -62,7 +62,7 @@ final class StockRefresher {
      * failed, not attempted, or the distributor is not configured) are stale: they rank below the fresh ones
      * ({@link #demoteStale}) and are returned with {@code stale: true}.
      */
-    RankedResults refresh(PartSearchService.Prepared prepared, RankedResults ranked, Deadline deadline) {
+    RankedResults refresh(Prepared prepared, RankedResults ranked, Deadline deadline) {
         Instant now = clock.instant();
         Instant staleBefore = now.minus(properties.cache().stockTtl());
         Map<Distributor, List<RankedPart>> out = new EnumMap<>(Distributor.class);

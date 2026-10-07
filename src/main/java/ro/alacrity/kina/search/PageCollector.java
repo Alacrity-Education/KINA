@@ -9,8 +9,7 @@ import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.metrics.KinaMetrics;
-import ro.alacrity.kina.search.PartSearchService.Fetched;
-import ro.alacrity.kina.search.PartSearchService.Progress;
+import ro.alacrity.kina.search.Fetched;
 
 import java.time.Clock;
 import java.time.Instant;

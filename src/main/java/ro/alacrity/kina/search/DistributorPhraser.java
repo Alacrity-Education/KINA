@@ -84,7 +84,7 @@ public class DistributorPhraser {
     /**
      * The shorter phrase tried once when {@code sent} (the phrase or the user's text) found nothing at Mouser or TME
      * (DESIGN.md 3.2 "Phrase fallback"): for connector queries the type words with the positions (TME) or with the
-     * pitch and orientation (Mouser); otherwise the parametric core ({@link PartSearchService#corePhrase}) or, for keyword-only
+     * pitch and orientation (Mouser); otherwise the parametric core ({@link CorePhrases#corePhrase}) or, for keyword-only
      * queries, the {@value #MIN_FALLBACK_TOKENS} to {@value #MAX_FALLBACK_TOKENS} most informative tokens. Null when
      * there is nothing shorter to try or it equals {@code sent}.
      */
@@ -113,7 +113,7 @@ public class DistributorPhraser {
      * The relaxation ladder tried, in order, at Mouser and TME while the search has found nothing that meets the
      * request (DESIGN.md 3.2 "Relaxation ladder"): (1) {@code sent} without rating values; (2) the minimal core: for
      * connector queries the type words with the positions (TME) or with the pitch and orientation (Mouser), for USB
-     * the type and gender words, otherwise the parametric core ({@link PartSearchService#corePhrase}: family word,
+     * the type and gender words, otherwise the parametric core ({@link CorePhrases#corePhrase}: family word,
      * values, technology, dielectric, package, tolerance) or, for keyword-only queries, the
      * {@value #MIN_FALLBACK_TOKENS} to {@value #MAX_FALLBACK_TOKENS} most informative tokens; then, for a parametric
      * core, (3) without the dielectric (and the technology, which stays a strict constraint), (4) also without the
@@ -153,7 +153,7 @@ public class DistributorPhraser {
                     && (c.isUsb() || distributor == Distributor.TME);
             steps.add(new Relaxation(core, orientationDropped ? List.of(orientation) : List.of()));
         } else {
-            core = PartSearchService.corePhrase(query, distributor, Set.of());
+            core = CorePhrases.corePhrase(query, distributor, Set.of());
             if (core == null) {
                 steps.add(new Relaxation(keywordCore(query), List.of()));
             } else {
@@ -179,7 +179,7 @@ public class DistributorPhraser {
                     if (!dielectric || query.dielectric() != null) {
                         relaxed.add(constraint);
                     }
-                    steps.add(new Relaxation(PartSearchService.corePhrase(query, distributor, drop), relaxed));
+                    steps.add(new Relaxation(CorePhrases.corePhrase(query, distributor, drop), relaxed));
                 }
             }
         }

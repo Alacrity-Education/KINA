@@ -13,9 +13,8 @@ import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
-import ro.alacrity.kina.search.PartSearchService.Fetched;
-import ro.alacrity.kina.search.PartSearchService.Prepared;
-import ro.alacrity.kina.search.PartSearchService.Progress;
+import ro.alacrity.kina.search.Fetched;
+import ro.alacrity.kina.search.Prepared;
 
 import java.time.Clock;
 import java.time.Instant;

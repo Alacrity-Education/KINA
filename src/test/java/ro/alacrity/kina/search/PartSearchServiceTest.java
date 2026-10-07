@@ -459,25 +459,25 @@ class PartSearchServiceTest {
     @Test
     void corePhraseKeepsFamilyValuesDielectricAndPackage() {
         QueryParser parser = new QueryParser();
-        assertThat(PartSearchService.corePhrase(parser.parse(MOSFET_QUERY))).isEqualTo(MOSFET_CORE);
+        assertThat(CorePhrases.corePhrase(parser.parse(MOSFET_QUERY))).isEqualTo(MOSFET_CORE);
         // ratings are never part of the core
-        assertThat(PartSearchService.corePhrase(parser.parse("MLCC 10uF 25V X7R 0805 ceramic low ESR")))
+        assertThat(CorePhrases.corePhrase(parser.parse("MLCC 10uF 25V X7R 0805 ceramic low ESR")))
                 .isEqualTo("MLCC 10uF X7R 0805");
         // the technology is, in the distributor's spelling
-        assertThat(PartSearchService.corePhrase(parser.parse("100uF 16V polymer aluminium capacitor SMD"),
+        assertThat(CorePhrases.corePhrase(parser.parse("100uF 16V polymer aluminium capacitor SMD"),
                 Distributor.TME)).isEqualTo("capacitor 100uF polymer");
         // the tolerance is, last: it is the last constraint the ladder loosens
-        assertThat(PartSearchService.corePhrase(parser.parse("22uF X7R 1206 25V MLCC 10%")))
+        assertThat(CorePhrases.corePhrase(parser.parse("22uF X7R 1206 25V MLCC 10%")))
                 .isEqualTo("MLCC 22uF X7R 1206 10%");
-        assertThat(PartSearchService.corePhrase(parser.parse("22uF X7R 1206 25V MLCC 10%"), null,
+        assertThat(CorePhrases.corePhrase(parser.parse("22uF X7R 1206 25V MLCC 10%"), null,
                 Set.of("dielectric", "package"))).isEqualTo("MLCC 22uF 10%");
         // a regulator's voltage is a specification, not a rating
-        assertThat(PartSearchService.corePhrase(parser.parse("LDO 3.3V SOT-23-5"))).isEqualTo("LDO 3.3V SOT-23-5");
+        assertThat(CorePhrases.corePhrase(parser.parse("LDO 3.3V SOT-23-5"))).isEqualTo("LDO 3.3V SOT-23-5");
         // the core may equal the query: the ladder skips a step equal to what was sent
-        assertThat(PartSearchService.corePhrase(parser.parse(QUERY))).isEqualTo(QUERY);
+        assertThat(CorePhrases.corePhrase(parser.parse(QUERY))).isEqualTo(QUERY);
         // no parametric core, single term
-        assertThat(PartSearchService.corePhrase(parser.parse("USB type C receptacle"))).isNull();
-        assertThat(PartSearchService.corePhrase(parser.parse("0805 something exotic"))).isNull();
+        assertThat(CorePhrases.corePhrase(parser.parse("USB type C receptacle"))).isNull();
+        assertThat(CorePhrases.corePhrase(parser.parse("0805 something exotic"))).isNull();
     }
 
     @Test
