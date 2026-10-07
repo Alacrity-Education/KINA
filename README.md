@@ -58,6 +58,18 @@ KINA answers (abridged):
 
 `parsed` shows what KINA understood (`query_understood` is false when it recognised nothing typed). `total_results` is what the distributor reported, `fetched` is every in-stock part KINA received, the two `excluded_*` counts are the parts of it left out, and `returned` is what you get. Add `quantity` and each part also gets `ordered_quantity`, `unit_price_at_quantity` and `total_price`. LCSC prices are USD, TME and Mouser EUR (`currencies`); KINA does not convert them.
 
+## How a search flows
+
+A request goes through five stages. Only the first and the third are models of the query; the others move data.
+
+1. **Parse.** The text becomes a typed request: family, values and ratings, package, mounting, technology, connector attributes, form factor. This is vocabulary and pattern work, no model. The response shows the result in `parsed`.
+2. **Retrieve, per distributor in parallel.** Each distributor is asked in its own wording (`distributor_query`).
+   - LCSC is always searched live in the local JLCPCB SQLite database. It never uses the PostgreSQL cache.
+   - TME and Mouser first look up the PostgreSQL cache by an exact key: the normalised query text plus the distributor. A hit serves the cached part list. A miss calls the distributor API, pages until a part meets the hard constraints, climbs the relaxation ladder (dielectric, then package where the family allows it, then tolerance; ratings are never relaxed) when nothing does, and stores the parts and the search list. Rate limits are waited out inside the 2-minute request deadline.
+3. **Rank.** The deterministic ranker scores every candidate, excludes parts that contradict a hard constraint, marks parts below a requested rating and gives each part a `match` grade. The in-process cross-encoder (MiniLM) then re-scores the deterministic top candidates and the two orders are blended half and half by rank. Without the model the deterministic order is returned as the fallback. The model only re-orders what retrieval found; it plays no part in the cache.
+4. **Refresh stock.** Parts about to be returned whose stock and prices are older than 24 hours are refreshed at the distributor in batches. Beyond the 3-day limit a part that could not be refreshed is returned with `stale: true`.
+5. **Assemble.** The top results per distributor, compact or full detail, the three smallest price brackets, `exact_matches`, the exclusion counts, hints, attributions and the metrics.
+
 ## Features
 
 - **Only stock that ships now.** Out-of-stock, on-order and factory-stock offers are never ranked, cached or returned.
@@ -153,10 +165,7 @@ Static tokens are tied to the group too. Set `KINA_TOKENS_UI_ENABLED=false` to s
 
 ## How it works
 
-1. **Parse.** The query is turned into a typed request: family, value, tolerance, ratings, dielectric, package, mounting, technology, and for connectors the type, gender, positions, rows, pitch and orientation. `parsed` in the response shows the result.
-2. **Fetch.** KINA asks each distributor in its own words (`distributor_query`). LCSC is searched in the local JLCPCB SQLite database. TME and Mouser are served from the PostgreSQL cache when it holds enough parts for a search younger than 3 days (1 hour for a search that found nothing). Otherwise KINA calls the API, waits out rate limits within the 2-minute deadline, and keeps only parts with stock above zero. When a search finds nothing, KINA relaxes it step by step: no ratings, no tolerance, the minimal core phrase, no dielectric.
-3. **Rank.** A deterministic ranker scores each part from 0 to 1 and gives it a `match` grade. The best 40 candidates then go to the in-process cross-encoder. The final score is half the deterministic rank and half the model rank.
-4. **Respond.** The three smallest price brackets, `total_price` for the requested quantity, availability, lifecycle, links and attributes, per distributor, with the errors of any distributor that failed.
+The request pipeline is described in [How a search flows](#how-a-search-flows).
 
 The design is documented in [docs/DESIGN.md](docs/DESIGN.md).
 
