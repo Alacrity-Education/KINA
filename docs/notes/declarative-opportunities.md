@@ -1,8 +1,9 @@
 # Note: where behaviour could be declared once (backlog, 2026-10-07)
 
-Status: backlog. The first step, the `ConstraintKind` enum with `@Relax` and `@Match` (DESIGN.md 3.2 and 3.4), is being
-implemented. The items below are the next candidates, in the recommended order. Every step must stay
-behaviour-preserving and be checked with the golden test.
+Status: approved for a second pass. The first step, the `ConstraintKind` enum with `@Relax` and `@Match` (DESIGN.md
+3.2 and 3.4), is being implemented, followed by the `PartSearchService` split. After both land, the applicability of
+the items below is reviewed again against the new code and the ones that improve readability are implemented
+(decision of 2026-10-07). Every step must stay behaviour-preserving and be checked with the golden test.
 
 ## The golden test (keep it)
 
