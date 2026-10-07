@@ -3,6 +3,8 @@ package ro.alacrity.kina.metrics;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.distributor.RateLimitRetry;
 import ro.alacrity.kina.domain.BatchSearchResponse;
@@ -48,19 +50,17 @@ import static ro.alacrity.kina.metrics.Metric.TOOL_ERRORS;
  * {@link #NOOP} is the default of every instrumented class, so classes built without Spring (tests) need no metrics.
  */
 @Slf4j
+@Component
 public class KinaMetrics implements RateLimitRetry.Listener {
 
     /** Counts in memory only, registers nothing; the default before the Spring bean is injected. */
     /** The {@code type} tag of a query whose component family the parser did not recognise. */
     public static final String UNKNOWN_TYPE = "unknown";
 
-    public static final KinaMetrics NOOP = new KinaMetrics(new MetricsStore(null));
+    public static final KinaMetrics NOOP = new KinaMetrics();
 
-    private final MetricsStore store;
-
-    public KinaMetrics(MetricsStore store) {
-        this.store = store;
-    }
+    /** In memory only until Spring injects the registered store. */
+    @Autowired private MetricsStore store = new MetricsStore();
 
     public MetricsStore store() {
         return store;

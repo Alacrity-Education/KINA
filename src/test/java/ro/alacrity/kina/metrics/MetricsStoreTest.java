@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import ro.alacrity.kina.TestWiring;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MetricsStoreTest {
 
     final SimpleMeterRegistry registry = new SimpleMeterRegistry();
-    final MetricsStore store = new MetricsStore(registry);
+    final MetricsStore store = TestWiring.metricsStore(registry);
 
     @Test
     void canonicalTagsDoNotDependOnOrder() {
@@ -95,7 +96,7 @@ class MetricsStoreTest {
 
     @Test
     void withoutRegistryValuesStayInMemory() {
-        MetricsStore memoryOnly = new MetricsStore(null);
+        MetricsStore memoryOnly = TestWiring.metricsStore(null);
         memoryOnly.increment(MetricKey.of("kina.searches"));
         memoryOnly.record(MetricKey.of("kina.search.duration"), 10);
 

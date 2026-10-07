@@ -2,6 +2,7 @@ package ro.alacrity.kina.metrics;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.RateLimitRetry;
@@ -25,8 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KinaMetricsTest {
 
-    final MetricsStore store = new MetricsStore(new SimpleMeterRegistry());
-    final KinaMetrics metrics = new KinaMetrics(store);
+    final MetricsStore store = TestWiring.metricsStore(new SimpleMeterRegistry());
+    final KinaMetrics metrics = TestWiring.metrics(store);
 
     static SearchResponse response(RankingMode mode, String note, DistributorResult... results) {
         return new SearchResponse("q", null, mode, note, List.of(results));

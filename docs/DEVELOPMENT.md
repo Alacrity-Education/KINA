@@ -118,13 +118,25 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 | `mcp` | `KinaMcpTools`: `search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping` |
 | `api` / `web` | `/api/v1` controllers + `ApiExceptionHandler` (RFC 9457 problems); Thymeleaf token UI (`TokenPageController`), `PublicUrlResolver` |
 
+Dependency injection: Spring beans take their collaborators as `@Autowired private Foo foo;` fields (not final),
+grouped at the top of the class. This is a deliberate choice for shorter classes. There are no injection constructors
+and no setters; a package-private setter is the fallback only where a field cannot be injected. Logic that used to run
+in a constructor (validation, derived values, listener registration, starting executors) lives in a `@PostConstruct`
+method, and `@PreDestroy` stops what it started. Classes whose default is a no-op until Spring injects the real bean
+keep it on the field (`@Autowired private KinaMetrics metrics = KinaMetrics.NOOP;`). Circular references stay
+disabled. Unit tests build beans with `ro.alacrity.kina.TestWiring` (test sources): `wire(bean, "field", value, ...)`
+sets fields by name with `ReflectionTestUtils.setField`, so a renamed field fails loudly, and then runs the
+`@PostConstruct` methods; typed helpers such as `metricsStore(registry)` cover the beans that tests build often.
+Records, DTOs, value objects and `KinaProperties` keep their constructors.
+
 Lombok (configured in `lombok.config` at the repository root: `config.stopBubbling`, `@lombok.Generated` on
 generated code for coverage tools, logger field `log`, and `@Qualifier` / `@Value` copied from fields to generated
 constructor parameters):
 
-- Allowed: `@Slf4j` (field `log`, never a hand-written `LoggerFactory.getLogger`); `@RequiredArgsConstructor` when a
-  constructor only assigns final fields (keep explicit constructors that validate, derive values, start executors
-  or delegate to another constructor; `access = AccessLevel.PACKAGE` or `PRIVATE` only for a sole constructor);
+- Allowed: `@Slf4j` (field `log`, never a hand-written `LoggerFactory.getLogger`); `@RequiredArgsConstructor` on
+  classes that are not Spring beans when a constructor only assigns final fields (keep explicit constructors that
+  validate, derive values or delegate to another constructor; `access = AccessLevel.PACKAGE` or `PRIVATE` only for a
+  sole constructor);
   `@Builder` / `@Builder(toBuilder = true)` on wide records (`Part`, `ParsedQuery`, `ParsedQuery.Connector`,
   `DistributorResult`, `PartResponse`, `ParsedQueryResponse.ConnectorResponse`, `RankingSummary`); use `toBuilder()`
   or `@With` to copy a record with one field changed; `@UtilityClass` for static-only helpers (declare members

@@ -2,10 +2,13 @@ package ro.alacrity.kina.metrics;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.lcsc.JlcpcbDatabaseManager;
 import ro.alacrity.kina.distributor.lcsc.JlcpcbStatus;
@@ -39,15 +42,17 @@ import static ro.alacrity.kina.metrics.Metric.USERS_REVOKED;
  * age, read from memory on every scrape.
  */
 @Slf4j
-public final class MetricsGauges {
+@Component
+public class MetricsGauges {
 
     /** The distributors whose results are cached in PostgreSQL (LCSC's SQLite database is its own cache). */
     static final Distributor[] CACHED = {Distributor.MOUSER, Distributor.TME};
 
-    private final JdbcClient jdbc;
-    private final Duration ttl;
-    private final Clock clock;
-    private final ObjectProvider<JlcpcbDatabaseManager> jlcpcb;
+    @Autowired private JdbcClient jdbc;
+    @Autowired private KinaProperties properties;
+    @Autowired private Clock clock;
+    @Autowired private ObjectProvider<JlcpcbDatabaseManager> jlcpcb;
+    @Autowired private MeterRegistry registry;
 
     private final Map<Distributor, AtomicLong> parts = new EnumMap<>(Distributor.class);
     private final Map<Distributor, AtomicLong> fresh = new EnumMap<>(Distributor.class);
@@ -59,12 +64,8 @@ public final class MetricsGauges {
     private final AtomicLong tokensActive = new AtomicLong();
     private boolean failing;
 
-    public MetricsGauges(JdbcClient jdbc, KinaProperties properties, Clock clock,
-                         ObjectProvider<JlcpcbDatabaseManager> jlcpcb, MeterRegistry registry) {
-        this.jdbc = jdbc;
-        this.ttl = properties.cache().ttl();
-        this.clock = clock;
-        this.jlcpcb = jlcpcb;
+    @PostConstruct
+    void registerGauges() {
         for (Distributor d : CACHED) {
             register(registry, CACHE_PARTS, parts, d);
             register(registry, CACHE_PARTS_FRESH, fresh, d);
@@ -119,7 +120,7 @@ public final class MetricsGauges {
     }
 
     private void refreshDatabase() {
-        OffsetDateTime freshSince = clock.instant().minus(ttl).atOffset(ZoneOffset.UTC);
+        OffsetDateTime freshSince = clock.instant().minus(properties.cache().ttl()).atOffset(ZoneOffset.UTC);
         Map<Distributor, long[]> counts = new EnumMap<>(Distributor.class);
         jdbc.sql("""
                         SELECT distributor, count(*) AS total,

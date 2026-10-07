@@ -3,8 +3,10 @@ package ro.alacrity.kina.metrics;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +22,7 @@ import java.util.Map;
  * never overwrites them with smaller ones (the upsert also keeps the larger value).
  */
 @Slf4j
+@Component
 public class MetricsPersistence {
 
     static final String UPSERT = """
@@ -28,16 +31,11 @@ public class MetricsPersistence {
             ON CONFLICT (name, tags) DO UPDATE
               SET value = GREATEST(metrics_counters.value, EXCLUDED.value), updated_at = EXCLUDED.updated_at""";
 
-    private final JdbcClient jdbc;
-    private final MetricsStore store;
+    @Autowired private JdbcClient jdbc;
+    @Autowired private MetricsStore store;
     private final Map<MetricKey, Long> saved = new HashMap<>();
     private volatile boolean restored;
     private boolean failing;
-
-    public MetricsPersistence(JdbcClient jdbc, MetricsStore store) {
-        this.jdbc = jdbc;
-        this.store = store;
-    }
 
     public boolean isRestored() {
         return restored;

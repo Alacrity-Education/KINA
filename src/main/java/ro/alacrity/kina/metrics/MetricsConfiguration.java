@@ -1,25 +1,19 @@
 package ro.alacrity.kina.metrics;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
-import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import ro.alacrity.kina.config.KinaProperties;
-import ro.alacrity.kina.distributor.lcsc.JlcpcbDatabaseManager;
-
-import java.time.Clock;
 
 /**
  * KINA's Prometheus metrics (DESIGN.md 3.7): the counter store, the instrumentation facade, the persistence of the
@@ -31,32 +25,7 @@ import java.time.Clock;
 @Slf4j
 public class MetricsConfiguration implements WebMvcConfigurer {
 
-    private final ObjectProvider<KinaMetrics> metrics;
-
-    public MetricsConfiguration(ObjectProvider<KinaMetrics> metrics) {
-        this.metrics = metrics;
-    }
-
-    @Bean
-    MetricsStore metricsStore(MeterRegistry registry) {
-        return new MetricsStore(registry);
-    }
-
-    @Bean
-    KinaMetrics kinaMetrics(MetricsStore store) {
-        return new KinaMetrics(store);
-    }
-
-    @Bean
-    MetricsPersistence metricsPersistence(JdbcClient jdbc, MetricsStore store) {
-        return new MetricsPersistence(jdbc, store);
-    }
-
-    @Bean
-    MetricsGauges metricsGauges(JdbcClient jdbc, KinaProperties properties, Clock clock,
-                                ObjectProvider<JlcpcbDatabaseManager> jlcpcb, MeterRegistry registry) {
-        return new MetricsGauges(jdbc, properties, clock, jlcpcb, registry);
-    }
+    @Autowired private ObjectProvider<KinaMetrics> metrics;
 
     /**
      * The management chain of {@code SecurityConfig} permits every actuator request; that is only safe while actuator

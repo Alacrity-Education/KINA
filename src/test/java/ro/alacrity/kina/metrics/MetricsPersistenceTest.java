@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.TestcontainersConfiguration;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.domain.Distributor;
@@ -61,8 +62,8 @@ class MetricsPersistenceTest {
         MetricKey calls = MetricKey.of(prefix + "calls", "tool", "search_parts");
         MetricKey duration = MetricKey.of(prefix + "duration");
 
-        MetricsStore firstRun = new MetricsStore(null);
-        MetricsPersistence first = new MetricsPersistence(jdbc, firstRun);
+        MetricsStore firstRun = TestWiring.metricsStore(null);
+        MetricsPersistence first = TestWiring.wire(new MetricsPersistence(), "jdbc", jdbc, "store", firstRun);
         assertThat(first.restore()).isTrue();
         firstRun.add(calls, 5);
         firstRun.record(duration, 3_000_000_000L);
@@ -72,9 +73,9 @@ class MetricsPersistenceTest {
         assertThat(stored(new MetricKey(prefix + "duration:nanos", ""))).isEqualTo(3_000_000_000L);
 
         // the next run: counts before its restore are kept on top of the stored values
-        MetricsStore secondRun = new MetricsStore(null);
+        MetricsStore secondRun = TestWiring.metricsStore(null);
         secondRun.increment(calls);
-        MetricsPersistence second = new MetricsPersistence(jdbc, secondRun);
+        MetricsPersistence second = TestWiring.wire(new MetricsPersistence(), "jdbc", jdbc, "store", secondRun);
         assertThat(second.restore()).isTrue();
         assertThat(secondRun.get(calls)).isEqualTo(6);
         assertThat(secondRun.get(new MetricKey(prefix + "duration:count", ""))).isEqualTo(1);

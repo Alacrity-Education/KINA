@@ -1,7 +1,7 @@
 package ro.alacrity.kina.metrics;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,10 +18,9 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/v1/metrics")
-@RequiredArgsConstructor
 public class MetricsController {
 
-    private final KinaMetrics metrics;
+    @Autowired private KinaMetrics metrics;
 
     /**
      * @param summary  the key counters (also in {@code list_distributors})

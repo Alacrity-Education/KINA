@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.CachedSearch;
 import ro.alacrity.kina.cache.PartCacheRepository;
@@ -764,8 +765,8 @@ class AuditRoundThreeTest {
         mouser.stock.put("M0", new StockUpdate(0, List.of()));
         mouser.stock.put("M1", new StockUpdate(42, List.of()));
         mouser.stock.put("M2", new StockUpdate(7, List.of()));
-        MetricsStore store = new MetricsStore(null);
-        service(List.of(mouser)).setMetrics(new KinaMetrics(store));
+        MetricsStore store = TestWiring.metricsStore(null);
+        service(List.of(mouser)).setMetrics(TestWiring.metrics(store));
 
         service.search(request(query, 2, false, Distributor.MOUSER));
 
@@ -777,7 +778,7 @@ class AuditRoundThreeTest {
         cachedSearches.clear();
         PhraseClient live = new PhraseClient(Distributor.MOUSER);
         service.shutdown();
-        service(List.of(live)).setMetrics(new KinaMetrics(store));
+        service(List.of(live)).setMetrics(TestWiring.metrics(store));
         service.search(request(query, 2, false, Distributor.MOUSER));
         String phrase = live.queries.getFirst();
         live.queries.clear();

@@ -4,6 +4,8 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Map;
@@ -21,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * across restarts. Thread-safe and lock-free on the increment path.
  */
 @Slf4j
+@Component
 public class MetricsStore {
 
     /** Suffix of a timer's event count. */
@@ -28,7 +31,8 @@ public class MetricsStore {
     /** Suffix of a timer's total time in nanoseconds. */
     public static final String NANOS = ":nanos";
 
-    private final MeterRegistry registry;
+    /** Where new meters are registered; null keeps the values in memory only (tests, no-op metrics). */
+    @Autowired private MeterRegistry registry;
     private final ConcurrentHashMap<MetricKey, AtomicLong> values = new ConcurrentHashMap<>();
     /** Strong references to the timer cells (Micrometer holds function meter state weakly). */
     private final ConcurrentHashMap<MetricKey, TimerCells> timers = new ConcurrentHashMap<>();
@@ -36,13 +40,6 @@ public class MetricsStore {
 
     /** Count and total nanoseconds of one timer. */
     record TimerCells(AtomicLong count, AtomicLong nanos) {
-    }
-
-    /**
-     * @param registry where new meters are registered; null keeps the values in memory only (tests, no-op metrics)
-     */
-    public MetricsStore(MeterRegistry registry) {
-        this.registry = registry;
     }
 
     /** Adds {@code amount} (ignored when not positive) to a counter. */
