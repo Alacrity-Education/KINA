@@ -1476,7 +1476,7 @@ No other value is possible (connector and USB sub-types are not tags), so the ta
 The timers (`kina_search_duration_seconds`, `kina_distributor_duration_seconds`) and `kina_searches_total` (a batch
 mixes types) have no `type` tag. Counts recorded before 0.5 have no type: migration V9 moved them to `type="unknown"`
 (Prometheus refuses two meters of one name with different tag keys), so `sum without (type) (...)` continues across
-the upgrade.
+the upgrade. The daily backfill (below) moves the part of them the database can attribute to a type.
 
 Spring Boot's own JVM, HTTP server, Hikari and process metrics are exported as well. Gauges cannot end in `_total` in
 the Prometheus exposition format, so the cache gauges are `kina_cache_parts` and `kina_cache_searches`. These two
@@ -1498,6 +1498,47 @@ request: it is logged once at WARN and retried at the next tick. Gauges are not 
 the database gauges every 30 s with a few `count(*)` queries and reads the JLCPCB gauges from memory at every scrape.
 Several KINA instances sharing one database would each keep their own counts, and the larger value would win in the
 table; run one instance per database.
+
+**Backfill.** The `type` tag arrived in 0.5, and the vocabulary keeps learning after a query was counted, so most
+history sits under `type="unknown"`. `MetricsBackfill` moves what the database proves to the right types. It runs
+daily at `kina.metrics.backfill.cron` (`0 0 6 * * *`, 06:00 in the JVM time zone), and once in the background after
+startup while `metrics_backfill` has no completion marker, so a fresh deploy backfills at once.
+`kina.metrics.backfill.enabled=false` turns both off. One run at a time (an `AtomicBoolean`), on the scheduler thread,
+never on a request thread; one instance per database, as for the counters. A run:
+
+1. Re-types every row. `cached_searches.type` is `KinaMetrics.typeOfQuery(query_key)` (the parser family of the
+   normalised query, through `typeOf`); `cached_parts.type` is `KinaMetrics.typeOfPart` of the stored payload (the
+   `Family` that `ParametricExtractor` derives; an unreadable payload is `unknown`). Both are also written on every
+   upsert, so the run only changes rows written before V12 (NULL) or typed by an older vocabulary. Rows are read
+   `kina.metrics.backfill.batch-size` (2000) at a time in key order, with one UPDATE per batch for the changed ones.
+2. Computes a target for each typed series, a lower bound of what it must hold, from the rows whose type is not
+   `unknown`: `kina.search.queries{type}` = distinct `query_key` values of that type; `kina.distributor.calls
+   {distributor, outcome=ok, type}` and `kina.cache.search.lookups{distributor, status=miss, type}` = cached searches
+   of that distributor and type (each was one successful fetch that missed the cache); `kina.parts.fetched
+   {distributor, type}` = cached parts of that distributor and type. `kina.parts.returned`, the other outcomes and
+   statuses, and LCSC (its searches are not cached in PostgreSQL) cannot be derived and are left alone.
+3. For each target, `held = max(current value of the typed series, attributed)`, where `attributed` is what the
+   backfill moved into that series before (`metrics_backfill`, section 8). When `target > held`, it moves
+   `min(target - held, value of the unknown series)` from the `type="unknown"` series with the same other tags to the
+   typed one. Counting what the series already holds keeps live counts from being matched twice: a search typed at
+   the time it ran already counted its row. A target that shrank (purged rows) moves nothing. Nothing is ever
+   subtracted from a typed series, the sum over `type` never changes, and a second run moves nothing.
+4. Applies the moves with `MetricsPersistence.transfer`, under the lock of the regular save: `MetricsStore.move`
+   (subtracts from the unknown cell, never below zero, and adds the same to the typed cell), then one transaction
+   that writes the changed rows of `metrics_counters` with their exact values (the only write that may lower a
+   stored value; the regular save keeps `GREATEST`), adds the moved amounts to `metrics_backfill.attributed` and
+   counts the run in the completion marker. The written values are recorded as saved, so the next save leaves the
+   lowered rows alone. When the transaction fails, the moves are undone in memory.
+5. Logs one INFO line: `Metrics backfill: retyped 12 cached_searches and 840 cached_parts rows; moved from
+   type=unknown: kina.search.queries 40, kina.distributor.calls 70, kina.cache.search.lookups 70, kina.parts.fetched
+   1500; 412 ms`, and counts `kina_metrics_backfill_runs_total{outcome}`, `kina_metrics_backfill_moved_total{name}`
+   and `kina_metrics_backfill_last_run_seconds`. A failure is one WARN line and `outcome="failed"`; it never affects
+   a request, and the next run tries again.
+
+The result is a lower bound: counts of rows already purged, repeated searches served from the cache, and queries the
+parser still does not recognise stay under `unknown`. A part's type is the part's own family, which may differ from
+the type of the query that fetched it. When the unknown series drops, Prometheus sees a counter reset on that one
+series, so `increase()` over the run time shows the moved amount on the typed series and nothing on the unknown one.
 
 **Instrumentation.** `metrics.Metric` declares every meter once: its Micrometer name, type, help text and tag keys
 (`MetricDocumentationTest` checks the table above against it). `KinaMetrics` is the facade; business code makes one
@@ -2336,6 +2377,10 @@ kina:
                                   INVALID, "BLOCKED_FOR_ZBL_*"] }
   metrics:
     save-interval: 30s           # section 3.7: counters saved to metrics_counters, database gauges recomputed
+    backfill:                    # section 3.7 "Backfill"
+      cron: "${KINA_METRICS_BACKFILL_CRON:0 0 6 * * *}"     # daily at 06:00, JVM time zone; also once at the first start
+      enabled: ${KINA_METRICS_BACKFILL_ENABLED:true}       # false in src/test/resources/config/application.yml
+      batch-size: 2000           # rows re-typed per UPDATE
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
             auto-download: true }   # false in src/test/resources/config/application.yml
 ```
@@ -2402,6 +2447,8 @@ empty value is not a valid duration or boolean).
   metrics: the counter store (canonical tags, timers, restore), persistence round trip with Testcontainers (save,
   restore in a new store, never decreasing), a production-mode `@SpringBootTest` on random ports that scrapes
   `/actuator/prometheus` on the management port without credentials and checks the main port does not serve it, and
-  the MCP integration test counting searches and tool calls.
+  the MCP integration test counting searches and tool calls, and the metrics backfill against Testcontainers
+  (lower bounds moved and totals kept, the lowered rows survive the next save, idempotent across runs and restarts,
+  re-typing after a vocabulary change, purged rows, the cap at the unknown value, the run at the first start only).
 - No secrets in code, logs or test fixtures. Never log bearer tokens or API keys.
 - Every external call has a timeout. Every distributor error is isolated per distributor.
