@@ -105,6 +105,8 @@ final class SearchExtractionContext implements ExtractionContext {
             case METRIC_PACKAGE -> Recognizers.findPackage(text, family, true);
             case FAN_TYPE, FAN_SUPPLY, FRAME_SIZE, BEARING, FAN_FEATURES -> FanVocabulary.word(vocabulary, text);
             case LED_COLOUR, LENS, LED_TYPE, LED_ORIENTATION, LED_PACKAGE -> LedVocabulary.word(vocabulary, text);
+            case SWITCH_TYPE, CONTACTS, SWITCH_FUNCTION, TERMINATION, SWITCH_SIZE, HOLE_DIAMETER, SWITCH_POSITIONS,
+                 ILLUMINATION, ILLUMINATION_COLOUR, SWITCH_ORIENTATION -> SwitchVocabulary.word(vocabulary, text, family);
         };
     }
 

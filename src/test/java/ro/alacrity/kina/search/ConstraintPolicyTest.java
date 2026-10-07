@@ -69,6 +69,8 @@ class ConstraintPolicyTest {
                 "mounting"));
         decided.put("usb", List.of("type", "usb type", "pin configuration", "usb standard", "gender", "mounting"));
         decided.put("fan", List.of("type", "fan type", "frame size", "voltage", "mounting"));   // fans, 0.13
+        decided.put("switch", List.of("type", "package", "mounting", "switch type", "contacts", "switch function",
+                "termination", "switch size", "hole diameter", "switch positions", "illumination"));   // switches, 0.13
         decided.put("default", List.of("type", "value", "package", "mounting", "technology", "elements", "polarity",
                 "voltage", "form factor"));
         assertThat(ConstraintPolicy.DEFAULT_HARD.keySet()).containsExactlyElementsOf(decided.keySet());
@@ -77,12 +79,14 @@ class ConstraintPolicyTest {
             assertThat(policy.table().get(family)).as(family).isEqualTo(java.util.Set.copyOf(names));
         });
         assertThat(ConstraintPolicy.RELAXABLE).containsExactly("dielectric", "package", "tolerance", "orientation",
-                "tcr", "esr", "dcr", "speed", "bearing", "lens", "viewing angle", "colour temperature");
+                "tcr", "esr", "dcr", "speed", "bearing", "lens", "viewing angle", "colour temperature", "force");
         assertThat(ConstraintPolicy.NAMES).containsExactlyInAnyOrder("value", "package", "mounting", "technology",
                 "elements", "type", "polarity", "voltage", "load capacitance", "connector type", "gender",
                 "positions", "pitch", "usb type", "pin configuration", "usb standard", "form factor", "dielectric",
                 "tolerance", "orientation", "tcr", "esr", "dcr", "fan type", "frame size", "speed", "bearing",
-                "led type", "colour", "wavelength", "lens", "viewing angle", "colour temperature");
+                "led type", "colour", "wavelength", "lens", "viewing angle", "colour temperature", "switch type",
+                "contacts", "switch function", "termination", "switch size", "hole diameter", "switch positions",
+                "illumination", "force");
     }
 
     @Test
@@ -94,7 +98,7 @@ class ConstraintPolicyTest {
         }
         // the package is hard, except for inductors, crystals and oscillators
         for (String family : List.of("resistor", "capacitor", "ferrite", "diode", "led", "transistor", "regulator",
-                "connector", "default")) {
+                "connector", "switch", "default")) {
             assertThat(t.get(family)).as(family).contains("package");
         }
         for (String family : List.of("inductor", "crystal", "oscillator")) {

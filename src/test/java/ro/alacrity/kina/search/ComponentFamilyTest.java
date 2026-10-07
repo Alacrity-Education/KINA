@@ -52,7 +52,7 @@ class ComponentFamilyTest {
         for (ComponentFamily family : ComponentFamily.values()) {
             PolicyFamily expected = switch (family.label()) {
                 case "resistor", "capacitor", "inductor", "ferrite", "crystal", "oscillator", "regulator",
-                     "connector", "fan", "led" -> PolicyFamily.byKey(family.label());
+                     "connector", "fan", "led", "switch" -> PolicyFamily.byKey(family.label());
                 case "diode", "schottky", "zener", "tvs" -> PolicyFamily.DIODE;
                 case "transistor", "mosfet" -> PolicyFamily.TRANSISTOR;
                 default -> PolicyFamily.DEFAULT;

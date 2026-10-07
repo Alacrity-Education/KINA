@@ -93,6 +93,20 @@ public interface ValueDisplay {
         }
     }
 
+    /**
+     * An ingress protection code from its two digits ({@code 67} is {@code IP67}; solids 0 are written {@code X}:
+     * {@code 7} is {@code IPX7}).
+     */
+    final class IpCode implements ValueDisplay {
+
+        @Override
+        public String display(double value, Unit unit) {
+            int code = (int) Math.round(value);
+            int solids = code / 10;
+            return unit.base() + (solids == 0 ? "X" : String.valueOf(solids)) + (code % 10);
+        }
+    }
+
     /** Hours, with the test temperature as the condition ({@code 2000h @105°C}). */
     final class HoursAtTemperature implements ValueDisplay {
 

@@ -20,7 +20,8 @@ import java.util.Map;
  * names part numbers (DESIGN.md 3.4 "Requested part numbers"); for a fan request {@code fan_type} ("axial", "radial"),
  * {@code fan_supply} ("DC", "AC"), {@code frame_size} ("40x40x10mm"), {@code bearing} ("ball") and
  * {@code fan_features} ({@code ["PWM"]}) when stated (DESIGN.md 3.4 "Fans"); for an LED request {@code led}
- * ({@link LedResponse}: colour, lens, type, orientation; DESIGN.md 3.4 "LEDs").
+ * ({@link LedResponse}: colour, lens, type, orientation; DESIGN.md 3.4 "LEDs"); for a switch request {@code switch}
+ * ({@link SwitchResponse}: type, contacts, function, termination, size...; DESIGN.md 3.4 "Switches").
  * Constraints are flattened into the object by kind using their display form; absent values are omitted.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -44,14 +45,15 @@ public record ParsedQueryResponse(
         @JsonProperty("frame_size") String frameSize,
         @JsonProperty("bearing") String bearing,
         @JsonProperty("fan_features") List<String> fanFeatures,
-        @JsonProperty("led") LedResponse led
+        @JsonProperty("led") LedResponse led,
+        @JsonProperty("switch") SwitchResponse sw
 ) {
 
     /** A parsed query without connector attributes and technology. */
     public ParsedQueryResponse(String family, Map<String, String> constraints, String dielectric, String packageName,
                                String mounting, List<String> keywords) {
         this(family, constraints, dielectric, packageName, mounting, null, keywords, null, null, null, null, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 
     public static ParsedQueryResponse from(ParsedQuery query) {
@@ -66,7 +68,8 @@ public record ParsedQueryResponse(
                 query.partNumbers().isEmpty() ? null : query.partNumbers(),
                 fan == null ? null : fan.type(), fan == null ? null : fan.supply(),
                 fan == null || fan.frame() == null ? null : fan.frame().display(), fan == null ? null : fan.bearing(),
-                fan == null || fan.features().isEmpty() ? null : fan.features(), LedResponse.from(query.led()));
+                fan == null || fan.features().isEmpty() ? null : fan.features(), LedResponse.from(query.led()),
+                SwitchResponse.from(query.sw()));
     }
 
     /**
@@ -84,6 +87,52 @@ public record ParsedQueryResponse(
 
         static LedResponse from(ParsedQuery.Led led) {
             return led == null ? null : new LedResponse(led.colour(), led.lens(), led.type(), led.orientation());
+        }
+    }
+
+    /**
+     * The {@code parsed.switch} object of a switch request, e.g. {@code {"type":"toggle","contacts":"SPDT",
+     * "termination":"solder lug"}}: the switch type (any mechanical switch when omitted), the contact configuration,
+     * the function ({@code momentary}, {@code latching}, {@code ON-OFF-ON}), the termination class ({@code PCB},
+     * {@code solder lug}, {@code quick connect}, {@code wire leads}, {@code screw}, {@code panel}), the body size,
+     * the panel cut-out ({@code hole_diameter}), the positions of a DIP or rotary switch, {@code illuminated} and the
+     * illumination colour, the orientation and the AC or DC of the stated voltage ({@code voltage_supply}). Omitted for
+     * other requests.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Builder
+    public record SwitchResponse(
+            @JsonProperty("type") String type,
+            @JsonProperty("contacts") String contacts,
+            @JsonProperty("function") String function,
+            @JsonProperty("termination") String termination,
+            @JsonProperty("size") String size,
+            @JsonProperty("hole_diameter") String holeDiameter,
+            @JsonProperty("positions") Integer positions,
+            @JsonProperty("illuminated") Boolean illuminated,
+            @JsonProperty("illumination_colour") String illuminationColour,
+            @JsonProperty("orientation") String orientation,
+            @JsonProperty("voltage_supply") String voltageSupply
+    ) {
+
+        static SwitchResponse from(ParsedQuery.Switch sw) {
+            if (sw == null) {
+                return null;
+            }
+            return builder()
+                    .type(sw.type())
+                    .contacts(sw.contacts() == null ? null : sw.contacts().display())
+                    .function(sw.function())
+                    .termination(sw.termination())
+                    .size(sw.size() == null ? null : sw.size().display())
+                    .holeDiameter(sw.holeDiameter() == null ? null
+                            : java.math.BigDecimal.valueOf(sw.holeDiameter()).stripTrailingZeros().toPlainString() + "mm")
+                    .positions(sw.positions())
+                    .illuminated(sw.illuminated())
+                    .illuminationColour(sw.illuminationColour())
+                    .orientation(sw.orientation())
+                    .voltageSupply(sw.voltageSupply())
+                    .build();
         }
     }
 

@@ -37,6 +37,7 @@ import static ro.alacrity.kina.domain.PolicyFamily.LED;
 import static ro.alacrity.kina.domain.PolicyFamily.OSCILLATOR;
 import static ro.alacrity.kina.domain.PolicyFamily.REGULATOR;
 import static ro.alacrity.kina.domain.PolicyFamily.RESISTOR;
+import static ro.alacrity.kina.domain.PolicyFamily.SWITCH;
 import static ro.alacrity.kina.domain.PolicyFamily.TRANSISTOR;
 import static ro.alacrity.kina.domain.RelaxStrategy.BELOW_SPEC;
 import static ro.alacrity.kina.domain.RelaxStrategy.LADDER;
@@ -174,7 +175,7 @@ public enum ConstraintKind {
      */
     @Relax(strategy = LADDER, order = 1)
     @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, FERRITE, DIODE, LED, TRANSISTOR, REGULATOR,
-            PolicyFamily.CONNECTOR, DEFAULT})
+            PolicyFamily.CONNECTOR, SWITCH, DEFAULT})
     @Match(mode = CUSTOM, weight = 0.20, order = 11, report = 4)
     PACKAGE("package", ParsedQuery::packageName, PartFeatures::packageName) {
         @Override
@@ -437,6 +438,177 @@ public enum ConstraintKind {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
             return grade(Math.abs(number(actual) - number(wanted)) <= WAVELENGTH_TOLERANCE_NM + 1e-9);
+        }
+    },
+
+    /**
+     * The switch type: tactile, pushbutton, toggle, slide, rocker, DIP, rotary, keylock, snap action, reed...; a
+     * pushbutton request takes tactile switches too. Every switch request states it (any mechanical switch unless it
+     * names one): a switch IC (analog, load, Ethernet switch), a Hall or proximity sensor or a cap answers none.
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = SWITCH)
+    @Match(mode = CUSTOM, weight = 0.15, order = 48, report = 40)
+    SWITCH_TYPE("switch type", q -> q.sw() == null ? null : q.sw().requestedType(),
+            f -> f.sw() == null ? null : f.sw().type()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return ParsedQuery.Switch.typeGrade((String) wanted, (String) actual);
+        }
+
+        @Override
+        public boolean namedInHint(ParsedQuery q) {
+            return q.sw() != null && q.sw().type() != null;
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return namedInHint(q) ? q.sw().type() : null;
+        }
+    },
+
+    /** The contact configuration (SPST, SPDT, DPDT...; SPST-NO and SPST-NC when the request states NO or NC). */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = SWITCH)
+    @Match(mode = CUSTOM, weight = 0.15, order = 49, report = 41)
+    CONTACTS("contacts", q -> q.sw() == null ? null : q.sw().contacts(),
+            f -> f.sw() == null ? null : f.sw().contacts()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return ((ParsedQuery.Contacts) wanted).grade((ParsedQuery.Contacts) actual);
+        }
+
+        @Override
+        public String mismatch(MatchContext c) {
+            Double g = compare(c);
+            return g == null || g >= 0 ? null : label() + ": " + c.part().sw().contacts().display() + " instead of "
+                    + c.query().sw().contacts().display();
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return wanted(q) == null ? null : q.sw().contacts().display();
+        }
+    },
+
+    /** Momentary or latching, or the positions ({@code ON-OFF-ON}, {@code (ON)-OFF-(ON)}) when both state them. */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = SWITCH)
+    @Match(mode = CUSTOM, weight = 0.10, order = 50, report = 42)
+    SWITCH_FUNCTION("switch function", q -> q.sw() == null ? null : q.sw().function(),
+            f -> f.sw() == null ? null : f.sw().function()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return ParsedQuery.Switch.functionGrade((String) wanted, (String) actual);
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return (String) wanted(q);
+        }
+    },
+
+    /**
+     * The termination class: PCB (SMD or THT pins) against panel mount (solder lugs, quick connect, wire leads, screw):
+     * a PCB request never takes a panel-mount switch and the reverse; a request for one panel class takes that class.
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = SWITCH)
+    @Match(mode = CUSTOM, weight = 0.10, order = 51, report = 43)
+    TERMINATION("termination", q -> q.sw() == null ? null : q.sw().termination(),
+            f -> f.sw() == null ? null : f.sw().termination()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return ParsedQuery.Switch.terminationGrade((String) wanted, (String) actual);
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            Object t = wanted(q);
+            return t == null || ParsedQuery.Switch.PCB.equals(t) ? null : "panel-mount " + t;
+        }
+    },
+
+    /** The body size of a switch: width and length within 0.5 mm (either order), the height when both state it. */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = SWITCH)
+    @Match(mode = CUSTOM, weight = 0.15, order = 52, report = 44)
+    SWITCH_SIZE("switch size", q -> q.sw() == null ? null : q.sw().size(),
+            f -> f.sw() == null ? null : f.sw().size()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return grade(((ParsedQuery.BodySize) wanted).matches((ParsedQuery.BodySize) actual));
+        }
+
+        @Override
+        public String mismatch(MatchContext c) {
+            Double g = compare(c);
+            return g == null || g >= 0 ? null : label() + ": " + c.part().sw().size().display() + " instead of "
+                    + c.query().sw().size().display();
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return wanted(q) == null ? null : q.sw().size().display();
+        }
+    },
+
+    /** The panel cut-out (mounting hole diameter) of a switch, within 0.1 mm. */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = SWITCH)
+    @Match(mode = CUSTOM, weight = 0.15, order = 53, report = 45)
+    HOLE_DIAMETER("hole diameter", q -> q.sw() == null ? null : q.sw().holeDiameter(),
+            f -> f.sw() == null ? null : f.sw().holeDiameter()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return grade(Math.abs(number(actual) - number(wanted)) <= ParsedQuery.Switch.HOLE_TOLERANCE_MM + 1e-9);
+        }
+
+        @Override
+        public String mismatch(MatchContext c) {
+            Double g = compare(c);
+            return g == null || g >= 0 ? null : label() + ": " + millimetres(c.part().sw().holeDiameter())
+                    + " instead of " + millimetres(c.query().sw().holeDiameter());
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return wanted(q) == null ? null : millimetres(q.sw().holeDiameter()) + " hole";
+        }
+    },
+
+    /** The number of switches of a DIP switch or of positions of a rotary switch. */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = SWITCH)
+    @Match(mode = EQUAL, weight = 0.15, order = 54, report = 46)
+    SWITCH_POSITIONS("switch positions", q -> q.sw() == null ? null : q.sw().positions(),
+            f -> f.sw() == null ? null : f.sw().positions()) {
+        @Override
+        public String describes(ParsedQuery q) {
+            return wanted(q) == null ? null : q.sw().positions() + "-position";
+        }
+    },
+
+    /** An illuminated switch (LED) when the request asks for one; a part that says it is not illuminated conflicts. */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = SWITCH)
+    @Match(mode = CUSTOM, weight = 0.10, order = 55, report = 47)
+    ILLUMINATION("illumination", q -> q.sw() != null && Boolean.TRUE.equals(q.sw().illuminated()) ? Boolean.TRUE : null,
+            f -> f.sw() == null ? null : f.sw().illuminated()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return grade((Boolean) actual);
+        }
+
+        @Override
+        public String mismatch(MatchContext c) {
+            Double g = compare(c);
+            return g == null || g >= 0 ? null : label() + ": none instead of illuminated";
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return wanted(q) == null ? null : "illuminated";
         }
     },
 
@@ -739,6 +911,12 @@ public enum ConstraintKind {
         }
     },
 
+    /** The operating force of a switch within 20 %: outside it a mismatch, never an exclusion; the ladder may loosen it. */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = LADDER, order = 12, families = SWITCH)
+    @Match(mode = WITHIN, tolerance = 0.20, weight = 0.05, order = 57, report = 49)
+    FORCE("force", ParsedQuery.FORCE),
+
     // ---------------------------------------------------------------- ratings (not in the policy table)
 
     /**
@@ -822,6 +1000,65 @@ public enum ConstraintKind {
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 46, report = 38)
     LUMINOUS_FLUX("luminous flux", ParsedQuery.LUMINOUS_FLUX),
 
+    /**
+     * The voltage rating of a switch, a minimum; AC and DC when the request states one (a 12 VDC rating never satisfies
+     * 250 VAC): the part's rating of that supply, else its plain voltage.
+     */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 16, report = 7)
+    SWITCH_VOLTAGE("voltage", ParsedQuery.VOLTAGE, ComponentFamily.SWITCH) {
+        @Override
+        public Object actual(ParsedQuery q, PartFeatures f) {
+            String supply = supply(q);
+            PartFeatures.Measure ac = f.measure(ParsedQuery.VOLTAGE_AC);
+            PartFeatures.Measure dc = f.measure(ParsedQuery.VOLTAGE_DC);
+            PartFeatures.Measure plain = f.measure(ParsedQuery.VOLTAGE);
+            if (ParsedQuery.AC.equals(supply)) {
+                return ac != null ? ac : dc != null ? dc : plain;
+            }
+            if (ParsedQuery.DC.equals(supply)) {
+                return dc != null ? dc : ac != null ? ac : plain;
+            }
+            return plain != null ? plain : ac != null ? ac : dc;
+        }
+
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            if (otherSupplyOnly(c)) {
+                return -1.0;
+            }
+            return grade(number(actual) >= number(wanted) * (1 - match().tolerance()));
+        }
+
+        @Override
+        public String mismatch(MatchContext c) {
+            if (!otherSupplyOnly(c) || compare(c) == null) {
+                return super.mismatch(c);
+            }
+            String supply = supply(c.query());
+            String other = ParsedQuery.AC.equals(supply) ? ParsedQuery.DC : ParsedQuery.AC;
+            return label() + ": " + display(actual(c.query(), c.part())) + " " + other + " instead of "
+                    + display(wanted(c.query())) + " " + supply;
+        }
+    },
+
+    /** A minimum ingress protection of a switch: IP67 satisfies IP65 (both digits at least the request's). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 58, report = 50)
+    IP_RATING("ip rating", ParsedQuery.IP_RATING) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            int w = (int) Math.round(number(wanted));
+            int a = (int) Math.round(number(actual));
+            return grade(a / 10 >= w / 10 && a % 10 >= w % 10);
+        }
+    },
+
+    /** A minimum mechanical life of a switch (cycles). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 59, report = 51)
+    LIFE("life", ParsedQuery.LIFE),
+
     // ---------------------------------------------------------------- preferences and connector-only signals
 
     /** "low DCR": a lower DC resistance ranks higher, {@code weight / (1 + DCR / 10 mOhm)} (score only). */
@@ -874,11 +1111,18 @@ public enum ConstraintKind {
 
     /**
      * The orientation of a part that is no connector: an LED's right angle (side view), reverse mount or vertical (top
-     * view). A preference: a different one is a mismatch, never an exclusion.
+     * view), a switch's right angle (side actuated) or vertical (top actuated). A preference: a different one is a
+     * mismatch, never an exclusion.
      */
     @Relax(strategy = SOFT)
     @Match(mode = EQUAL, weight = 0.05, scope = PART, order = 47, report = 39)
     PART_ORIENTATION("orientation", ConstraintKind::partOrientation, ConstraintKind::partOrientation),
+
+    /** The colour of a switch's illumination: a preference (a different one is a mismatch, never an exclusion). */
+    @Relax(strategy = SOFT)
+    @Match(mode = EQUAL, weight = 0.03, order = 56, report = 48)
+    ILLUMINATION_COLOUR("illumination colour", q -> q.sw() == null ? null : q.sw().illuminationColour(),
+            f -> f.sw() == null ? null : f.sw().illuminationColour()),
 
     /** Rows of a connector: a different row count costs the weight, the same earns nothing. */
     @Relax(strategy = SOFT)
@@ -1528,14 +1772,35 @@ public enum ConstraintKind {
                 && !q.subtype().equals(f.subtype());
     }
 
-    /** The orientation of an LED request (null for every other request). */
+    /** The orientation of an LED or switch request (null for every other request). */
     private static Object partOrientation(ParsedQuery q) {
-        return q.led() == null ? null : q.led().orientation();
+        return q.led() != null ? q.led().orientation() : q.sw() != null ? q.sw().orientation() : null;
     }
 
-    /** The orientation of an LED part (null for every other part). */
+    /** The orientation of an LED or switch part (null for every other part). */
     private static Object partOrientation(PartFeatures f) {
-        return f.led() == null ? null : f.led().orientation();
+        return f.led() != null ? f.led().orientation() : f.sw() != null ? f.sw().orientation() : null;
+    }
+
+    /** {@link ParsedQuery#AC} or {@link ParsedQuery#DC} when a switch request's voltage says so, else null. */
+    private static String supply(ParsedQuery q) {
+        return q.sw() == null ? null : q.sw().voltageSupply();
+    }
+
+    /** A switch request states AC or DC and the part states a rating of the other supply only. */
+    private static boolean otherSupplyOnly(MatchContext c) {
+        String supply = supply(c.query());
+        if (supply == null) {
+            return false;
+        }
+        boolean ac = c.part().measure(ParsedQuery.VOLTAGE_AC) != null;
+        boolean dc = c.part().measure(ParsedQuery.VOLTAGE_DC) != null;
+        return ParsedQuery.AC.equals(supply) ? !ac && dc : !dc && ac;
+    }
+
+    /** {@code 12mm}, {@code 16.2mm}. */
+    private static String millimetres(Double mm) {
+        return java.math.BigDecimal.valueOf(mm).stripTrailingZeros().toPlainString() + "mm";
     }
 
     /** The fan attributes of a request or part when they state the type or the supply, else null. */

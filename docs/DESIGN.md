@@ -842,6 +842,79 @@ canonical attributes add `LedColour`, `LensType` (TME sends `Colour` for a housi
 `ForwardVoltage`, `LuminousIntensity`, `LuminousFlux` and `ViewingAngle`; `Voltage` stays the voltage the part states
 (for an LED usually its forward voltage, for an IR emitter sometimes its reverse voltage).
 
+**Switches** (`search.SwitchVocabulary`, `ParsedQuery.Switch`, family `switch`, policy family `switch`;
+2026-10-07). The vocabulary is read in texts of the switch family only, except the words of switch ICs and switching
+sensors, which any part's text may name (they make a part no mechanical switch).
+
+- **Switch type** (`parsed.switch.type`, the part's `SwitchType`): `tactile` (`tact`, `touch switch`), `pushbutton`
+  (`push button`, `push-button`, `push switch`, `momentary button`), `toggle` (`lever`), `slide`, `rocker`, `DIP`
+  (`DIP switch`, `DIL`, `piano`), `rotary` (`thumbwheel`, `coded rotary`), `keylock` (`key lock`, `key switch`), `snap
+  action` (`micro switch`, `microswitch`, `limit`, `travel switch`), `reed`, `membrane`, `detector`, `navigation`
+  (`joystick`, `multi-directional`). A request that names no type takes every mechanical switch; a pushbutton request
+  takes tactile switches too, a tactile request tactile switches only (`panel` narrows a pushbutton request through
+  the termination). No mechanical switch, in any family's text: `IC` (analog, load, power distribution, Ethernet, RF,
+  signal, video or USB switches, multiplexers), `sensor` (Hall, proximity and thermostat switches), `accessory` (caps,
+  keycaps). A switch request never takes them.
+- **Contacts** (`contacts`): `SPST`, `SPDT`, `DPST`, `DPDT`, `3PDT`, `4PDT`, `SP3T`; JLCPCB `1P2T` and `2P2T`; `1
+  Form A` (SPST-NO), `1 Form B` (SPST-NC), `1 Form C` (SPDT); `1xNO`; `normally open`. SPST-NO and SPST-NC differ when
+  the request states NO or NC; a part that does not say is then unverified.
+- **Function** (`function`): `momentary` (`non-latching`, `push-to-make`, `spring return`, TME `monostable`),
+  `latching` (`maintained`, `self-locking`, `push-push`, `alternate action`, TME `bistable`), or the positions as
+  distributors write them (`ON-OFF`, `ON-ON`, `ON-OFF-ON`, `(ON)-OFF-(ON)`, `OFF-(ON)`; brackets mark a momentary
+  position; Mouser `ON-NONE-ON` is `ON-ON`). Two position patterns are compared as written; otherwise momentary against
+  latching (a pattern whose every ON is bracketed is momentary, one without brackets latching). A tactile switch is
+  momentary when nothing says otherwise.
+- **Termination class** (`termination`): `PCB` (SMD, SMT, THT, through hole, PC pins, gull wing; an SMD or THT request
+  is PCB), `solder lug` (`solder lugs`, `solder terminals`, `solder tags`; `for wire soldering` and a bare `solder` when
+  no PCB word is there), `quick connect` (`faston`, `spade`, `6.3mm tabs`), `wire leads` (`with wires`), `screw`
+  (`screw terminals`), and `panel` (`panel mount`, `snap-in`) when only the panel mounting is known. A PCB request never
+  takes a panel-mount switch and the reverse; a request for one panel class takes that class (a part that says `panel`
+  only is then unverified). SMD against THT stays the `mounting` check.
+- **Size** (`size`, the part's `SwitchSize`): `6x6`, `6x6x4.3`, `12x12mm`, `3x6`; `4.3mm height` adds the height;
+  JLCPCB `SMD-4P,6x6mm`. Width and length within 0.5 mm in either order, the height within 0.5 mm when both state it.
+  **Panel cut-out** (`hole_diameter`): `12mm hole`, `Ø16mm`, `M12`, and a bare `12mm` of a panel switch (pushbutton,
+  toggle, rocker, keylock, a panel termination); a bare size of a tactile, DIP or slide switch is its body (`tactile
+  12mm` is 12x12mm); within 0.1 mm. **Positions** (`positions`): `8 position`, `8 pos`, `8-way`, `8 bit` (DIP and
+  rotary switches).
+- **Illumination**: `illuminated`, `lighted`, `backlit`, `LED`, `LED ring`; `non-illuminated`, `without LED` on a part;
+  the colour from `red LED`, `blue ring`, `LED colour: red`, Mouser `Illumination Color`. **Orientation**: `right angle`
+  (`side actuated`, `horizontal`, JLCPCB `Push Switches - Horizontal Type`), `vertical` (`top actuated`).
+- **Ratings**: current and voltage are minimums; `250VAC`, `30 VDC`, `24V DC` state the supply, and then the part's
+  rating of that supply counts (`VOLTAGE_AC`, `VOLTAGE_DC`: Mouser `Voltage Rating AC/DC`, TME `3A/125VAC`,
+  `0.05A/12VDC`): a 12 VDC rating never satisfies 250 VAC; a part that states a voltage without AC or DC is compared
+  by its value. IP code (`IP67`, `IPX7`; `sealed` and `waterproof` are IP67): a minimum in both digits (IP67 satisfies
+  IP65, IP54 does not). Life: `100,000 cycles`, `1,000,000 cycles`, `100k cycles`, `20 thousand cycles`, `10000 times`,
+  a minimum. Force: `160gf`, `1.6N`, `250 gf`, shown `1.57 N (160 gf)`, within 20 %.
+- **Family words**: `switch` and `switches` (priority 3: `MOSFET to switch a 12V LED strip` stays a MOSFET request,
+  the first family word winning a tie; `switch with LED` is a switch); `tactile`, `tact`, `pushbutton`, `push-button`,
+  `push button`, `toggle`, `rocker`, `microswitch`, `keylock`, `DIP-switch` at priority 4 (`pushbutton switch with
+  red LED` is a switch). `switching`, `switch mode`, `switch-mode` and the IC and sensor phrases (`analog switch`,
+  `load switch`, `power distribution switch`, `Ethernet switch`, `Hall switch`...) name no switch: `switching
+  regulator` stays a regulator, `analog switch SOT-23-6` is no switch request. `DIP` is a switch type in a switch text,
+  never the DIP package.
+
+| Attribute | Match | Policy |
+|---|---|---|
+| switch type | as above; IC, sensor and accessory parts never match | hard (`switch type`); every switch request states it |
+| contacts | poles and throws; NO or NC when the request states it | hard (`contacts`) when stated |
+| function | positions when both state them, else momentary against latching | hard (`switch function`) when stated |
+| termination class | PCB against panel classes; one panel class against another | hard (`termination`) |
+| size | width, length (and height) within 0.5 mm | hard (`switch size`) when stated |
+| panel cut-out | within 0.1 mm | hard (`hole diameter`) when stated |
+| positions | equal | hard (`switch positions`) when stated |
+| illuminated | a part that says it is not illuminated conflicts | hard (`illumination`) when the request asks for it |
+| illumination colour | equal | soft (a mismatch, never an exclusion) |
+| voltage | a minimum; AC or DC when the request states it (`SWITCH_VOLTAGE`) | rating, `allow_below_spec` |
+| current, IP code, life | minimums | rating |
+| force | within 20 % | relaxable for switches (ladder order 12) |
+| orientation | equal (`PART_ORIENTATION`) | soft, never excludes |
+
+`parsed.switch` shows `type`, `contacts`, `function`, `termination`, `size`, `hole_diameter`, `positions`,
+`illuminated`, `illumination_colour`, `orientation` and `voltage_supply`; the values are constraints (`voltage`,
+`current`, `force`, `life`, `ip_rating`). A part's canonical attributes add `SwitchType`, `Contacts`,
+`SwitchFunction`, `Termination`, `SwitchSize`, `HoleDiameter`, `SwitchPositions`, `Illuminated`,
+`IlluminationColour`, `Orientation`, `Force`, `Life`, `IpRating`, `VoltageAC` and `VoltageDC`.
+
 **Attribute sources** (`domain.PartAttribute`, the `@Source` and `@Unit` annotations; user decision 2026-10-07).
 Every attribute KINA reads from a part is a constant of `PartAttribute`, with its sources declared on it. A source
 names the lower-case distributor attribute names (`names`), the distributors and families it applies to
@@ -928,6 +1001,16 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `Described` | `led` |  |
 | `VIEWING_ANGLE` | `°` from `deg` in `led` | `Simple` | `led` | `viewing angle`, `view angle`, `angle of radiation`, `viewing angle (2θ1/2)`, `beam angle` |
 |  |  | `Described` | `led` |  |
+| `FORCE` | `N` from `n`, `gf` ×0.00980665 in `switch` (WithAlternative, `gf`) | `Simple` | `switch` | `operating force`, `actuating force`, `actuator force`, `actuation force`, `force`, `operating force (gf)` |
+|  |  | `Described` | `switch` |  |
+| `LIFE` | `cycles` from `cycles`, `cycle`, `times`, `operations` in `switch` (Spaced) | `Simple` | `switch` | `mechanical life`, `mechanical durability`, `electrical life`, `operating life`, `life cycle`, `durability`, `life` |
+|  |  | `Described` | `switch` |  |
+| `IP_RATING` | `IP` (IpCode) | `IpCode` | `switch` | `ip rating`, `protection class`, `ingress protection`, `ip code`, `ip protection` |
+|  |  | `IpCode` | `switch` |  |
+| `VOLTAGE_AC` | `V` | `Simple` | `switch` | `voltage rating ac`, `ac voltage rating`, `rated voltage ac`, `max. voltage ac`, `voltage ac` |
+|  |  | `SupplyVoltage` | `switch` |  |
+| `VOLTAGE_DC` | `V` | `Simple` | `switch` | `voltage rating dc`, `dc voltage rating`, `rated voltage dc`, `max. voltage dc`, `voltage dc` |
+|  |  | `SupplyVoltage` | `switch` |  |
 | `TEST_FREQUENCY` |  | `Simple` |  | `test frequency`, `impedance test frequency`, `frequency`, `measuring frequency` |
 | `RIPPLE_CURRENT` |  | `Simple` |  | `ripplecurrent`, `ripple current`, `rated ripple current`, `ripple current (max)`, `max ripple current`, `current - ripple`, `ripple current @ high frequency`, `ripple current @ low frequency`, `operating current`, `current rating`, `rated current`, `current` |
 |  |  | `KeyContaining` |  | `ripple` |
@@ -966,6 +1049,26 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 | `LED_TYPE` |  | `MergedWords` | `led` | `led version`, `kind of controller`, `type of optoelectronic module`, `product`, `product type`, `type of led`, `kind of led`, `led type`, `type` |
 | `LED_ORIENTATION` |  | `VocabularyWord` | `led` | `orientation`, `mounting angle`, `emitting direction`, `view` |
 |  |  | `DescribedWord` | `led` |  |
+| `SWITCH_TYPE` |  | `VocabularyWord` |  | `type of switch`, `switch type`, `kind of switch`, `product`, `product type`, `type` |
+|  |  | `DescribedWord` |  |  |
+| `CONTACTS` |  | `VocabularyWord` | `switch` | `contact form`, `contact configuration`, `type of contacts`, `switch configuration`, `configuration`, `circuit`, `contact arrangement` |
+|  |  | `DescribedWord` | `switch` |  |
+| `SWITCH_FUNCTION` |  | `VocabularyWord` | `switch` | `switch function`, `function`, `switch type`, `operation`, `actuator type`, `action`, `switching function` |
+|  |  | `DescribedWord` | `switch` |  |
+| `TERMINATION` |  | `MergedWords` | `switch` | `termination style`, `termination`, `terminals`, `leads`, `switch leads`, `electrical mounting`, `mounting style`, `mounting`, `connection`, `type of terminals` |
+| `SWITCH_SIZE` |  | `VocabularyWord` | `switch` | `dimensions`, `body dimensions`, `size / dimension`, `size`, `switch dimensions`, `body size` |
+|  |  | `PackageFieldWord` | `switch` |  |
+|  |  | `DescribedWord` | `switch` |  |
+| `HOLE_DIAMETER` |  | `VocabularyWord` | `switch` | `mounting hole diameter`, `mounting hole diam.`, `mounting hole dia.`, `hole diameter`, `panel cutout`, `panel cut-out`, `cut-out` |
+|  |  | `DescribedWord` | `switch` |  |
+| `SWITCH_POSITIONS` |  | `FirstInteger` | `switch` | `number of positions`, `number of switches`, `number of sections`, `positions` |
+|  |  | `DescribedWord` | `switch` |  |
+| `ILLUMINATED` |  | `VocabularyWord` | `switch` | `illuminated`, `illumination`, `illumination type`, `lighting`, `backlight`, `backlighting` |
+|  |  | `DescribedWord` | `switch` |  |
+| `ILLUMINATION_COLOUR` |  | `VocabularyWord` | `switch` | `illumination color`, `illumination colour`, `led colour`, `led color`, `backlight colour`, `colour of backlight` |
+|  |  | `DescribedWord` | `switch` |  |
+| `SWITCH_ORIENTATION` |  | `VocabularyWord` | `switch` | `orientation`, `actuator orientation`, `mounting angle`, `actuation direction` |
+|  |  | `DescribedWord` | `switch` |  |
 | `ELEMENTS` |  | `ElementsCount` | `ARRAYS` | `elements`, `number of elements`, `number of resistors`, `number of capacitors`, `number of lines`, `number of channels`, `number of bits` |
 | `ESR` |  | `OhmsAtFrequency` |  | `esr`, `esr (equivalent series resistance)`, `equivalent series resistance`, `esr max`, `esr (max)`, `max esr`, `esr max.` |
 |  |  | `OhmsAtKeyPrefix` |  | `esr ` |
@@ -1239,6 +1342,7 @@ each kind (resistance, capacitance, "a higher USB standard is accepted"...) are 
 | `connector` | `type`, `package`, `mounting`, `connector type`, `positions`, `pitch`, `gender` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `usb` | `type`, `mounting`, `usb type`, `pin configuration`, `usb standard`, `gender` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `fan` | `type`, `voltage`, `mounting`, `fan type`, `frame size` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr`, `speed`, `bearing` |
+| `switch` | `type`, `package`, `mounting`, `switch type`, `contacts`, `switch function`, `termination`, `switch size`, `hole diameter`, `switch positions`, `illumination` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr`, `force` |
 | `default` | `type`, `polarity`, `value`, `voltage`, `package`, `mounting`, `technology`, `form factor`, `elements` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 
 Ratings (minimum voltage, current, saturation current, power, temperature, lifetime; maximum DCR) are not in the

@@ -48,6 +48,9 @@ import java.util.Map;
  *                     features; DESIGN.md 3.4 "Fans"), else null
  * @param led          the LED attributes of an LED request (family {@code "led"}: colour, lens, LED type, orientation;
  *                     DESIGN.md 3.4 "LEDs"), else null
+ * @param sw           the switch attributes of a switch request (family {@code "switch"}: switch type, contacts,
+ *                     function, termination class, size, hole diameter, positions, illumination, orientation, the
+ *                     AC or DC of the stated voltage; DESIGN.md 3.4 "Switches"), else null
  */
 @Builder(toBuilder = true)
 public record ParsedQuery(
@@ -68,7 +71,8 @@ public record ParsedQuery(
         String formFactor,
         List<String> partNumbers,
         Fan fan,
-        Led led
+        Led led,
+        Switch sw
 ) {
 
     /** {@link #elements()} of a request for an array or network whose element count is not stated. */
@@ -112,6 +116,20 @@ public record ParsedQuery(
     public static final String LUMINOUS_FLUX = "luminous_flux";
     /** Viewing angle of an LED, in degrees; within 15 degrees, a preference. */
     public static final String VIEWING_ANGLE = "viewing_angle";
+    /** Operating force of a switch, in newton; within 20 %, a preference (DESIGN.md 3.4 "Switches"). */
+    public static final String FORCE = "force";
+    /** Mechanical life of a switch, in cycles; a minimum. */
+    public static final String LIFE = "life";
+    /**
+     * Ingress protection of a switch: {@code 10 * solids + liquids} ({@code IP67} is 67, {@code IPX7} 7); a minimum
+     * in both digits.
+     */
+    public static final String IP_RATING = "ip_rating";
+    /** The AC voltage rating of a switch, in volt (Mouser {@code Voltage Rating AC}, {@code 250VAC}). */
+    public static final String VOLTAGE_AC = "voltage_ac";
+    /** The DC voltage rating of a switch, in volt (Mouser {@code Voltage Rating DC}, {@code 30VDC}). */
+    public static final String VOLTAGE_DC = "voltage_dc";
+
     /** Fan types ({@link Fan#type()}): an axial fan, a radial (centrifugal) fan or blower. */
     public static final String AXIAL = "axial";
     public static final String RADIAL = "radial";
@@ -179,7 +197,7 @@ public record ParsedQuery(
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
         this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -190,7 +208,7 @@ public record ParsedQuery(
     public boolean understood() {
         return family != null || !constraints.isEmpty() || dielectric != null || packageName != null
                 || mounting != null || technology != null || connector != null || elements != null
-                || formFactor != null || fan != null || led != null;
+                || formFactor != null || fan != null || led != null || sw != null;
     }
 
     /** True when the query names a part number ({@link #partNumbers}). */
@@ -407,6 +425,177 @@ public record ParsedQuery(
                 return 1.0;
             }
             return -1.0;
+        }
+    }
+
+    /**
+     * Switch attributes of a query or a part (DESIGN.md 3.4 "Switches"). Every field is null when unknown.
+     *
+     * @param type               {@code tactile}, {@code pushbutton}, {@code toggle}, {@code slide}, {@code rocker},
+     *                           {@code DIP}, {@code rotary}, {@code keylock}, {@code snap action}, {@code reed},
+     *                           {@code membrane}, {@code detector}, {@code navigation}; a part may also be no
+     *                           mechanical switch at all ({@code IC}: analog, load or Ethernet switches;
+     *                           {@code sensor}: Hall, proximity, thermostat; {@code accessory}: caps); a request that
+     *                           names none takes every mechanical switch ({@link #requestedType()})
+     * @param contacts           the contact configuration ({@code SPDT}, {@code SPST-NO})
+     * @param function           {@code momentary}, {@code latching}, or the positions as distributors write them
+     *                           ({@code ON-OFF-ON}, {@code (ON)-OFF-(ON)}; brackets mark a momentary position)
+     * @param termination        the termination class: {@code PCB} (SMD or THT pins), or a panel-mount class:
+     *                           {@code solder lug}, {@code quick connect}, {@code wire leads}, {@code screw}, or
+     *                           {@code panel} when only the panel mounting is known
+     * @param size               the body size ({@code 6x6mm}, {@code 6x6x4.3mm})
+     * @param holeDiameter       the panel cut-out (mounting hole diameter) in millimetres
+     * @param positions          the number of switches of a DIP switch, or of positions of a rotary switch
+     * @param illuminated        true for an illuminated switch (LED), false for one that says it is not
+     * @param illuminationColour the colour of the illumination ({@code red})
+     * @param orientation        {@code right angle} (side actuated) or {@code vertical} (top actuated)
+     * @param voltageSupply      a request: {@link ParsedQuery#AC} or {@link ParsedQuery#DC} when its voltage says so
+     */
+    @Builder(toBuilder = true)
+    public record Switch(String type, Contacts contacts, String function, String termination, BodySize size,
+                         Double holeDiameter, Integer positions, Boolean illuminated, String illuminationColour,
+                         String orientation, String voltageSupply) {
+
+        public static final String TACTILE = "tactile";
+        public static final String PUSHBUTTON = "pushbutton";
+        public static final String MOMENTARY = "momentary";
+        public static final String LATCHING = "latching";
+        public static final String PCB = "PCB";
+        public static final String PANEL = "panel";
+        /** Largest difference in millimetres between two hole diameters that are the same. */
+        public static final double HOLE_TOLERANCE_MM = 0.1;
+
+        /** True when no attribute is known. */
+        public boolean isEmpty() {
+            return type == null && contacts == null && function == null && termination == null && size == null
+                    && holeDiameter == null && positions == null && illuminated == null && illuminationColour == null
+                    && orientation == null && voltageSupply == null;
+        }
+
+        /** The type of a request that names none: any mechanical switch. */
+        public static final String ANY = "switch";
+        /** Part types that are no mechanical switch: switch ICs, switching sensors, accessories (caps). */
+        public static final java.util.Set<String> NOT_MECHANICAL = java.util.Set.of("IC", "sensor", "accessory");
+
+        /** The type a request asks for: the one it names, else {@link #ANY}. */
+        public String requestedType() {
+            return type == null ? ANY : type;
+        }
+
+        /**
+         * 1 when a part of switch type {@code actual} answers a request for {@code wanted}, else -1: a request that names
+         * no type takes every mechanical switch, a pushbutton request takes tactile switches too (a tactile request
+         * takes tactile switches only); a switch IC, a Hall or proximity sensor or a cap answers no switch request.
+         */
+        public static double typeGrade(String wanted, String actual) {
+            if (NOT_MECHANICAL.contains(actual)) {
+                return wanted.equals(actual) ? 1 : -1;
+            }
+            return ANY.equals(wanted) || wanted.equals(actual) || PUSHBUTTON.equals(wanted) && TACTILE.equals(actual)
+                    ? 1 : -1;
+        }
+
+        /**
+         * The function of a request against a part's: the positions when both state them ({@code ON-OFF-ON}), else
+         * momentary or latching; null when either side does not say.
+         */
+        public static Double functionGrade(String wanted, String actual) {
+            boolean wantedPattern = wanted.contains("ON");
+            boolean actualPattern = actual.contains("ON");
+            if (wantedPattern && actualPattern) {
+                return wanted.equals(actual) ? 1.0 : -1.0;
+            }
+            String w = action(wanted);
+            String a = action(actual);
+            return w == null || a == null ? null : w.equals(a) ? 1.0 : -1.0;
+        }
+
+        /**
+         * {@link #MOMENTARY} or {@link #LATCHING} for a function: a pattern whose every ON is bracketed is momentary
+         * ({@code OFF-(ON)}, {@code (ON)-OFF-(ON)}), one without brackets latching ({@code ON-OFF}); a mixed one
+         * ({@code ON-OFF-(ON)}) neither.
+         */
+        public static String action(String function) {
+            if (!function.contains("ON")) {
+                return function;
+            }
+            int on = function.split("ON", -1).length - 1;
+            int bracketed = function.split("\\(ON\\)", -1).length - 1;
+            return bracketed == 0 ? LATCHING : bracketed == on ? MOMENTARY : null;
+        }
+
+        /**
+         * The termination class of a request against a part's: a PCB request (SMD or THT) never takes a panel-mount
+         * part and the reverse; a request for one panel class ({@code solder lug}) takes that class only. Null when
+         * the part is panel mount without a known class.
+         */
+        public static Double terminationGrade(String wanted, String actual) {
+            boolean wantedPcb = PCB.equals(wanted);
+            boolean actualPcb = PCB.equals(actual);
+            if (wantedPcb || actualPcb) {
+                return wantedPcb == actualPcb ? 1.0 : -1.0;
+            }
+            if (PANEL.equals(wanted) || wanted.equals(actual)) {
+                return 1.0;
+            }
+            return PANEL.equals(actual) ? null : -1.0;
+        }
+    }
+
+    /**
+     * A contact configuration: poles and throws ({@code SPDT}: 1 and 2), with the normal state of a single throw when
+     * stated ({@code NO}, {@code NC}).
+     */
+    public record Contacts(int poles, int throwsCount, String form) {
+
+        /** {@code SPST-NO}, {@code SPDT}, {@code DPDT}, {@code 3PDT}, {@code SP3T}. */
+        public String display() {
+            String p = poles == 1 ? "S" : poles == 2 ? "D" : String.valueOf(poles);
+            String t = throwsCount == 1 ? "S" : throwsCount == 2 ? "D" : String.valueOf(throwsCount);
+            return p + "P" + t + "T" + (form == null ? "" : "-" + form);
+        }
+
+        /**
+         * 1 for the same poles and throws (and the same NO or NC when both state one), -1 for different ones; null
+         * when the request states NO or NC and the part does not.
+         */
+        public Double grade(Contacts actual) {
+            if (poles != actual.poles || throwsCount != actual.throwsCount) {
+                return -1.0;
+            }
+            if (form == null) {
+                return 1.0;
+            }
+            return actual.form == null ? null : form.equals(actual.form) ? 1.0 : -1.0;
+        }
+    }
+
+    /**
+     * The body size of a switch in millimetres: width and length, and the height when stated ({@code 6x6x4.3mm}).
+     */
+    public record BodySize(double width, double length, Double height) {
+
+        /** Largest difference in millimetres between two widths, lengths or heights that are the same. */
+        public static final double TOLERANCE_MM = 0.5;
+
+        /** True when {@code actual} is this size: width and length within 0.5 mm in either order, the height too. */
+        public boolean matches(BodySize actual) {
+            boolean straight = same(width, actual.width) && same(length, actual.length);
+            boolean crossed = same(width, actual.length) && same(length, actual.width);
+            return (straight || crossed) && (height == null || actual.height == null || same(height, actual.height));
+        }
+
+        private static boolean same(double a, double b) {
+            return Math.abs(a - b) <= TOLERANCE_MM + 1e-9;
+        }
+
+        /** {@code 6x6mm}, {@code 6x6x4.3mm}, {@code 12x12x7.3mm}. */
+        public String display() {
+            return number(width) + "x" + number(length) + (height == null ? "" : "x" + number(height)) + "mm";
+        }
+
+        private static String number(double v) {
+            return java.math.BigDecimal.valueOf(v).stripTrailingZeros().toPlainString();
         }
     }
 

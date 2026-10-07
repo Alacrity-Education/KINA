@@ -13,6 +13,7 @@ import ro.alacrity.kina.domain.extract.ElementsCount;
 import ro.alacrity.kina.domain.extract.FirstInteger;
 import ro.alacrity.kina.domain.extract.GenderWord;
 import ro.alacrity.kina.domain.extract.ImpedanceAtFrequency;
+import ro.alacrity.kina.domain.extract.IpCode;
 import ro.alacrity.kina.domain.extract.KeyContaining;
 import ro.alacrity.kina.domain.extract.LedPackage;
 import ro.alacrity.kina.domain.extract.LargestVoltage;
@@ -30,12 +31,14 @@ import ro.alacrity.kina.domain.extract.PackageCode;
 import ro.alacrity.kina.domain.extract.PackageField;
 import ro.alacrity.kina.domain.extract.PackageFieldDimensions;
 import ro.alacrity.kina.domain.extract.PackageFieldMounting;
+import ro.alacrity.kina.domain.extract.PackageFieldWord;
 import ro.alacrity.kina.domain.extract.PartNumberPackage;
 import ro.alacrity.kina.domain.extract.PitchValue;
 import ro.alacrity.kina.domain.extract.RawPackageField;
 import ro.alacrity.kina.domain.extract.SeriesPower;
 import ro.alacrity.kina.domain.extract.ShortSeries;
 import ro.alacrity.kina.domain.extract.StatedGender;
+import ro.alacrity.kina.domain.extract.SupplyVoltage;
 import ro.alacrity.kina.domain.extract.TemperatureRange;
 import ro.alacrity.kina.domain.extract.VocabularyWord;
 
@@ -52,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static ro.alacrity.kina.domain.ComponentFamily.FAN;
 import static ro.alacrity.kina.domain.ComponentFamily.LED;
+import static ro.alacrity.kina.domain.ComponentFamily.SWITCH;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.ARRAYS;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.INDUCTIVE;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.PASSIVE;
@@ -283,6 +287,46 @@ public enum PartAttribute {
     @Source(precedence = 9, logic = Described.class, families = LED)
     VIEWING_ANGLE(ParsedQuery.VIEWING_ANGLE, "ViewingAngle"),
 
+    /**
+     * The operating force of a switch in newton, shown with its gram-force ({@code 1.57 N (160 gf)}): Mouser
+     * {@code 160gf}, TME and JLCPCB {@code 1.6N}.
+     */
+    @Unit(symbols = {"n", "gf"}, factors = {1, 0.00980665}, base = "N", display = ValueDisplay.WithAlternative.class,
+            alternative = "gf", families = SWITCH)
+    @Source(names = {"operating force", "actuating force", "actuator force", "actuation force", "force",
+            "operating force (gf)"}, families = SWITCH)
+    @Source(precedence = 9, logic = Described.class, families = SWITCH)
+    FORCE(ParsedQuery.FORCE, "Force"),
+
+    /** The mechanical life of a switch in cycles ({@code 100,000 cycles}, {@code 10000 times}, {@code 100k cycles}). */
+    @Unit(symbols = {"cycles", "cycle", "times", "operations"}, base = "cycles", display = ValueDisplay.Spaced.class,
+            families = SWITCH)
+    @Source(names = {"mechanical life", "mechanical durability", "electrical life", "operating life", "life cycle",
+            "durability", "life"}, families = SWITCH)
+    @Source(precedence = 9, logic = Described.class, families = SWITCH)
+    LIFE(ParsedQuery.LIFE, "Life"),
+
+    /** The ingress protection of a switch ({@code IP67}): TME {@code IP rating}, else the description. */
+    @Unit(base = "IP", display = ValueDisplay.IpCode.class)
+    @Source(names = {"ip rating", "protection class", "ingress protection", "ip code", "ip protection"},
+            families = SWITCH, logic = IpCode.class)
+    @Source(precedence = 9, families = SWITCH, logic = IpCode.class)
+    IP_RATING(ParsedQuery.IP_RATING, "IpRating"),
+
+    /** The AC voltage rating of a switch: Mouser {@code Voltage Rating AC}, TME {@code 3A/125VAC}, {@code 250VAC}. */
+    @Unit(base = "V", prefixes = {"m", "", "k"})
+    @Source(names = {"voltage rating ac", "ac voltage rating", "rated voltage ac", "max. voltage ac", "voltage ac"},
+            families = SWITCH)
+    @Source(precedence = 1, families = SWITCH, logic = SupplyVoltage.class)
+    VOLTAGE_AC(ParsedQuery.VOLTAGE_AC, "VoltageAC"),
+
+    /** The DC voltage rating of a switch: Mouser {@code Voltage Rating DC}, TME {@code 0.05A/12VDC}, {@code 30VDC}. */
+    @Unit(base = "V", prefixes = {"m", "", "k"})
+    @Source(names = {"voltage rating dc", "dc voltage rating", "rated voltage dc", "max. voltage dc", "voltage dc"},
+            families = SWITCH)
+    @Source(precedence = 1, families = SWITCH, logic = SupplyVoltage.class)
+    VOLTAGE_DC(ParsedQuery.VOLTAGE_DC, "VoltageDC"),
+
     // ---------------------------------------------------------------- numeric details
 
     /** The test frequency of a ferrite bead's impedance (Mouser {@code Test Frequency}), read by {@link #IMPEDANCE}. */
@@ -431,6 +475,78 @@ public enum PartAttribute {
     @Source(precedence = 1, families = LED, logic = DescribedWord.class)
     LED_ORIENTATION(null, "Orientation", Vocabulary.LED_ORIENTATION),
 
+    // ---------------------------------------------------------------- switches (Mouser categories "Tactile Switches",
+    // "Toggle Switches"...; TME "Switch: tactile; SPST-NO; ..."; JLCPCB "Key/Switch" and "Switches" categories)
+
+    /**
+     * The switch type ({@code tactile}, {@code toggle}, {@code DIP}...). Read for every family: in a text of another
+     * family only a switch IC or a switching sensor ({@code IC}: Mouser {@code Analog Switch ICs}, JLCPCB
+     * {@code Power Distribution Switches}; {@code sensor}: Hall, proximity), which no switch request takes.
+     */
+    @Source(names = {"type of switch", "switch type", "kind of switch", "product", "product type", "type"},
+            logic = VocabularyWord.class)
+    @Source(precedence = 1, logic = DescribedWord.class)
+    SWITCH_TYPE(null, "SwitchType", Vocabulary.SWITCH_TYPE),
+
+    /** The contact configuration ({@code SPDT}, {@code SPST-NO}, {@code 2P2T} is DPDT, {@code 1 Form C} SPDT). */
+    @Source(names = {"contact form", "contact configuration", "type of contacts", "switch configuration",
+            "configuration", "circuit", "contact arrangement"}, families = SWITCH, logic = VocabularyWord.class)
+    @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
+    CONTACTS(null, "Contacts", Vocabulary.CONTACTS),
+
+    /** Momentary or latching, or the positions ({@code ON-OFF-ON}); TME {@code monostable}, {@code bistable}. */
+    @Source(names = {"switch function", "function", "switch type", "operation", "actuator type", "action",
+            "switching function"}, families = SWITCH, logic = VocabularyWord.class)
+    @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
+    SWITCH_FUNCTION(null, "SwitchFunction", Vocabulary.SWITCH_FUNCTION),
+
+    /**
+     * The termination class: {@code PCB} (SMD, THT, PC pins, gull wing), {@code solder lug}, {@code quick connect},
+     * {@code wire leads}, {@code screw}, or {@code panel} when only the panel mounting is known: every name, the
+     * description and the category together (a solder lug beats a panel mount word).
+     */
+    @Source(names = {"termination style", "termination", "terminals", "leads", "switch leads", "electrical mounting",
+            "mounting style", "mounting", "connection", "type of terminals"}, families = SWITCH,
+            logic = MergedWords.class)
+    TERMINATION(null, "Termination", Vocabulary.TERMINATION),
+
+    /** The body size of a switch ({@code 6x6x4.3mm}): the attributes, the package field (JLCPCB {@code SMD-4P,6x6mm}). */
+    @Source(names = {"dimensions", "body dimensions", "size / dimension", "size", "switch dimensions", "body size"},
+            families = SWITCH, logic = VocabularyWord.class)
+    @Source(precedence = 1, families = SWITCH, logic = PackageFieldWord.class)
+    @Source(precedence = 2, families = SWITCH, logic = DescribedWord.class)
+    SWITCH_SIZE(null, "SwitchSize", Vocabulary.SWITCH_SIZE),
+
+    /** The panel cut-out of a switch ({@code 12mm}): Mouser {@code Mounting Hole Diameter}, {@code Ø12mm}. */
+    @Source(names = {"mounting hole diameter", "mounting hole diam.", "mounting hole dia.", "hole diameter",
+            "panel cutout", "panel cut-out", "cut-out"}, families = SWITCH, logic = VocabularyWord.class)
+    @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
+    HOLE_DIAMETER(null, "HoleDiameter", Vocabulary.HOLE_DIAMETER),
+
+    /** The switches of a DIP switch or the positions of a rotary switch ({@code 8 Position}, {@code 8 pos}). */
+    @Source(names = {"number of positions", "number of switches", "number of sections", "positions"},
+            families = SWITCH, logic = FirstInteger.class)
+    @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
+    SWITCH_POSITIONS(null, "SwitchPositions", Vocabulary.SWITCH_POSITIONS),
+
+    /** {@code yes} for an illuminated switch, {@code no} for one that says it is not (Mouser {@code Non-Illuminated}). */
+    @Source(names = {"illuminated", "illumination", "illumination type", "lighting", "backlight", "backlighting"},
+            families = SWITCH, logic = VocabularyWord.class)
+    @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
+    ILLUMINATED(null, "Illuminated", Vocabulary.ILLUMINATION),
+
+    /** The colour of a switch's illumination ({@code red}): Mouser {@code Illumination Color}, {@code red LED}. */
+    @Source(names = {"illumination color", "illumination colour", "led colour", "led color", "backlight colour",
+            "colour of backlight"}, families = SWITCH, logic = VocabularyWord.class)
+    @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
+    ILLUMINATION_COLOUR(null, "IlluminationColour", Vocabulary.ILLUMINATION_COLOUR),
+
+    /** A switch's orientation: {@code right angle} (side actuated, horizontal), {@code vertical} (top actuated). */
+    @Source(names = {"orientation", "actuator orientation", "mounting angle", "actuation direction"},
+            families = SWITCH, logic = VocabularyWord.class)
+    @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
+    SWITCH_ORIENTATION(null, "Orientation", Vocabulary.SWITCH_ORIENTATION),
+
     // ---------------------------------------------------------------- passive details
 
     /** The number of elements of an array or network. */
@@ -525,7 +641,7 @@ public enum PartAttribute {
     public static final List<PartAttribute> VALUES = List.of(CAPACITANCE, RESISTANCE, INDUCTANCE, IMPEDANCE,
             FREQUENCY, VOLTAGE, CURRENT, SATURATION_CURRENT, DCR, POWER, TEMPERATURE, LIFETIME, TOLERANCE, SPEED,
             AIRFLOW, STATIC_PRESSURE, NOISE, WAVELENGTH, COLOUR_TEMPERATURE, FORWARD_VOLTAGE, LUMINOUS_INTENSITY,
-            LUMINOUS_FLUX, VIEWING_ANGLE);
+            LUMINOUS_FLUX, VIEWING_ANGLE, FORCE, LIFE, IP_RATING, VOLTAGE_AC, VOLTAGE_DC);
 
     private final String kind;
     private final String key;

@@ -54,6 +54,13 @@ public interface PartFeatures {
     /** The LED attributes of an LED (colour, lens, LED type, orientation), else null. */
     ParsedQuery.Led led();
 
+    /**
+     * The switch attributes of a switch (type, contacts, function, termination, size, hole diameter, positions,
+     * illumination, orientation), else null; the switch type of a part of another family that is a switch IC or a
+     * switching sensor ({@code IC}, {@code sensor}).
+     */
+    ParsedQuery.Switch sw();
+
     /** The voltages the part states as its specification (Zener voltage, output voltages), never null. */
     List<Double> voltages();
 

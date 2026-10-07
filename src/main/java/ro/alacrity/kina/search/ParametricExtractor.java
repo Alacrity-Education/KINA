@@ -130,6 +130,28 @@ public class ParametricExtractor {
     public static final String LENS = "LensType";
     /** "indicator", "high power", "addressable", "strip", "receiver"... */
     public static final String LED_TYPE = "LedType";
+    // switches (DESIGN.md 3.4 "Switches")
+    public static final String FORCE = "Force";
+    public static final String LIFE = "Life";
+    public static final String IP_RATING = "IpRating";
+    public static final String VOLTAGE_AC = "VoltageAC";
+    public static final String VOLTAGE_DC = "VoltageDC";
+    /** "tactile", "toggle", "DIP"...; "IC" or "sensor" for a part that is no mechanical switch. */
+    public static final String SWITCH_TYPE = "SwitchType";
+    /** "SPDT", "SPST-NO". */
+    public static final String CONTACTS = "Contacts";
+    /** "momentary", "latching", "ON-OFF-ON". */
+    public static final String SWITCH_FUNCTION = "SwitchFunction";
+    /** "PCB", "solder lug", "quick connect", "wire leads", "screw", "panel". */
+    public static final String TERMINATION = "Termination";
+    /** "6x6x4.3mm". */
+    public static final String SWITCH_SIZE = "SwitchSize";
+    /** "12mm". */
+    public static final String HOLE_DIAMETER = "HoleDiameter";
+    public static final String SWITCH_POSITIONS = "SwitchPositions";
+    /** "yes" or "no". */
+    public static final String ILLUMINATED = "Illuminated";
+    public static final String ILLUMINATION_COLOUR = "IlluminationColour";
 
     /**
      * Every canonical key {@link #extract} can produce: the {@code compact} response detail returns only these and
@@ -142,7 +164,9 @@ public class ParametricExtractor {
             "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features", ELEMENTS, RIPPLE_CURRENT, ESR, DIMENSIONS,
             QUALIFICATION, CASE, POLARITY, SUBTYPE, FORM_FACTOR, OPERATING_TEMPERATURE, SPEED, AIRFLOW, STATIC_PRESSURE,
             NOISE, FAN_TYPE, FAN_SUPPLY, FRAME_SIZE, BEARING, WAVELENGTH, COLOUR_TEMPERATURE, FORWARD_VOLTAGE,
-            LUMINOUS_INTENSITY, LUMINOUS_FLUX, VIEWING_ANGLE, COLOUR, LENS, LED_TYPE);
+            LUMINOUS_INTENSITY, LUMINOUS_FLUX, VIEWING_ANGLE, COLOUR, LENS, LED_TYPE, FORCE, LIFE, IP_RATING, VOLTAGE_AC,
+            VOLTAGE_DC, SWITCH_TYPE, CONTACTS, SWITCH_FUNCTION, TERMINATION, SWITCH_SIZE, HOLE_DIAMETER,
+            SWITCH_POSITIONS, ILLUMINATED, ILLUMINATION_COLOUR);
 
     /**
      * Canonical keys no distributor sends (verified against the recorded TME and Mouser responses; LCSC parts have no
@@ -197,7 +221,7 @@ public class ParametricExtractor {
                     String mounting, String text, ParsedQuery.Connector connector, String technology,
                     Integer elements, Map<String, String> details, String polarity, String subtype,
                     List<Double> voltages, String formFactor, ParsedQuery.Fan fan,
-                    ParsedQuery.Led led) implements PartFeatures {
+                    ParsedQuery.Led led, ParsedQuery.Switch sw) implements PartFeatures {
 
         Features {
             details = details == null ? Map.of() : details;
@@ -252,6 +276,20 @@ public class ParametricExtractor {
             putIfNotNull(out, LENS, led.lens());
             putIfNotNull(out, LED_TYPE, led.type());
             putIfNotNull(out, ORIENTATION, led.orientation());
+        }
+        ParsedQuery.Switch sw = f.sw();
+        if (sw != null) {
+            putIfNotNull(out, SWITCH_TYPE, sw.type());
+            putIfNotNull(out, CONTACTS, sw.contacts() == null ? null : sw.contacts().display());
+            putIfNotNull(out, SWITCH_FUNCTION, sw.function());
+            putIfNotNull(out, TERMINATION, sw.termination());
+            putIfNotNull(out, SWITCH_SIZE, sw.size() == null ? null : sw.size().display());
+            putIfNotNull(out, HOLE_DIAMETER, sw.holeDiameter() == null ? null
+                    : java.math.BigDecimal.valueOf(sw.holeDiameter()).stripTrailingZeros().toPlainString() + "mm");
+            putIfNotNull(out, SWITCH_POSITIONS, sw.positions() == null ? null : sw.positions().toString());
+            putIfNotNull(out, ILLUMINATED, sw.illuminated() == null ? null : sw.illuminated() ? "yes" : "no");
+            putIfNotNull(out, ILLUMINATION_COLOUR, sw.illuminationColour());
+            putIfNotNull(out, ORIENTATION, sw.orientation());
         }
         f.details().forEach(out::putIfAbsent);
         ParsedQuery.Connector c = f.connector();
@@ -468,7 +506,8 @@ public class ParametricExtractor {
                 Recognizers.normalizeKey(text.toString()), connector, connector != null ? null : technology,
                 connector == null ? ctx.read(PartAttribute.ELEMENTS, Integer.class) : null, details, polarity, subtype,
                 voltages, formFactor, connector == null ? fan(ctx) : null,
-                connector == null ? led(ctx, values.get(ParsedQuery.WAVELENGTH)) : null);
+                connector == null ? led(ctx, values.get(ParsedQuery.WAVELENGTH)) : null,
+                null);
     }
 
     /**

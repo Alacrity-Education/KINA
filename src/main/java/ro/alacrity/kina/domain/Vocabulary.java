@@ -29,5 +29,28 @@ public enum Vocabulary {
     /** An LED's orientation ({@code right angle}, {@code reverse mount}, {@code vertical}). */
     LED_ORIENTATION,
     /** An LED package name ({@code 5050}, {@code PLCC-4}, {@code 5mm}). */
-    LED_PACKAGE
+    LED_PACKAGE,
+    /**
+     * The switch type ({@code tactile}, {@code toggle}, {@code DIP}...); in a text of another family only a switch IC
+     * or a switching sensor ({@code IC}, {@code sensor}).
+     */
+    SWITCH_TYPE,
+    /** A contact configuration, displayed ({@code SPDT}, {@code SPST-NO}). */
+    CONTACTS,
+    /** A switch function ({@code momentary}, {@code latching}, {@code ON-OFF-ON}). */
+    SWITCH_FUNCTION,
+    /** A termination class ({@code PCB}, {@code solder lug}, {@code quick connect}, {@code panel}...). */
+    TERMINATION,
+    /** A switch body size, displayed ({@code 6x6x4.3mm}). */
+    SWITCH_SIZE,
+    /** A panel cut-out, displayed ({@code 12mm}). */
+    HOLE_DIAMETER,
+    /** The positions of a DIP or rotary switch ({@code 8}). */
+    SWITCH_POSITIONS,
+    /** {@code yes} for an illuminated switch, {@code no} for one that says it is not. */
+    ILLUMINATION,
+    /** The colour of a switch's illumination ({@code red}). */
+    ILLUMINATION_COLOUR,
+    /** A switch's orientation ({@code right angle}, {@code vertical}). */
+    SWITCH_ORIENTATION
 }

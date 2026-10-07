@@ -19,6 +19,8 @@ public enum PolicyFamily {
     REGULATOR, CONNECTOR, USB,
     /** Fans and blowers. */
     FAN,
+    /** Mechanical switches. */
+    SWITCH,
     /** Every other family, and requests whose family is not known. */
     DEFAULT;
 
