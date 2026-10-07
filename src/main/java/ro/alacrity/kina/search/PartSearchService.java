@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatus;
-import ro.alacrity.kina.cache.CachedSearch;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
@@ -14,7 +13,6 @@ import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
-import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.domain.BatchSearchRequest;
 import ro.alacrity.kina.domain.BatchSearchResponse;
 import ro.alacrity.kina.domain.ConstraintKind;
@@ -33,7 +31,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,20 +58,11 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class PartSearchService {
 
-    /** Pages fetched per search for LCSC (the SQLite query already returns the whole window). */
-    static final int LCSC_MAX_PAGES = 1;
-    /** Queries of one batch whose distributor fetches run at the same time (protects distributor rate limits). */
     static final int BATCH_FETCH_CONCURRENCY = 4;
     /** Below this remaining batch budget a query is ranked with the fallback ranking. */
     static final Duration MIN_BATCH_RANKING_BUDGET = Duration.ofMillis(250);
     /** Extra wait after the distributor deadline before a fetch is abandoned (lets a finishing task hand over). */
     static final Duration TIMEOUT_GRACE = Duration.ofMillis(250);
-    /**
-     * Pages read beyond {@code max-pages-per-search} while every match so far was out of stock (DESIGN.md 3.2): the
-     * part exists, the next page may hold a shippable one.
-     */
-    static final int EXTRA_OUT_OF_STOCK_PAGES = 2;
-
     private final KinaProperties properties;
     private final DistributorRegistry registry;
     private final QueryParser parser;
@@ -85,6 +73,9 @@ public class PartSearchService {
     private final Clock clock;
     private final ExecutorService executor;
     private final StockRefresher stockRefresher;
+    private final PageCollector pageCollector;
+    private final DistributorRetriever lcscRetriever;
+    private final DistributorRetriever cachedRetriever;
     private final ResponseAssembler assembler;
     private KinaMetrics metrics = KinaMetrics.NOOP;
 
@@ -103,12 +94,17 @@ public class PartSearchService {
         this.executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("kina-search-", 0).factory());
         this.stockRefresher = new StockRefresher(properties, registry, partCache, clock);
         this.assembler = new ResponseAssembler(properties, extractor, ranking, stockRefresher, clock);
+        this.pageCollector = new PageCollector(extractor, clock);
+        this.lcscRetriever = new LcscRetriever(properties, pageCollector, ranking);
+        this.cachedRetriever = new CachedDistributorRetriever(properties, pageCollector, ranking, extractor,
+                partCache, searchCache, clock);
     }
 
     @Autowired
     void setMetrics(KinaMetrics metrics) {
         this.metrics = metrics;
         stockRefresher.setMetrics(metrics);
+        pageCollector.setMetrics(metrics);
     }
 
     @PreDestroy
@@ -239,30 +235,6 @@ public class PartSearchService {
         return new Prepared(request, parsed, maxResults, distributors);
     }
 
-    /** {@code max(maxResults, candidate-window)} capped by the distributor's {@code max-results-per-search}. */
-    int window(Distributor distributor, int maxResults) {
-        int cap = switch (distributor) {
-            case MOUSER -> properties.distributors().mouser().maxResultsPerSearch();
-            case TME -> properties.distributors().tme().maxResultsPerSearch();
-            case LCSC -> properties.jlcpcb().maxResultsPerSearch();
-        };
-        return Math.max(1, Math.min(Math.max(maxResults, properties.search().candidateWindow()), cap));
-    }
-
-    int maxPages(Distributor distributor) {
-        return Math.max(1, switch (distributor) {
-            case MOUSER -> properties.distributors().mouser().maxPagesPerSearch();
-            case TME -> properties.distributors().tme().maxPagesPerSearch();
-            case LCSC -> LCSC_MAX_PAGES;
-        });
-    }
-
-    /** Only Mouser and TME use the Postgres cache; the JLCPCB SQLite database is LCSC's cache. */
-    static boolean usesPostgresCache(Distributor distributor) {
-        return distributor != Distributor.LCSC;
-    }
-
-    // ---- fetching -------------------------------------------------------------------------------------------------
 
     /**
      * What one distributor contributed: in-stock parts (enriched, distributor order, deduplicated), the
@@ -335,11 +307,11 @@ public class PartSearchService {
                         DistributorException.Kind.NOT_CONFIGURED.code()));
                 continue;
             }
-            Progress p = new Progress(initialStatus(distributor, prepared.request().bypassCache()));
+            Progress p = new Progress(DistributorRetriever.initialStatus(distributor, prepared.request().bypassCache()));
             progress.put(distributor, p);
             DistributorBudget budget = new DistributorBudget(requestDeadline, timeout);
             budgets.put(distributor, budget);
-            futures.put(distributor, executor.submit(() -> fetchDistributor(client.get(), prepared, p, budget)));
+            futures.put(distributor, executor.submit(() -> retrieverFor(distributor).retrieve(client.get(), prepared, p, budget)));
         }
 
         futures.forEach((distributor, future) -> {
@@ -376,11 +348,8 @@ public class PartSearchService {
         return results;
     }
 
-    private static CacheStatus initialStatus(Distributor distributor, boolean bypassCache) {
-        if (!usesPostgresCache(distributor)) {
-            return CacheStatus.NOT_APPLICABLE;
-        }
-        return bypassCache ? CacheStatus.BYPASSED : CacheStatus.MISS;
+    private DistributorRetriever retrieverFor(Distributor distributor) {
+        return DistributorRetriever.usesPostgresCache(distributor) ? cachedRetriever : lcscRetriever;
     }
 
     private static String errorCode(Distributor distributor, Throwable error) {
@@ -392,200 +361,9 @@ public class PartSearchService {
         return DistributorException.Kind.UNAVAILABLE.code();
     }
 
-    /**
-     * True when the part meets the request (DESIGN.md 3.2): no known attribute contradicts a strict constraint and no
-     * known rating is below the request. Paging and the relaxation ladder go on until a part meets it.
-     */
+    /** Delegate for the tests: {@link PageCollector.Check#meets}. */
     boolean meetsRequest(ParsedQuery parsed, Part part) {
-        RankingService.Verdict v = verdict(parsed, part);
-        return v == RankingService.Verdict.MEETS || v == RankingService.Verdict.UNVERIFIED_RATING;
-    }
-
-    /** True when the part meets the request with every requested rating stated: paging stops only for such parts. */
-    boolean confirmed(ParsedQuery parsed, Part part) {
-        return verdict(parsed, part) == RankingService.Verdict.MEETS;
-    }
-
-    private RankingService.Verdict verdict(ParsedQuery parsed, Part part) {
-        try {
-            RankingService.Verdict v = ranking.verdict(parsed, part);
-            return v == null ? RankingService.Verdict.MEETS : v;
-        } catch (RuntimeException e) {
-            log.warn("checking {} against '{}' failed", part.key(), parsed.normalizedKey(), e);
-            return RankingService.Verdict.MEETS;
-        }
-    }
-
-    /** True when the part would be returned: it meets the request, or it is only below spec and that is allowed. */
-    private boolean returnable(ParsedQuery parsed, Part part, boolean allowBelowSpec) {
-        RankingService.Verdict v = verdict(parsed, part);
-        return v != RankingService.Verdict.CONSTRAINT && (allowBelowSpec || v != RankingService.Verdict.BELOW_SPEC);
-    }
-
-    /** One rung of the relaxation ladder that produced parts: its result, its phrase and what it loosened. */
-    private record Attempt(Collected collected, String phrase, List<String> relaxed) {
-    }
-
-    /**
-     * DESIGN.md 3.2 for one distributor. Runs on a virtual thread; no further page is requested once {@code budget}
-     * has run out.
-     */
-    Fetched fetchDistributor(DistributorClient client, Prepared prepared, Progress progress, DistributorBudget deadline) {
-        Distributor distributor = client.distributor();
-        ParsedQuery parsed = prepared.parsed();
-        // connector queries are sent in the distributor's own wording; the cache key stays the user's query
-        String phrase = DistributorPhraser.phrase(distributor, parsed);
-        String query = phrase != null ? phrase : parsed.originalText();
-        int window = window(distributor, prepared.maxResults());
-        int maxPages = maxPages(distributor);
-        Check meets = new Check(p -> meetsRequest(parsed, p), p -> confirmed(parsed, p));
-
-        if (!usesPostgresCache(distributor)) {
-            Collected collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets,
-                    parsed.family());
-            return collected.toFetched(distributor, CacheStatus.NOT_APPLICABLE)
-                    .withOutOfStockMatches(progress.outOfStock);
-        }
-
-        String queryKey = parsed.normalizedKey();
-        Instant now = clock.instant();
-        Instant freshSince = now.minus(properties.cache().ttl());
-        Instant emptyFreshSince = now.minus(properties.cache().emptyResultTtl());
-
-        Optional<CachedSearch> expired = Optional.empty();
-        if (!prepared.request().bypassCache()) {
-            Optional<CachedSearch> stored = readCachedSearch(distributor, queryKey);
-            Optional<CachedSearch> cached = stored.filter(c -> isFresh(c, freshSince, emptyFreshSince));
-            expired = stored.filter(c -> cached.isEmpty() && !c.partNumbers().isEmpty());
-            if (cached.isPresent()) {
-                CachedSearch search = cached.get();
-                String fallbackQuery = search.fallbackQuery();
-                List<String> relaxed = search.constraintsRelaxed() != null ? search.constraintsRelaxed()
-                        : relaxedBy(distributor, parsed, query, fallbackQuery, policy());
-                // metadata is kept and stock ages on its own: a part of any stock age is used (refreshed or marked
-                // stale after ranking, DESIGN.md 3.2 "Cache model"); a part missing or sold out is a miss
-                Optional<List<Part>> parts = readCachedParts(distributor, search.partNumbers(), false);
-                if (parts.isPresent()) {
-                    List<Part> cachedParts = parts.get().stream().map(extractor::enrich).toList();
-                    boolean nothingReturnable = !cachedParts.isEmpty() && cachedParts.stream()
-                            .noneMatch(p -> returnable(parsed, p, prepared.request().allowBelowSpec()));
-                    if (nothingReturnable) {
-                        // a hit that would return nothing (every part excluded) never hides a live result
-                        log.info("{} cached search '{}' has no part that can be returned; searching live",
-                                distributor, queryKey);
-                    } else if (isSufficient(search, prepared.maxResults(), window)) {
-                        return new Fetched(distributor, cachedParts, search.totalResults(), CacheStatus.HIT, null,
-                                fallbackQuery).withOutOfStockMatches(search.outOfStockMatches())
-                                .withConstraintsRelaxed(relaxed);
-                    } else {
-                        return extend(client, prepared, progress, deadline, search, cachedParts, relaxed, query,
-                                window, maxPages, meets);
-                    }
-                }
-                // some cached parts are missing or sold out: refetch from the start
-            }
-        }
-        CacheStatus status = prepared.request().bypassCache() ? CacheStatus.BYPASSED : CacheStatus.MISS;
-        Collected collected;
-        try {
-            collected = collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets,
-                    parsed.family());
-        } catch (DistributorException e) {
-            Optional<Fetched> served = expired.flatMap(search -> servedStale(distributor, parsed, query, search, e));
-            if (served.isPresent()) {
-                return served.get();
-            }
-            throw e;
-        }
-        String fallbackQuery = null;
-        List<String> relaxed = List.of();
-        Attempt firstWithParts = collected.all().isEmpty() ? null : new Attempt(collected, null, List.of());
-        // relaxation ladder (DESIGN.md 3.2): until a phrase finds a part that meets the request
-        for (DistributorPhraser.Relaxation step : DistributorPhraser.ladder(distributor, parsed, query, policy())) {
-            if (collected.meeting() > 0 || collected.error() != null || deadline.remainingNanos() <= 0) {
-                break;
-            }
-            log.info("{} found nothing that meets '{}' with '{}', relaxing to '{}'{}", distributor, queryKey,
-                    fallbackQuery != null ? fallbackQuery : query, step.phrase(),
-                    step.relaxed().isEmpty() ? "" : " (loosens " + step.relaxed() + ")");
-            progress.fallbackQuery = step.phrase();
-            progress.constraintsRelaxed = step.relaxed();
-            Collected previous = collected;
-            try {
-                collected = collect(client, step.phrase(), 0, window, maxPages, List.of(), progress, deadline, meets,
-                        parsed.family());
-            } catch (DistributorException e) {
-                // an earlier phrase did answer: report the failure, cache nothing
-                log.info("{} relaxed search '{}' failed: {}", distributor, step.phrase(), e.getMessage());
-                Attempt kept = firstWithParts;
-                return new Fetched(distributor, kept == null ? List.of() : kept.collected().all(),
-                        previous.totalResults(), status, e.errorCode(), kept == null ? step.phrase() : kept.phrase())
-                        .withOutOfStockMatches(progress.outOfStock)
-                        .withConstraintsRelaxed(kept == null ? step.relaxed() : kept.relaxed());
-            }
-            fallbackQuery = step.phrase();
-            relaxed = step.relaxed();
-            if (firstWithParts == null && !collected.all().isEmpty()) {
-                firstWithParts = new Attempt(collected, fallbackQuery, relaxed);
-            }
-        }
-        if (collected.meeting() == 0 && firstWithParts != null && firstWithParts.collected() != collected) {
-            // no rung found a part that meets the request: keep the least relaxed result that found parts
-            collected = firstWithParts.collected();
-            fallbackQuery = firstWithParts.phrase();
-            relaxed = firstWithParts.relaxed();
-        }
-        store(distributor, queryKey, collected, now, fallbackQuery, progress.outOfStock, relaxed);
-        return collected.toFetched(distributor, status, fallbackQuery).withOutOfStockMatches(progress.outOfStock)
-                .withConstraintsRelaxed(relaxed);
-    }
-
-    /**
-     * A fresh cached list shorter than {@code max_results} and not exhausted: further querying is needed, with the
-     * phrase the list was built from so the raw offsets stay valid ({@code PARTIAL}).
-     */
-    private Fetched extend(DistributorClient client, Prepared prepared, Progress progress, DistributorBudget deadline,
-                           CachedSearch search, List<Part> cachedParts, List<String> relaxed, String query, int window,
-                           int maxPages, Check meets) {
-        Distributor distributor = client.distributor();
-        String fallbackQuery = search.fallbackQuery();
-        progress.cache = CacheStatus.PARTIAL;
-        progress.parts = cachedParts;
-        progress.totalResults = search.totalResults();
-        progress.fallbackQuery = fallbackQuery;
-        progress.constraintsRelaxed = relaxed;
-        progress.outOfStock = search.outOfStockMatches() == null ? 0 : search.outOfStockMatches();
-        int offset = search.nextOffset() != null ? search.nextOffset() : cachedParts.size();
-        Collected collected;
-        try {
-            collected = collect(client, fallbackQuery != null ? fallbackQuery : query, offset, window, maxPages,
-                    cachedParts, progress, deadline, meets, prepared.parsed().family());
-        } catch (DistributorException e) {
-            // serve what the cache holds, flagged with the error
-            log.info("{} could not extend cached search '{}': {}", distributor, search.queryKey(), e.getMessage());
-            return new Fetched(distributor, cachedParts, search.totalResults(), CacheStatus.PARTIAL,
-                    e.errorCode(), fallbackQuery).withOutOfStockMatches(search.outOfStockMatches())
-                    .withConstraintsRelaxed(relaxed);
-        }
-        store(distributor, search.queryKey(), collected, search.fetchedAt(), fallbackQuery, progress.outOfStock,
-                relaxed);
-        return collected.toFetched(distributor, CacheStatus.PARTIAL, fallbackQuery)
-                .withOutOfStockMatches(progress.outOfStock).withConstraintsRelaxed(relaxed);
-    }
-
-    /**
-     * What the ladder rung {@code fallbackQuery} loosened, for a cached search stored before
-     * {@code cached_searches.constraints_relaxed} existed (the ladder is a pure function of the parsed query).
-     */
-    static List<String> relaxedBy(Distributor distributor, ParsedQuery parsed, String query, String fallbackQuery,
-                                  ConstraintPolicy policy) {
-        if (fallbackQuery == null) {
-            return List.of();
-        }
-        return DistributorPhraser.ladder(distributor, parsed, query, policy).stream()
-                .filter(step -> step.phrase().equals(fallbackQuery))
-                .map(DistributorPhraser.Relaxation::relaxed)
-                .findFirst().orElse(List.of());
+        return PageCollector.Check.meets(ranking, parsed, part);
     }
 
     /**
@@ -621,16 +399,6 @@ public class PartSearchService {
             out.addAll(droppedKeywords);
         }
         return List.copyOf(out);
-    }
-
-    /**
-     * Fresh for {@code kina.cache.ttl}, except a list without any in-stock part, which is fresh only for
-     * {@code kina.cache.empty-result-ttl} (whichever is shorter).
-     */
-    static boolean isFresh(CachedSearch search, Instant freshSince, Instant emptyFreshSince) {
-        Instant since = search.partNumbers().isEmpty() && emptyFreshSince.isAfter(freshSince)
-                ? emptyFreshSince : freshSince;
-        return !search.fetchedAt().isBefore(since);
     }
 
     /** {@link #corePhrase(ParsedQuery, Distributor)} with the canonical technology words. */
@@ -713,232 +481,6 @@ public class PartSearchService {
             return null;
         }
         return String.join(" ", terms);
-    }
-
-    /**
-     * A cached list can be served as-is when the distributor had nothing more, when it already holds the fetch
-     * window, or when it holds at least {@code maxResults} parts (querying more would not change what is returned
-     * beyond ranking depth, and would spend distributor quota).
-     */
-    static boolean isSufficient(CachedSearch search, int maxResults, int window) {
-        int size = search.partNumbers().size();
-        return search.exhausted() || size >= window || size >= maxResults;
-    }
-
-    /**
-     * The parts in list order whatever the age of their stock, or empty when any of them is missing from
-     * {@code cached_parts} or sold out (the whole search is then refetched); with {@code partial} the parts that are
-     * there.
-     */
-    private Optional<List<Part>> readCachedParts(Distributor distributor, List<String> partNumbers, boolean partial) {
-        if (partNumbers.isEmpty()) {
-            return Optional.of(List.of());
-        }
-        Map<String, Part> found;
-        try {
-            found = partCache.findInStock(distributor, partNumbers);
-        } catch (RuntimeException e) {
-            log.warn("Reading cached {} parts failed, fetching from the distributor: {}", distributor, e.toString());
-            return Optional.empty();
-        }
-        List<Part> ordered = new ArrayList<>(partNumbers.size());
-        for (String partNumber : partNumbers) {
-            Part part = found.get(partNumber);
-            if (part == null) {
-                if (partial) {
-                    continue;
-                }
-                return Optional.empty();
-            }
-            ordered.add(part);
-        }
-        return Optional.of(ordered);
-    }
-
-    /**
-     * The live search failed and the query has an expired cached list: its parts are served (cache status
-     * {@code stale}, the entry keeps the {@code error}) rather than nothing; their stock and prices are refreshed or
-     * marked stale after ranking like any cached part (DESIGN.md 3.2 "Cache model"). Empty when none of the parts is
-     * still cached in stock.
-     */
-    private Optional<Fetched> servedStale(Distributor distributor, ParsedQuery parsed, String query,
-                                          CachedSearch search, DistributorException error) {
-        List<Part> parts = readCachedParts(distributor, search.partNumbers(), true).orElse(List.of());
-        if (parts.isEmpty()) {
-            return Optional.empty();
-        }
-        log.info("{} search '{}' failed ({}); serving the expired cached list of {} parts", distributor,
-                search.queryKey(), error.errorCode(), parts.size());
-        List<String> relaxed = search.constraintsRelaxed() != null ? search.constraintsRelaxed()
-                : relaxedBy(distributor, parsed, query, search.fallbackQuery(), policy());
-        return Optional.of(new Fetched(distributor, parts.stream().map(extractor::enrich).toList(),
-                search.totalResults(), CacheStatus.STALE, error.errorCode(), search.fallbackQuery())
-                .withOutOfStockMatches(search.outOfStockMatches()).withConstraintsRelaxed(relaxed));
-    }
-
-    private Optional<CachedSearch> readCachedSearch(Distributor distributor, String queryKey) {
-        try {
-            return searchCache.find(distributor, queryKey);
-        } catch (RuntimeException e) {
-            log.warn("Reading the cached {} search failed, fetching from the distributor: {}", distributor,
-                    e.toString());
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * Parts collected for one query plus the paging state to store in {@code cached_searches}, how many of them meet
-     * the request ({@link #meetsRequest}), and what LCSC's database search dropped (constraint names, free-text
-     * keywords).
-     */
-    record Collected(List<Part> all, List<Part> fetched, Integer totalResults, boolean exhausted, int nextOffset,
-                     String error, List<String> relaxed, List<String> droppedKeywords, int meeting) {
-
-        Collected(List<Part> all, List<Part> fetched, Integer totalResults, boolean exhausted, int nextOffset,
-                  String error) {
-            this(all, fetched, totalResults, exhausted, nextOffset, error, List.of(), List.of(), all.size());
-        }
-
-        Fetched toFetched(Distributor distributor, CacheStatus cache) {
-            return toFetched(distributor, cache, null);
-        }
-
-        Fetched toFetched(Distributor distributor, CacheStatus cache, String fallbackQuery) {
-            return new Fetched(distributor, all, totalResults, cache, error, fallbackQuery)
-                    .withConstraintsRelaxed(relaxed).withDroppedKeywords(droppedKeywords);
-        }
-    }
-
-    /**
-     * Which collected parts meet the request ({@link #meetsRequest}) and which of those have every requested rating
-     * verified ({@link #confirmed}).
-     */
-    record Check(java.util.function.Predicate<Part> meets, java.util.function.Predicate<Part> confirmed) {
-
-        static final Check ALL = new Check(p -> true, p -> true);
-    }
-
-    /**
-     * As {@link #collect(DistributorClient, String, int, int, int, List, Progress, DistributorBudget, Check, String)},
-     * every part meeting the request, counted under the {@code unknown} type.
-     */
-    Collected collect(DistributorClient client, String query, int offset, int window, int maxPages,
-                      List<Part> existing, Progress progress, DistributorBudget deadline) {
-        return collect(client, query, offset, window, maxPages, existing, progress, deadline, Check.ALL, null);
-    }
-
-    /**
-     * Pages through {@link DistributorClient#search} from {@code offset} until {@code window} parts are held and at
-     * least one of them meets the request with its ratings verified ({@code meets}; DESIGN.md 3.2: a rating is never
-     * in the phrase, so the parts that satisfy it may sit on later pages), the distributor reports no more results, {@code maxPages} pages were
-     * requested or the next page would not fit within {@code deadline}. Pages have the distributor's
-     * {@link DistributorClient#maxPageSize()} (the first one is shortened to end on a page boundary) because
-     * distributors drop parts without ships-now stock: paging is driven by raw record offsets, not by the number of
-     * parts kept. A failure on the first page propagates; a failure on a later page keeps what was collected and
-     * reports the error code. {@code family} is the parser family of the request, the {@code type} tag of the page
-     * metrics (DESIGN.md 3.7).
-     */
-    Collected collect(DistributorClient client, String query, int offset, int window, int maxPages,
-                      List<Part> existing, Progress progress, DistributorBudget deadline, Check meets,
-                      String family) {
-        Distributor distributor = client.distributor();
-        boolean pagedByRecords = usesPostgresCache(distributor);
-        int outOfStock = 0;
-        List<String> relaxed = List.of();
-        List<String> droppedKeywords = List.of();
-        int pageSize = Math.max(1, client.maxPageSize());
-        List<Part> all = new ArrayList<>(existing);
-        List<Part> fetched = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
-        existing.forEach(p -> seen.add(p.distributorPartNumber()));
-        int meeting = (int) existing.stream().filter(meets.meets()).count();
-        int confirmed = (int) existing.stream().filter(meets.confirmed()).count();
-        Integer total = progress.totalResults;
-        boolean hasMore = true;
-        int next = Math.max(0, offset);
-        int pages = 0;
-        long lastPageNanos = 0;
-        String error = null;
-        // while every match so far is out of stock, up to EXTRA_OUT_OF_STOCK_PAGES more pages (DESIGN.md 3.2)
-        while ((pages < maxPages || all.isEmpty() && outOfStock > 0 && pages < maxPages + EXTRA_OUT_OF_STOCK_PAGES)
-                && hasMore && (all.size() < window || confirmed == 0)) {
-            if (pages > 0 && deadline.remainingNanos() < lastPageNanos) {
-                log.debug("{}: no time for another page of '{}'", distributor, query);
-                break;
-            }
-            int limit = pagedByRecords ? pageSize - next % pageSize : Math.min(window, pageSize);
-            long started = System.nanoTime();
-            long waitedBefore = deadline.rateLimitWaitedNanos();
-            DistributorSearchPage page;
-            try {
-                page = client.search(query, next, limit, deadline.deadline());
-            } catch (DistributorException e) {
-                if (pages == 0) {
-                    throw e;
-                }
-                log.info("{}: page {} of '{}' failed, keeping {} parts: {}", distributor, pages + 1, query,
-                        all.size(), e.getMessage());
-                error = e.errorCode();
-                break;
-            }
-            // active time of the page: rate-limit waits do not predict how long the next page takes
-            lastPageNanos = Math.max(0, System.nanoTime() - started - (deadline.rateLimitWaitedNanos() - waitedBefore));
-            pages++;
-            metrics.distributorPage(distributor, family, System.nanoTime() - started, page.parts().size());
-            next += limit;
-            total = page.totalResults();
-            hasMore = page.hasMore();
-            outOfStock += page.outOfStock();
-            if (!page.relaxed().isEmpty()) {
-                relaxed = page.relaxed();
-            }
-            if (!page.droppedKeywords().isEmpty()) {
-                droppedKeywords = page.droppedKeywords();
-            }
-            progress.outOfStock += page.outOfStock();
-            Instant now = clock.instant();
-            for (Part part : page.parts()) {
-                if (part == null || part.stock() <= 0 || !seen.add(part.distributorPartNumber())) {
-                    continue;
-                }
-                Part enriched = extractor.enrich(
-                        part.fetchedAt() == null ? part.toBuilder().fetchedAt(now).build() : part);
-                all.add(enriched);
-                fetched.add(enriched);
-                if (meets.meets().test(enriched)) {
-                    meeting++;
-                    if (meets.confirmed().test(enriched)) {
-                        confirmed++;
-                    }
-                }
-            }
-            progress.parts = List.copyOf(all);
-            progress.totalResults = total;
-        }
-        return new Collected(all, fetched, total, !hasMore, next, error, relaxed, droppedKeywords, meeting);
-    }
-
-    /**
-     * Writes the new parts and the search list. A list whose parts all fail the request (strict constraints, below
-     * spec) is never stored as a reusable search: only its parts are cached. Cache failures are logged, never
-     * propagated.
-     */
-    private void store(Distributor distributor, String queryKey, Collected collected, Instant listFetchedAt,
-                       String fallbackQuery, int outOfStockMatches, List<String> constraintsRelaxed) {
-        try {
-            partCache.upsertAll(collected.fetched());
-            if (!collected.all().isEmpty() && collected.meeting() == 0) {
-                log.info("{} search '{}': none of its {} parts meets the request; not cached as a search",
-                        distributor, queryKey, collected.all().size());
-                searchCache.delete(distributor, queryKey);
-                return;
-            }
-            searchCache.upsert(new CachedSearch(distributor, queryKey, collected.totalResults(),
-                    collected.all().stream().map(Part::distributorPartNumber).toList(), collected.exhausted(),
-                    listFetchedAt, collected.nextOffset(), fallbackQuery, outOfStockMatches, constraintsRelaxed));
-        } catch (RuntimeException e) {
-            log.warn("Caching {} results for '{}' failed: {}", distributor, queryKey, e.toString());
-        }
     }
 
     private Map<Distributor, Fetched> awaitBatchFetch(Future<Map<Distributor, Fetched>> future, Prepared prepared) {

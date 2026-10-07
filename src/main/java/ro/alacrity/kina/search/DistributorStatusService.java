@@ -101,7 +101,7 @@ public class DistributorStatusService {
     private DistributorStatus status(Distributor distributor, CacheStatistics stats) {
         Optional<DistributorClient> client = registry.find(distributor);
         boolean configured = client.map(DistributorClient::isConfigured).orElse(false);
-        boolean usesCache = PartSearchService.usesPostgresCache(distributor);
+        boolean usesCache = DistributorRetriever.usesPostgresCache(distributor);
         Long cachedParts = usesCache && stats != null ? stats.partsByDistributor().getOrDefault(distributor, 0L) : null;
         return switch (distributor) {
             case MOUSER -> new DistributorStatus(distributor, configured, configured,

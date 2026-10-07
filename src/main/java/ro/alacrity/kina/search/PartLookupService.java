@@ -109,7 +109,7 @@ public class PartLookupService {
         }
         String number = partNumber.strip();
         Optional<DistributorClient> configured = registry.find(distributor).filter(DistributorClient::isConfigured);
-        boolean cached = PartSearchService.usesPostgresCache(distributor);
+        boolean cached = DistributorRetriever.usesPostgresCache(distributor);
         if (configured.isEmpty() && !cached) {
             throw DistributorException.notConfigured(distributor);
         }

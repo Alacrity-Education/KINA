@@ -70,7 +70,7 @@ final class StockRefresher {
         for (Map.Entry<Distributor, List<RankedPart>> entry : ranked.byDistributor().entrySet()) {
             Distributor distributor = entry.getKey();
             List<RankedPart> list = entry.getValue();
-            if (!PartSearchService.usesPostgresCache(distributor) || list.isEmpty()) {
+            if (!DistributorRetriever.usesPostgresCache(distributor) || list.isEmpty()) {
                 out.put(distributor, list);
                 continue;
             }
@@ -188,7 +188,7 @@ final class StockRefresher {
      * from its local database).
      */
     boolean isStale(Part part, Instant now) {
-        return PartSearchService.usesPostgresCache(part.distributor()) && part.fetchedAt() != null
+        return DistributorRetriever.usesPostgresCache(part.distributor()) && part.fetchedAt() != null
                 && part.fetchedAt().isBefore(now.minus(properties.cache().ttl()));
     }
 }

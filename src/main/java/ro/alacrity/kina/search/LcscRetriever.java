@@ -1,0 +1,46 @@
+package ro.alacrity.kina.search;
+
+import ro.alacrity.kina.cache.CacheStatus;
+import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.DistributorClient;
+import ro.alacrity.kina.domain.Distributor;
+import ro.alacrity.kina.domain.ParsedQuery;
+import ro.alacrity.kina.search.PageCollector.Check;
+import ro.alacrity.kina.search.PageCollector.Collected;
+import ro.alacrity.kina.search.PartSearchService.Fetched;
+import ro.alacrity.kina.search.PartSearchService.Prepared;
+import ro.alacrity.kina.search.PartSearchService.Progress;
+
+import java.util.List;
+
+/** LCSC retrieval: the JLCPCB SQLite database is the cache, so a search is one live query. */
+final class LcscRetriever implements DistributorRetriever {
+
+    private final KinaProperties properties;
+    private final PageCollector pages;
+    private final RankingService ranking;
+
+    LcscRetriever(KinaProperties properties, PageCollector pages, RankingService ranking) {
+        this.properties = properties;
+        this.pages = pages;
+        this.ranking = ranking;
+    }
+
+    @Override
+    public Fetched retrieve(DistributorClient client, Prepared prepared, Progress progress,
+                            DistributorBudget deadline) {
+        Distributor distributor = client.distributor();
+        ParsedQuery parsed = prepared.parsed();
+        // connector queries are sent in the distributor's own wording; the cache key stays the user's query
+        String phrase = DistributorPhraser.phrase(distributor, parsed);
+        String query = phrase != null ? phrase : parsed.originalText();
+        int window = DistributorRetriever.window(properties, distributor, prepared.maxResults());
+        int maxPages = DistributorRetriever.maxPages(properties, distributor);
+        Check meets = Check.of(ranking, parsed);
+
+        Collected collected = pages.collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets,
+                parsed.family());
+        return collected.toFetched(distributor, CacheStatus.NOT_APPLICABLE)
+                .withOutOfStockMatches(progress.outOfStock);
+    }
+}
