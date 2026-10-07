@@ -1,6 +1,10 @@
 package ro.alacrity.kina.search;
 
+import lombok.AccessLevel;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.Deadline;
@@ -29,33 +33,21 @@ import java.util.concurrent.TimeoutException;
  * in enum order (LCSC, TME, MOUSER).
  */
 @Slf4j
+@Component
 class ParallelRetrieval {
 
     /** Extra wait after the distributor deadline before a fetch is abandoned (lets a finishing task hand over). */
     static final Duration TIMEOUT_GRACE = Duration.ofMillis(250);
 
-    private final KinaProperties properties;
-    private final DistributorRegistry registry;
-    private final QueryParser parser;
-    private final ExecutorService executor;
-    private final DistributorRetriever lcscRetriever;
-    private final DistributorRetriever cachedRetriever;
+    @Autowired private KinaProperties properties;
+    @Autowired private DistributorRegistry registry;
+    @Autowired private QueryParser parser;
+    @Autowired private LcscRetriever lcscRetriever;
+    @Autowired private CachedDistributorRetriever cachedRetriever;
+    /** The search executor, owned by {@link PartSearchService}. */
+    @Setter(AccessLevel.PACKAGE)
+    private ExecutorService executor;
 
-    ParallelRetrieval(KinaProperties properties, DistributorRegistry registry, QueryParser parser,
-                      ExecutorService executor, DistributorRetriever lcscRetriever,
-                      DistributorRetriever cachedRetriever) {
-        this.properties = properties;
-        this.registry = registry;
-        this.parser = parser;
-        this.executor = executor;
-        this.lcscRetriever = lcscRetriever;
-        this.cachedRetriever = cachedRetriever;
-    }
-
-    /**
-     * Fetches every distributor of the query in parallel. Each fetch has {@code distributor-timeout} of active work,
-     * extended by its rate-limit waits, never beyond {@code requestDeadline}.
-     */
     Map<Distributor, Fetched> retrieveAll(Prepared prepared, Deadline requestDeadline) {
         Duration timeout = properties.search().distributorTimeout();
         Map<Distributor, Fetched> results = new EnumMap<>(Distributor.class);

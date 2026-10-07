@@ -46,28 +46,14 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class PartLookupService {
 
-    private final KinaProperties properties;
-    private final DistributorRegistry registry;
-    private final ParametricExtractor extractor;
-    private final PartCacheRepository partCache;
-    private final Clock clock;
-    private final ExecutorService executor;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
-
-    public PartLookupService(KinaProperties properties, DistributorRegistry registry, ParametricExtractor extractor,
-                             PartCacheRepository partCache, Clock clock) {
-        this.properties = properties;
-        this.registry = registry;
-        this.extractor = extractor;
-        this.partCache = partCache;
-        this.clock = clock;
-        this.executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("kina-lookup-", 0).factory());
-    }
-
-    @Autowired
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
-    }
+    @Autowired private KinaProperties properties;
+    @Autowired private DistributorRegistry registry;
+    @Autowired private ParametricExtractor extractor;
+    @Autowired private PartCacheRepository partCache;
+    @Autowired private Clock clock;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
+    private final ExecutorService executor =
+            Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("kina-lookup-", 0).factory());
 
     @PreDestroy
     void shutdown() {

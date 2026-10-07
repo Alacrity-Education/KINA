@@ -15,13 +15,21 @@ import ro.alacrity.kina.distributor.lcsc.JlcpcbSqliteSearch;
 import ro.alacrity.kina.distributor.lcsc.LcscClient;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.metrics.MetricsStore;
+import ro.alacrity.kina.search.DeterministicRanker;
+import ro.alacrity.kina.search.ParametricExtractor;
+import ro.alacrity.kina.search.PartRanker;
+import ro.alacrity.kina.search.RankingScoreCache;
+import ro.alacrity.kina.search.RankingService;
+import ro.alacrity.kina.search.ce.CrossEncoderPartRanker;
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Builds beans by hand for unit tests, the way Spring would: the bean's no-arg constructor, its {@code @Autowired}
@@ -93,6 +101,24 @@ public class TestWiring {
     /** An {@link LcscClient} on {@code search}. */
     public LcscClient lcscClient(JlcpcbSqliteSearch search) {
         return wire(new LcscClient(), "search", search);
+    }
+
+    /** A {@link DeterministicRanker} on {@code extractor}. */
+    public DeterministicRanker deterministicRanker(ParametricExtractor extractor) {
+        return wire(new DeterministicRanker(), "extractor", extractor);
+    }
+
+    /** A {@link RankingScoreCache} whose entries expire {@code ttl} after write. */
+    public RankingScoreCache scoreCache(Duration ttl) {
+        return wire(new RankingScoreCache(), "properties", properties("kina.ranking.score-cache-ttl", ttl.toString()));
+    }
+
+    /** A {@link RankingService} with {@code ranker} as the model and {@code modelStatus} as its status. */
+    public RankingService rankingService(KinaProperties properties, DeterministicRanker deterministic,
+                                         PartRanker ranker, Supplier<CrossEncoderPartRanker.Status> modelStatus,
+                                         RankingScoreCache cache) {
+        return wire(new RankingService(), "properties", properties, "deterministic", deterministic, "ranker", ranker,
+                "modelStatus", modelStatus, "cache", cache);
     }
 
     /** A {@link MetricsStore} registering on {@code registry}; null keeps the values in memory only. */

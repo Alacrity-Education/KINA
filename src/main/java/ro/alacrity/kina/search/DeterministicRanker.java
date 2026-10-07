@@ -1,6 +1,6 @@
 package ro.alacrity.kina.search;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Match;
@@ -40,7 +40,6 @@ import java.util.Map;
  * DCR above its maximum) is <b>below spec</b> ({@link Assessment#belowSpec()}, with its distance from the target).
  */
 @Component
-@RequiredArgsConstructor
 public class DeterministicRanker {
 
     static final double W_LEXICAL = 0.10;
@@ -59,7 +58,7 @@ public class DeterministicRanker {
     /** A minimum order quantity this many decades above the quantity loses the whole MOQ penalty. */
     static final double MOQ_PENALTY_DECADES = 3.0;
 
-    private final ParametricExtractor extractor;
+    @Autowired private ParametricExtractor extractor;
 
     /**
      * Deterministic score and match grade of one part.

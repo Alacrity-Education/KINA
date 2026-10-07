@@ -3,6 +3,7 @@ package ro.alacrity.kina.search;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
@@ -22,7 +23,7 @@ class PowerResistorTest {
 
     private final QueryParser parser = new QueryParser();
     private final ParametricExtractor extractor = new ParametricExtractor();
-    private final DeterministicRanker ranker = new DeterministicRanker(extractor);
+    private final DeterministicRanker ranker = TestWiring.deterministicRanker(extractor);
 
     // ---------------------------------------------------------------- power wording and display
 

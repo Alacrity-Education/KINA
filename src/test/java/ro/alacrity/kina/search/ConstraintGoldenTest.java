@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
@@ -67,7 +68,7 @@ class ConstraintGoldenTest {
 
     private final QueryParser parser = new QueryParser();
     private final ParametricExtractor extractor = new ParametricExtractor();
-    private final DeterministicRanker ranker = new DeterministicRanker(extractor);
+    private final DeterministicRanker ranker = TestWiring.deterministicRanker(extractor);
 
     @Test
     void constraintModelMatchesTheGoldenMaster() throws Exception {

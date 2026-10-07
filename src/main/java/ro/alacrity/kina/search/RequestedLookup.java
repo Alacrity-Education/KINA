@@ -1,11 +1,14 @@
 package ro.alacrity.kina.search;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CachedSearch.RequestedPart;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.PartLookupResult;
+import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 
@@ -32,6 +35,7 @@ import java.util.Set;
  * list. The new outcomes are returned for the caller to store.
  */
 @Slf4j
+@Component
 final class RequestedLookup {
 
     /**
@@ -44,18 +48,10 @@ final class RequestedLookup {
     record Result(Fetched fetched, Map<String, RequestedPart> learned, List<String> inStock) {
     }
 
-    private final ParametricExtractor extractor;
-    /** Null for LCSC (its database is the cache). */
-    private final PartCacheRepository partCache;
-    private final Clock clock;
+    @Autowired private ParametricExtractor extractor;
+    @Autowired private PartCacheRepository partCache;
+    @Autowired private Clock clock;
 
-    RequestedLookup(ParametricExtractor extractor, PartCacheRepository partCache, Clock clock) {
-        this.extractor = extractor;
-        this.partCache = partCache;
-        this.clock = clock;
-    }
-
-    /** {@code fetched} with the parts the query names that it lacks, when the distributor has them. */
     Fetched complete(DistributorClient client, Prepared prepared, Fetched fetched, DistributorBudget budget) {
         return complete(client, prepared, fetched, budget, Map.of()).fetched();
     }
@@ -123,7 +119,7 @@ final class RequestedLookup {
                 (stocked ? inStock : listed).add(enriched);
             }
         }
-        cache(inStock, listed.stream().filter(p -> learned.values().stream()
+        cache(client.distributor(), inStock, listed.stream().filter(p -> learned.values().stream()
                 .anyMatch(r -> p.distributorPartNumber().equals(r.partNumber()))).toList());
         if (inStock.isEmpty() && listed.isEmpty()) {
             return new Result(fetched, learned, List.of());
@@ -140,7 +136,8 @@ final class RequestedLookup {
      */
     private Optional<Part> cachedListed(DistributorClient client, ParsedQuery query, String number,
                                         String partNumber) {
-        if (partCache == null || partNumber == null || !query.partNumbers().contains(number)) {
+        if (!DistributorRetriever.usesPostgresCache(client.distributor()) || partNumber == null
+                || !query.partNumbers().contains(number)) {
             return Optional.empty();
         }
         try {
@@ -152,8 +149,8 @@ final class RequestedLookup {
         }
     }
 
-    private void cache(List<Part> inStock, List<Part> listed) {
-        if (partCache == null || inStock.isEmpty() && listed.isEmpty()) {
+    private void cache(Distributor distributor, List<Part> inStock, List<Part> listed) {
+        if (!DistributorRetriever.usesPostgresCache(distributor) || inStock.isEmpty() && listed.isEmpty()) {
             return;
         }
         try {

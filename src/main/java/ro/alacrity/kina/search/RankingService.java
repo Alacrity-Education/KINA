@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -233,29 +234,18 @@ public class RankingService {
                                 String lastError, int threads, Double avgLatencyMs) {
     }
 
-    private final KinaProperties.Ranking config;
-    private final KinaProperties.Search search;
-    private final DeterministicRanker deterministic;
-    private final PartRanker ranker;
-    private final ConstraintPolicy policy;
-    private final Supplier<CrossEncoderPartRanker.Status> modelStatus;
-    private final RankingScoreCache cache;
+    @Autowired private KinaProperties properties;
+    @Autowired private DeterministicRanker deterministic;
+    @Autowired private PartRanker ranker;
+    @Autowired private CrossEncoderPartRanker crossEncoder;
+    @Autowired private RankingScoreCache cache;
+    /** The cross-encoder's status; tests replace it. */
+    private Supplier<CrossEncoderPartRanker.Status> modelStatus = () -> crossEncoder.status();
+    private ConstraintPolicy policy;
 
-    @Autowired
-    public RankingService(KinaProperties properties, DeterministicRanker deterministic,
-                          CrossEncoderPartRanker crossEncoder, RankingScoreCache cache) {
-        this(properties, deterministic, crossEncoder, crossEncoder::status, cache);
-    }
-
-    RankingService(KinaProperties properties, DeterministicRanker deterministic, PartRanker ranker,
-                   Supplier<CrossEncoderPartRanker.Status> modelStatus, RankingScoreCache cache) {
-        this.config = properties.ranking();
-        this.search = properties.search();
-        this.deterministic = deterministic;
-        this.ranker = ranker;
-        this.modelStatus = modelStatus;
-        this.cache = cache;
-        this.policy = ConstraintPolicy.from(properties.search());
+    @PostConstruct
+    void init() {
+        policy = ConstraintPolicy.from(properties.search());
     }
 
     /** The hard / relaxable constraint table in use ({@code kina.search.hard-constraints}). */
@@ -264,7 +254,7 @@ public class RankingService {
     }
 
     public RankingStatus status() {
-        KinaProperties.CrossEncoder ce = config.crossEncoder();
+        KinaProperties.CrossEncoder ce = properties.ranking().crossEncoder();
         CrossEncoderPartRanker.Status s;
         try {
             s = modelStatus.get();
@@ -339,7 +329,7 @@ public class RankingService {
     public RankedResults rank(ParsedQuery query, Map<Distributor, List<Part>> fetched, Duration budget,
                               RankOptions options) {
         RankOptions opts = options == null ? RankOptions.DEFAULT : options;
-        Duration effective = budget == null ? config.timeout() : budget;
+        Duration effective = budget == null ? properties.ranking().timeout() : budget;
         long deadline = System.nanoTime() + effective.toNanos();
         Map<Distributor, List<Part>> input = fetched == null ? Map.of() : fetched;
         Map<String, Double> det = new HashMap<>();
@@ -411,7 +401,7 @@ public class RankingService {
                     belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
         }
 
-        if (!config.crossEncoder().enabled()) {
+        if (!properties.ranking().crossEncoder().enabled()) {
             return annotate(fallback(sorted, det, tiers, "cross-encoder disabled"), assessments, understood)
                     .withExcluded(excluded, excludedBelowSpec, detail,
                     belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
@@ -443,10 +433,10 @@ public class RankingService {
      * lifecycle ({@code kina.search.lifecycle.*}).
      */
     double penalty(Part part, int quantity) {
-        KinaProperties.Quantity q = search.quantity();
+        KinaProperties.Quantity q = properties.search().quantity();
         double penalty = DeterministicRanker.quantityPenalty(part, quantity, q.stockShortfallPenalty(), q.moqPenalty())
                 + lifecyclePenalty(part);
-        if (Availability.isLowStock(part, quantity, search.lowStockThreshold())) {
+        if (Availability.isLowStock(part, quantity, properties.search().lowStockThreshold())) {
             penalty += q.lowStockPenalty();
         }
         return penalty;
@@ -457,7 +447,7 @@ public class RankingService {
                                          Map<String, Double> distances, Map<String, Double> penalties,
                                          long deadline, Duration budget)
             throws RankingException {
-        Map<Distributor, Integer> quotas = quotas(sorted, config.crossEncoder().maxCandidates());
+        Map<Distributor, Integer> quotas = quotas(sorted, properties.ranking().crossEncoder().maxCandidates());
         List<Part> candidates = new ArrayList<>();
         sorted.forEach((d, parts) -> candidates.addAll(parts.subList(0, quotas.getOrDefault(d, 0))));
 
@@ -597,7 +587,7 @@ public class RankingService {
                                   Map<String, Integer> tiers, Map<String, Double> distances,
                                   Map<String, Double> penalties, Map<String, Double> detNorm,
                                   Map<String, Double> modelNorm) {
-        double w = Math.clamp(config.crossEncoder().weight(), 0.0, 1.0);
+        double w = Math.clamp(properties.ranking().crossEncoder().weight(), 0.0, 1.0);
         Map<String, Double> finalScores = new HashMap<>();
         modelNorm.forEach((key, m) -> finalScores.put(key, Math.max(0.0,
                 (1 - w) * detNorm.getOrDefault(key, 0.0) + w * m - penalties.getOrDefault(key, 0.0))));
@@ -651,8 +641,8 @@ public class RankingService {
      */
     private double lifecyclePenalty(Part part) {
         return switch (Availability.lifecycleOf(part)) {
-            case Availability.LAST_TIME_BUY -> search.lifecycle().lastTimeBuyPenalty();
-            case Availability.SUPPLY_CONSTRAINED -> search.lifecycle().supplyConstrainedPenalty();
+            case Availability.LAST_TIME_BUY -> properties.search().lifecycle().lastTimeBuyPenalty();
+            case Availability.SUPPLY_CONSTRAINED -> properties.search().lifecycle().supplyConstrainedPenalty();
             default -> 0.0;
         };
     }

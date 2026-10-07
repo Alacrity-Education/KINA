@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.domain.Part;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -652,7 +653,7 @@ class ParametricExtractorTest {
         Part ao3400 = jlcpcb("C20917", "AO3400A",
                 "-55℃~+150℃ 1 N-channel 1.45V 1.4W 30V 48mΩ@2.5V 5.7A 50pF 630pF 75pF 7nC@10V N-Channel",
                 "Transistors/Thyristors / MOSFETs", "SOT-23");
-        DeterministicRanker.Assessment a = new DeterministicRanker(extractor).assess(query, ao3400);
+        DeterministicRanker.Assessment a = TestWiring.deterministicRanker(extractor).assess(query, ao3400);
         assertThat(a.mismatches()).isEmpty();
         assertThat(a.belowSpec()).isEmpty();
         assertThat(a.unverified()).doesNotContain("voltage");

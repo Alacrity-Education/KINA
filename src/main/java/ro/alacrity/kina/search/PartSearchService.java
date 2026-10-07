@@ -1,12 +1,11 @@
 package ro.alacrity.kina.search;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatus;
-import ro.alacrity.kina.cache.PartCacheRepository;
-import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
@@ -22,7 +21,6 @@ import ro.alacrity.kina.domain.SearchResponse;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.RankingService.RankedResults;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -50,6 +48,9 @@ import java.util.concurrent.Semaphore;
  *   <li>{@link ResponseAssembler}: assemble the {@link SearchResponse}.</li>
  * </ol>
  *
+ * <p>The stages are beans. The service owns the virtual-thread executor that runs the batch queries and the parallel
+ * retrieval: it creates it in {@code @PostConstruct}, hands it to {@link ParallelRetrieval} and shuts it down.
+ *
  * <p>Distributor failures never fail a search: they become the distributor entry's {@code error}.
  *
  * <p>Every incoming request (one search, one whole batch) has one hard deadline,
@@ -65,40 +66,20 @@ public class PartSearchService {
     /** Below this remaining batch budget a query is ranked with the fallback ranking. */
     static final Duration MIN_BATCH_RANKING_BUDGET = Duration.ofMillis(250);
 
-    private final KinaProperties properties;
-    private final DistributorRegistry registry;
-    private final QueryParser parser;
-    private final RankingService ranking;
-    private final ExecutorService executor;
-    private final StockRefresher stockRefresher;
-    private final PageCollector pageCollector;
-    private final ParallelRetrieval retrieval;
-    private final ResponseAssembler assembler;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
+    @Autowired private KinaProperties properties;
+    @Autowired private DistributorRegistry registry;
+    @Autowired private QueryParser parser;
+    @Autowired private RankingService ranking;
+    @Autowired private ParallelRetrieval retrieval;
+    @Autowired private StockRefresher stockRefresher;
+    @Autowired private ResponseAssembler assembler;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
+    private ExecutorService executor;
 
-    @Autowired
-    public PartSearchService(KinaProperties properties, DistributorRegistry registry, QueryParser parser,
-                             ParametricExtractor extractor, RankingService ranking, PartCacheRepository partCache,
-                             SearchCacheRepository searchCache, Clock clock) {
-        this.properties = properties;
-        this.registry = registry;
-        this.parser = parser;
-        this.ranking = ranking;
-        this.executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("kina-search-", 0).factory());
-        this.stockRefresher = new StockRefresher(properties, registry, partCache, clock);
-        this.assembler = new ResponseAssembler(properties, extractor, ranking, stockRefresher, clock);
-        this.pageCollector = new PageCollector(extractor, clock);
-        this.retrieval = new ParallelRetrieval(properties, registry, parser, executor,
-                new LcscRetriever(properties, pageCollector, ranking, extractor, clock),
-                new CachedDistributorRetriever(properties, pageCollector, ranking, extractor, partCache, searchCache,
-                        clock));
-    }
-
-    @Autowired
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
-        stockRefresher.setMetrics(metrics);
-        pageCollector.setMetrics(metrics);
+    @PostConstruct
+    void startExecutor() {
+        executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("kina-search-", 0).factory());
+        retrieval.setExecutor(executor);
     }
 
     @PreDestroy

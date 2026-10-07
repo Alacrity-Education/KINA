@@ -126,8 +126,12 @@ method, and `@PreDestroy` stops what it started. Classes whose default is a no-o
 keep it on the field (`@Autowired private KinaMetrics metrics = KinaMetrics.NOOP;`). Circular references stay
 disabled. Unit tests build beans with `ro.alacrity.kina.TestWiring` (test sources): `wire(bean, "field", value, ...)`
 sets fields by name with `ReflectionTestUtils.setField`, so a renamed field fails loudly, and then runs the
-`@PostConstruct` methods; typed helpers such as `metricsStore(registry)` cover the beans that tests build often.
-Records, DTOs, value objects and `KinaProperties` keep their constructors.
+`@PostConstruct` methods; typed helpers such as `metricsStore(registry)`, `registry(clients)`, `rankingService(...)` and
+`properties(...)` cover the beans that tests build often. `RankingFixtures.searchService(...)` (search test package)
+assembles `PartSearchService` and its package-private stages the same way.
+Records, DTOs, value objects and `KinaProperties` keep their constructors. So do the security filters, the bearer
+entry point and `UpstreamTokenCapturingClientRepository`, which `SecurityConfig` creates itself (as beans, Spring Boot
+would register the filters for every request), and `OidcAccessPolicy`, a value built from the OIDC settings.
 
 Lombok (configured in `lombok.config` at the repository root: `config.stopBubbling`, `@lombok.Generated` on
 generated code for coverage tools, logger field `log`, and `@Qualifier` / `@Value` copied from fields to generated

@@ -42,9 +42,10 @@ class PartLookupServiceTest {
     PartLookupService service;
 
     PartLookupService service(DistributorClient... clients) {
-        service = new PartLookupService(RankingFixtures.properties("kina.search.distributor-timeout", "300ms"),
-                TestWiring.registry(List.of(clients)), new ParametricExtractor(), cache,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+        service = TestWiring.wire(new PartLookupService(),
+                "properties", RankingFixtures.properties("kina.search.distributor-timeout", "300ms"),
+                "registry", TestWiring.registry(List.of(clients)), "extractor", new ParametricExtractor(),
+                "partCache", cache, "clock", Clock.fixed(NOW, ZoneOffset.UTC));
         return service;
     }
 

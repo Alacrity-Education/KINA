@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
@@ -27,7 +28,7 @@ class AuditFindingsTest {
 
     private final QueryParser parser = new QueryParser();
     private final ParametricExtractor extractor = new ParametricExtractor();
-    private final DeterministicRanker ranker = new DeterministicRanker(extractor);
+    private final DeterministicRanker ranker = TestWiring.deterministicRanker(extractor);
 
     private Map<String, String> parsed(String query) {
         return ParsedQueryResponse.from(parser.parse(query)).constraints();
@@ -293,8 +294,8 @@ class AuditFindingsTest {
 
     private RankingService rankingService(String... properties) {
         KinaProperties props = RankingFixtures.properties(properties);
-        return new RankingService(props, ranker, new RankingServiceTest.FakeRanker(),
-                () -> RankingServiceTest.READY, new RankingScoreCache(props.ranking().scoreCacheTtl()));
+        return TestWiring.rankingService(props, ranker, new RankingServiceTest.FakeRanker(),
+                () -> RankingServiceTest.READY, TestWiring.scoreCache(props.ranking().scoreCacheTtl()));
     }
 
     @Test

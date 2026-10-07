@@ -140,9 +140,9 @@ class GanAuditFixtureTest {
     SearchResponse search(DistributorClient mouser, String query, boolean allowBelowSpec, int maxResults) {
         KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
         ParametricExtractor extractor = new ParametricExtractor();
-        RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
-                mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
-        PartSearchService service = new PartSearchService(props, TestWiring.registry(List.of(mouser)),
+        RankingService ranking = TestWiring.rankingService(props, TestWiring.deterministicRanker(extractor),
+                mock(PartRanker.class), () -> null, TestWiring.scoreCache(Duration.ofHours(1)));
+        PartSearchService service = RankingFixtures.searchService(props, TestWiring.registry(List.of(mouser)),
                 new QueryParser(), extractor, ranking, partCache, mock(SearchCacheRepository.class), clock);
         return service.search(new SearchRequest(query, maxResults, Set.of(Distributor.MOUSER), false, 1,
                 ResponseDetail.FULL, allowBelowSpec));

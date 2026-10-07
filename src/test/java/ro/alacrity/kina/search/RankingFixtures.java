@@ -4,12 +4,18 @@ import lombok.experimental.UtilityClass;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import ro.alacrity.kina.TestWiring;
+import ro.alacrity.kina.cache.PartCacheRepository;
+import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PriceBreak;
+import ro.alacrity.kina.metrics.KinaMetrics;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -77,5 +83,39 @@ class RankingFixtures {
         source.putIfAbsent("kina.public-base-url", "");
         return new Binder(new MapConfigurationPropertySource(source))
                 .bindOrCreate("kina", Bindable.of(KinaProperties.class));
+    }
+
+    /** {@link PartSearchService} and its stages, wired with {@link TestWiring} as Spring would. */
+    static PartSearchService searchService(KinaProperties props, DistributorRegistry registry, QueryParser parser,
+                                           ParametricExtractor extractor, RankingService ranking,
+                                           PartCacheRepository partCache, SearchCacheRepository searchCache,
+                                           Clock clock) {
+        return searchService(props, registry, parser, extractor, ranking, partCache, searchCache, clock,
+                KinaMetrics.NOOP);
+    }
+
+    /** As above, counting into {@code metrics}. */
+    static PartSearchService searchService(KinaProperties props, DistributorRegistry registry, QueryParser parser,
+                                           ParametricExtractor extractor, RankingService ranking,
+                                           PartCacheRepository partCache, SearchCacheRepository searchCache,
+                                           Clock clock, KinaMetrics metrics) {
+        PageCollector pages = TestWiring.wire(new PageCollector(), "extractor", extractor, "clock", clock,
+                "metrics", metrics);
+        StockRefresher stock = TestWiring.wire(new StockRefresher(), "properties", props, "registry", registry,
+                "partCache", partCache, "clock", clock, "metrics", metrics);
+        RequestedLookup requested = TestWiring.wire(new RequestedLookup(), "extractor", extractor,
+                "partCache", partCache, "clock", clock);
+        LcscRetriever lcsc = TestWiring.wire(new LcscRetriever(), "properties", props, "pages", pages,
+                "ranking", ranking, "requested", requested);
+        CachedDistributorRetriever cached = TestWiring.wire(new CachedDistributorRetriever(), "properties", props,
+                "pages", pages, "ranking", ranking, "extractor", extractor, "partCache", partCache,
+                "searchCache", searchCache, "clock", clock, "requested", requested);
+        ParallelRetrieval retrieval = TestWiring.wire(new ParallelRetrieval(), "properties", props,
+                "registry", registry, "parser", parser, "lcscRetriever", lcsc, "cachedRetriever", cached);
+        ResponseAssembler assembler = TestWiring.wire(new ResponseAssembler(), "properties", props,
+                "extractor", extractor, "ranking", ranking, "staleness", stock, "clock", clock);
+        return TestWiring.wire(new PartSearchService(), "properties", props, "registry", registry, "parser", parser,
+                "ranking", ranking, "retrieval", retrieval, "stockRefresher", stock, "assembler", assembler,
+                "metrics", metrics);
     }
 }

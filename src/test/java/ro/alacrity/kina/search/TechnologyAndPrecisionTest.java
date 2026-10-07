@@ -3,6 +3,7 @@ package ro.alacrity.kina.search;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
@@ -25,7 +26,7 @@ class TechnologyAndPrecisionTest {
 
     private final QueryParser parser = new QueryParser();
     private final ParametricExtractor extractor = new ParametricExtractor();
-    private final DeterministicRanker ranker = new DeterministicRanker(extractor);
+    private final DeterministicRanker ranker = TestWiring.deterministicRanker(extractor);
 
     // ---- real distributor records -----------------------------------------------------------------------------------
 

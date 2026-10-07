@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
@@ -26,8 +27,8 @@ class GanRankingTest {
 
     private RankingService ranking() {
         KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
-        return new RankingService(props, new DeterministicRanker(extractor), mock(PartRanker.class), () -> null,
-                new RankingScoreCache(Duration.ofHours(1)));
+        return TestWiring.rankingService(props, TestWiring.deterministicRanker(extractor), mock(PartRanker.class), () -> null,
+                TestWiring.scoreCache(Duration.ofHours(1)));
     }
 
     static Part fet(String mpn, String description) {
@@ -108,7 +109,7 @@ class GanRankingTest {
     // ---- voltage overshoot
 
     private DeterministicRanker.Assessment assess(String query, Part part) {
-        return new DeterministicRanker(extractor).assess(parser.parse(query), part);
+        return TestWiring.deterministicRanker(extractor).assess(parser.parse(query), part);
     }
 
     private static Part mlcc(String volts) {
@@ -154,8 +155,8 @@ class GanRankingTest {
         org.mockito.Mockito.when(model.rank(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any())).thenReturn(Map.of(ro.alacrity.kina.domain.PartKey.of(v600), 9.0,
                 ro.alacrity.kina.domain.PartKey.of(v200), 5.0, ro.alacrity.kina.domain.PartKey.of(v100), 1.0));
-        RankingService blended = new RankingService(props, new DeterministicRanker(extractor), model, () -> null,
-                new RankingScoreCache(Duration.ofHours(1)));
+        RankingService blended = TestWiring.rankingService(props, TestWiring.deterministicRanker(extractor), model, () -> null,
+                TestWiring.scoreCache(Duration.ofHours(1)));
         RankedResults ranked = blended.rank(parser.parse("GaN FET 100V"),
                 Map.of(Distributor.MOUSER, List.of(v600, v200, v100)), Duration.ofSeconds(5));
         assertThat(ranked.mode()).isEqualTo(ro.alacrity.kina.domain.RankingMode.BLENDED);

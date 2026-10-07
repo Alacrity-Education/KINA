@@ -2,11 +2,10 @@ package ro.alacrity.kina.search;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
-
-import java.time.Duration;
 
 /**
  * In-memory cache of raw cross-encoder scores (DESIGN.md section 3.3), keyed by {@code normalizedKey + "|" + partKey},
@@ -17,15 +16,13 @@ public class RankingScoreCache {
 
     static final long MAX_ENTRIES = 50_000;
 
-    private final Cache<String, Double> cache;
+    @Autowired private KinaProperties properties;
+    private Cache<String, Double> cache;
 
-    @Autowired
-    public RankingScoreCache(KinaProperties properties) {
-        this(properties.ranking().scoreCacheTtl());
-    }
-
-    public RankingScoreCache(Duration ttl) {
-        this.cache = Caffeine.newBuilder().expireAfterWrite(ttl).maximumSize(MAX_ENTRIES).build();
+    @PostConstruct
+    void init() {
+        cache = Caffeine.newBuilder().expireAfterWrite(properties.ranking().scoreCacheTtl()).maximumSize(MAX_ENTRIES)
+                .build();
     }
 
     static String key(String normalizedKey, String partKey) {

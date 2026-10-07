@@ -1,5 +1,7 @@
 package ro.alacrity.kina.search;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorClient;
@@ -8,24 +10,16 @@ import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
 
-import java.time.Clock;
 import java.util.List;
 
 /** LCSC retrieval: the JLCPCB SQLite database is the cache, so a search is one live query. */
+@Component
 final class LcscRetriever implements DistributorRetriever {
 
-    private final KinaProperties properties;
-    private final PageCollector pages;
-    private final RankingService ranking;
-    private final RequestedLookup requested;
-
-    LcscRetriever(KinaProperties properties, PageCollector pages, RankingService ranking,
-                  ParametricExtractor extractor, Clock clock) {
-        this.properties = properties;
-        this.pages = pages;
-        this.ranking = ranking;
-        this.requested = new RequestedLookup(extractor, null, clock);
-    }
+    @Autowired private KinaProperties properties;
+    @Autowired private PageCollector pages;
+    @Autowired private RankingService ranking;
+    @Autowired private RequestedLookup requested;
 
     @Override
     public Fetched retrieve(DistributorClient client, Prepared prepared, Progress progress,

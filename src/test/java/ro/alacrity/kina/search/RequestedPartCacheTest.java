@@ -129,9 +129,9 @@ class RequestedPartCacheTest {
         if (service == null) {
             ParametricExtractor extractor = new ParametricExtractor();
             var props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
-            RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
-                    mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
-            service = new PartSearchService(props, TestWiring.registry(List.of(mouser)), new QueryParser(),
+            RankingService ranking = TestWiring.rankingService(props, TestWiring.deterministicRanker(extractor),
+                    mock(PartRanker.class), () -> null, TestWiring.scoreCache(Duration.ofHours(1)));
+            service = RankingFixtures.searchService(props, TestWiring.registry(List.of(mouser)), new QueryParser(),
                     extractor, ranking, partCache, searchCache, clock);
         }
         return service.search(new SearchRequest(query, 5, Set.of(Distributor.MOUSER), false));
@@ -250,7 +250,8 @@ class RequestedPartCacheTest {
     void theListedRowIsReadOnlyForTheSearchThatNamesItsPartNumber() {
         partCache.upsertListed(List.of(requested(0).toBuilder().fetchedAt(clock.instant()).build()));
         Mouser mouser = new Mouser(List.of(keywordPart("M1")), PartLookupResult.notFound());
-        RequestedLookup lookup = new RequestedLookup(new ParametricExtractor(), partCache, clock);
+        RequestedLookup lookup = TestWiring.wire(new RequestedLookup(), "extractor", new ParametricExtractor(),
+                "partCache", partCache, "clock", clock);
         var known = java.util.Map.of(TOKEN,
                 new CachedSearch.RequestedPart(CachedSearch.RequestedPart.LISTED, "65-" + TOKEN));
         DistributorBudget budget = new DistributorBudget(Deadline.after(Duration.ofSeconds(5)), Duration.ofSeconds(5));

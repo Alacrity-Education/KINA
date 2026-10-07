@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
@@ -17,7 +18,7 @@ import static ro.alacrity.kina.search.RankingFixtures.part;
 class DeterministicRankerTest {
 
     private final QueryParser parser = new QueryParser();
-    private final DeterministicRanker ranker = new DeterministicRanker(new ParametricExtractor());
+    private final DeterministicRanker ranker = TestWiring.deterministicRanker(new ParametricExtractor());
 
     private static Part mlcc(String mpn, String capacitance, String voltage, String dielectric, String tolerance,
                              String pkg) {

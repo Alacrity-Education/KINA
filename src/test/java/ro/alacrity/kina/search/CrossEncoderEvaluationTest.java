@@ -58,13 +58,13 @@ class CrossEncoderEvaluationTest {
                 "kina.ranking.cross-encoder.variant", variant,
                 "kina.ranking.cross-encoder.max-candidates", "1000");
         ParametricExtractor extractor = new ParametricExtractor();
-        DeterministicRanker deterministic = new DeterministicRanker(extractor);
-        RankingScoreCache cache = new RankingScoreCache(Duration.ofHours(1));
+        DeterministicRanker deterministic = TestWiring.deterministicRanker(extractor);
+        RankingScoreCache cache = TestWiring.scoreCache(Duration.ofHours(1));
         CrossEncoderModel model = TestWiring.wire(new CrossEncoderModel(), "properties", props, "scoreCache", cache);
         assertThat(model.check()).as("model loads: %s", model.lastError()).isTrue();
         CrossEncoderPartRanker ranker = TestWiring.wire(new CrossEncoderPartRanker(), "properties", props,
                 "extractor", extractor, "owner", model);
-        RankingService service = new RankingService(props, deterministic, ranker, cache);
+        RankingService service = TestWiring.rankingService(props, deterministic, ranker, ranker::status, cache);
         QueryParser parser = new QueryParser();
 
         double detSum = 0;

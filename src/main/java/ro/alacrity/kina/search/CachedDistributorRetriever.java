@@ -1,6 +1,8 @@
 package ro.alacrity.kina.search;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.CachedSearch;
 import ro.alacrity.kina.cache.PartCacheRepository;
@@ -26,31 +28,18 @@ import java.util.Optional;
  * cache write. Built by {@link PartSearchService}.
  */
 @Slf4j
+@Component
 final class CachedDistributorRetriever implements DistributorRetriever {
 
-    private final KinaProperties properties;
-    private final PageCollector pages;
-    private final RankingService ranking;
-    private final ParametricExtractor extractor;
-    private final PartCacheRepository partCache;
-    private final SearchCacheRepository searchCache;
-    private final Clock clock;
-    private final RequestedLookup requested;
+    @Autowired private KinaProperties properties;
+    @Autowired private PageCollector pages;
+    @Autowired private RankingService ranking;
+    @Autowired private ParametricExtractor extractor;
+    @Autowired private PartCacheRepository partCache;
+    @Autowired private SearchCacheRepository searchCache;
+    @Autowired private Clock clock;
+    @Autowired private RequestedLookup requested;
 
-    CachedDistributorRetriever(KinaProperties properties, PageCollector pages, RankingService ranking,
-                               ParametricExtractor extractor, PartCacheRepository partCache,
-                               SearchCacheRepository searchCache, Clock clock) {
-        this.properties = properties;
-        this.pages = pages;
-        this.ranking = ranking;
-        this.extractor = extractor;
-        this.partCache = partCache;
-        this.searchCache = searchCache;
-        this.clock = clock;
-        this.requested = new RequestedLookup(extractor, partCache, clock);
-    }
-
-    /** One rung of the relaxation ladder that produced parts: its result, its phrase and what it loosened. */
     private record Attempt(Collected collected, String phrase, List<String> relaxed) {
     }
 

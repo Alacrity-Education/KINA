@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
@@ -23,7 +24,7 @@ class ConstraintPolicyTest {
 
     private final QueryParser parser = new QueryParser();
     private final ParametricExtractor extractor = new ParametricExtractor();
-    private final DeterministicRanker ranker = new DeterministicRanker(extractor);
+    private final DeterministicRanker ranker = TestWiring.deterministicRanker(extractor);
     private final ConstraintPolicy policy = ConstraintPolicy.DEFAULTS;
 
     private List<String> conflicts(String query, Part part) {
@@ -427,8 +428,8 @@ class ConstraintPolicyTest {
                 lcsc("V2", "25V 4.7uF X7R ±10% 1206", category, "1206"),
                 lcsc("P1", "25V 22uF X7R ±10% 1210", category, "1210")));
         KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
-        RankingService service = new RankingService(props, ranker, new RankingServiceTest.FakeRanker(),
-                () -> RankingServiceTest.READY, new RankingScoreCache(props.ranking().scoreCacheTtl()));
+        RankingService service = TestWiring.rankingService(props, ranker, new RankingServiceTest.FakeRanker(),
+                () -> RankingServiceTest.READY, TestWiring.scoreCache(props.ranking().scoreCacheTtl()));
         RankingService.RankedResults r = service.rank(q, fetched, Duration.ofSeconds(1));
         assertThat(r.byDistributor().get(Distributor.LCSC)).extracting(p -> p.part().distributorPartNumber())
                 .containsExactly("OK");

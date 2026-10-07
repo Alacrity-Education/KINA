@@ -1,5 +1,7 @@
 package ro.alacrity.kina.search;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
@@ -22,22 +24,14 @@ import java.util.Map;
  * Assembly stage of a search: turns the fetched and ranked parts into the {@link SearchResponse} (per-distributor
  * entries, hints, relaxed constraints). Built by {@link PartSearchService}.
  */
+@Component
 final class ResponseAssembler {
 
-    private final KinaProperties properties;
-    private final ParametricExtractor extractor;
-    private final RankingService ranking;
-    private final StockRefresher staleness;
-    private final Clock clock;
-
-    ResponseAssembler(KinaProperties properties, ParametricExtractor extractor, RankingService ranking,
-                      StockRefresher staleness, Clock clock) {
-        this.properties = properties;
-        this.extractor = extractor;
-        this.ranking = ranking;
-        this.staleness = staleness;
-        this.clock = clock;
-    }
+    @Autowired private KinaProperties properties;
+    @Autowired private ParametricExtractor extractor;
+    @Autowired private RankingService ranking;
+    @Autowired private StockRefresher staleness;
+    @Autowired private Clock clock;
 
     SearchResponse assemble(Prepared prepared, Map<Distributor, Fetched> fetched,
                             RankedResults ranked, String note) {

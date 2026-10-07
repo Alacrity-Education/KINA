@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
@@ -24,7 +25,7 @@ class RankingServiceTest {
 
     private final QueryParser parser = new QueryParser();
     private final ParametricExtractor extractor = new ParametricExtractor();
-    private final DeterministicRanker deterministic = new DeterministicRanker(extractor);
+    private final DeterministicRanker deterministic = TestWiring.deterministicRanker(extractor);
 
     static final CrossEncoderPartRanker.Status READY = new CrossEncoderPartRanker.Status(true, true, "int8",
             "/data/cross-encoder", "c5ee24cb", "onnx/model_quint8_avx2.onnx", 4, null, 85.0, 3);
@@ -67,8 +68,8 @@ class RankingServiceTest {
         List<String> kv = new ArrayList<>(List.of("kina.search.hard-constraints.capacitor", "mounting"));
         kv.addAll(List.of(properties));
         KinaProperties props = RankingFixtures.properties(kv.toArray(String[]::new));
-        return new RankingService(props, deterministic, ranker, () -> READY,
-                new RankingScoreCache(props.ranking().scoreCacheTtl()));
+        return TestWiring.rankingService(props, deterministic, ranker, () -> READY,
+                TestWiring.scoreCache(props.ranking().scoreCacheTtl()));
     }
 
     private static Part mlcc(Distributor d, String number, String description, int stock, String price) {
@@ -349,13 +350,13 @@ class RankingServiceTest {
                 "c5ee24cb", true, 40, 0.3, null, 4, 85.0));
 
         KinaProperties disabled = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
-        RankingService off = new RankingService(disabled, deterministic, new FakeRanker(), () -> READY,
-                new RankingScoreCache(Duration.ofHours(1)));
+        RankingService off = TestWiring.rankingService(disabled, deterministic, new FakeRanker(), () -> READY,
+                TestWiring.scoreCache(Duration.ofHours(1)));
         assertThat(off.status().ready()).isFalse();
         assertThat(off.status().crossEncoderEnabled()).isFalse();
-        RankingService broken = new RankingService(disabled, deterministic, new FakeRanker(), () -> {
+        RankingService broken = TestWiring.rankingService(disabled, deterministic, new FakeRanker(), () -> {
             throw new IllegalStateException("x");
-        }, new RankingScoreCache(Duration.ofHours(1)));
+        }, TestWiring.scoreCache(Duration.ofHours(1)));
         assertThat(broken.status().ready()).isFalse();
         assertThat(broken.status().lastError()).isEqualTo("status unavailable");
     }

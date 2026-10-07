@@ -268,7 +268,7 @@ class PartSearchServiceTest {
             return new RankedResults(out, RankingMode.BLENDED, null);
         });
 
-        service = new PartSearchService(props, TestWiring.registry(List.copyOf(clients)), new QueryParser(),
+        service = RankingFixtures.searchService(props, TestWiring.registry(List.copyOf(clients)), new QueryParser(),
                 new ParametricExtractor(), ranking, partCache, searchCache, clock);
         return service;
     }
@@ -934,7 +934,7 @@ class PartSearchServiceTest {
         FakeClient lcsc = new FakeClient(Distributor.LCSC).records(5, i -> part(Distributor.LCSC, "C" + i));
         // the first ranking call consumes the whole batch budget
         RankingService slow = rankingThatSleepsOnFirstCall(Duration.ofMillis(700));
-        service = new PartSearchService(RankingFixtures.properties("kina.ranking.batch-timeout", "600ms"),
+        service = RankingFixtures.searchService(RankingFixtures.properties("kina.ranking.batch-timeout", "600ms"),
                 TestWiring.registry(List.of(lcsc)), new QueryParser(), new ParametricExtractor(), slow,
                 mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
 
@@ -961,9 +961,9 @@ class PartSearchServiceTest {
         KinaProperties props = RankingFixtures.properties("kina.ranking.batch-timeout", "0s",
                 "kina.ranking.cross-encoder.enabled", "false");
         ParametricExtractor extractor = new ParametricExtractor();
-        RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
-                mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
-        service = new PartSearchService(props, TestWiring.registry(List.of(lcsc)), new QueryParser(), extractor,
+        RankingService ranking = TestWiring.rankingService(props, TestWiring.deterministicRanker(extractor),
+                mock(PartRanker.class), () -> null, TestWiring.scoreCache(Duration.ofHours(1)));
+        service = RankingFixtures.searchService(props, TestWiring.registry(List.of(lcsc)), new QueryParser(), extractor,
                 ranking, mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
 
         BatchSearchResponse response = service.searchBatch(BatchSearchRequest.of(List.of(
@@ -1136,9 +1136,9 @@ class PartSearchServiceTest {
         });
         KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
         ParametricExtractor extractor = new ParametricExtractor();
-        RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
-                mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
-        service = new PartSearchService(props, TestWiring.registry(List.copyOf(clients)), new QueryParser(),
+        RankingService ranking = TestWiring.rankingService(props, TestWiring.deterministicRanker(extractor),
+                mock(PartRanker.class), () -> null, TestWiring.scoreCache(Duration.ofHours(1)));
+        service = RankingFixtures.searchService(props, TestWiring.registry(List.copyOf(clients)), new QueryParser(),
                 extractor, ranking, mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
         return service.search(new SearchRequest(query, 10, Set.of(), false, 1, detail));
     }

@@ -1,6 +1,8 @@
 package ro.alacrity.kina.search;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.Deadline;
@@ -29,39 +31,18 @@ import java.util.Set;
  * about to be returned and moves stale parts below the fresh ones. Built by {@link PartSearchService}.
  */
 @Slf4j
+@Component
 final class StockRefresher {
 
     /** Rounds of refreshing the parts about to be returned (a sold-out part pulls the next one into the top). */
     static final int STOCK_REFRESH_ROUNDS = 2;
 
-    private final KinaProperties properties;
-    private final DistributorRegistry registry;
-    private final PartCacheRepository partCache;
-    private final Clock clock;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
+    @Autowired private KinaProperties properties;
+    @Autowired private DistributorRegistry registry;
+    @Autowired private PartCacheRepository partCache;
+    @Autowired private Clock clock;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
 
-    StockRefresher(KinaProperties properties, DistributorRegistry registry, PartCacheRepository partCache,
-                   Clock clock) {
-        this.properties = properties;
-        this.registry = registry;
-        this.partCache = partCache;
-        this.clock = clock;
-    }
-
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
-    }
-
-    /**
-     * Refreshes the stock and prices of the parts about to be returned whose cached figures are older than
-     * {@code kina.cache.stock-ttl} (DESIGN.md 3.2 "Stock refresh"): one cheap distributor call per batch of part numbers
-     * (TME {@code /products/data}, Mouser part-number search), only for Mouser and TME and only for the top
-     * {@code max_results} parts. Refreshed parts get the new figures and {@code fetchedAt = now} and are written back to
-     * the cache; a part that sold out is removed from the list and marked sold out in the cache (its metadata stays). A
-     * failed refresh keeps the cached figures. Then parts whose figures are older than {@code kina.cache.ttl} (refresh
-     * failed, not attempted, or the distributor is not configured) are stale: they rank below the fresh ones
-     * ({@link #demoteStale}) and are returned with {@code stale: true}.
-     */
     RankedResults refresh(Prepared prepared, RankedResults ranked, Deadline deadline) {
         Instant now = clock.instant();
         Instant staleBefore = now.minus(properties.cache().stockTtl());

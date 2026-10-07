@@ -8,7 +8,6 @@ import org.junit.jupiter.api.io.TempDir;
 import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.config.KinaProperties.CrossEncoder.Variant;
-import ro.alacrity.kina.search.RankingScoreCache;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -111,7 +110,7 @@ class CrossEncoderModelTest {
             return new CrossEncoderPartRankerTest.FakeBackend();
         };
         return TestWiring.wire(new CrossEncoderModel(), "properties", properties,
-                "scoreCache", new RankingScoreCache(Duration.ofHours(1)), "backends", backends,
+                "scoreCache", TestWiring.scoreCache(Duration.ofHours(1)), "backends", backends,
                 "cpuFlags", cpuFlags, "arch", "amd64");
     }
 

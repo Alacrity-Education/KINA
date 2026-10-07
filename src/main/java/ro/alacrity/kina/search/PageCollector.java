@@ -1,6 +1,8 @@
 package ro.alacrity.kina.search;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
@@ -22,6 +24,7 @@ import java.util.Set;
  * meet the request are held. Built by {@link PartSearchService}.
  */
 @Slf4j
+@Component
 final class PageCollector {
 
     /**
@@ -30,24 +33,10 @@ final class PageCollector {
      */
     static final int EXTRA_OUT_OF_STOCK_PAGES = 2;
 
-    private final ParametricExtractor extractor;
-    private final Clock clock;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
+    @Autowired private ParametricExtractor extractor;
+    @Autowired private Clock clock;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
 
-    PageCollector(ParametricExtractor extractor, Clock clock) {
-        this.extractor = extractor;
-        this.clock = clock;
-    }
-
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
-    }
-
-    /**
-     * Parts collected for one query plus the paging state to store in {@code cached_searches}, how many of them meet
-     * the request ({@link Check}), and what LCSC's database search dropped (constraint names, free-text
-     * keywords).
-     */
     record Collected(List<Part> all, List<Part> fetched, Integer totalResults, boolean exhausted, int nextOffset,
                      String error, List<String> relaxed, List<String> droppedKeywords, int meeting) {
 

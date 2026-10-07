@@ -23,6 +23,7 @@ import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.domain.ResponseDetail;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.metrics.Metric;
 import ro.alacrity.kina.metrics.MetricsStore;
 import ro.alacrity.kina.search.RankingService.RankOptions;
@@ -67,7 +68,7 @@ class AuditRoundThreeTest {
 
     final QueryParser parser = new QueryParser();
     final ParametricExtractor extractor = new ParametricExtractor();
-    final DeterministicRanker deterministic = new DeterministicRanker(extractor);
+    final DeterministicRanker deterministic = TestWiring.deterministicRanker(extractor);
     final Map<String, Part> cachedParts = new ConcurrentHashMap<>();
     final Set<String> soldOut = ConcurrentHashMap.newKeySet();
     final Map<String, CachedSearch> cachedSearches = new ConcurrentHashMap<>();
@@ -167,6 +168,9 @@ class AuditRoundThreeTest {
                 "MLCC SMD capacitors", 1000, Map.of(), Map.of(), NOW);
     }
 
+    /** Counts of the services built by {@link #service}. */
+    KinaMetrics metrics = KinaMetrics.NOOP;
+
     PartSearchService service(List<? extends DistributorClient> clients, String... properties) {
         List<String> kv = new ArrayList<>(List.of("kina.ranking.cross-encoder.enabled", "false"));
         kv.addAll(List.of(properties));
@@ -227,17 +231,17 @@ class AuditRoundThreeTest {
             cachedSearches.remove(inv.getArgument(0) + "|" + inv.getArgument(1));
             return null;
         }).when(searchCache).delete(any(), anyString());
-        RankingService ranking = new RankingService(props, deterministic, new RankingServiceTest.FakeRanker(),
-                () -> RankingServiceTest.READY, new RankingScoreCache(props.ranking().scoreCacheTtl()));
-        service = new PartSearchService(props, TestWiring.registry(List.copyOf(clients)), parser, extractor,
-                ranking, partCache, searchCache, Clock.fixed(NOW, ZoneOffset.UTC));
+        RankingService ranking = TestWiring.rankingService(props, deterministic, new RankingServiceTest.FakeRanker(),
+                () -> RankingServiceTest.READY, TestWiring.scoreCache(props.ranking().scoreCacheTtl()));
+        service = RankingFixtures.searchService(props, TestWiring.registry(List.copyOf(clients)), parser, extractor,
+                ranking, partCache, searchCache, Clock.fixed(NOW, ZoneOffset.UTC), metrics);
         return service;
     }
 
     RankingService ranking(RankingServiceTest.FakeRanker ce, String... properties) {
         KinaProperties props = RankingFixtures.properties(properties);
-        return new RankingService(props, deterministic, ce, () -> RankingServiceTest.READY,
-                new RankingScoreCache(props.ranking().scoreCacheTtl()));
+        return TestWiring.rankingService(props, deterministic, ce, () -> RankingServiceTest.READY,
+                TestWiring.scoreCache(props.ranking().scoreCacheTtl()));
     }
 
     static Map<Distributor, List<Part>> fetched(Distributor d, Part... parts) {
@@ -764,7 +768,8 @@ class AuditRoundThreeTest {
         mouser.stock.put("M1", new StockUpdate(42, List.of()));
         mouser.stock.put("M2", new StockUpdate(7, List.of()));
         MetricsStore store = TestWiring.metricsStore(null);
-        service(List.of(mouser)).setMetrics(TestWiring.metrics(store));
+        metrics = TestWiring.metrics(store);
+        service(List.of(mouser));
 
         service.search(request(query, 2, false, Distributor.MOUSER));
 
@@ -776,7 +781,7 @@ class AuditRoundThreeTest {
         cachedSearches.clear();
         PhraseClient live = new PhraseClient(Distributor.MOUSER);
         service.shutdown();
-        service(List.of(live)).setMetrics(TestWiring.metrics(store));
+        service(List.of(live));
         service.search(request(query, 2, false, Distributor.MOUSER));
         String phrase = live.queries.getFirst();
         live.queries.clear();
