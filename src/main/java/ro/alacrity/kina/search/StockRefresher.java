@@ -79,8 +79,13 @@ final class StockRefresher {
             Set<String> attempted = new HashSet<>();
             for (int round = 0; client.isPresent() && round < STOCK_REFRESH_ROUNDS && deadline.remainingNanos() > 0;
                  round++) {
-                List<String> due = kept.subList(0, Math.min(prepared.maxResults(), kept.size())).stream()
-                        .map(RankedPart::part)
+                // the top max_results, and a requested part listed without stock (it may take the last place, and it
+                // may be back in stock: the same 24 h rule)
+                List<RankedPart> current = kept;
+                int top = Math.min(prepared.maxResults(), current.size());
+                List<String> due = java.util.stream.IntStream.range(0, current.size())
+                        .filter(i -> i < top || current.get(i).part().stock() <= 0)
+                        .mapToObj(i -> current.get(i).part())
                         .filter(p -> p.fetchedAt() == null || p.fetchedAt().isBefore(staleBefore))
                         .map(Part::distributorPartNumber)
                         .filter(attempted::add)
@@ -102,12 +107,21 @@ final class StockRefresher {
                     break;
                 }
                 List<Part> refreshed = new ArrayList<>();
+                List<Part> stillListed = new ArrayList<>();
                 List<String> soldOut = new ArrayList<>();
                 List<RankedPart> next = new ArrayList<>(kept.size());
                 for (RankedPart r : kept) {
                     StockUpdate update = updates == null ? null : updates.get(r.part().distributorPartNumber());
                     if (update == null) {
                         next.add(r);
+                    } else if (update.stock() <= 0 && r.part().stock() <= 0) {
+                        // a requested part listed without stock stays listed, with its new prices and age
+                        Part p = r.part().toBuilder().stock(0)
+                                .prices(update.prices().isEmpty() ? r.part().prices() : update.prices())
+                                .fetchedAt(now).build();
+                        stillListed.add(p);
+                        next.add(new RankedPart(p, r.score(), r.match(), r.mismatches(), r.unverified(),
+                                r.belowSpec()));
                     } else if (update.stock() <= 0) {
                         soldOut.add(r.part().distributorPartNumber());
                     } else {
@@ -123,10 +137,18 @@ final class StockRefresher {
                 changed = true;
                 log.info("{} stock refresh: {} parts updated, {} sold out", distributor, refreshed.size(),
                         soldOut.size());
-                metrics.stockRefreshed(distributor, "ok", refreshed.size());
+                metrics.stockRefreshed(distributor, "ok", refreshed.size() + stillListed.size());
                 metrics.stockRefreshed(distributor, "out_of_stock", soldOut.size());
-                metrics.stockRefreshed(distributor, "failed", due.size() - refreshed.size() - soldOut.size());
+                metrics.stockRefreshed(distributor, "failed",
+                        due.size() - refreshed.size() - stillListed.size() - soldOut.size());
                 writeBack(distributor, refreshed, soldOut);
+                if (!stillListed.isEmpty()) {
+                    try {
+                        partCache.upsertListed(stillListed);
+                    } catch (RuntimeException e) {
+                        log.warn("Writing refreshed listed {} parts failed: {}", distributor, e.toString());
+                    }
+                }
                 if (soldOut.isEmpty()) {
                     break;
                 }

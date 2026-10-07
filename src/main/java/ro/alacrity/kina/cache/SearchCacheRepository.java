@@ -10,6 +10,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static ro.alacrity.kina.cache.PartCacheRepository.utc;
@@ -24,13 +25,18 @@ import static ro.alacrity.kina.cache.PartCacheRepository.utc;
 @RequiredArgsConstructor
 public class SearchCacheRepository {
 
+    private static final tools.jackson.core.type.TypeReference<Map<String, CachedSearch.RequestedPart>> REQUESTED_TYPE =
+            new tools.jackson.core.type.TypeReference<>() {
+            };
+
     private final JdbcClient jdbc;
     private final JsonMapper jsonMapper;
 
     public Optional<CachedSearch> find(Distributor distributor, String queryKey) {
         List<Optional<CachedSearch>> rows = jdbc.sql("""
                         SELECT total_results, part_numbers::text AS part_numbers, exhausted, fetched_at, next_offset,
-                               fallback_query, out_of_stock_matches, constraints_relaxed::text AS constraints_relaxed
+                               fallback_query, out_of_stock_matches, constraints_relaxed::text AS constraints_relaxed,
+                               requested_parts::text AS requested_parts
                         FROM cached_searches WHERE distributor = ? AND query_key = ?""")
                 .params(distributor.name(), queryKey)
                 .query((rs, n) -> {
@@ -45,10 +51,13 @@ public class SearchCacheRepository {
                         String relaxedJson = rs.getString("constraints_relaxed");
                         List<String> relaxed = relaxedJson == null ? null
                                 : List.of(jsonMapper.readValue(relaxedJson, String[].class));
+                        String requestedJson = rs.getString("requested_parts");
+                        Map<String, CachedSearch.RequestedPart> requested = requestedJson == null ? null
+                                : jsonMapper.readValue(requestedJson, REQUESTED_TYPE);
                         return Optional.of(new CachedSearch(distributor, queryKey, totalResults,
                                 List.of(partNumbers), rs.getBoolean("exhausted"),
                                 rs.getObject("fetched_at", OffsetDateTime.class).toInstant(), nextOffset,
-                                rs.getString("fallback_query"), outOfStockMatches, relaxed));
+                                rs.getString("fallback_query"), outOfStockMatches, relaxed, requested));
                     } catch (RuntimeException e) {
                         log.warn("Skipping unreadable cached_searches row for {} '{}': {}", distributor, queryKey,
                                 e.getMessage());
@@ -64,20 +73,44 @@ public class SearchCacheRepository {
         jdbc.sql("""
                         INSERT INTO cached_searches
                           (distributor, query_key, total_results, part_numbers, exhausted, fetched_at, next_offset,
-                           fallback_query, out_of_stock_matches, constraints_relaxed)
-                        VALUES (?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?::jsonb)
+                           fallback_query, out_of_stock_matches, constraints_relaxed, requested_parts)
+                        VALUES (?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb)
                         ON CONFLICT (distributor, query_key) DO UPDATE SET
                           total_results = EXCLUDED.total_results, part_numbers = EXCLUDED.part_numbers,
                           exhausted = EXCLUDED.exhausted, fetched_at = EXCLUDED.fetched_at,
                           next_offset = EXCLUDED.next_offset, fallback_query = EXCLUDED.fallback_query,
                           out_of_stock_matches = EXCLUDED.out_of_stock_matches,
-                          constraints_relaxed = EXCLUDED.constraints_relaxed""")
+                          constraints_relaxed = EXCLUDED.constraints_relaxed,
+                          requested_parts = EXCLUDED.requested_parts""")
                 .params(search.distributor().name(), search.queryKey(), search.totalResults(),
                         jsonMapper.writeValueAsString(search.partNumbers()), search.exhausted(),
                         utc(search.fetchedAt()), search.nextOffset(), search.fallbackQuery(),
                         search.outOfStockMatches(), search.constraintsRelaxed() == null ? null
-                                : jsonMapper.writeValueAsString(search.constraintsRelaxed()))
+                                : jsonMapper.writeValueAsString(search.constraintsRelaxed()),
+                        search.requestedParts() == null ? null
+                                : jsonMapper.writeValueAsString(search.requestedParts()))
                 .update();
+    }
+
+    /**
+     * Records the outcome of requested part-number lookups on an existing row (DESIGN.md 3.2 "Requested part
+     * numbers"): the in-stock part numbers found are appended to {@code part_numbers} and {@code outcomes} merged into
+     * {@code requested_parts}; {@code fetched_at} is unchanged, so the outcome lives as long as the list. No-op when
+     * the row does not exist (a search that is not cached).
+     *
+     * @return true when a row was updated
+     */
+    public boolean recordRequested(Distributor distributor, String queryKey, List<String> appendPartNumbers,
+                                   Map<String, CachedSearch.RequestedPart> outcomes) {
+        return jdbc.sql("""
+                        UPDATE cached_searches
+                           SET part_numbers = part_numbers || ?::jsonb,
+                               requested_parts = COALESCE(requested_parts, '{}'::jsonb) || ?::jsonb
+                         WHERE distributor = ? AND query_key = ?""")
+                .params(jsonMapper.writeValueAsString(appendPartNumbers == null ? List.of() : appendPartNumbers),
+                        jsonMapper.writeValueAsString(outcomes == null ? Map.of() : outcomes), distributor.name(),
+                        queryKey)
+                .update() > 0;
     }
 
     /** Deletes the row for {@code (distributor, queryKey)} (a search that must not be served from the cache). */

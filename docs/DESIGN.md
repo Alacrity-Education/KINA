@@ -369,10 +369,22 @@ the phrase that produced the parts. The third audit saw `total 55, fetched 6, ex
 (section 3.4) and a part number is carried by none of the fetched parts (MPN or distributor part number equal to it or
 starting with it), it is looked up directly (`DistributorClient.lookup`, one call per missing part number, within the
 distributor's budget; skipped when the retrieval failed). An in-stock part joins the fetched parts (and `cached_parts`;
-it is not added to the cached search list, so a repeated search looks it up again); a part listed without stock joins
-`Fetched.listed` (section 2, stock rule); a failed lookup is logged and changes nothing. Live 2026-10-07: Mouser's
+its number is appended to the cached search list); a part listed without stock joins `Fetched.listed` (section 2, stock
+rule); a failed lookup is logged and changes nothing.
+**The outcome is part of the cached search** (V10 `cached_searches.requested_parts`, written by
+`SearchCacheRepository.recordRequested` on the existing row; `fetched_at` is unchanged, so it is fresh exactly as
+long as the list: `kina.cache.ttl`, or `kina.cache.empty-result-ttl` for an empty list). Per part number: `found`
+(in stock, number appended to `part_numbers`, so a cache hit holds it), `listed` (stock 0: the number is **not** in
+`part_numbers`, whose rows must be in stock; a cache hit reads its `in_stock = false` row with
+`PartCacheRepository.findListed`, only for a part number the query names and only when the row is the part that number
+requests: the query key contains the part number, so such a hit is always an explicit search) or `not_found` (not
+retried). A cache hit (or a `PARTIAL` extension, which keeps the outcomes) therefore makes no lookup call; a live
+search (miss, bypass, an expired list) starts without outcomes and looks the part numbers up again; a search that is
+not stored (none of its parts meets the request) records nothing. A listed part follows the stock refresh of step 5
+like any part (refreshed when older than `kina.cache.stock-ttl`, also outside the top `max_results`): still without
+stock, its row gets the new prices and age; back in stock, it is written with `in_stock = true` and served normally. Live 2026-10-07: Mouser's
 keyword search for `uP1966E GaN half bridge gate driver` does not return 65-UP1966E (3685 in stock); the lookup does,
-and it ranks first. A part number in a cached search list costs no call.
+and it ranks first. A part number whose outcome a fresh cached search holds costs no call.
 
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
@@ -1694,7 +1706,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V9__metrics_counters_type_tag.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V10__cached_search_requested_parts.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -1796,6 +1808,12 @@ ALTER TABLE cached_searches ADD COLUMN out_of_stock_matches INTEGER;
 -- as ["dielectric"]), so a cache hit reports the same constraints_relaxed (section 3.2); NULL = unknown (older rows,
 -- derived from fallback_query when read)
 ALTER TABLE cached_searches ADD COLUMN constraints_relaxed JSONB;
+-- V10__cached_search_requested_parts.sql: the outcome of the direct lookup of each part number the query names
+-- (section 3.2 "Requested part numbers"), by the part number as sent:
+-- {"EPC2302": {"status": "listed", "part_number": "65-EPC2302"}}; status found (in stock, its number is also in
+-- part_numbers), listed (no ships-now stock; its cached_parts row has in_stock = false) or not_found. NULL = nothing
+-- looked up (older rows, queries without part numbers). It lives as long as the list (fetched_at is unchanged)
+ALTER TABLE cached_searches ADD COLUMN requested_parts JSONB;
 
 -- V4__group_authorisation.sql (section 7.1 to 7.3)
 ALTER TABLE users

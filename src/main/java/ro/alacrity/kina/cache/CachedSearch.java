@@ -2,8 +2,11 @@ package ro.alacrity.kina.cache;
 
 import ro.alacrity.kina.domain.Distributor;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -24,6 +27,8 @@ import java.util.Objects;
  *                      (rows written before V5)
  * @param constraintsRelaxed the constraints the relaxation ladder loosened to build the list ({@code dielectric},
  *                      {@code package}, {@code tolerance}); null when unknown (rows written before V7)
+ * @param requestedParts the outcome of the direct lookup of each part number the query names, by the part number as
+ *                      sent (V10); null when nothing was looked up (or the row predates V10)
  */
 public record CachedSearch(
         Distributor distributor,
@@ -35,8 +40,33 @@ public record CachedSearch(
         Integer nextOffset,
         String fallbackQuery,
         Integer outOfStockMatches,
-        List<String> constraintsRelaxed
+        List<String> constraintsRelaxed,
+        Map<String, RequestedPart> requestedParts
 ) {
+
+    /**
+     * The outcome of one requested part-number lookup (DESIGN.md 3.2 "Requested part numbers").
+     *
+     * @param status     {@value #FOUND} (in stock; its number is in {@code partNumbers}), {@value #LISTED} (listed
+     *                   without ships-now stock; the {@code cached_parts} row has {@code in_stock = false}) or
+     *                   {@value #NOT_FOUND}
+     * @param partNumber the distributor part number, null for {@value #NOT_FOUND}
+     */
+    public record RequestedPart(@JsonProperty("status") String status,
+                                @JsonProperty("part_number") String partNumber) {
+
+        public static final String FOUND = "found";
+        public static final String LISTED = "listed";
+        public static final String NOT_FOUND = "not_found";
+    }
+
+    /** A row without requested parts. */
+    public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
+                        boolean exhausted, Instant fetchedAt, Integer nextOffset, String fallbackQuery,
+                        Integer outOfStockMatches, List<String> constraintsRelaxed) {
+        this(distributor, queryKey, totalResults, partNumbers, exhausted, fetchedAt, nextOffset, fallbackQuery,
+                outOfStockMatches, constraintsRelaxed, null);
+    }
 
     /** A row without the loosened constraints (unknown). */
     public CachedSearch(Distributor distributor, String queryKey, Integer totalResults, List<String> partNumbers,
@@ -70,5 +100,7 @@ public record CachedSearch(
         Objects.requireNonNull(fetchedAt, "fetchedAt");
         partNumbers = partNumbers == null ? List.of() : List.copyOf(partNumbers);
         constraintsRelaxed = constraintsRelaxed == null ? null : List.copyOf(constraintsRelaxed);
+        requestedParts = requestedParts == null ? null
+                : java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(requestedParts));
     }
 }

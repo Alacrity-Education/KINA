@@ -61,8 +61,28 @@ final class CachedDistributorRetriever implements DistributorRetriever {
     @Override
     public Fetched retrieve(DistributorClient client, Prepared prepared, Progress progress,
                             DistributorBudget deadline) {
-        // a part number the query names that the search did not bring is looked up directly
-        return requested.complete(client, prepared, search(client, prepared, progress, deadline), deadline);
+        // a part number the query names that the search did not bring is looked up directly, once per cached search
+        Fetched searched = search(client, prepared, progress, deadline);
+        if (!prepared.parsed().namesPartNumber() || searched.error() != null) {
+            return searched;
+        }
+        Distributor distributor = client.distributor();
+        String queryKey = prepared.parsed().normalizedKey();
+        Map<String, CachedSearch.RequestedPart> known = Map.of();
+        if (searched.cache() == CacheStatus.HIT || searched.cache() == CacheStatus.PARTIAL) {
+            // the key contains the part numbers, so this row belongs to an explicit part-number search
+            known = readCachedSearch(distributor, queryKey).map(CachedSearch::requestedParts).orElse(Map.of());
+        }
+        RequestedLookup.Result result = requested.complete(client, prepared, searched, deadline, known);
+        if (!result.learned().isEmpty()) {
+            try {
+                searchCache.recordRequested(distributor, queryKey, result.inStock(), result.learned());
+            } catch (RuntimeException e) {
+                log.warn("Caching the requested part numbers of {} '{}' failed: {}", distributor, queryKey,
+                        e.toString());
+            }
+        }
+        return result.fetched();
     }
 
     private Fetched search(DistributorClient client, Prepared prepared, Progress progress,
@@ -164,7 +184,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
             fallbackQuery = firstWithParts.phrase();
             relaxed = firstWithParts.relaxed();
         }
-        store(distributor, queryKey, collected, now, fallbackQuery, progress.outOfStock, relaxed);
+        // a live list starts without lookup outcomes: an expired list looks its part numbers up again
+        store(distributor, queryKey, collected, now, fallbackQuery, progress.outOfStock, relaxed, null);
         return collected.toFetched(distributor, status, fallbackQuery).withOutOfStockMatches(progress.outOfStock)
                 .withConstraintsRelaxed(relaxed);
     }
@@ -197,7 +218,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
                     .withConstraintsRelaxed(relaxed);
         }
         store(distributor, search.queryKey(), collected, search.fetchedAt(), fallbackQuery, progress.outOfStock,
-                relaxed);
+                relaxed, search.requestedParts());
         return collected.toFetched(distributor, CacheStatus.PARTIAL, fallbackQuery)
                 .withOutOfStockMatches(progress.outOfStock).withConstraintsRelaxed(relaxed);
     }
@@ -304,7 +325,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
      * propagated.
      */
     private void store(Distributor distributor, String queryKey, Collected collected, Instant listFetchedAt,
-                       String fallbackQuery, int outOfStockMatches, List<String> constraintsRelaxed) {
+                       String fallbackQuery, int outOfStockMatches, List<String> constraintsRelaxed,
+                       Map<String, CachedSearch.RequestedPart> requestedParts) {
         try {
             partCache.upsertAll(collected.fetched());
             if (!collected.all().isEmpty() && collected.meeting() == 0) {
@@ -315,7 +337,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
             }
             searchCache.upsert(new CachedSearch(distributor, queryKey, collected.totalResults(),
                     collected.all().stream().map(Part::distributorPartNumber).toList(), collected.exhausted(),
-                    listFetchedAt, collected.nextOffset(), fallbackQuery, outOfStockMatches, constraintsRelaxed));
+                    listFetchedAt, collected.nextOffset(), fallbackQuery, outOfStockMatches, constraintsRelaxed,
+                    requestedParts));
         } catch (RuntimeException e) {
             log.warn("Caching {} results for '{}' failed: {}", distributor, queryKey, e.toString());
         }

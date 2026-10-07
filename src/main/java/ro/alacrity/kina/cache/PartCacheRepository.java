@@ -248,6 +248,30 @@ public class PartCacheRepository {
         return rows.isEmpty() ? Optional.empty() : rows.getFirst();
     }
 
+    /**
+     * The row of a part an explicit part-number lookup found listed without ships-now stock ({@link #upsertListed}:
+     * {@code in_stock = false}, stock 0 in the payload). Only for the search that names this part number (DESIGN.md 2,
+     * stock rule): the caller must check that the query requests it; never use it to fill a keyword search.
+     */
+    public Optional<Part> findListed(Distributor distributor, String partNumber) {
+        List<Optional<Part>> rows = jdbc.sql("""
+                        SELECT part_number, payload::text AS payload FROM cached_parts
+                        WHERE distributor = ? AND part_number = ? AND NOT in_stock""")
+                .params(distributor.name(), partNumber)
+                .query((rs, n) -> {
+                    try {
+                        Part part = jsonMapper.readValue(rs.getString("payload"), Part.class);
+                        return part.stock() <= 0 ? Optional.of(part) : Optional.<Part>empty();
+                    } catch (RuntimeException e) {
+                        log.warn("Skipping unreadable cached_parts payload for {}:{}: {}", distributor, partNumber,
+                                e.getMessage());
+                        return Optional.<Part>empty();
+                    }
+                })
+                .list();
+        return rows.isEmpty() ? Optional.empty() : rows.getFirst();
+    }
+
     /** Deletes one part. */
     public void delete(Distributor distributor, String partNumber) {
         jdbc.sql("DELETE FROM cached_parts WHERE distributor = ? AND part_number = ?")
