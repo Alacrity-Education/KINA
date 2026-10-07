@@ -11,7 +11,7 @@
         <form method="get" th:action="@{/}" id="search-form">
             <div class="row">
                 <input type="text" name="q" maxlength="300" required autofocus
-                       placeholder="e.g. 10k 0603 resistor 1%" aria-label="Part description" th:value="${q}">
+                       placeholder="e.g. 10k 0603 resistor 1%" aria-label="Part description" th:value="${form.q}">
                 <button type="submit" id="search-button">Search</button>
             </div>
             <div class="options">
@@ -23,16 +23,174 @@
                         <span class="muted" th:unless="${d.configured}">(not configured)</span>
                     </label>
                 </fieldset>
+                <fieldset>
+                    <legend>Results per distributor</legend>
+                    <select name="max_results" aria-label="Results per distributor">
+                        <option th:each="n : ${maxResultsChoices}" th:value="${n}" th:text="${n}"
+                                th:selected="${n == form.maxResults}">10</option>
+                    </select>
+                </fieldset>
+                <fieldset>
+                    <legend>Quantity</legend>
+                    <input type="number" name="quantity" min="1" max="10000000" step="1" style="width:8em"
+                           aria-label="Quantity" th:value="${form.quantity}">
+                </fieldset>
+                <fieldset>
+                    <legend>Detail</legend>
+                    <label><input type="radio" name="detail" value="compact"
+                                  th:checked="${form.detail == 'compact'}"> compact</label>
+                    <label><input type="radio" name="detail" value="full"
+                                  th:checked="${form.detail == 'full'}"> full</label>
+                </fieldset>
+                <fieldset>
+                    <legend>Options</legend>
+                    <label><input type="checkbox" name="bypass_cache" value="true" th:checked="${form.bypassCache}">
+                        bypass cache</label>
+                    <label><input type="checkbox" name="allow_below_spec" value="true"
+                                  th:checked="${form.allowBelowSpec}"> allow below spec</label>
+                </fieldset>
             </div>
+            <p class="error" th:if="${error}" th:text="${error}">Please enter what you are looking for.</p>
         </form>
-        <p class="muted" th:if="${tokensEnabled}">Connect KINA to Claude: add a custom connector with the URL
-            <code th:text="${mcpUrl}">https://kina.example.com/mcp</code>. Details and static tokens are in the
-            <a th:href="@{/connect}">MCP</a> tab.</p>
-        <p class="muted" th:unless="${tokensEnabled}">Connect KINA through Claude: add a custom connector with the URL
-            <code th:text="${mcpUrl}">https://kina.example.com/mcp</code>. Static tokens are disabled on this
-            server.</p>
+        <th:block th:if="${result == null}">
+            <p class="muted" th:if="${tokensEnabled}">Connect KINA to Claude: add a custom connector with the URL
+                <code th:text="${mcpUrl}">https://kina.example.com/mcp</code>. Details and static tokens are in the
+                <a th:href="@{/connect}">MCP</a> tab.</p>
+            <p class="muted" th:unless="${tokensEnabled}">Connect KINA through Claude: add a custom connector with the
+                URL <code th:text="${mcpUrl}">https://kina.example.com/mcp</code>. Static tokens are disabled on this
+                server.</p>
+        </th:block>
     </div>
+
+    <th:block th:if="${result != null}">
+        <div class="card" id="parsed">
+            <h2>Understood as</h2>
+            <div class="chips" th:unless="${#lists.isEmpty(parsedItems)}">
+                <span class="chip" th:each="i : ${parsedItems}" th:text="${i.label} + ': ' + ${i.value}">family: resistor</span>
+            </div>
+            <p class="muted" th:if="${#lists.isEmpty(parsedItems)}">Nothing was recognised.</p>
+            <p class="warn" th:unless="${result.queryUnderstood}" th:text="${result.hint}">No component type was
+                recognised.</p>
+            <p class="warn" th:if="${result.queryUnderstood and result.hint != null}" th:text="${result.hint}">hint</p>
+            <p class="muted">
+                Ranking: <strong th:text="${result.ranking.jsonValue()}">blended</strong>
+                <span th:if="${result.rankingNote != null}" th:text="'(' + ${result.rankingNote} + ')'">(note)</span>
+                · <span th:text="${#numbers.formatInteger(elapsedMs, 1, 'COMMA')} + ' ms'">120 ms</span>
+                <span th:unless="${#lists.isEmpty(result.currencies)}"
+                      th:text="'· prices in ' + ${#strings.listJoin(result.currencies, ', ')}">· prices in EUR</span>
+            </p>
+        </div>
+
+        <div class="card distributor-result" th:each="s : ${sections}" th:with="r=${s.result}">
+            <h2>
+                <span th:text="${r.distributor}">LCSC</span>
+                <span class="muted" th:if="${r.cache != null}" th:text="'cache ' + ${r.cache.jsonValue()}">cache hit</span>
+                <span class="error" th:if="${r.error != null}" th:text="'error: ' + ${r.error}">error: timeout</span>
+            </h2>
+            <dl class="kv">
+                <dt>Results</dt>
+                <dd th:text="${r.returned} + ' returned of ' + ${#numbers.formatInteger(r.fetched, 1, 'COMMA')} + ' fetched'
+                             + (${r.totalResults != null} ? ' (' + ${#numbers.formatInteger(r.totalResults, 1, 'COMMA')}
+                             + ' reported by the distributor)' : '')">5 returned of 40 fetched</dd>
+                <dt>Exact matches</dt>
+                <dd th:text="${r.exactMatches != null} ? ${r.exactMatches} : 'not computed'">3</dd>
+                <dt>Excluded by constraints</dt>
+                <dd>
+                    <span th:text="${r.excludedByConstraints}">0</span>
+                    <span class="chips" style="display:inline-flex" th:unless="${#maps.isEmpty(r.excludedByConstraintsDetail)}">
+                        <span class="chip" th:each="e : ${r.excludedByConstraintsDetail}"
+                              th:text="${e.key} + ': ' + ${e.value}">package: 3</span>
+                    </span>
+                </dd>
+                <dt>Excluded below spec</dt>
+                <dd>
+                    <span th:text="${r.excludedBelowSpec}">0</span>
+                    <span class="chips" style="display:inline-flex" th:unless="${#lists.isEmpty(r.excludedBelowSpecDetail)}">
+                        <span class="chip" th:each="b : ${r.excludedBelowSpecDetail}"
+                              th:text="${b.partNumber} + ' ' + ${b.rating} + ' ' + ${b.partValue} + ' < ' + ${b.requested}">C1 voltage 16V &lt; 25V</span>
+                    </span>
+                </dd>
+                <dt>Out of stock matches</dt>
+                <dd th:text="${r.outOfStockMatches != null} ? ${r.outOfStockMatches} : 'unknown'">0</dd>
+                <th:block th:each="f : ${s.facts}">
+                    <dt th:text="${f.label}">distributor query</dt>
+                    <dd th:text="${f.value}">value</dd>
+                </th:block>
+            </dl>
+            <p class="warn" th:if="${r.hint != null}" th:text="${r.hint}">hint</p>
+
+            <div class="table-wrap" th:unless="${#lists.isEmpty(s.rows)}" style="margin-top:12px">
+                <table class="parts">
+                    <thead>
+                    <tr>
+                        <th class="num">#</th>
+                        <th class="num">Match</th>
+                        <th>Part</th>
+                        <th>Description</th>
+                        <th class="num">Stock</th>
+                        <th>Prices</th>
+                        <th>Availability</th>
+                        <th>Attributes</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="part-row" th:each="row : ${s.rows}" th:with="p=${row.part}">
+                        <td class="num" th:text="${p.rank}">1</td>
+                        <td class="num">
+                            <span th:text="${row.match != null} ? ${row.match} : '-'">1.00</span>
+                            <span class="chip" th:if="${p.belowSpec != null and p.belowSpec}">below spec</span>
+                        </td>
+                        <td>
+                            <a th:if="${row.productUrl != null}" th:href="${row.productUrl}" target="_blank"
+                               rel="noopener noreferrer" class="mono" th:text="${p.partNumber}">C25804</a>
+                            <span th:if="${row.productUrl == null}" class="mono" th:text="${p.partNumber}">C25804</span>
+                            <div class="mono" th:text="${p.mpn}">0603WAF1002T5E</div>
+                            <div class="muted" th:text="${p.manufacturer}">UNI-ROYAL</div>
+                            <a th:if="${row.datasheetUrl != null}" th:href="${row.datasheetUrl}" target="_blank"
+                               rel="noopener noreferrer">datasheet</a>
+                        </td>
+                        <td th:text="${p.description}">10kΩ ±1% 100mW 0603</td>
+                        <td class="num">
+                            <span th:text="${#numbers.formatInteger(p.stock, 1, 'COMMA')}">1,000</span>
+                            <div class="muted" th:if="${p.stale != null and p.stale}">stale</div>
+                        </td>
+                        <td>
+                            <div th:each="price : ${row.prices}" th:text="${price}" style="white-space:nowrap">1+: 0.01 USD</div>
+                            <div class="muted" th:if="${row.order != null}" th:text="${row.order}">100 pcs: 1.00 USD</div>
+                        </td>
+                        <td>
+                            <span th:text="${p.availability != null} ? ${p.availability.status} : ''">in_stock</span>
+                            <div class="muted" th:text="${p.lifecycle}">active</div>
+                        </td>
+                        <td>
+                            <div class="chips">
+                                <span class="chip" th:each="a : ${row.attributes}"
+                                      th:text="${a.label} + ': ' + ${a.value}">resistance: 10kΩ</span>
+                            </div>
+                            <div class="chips" th:unless="${#lists.isEmpty(row.details)}" style="margin-top:4px">
+                                <span class="chip muted" th:each="a : ${row.details}"
+                                      th:text="${a.label} + ': ' + ${a.value}">category: Resistors</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </th:block>
 </main>
 <footer th:replace="~{fragments :: pageFooter}"></footer>
+<script>
+    document.getElementById('search-form').addEventListener('submit', function () {
+        var button = document.getElementById('search-button');
+        button.disabled = true;
+        button.textContent = 'Searching...';
+    });
+    window.addEventListener('pageshow', function () {
+        var button = document.getElementById('search-button');
+        button.disabled = false;
+        button.textContent = 'Search';
+    });
+</script>
 </body>
 </html>
