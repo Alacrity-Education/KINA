@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.config.KinaProperties.CrossEncoder.Variant;
 import ro.alacrity.kina.search.RankingScoreCache;
@@ -89,24 +90,29 @@ class CrossEncoderModelTest {
         server.stop(0);
     }
 
-    private KinaProperties.CrossEncoder config(String... kv) {
-        String[] all = new String[kv.length + 4];
+    private KinaProperties config(String... kv) {
+        String[] all = new String[kv.length + 6];
         all[0] = "model-dir";
         all[1] = tmp.resolve("data/jlcpcb/../cross-encoder").toString();
         all[2] = "model-url";
         all[3] = baseUrl;
-        System.arraycopy(kv, 0, all, 4, kv.length);
-        return CrossEncoderPartRankerTest.config(all);
+        all[4] = "download-timeout";
+        all[5] = "10s";
+        System.arraycopy(kv, 0, all, 6, kv.length);
+        return CrossEncoderPartRankerTest.properties(all);
     }
 
-    private CrossEncoderModel model(KinaProperties.CrossEncoder config, Set<String> cpuFlags) {
-        return new CrossEncoderModel(config, new ModelDownloader(Duration.ofSeconds(10)), (file, threads) -> {
+    private CrossEncoderModel model(KinaProperties properties, Set<String> cpuFlags) {
+        CrossEncoderModel.BackendFactory backends = (file, threads) -> {
             if (brokenModels.stream().anyMatch(file::endsWith)) {
                 throw new IllegalStateException("cannot create session for " + file.getFileName());
             }
             loadedFiles.add(file);
             return new CrossEncoderPartRankerTest.FakeBackend();
-        }, new RankingScoreCache(Duration.ofHours(1)), cpuFlags, "amd64");
+        };
+        return TestWiring.wire(new CrossEncoderModel(), "properties", properties,
+                "scoreCache", new RankingScoreCache(Duration.ofHours(1)), "backends", backends,
+                "cpuFlags", cpuFlags, "arch", "amd64");
     }
 
     @Test

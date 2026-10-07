@@ -1,5 +1,6 @@
 package ro.alacrity.kina.search.ce;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,33 +53,23 @@ public class CrossEncoderModel {
         ScoringBackend load(Path onnxFile, int threads) throws Exception;
     }
 
-    private final KinaProperties.CrossEncoder config;
-    private final ModelDownloader downloader;
-    private final BackendFactory backends;
-    private final RankingScoreCache scoreCache;
-    private final Set<String> cpuFlags;
-    private final String arch;
+    @Autowired private KinaProperties properties;
+    @Autowired private RankingScoreCache scoreCache;
+    private BackendFactory backends = OnnxScoringBackend::load;
+    private Set<String> cpuFlags = ModelLayout.cpuFlags();
+    private String arch = System.getProperty("os.arch", "");
+    private KinaProperties.CrossEncoder config;
+    private ModelDownloader downloader;
 
     private final AtomicBoolean loading = new AtomicBoolean();
     private volatile Loaded loaded;
     private volatile String lastError;
     private volatile String lastLoggedError;
 
-    @Autowired
-    public CrossEncoderModel(KinaProperties properties, RankingScoreCache scoreCache) {
-        this(properties.ranking().crossEncoder(), new ModelDownloader(properties.ranking().crossEncoder()
-                .downloadTimeout()), OnnxScoringBackend::load, scoreCache, ModelLayout.cpuFlags(),
-                System.getProperty("os.arch", ""));
-    }
-
-    CrossEncoderModel(KinaProperties.CrossEncoder config, ModelDownloader downloader, BackendFactory backends,
-                      RankingScoreCache scoreCache, Set<String> cpuFlags, String arch) {
-        this.config = config;
-        this.downloader = downloader;
-        this.backends = backends;
-        this.scoreCache = scoreCache;
-        this.cpuFlags = cpuFlags;
-        this.arch = arch;
+    @PostConstruct
+    void init() {
+        config = properties.ranking().crossEncoder();
+        downloader = new ModelDownloader(config.downloadTimeout());
     }
 
     @EventListener(ApplicationReadyEvent.class)

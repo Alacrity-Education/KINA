@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
@@ -59,9 +60,10 @@ class CrossEncoderEvaluationTest {
         ParametricExtractor extractor = new ParametricExtractor();
         DeterministicRanker deterministic = new DeterministicRanker(extractor);
         RankingScoreCache cache = new RankingScoreCache(Duration.ofHours(1));
-        CrossEncoderModel model = new CrossEncoderModel(props, cache);
+        CrossEncoderModel model = TestWiring.wire(new CrossEncoderModel(), "properties", props, "scoreCache", cache);
         assertThat(model.check()).as("model loads: %s", model.lastError()).isTrue();
-        CrossEncoderPartRanker ranker = new CrossEncoderPartRanker(props, extractor, model);
+        CrossEncoderPartRanker ranker = TestWiring.wire(new CrossEncoderPartRanker(), "properties", props,
+                "extractor", extractor, "owner", model);
         RankingService service = new RankingService(props, deterministic, ranker, cache);
         QueryParser parser = new QueryParser();
 

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.config.KinaProperties.CrossEncoder.Variant;
 import ro.alacrity.kina.domain.Distributor;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -76,20 +78,23 @@ class CrossEncoderPartRankerTest {
         }
     }
 
-    static KinaProperties.CrossEncoder config(String... kv) {
+    /** {@link KinaProperties} with {@code kina.ranking.cross-encoder.*} set from key and value pairs. */
+    static KinaProperties properties(String... kv) {
         Map<String, String> source = new LinkedHashMap<>();
         for (int i = 0; i < kv.length; i += 2) {
             source.put("kina.ranking.cross-encoder." + kv[i], kv[i + 1]);
         }
         source.put("kina.public-base-url", "");
         return new Binder(new MapConfigurationPropertySource(source))
-                .bindOrCreate("kina", Bindable.of(KinaProperties.class)).ranking().crossEncoder();
+                .bindOrCreate("kina", Bindable.of(KinaProperties.class));
     }
 
     private CrossEncoderPartRanker ranker(FakeBackend backend, String... kv) {
         CrossEncoderModel.Loaded loaded = backend == null ? null : new CrossEncoderModel.Loaded(tokenizer, backend,
                 Variant.INT8, ModelLayout.QINT8_AVX512_VNNI, Path.of("/models/ce"), "abc123");
-        return new CrossEncoderPartRanker(config(kv), extractor, () -> loaded, null);
+        Supplier<CrossEncoderModel.Loaded> model = () -> loaded;
+        return TestWiring.wire(new CrossEncoderPartRanker(), "properties", properties(kv), "extractor", extractor,
+                "model", model);
     }
 
     private static Part part(String number, String manufacturer, String mpn, String description, String category,

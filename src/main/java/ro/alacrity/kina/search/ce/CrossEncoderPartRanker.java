@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search.ce;
 
 import ai.onnxruntime.OrtException;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -44,33 +45,21 @@ public class CrossEncoderPartRanker implements PartRanker {
                          String onnxFile, int threads, String lastError, Double avgLatencyMs, long calls) {
     }
 
-    private final KinaProperties.CrossEncoder config;
-    private final ParametricExtractor extractor;
-    private final Supplier<CrossEncoderModel.Loaded> model;
-    private final CrossEncoderModel owner;
-    private final Semaphore slots;
+    @Autowired private KinaProperties properties;
+    @Autowired private ParametricExtractor extractor;
+    @Autowired private CrossEncoderModel owner;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
+    /** The loaded model or null; tests replace it. */
+    private Supplier<CrossEncoderModel.Loaded> model = () -> owner.loaded();
     private final AtomicLong calls = new AtomicLong();
     private final AtomicLong totalNanos = new AtomicLong();
-    private KinaMetrics metrics = KinaMetrics.NOOP;
+    private KinaProperties.CrossEncoder config;
+    private Semaphore slots;
 
-    @Autowired
-    public CrossEncoderPartRanker(KinaProperties properties, ParametricExtractor extractor, CrossEncoderModel model) {
-        this(properties.ranking().crossEncoder(), extractor, model::loaded, model);
-    }
-
-    /** For tests: the model comes from {@code model} (null = not loaded). */
-    CrossEncoderPartRanker(KinaProperties.CrossEncoder config, ParametricExtractor extractor,
-                           Supplier<CrossEncoderModel.Loaded> model, CrossEncoderModel owner) {
-        this.config = config;
-        this.extractor = extractor;
-        this.model = model;
-        this.owner = owner;
-        this.slots = new Semaphore(Math.max(1, config.maxConcurrent()), true);
-    }
-
-    @Autowired
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
+    @PostConstruct
+    void init() {
+        config = properties.ranking().crossEncoder();
+        slots = new Semaphore(Math.max(1, config.maxConcurrent()), true);
     }
 
     @Override
