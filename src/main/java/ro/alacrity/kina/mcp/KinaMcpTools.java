@@ -35,160 +35,72 @@ import java.util.Set;
 public class KinaMcpTools {
 
     static final String SEARCH_DESCRIPTION = """
-            Search electronic components across distributors (LCSC via the JLCPCB parts database, TME, Mouser) and \
-            return ranked, in-stock offers.
-            Write the query like a part request: component type plus the parameters that matter, e.g. \
-            "10uF X7R 0805 MLCC 25V", "4k7 1% 0603 resistor", "thin film resistor 5.36k 0805 0.1%", \
-            "SOT-23 N-channel MOSFET 30V", "LDO 3.3V SOT-23-5", "power inductor 3.3uH 6A Isat 8A DCR < 20mOhm", \
-            "120 ohm 100MHz 0603 ferrite bead", "GaN half bridge gate driver 100V", or a manufacturer part number. \
-            Values, tolerance, ratings, dielectric, package, mounting (SMD/THT), the technology of a passive (thin \
-            film, thick film, metal film, wirewound, current sense; ceramic, tantalum, tantalum polymer, aluminium \
-            polymer, polymer, electrolytic, film; multilayer...) and the semiconductor of a MOSFET, transistor or \
-            gate driver (GaN, SiC, silicon) are parsed and used for ranking (see "parsed" in the result). \
-            A part number in the query (letters and digits mixed, e.g. "uP1966E GaN half bridge gate driver") is \
-            listed in parsed.part_numbers: the part whose MPN or distributor part number equals it (or starts with \
-            it) is returned first in its distributor if it meets the hard constraints and ratings, and \
-            requested_part_found says per distributor whether it is among the in-stock parts (null when the query \
-            names no part number); when false, the hint says whether the part is not listed in stock there or why \
-            it was left out, and the other parts are keyword matches, not the requested part. \
-            query_understood = false (with a hint) means no component type or parameter was recognised: the parts \
-            were found by keywords only and match is null; rephrase, or use get_part for a part number.
-            Ratings are hard minimums: voltage, current (an inductor's rated current; write Isat or "saturation" for \
-            the saturation current), power, maximum temperature (105C) and lifetime (2000h) accept any part rated at \
-            least that high, so a 25V request also returns 35V and 50V parts, ranked after an equal 25V part; a \
-            voltage above 2x the request (3x for capacitors) ranks clearly lower (a 600V part after the 100-200V \
-            parts of a 100V request) but is still returned with match 1.0. For MOSFETs a lower on-resistance \
-            (Resistance, R_DS(on)) ranks a little higher. A \
-            DCR limit ("DCR < 20mOhm") is a maximum; "low DCR" is a preference (lower DCR ranks higher). A part \
-            whose known rating is below the request is never returned by default (counted in excluded_below_spec); \
-            pass allow_below_spec=true to see such parts, flagged below_spec: true and listed after every part that \
-            meets the request, closest to the target first. A fuse current must match. Ratings are not sent to the \
-            distributors' keyword search (distributor_query shows the phrase).
-            Hard constraints are NEVER relaxed and never substituted: a part whose known value contradicts one is \
-            left out (excluded_by_constraints, per constraint in excluded_by_constraints_detail). Hard for every \
-            component: the primary value (resistance, capacitance, inductance, a ferrite bead's impedance at its \
-            frequency, a crystal's or oscillator's frequency), mounting (SMD/THT), technology, the package (except \
-            for inductors, crystals and oscillators) and the component type: crystals and oscillators (XO, TCXO, \
-            VCXO, MEMS) are never mixed; Schottky, standard rectifier/switching, Zener and TVS diodes are different \
-            types; MOSFETs and gate drivers (including GaN power stages and half-bridges with an integrated \
-            driver) are different types; N-channel vs P-channel and NPN vs PNP; GaN vs SiC vs silicon; fixed vs \
-            adjustable regulators and the exact output \
-            voltage; the Zener voltage and a crystal's load capacitance are exact; for connectors the type, gender, \
-            positions and pitch, for USB connectors the type and the stated pin count (a higher USB standard is \
-            accepted, a lower one is not); a bead array or resistor network for a single-element request (write \
-            "array", "network" or "4 lines" to ask for one). "polymer aluminium" excludes tantalum polymer; a bare \
-            "polymer" accepts both. The form factor is hard for passives: "heatsink", "chassis", "bolt"/"screw \
-            mount" or "aluminium housed" asks for a chassis part (chassis or power package such as SOT-227, TO-220, \
-            TO-247), a package names its class (SOT-227 power package, 0805 chip, D2PAK power SMD); chip resistors \
-            and leaded (axial, radial) bodies are excluded from such requests. A part that does not state an \
-            attribute is kept, listed in unverified.
-            Packages are imperial, always: a four-digit chip code is the inch code ("0603" is imperial 0603, never \
-            metric 0603 = imperial 0201); write "1608 metric" or "3216M" for a metric code. A can capacitor size \
-            ("6.3x5.4mm", "D6.3xL5.4mm") matches within 0.2 mm.
-            Relaxable (only when nothing else is found, always reported in constraints_relaxed and in each part's \
-            mismatches, e.g. "dielectric: X5R instead of X7R"): the dielectric, then the package of an inductor, \
-            crystal or oscillator, then a looser tolerance; also a connector's orientation. When a distributor has \
-            nothing that meets the hard constraints, its list is empty (exact_matches 0) and a hint (per \
-            distributor and for the response) names the constraints that could not be met: no substitutes are \
-            returned; try another package or value, or check whether allow_below_spec is the issue.
-            Only stock that ships now is returned: parts with only factory stock, on-order or lead-time quantities \
-            are never returned. The one exception: a part the query names by its part number that the distributor \
-            lists without stock is still returned, after every part in stock (it takes the last place), with stock 0 \
-            and availability.status "out_of_stock" (requested_part_found stays false: it cannot ship now). For BOM work always pass quantity (pieces to order, default 1): parts with less \
-            stock rank last, low stock and a minimum order quantity far above the quantity cost rank, and each part \
-            gets the order price.
-            Results are grouped per distributor. Each distributor entry has: total_results = matches the distributor \
-            reported (can be far more than returned); fetched = in-stock parts KINA received for the query before \
-            any exclusion; excluded_by_constraints and excluded_below_spec = parts of fetched left out; \
-            excluded_below_spec_detail = up to 5 of the below-spec parts, closest first, each with part_number, \
-            mpn and the failed rating (rating, part_value as the distributor states it, requested); returned = \
-            parts in this response (at most max_results and fetched minus the exclusions); out_of_stock_matches = \
-            matches the distributor has but cannot ship now (not part of fetched); cache = hit | partial | miss | \
-            bypassed | not_applicable (LCSC is a local database) | stale (the live search failed, error is set, and \
-            the parts come from the expired cached list); error = null or rate_limited | unavailable | \
-            not_configured | timeout | bad_response (a failing distributor never fails the whole search, its list is \
-            just empty); distributor_query = null when your text was sent as written, else the phrase KINA sent \
-            (ratings left out; connector queries rewritten into the distributor's wording); fallback_query = null, \
-            or the relaxed phrase that produced the parts; query_terms_dropped = request terms not sent in that \
-            phrase (informational, they are still checked); constraints_relaxed = constraints actually loosened \
-            (empty when nothing was relaxed); exact_matches = returned parts with every typed constraint verified \
-            and met (free-text words such as "housed" never block it). currencies lists the price currencies (LCSC USD, TME and Mouser EUR); prices are not converted.
-            Connector queries: type (pin header, female header, box header, terminal block, JST, USB-C, FPC, \
-            RJ45...), gender, number of positions, rows (1x6, 2x3), pitch (2.54mm, 0.1") and orientation (right \
-            angle / vertical) are recognised (parsed.connector) and ranked; say them explicitly.
-            Rate limits: when a distributor API is rate limited KINA waits and retries instead of failing at once, \
-            so a call may take up to 2 minutes; rate_limit_waited_ms reports how long it waited (0 normally).
-            Parts (detail "compact", the default) carry rank (1 = best within the distributor), match (0..1), \
-            below_spec (only when true), distributor, part_number (the distributor's number, for get_part), \
-            manufacturer, manufacturer_id (TME's own id), mpn, description, stock, stock_as_of (when stock and \
-            prices were fetched; cached figures older than a day are refreshed before they are returned), stale \
-            (only when true: stock and prices are older than 3 days and could not be refreshed; treat them as \
-            unconfirmed, availability.status is "stale", and such parts rank below fresh ones), \
-            min_order_qty, order_multiple, prices (the 3 smallest quantity brackets), with quantity > 1 also \
-            ordered_quantity, unit_price_at_quantity and total_price, availability {status: in_stock | low_stock \
-            (fewer than 10 pieces, or fewer than twice the quantity) | limited (fewer than the quantity) | \
-            last_units | stale, note}, lifecycle (active | new | supply_constrained | last_time_buy; the last two rank \
-            lower), mismatches, unverified, datasheet_url, product_url and the canonical attributes (Capacitance, \
-            Resistance, Inductance, Impedance, Voltage, Current or RatedCurrent, SaturationCurrent, DCR, \
-            RippleCurrent, ESR, Power, MaxTemperature, Lifetime, Tolerance, Dielectric, Package, Dimensions, \
-            Mounting, Technology, FormFactor, OperatingTemperature, Elements, Qualification, Features...). detail \
-            "full" adds score, category, package, photo_url, every raw distributor attribute and the \
-            distributor-specific extra fields.
-            rank orders the list. score (full detail only) is relative to the other candidates, so the last of \
-            several good parts can score 0.00. match says how well the part satisfies the typed constraints it \
-            states (free-text words do not count): unverified lists \
-            the requested constraints the distributor does not state for the part (e.g. ["current"]); they are left \
-            out of match, so match 1.0 with a non-empty unverified list is NOT a confirmed fit (check the \
-            datasheet), and such parts rank below parts whose constraints are all verified and met. Judge a part by \
-            match, mismatches and unverified, not by score.
-            ranking = "blended" (deterministic parametric score blended with a cross-encoder relevance model) \
-            or "fallback" (deterministic only; ranking_note says why).
-            Results are cached for 3 days: calling again with the same query and a larger max_results is served \
-            from the cache, and only fetches more from a distributor when the cache holds too few parts.""";
+            Search electronic components at LCSC, TME and Mouser and return ranked offers that ship now, grouped per \
+            distributor.
+            Write the query like a part request, component type plus the parameters that matter: "10uF X7R 0805 MLCC \
+            25V", "4k7 1% 0603 resistor", "SOT-23 N-channel MOSFET 30V", "power inductor 3.3uH Isat 8A DCR < \
+            20mOhm", "uP1966E GaN half bridge gate driver".
+            Ratings (voltage, current, power, temperature, lifetime) are minimums: 25V also returns 35V and 50V \
+            parts, after the 25V ones. A part whose known rating is below the request is never returned (counted in \
+            excluded_below_spec); pass allow_below_spec=true to see such parts, flagged below_spec and listed last.
+            Hard constraints are never relaxed or substituted: the value, package, mounting, technology, component \
+            type and polarity, connector type, gender, positions and pitch. A part that contradicts one is left out; \
+            a part that does not state it is kept and listed in unverified. An empty list with a hint means nothing \
+            met them: try another value or package. Only the dielectric, a looser tolerance, the package of an \
+            inductor, crystal or oscillator and a connector's orientation are relaxed, and only when nothing else is \
+            found (constraints_relaxed, mismatches).
+            Packages are imperial: "0603" is imperial 0603; write "1608 metric" for a metric code.
+            A part number in the query (parsed.part_numbers) is returned first in its distributor when it is listed \
+            and meets the request; requested_part_found is false otherwise and the hint says why. A requested part \
+            the distributor lists without stock is still returned, last, with stock 0 and availability.status \
+            "out_of_stock".
+            Judge a part by match (0..1 over the typed constraints the part states), mismatches and unverified, not \
+            by score: match 1.0 with a non-empty unverified list is not a confirmed fit (check the datasheet). rank \
+            orders the list.
+            Per distributor read fetched, excluded_by_constraints(_detail), excluded_below_spec(_detail), \
+            exact_matches, cache, error (only that distributor failed) and hint. query_understood=false means keyword \
+            matching only (match is null): rephrase, or use get_part for a part number.
+            For BOM work pass quantity (pieces to order): parts that cannot supply it rank last and each part gets \
+            the order price. detail="full" adds score and the raw distributor attributes. Under rate limits KINA \
+            waits, so a call can take up to 2 minutes (rate_limit_waited_ms). Results are cached for 3 days.
+            Field reference: docs/API.md in the KINA repository.""";
 
     static final String BATCH_DESCRIPTION = """
             Run several component searches at once (1-20 queries, e.g. every line of a BOM: give each its quantity). \
             Same semantics, cache behaviour and result shape as search_parts; returns {"results": [one search_parts \
             result per query, in request order]}. distributors, bypass_cache, detail and allow_below_spec apply to \
-            every query; each query has its own max_results and quantity (pieces to order, default 1). Queries are \
-            ranked one after another within an overall ranking budget; queries ranked after it ran out report \
-            ranking "fallback". Rate-limit waits share one 2-minute budget for the whole batch.""";
+            every query; each query has its own max_results and quantity. Queries ranked after the overall ranking \
+            budget ran out report ranking "fallback". Rate-limit waits share one 2-minute budget for the whole \
+            batch.""";
 
     static final String QUERY_PARAM = """
             Component description or part number, e.g. "10uF X7R 0805", "100nF 50V C0G 0603", "2N7002 SOT-23".""";
 
     static final String MAX_RESULTS_PARAM = """
-            Maximum number of parts returned PER DISTRIBUTOR (1-50, default 10). With 3 distributors up to \
-            3 x max_results parts come back. Asking again with a larger value is served from the cache.""";
+            Maximum number of parts returned PER DISTRIBUTOR (1-50, default 10).""";
 
     static final String DISTRIBUTORS_PARAM = """
-            Distributors to search: any of "LCSC", "TME", "MOUSER" (case-insensitive). Default: all configured \
-            distributors. A listed distributor that is not configured reports error "not_configured".""";
+            Any of "LCSC", "TME", "MOUSER" (case-insensitive). Default: all configured distributors.""";
 
     static final String QUANTITY_PARAM = """
-            Pieces to order (default 1); pass it for BOM work. Parts with less stock rank below parts that can supply \
-            it, low stock (under 10 pieces or under twice the quantity) and a minimum order quantity far above it \
-            lower the rank, and each part gets ordered_quantity, unit_price_at_quantity and total_price.""";
+            Pieces to order (default 1). Ranks by whether stock and minimum order fit, and adds \
+            ordered_quantity, unit_price_at_quantity and total_price to each part.""";
 
     static final String ALLOW_BELOW_SPEC_PARAM = """
-            Default false: a part whose known rating (voltage, current, saturation current, power, temperature, \
-            lifetime; DCR above a stated maximum) is below the request is left out (excluded_below_spec). true: \
-            such parts are returned flagged below_spec: true, after every part that meets the request, closest to \
-            the target first. Use it only when no compliant part exists and a weaker one is acceptable.""";
+            Default false. true also returns parts whose known rating is below the request, flagged below_spec: \
+            true and listed after every compliant part, closest first. Use it only when no compliant part exists.""";
 
     static final String DETAIL_PARAM = """
-            "compact" (default): identity, stock, order rules, prices, availability, links, rank/match and the \
-            canonical attributes. "full": additionally score, category, package, photo_url, raw distributor attributes and \
-            distributor-specific extra fields (larger responses).""";
+            "compact" (default) or "full" (adds score, category, package, photo_url, the raw distributor \
+            attributes and extra fields).""";
 
     static final String GET_PART_DETAIL_PARAM = """
-            "full" (default for get_part): every attribute the distributor gives (canonical and raw), photo_url and \
-            the distributor-specific extra fields. "compact": the canonical attributes only.""";
+            "full" (default here): every attribute, canonical and raw, photo_url and extra fields. "compact": the \
+            canonical attributes only.""";
 
     static final String BYPASS_CACHE_PARAM = """
-            Default false. true skips the cache lookup and queries the distributors live (fresh stock and prices); \
-            the results still refresh the cache. Mouser has a small daily API quota, so use it only when fresh data \
-            matters. No effect on LCSC (served from a local JLCPCB database).""";
+            Default false. true queries the distributors live for fresh stock and prices. Mouser has a small daily \
+            quota, so use it only when fresh data matters. No effect on LCSC.""";
 
     @Value("${spring.ai.mcp.server.version:dev}") private String version;
     @Autowired private PartSearchService searchService;
@@ -197,8 +109,8 @@ public class KinaMcpTools {
     @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
 
     @McpTool(name = "ping", description = "Health check. Returns {\"status\":\"ok\",\"version\":...} when the KINA MCP server is reachable.",
-            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true,
-                    openWorldHint = false))
+            annotations = @McpTool.McpAnnotations(title = "Check the KINA server", readOnlyHint = true,
+                    destructiveHint = false, idempotentHint = true, openWorldHint = false))
     public Ping ping() {
         return metrics.toolCall("ping", () -> new Ping("ok", version));
     }
@@ -249,24 +161,14 @@ public class KinaMcpTools {
     }
 
     @McpTool(name = "get_part", description = """
-            Get the current details of one part by its distributor part number (the part_number field of a \
-            search_parts result: LCSC "C15850", TME symbol, Mouser part number such as "603-CC0805KRX7R9BB104"). \
-            A manufacturer part number also works (compared ignoring case, spaces and hyphens, so ERA6AEB5361V \
-            finds Mouser's ERA-6AEB5361V); part.part_number is then the distributor's own number. \
-            Returns {found, distributor, part_number, cache, error, reason, part}; part has every attribute the \
-            distributor gives (detail "full" is the default here: canonical keys such as RippleCurrent, ESR, \
-            Impedance, Dimensions, Qualification and Features plus the raw distributor attributes, photo_url and \
-            the extra fields; pass detail "compact" for the canonical attributes only) and stock_as_of. found is \
-            false when the lookup failed (error says why, reason is null) or the part is not available: reason \
-            "not_found" = the distributor does not know the part. reason "out_of_stock" = the distributor lists it \
-            but has no stock that ships now: identity {part_number, manufacturer, mpn, description} tells which \
-            part it is, and part is returned too (found true) with stock 0, the listed prices and \
-            availability.status "out_of_stock", because you asked for it explicitly; when the distributor gives \
-            only the identity (a Mouser catalogue part without a Mouser number), found is false and part null. Prices are the 3 smallest quantity brackets; with quantity the part also gets \
-            ordered_quantity, unit_price_at_quantity and total_price. Mouser/TME data comes from the cache unless \
-            bypass_cache is true; stock and prices older than a day are refreshed first, and when they are older \
-            than 3 days and neither a refresh nor a live lookup succeeds the part carries stale: true and \
-            availability.status "stale".""",
+            Get the current details of one part by distributor part number (the part_number of a search_parts \
+            result, e.g. LCSC "C15850") or by manufacturer part number (case, spaces and hyphens ignored; \
+            part.part_number is then the distributor's own). Returns {found, distributor, part_number, cache, error, \
+            reason, part}; detail "full" is the default here. A part listed without stock that ships now is still \
+            returned: found true, reason "out_of_stock", stock 0. found is false when the distributor does not know \
+            the part (reason "not_found"), gives only its identity (reason "out_of_stock", part null) or the lookup \
+            failed (error says why).
+            Field reference: docs/API.md in the KINA repository.""",
             annotations = @McpTool.McpAnnotations(title = "Get one part", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = true))
     public PartLookupResponse getPart(
@@ -293,11 +195,9 @@ public class KinaMcpTools {
     }
 
     @McpTool(name = "list_distributors", description = """
-            List the distributors KINA can search with their state: configured (credentials present), available, \
-            a human-readable detail (for LCSC: JLCPCB database date and part count, or download progress), cached \
-            part counts, the Postgres cache statistics (5-day freshness), the ranking configuration (cross-encoder \
-            model state) and usage counters since the first start (searches, tool calls, cache rows added and \
-            rate-limited calls per distributor, cross-encoder runs). Does not call the distributor APIs.""",
+            List the distributors KINA can search with their state: configured, available, a detail line (for LCSC \
+            the JLCPCB database date and part count, or the download progress) and cached part counts; also the \
+            cache statistics, the ranking model state and usage counters. Does not call the distributor APIs.""",
             annotations = @McpTool.McpAnnotations(title = "List distributors", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = false))
     public DistributorStatusResponse listDistributors() {

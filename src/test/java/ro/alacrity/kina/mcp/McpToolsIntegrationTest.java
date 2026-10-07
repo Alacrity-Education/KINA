@@ -334,5 +334,26 @@ class McpToolsIntegrationTest {
                 .doesNotContain("max_results");
         assertThat(properties.path("max_results").path("description").asString()).contains("PER DISTRIBUTOR");
         assertThat(search.path("description").asString()).contains("up to 2 minutes", "rate_limit_waited_ms");
+        // the description stays a summary (about 2,500 characters); the field reference is docs/API.md
+        assertThat(search.path("description").asString())
+                .contains("allow_below_spec", "never relaxed or substituted", "imperial", "requested_part_found",
+                        "\"out_of_stock\"", "not a confirmed fit", "exact_matches", "detail=\"full\"",
+                        "cached for 3 days", "Field reference: docs/API.md")
+                .hasSizeLessThan(2700);
+        JsonNode getPart = tool(tools, "get_part");
+        assertThat(getPart.path("description").asString())
+                .contains("reason \"out_of_stock\"", "stock 0", "\"not_found\"", "detail \"full\" is the default",
+                        "Field reference: docs/API.md")
+                .hasSizeLessThan(900);
+        assertThat(tool(tools, "ping").path("annotations").path("title").asString()).isNotBlank();
+    }
+
+    private static JsonNode tool(JsonNode tools, String name) {
+        for (JsonNode t : tools) {
+            if (t.path("name").asString().equals(name)) {
+                return t;
+            }
+        }
+        throw new AssertionError("tool " + name + " not listed");
     }
 }

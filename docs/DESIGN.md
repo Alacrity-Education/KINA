@@ -1575,6 +1575,14 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
+The descriptions are sent to the model on every connection, so they stay short summaries: `search_parts` about
+2,500 characters (what it does and how to write a query; ratings are minimums, hard constraints are never relaxed,
+packages are imperial; part numbers in the query; how to judge a part by `match`, `mismatches` and `unverified`; the
+per-distributor counts; `quantity`, `detail`, the 2-minute rate-limit wait and the cache), the other tools under
+1,000. `search_parts` and `get_part` end with "Field reference: docs/API.md in the KINA repository": the field
+reference, vocabulary, connector details and status values live in `docs/API.md`, not in the descriptions.
+`McpToolsIntegrationTest` and the e2e `mcp` suite check the key phrases and the sizes.
+
 `SearchResponse` JSON (snake_case):
 
 ```json

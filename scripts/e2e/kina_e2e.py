@@ -379,6 +379,15 @@ def suite_mcp(base: str, token: str, rec: Recorder):
     names = sorted(t["name"] for t in (msg.get("result") or {}).get("tools", []))
     rec.check("mcp: tools/list returns 5 tools", names == sorted(
         ["search_parts", "search_parts_batch", "get_part", "list_distributors", "ping"]), ", ".join(names), resp.millis)
+    tools = {t["name"]: t for t in (msg.get("result") or {}).get("tools", [])}
+    sizes = {name: len(t.get("description") or "") for name, t in tools.items()}
+    search_text = (tools.get("search_parts") or {}).get("description") or ""
+    rec.check("mcp: tool descriptions stay short and point to docs/API.md", sizes.get("search_parts", 0) < 2700
+              and sizes.get("get_part", 0) < 900 and all(s < 1000 for n, s in sizes.items() if n != "search_parts")
+              and "allow_below_spec" in search_text and search_text.endswith("Field reference: docs/API.md in the "
+                                                                              "KINA repository.")
+              and ((tools.get("ping") or {}).get("annotations") or {}).get("title"),
+              ", ".join(f"{n} {s}" for n, s in sorted(sizes.items())))
 
     resp, ping = mcp.tool("ping")
     rec.check("mcp: ping", ping.get("status") == "ok", json.dumps(ping), resp.millis)
