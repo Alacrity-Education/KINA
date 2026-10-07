@@ -1840,7 +1840,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V11__cached_parts_derived_attributes.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V12__cache_type_and_metrics_backfill.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -1954,6 +1954,12 @@ UPDATE cached_parts
    SET payload = jsonb_set(payload, '{attributes}', (payload -> 'attributes') - ARRAY['Family', 'Subtype', ...])
  WHERE jsonb_typeof(payload -> 'attributes') = 'object'
    AND (payload -> 'attributes') <> (payload -> 'attributes') - ARRAY['Family', 'Subtype', ...];
+-- V12__cache_type_and_metrics_backfill.sql (section 3.7 "Backfill"): the component type of each row, the value of
+-- the metrics type tag (a parser family in lower case, or unknown). Written on every upsert (cached_searches: the
+-- parse of query_key; cached_parts: the family ParametricExtractor derives from the stored payload) and recomputed
+-- for every row by the daily metrics backfill. NULL (rows written before V12) counts as unknown
+ALTER TABLE cached_searches ADD COLUMN type TEXT;
+ALTER TABLE cached_parts ADD COLUMN type TEXT;
 
 -- V4__group_authorisation.sql (section 7.1 to 7.3)
 ALTER TABLE users
@@ -1994,6 +2000,16 @@ UPDATE metrics_counters
  WHERE name IN ('kina.search.queries', 'kina.distributor.calls', 'kina.parts.returned', 'kina.parts.fetched',
                 'kina.cache.search.lookups')
    AND tags NOT LIKE 'type=%' AND tags NOT LIKE '%,type=%';
+-- V12__cache_type_and_metrics_backfill.sql (section 3.7 "Backfill"): what the metrics backfill moved into each typed
+-- counter, summed over all runs; the row ('backfill.completed', '') is the completion marker (attributed = completed
+-- runs, updated_at = end of the last one)
+CREATE TABLE metrics_backfill (
+  name       TEXT        NOT NULL,             -- Micrometer name, as in metrics_counters
+  tags       TEXT        NOT NULL DEFAULT '',  -- canonical tags, as in metrics_counters
+  attributed BIGINT      NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (name, tags)
+);
 ```
 
 ## 9. Distributor details (verified against the live APIs on 2026-10-05)

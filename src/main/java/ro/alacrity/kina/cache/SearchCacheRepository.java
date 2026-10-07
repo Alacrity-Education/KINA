@@ -5,10 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import ro.alacrity.kina.domain.Distributor;
+import ro.alacrity.kina.metrics.KinaMetrics;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,7 +20,8 @@ import static ro.alacrity.kina.cache.PartCacheRepository.utc;
 /**
  * {@code cached_searches}: the ordered part-number list per (distributor, normalised query key). Freshness is
  * decided by the caller from {@link CachedSearch#fetchedAt()}. Unreadable rows are logged at WARN and treated as
- * missing.
+ * missing. Every upsert also stores the query's {@code type} ({@link KinaMetrics#typeOfQuery} of the key, DESIGN.md
+ * 3.7); {@link #retype} recomputes it for every row.
  */
 @Repository
 @Slf4j
@@ -72,23 +75,77 @@ public class SearchCacheRepository {
         jdbc.sql("""
                         INSERT INTO cached_searches
                           (distributor, query_key, total_results, part_numbers, exhausted, fetched_at, next_offset,
-                           fallback_query, out_of_stock_matches, constraints_relaxed, requested_parts)
-                        VALUES (?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb)
+                           fallback_query, out_of_stock_matches, constraints_relaxed, requested_parts, type)
+                        VALUES (?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?)
                         ON CONFLICT (distributor, query_key) DO UPDATE SET
                           total_results = EXCLUDED.total_results, part_numbers = EXCLUDED.part_numbers,
                           exhausted = EXCLUDED.exhausted, fetched_at = EXCLUDED.fetched_at,
                           next_offset = EXCLUDED.next_offset, fallback_query = EXCLUDED.fallback_query,
                           out_of_stock_matches = EXCLUDED.out_of_stock_matches,
                           constraints_relaxed = EXCLUDED.constraints_relaxed,
-                          requested_parts = EXCLUDED.requested_parts""")
+                          requested_parts = EXCLUDED.requested_parts, type = EXCLUDED.type""")
                 .params(search.distributor().name(), search.queryKey(), search.totalResults(),
                         jsonMapper.writeValueAsString(search.partNumbers()), search.exhausted(),
                         utc(search.fetchedAt()), search.nextOffset(), search.fallbackQuery(),
                         search.outOfStockMatches(), search.constraintsRelaxed() == null ? null
                                 : jsonMapper.writeValueAsString(search.constraintsRelaxed()),
                         search.requestedParts() == null ? null
-                                : jsonMapper.writeValueAsString(search.requestedParts()))
+                                : jsonMapper.writeValueAsString(search.requestedParts()),
+                        KinaMetrics.typeOfQuery(search.queryKey()))
                 .update();
+    }
+
+    /**
+     * Recomputes the {@code type} column of every row from its {@code query_key} ({@link KinaMetrics#typeOfQuery}),
+     * reading {@code batchSize} rows at a time in key order and writing the changed ones of each batch with one UPDATE.
+     * Returns the number of rows whose type changed.
+     */
+    public int retype(int batchSize) {
+        int size = Math.max(1, batchSize);
+        int changed = 0;
+        String lastDistributor = "";
+        String lastKey = "";
+        while (true) {
+            List<String[]> batch = new ArrayList<>(size);
+            jdbc.sql("""
+                            SELECT distributor, query_key, type FROM cached_searches
+                            WHERE (distributor, query_key) > (?, ?)
+                            ORDER BY distributor, query_key LIMIT ?""")
+                    .params(lastDistributor, lastKey, size)
+                    .query(rs -> {
+                        batch.add(new String[] {rs.getString("distributor"), rs.getString("query_key"),
+                                rs.getString("type")});
+                    });
+            if (batch.isEmpty()) {
+                return changed;
+            }
+            List<String> distributors = new ArrayList<>();
+            List<String> keys = new ArrayList<>();
+            List<String> types = new ArrayList<>();
+            for (String[] row : batch) {
+                String type = KinaMetrics.typeOfQuery(row[1]);
+                if (!type.equals(row[2])) {
+                    distributors.add(row[0]);
+                    keys.add(row[1]);
+                    types.add(type);
+                }
+            }
+            if (!types.isEmpty()) {
+                changed += jdbc.sql("""
+                                UPDATE cached_searches c SET type = u.t
+                                FROM unnest(?::text[], ?::text[], ?::text[]) AS u(d, k, t)
+                                WHERE c.distributor = u.d AND c.query_key = u.k""")
+                        .params(distributors.toArray(String[]::new), keys.toArray(String[]::new),
+                                types.toArray(String[]::new))
+                        .update();
+            }
+            String[] last = batch.getLast();
+            lastDistributor = last[0];
+            lastKey = last[1];
+            if (batch.size() < size) {
+                return changed;
+            }
+        }
     }
 
     /**

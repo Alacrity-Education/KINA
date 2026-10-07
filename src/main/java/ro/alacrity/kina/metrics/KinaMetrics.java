@@ -11,8 +11,10 @@ import ro.alacrity.kina.domain.BatchSearchResponse;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
 import ro.alacrity.kina.domain.MetricsSummary;
+import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.RankingMode;
 import ro.alacrity.kina.domain.SearchResponse;
+import ro.alacrity.kina.search.ParametricExtractor;
 import ro.alacrity.kina.search.QueryParser;
 
 import java.util.Locale;
@@ -137,6 +139,39 @@ public class KinaMetrics implements RateLimitRetry.Listener {
         }
         String type = family.toLowerCase(Locale.ROOT);
         return QueryParser.families().contains(type) ? type : UNKNOWN_TYPE;
+    }
+
+    /**
+     * The {@code type} of a query text (a {@code cached_searches.query_key}): the family the parser finds in it through
+     * {@link #typeOf(String)}, {@value #UNKNOWN_TYPE} when none or when parsing fails.
+     */
+    public static String typeOfQuery(String query) {
+        try {
+            return typeOf(Typing.PARSER.parse(query).family());
+        } catch (RuntimeException e) {
+            log.debug("Typing the query failed: {}", e.toString());
+            return UNKNOWN_TYPE;
+        }
+    }
+
+    /**
+     * The {@code type} of a part (a {@code cached_parts} row): the family {@link ParametricExtractor} derives from it
+     * through {@link #typeOf(String)}, {@value #UNKNOWN_TYPE} when none or when the extraction fails.
+     */
+    public static String typeOfPart(Part part) {
+        try {
+            return part == null ? UNKNOWN_TYPE
+                    : typeOf(Typing.EXTRACTOR.extract(part).get(ParametricExtractor.FAMILY));
+        } catch (RuntimeException e) {
+            log.debug("Typing the part failed: {}", e.toString());
+            return UNKNOWN_TYPE;
+        }
+    }
+
+    /** Stateless parser and extractor for the static typing helpers, created on first use. */
+    private static final class Typing {
+        static final QueryParser PARSER = new QueryParser();
+        static final ParametricExtractor EXTRACTOR = new ParametricExtractor();
     }
 
     /**

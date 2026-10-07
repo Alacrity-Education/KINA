@@ -302,6 +302,42 @@ class CacheRepositoriesTest {
     }
 
     @Test
+    void upsertsWriteTheTypeAndRetypeRecomputesEveryRow() {
+        parts.upsertAll(List.of(part(Distributor.TME, "cap", 5, NOW)));
+        parts.upsertListed(List.of(part(Distributor.MOUSER, "listed", 0, NOW)));
+        searches.upsert(new CachedSearch(Distributor.TME, "10uf x7r 0805", 1, List.of("cap"), false, NOW));
+        searches.upsert(new CachedSearch(Distributor.TME, "qwertyuiop", 0, List.of(), true, NOW));
+        assertThat(type("cached_parts", "part_number", "cap")).isEqualTo("capacitor");
+        assertThat(type("cached_parts", "part_number", "listed")).isEqualTo("capacitor");
+        assertThat(type("cached_searches", "query_key", "10uf x7r 0805")).isEqualTo("capacitor");
+        assertThat(type("cached_searches", "query_key", "qwertyuiop")).isEqualTo("unknown");
+        assertThat(parts.retype(1)).as("nothing to change").isZero();
+        assertThat(searches.retype(1)).isZero();
+
+        // rows written before V12 (NULL) or typed by an older vocabulary are typed again, a few per batch
+        jdbc.sql("UPDATE cached_parts SET type = NULL").update();
+        jdbc.sql("UPDATE cached_searches SET type = 'unknown' WHERE query_key = '10uf x7r 0805'").update();
+        insertRaw("TME", "broken", "{\"not\": \"a part\"}");
+        for (int i = 0; i < 5; i++) {
+            parts.upsertAll(List.of(part(Distributor.TME, "more" + i, 5, NOW)));
+        }
+        jdbc.sql("UPDATE cached_parts SET type = 'resistor' WHERE part_number LIKE 'more%'").update();
+
+        assertThat(parts.retype(2)).isEqualTo(8);
+        assertThat(searches.retype(1)).isEqualTo(1);
+        assertThat(type("cached_parts", "part_number", "listed")).isEqualTo("capacitor");
+        assertThat(type("cached_parts", "part_number", "more4")).isEqualTo("capacitor");
+        assertThat(type("cached_parts", "part_number", "broken")).isEqualTo("unknown");
+        assertThat(type("cached_searches", "query_key", "10uf x7r 0805")).isEqualTo("capacitor");
+        assertThat(parts.retype(1000)).isZero();
+    }
+
+    private String type(String table, String keyColumn, String key) {
+        return jdbc.sql("SELECT type FROM " + table + " WHERE " + keyColumn + " = ?").param(key)
+                .query(String.class).single();
+    }
+
+    @Test
     void corruptSearchRowIsTreatedAsMissing() {
         jdbc.sql("""
                         INSERT INTO cached_searches (distributor, query_key, part_numbers, fetched_at)

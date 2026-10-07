@@ -37,27 +37,32 @@ import java.util.Set;
  * own age ({@code stock_fetched_at}, equal to {@link Part#fetchedAt()}). A row a stock refresh found sold out keeps its
  * metadata with {@code in_stock = false} and is never served until a live fetch finds it in stock again; so does a part
  * an explicit part-number lookup found listed without stock ({@link #upsertListed}).
+ *
+ * <p>Every write also stores the part's {@code type} ({@link KinaMetrics#typeOfPart}, DESIGN.md 3.7); {@link #retype}
+ * recomputes it for every row.
  */
 @Repository
 @Slf4j
 public class PartCacheRepository {
 
     private static final String UPSERT = """
-            INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at, metadata_fetched_at, in_stock)
-            VALUES (?, ?, ?::jsonb, ?, ?, true)
+            INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at, metadata_fetched_at, in_stock,
+                                      type)
+            VALUES (?, ?, ?::jsonb, ?, ?, true, ?)
             ON CONFLICT (distributor, part_number)
             DO UPDATE SET payload = EXCLUDED.payload, stock_fetched_at = EXCLUDED.stock_fetched_at,
               metadata_fetched_at = GREATEST(cached_parts.metadata_fetched_at, EXCLUDED.metadata_fetched_at),
-              in_stock = true""";
+              in_stock = true, type = EXCLUDED.type""";
 
     /** A part listed without ships-now stock: metadata kept, never served ({@code in_stock = false}). */
     private static final String UPSERT_LISTED = """
-            INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at, metadata_fetched_at, in_stock)
-            VALUES (?, ?, ?::jsonb, ?, ?, false)
+            INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at, metadata_fetched_at, in_stock,
+                                      type)
+            VALUES (?, ?, ?::jsonb, ?, ?, false, ?)
             ON CONFLICT (distributor, part_number)
             DO UPDATE SET payload = EXCLUDED.payload, stock_fetched_at = EXCLUDED.stock_fetched_at,
               metadata_fetched_at = GREATEST(cached_parts.metadata_fetched_at, EXCLUDED.metadata_fetched_at),
-              in_stock = false""";
+              in_stock = false, type = EXCLUDED.type""";
 
     private static final String UPDATE_STOCK = """
             UPDATE cached_parts SET payload = ?::jsonb, stock_fetched_at = ?, in_stock = true
@@ -97,8 +102,10 @@ public class PartCacheRepository {
                 continue;
             }
             Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
+            Part stored = part.asStored();
             rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
-                    jsonMapper.writeValueAsString(part.asStored()), utc(fetchedAt), utc(fetchedAt)});
+                    jsonMapper.writeValueAsString(stored), utc(fetchedAt), utc(fetchedAt),
+                    KinaMetrics.typeOfPart(stored)});
             written.computeIfAbsent(part.distributor(), d -> new LinkedHashSet<>()).add(part.distributorPartNumber());
         }
         Map<Distributor, Long> existing = countExisting(written);
@@ -132,11 +139,74 @@ public class PartCacheRepository {
                 continue;
             }
             Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
+            Part stored = part.asStored();
             rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
-                    jsonMapper.writeValueAsString(part.asStored()), utc(fetchedAt), utc(fetchedAt)});
+                    jsonMapper.writeValueAsString(stored), utc(fetchedAt), utc(fetchedAt),
+                    KinaMetrics.typeOfPart(stored)});
         }
         if (!rows.isEmpty()) {
             jdbcTemplate.batchUpdate(UPSERT_LISTED, rows);
+        }
+    }
+
+    /**
+     * Recomputes the {@code type} column of every row from its stored payload ({@link KinaMetrics#typeOfPart}; an
+     * unreadable payload is {@code unknown}), reading {@code batchSize} rows at a time in key order and writing the
+     * changed ones of each batch with one UPDATE. Returns the number of rows whose type changed.
+     */
+    public int retype(int batchSize) {
+        int size = Math.max(1, batchSize);
+        int changed = 0;
+        String lastDistributor = "";
+        String lastPartNumber = "";
+        while (true) {
+            List<String[]> batch = new ArrayList<>(size);
+            jdbc.sql("""
+                            SELECT distributor, part_number, payload::text AS payload, type FROM cached_parts
+                            WHERE (distributor, part_number) > (?, ?)
+                            ORDER BY distributor, part_number LIMIT ?""")
+                    .params(lastDistributor, lastPartNumber, size)
+                    .query(rs -> {
+                        batch.add(new String[] {rs.getString("distributor"), rs.getString("part_number"),
+                                rs.getString("payload"), rs.getString("type")});
+                    });
+            if (batch.isEmpty()) {
+                return changed;
+            }
+            List<String> distributors = new ArrayList<>();
+            List<String> partNumbers = new ArrayList<>();
+            List<String> types = new ArrayList<>();
+            for (String[] row : batch) {
+                String type = typeOfPayload(row[2]);
+                if (!type.equals(row[3])) {
+                    distributors.add(row[0]);
+                    partNumbers.add(row[1]);
+                    types.add(type);
+                }
+            }
+            if (!types.isEmpty()) {
+                changed += jdbc.sql("""
+                                UPDATE cached_parts c SET type = u.t
+                                FROM unnest(?::text[], ?::text[], ?::text[]) AS u(d, p, t)
+                                WHERE c.distributor = u.d AND c.part_number = u.p""")
+                        .params(distributors.toArray(String[]::new), partNumbers.toArray(String[]::new),
+                                types.toArray(String[]::new))
+                        .update();
+            }
+            String[] last = batch.getLast();
+            lastDistributor = last[0];
+            lastPartNumber = last[1];
+            if (batch.size() < size) {
+                return changed;
+            }
+        }
+    }
+
+    private String typeOfPayload(String payload) {
+        try {
+            return KinaMetrics.typeOfPart(jsonMapper.readValue(payload, Part.class));
+        } catch (RuntimeException e) { // JacksonException, or a Part invariant violated by the payload
+            return KinaMetrics.UNKNOWN_TYPE;
         }
     }
 
