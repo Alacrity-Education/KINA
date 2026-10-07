@@ -132,6 +132,15 @@ class Recognizers {
         return WHITESPACE.matcher(s).replaceAll(" ").trim();
     }
 
+    /**
+     * {@link #prepare(String)} for a text of {@code family}: a fan text also gets its units in token spelling
+     * ({@link FanVocabulary#normaliseUnits}: {@code 70 m³/h} -&gt; {@code 70m3h}).
+     */
+    static String prepare(String text, String family) {
+        String prepared = prepare(text);
+        return FanVocabulary.FAN.equals(family) ? FanVocabulary.normaliseUnits(prepared) : prepared;
+    }
+
     static List<String> tokenize(String prepared) {
         List<String> tokens = new ArrayList<>();
         for (String raw : TOKEN_SPLIT.split(prepared)) {
@@ -1021,7 +1030,8 @@ class Recognizers {
     private static final List<String> VALUE_ORDER = List.of(ParsedQuery.CAPACITANCE, ParsedQuery.RESISTANCE,
             ParsedQuery.INDUCTANCE, ParsedQuery.IMPEDANCE, ParsedQuery.FREQUENCY, ParsedQuery.VOLTAGE,
             ParsedQuery.CURRENT, ParsedQuery.SATURATION_CURRENT, ParsedQuery.DCR, ParsedQuery.POWER,
-            ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME, ParsedQuery.TOLERANCE);
+            ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME, ParsedQuery.TOLERANCE, ParsedQuery.SPEED,
+            ParsedQuery.AIRFLOW, ParsedQuery.STATIC_PRESSURE, ParsedQuery.NOISE);
 
     /** A value with the token it was read from. */
     private record Read(Value value, String token) {
@@ -1060,6 +1070,11 @@ class Recognizers {
         boolean explicit = family != null;
         if (family == null) {
             family = familyHint;
+        }
+        if (text != null && FanVocabulary.FAN.equals(family)) {
+            // fan units in token spelling ("8.5m3/h", "25dB(A)", "3000 r/min")
+            residual = FanVocabulary.normaliseUnits(residual);
+            tokens = tokenize(residual);
         }
 
         // pass 2: everything else
@@ -1103,6 +1118,9 @@ class Recognizers {
             if (tol != null) {
                 values.putIfAbsent(ParsedQuery.TOLERANCE, of(ParsedQuery.TOLERANCE, tol));
                 continue;
+            }
+            if (FanVocabulary.claims(family, t)) {
+                continue;   // "axial" / "radial" of a fan is its type, not a capacitor's leads (FanVocabulary)
             }
             String mnt = mounting(t);
             if (mnt != null) {
@@ -1307,7 +1325,7 @@ class Recognizers {
         if (text == null || text.isBlank()) {
             return out;
         }
-        for (String word : WHITESPACE.split(RANGE_DASH.matcher(prepare(text)).replaceAll("~"))) {
+        for (String word : WHITESPACE.split(RANGE_DASH.matcher(prepare(text, family)).replaceAll("~"))) {
             if (word.indexOf('~') >= 0 || word.indexOf('@') >= 0 || word.indexOf('÷') >= 0 || word.contains("...")) {
                 continue;
             }
@@ -1326,7 +1344,7 @@ class Recognizers {
         if (text == null || text.isBlank()) {
             return null;
         }
-        for (String token : tokenize(prepare(text))) {
+        for (String token : tokenize(prepare(text, family))) {
             if (kind.equals(ParsedQuery.TOLERANCE)) {
                 Double tol = tolerance(token);
                 if (tol != null) {

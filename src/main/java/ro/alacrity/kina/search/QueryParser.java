@@ -19,8 +19,9 @@ import java.util.Set;
  * mounting, connector attributes ({@link ConnectorRecognizer}: type, gender, positions, rows, pitch, orientation), the
  * technology of a passive ({@link TechnologyVocabulary}: thin film, tantalum, multilayer...), labelled values
  * (saturation current, DC resistance, lifetime, operating temperature, the impedance of a ferrite bead), preferences
- * ("low DCR"), the part numbers it names ({@link PartNumbers}) and the remaining free-text keywords. Stateless and
- * thread-safe.
+ * ("low DCR"), the part numbers it names ({@link PartNumbers}), the fan attributes of a fan request
+ * ({@link FanVocabulary}: type, supply, frame size, bearing, features; speed, airflow, static pressure and noise are
+ * values) and the remaining free-text keywords. Stateless and thread-safe.
  *
  * <p>When no family keyword is present the family is inferred from the value kind (capacitance or dielectric -&gt;
  * capacitor, resistance -&gt; resistor, inductance -&gt; inductor).
@@ -54,6 +55,7 @@ public class QueryParser {
         String subtype = null;
         String packageName = analysis.packageName();
         List<String> keywords = analysis.keywords();
+        ParsedQuery.Fan fan = null;
         if (connector == null) {
             polarity = family == null || ComponentFamily.has(family, ComponentFamily.Trait.POLARISED) ? ComponentTypes.polarity(original) : null;
             if (family == null && polarity != null) {
@@ -64,6 +66,12 @@ public class QueryParser {
             subtype = ComponentTypes.subtype(family, original);
             if (subtype == null && "regulator".equals(family) && constraints.containsKey(ParsedQuery.VOLTAGE)) {
                 subtype = ComponentTypes.FIXED;   // "3.3V LDO": a stated output voltage is a fixed regulator
+            }
+            if (FanVocabulary.FAN.equals(family)) {
+                // fan type, supply, frame size, bearing and features (FanVocabulary); their words are no keywords
+                FanVocabulary.Analysis f = FanVocabulary.analyze(original, false);
+                fan = f.fan();
+                keywords = keywords.stream().filter(k -> !f.consumed().contains(k)).toList();
             }
             if (packageName == null && "capacitor".equals(family)) {
                 String can = canSize(original, analysis.technology());
@@ -90,6 +98,7 @@ public class QueryParser {
                 .elements(connector != null ? null : requestedElements(original))
                 .formFactor(connector != null ? null : FormFactor.ofRequestWords(original, family))
                 .partNumbers(PartNumbers.in(original, keywords))
+                .fan(fan)
                 .build();
     }
 
