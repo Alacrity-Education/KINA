@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
@@ -46,6 +47,39 @@ class ConstraintPolicyTest {
     }
 
     // ---------------------------------------------------------------- the table
+
+    /** The table read from the {@code @Relax} declarations equals the table of 0.5.0 (a literal copy). */
+    @Test
+    void theDeclaredTableIsTheDecidedOne() {
+        Map<String, List<String>> decided = new java.util.LinkedHashMap<>();
+        decided.put("resistor", List.of("type", "value", "package", "mounting", "technology", "elements",
+                "form factor"));
+        decided.put("capacitor", List.of("type", "value", "package", "mounting", "technology", "elements",
+                "form factor"));
+        decided.put("inductor", List.of("type", "value", "mounting", "technology", "form factor"));
+        decided.put("ferrite", List.of("type", "value", "package", "mounting", "elements"));
+        decided.put("crystal", List.of("type", "value", "load capacitance", "mounting"));
+        decided.put("oscillator", List.of("type", "value", "mounting"));
+        decided.put("diode", List.of("type", "voltage", "package", "mounting"));
+        decided.put("transistor", List.of("type", "polarity", "package", "mounting"));
+        decided.put("regulator", List.of("type", "voltage", "package", "mounting"));
+        decided.put("connector", List.of("type", "connector type", "gender", "positions", "pitch", "package",
+                "mounting"));
+        decided.put("usb", List.of("type", "usb type", "pin configuration", "usb standard", "gender", "mounting"));
+        decided.put("default", List.of("type", "value", "package", "mounting", "technology", "elements", "polarity",
+                "voltage", "form factor"));
+        assertThat(ConstraintPolicy.DEFAULT_HARD.keySet()).containsExactlyElementsOf(decided.keySet());
+        decided.forEach((family, names) -> {
+            assertThat(ConstraintPolicy.DEFAULT_HARD.get(family)).as(family).containsExactlyInAnyOrderElementsOf(names);
+            assertThat(policy.table().get(family)).as(family).isEqualTo(java.util.Set.copyOf(names));
+        });
+        assertThat(ConstraintPolicy.RELAXABLE).containsExactly("dielectric", "package", "tolerance", "orientation",
+                "tcr", "esr", "dcr");
+        assertThat(ConstraintPolicy.NAMES).containsExactlyInAnyOrder("value", "package", "mounting", "technology",
+                "elements", "type", "polarity", "voltage", "load capacitance", "connector type", "gender",
+                "positions", "pitch", "usb type", "pin configuration", "usb standard", "form factor", "dielectric",
+                "tolerance", "orientation", "tcr", "esr", "dcr");
+    }
 
     @Test
     void theDecidedTable() {
@@ -174,7 +208,7 @@ class ConstraintPolicyTest {
     @Test
     void crystalLoadCapacitanceIsExactAndTheFrequencyIsThePrimaryValue() {
         ParsedQuery q = parser.parse("16MHz crystal 10pF 3225");
-        assertThat(DeterministicRanker.primaryKind(q)).isEqualTo(ParsedQuery.FREQUENCY);
+        assertThat(ConstraintKind.primaryKind(q)).isEqualTo(ParsedQuery.FREQUENCY);
         Part ten = lcsc("A", "-40℃~+85℃ 10pF 16MHz ±10ppm", "Crystals, Oscillators, Resonators / Crystals",
                 "SMD3225-4P");
         Part twenty = lcsc("B", "-40℃~+85℃ 20pF 16MHz ±10ppm", "Crystals, Oscillators, Resonators / Crystals",

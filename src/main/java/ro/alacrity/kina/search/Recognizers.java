@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ParsedQuery;
+import ro.alacrity.kina.domain.PartFeatures;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -42,7 +43,7 @@ class Recognizers {
      * compact display form. {@code condition} is the test frequency (Hz) of an impedance or the temperature (degrees
      * Celsius) of a lifetime when stated, else null.
      */
-    record Value(String kind, double value, String display, Double condition) {
+    record Value(String kind, double value, String display, Double condition) implements PartFeatures.Measure {
 
         Value(String kind, double value, String display) {
             this(kind, value, display, null);

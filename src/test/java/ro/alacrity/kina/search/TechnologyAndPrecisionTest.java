@@ -3,6 +3,7 @@ package ro.alacrity.kina.search;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.ParsedQueryResponse;
@@ -277,7 +278,7 @@ class TechnologyAndPrecisionTest {
         assertThat(a.complete()).isTrue();
         assertThat(c.complete()).isFalse();
         // without the clamp the gap is 2 x W_TECHNOLOGY; check the raw signal through the unknown part
-        assertThat(c.score() - b.score()).isCloseTo(DeterministicRanker.W_TECHNOLOGY, within(1e-9));
+        assertThat(c.score() - b.score()).isCloseTo(ConstraintKind.TECHNOLOGY.weight(), within(1e-9));
         assertThat(b.score()).isLessThan(c.score());
         assertThat(c.score()).isLessThanOrEqualTo(a.score());
     }

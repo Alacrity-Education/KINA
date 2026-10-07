@@ -197,17 +197,17 @@ class UsbVocabulary {
 
     // ------------------------------------------------------------------ features
 
-    static final String POWER_ONLY = "power only";
+    static final String POWER_ONLY = ParsedQuery.POWER_ONLY;
     static final String PD = "PD";
     static final String MID_MOUNT = "mid-mount";
     static final String TOP_MOUNT = "top-mount";
-    static final String HYBRID = "hybrid";
+    static final String HYBRID = ParsedQuery.HYBRID;
     static final String THROUGH_HOLE_SHELL = "through-hole shell";
-    static final String WATERPROOF = "waterproof";
-    static final String BOARD_LOCK = "board lock";
+    static final String WATERPROOF = ParsedQuery.WATERPROOF;
+    static final String BOARD_LOCK = ParsedQuery.BOARD_LOCK;
     static final String STRADDLE = "straddle-mount";
     static final String MULTI_PORT = "multi-port";
-    static final String FULLY_SMD = "fully SMD";
+    static final String FULLY_SMD = ParsedQuery.FULLY_SMD;
 
     private record FeatureRule(Pattern pattern, String feature) {
     }

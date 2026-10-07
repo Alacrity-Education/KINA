@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
+import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.util.regex.Pattern;
 
@@ -28,7 +29,7 @@ class ComponentTypes {
     static final String COMPLEMENTARY = "complementary";
 
     /** A standard (non-Schottky) rectifier or switching diode. */
-    static final String STANDARD = "standard";
+    static final String STANDARD = ParsedQuery.STANDARD;
     static final String FIXED = "fixed";
     static final String ADJUSTABLE = "adjustable";
 

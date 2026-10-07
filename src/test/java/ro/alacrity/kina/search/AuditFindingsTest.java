@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.ParsedQueryResponse;
@@ -234,7 +235,7 @@ class AuditFindingsTest {
         double tooHigh = ranker.score(limit, inductor("F", "Power Inductor 3.3uH Isat 9A DCR 25mOhm"));
         double saturates = ranker.score(limit, inductor("G", "Power Inductor 3.3uH Isat 6A DCR 15mOhm"));
         assertThat(ok).isGreaterThan(tooHigh).isGreaterThan(saturates - 1e-9);
-        assertThat(ok - tooHigh).isCloseTo(DeterministicRanker.W_RATING, within(1e-9));
+        assertThat(ok - tooHigh).isCloseTo(ConstraintKind.VOLTAGE_RATING.weight(), within(1e-9));
     }
 
     @Test

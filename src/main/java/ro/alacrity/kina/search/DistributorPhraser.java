@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
+import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 
@@ -235,7 +236,7 @@ public class DistributorPhraser {
         }
         Set<String> kinds = new LinkedHashSet<>();
         for (String kind : RATING_KINDS) {
-            if (!DeterministicRanker.isExactRating(kind, query.family())) {
+            if (!ConstraintKind.isExactRating(kind, query.family())) {
                 kinds.add(kind);
             }
         }
@@ -263,7 +264,7 @@ public class DistributorPhraser {
         List<String> terms = new ArrayList<>();
         for (String kind : List.of(ParsedQuery.VOLTAGE, ParsedQuery.CURRENT, ParsedQuery.POWER)) {
             ParsedQuery.Constraint c = query.constraint(kind);
-            if (c != null && !DeterministicRanker.isExactRating(kind, query.family())
+            if (c != null && !ConstraintKind.isExactRating(kind, query.family())
                     && RATING_TERM.matcher(c.display()).matches()) {
                 terms.add(">=" + c.display());
             }

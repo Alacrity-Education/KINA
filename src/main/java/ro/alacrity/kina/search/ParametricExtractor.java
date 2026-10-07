@@ -1,7 +1,9 @@
 package ro.alacrity.kina.search;
 
 import org.springframework.stereotype.Component;
+import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.ParsedQuery;
+import ro.alacrity.kina.domain.PartFeatures;
 import ro.alacrity.kina.domain.Part;
 
 import java.util.LinkedHashMap;
@@ -281,16 +283,16 @@ public class ParametricExtractor {
     record Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
                     String mounting, String text, ParsedQuery.Connector connector, String technology,
                     Integer elements, Map<String, String> details, String polarity, String subtype,
-                    List<Double> voltages, String formFactor) {
+                    List<Double> voltages, String formFactor) implements PartFeatures {
 
         Features {
             details = details == null ? Map.of() : details;
             voltages = voltages == null ? List.of() : List.copyOf(voltages);
         }
 
-        Double value(String kind) {
-            Recognizers.Value v = values.get(kind);
-            return v == null ? null : v.value();
+        @Override
+        public Recognizers.Value measure(String kind) {
+            return values.get(kind);
         }
     }
 
@@ -380,7 +382,7 @@ public class ParametricExtractor {
         Recognizers.Value a = Recognizers.firstValue(raw, kind, null);
         Recognizers.Value b = Recognizers.firstValue(canonical, kind, null);
         return a != null && b != null && a.condition() == null
-                && DeterministicRanker.sameValue(b.value(), a.value(), 1e-9);
+                && ConstraintKind.sameValue(b.value(), a.value(), 1e-9);
     }
 
     /** Typed features used by {@link DeterministicRanker}. */
@@ -582,7 +584,7 @@ public class ParametricExtractor {
         String polarity = ComponentTypes.polarised(family) ? ComponentTypes.polarity(typeText) : null;
         String subtype = connector == null ? ComponentTypes.subtype(family, typeText) : null;
         List<Double> voltages = List.of();
-        if (DeterministicRanker.isExactRating(ParsedQuery.VOLTAGE, family)) {
+        if (ConstraintKind.isExactRating(ParsedQuery.VOLTAGE, family)) {
             voltages = fromAttributes.contains(ParsedQuery.VOLTAGE) ? List.of(values.get(ParsedQuery.VOLTAGE).value())
                     : Recognizers.singleValues(part.description(), ParsedQuery.VOLTAGE, family);
         }

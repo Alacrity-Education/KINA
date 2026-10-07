@@ -18,6 +18,7 @@ import ro.alacrity.kina.distributor.DistributorSearchPage;
 import ro.alacrity.kina.distributor.StockUpdate;
 import ro.alacrity.kina.domain.BatchSearchRequest;
 import ro.alacrity.kina.domain.BatchSearchResponse;
+import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
 import ro.alacrity.kina.domain.ParsedQuery;
@@ -678,7 +679,7 @@ public class PartSearchService {
             if (constraint.display() == null
                     || constraint.display().isBlank()
                     || DeterministicRanker.RATING_KINDS.contains(constraint.kind())
-                    && !DeterministicRanker.isExactRating(constraint.kind(), parsed.family())) {
+                    && !ConstraintKind.isExactRating(constraint.kind(), parsed.family())) {
                 continue;
             }
             // an impedance is sent without its test frequency ("120ohm", not "120ohm @100MHz")

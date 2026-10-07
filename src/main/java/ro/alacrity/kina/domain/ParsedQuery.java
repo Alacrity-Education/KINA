@@ -120,6 +120,17 @@ public record ParsedQuery(
     public static final String RIGHT_ANGLE = "right angle";
     public static final String VERTICAL = "vertical";
 
+    /** {@link #subtype()} of a standard (non-Schottky) rectifier or switching diode. */
+    public static final String STANDARD = "standard";
+
+    /** USB mounting style ({@link Connector#mountingStyle()}): SMD signal pins with through-hole shell legs. */
+    public static final String HYBRID = "hybrid";
+    /** USB features ({@link Connector#features()}). */
+    public static final String POWER_ONLY = "power only";
+    public static final String WATERPROOF = "waterproof";
+    public static final String BOARD_LOCK = "board lock";
+    public static final String FULLY_SMD = "fully SMD";
+
     public ParsedQuery {
         constraints = constraints == null ? Map.of() : constraints;
         keywords = keywords == null ? List.of() : List.copyOf(keywords);

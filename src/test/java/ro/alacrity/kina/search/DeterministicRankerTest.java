@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
+import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
@@ -59,7 +60,7 @@ class DeterministicRankerTest {
         assertThat(higher).isGreaterThan(sixtyThree);
         assertThat(sixtyThree).isGreaterThan(hundred);
         assertThat(hundred).isGreaterThan(lower);
-        assertThat(lower).isCloseTo(exact - 2 * DeterministicRanker.W_RATING, within(1e-9));
+        assertThat(lower).isCloseTo(exact - 2 * ConstraintKind.VOLTAGE_RATING.weight(), within(1e-9));
         // the match grade does not prefer: every part at or above the rating matches fully
         assertThat(ranker.assess(parser.parse(q), mlcc("B", "10uF", "50V", "X7R", "±10%", "0805")).match())
                 .isEqualTo(1.0);
@@ -72,7 +73,7 @@ class DeterministicRankerTest {
         Part exact = part("E", "Resistor 10kΩ ±1% 0805", null, "0805", Map.of());
         Part loose = part("L", "Resistor 10kΩ ±5% 0805", null, "0805", Map.of());
         assertThat(score(q, tight)).isCloseTo(score(q, exact), within(1e-9));
-        assertThat(score(q, loose)).isCloseTo(score(q, exact) - 2 * DeterministicRanker.W_TOLERANCE, within(1e-9));
+        assertThat(score(q, loose)).isCloseTo(score(q, exact) - 2 * ConstraintKind.TOLERANCE.weight(), within(1e-9));
     }
 
     @Test
@@ -93,12 +94,12 @@ class DeterministicRankerTest {
         double c0g = score("22pF NP0 0402", mlcc("C", "22pF", "50V", "C0G", "±5%", "0402"));
         double x7r = score("22pF C0G 0402", mlcc("X", "22pF", "50V", "X7R", "±5%", "0402"));
         assertThat(np0).isCloseTo(c0g, within(1e-9));
-        assertThat(x7r).isCloseTo(np0 - 2 * DeterministicRanker.W_DIELECTRIC, within(1e-9));
+        assertThat(x7r).isCloseTo(np0 - 2 * ConstraintKind.DIELECTRIC.weight(), within(1e-9));
         double sot = score("NPN transistor SOT-23", part("BC847", "Bipolar Transistors - BJT NPN 45V", null,
                 "SOT-23-3", Map.of()));
         double sotOther = score("NPN transistor SOT-23", part("BC847W", "Bipolar Transistors - BJT NPN 45V", null,
                 "SOT-323", Map.of()));
-        assertThat(sot).isGreaterThan(sotOther + DeterministicRanker.W_PACKAGE);   // the mismatch is clamped at 0
+        assertThat(sot).isGreaterThan(sotOther + ConstraintKind.PACKAGE.weight());   // the mismatch is clamped at 0
     }
 
     @Test
@@ -176,10 +177,10 @@ class DeterministicRankerTest {
         assertThat(straight).isGreaterThan(male);
         assertThat(tenPin).isGreaterThan(unrelated);
         assertThat(male).isGreaterThan(unrelated);
-        assertThat(exact - dualRow).isCloseTo(DeterministicRanker.W_ROWS, within(1e-9));
-        assertThat(exact - straight).isCloseTo(2 * DeterministicRanker.W_ORIENTATION, within(1e-9));
-        assertThat(exact - tenPin).isCloseTo(2 * DeterministicRanker.W_POSITIONS, within(1e-9));
-        assertThat(exact - male).isCloseTo(2 * DeterministicRanker.W_GENDER + 2 * DeterministicRanker.W_CONNECTOR_TYPE,
+        assertThat(exact - dualRow).isCloseTo(ConstraintKind.ROWS.weight(), within(1e-9));
+        assertThat(exact - straight).isCloseTo(2 * ConstraintKind.ORIENTATION.weight(), within(1e-9));
+        assertThat(exact - tenPin).isCloseTo(2 * ConstraintKind.POSITIONS.weight(), within(1e-9));
+        assertThat(exact - male).isCloseTo(2 * ConstraintKind.GENDER.weight() + 2 * ConstraintKind.CONNECTOR_TYPE.weight(),
                 within(1e-9));
         assertThat(exact).isGreaterThan(0.9);
     }
@@ -196,7 +197,7 @@ class DeterministicRankerTest {
         assertThat(score(q, femaleRa)).isGreaterThan(score(q, dualRow));
         // positions unspecified rows: single-row parts are mildly preferred
         assertThat(score(q, femaleRa) - score(q, dualRow))
-                .isCloseTo(DeterministicRanker.W_ROWS_UNSPECIFIED, within(1e-9));
+                .isCloseTo(ConstraintKind.SINGLE_ROW.weight(), within(1e-9));
         assertThat(score(q, dualRow)).isGreaterThan(score(q, maleStraight) + 0.5);
         assertThat(score(q, tme)).isGreaterThan(0.85);
     }
@@ -210,7 +211,7 @@ class DeterministicRankerTest {
                 "P=2mm", Map.of());
         assertThat(score("2.54mm female header 1x6 right angle", metric)
                 - score("2.54mm female header 1x6 right angle", twoMm))
-                .isCloseTo(2 * DeterministicRanker.W_PITCH, within(1e-9));
+                .isCloseTo(2 * ConstraintKind.PITCH.weight(), within(1e-9));
         // nothing known about the part's connector attributes: no penalty, only the family signal
         Part bare = RankingFixtures.lcsc("C8", "ACME", "M", "", "Connectors / Connectors", null, Map.of());
         ParsedQuery query = parser.parse("female header 1x6 right angle 2.54mm");
@@ -225,10 +226,10 @@ class DeterministicRankerTest {
                 + " Right Angle Type-C", "Connectors / USB Connectors", "SMD", Map.of());
         Part tht = RankingFixtures.tme("USB4085-GF-A", "GCT", "Connector: USB C; socket; THT; PIN: 16; horizontal",
                 "USB & IEEE1394 connectors", null, Map.of());
-        assertThat(score(q, smd) - score(q, tht)).isCloseTo(2 * DeterministicRanker.W_USB_MOUNTING,
+        assertThat(score(q, smd) - score(q, tht)).isCloseTo(2 * ConstraintKind.USB_MOUNTING.weight(),
                 within(0.011));   // tie-break (library type) differs by up to 0.01
-        assertThat(DeterministicRanker.W_POSITIONS + DeterministicRanker.W_GENDER + DeterministicRanker.W_ORIENTATION
-                + DeterministicRanker.W_PITCH + DeterministicRanker.W_CONNECTOR_TYPE).isCloseTo(0.90, within(1e-9));
+        assertThat(ConstraintKind.POSITIONS.weight() + ConstraintKind.GENDER.weight() + ConstraintKind.ORIENTATION.weight()
+                + ConstraintKind.PITCH.weight() + ConstraintKind.CONNECTOR_TYPE.weight()).isCloseTo(0.90, within(1e-9));
     }
 
     // ------------------------------------------------------------------ USB connectors
@@ -270,18 +271,18 @@ class DeterministicRankerTest {
         ParsedQuery query = parser.parse(q);
         ParametricExtractor extractor = new ParametricExtractor();
         assertThat(DeterministicRanker.connectorScore(query, extractor.features(TYPE_C_17)))
-                .isCloseTo(DeterministicRanker.W_USB_TYPE + DeterministicRanker.W_USB_PINS
-                        + DeterministicRanker.W_USB_STANDARD + DeterministicRanker.W_USB_GENDER
-                        + DeterministicRanker.W_USB_MOUNTING, within(1e-9));
+                .isCloseTo(ConstraintKind.USB_TYPE.weight() + ConstraintKind.PIN_CONFIGURATION.weight()
+                        + ConstraintKind.USB_STANDARD.weight() + ConstraintKind.USB_GENDER.weight()
+                        + ConstraintKind.USB_MOUNTING.weight(), within(1e-9));
         // higher speed class than requested: half credit for the standard, wrong pins
         assertThat(DeterministicRanker.connectorScore(query, extractor.features(TYPE_C_24)))
-                .isCloseTo(DeterministicRanker.W_USB_TYPE - DeterministicRanker.W_USB_PINS
-                        + DeterministicRanker.W_USB_STANDARD / 2 + DeterministicRanker.W_USB_GENDER
-                        + DeterministicRanker.W_USB_MOUNTING, within(1e-9));
+                .isCloseTo(ConstraintKind.USB_TYPE.weight() - ConstraintKind.PIN_CONFIGURATION.weight()
+                        + ConstraintKind.USB_STANDARD.weight() / 2 + ConstraintKind.USB_GENDER.weight()
+                        + ConstraintKind.USB_MOUNTING.weight(), within(1e-9));
         assertThat(DeterministicRanker.connectorScore(query, extractor.features(MICRO_B)))
-                .isCloseTo(-DeterministicRanker.W_USB_TYPE - DeterministicRanker.W_USB_PINS
-                        + DeterministicRanker.W_USB_STANDARD + DeterministicRanker.W_USB_GENDER
-                        + DeterministicRanker.W_USB_MOUNTING, within(1e-9));
+                .isCloseTo(-ConstraintKind.USB_TYPE.weight() - ConstraintKind.PIN_CONFIGURATION.weight()
+                        + ConstraintKind.USB_STANDARD.weight() + ConstraintKind.USB_GENDER.weight()
+                        + ConstraintKind.USB_MOUNTING.weight(), within(1e-9));
     }
 
     @Test
@@ -302,7 +303,7 @@ class DeterministicRankerTest {
         String usb2 = "USB 2.0 Type-C receptacle";
         assertThat(score(usb2, TYPE_C_16)).isGreaterThan(score(usb2, TYPE_C_24));
         assertThat(score(usb2, TYPE_C_24)).isGreaterThan(score(usb2, TYPE_C_6));
-        assertThat(score(usb2, TYPE_C_16) - score(usb2, TYPE_C_14)).isCloseTo(DeterministicRanker.W_USB_PINS,
+        assertThat(score(usb2, TYPE_C_16) - score(usb2, TYPE_C_14)).isCloseTo(ConstraintKind.PIN_CONFIGURATION.weight(),
                 within(1e-9));   // +W/2 vs -W/2
         String usb3 = "USB 3.1 Type-C receptacle";
         assertThat(score(usb3, TYPE_C_24)).isGreaterThan(score(usb3, TYPE_C_16_LABELLED_31));
@@ -318,17 +319,17 @@ class DeterministicRankerTest {
         Part topMount = RankingFixtures.lcsc("CT", "ACME", "M-CT", "Connector: USB C; socket; SMT; PIN: 16; horizontal",
                 "Connectors / USB Connectors", "SMD", RankingFixtures.attrs("Connector variant", "top board mount"));
         String q = "mid-mount USB-C 16P";
-        assertThat(score(q, midMount) - score(q, topMount)).isCloseTo(2 * DeterministicRanker.W_USB_MOUNTING,
+        assertThat(score(q, midMount) - score(q, topMount)).isCloseTo(2 * ConstraintKind.USB_MOUNTING.weight(),
                 within(1e-9));
         // a hybrid part (SMD + through-hole shell) counts half for an SMD request
         Part hybrid = usbC("CH", "1 16P 5A Black Female Hybrid SMT/THT Right Angle Type-C USB 2.0");
-        Double half = DeterministicRanker.usbMounting(null, "SMD",
+        Double half = ConstraintKind.usbMounting(null, "SMD",
                 new ParametricExtractor().features(hybrid).connector(), "SMD");
         assertThat(half).isEqualTo(0.5);
         // requested features present earn a small bonus
         Part sealed = usbC("CW", "1 16P 5A Black Female Surface Mount, Right Angle Type-C USB 2.0 with O-ring");
         String waterproof = "waterproof USB-C receptacle 16 pin";
-        assertThat(score(waterproof, sealed) - score(waterproof, TYPE_C_16)).isCloseTo(DeterministicRanker.W_USB_FEATURE,
+        assertThat(score(waterproof, sealed) - score(waterproof, TYPE_C_16)).isCloseTo(ConstraintKind.WATERPROOF.weight(),
                 within(1e-9));
         // gender: a plug request ranks plugs first
         Part plug = usbC("CP", "1 24P 5A Black Clamping plate Male Type-C USB 3.1");
