@@ -1,12 +1,15 @@
 package ro.alacrity.kina.security;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.metrics.KinaMetrics;
 
 import java.time.Clock;
@@ -27,32 +30,16 @@ import java.util.TreeSet;
  * (subject, reason, domain) and the claim names the provider sent at INFO; never addresses or claim values.
  */
 @Slf4j
+@Component
+@Conditional(DevModeCondition.Prod.class)
 public class OidcUserSynchronizer implements OAuth2UserService<OidcUserRequest, OidcUser> {
 
-    private final OAuth2UserService<OidcUserRequest, OidcUser> delegate;
-    private final UserRepository users;
-    private final OidcAccessPolicy policy;
-    private final MembershipVerifier membership;
-    private final Clock clock;
-    private KinaMetrics metrics = KinaMetrics.NOOP;
-
-    public OidcUserSynchronizer(UserRepository users, OidcAccessPolicy policy, MembershipVerifier membership) {
-        this(OidcHttp.oidcUserService(), users, policy, membership, Clock.systemUTC());
-    }
-
-    public OidcUserSynchronizer(OAuth2UserService<OidcUserRequest, OidcUser> delegate, UserRepository users,
-                                OidcAccessPolicy policy, MembershipVerifier membership, Clock clock) {
-        this.delegate = delegate;
-        this.users = users;
-        this.policy = policy;
-        this.membership = membership;
-        this.clock = clock;
-    }
-
-    /** Counts logins and refusals (DESIGN.md 3.7). */
-    public void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
-    }
+    @Autowired private UserRepository users;
+    @Autowired private OidcAccessPolicy policy;
+    @Autowired private MembershipVerifier membership;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
+    private final OAuth2UserService<OidcUserRequest, OidcUser> delegate = OidcHttp.oidcUserService();
+    private final Clock clock = Clock.systemUTC();
 
     @Override
     public OidcUser loadUser(OidcUserRequest request) throws OAuth2AuthenticationException {

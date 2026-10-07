@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.security.AccessTokenRepository.AccessToken;
 import ro.alacrity.kina.security.AccessTokenService.IssuedToken;
 
@@ -34,7 +35,8 @@ class AccessTokenServiceTest {
     @BeforeEach
     void setUp() {
         clock = new MutableClock(Instant.now().truncatedTo(ChronoUnit.SECONDS));
-        service = new AccessTokenService(repository, Duration.ofDays(30), clock);
+        service = TestWiring.wire(new AccessTokenService(), "repository", repository,
+                "properties", TestWiring.properties("kina.tokens.validity", "30d"), "clock", clock);
         userId = users.upsert("test", "user-" + UUID.randomUUID(), "u@example.com", "Test User", null).id();
     }
 

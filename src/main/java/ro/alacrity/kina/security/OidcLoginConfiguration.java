@@ -5,10 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import ro.alacrity.kina.config.KinaProperties;
-import ro.alacrity.kina.metrics.KinaMetrics;
 
 /**
  * Production mode only: OIDC login beans, built programmatically from {@code kina.security.oidc.*}
@@ -21,13 +19,6 @@ import ro.alacrity.kina.metrics.KinaMetrics;
 @Conditional(DevModeCondition.Prod.class)
 public class OidcLoginConfiguration {
 
-    @Bean
-    ClientRegistrationRepository clientRegistrationRepository(KinaProperties properties,
-                                                              MembershipVerifier membership) {
-        return new LazyOidcClientRegistrationRepository(properties.security().oidc(),
-                membership.storesUpstreamTokens());
-    }
-
     /** ID token decoding of the login (picked up by Spring's OAuth2 login) and of membership re-checks. */
     @Bean
     JwtDecoderFactory<ClientRegistration> oidcIdTokenDecoderFactory() {
@@ -39,13 +30,5 @@ public class OidcLoginConfiguration {
         OidcAccessPolicy policy = new OidcAccessPolicy(properties.security().oidc());
         log.info("OIDC login policy: {}", policy.describe());
         return policy;
-    }
-
-    @Bean
-    OidcUserSynchronizer oidcUserSynchronizer(UserRepository users, OidcAccessPolicy policy,
-                                              MembershipVerifier membership, KinaMetrics metrics) {
-        OidcUserSynchronizer synchronizer = new OidcUserSynchronizer(users, policy, membership);
-        synchronizer.setMetrics(metrics);
-        return synchronizer;
     }
 }

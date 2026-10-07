@@ -1,9 +1,13 @@
 package ro.alacrity.kina.security;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.ClientRegistrations;
+import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
 
 import java.time.Clock;
@@ -23,40 +27,30 @@ import java.util.function.Function;
  * that time the login request fails with an error instead of hanging. No provider-specific code.
  */
 @Slf4j
+@Component("clientRegistrationRepository")
+@Conditional(DevModeCondition.Prod.class)
 public class LazyOidcClientRegistrationRepository implements ClientRegistrationRepository {
 
     public static final String REGISTRATION_ID = "oidc";
     static final Duration RETRY_AFTER = Duration.ofSeconds(10);
     static final String OFFLINE_ACCESS = "offline_access";
 
-    private final KinaProperties.Oidc oidc;
-    private final Function<String, ClientRegistration.Builder> discovery;
-    private final Clock clock;
+    @Autowired private KinaProperties properties;
+    @Autowired private MembershipVerifier membership;
+    private Function<String, ClientRegistration.Builder> discovery = ClientRegistrations::fromIssuerLocation;
+    private Clock clock = Clock.systemUTC();
+    private KinaProperties.Oidc oidc;
     private volatile ClientRegistration registration;
     private Instant nextAttempt = Instant.MIN;
     private volatile boolean discoveryAttempted;
-    private final boolean requestOfflineAccess;
 
-    public LazyOidcClientRegistrationRepository(KinaProperties.Oidc oidc) {
-        this(oidc, false);
-    }
-
-    /** {@code requestOfflineAccess}: ask for {@code offline_access} when the provider supports it. */
-    public LazyOidcClientRegistrationRepository(KinaProperties.Oidc oidc, boolean requestOfflineAccess) {
-        this(oidc, ClientRegistrations::fromIssuerLocation, Clock.systemUTC(), requestOfflineAccess);
-    }
-
-    LazyOidcClientRegistrationRepository(KinaProperties.Oidc oidc,
-                                         Function<String, ClientRegistration.Builder> discovery, Clock clock,
-                                         boolean requestOfflineAccess) {
+    @PostConstruct
+    void init() {
+        oidc = properties.security().oidc();
         if (oidc == null || !oidc.isConfigured()) {
             throw new IllegalStateException("kina.security.mode=prod requires OIDC_ISSUER_URI and OIDC_CLIENT_ID "
                     + "(kina.security.oidc.issuer-uri / client-id)");
         }
-        this.oidc = oidc;
-        this.discovery = discovery;
-        this.clock = clock;
-        this.requestOfflineAccess = requestOfflineAccess;
     }
 
     /**
@@ -67,7 +61,7 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
     Set<String> scopes(ClientRegistration discovered) {
         Set<String> scopes = new LinkedHashSet<>(List.of("openid", "profile", "email"));
         scopes.addAll(oidc.extraScopes());
-        if (requestOfflineAccess && !scopes.contains(OFFLINE_ACCESS)) {
+        if (membership.storesUpstreamTokens() && !scopes.contains(OFFLINE_ACCESS)) {
             Object supported = discovered.getProviderDetails().getConfigurationMetadata().get("scopes_supported");
             if (supported instanceof Collection<?> values && values.contains(OFFLINE_ACCESS)) {
                 scopes.add(OFFLINE_ACCESS);

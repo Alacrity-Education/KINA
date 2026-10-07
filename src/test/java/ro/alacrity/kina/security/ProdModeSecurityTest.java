@@ -11,6 +11,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.TestcontainersConfiguration;
 
 import java.util.UUID;
@@ -47,6 +48,9 @@ class ProdModeSecurityTest {
 
     @Autowired
     ClientRegistrationRepository clientRegistrations;
+
+    @Autowired
+    MembershipVerifier membership;
 
     @Test
     void unauthenticatedMcpRequestGetsBearerChallenge() throws Exception {
@@ -131,8 +135,10 @@ class ProdModeSecurityTest {
 
     @Test
     void unreachableIssuerFailsLoginWithoutBreakingTheApp() throws Exception {
-        LazyOidcClientRegistrationRepository repository = new LazyOidcClientRegistrationRepository(
-                new ro.alacrity.kina.config.KinaProperties.Oidc("http://127.0.0.1:9/fake-issuer", "id", "secret"));
+        LazyOidcClientRegistrationRepository repository = TestWiring.wire(new LazyOidcClientRegistrationRepository(),
+                "properties", TestWiring.properties("kina.security.oidc.issuer-uri", "http://127.0.0.1:9/fake-issuer",
+                        "kina.security.oidc.client-id", "id", "kina.security.oidc.client-secret", "secret"),
+                "membership", membership);
         assertThat(repository.findByRegistrationId("oidc")).isNull();
         assertThat(repository.discoveryAttempted()).isTrue();
         assertThat(repository.findByRegistrationId("other")).isNull();

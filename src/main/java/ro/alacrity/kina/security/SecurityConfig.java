@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -64,6 +65,14 @@ public class SecurityConfig {
     static final String[] PUBLIC_WEB_PATHS = {"/actuator/health", "/actuator/health/**", "/actuator/info", "/error",
             "/login-error", "/login-denied", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/webjars/**"};
 
+    @Autowired private KinaProperties properties;
+    @Autowired private AccessTokenService tokens;
+    @Autowired private UserRepository users;
+    @Autowired private MembershipVerifier membership;
+    @Autowired private PublicUrlResolver urls;
+    @Autowired private ObjectProvider<DevAdminProvider> devAdmin;
+    @Autowired private ObjectProvider<OidcUserSynchronizer> oidcUserSynchronizer;
+
     /**
      * Everything served on the management port: health, info and the Prometheus scrape endpoint, unauthenticated.
      * {@link EndpointRequest} matches only requests of the management server when it has its own port.
@@ -84,10 +93,7 @@ public class SecurityConfig {
 
     @Bean
     @Order(1)
-    SecurityFilterChain machineSecurityFilterChain(HttpSecurity http, KinaProperties properties,
-                                                   AccessTokenService tokens, UserRepository users,
-                                                   MembershipVerifier membership, PublicUrlResolver urls,
-                                                   ObjectProvider<DevAdminProvider> devAdmin) {
+    SecurityFilterChain machineSecurityFilterChain(HttpSecurity http) {
         RequestMatcher protectedPaths = matcher(PROTECTED_MACHINE_PATHS);
         BearerAuthenticationEntryPoint entryPoint = new BearerAuthenticationEntryPoint(urls);
         BearerTokenAuthenticationFilter bearerFilter =
@@ -116,10 +122,7 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    SecurityFilterChain webSecurityFilterChain(HttpSecurity http, KinaProperties properties,
-                                               ObjectProvider<DevAdminProvider> devAdmin,
-                                               ObjectProvider<OidcUserSynchronizer> oidcUserSynchronizer,
-                                               UserRepository users, MembershipVerifier membership) {
+    SecurityFilterChain webSecurityFilterChain(HttpSecurity http) {
         http.csrf(Customizer.withDefaults())
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable);

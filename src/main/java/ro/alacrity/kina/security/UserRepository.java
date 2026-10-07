@@ -1,6 +1,6 @@
 package ro.alacrity.kina.security;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -12,7 +12,6 @@ import java.util.UUID;
 
 /** {@code users} table. Users are identified by (issuer, subject). */
 @Repository
-@RequiredArgsConstructor
 public class UserRepository {
 
     public static final String DEV_ISSUER = "dev";
@@ -27,7 +26,7 @@ public class UserRepository {
             instant(rs.getTimestamp("access_revoked_at")), instant(rs.getTimestamp("membership_checked_at")),
             rs.getBoolean("has_upstream_refresh_token"));
 
-    private final JdbcClient jdbc;
+    @Autowired private JdbcClient jdbc;
 
     /**
      * A user row. {@code accessRevokedAt} is set while the user is blocked (failed group check or the provider

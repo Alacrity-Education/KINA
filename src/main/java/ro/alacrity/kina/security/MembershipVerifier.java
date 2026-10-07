@@ -1,5 +1,6 @@
 package ro.alacrity.kina.security;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -72,44 +73,32 @@ public class MembershipVerifier {
     private static final int LOCK_STRIPES = 64;
     private static final String REGISTRATION_ID = LazyOidcClientRegistrationRepository.REGISTRATION_ID;
 
+    @Autowired private KinaProperties properties;
+    @Autowired private UserRepository users;
+    @Autowired private AccessTokenService tokens;
+    @Autowired private ObjectProvider<ClientRegistrationRepository> registrations;
+    @Autowired private ObjectProvider<JwtDecoderFactory<ClientRegistration>> idTokenDecoderFactories;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
     @Getter
-    private final boolean enforced;
-    private final KinaProperties.Oidc oidc;
-    private final OidcAccessPolicy policy;
-    private final UpstreamTokenCipher cipher;
-    private final UserRepository users;
-    private final AccessTokenService tokens;
-    private final ObjectProvider<ClientRegistrationRepository> registrations;
-    private final JwtDecoderFactory<ClientRegistration> idTokenDecoders;
-    private final HttpClient http;
-    private final Clock clock;
+    private boolean enforced;
+    private KinaProperties.Oidc oidc;
+    private OidcAccessPolicy policy;
+    private UpstreamTokenCipher cipher;
+    private JwtDecoderFactory<ClientRegistration> idTokenDecoders;
+    private final HttpClient http = OidcHttp.httpClient();
+    private final Clock clock = Clock.systemUTC();
     private final ReentrantLock[] locks = new ReentrantLock[LOCK_STRIPES];
     private final Set<UUID> inFlight = ConcurrentHashMap.newKeySet();
     /** Users whose last re-check found the provider unreachable (cleared by a successful check). */
     private final Map<UUID, Instant> unreachableSince = new ConcurrentHashMap<>();
-    private KinaMetrics metrics = KinaMetrics.NOOP;
 
-    @Autowired
-    public MembershipVerifier(KinaProperties properties, UserRepository users, AccessTokenService tokens,
-                              ObjectProvider<ClientRegistrationRepository> registrations,
-                              ObjectProvider<JwtDecoderFactory<ClientRegistration>> idTokenDecoders) {
-        this(properties, users, tokens, registrations, idTokenDecoders.getIfAvailable(OidcIdTokenDecoders::new),
-                OidcHttp.httpClient(), Clock.systemUTC());
-    }
-
-    MembershipVerifier(KinaProperties properties, UserRepository users, AccessTokenService tokens,
-                       ObjectProvider<ClientRegistrationRepository> registrations,
-                       JwtDecoderFactory<ClientRegistration> idTokenDecoders, HttpClient http, Clock clock) {
-        this.enforced = properties.security().enforcesGroups();
-        this.oidc = properties.security().oidc();
-        this.policy = new OidcAccessPolicy(oidc);
-        this.cipher = UpstreamTokenCipher.fromBase64Key(oidc.tokenEncryptionKey());
-        this.users = users;
-        this.tokens = tokens;
-        this.registrations = registrations;
-        this.idTokenDecoders = idTokenDecoders;
-        this.http = http;
-        this.clock = clock;
+    @PostConstruct
+    void init() {
+        enforced = properties.security().enforcesGroups();
+        oidc = properties.security().oidc();
+        policy = new OidcAccessPolicy(oidc);
+        cipher = UpstreamTokenCipher.fromBase64Key(oidc.tokenEncryptionKey());
+        idTokenDecoders = idTokenDecoderFactories.getIfAvailable(OidcIdTokenDecoders::new);
         for (int i = 0; i < LOCK_STRIPES; i++) {
             locks[i] = new ReentrantLock();
         }
@@ -126,12 +115,6 @@ public class MembershipVerifier {
                         oidc.reloginIntervalWithoutRecheck());
             }
         }
-    }
-
-    /** Counts re-checks at the identity provider by outcome (DESIGN.md 3.7). */
-    @Autowired
-    void setMetrics(KinaMetrics metrics) {
-        this.metrics = metrics;
     }
 
     /** Result of an enforcement decision; {@code description} explains a refusal (safe to show to clients). */

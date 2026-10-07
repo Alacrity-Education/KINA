@@ -28,20 +28,9 @@ public class AccessTokenService {
     static final Duration LAST_USED_THROTTLE = Duration.ofMinutes(1);
     private static final Pattern FORMAT = Pattern.compile("^kina_[A-Za-z0-9_-]{43}$");
 
-    private final AccessTokenRepository repository;
-    private final Duration validity;
-    private final Clock clock;
-
-    @Autowired
-    public AccessTokenService(AccessTokenRepository repository, KinaProperties properties) {
-        this(repository, properties.tokens().validity(), Clock.systemUTC());
-    }
-
-    public AccessTokenService(AccessTokenRepository repository, Duration validity, Clock clock) {
-        this.repository = repository;
-        this.validity = validity;
-        this.clock = clock;
-    }
+    @Autowired private AccessTokenRepository repository;
+    @Autowired private KinaProperties properties;
+    private Clock clock = Clock.systemUTC();
 
     /** A freshly issued token: {@code plaintext} must be shown to the user once and then discarded. */
     public record IssuedToken(String plaintext, AccessToken token) {
@@ -53,7 +42,7 @@ public class AccessTokenService {
     }
 
     public Duration validity() {
-        return validity;
+        return properties.tokens().validity();
     }
 
     /** Generates a new plaintext token ({@code kina_} + 43 base64url chars). */
@@ -74,7 +63,7 @@ public class AccessTokenService {
      * Creates a token for {@code userId}. {@code oauthClientId} is null for tokens created in the web UI.
      */
     public IssuedToken create(UUID userId, String name, String scope, String oauthClientId) {
-        return create(userId, name, scope, oauthClientId, validity);
+        return create(userId, name, scope, oauthClientId, validity());
     }
 
     /** Like {@link #create(UUID, String, String, String)} with an explicit lifetime (OAuth access tokens). */
