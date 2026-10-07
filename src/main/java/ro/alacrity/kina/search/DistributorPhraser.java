@@ -110,12 +110,6 @@ public class DistributorPhraser {
     }
 
     /**
-     * Constraints the parametric ladder loosens, in order (user decision 2026-10-06), each only where the family lets
-     * it relax ({@link ConstraintPolicy#isRelaxable}).
-     */
-    static final List<String> RELAXATION_ORDER = List.of("dielectric", "package", "tolerance");
-
-    /**
      * The relaxation ladder tried, in order, at Mouser and TME while the search has found nothing that meets the
      * request (DESIGN.md 3.2 "Relaxation ladder"): (1) {@code sent} without rating values; (2) the minimal core: for
      * connector queries the type words with the positions (TME) or with the pitch and orientation (Mouser), for USB
@@ -154,9 +148,10 @@ public class DistributorPhraser {
         if (core != null) {
             // the core of a connector request leaves the orientation out (TME, USB): a relaxable constraint
             ParsedQuery.Connector c = query.connector();
-            boolean orientationDropped = c.orientation() != null && policy.isRelaxable(query, ConstraintPolicy.ORIENTATION)
+            String orientation = ConstraintKind.ORIENTATION.label();
+            boolean orientationDropped = c.orientation() != null && policy.isRelaxable(query, orientation)
                     && (c.isUsb() || distributor == Distributor.TME);
-            steps.add(new Relaxation(core, orientationDropped ? List.of(ConstraintPolicy.ORIENTATION) : List.of()));
+            steps.add(new Relaxation(core, orientationDropped ? List.of(orientation) : List.of()));
         } else {
             core = PartSearchService.corePhrase(query, distributor, Set.of());
             if (core == null) {
@@ -165,22 +160,23 @@ public class DistributorPhraser {
                 steps.add(new Relaxation(core, List.of()));
                 Set<String> drop = new LinkedHashSet<>();
                 List<String> relaxed = new ArrayList<>();
-                for (String constraint : RELAXATION_ORDER) {
-                    boolean stated = switch (constraint) {
-                        case "dielectric" -> query.dielectric() != null || query.technology() != null;
-                        case "package" -> query.packageName() != null;
-                        default -> query.constraint(ParsedQuery.TOLERANCE) != null;
-                    };
+                // the ladder kinds in their declared order (ConstraintKind, @Relax(strategy = LADDER, order = ...));
+                // the parametric core states the dielectric, the package and the tolerance
+                for (ConstraintKind kind : ConstraintKind.ladder()) {
+                    String constraint = kind.label();
+                    boolean dielectric = kind == ConstraintKind.DIELECTRIC;
+                    boolean stated = dielectric ? query.dielectric() != null || query.technology() != null
+                            : kind.wanted(query) != null;
                     // hard constraints are never loosened (the package of most families, DESIGN.md 3.4); the
                     // technology goes with the dielectric but is hard and stays out of what is reported
                     boolean relaxable = policy.isRelaxable(query, constraint)
-                            || "dielectric".equals(constraint) && query.dielectric() == null;
+                            || dielectric && query.dielectric() == null;
                     if (!stated || !relaxable) {
                         continue;
                     }
                     drop.add(constraint);
                     // the technology goes with the dielectric but stays strict: it is not reported as loosened
-                    if (!"dielectric".equals(constraint) || query.dielectric() != null) {
+                    if (!dielectric || query.dielectric() != null) {
                         relaxed.add(constraint);
                     }
                     steps.add(new Relaxation(PartSearchService.corePhrase(query, distributor, drop), relaxed));
@@ -216,9 +212,7 @@ public class DistributorPhraser {
     // ---------------------------------------------------------------- ratings and tolerance
 
     /** Rating kinds a request states as minimums (and DCR, a maximum): never part of a distributor phrase. */
-    private static final List<String> RATING_KINDS = List.of(ParsedQuery.VOLTAGE, ParsedQuery.CURRENT,
-            ParsedQuery.SATURATION_CURRENT, ParsedQuery.POWER, ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME,
-            ParsedQuery.DCR);
+    private static final List<String> RATING_KINDS = ConstraintKind.ratingMeasures();
     private static final Pattern TOLERANCE = Pattern.compile(
             "(?<![\\p{L}\\d.])(?:\\+/-|\\+-|±)?\\s?(?:\\d+(?:[.,]\\d+)?|\\.\\d+)\\s?%");
     private static final Pattern LOOSE_SEPARATORS = Pattern.compile("\\s*([,;])(?:\\s*[,;])+");

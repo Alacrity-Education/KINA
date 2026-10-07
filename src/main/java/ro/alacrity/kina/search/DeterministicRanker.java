@@ -283,7 +283,8 @@ public class DeterministicRanker {
                 continue;
             }
             ConstraintKind.Outcome o = kind.score(context, match.weight());
-            if (o.state() == ConstraintKind.Outcome.State.COUNTED || o.state() == ConstraintKind.Outcome.State.UNCOUNTED) {
+            if (o.state() == ConstraintKind.Outcome.State.COUNTED
+                    || o.state() == ConstraintKind.Outcome.State.UNCOUNTED) {
                 score += o.points();
             }
         }

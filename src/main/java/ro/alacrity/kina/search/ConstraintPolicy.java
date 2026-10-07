@@ -44,7 +44,6 @@ public final class ConstraintPolicy {
     /** The exact voltage of a Zener diode or a fixed regulator (within 2 %). */
     public static final String VOLTAGE = ConstraintKind.EXACT_VOLTAGE.label();
     public static final String FORM_FACTOR = ConstraintKind.FORM_FACTOR.label();
-    public static final String ORIENTATION = ConstraintKind.ORIENTATION.label();
 
     /** Every name a hard-constraint list may contain: the labels of the policy kinds. */
     public static final Set<String> NAMES = ConstraintKind.policyKinds().stream().map(ConstraintKind::label)
@@ -176,11 +175,6 @@ public final class ConstraintPolicy {
     public boolean isRelaxable(ParsedQuery query, String name) {
         ConstraintKind kind = ConstraintKind.byPolicyName(name);
         return kind != null && strategy(query, kind) == RelaxStrategy.LADDER;
-    }
-
-    /** The ladder kinds the request may loosen, in ladder order. */
-    public List<ConstraintKind> ladder(ParsedQuery query) {
-        return ConstraintKind.ladder().stream().filter(k -> strategy(query, k) == RelaxStrategy.LADDER).toList();
     }
 
     /** The table as configured, family by family (for documentation and {@code list_distributors}). */
