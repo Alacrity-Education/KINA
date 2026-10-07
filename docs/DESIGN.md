@@ -744,6 +744,7 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `Described` |  |  |
 | `VOLTAGE` | `V` from `v`, `vdc`, `vac`, `volt`, `volts`, `vol`, `vo` | `Simple` | `regulator` | `output voltage`, `voltage - output`, `voltage - output (min/fixed)`, `output voltage (fixed)`, `fixed output voltage` |
 |  |  | `Simple` | `zener` | `vz - zener voltage`, `zener voltage`, `voltage - zener (nom) (vz)`, `zener voltage (vz)`, `voltage - zener` |
+|  |  | `Simple` | `fan` | `supply voltage`, `rated voltage`, `nominal voltage`, `voltage rating dc`, `voltage rating`, `voltage` |
 |  |  | `Simple` |  | `voltage rating dc`, `voltage rating - dc`, `voltage rating`, `voltage rated`, `rated voltage`, `voltage - rated`, `operating voltage`, `dc voltage rating`, `voltage`, `output voltage`, `voltage - output`, `voltage - output (min/fixed)`, `vr - reverse voltage`, `reverse voltage (vr)`, `vds - drain-source breakdown voltage`, `drain source voltage (vdss)`, `drain to source voltage (vdss)`, `vz - zener voltage`, `voltage - zener (nom) (vz)`, `vrwm - reverse standoff voltage`, `reverse stand-off voltage (vrwm)`, `voltage - reverse standoff (typ)` |
 |  |  | `KeyContaining` |  | `voltage`; not `forward`, `clamp`, `breakdown`, `input`, `supply`, `isolation`, `threshold`, `gate`, `ripple`, `dropout`, `temperature`, `coefficient`, `offset` |
 |  |  | `LargestVoltage` |  |  |
@@ -764,6 +765,14 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `Described` |  |  |
 | `TOLERANCE` | `%` (Percent) | `Simple` |  | `tolerance`, `resistance tolerance`, `capacitance tolerance`, `inductance tolerance` |
 |  |  | `Described` |  |  |
+| `SPEED` | `rpm` from `rpm` in `fan` (Spaced) | `Simple` | `fan` | `rotational rate/speed`, `rotational speed`, `speed`, `fan speed`, `rated speed`, `speed (rpm)`, `nominal speed` |
+|  |  | `Described` | `fan` |  |
+| `AIRFLOW` | `m³/h` from `cfm` ×1.69901, `m3h`, `m3min` ×60, `lmin` ×0.06 in `fan` (WithAlternative, `CFM`) | `Simple` | `fan` | `fan efficiency`, `air flow`, `air flow rate`, `max air flow`, `maximum air flow`, `air volume` |
+|  |  | `Described` | `fan` |  |
+| `STATIC_PRESSURE` | `Pa` from `pa`, `mmh2o` ×9.80665, `mmaq` ×9.80665, `inh2o` ×249.089 in `fan` (WithAlternative, `mmH2O`) | `Simple` | `fan` | `static pressure`, `max static pressure`, `maximum static pressure`, `static air pressure`, `air pressure` |
+|  |  | `Described` | `fan` |  |
+| `NOISE` | `dBA` from `dba`, `db` in `fan` (Spaced) | `Simple` | `fan` | `noise level`, `noise`, `acoustic noise`, `sound level`, `sound pressure level`, `noise (dba)` |
+|  |  | `Described` | `fan` |  |
 | `TEST_FREQUENCY` |  | `Simple` |  | `test frequency`, `impedance test frequency`, `frequency`, `measuring frequency` |
 | `RIPPLE_CURRENT` |  | `Simple` |  | `ripplecurrent`, `ripple current`, `rated ripple current`, `ripple current (max)`, `max ripple current`, `current - ripple`, `ripple current @ high frequency`, `ripple current @ low frequency`, `operating current`, `current rating`, `rated current`, `current` |
 |  |  | `KeyContaining` |  | `ripple` |
@@ -784,6 +793,15 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 | `CRYSTAL_BODY` |  | `Simple` |  | `body dimensions`, `dimensions`, `size / dimension`, `size`, `case size`, `body size` |
 | `OPERATING_TEMPERATURE` |  | `TemperatureRange` |  | `operating temperature`, `operating temperature range`, `temperature range` |
 |  |  | `DescriptionTemperatureRange` |  |  |
+| `FAN_TYPE` |  | `VocabularyWord` | `fan` | `kind of fan`, `fan type`, `type of fan`, `product type`, `type` |
+|  |  | `DescribedWord` | `fan` |  |
+| `FAN_SUPPLY` |  | `VocabularyWord` | `fan` | `type of fan`, `supply voltage`, `fan motor`, `kind of fan` |
+|  |  | `DescribedWord` | `fan` |  |
+| `FRAME_SIZE` |  | `VocabularyWord` | `fan` | `fan dimensions`, `frame size`, `fan size`, `dimensions`, `size`, `body dimensions` |
+|  |  | `DescribedWord` | `fan` |  |
+| `BEARING` |  | `VocabularyWord` | `fan` | `kind of bearing`, `bearing`, `bearing type`, `type of bearing` |
+|  |  | `DescribedWord` | `fan` |  |
+| `FAN_FEATURES` |  | `MergedWords` | `fan` | `additional functions`, `signal output`, `leads`, `features`, `control`, `output signal` |
 | `ELEMENTS` |  | `ElementsCount` | `ARRAYS` | `elements`, `number of elements`, `number of resistors`, `number of capacitors`, `number of lines`, `number of channels`, `number of bits` |
 | `ESR` |  | `OhmsAtFrequency` |  | `esr`, `esr (equivalent series resistance)`, `equivalent series resistance`, `esr max`, `esr (max)`, `max esr`, `esr max.` |
 |  |  | `OhmsAtKeyPrefix` |  | `esr ` |

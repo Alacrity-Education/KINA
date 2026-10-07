@@ -1,0 +1,4255 @@
+{
+ "query": "40x40x10 fan 12V",
+ "recorded": "2026-10-07 live probe (detail=full, allow_below_spec, max_results 50) of the fan phrasing (Mouser and TME one search each; LCSC with the first phrase \"Cooling fan\" + voltage, whose relaxation reached non-fans for the blower); attributes are the raw distributor attributes (canonical keys removed), prices the three smallest breaks",
+ "phrases": {
+  "LCSC": "\"Cooling fan\" 12V",
+  "TME": "fan DC axial 12V 40x40x10",
+  "MOUSER": "DC fan 40x40x10 12V"
+ },
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729751",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF5015SM12",
+    "description": "、37.7dB(A) 0.14A 1.68W 12V 13.4CFM 50mm×50mm×15mm 5500RPM DC cooling fan",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 101,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.684,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2104212111_SHENG-FENG-SF5015SM12_C729751.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729751.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729751"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729761",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF6025SM12",
+    "description": "、34.3dB(A) 0.17A 12V 2.04W 21.5CFM 4000RPM 60mm×60mm×25mm DC cooling fan",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 42,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.799,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2105241518_SHENG-FENG-SF6025SM12_C729761.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729761.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729761"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40101V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40101V1-1000U-A99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 13.52m3/h; 27.3dBA; Vapo; 7000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2303,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.74,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.11,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 1.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/3ee27e86a56ece2860d291263a4ec172/MF40101V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/0F/3F/80/00/0/586736_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d1fb374ecc4fac0e9274103f5f9c4914c100aab6",
+    "productUrl": "https://www.tme.eu/en/details/mf40101v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "4.5...13.8V DC",
+     "Power consumption": "0.72W",
+     "Current rating": "51mA",
+     "Fan efficiency": "13.52m<sup>3</sup>/h",
+     "Noise level": "27.3dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "7000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.83mm H<sub>2</sub>O",
+     "Wire size": "26AWG",
+     "Related items": "SR4-15.5",
+     "Insulation class": "A"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EE40101S2-999-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EE40101S2-1000U-999",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 11.99m3/h; 23dBA; slide; 6100rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2285,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 1.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 1.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/e1474fcc9252e2791a7b00c5f9d01b73/EE40101S2-999-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/BC/85/90/00/0/612555_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=749396ab78d3ab22c881cf6fc831f2c36fc4ee39",
+    "productUrl": "https://www.tme.eu/en/details/ee40101s2-999-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "0.96W",
+     "Current rating": "68mA",
+     "Fan efficiency": "11.99m<sup>3</sup>/h",
+     "Noise level": "23dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6100rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3.05mm H<sub>2</sub>O",
+     "Wire size": "26AWG",
+     "Related items": "SR4-15.5",
+     "Insulation class": "A",
+     "Current and power consumption tolerance": "±15%"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40101V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40101V2-1000U-A99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 11.89m3/h; 20.6dBA; Vapo; 5800rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 4680,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 2.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.18,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/4acd2e43661a550f220e369becdbfcbd/MF40101V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3A/70/90/00/0/591779_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=4fed737af707cb9e05ac44bad307473ddd38daac",
+    "productUrl": "https://www.tme.eu/en/details/mf40101v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "0.59W",
+     "Current rating": "40mA",
+     "Fan efficiency": "11.89m<sup>3</sup>/h",
+     "Noise level": "20.6dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5800rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3.05mm H<sub>2</sub>O",
+     "Wire size": "26AWG",
+     "Related items": "SR4-15.5"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "HA40101V4-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "HA40101V4-1000U-A99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9.13m3/h; 15.7dBA; Vapo; 5000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1484,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 1.88,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 1.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/155940d94fffd4dbb8a29e964554b703/Product 21.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B6/3F/80/00/0/586603_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6c77c29a82105927ef4d98c954c20d17243b4a74",
+    "productUrl": "https://www.tme.eu/en/details/ha40101v4-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "4.5...13.8V DC",
+     "Power consumption": "0.43W",
+     "Current rating": "31mA",
+     "Fan efficiency": "9.13m<sup>3</sup>/h",
+     "Noise level": "15.7dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2.28mm H<sub>2</sub>O",
+     "Wire size": "26AWG",
+     "Related items": "SR4-15.5",
+     "Storage temperature": "-40...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "HA40101V4-G99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "HA40101V4-1000U-G99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9.13m3/h; 15.7dBA; Vapo; 5000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2478,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 2.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/0aefb603effa4ffaf395d85536c4f072/HA40101V4-G99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/32/12/B0/00/0/729379_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=015d325e066f38abaa2bc8a50a79206cad277ab4",
+    "productUrl": "https://www.tme.eu/en/details/ha40101v4-g99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "4.5...13.8V DC",
+     "Power consumption": "0.43W",
+     "Current rating": "31mA",
+     "Fan efficiency": "9.13m<sup>3</sup>/h",
+     "Noise level": "15.7dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2.28mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40101VX-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40101VX-1000U-A99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 16.73m3/h; 31.4dBA; Vapo; 8500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1456,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.09,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.35,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 2.06,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/128bcbd728ca8eb4584682fe73077e85/MF40101VX-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E7/23/90/00/0/602750_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=3f0f4c89d07fd10b0bc386a8cf09cc4acf3a2ecd",
+    "productUrl": "https://www.tme.eu/en/details/mf40101vx-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "4.5...13.8V DC",
+     "Power consumption": "1.05W",
+     "Current rating": "87mA",
+     "Fan efficiency": "16.73m<sup>3</sup>/h",
+     "Noise level": "31.4dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "8500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "6.35mm H<sub>2</sub>O",
+     "Wire size": "28AWG",
+     "Related items": "SR4-15.5",
+     "Insulation class": "A"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40101V2-G99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40101V2-1000U-G99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 11.89m3/h; 20.6dBA; Vapo; 5800rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 481,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 2.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/7ea98b3cfd9e98af843e91e1db38548e/MF40101V2-G99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/4A/70/90/00/0/591780_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=726979fe55dfdcc0f7b1df577667d00a438b0228",
+    "productUrl": "https://www.tme.eu/en/details/mf40101v2-g99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "0.59W",
+     "Current rating": "40mA",
+     "Fan efficiency": "11.89m<sup>3</sup>/h",
+     "Noise level": "20.6dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5800rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3.05mm H<sub>2</sub>O",
+     "Wire size": "26AWG",
+     "Related items": "SR4-15.5",
+     "Signal output": "F type"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT2",
+       "amount": 200
+      },
+      {
+       "id": "CT1",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EF40101BX-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EF40101BX-1000U-A99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 16.99m3/h; 33.7dBA; ball; 9000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 867,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.79,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 5.22,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 4.45,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/42dcde998e479149ecbc25f2fa28be4f/EF40101BX-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F1/12/B0/00/0/729375_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ad2743a20b0dfb0126f6e2060f9eb3acc5f7f104",
+    "productUrl": "https://www.tme.eu/en/details/ef40101bx-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "4.5...13.8V DC",
+     "Power consumption": "1.47W",
+     "Current rating": "0.122A",
+     "Fan efficiency": "16.99m<sup>3</sup>/h",
+     "Noise level": "33.7dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "9000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "6.85mm H<sub>2</sub>O",
+     "Insulation class": "A",
+     "Current and power consumption tolerance": "±15%"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40101VX-G99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40101VX-1000U-G99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 16.82m3/h; 31.4dBA; Vapo; 8500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 582,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.88,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.95,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/mf40101vx-g99-a/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/BB/E6/F0/00/0/1011387_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=843ba5d08a451f3468e697634bf5df27ed300bc3",
+    "productUrl": "https://www.tme.eu/en/details/mf40101vx-g99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "4.5...13.8V DC",
+     "Power consumption": "1.05W",
+     "Current rating": "87mA",
+     "Fan efficiency": "16.82m<sup>3</sup>/h",
+     "Noise level": "31.4dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "8500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "6.35mm H<sub>2</sub>O",
+     "Wire size": "28AWG",
+     "Insulation class": "A",
+     "Signal output": "F type"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-4010MS",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-4010MS",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 28.5dBA; EBR; 5400rpm; 2.41mmH2O",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 40,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.39,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/5ed0b6e6465c9a5795469e85d6b817b2/AK-4010MS.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B3/A3/F0/00/0/997947_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=351bea929345316dac052a1edf374cc289a717c7",
+    "productUrl": "https://www.tme.eu/en/details/ak-4010ms/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.1A",
+     "Noise level": "28.5dBA",
+     "Kind of Bearing": "EBR",
+     "Rotational rate/speed": "5400rpm",
+     "Leads": "3pin",
+     "Additional functions": "silent operation, speed sensor",
+     "Static pressure": "2.41mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "40000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EF40101B1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EF40101B1-1000U-A99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 13.59m3/h; 27.3dBA; ball; 7000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 359,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/def02e92aac29fb6e3122795726351f2/EF40101B1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/D1/12/B0/00/0/729373_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=35a6a5693abbdb9095e54cb0e7b53d26ed0bf134",
+    "productUrl": "https://www.tme.eu/en/details/ef40101b1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "1.01W",
+     "Current rating": "82mA",
+     "Fan efficiency": "13.59m<sup>3</sup>/h",
+     "Noise level": "27.3dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "7000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.82mm H<sub>2</sub>O",
+     "Insulation class": "A",
+     "Current and power consumption tolerance": "±15%"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      },
+      {
+       "id": "CT2",
+       "amount": 200
+      },
+      {
+       "id": "CT4",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412F",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412F",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 8m3/h; 22.1dBA; slide; 5400rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 37,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 11.72,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.31,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f2b4b99b5e5ee57745ab1dafd9b1bcd5/EBM.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B0/91/01/00/0/1054987_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b2803222d016f97bd16903e95f3e4d076bb900dd",
+    "productUrl": "https://www.tme.eu/en/details/412f/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.7W",
+     "Fan efficiency": "8m<sup>3</sup>/h",
+     "Noise level": "22.1dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "5400rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EF40101B2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EF40101B2-1000U-A99",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9.35m3/h; 17.7dBA; ball; 5000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 186,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.43,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.95,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 4.85,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/9f3b8f113470e365d1229335666244d9/EF40101B2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E1/12/B0/00/0/729374_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=959414531753b21208c959d4ac0a2c39ae865387",
+    "productUrl": "https://www.tme.eu/en/details/ef40101b2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "0.45W",
+     "Current rating": "37mA",
+     "Fan efficiency": "9.35m<sup>3</sup>/h",
+     "Noise level": "17.7dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "5000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2.53mm H<sub>2</sub>O",
+     "Insulation class": "A",
+     "Current and power consumption tolerance": "±15%"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT2",
+       "amount": 200
+      },
+      {
+       "id": "CT3",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "109P0412H901",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "109P0412H901",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9m3/h; 25dBA; ball; 6200rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 98,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 10.53,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.15,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/30df9482fd0ef3d6d50013f3df049c8f/109P0412H901.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/63/A5/C0/00/0/809526_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6bf62b2c3f11a4892811d786df67e5c5b06e924b",
+    "productUrl": "https://www.tme.eu/en/details/109p0412h901/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "7...13.8V DC",
+     "Power consumption": "0.84W",
+     "Current rating": "70mA",
+     "Fan efficiency": "9m<sup>3</sup>/h",
+     "Noise level": "25dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "6200rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.32m",
+     "Operating temperature": "-10...60°C",
+     "Flammability rating": "UL94V-1",
+     "Additional functions": "lock sensor, reverse polarity protection",
+     "Kind of material": "flame retardant"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 216
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412FH",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412FH",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9m3/h; 26dBA; slide; 6000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 15,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 15.76,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f2b4b99b5e5ee57745ab1dafd9b1bcd5/EBM.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/5B/42/A0/00/0/664757_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=1d215ca4df1673e063647c0208cb4de8f4b812c1",
+    "productUrl": "https://www.tme.eu/en/details/412fh/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.8W",
+     "Fan efficiency": "9m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MFB40H12A-007",
+    "manufacturer": "SEPA Europe GMBH",
+    "manufacturerPartNumber": "MFB40H12A-007",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 10.4m3/h; 25dBA; ball; 5500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 19,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 12.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/mfb40h12a-007/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/9D/15/11/00/0/1135065_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=fd138a3ee14b3639ad7fa6ec144ae5dd71bf84ae",
+    "productUrl": "https://www.tme.eu/en/details/mfb40h12a-007/",
+    "attributes": {
+     "Manufacturer": "SEPA Europe GMBH",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Current rating": "50mA",
+     "Fan efficiency": "10.4m<sup>3</sup>/h",
+     "Noise level": "25dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "5500rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "3pin, leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-40...85°C",
+     "Additional functions": "speed sensor"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 2029,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 25
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412F/2H-038",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412F/2H-038",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 8.88m3/h; 26dBA; slide; 6000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 21,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 19.44,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/12e23c3f3dfc89aa789ddce41bf91453/412F_2H-038_Spec.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/17/4A/B0/00/0/762993_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=63df76335d16ace41881378ad2072c810d9fc02d",
+    "productUrl": "https://www.tme.eu/en/details/412f_2h-038/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.8W",
+     "Fan efficiency": "8.88m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Operating temperature": "-20...70°C",
+     "Additional functions": "speed sensor",
+     "Engineering PN": "9291705038"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ASFP44771",
+    "manufacturer": "PANASONIC",
+    "manufacturerPartNumber": "ASFP44771",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 8.4m3/h; 21.5dBA; ball; 5500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 8,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 20.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 18.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/asfp44771/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/17/C5/D0/00/0/875633_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=418404244bbe4a15c47791ee43fd09fd5e583a29",
+    "productUrl": "https://www.tme.eu/en/details/asfp44771/",
+    "attributes": {
+     "Manufacturer": "PANASONIC",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "0.48W",
+     "Current rating": "40mA",
+     "Fan efficiency": "8.4m<sup>3</sup>/h",
+     "Noise level": "21.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "5500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.2m",
+     "Operating temperature": "-10...60°C"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112524,
+     "manufacturer_id": 131,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412F/2M",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412F/2M",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 6.5m3/h; slide; 4300rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 8,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 20.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 18.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/7ce307f8115d03004e67ce273d0df177/6200N.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/37/4A/B0/00/0/762995_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2615c080d6087432e86456c1a58f877bea919eae",
+    "productUrl": "https://www.tme.eu/en/details/412f_2m/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "0.4W",
+     "Fan efficiency": "6.5m<sup>3</sup>/h",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "4300rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Operating temperature": "-20...70°C",
+     "Additional functions": "speed sensor"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "LF40P12PSE00A",
+    "manufacturer": "SEPA Europe GMBH",
+    "manufacturerPartNumber": "LF40P12PSE00A",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 13.8m3/h; 28dBA; MagFix; 7500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 7,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 8.75,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/lf40p12pse00a/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F4/5E/31/00/0/1303887_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2f87028d4e454f4c4338cf75b690599b06c82876",
+    "productUrl": "https://www.tme.eu/en/details/lf40p12pse00a/",
+    "attributes": {
+     "Manufacturer": "SEPA Europe GMBH",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10.2...13.8V DC",
+     "Current rating": "50mA",
+     "Fan efficiency": "13.8m<sup>3</sup>/h",
+     "Noise level": "28dBA",
+     "Kind of Bearing": "MagFix",
+     "Rotational rate/speed": "7500rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "4pin, leads x4",
+     "Lead length": "0.145m",
+     "Operating temperature": "-20...85°C",
+     "Additional functions": "PWM, speed sensor"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 2029,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 25
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "DFS401012M",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "DFS401012M",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 28.5dBA; EBR; 5400rpm; 2.41mmH2O",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.78,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/0d62cde0422cf9e7e508f734320b5ea1/DFS401012M.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/DE/C3/F0/00/0/998637_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9644623b08c2a4cef0ceacd97373e758c11a3cc5",
+    "productUrl": "https://www.tme.eu/en/details/dfs401012m/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.1A",
+     "Noise level": "28.5dBA",
+     "Kind of Bearing": "EBR",
+     "Rotational rate/speed": "5400rpm",
+     "Leads": "3pin",
+     "Additional functions": "silent operation, speed sensor",
+     "Static pressure": "2.41mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "40000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412F/2H",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412F/2H",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 8.88m3/h; 26dBA; slide; 6000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 15.15,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/412f_2h/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/07/4A/B0/00/0/762992_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ad8f1cdd639b18df3ad4447f687c09f8bb1947ff",
+    "productUrl": "https://www.tme.eu/en/details/412f_2h/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.8W",
+     "Fan efficiency": "8.88m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Operating temperature": "-20...70°C",
+     "Additional functions": "speed sensor",
+     "Engineering PN": "9291705026"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ASFP42771",
+    "manufacturer": "PANASONIC",
+    "manufacturerPartNumber": "ASFP42771",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9.6m3/h; 24.5dBA; ball; 6500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 22.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 20.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/asfp42771/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3E/B5/D0/00/0/875491_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=220b3b381a7759b1559adeb721058d75024f641e",
+    "productUrl": "https://www.tme.eu/en/details/asfp42771/",
+    "attributes": {
+     "Manufacturer": "PANASONIC",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "0.6W",
+     "Current rating": "50mA",
+     "Fan efficiency": "9.6m<sup>3</sup>/h",
+     "Noise level": "24.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "6500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.2m",
+     "Operating temperature": "-10...60°C"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112524,
+     "manufacturer_id": 131,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412FM",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412FM",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 6m3/h; 17dBA; slide; 4300rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 5,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.15,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f2b4b99b5e5ee57745ab1dafd9b1bcd5/EBM.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/6B/42/A0/00/0/664758_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c40a447ad697c1ff908f6b362ab754a81b4a7da4",
+    "productUrl": "https://www.tme.eu/en/details/412fm/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.5W",
+     "Fan efficiency": "6m<sup>3</sup>/h",
+     "Noise level": "17dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "4300rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ASFP40791",
+    "manufacturer": "PANASONIC",
+    "manufacturerPartNumber": "ASFP40791",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 11.4m3/h; 29.5dBA; ball; 7500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 4,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 23.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 21.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/asfp40791/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/A1/80/E0/00/0/919578_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=3a92baf75e233b2ac3ff505ce252ba549b872858",
+    "productUrl": "https://www.tme.eu/en/details/asfp40791/",
+    "attributes": {
+     "Manufacturer": "PANASONIC",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "0.72W",
+     "Current rating": "60mA",
+     "Fan efficiency": "11.4m<sup>3</sup>/h",
+     "Noise level": "29.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "7500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.2m",
+     "Operating temperature": "-10...60°C",
+     "Additional functions": "lock sensor"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112524,
+     "manufacturer_id": 131,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412F-130",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412F-130",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 8m3/h; 22.1dBA; slide; 5400rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 21.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 20.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/412f-130/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/47/4A/B0/00/0/762996_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=db69414137acdb7b8fde91ad89cef347a7ddd05d",
+    "productUrl": "https://www.tme.eu/en/details/412f-130/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.6W",
+     "Fan efficiency": "8m<sup>3</sup>/h",
+     "Noise level": "22.1dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "5400rpm",
+     "Impeller material": "polyamide",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m",
+     "Operating temperature": "-20...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412FM-074",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412FM-074",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 6m3/h; 17dBA; slide; 4300rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 21.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 20.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 19.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/412fm-074/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/57/4A/B0/00/0/762997_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c6a489578e8368fac655974cb0df9fd987610946",
+    "productUrl": "https://www.tme.eu/en/details/412fm-074/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.4W",
+     "Fan efficiency": "6m<sup>3</sup>/h",
+     "Noise level": "17dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "4300rpm",
+     "Impeller material": "polyamide",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412FH132",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412 FH-132",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9m3/h; 26dBA; slide; 6000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 23.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 19.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 18.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/16b10ad55e65df68a9361c5701e146a6/EBMdocumentation.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C8/56/A0/00/0/681356_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=088ec6a6b460889116c0128764d7831d3e0950c0",
+    "productUrl": "https://www.tme.eu/en/details/412fh132/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Fan efficiency": "9m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "polyamide",
+     "Enclosure material": "PBT",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412FH-132",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412FH-132",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9m3/h; 26dBA; slide; 6000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 24.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 21.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/412fh-132/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/57/C9/B0/00/0/760949_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d4e8dd4a67b5f13b220f689ddff08beda81a6976",
+    "productUrl": "https://www.tme.eu/en/details/412fh-132/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.8W",
+     "Fan efficiency": "9m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "polyamide",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ASFP40771",
+    "manufacturer": "PANASONIC",
+    "manufacturerPartNumber": "ASFP40771",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 11.4m3/h; 29.5dBA; ball; 7500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 24.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 22.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/asfp40771/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/76/66/D0/00/0/878183_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=cda1e28125f70861cd3a3fb26901f4bc0781024a",
+    "productUrl": "https://www.tme.eu/en/details/asfp40771/",
+    "attributes": {
+     "Manufacturer": "PANASONIC",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "0.72W",
+     "Current rating": "60mA",
+     "Fan efficiency": "11.4m<sup>3</sup>/h",
+     "Noise level": "29.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "7500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.2m",
+     "Operating temperature": "-10...60°C"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112524,
+     "manufacturer_id": 131,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412F/2H-136",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412F/2H-136",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 8.88m3/h; 26dBA; slide; 6000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 26.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 23.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/412f_2h-136/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/27/4A/B0/00/0/762994_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b60aae0836d53998ab041ccddf746de05b6ff9a1",
+    "productUrl": "https://www.tme.eu/en/details/412f_2h-136/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10...14V DC",
+     "Power consumption": "0.8W",
+     "Fan efficiency": "8.88m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Operating temperature": "-20...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412JH",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412JH",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 22m3/h; slide; 11700rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 43.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 40.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 38.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/412jh/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/67/C9/B0/00/0/760950_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d9c8c22bc4e492189ae7579c5509a9a491730fd1",
+    "productUrl": "https://www.tme.eu/en/details/412jh/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "8...13.5V DC",
+     "Power consumption": "3W",
+     "Fan efficiency": "22m<sup>3</sup>/h",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "11700rpm",
+     "Impeller material": "polyamide",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ASFP42791",
+    "manufacturer": "PANASONIC",
+    "manufacturerPartNumber": "ASFP42791",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 9.6m3/h; 24.5dBA; ball; 6500rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 21.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 19.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/asfp42791/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/91/80/E0/00/0/919577_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=5465da3a920a78506b3a62f146f3ab4727a0deda",
+    "productUrl": "https://www.tme.eu/en/details/asfp42791/",
+    "attributes": {
+     "Manufacturer": "PANASONIC",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "0.6W",
+     "Current rating": "50mA",
+     "Fan efficiency": "9.6m<sup>3</sup>/h",
+     "Noise level": "24.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "6500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.2m",
+     "Operating temperature": "-10...60°C",
+     "Additional functions": "lock sensor"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112524,
+     "manufacturer_id": 131,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "412FMR-161",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "412FMR-161",
+    "description": "Fan: DC; 40x40x10mm; axial; 12VDC; 6.5m3/h; 14dBA; slide; 4300rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 23.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 21.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/412fmr-161/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/67/4A/B0/00/0/762998_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=5892a30cb41869e2922c6dad489ab425d063b754",
+    "productUrl": "https://www.tme.eu/en/details/412fmr-161/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "0.5W",
+     "Fan efficiency": "6.5m<sup>3</sup>/h",
+     "Noise level": "14dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "4300rpm",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "MOUSER": [
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101VX1UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101VX-1000U-A99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 9.9CFM, 0.25\"H2O, Vapo, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 2000,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.18,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.63,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 3.54,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF40101VX_1000U_A99_D04111120G_02_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_MF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101VX-1000U-A99?qs=EU6FO9ffTwdxYJ1Fqg9j9g%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 3665,
+       "date": "2026-12-22T00:00:00"
+      },
+      {
+       "quantity": 4630,
+       "date": "2027-03-16T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101V21UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101V2-1000U-A99",
+    "description": "DC Fans DC Axial Fan, 40x40x10mm, 12VDC, 7CFM, 0.12\"H2O, Vapo, 2xWire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 2258,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.18,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.42,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 3.26,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF40101V2_1000U_A99_D04111140G_02_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_MF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101V2-1000U-A99?qs=EU6FO9ffTwf%252BI2pm6nEibQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "120 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM-4010-13-10",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-4010-13-10",
+    "description": "DC Fans DC Fan 10CFM 1.56W 12V 40x40x10.6mm AR",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1519,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 7.47,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_40.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/cfm-4010-03-10_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-4010-13-10?qs=2KpglrJGpg%252BK0iPpcoIVrw%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "100"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "196 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101V11UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101V1-1000U-A99",
+    "description": "DC Fans DC Axial Fan, 40x40x10mm, 12VDC, 8CFM, 0.19\"H2O, Vapo, 2xWire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1945,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.18,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.58,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF40101V1_1000U_A99_D04111130G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_MF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101V1-1000U-A99?qs=EU6FO9ffTwcZMKK5O5Bvpw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD4010-12HSS",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD4010-12HSS",
+    "description": "DC Fans DC Fan, 40x40x10mm, 12VDC, 6.7CFM, 0.1A, 25dBA, 6000RPM, Sealed Sleeve, Leads",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 578,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.33,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.67,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6002/1/OD4010_sealedsleeve.pdf",
+    "photoUrl": "https://www.mouser.com/images/knightelectronics/images/OD4010-05HSS_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD4010-12HSS?qs=z2%252Bm4eYGIpxAbJyOulqxmg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "567-DC0401012V2B-3T3",
+    "manufacturer": "Wakefield Thermal",
+    "manufacturerPartNumber": "DC0401012V2B-3T3",
+    "description": "DC Fans Fan, 40x10mm, 12VDC, 12.23CFM, 2.16W, Ball Bearing, 3 Lead, 3 Pin Connector",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 687,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.04,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.83,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 12.06,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/264/1/wfv-dc-fans-rev-a3 (1).pdf",
+    "photoUrl": "https://www.mouser.com/images/wakefield/images/MFG_DC0401012V2B_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wakefield-Thermal/DC0401012V2B-3T3?qs=GBLSl2AkiruHB4OWftdkfA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "600"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "567-DC0401012V2B-3T0",
+    "manufacturer": "Wakefield Thermal",
+    "manufacturerPartNumber": "DC0401012V2B-3T0",
+    "description": "DC Fans Fan, 40x10mm, 12VDC, 12.23CFM, 2.16W, 0.18A, 39dBA, 2Ball Bearing, 3 Lead, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 514,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.14,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.71,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.06,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/264/1/wfv-dc-fans-rev-a3 (1).pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wakefield-Thermal/DC0401012V2B-3T0?qs=GBLSl2AkirtxrlvB617I%252BQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "600"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-HA40101V41UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "HA40101V4-1000U-A99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 5.4CFM, 0.09\"H2O, Vapo, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1995,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 2.94,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/HA40101V4_1000U_A99_D04168890G_01_4_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_HA_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/HA40101V4-1000U-A99?qs=EU6FO9ffTwdWOxUhETVP%252Bg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 1995,
+       "date": "2026-12-30T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101VX100UG99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101VX-1000U-G99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 0.25\"H2O, Vapo, 3x Wire, Auto Restart, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 418,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.56,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.84,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF40101VX_1000U_G99_D04183070G_00_3_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/MF40101VX-1000U-G99_wdp_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101VX-1000U-G99?qs=T3oQrply3y8Qap1aIz2%2FAg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101V1100UG99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101V1-1000U-G99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 8CFM, 0.19\"H2O, Vapo, 3x Wire, Auto Restart, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 460,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.68,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 4.32,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF40101V1_1000U_G99_D04171600G_00_1_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/MFG_MF4010_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101V1-1000U-G99?qs=PqoDHHvF64%2FMOTng1EXGFA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD401012HB",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD4010-12HB",
+    "description": "DC Fans DC Fan, 40x40x10mm, 12VDC, 7CFM, 0.1A, 25dBA, 6000RPM, Dual Ball, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 193,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.19,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/knightelectronics/images/OD4010-05HB_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD4010-12HB?qs=ugWpKuv%252BIIAeCrFVjuQ81A%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101V210UG99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101V2-1000U-G99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 7CFM, 0.12\"H2O, Vapo, 3x Wire, Auto Restart, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 272,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.35,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.63,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF40101V2_1000U_G99_D04192270G_00_0_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_MF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101V2-1000U-G99?qs=T3oQrply3y81j5%2FyIEOEbQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "472-04010SA-12M-ALD0",
+    "manufacturer": "NMB",
+    "manufacturerPartNumber": "04010SA-12M-ALD-0",
+    "description": "DC Fans DC Tubeaxial Fan, 40x40x10mm, 12VDC, 6CFM, Rib Mount, Ball, 3 Wire, Lock Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 425,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 9.67,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 9.62,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6001/1/04010SA_data_sheet.pdf",
+    "photoUrl": "https://www.mouser.com/images/nmb/images/04010SA-05M-AL-D0_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/NMB/04010SA-12M-ALD-0?qs=1Kr7Jg1SGW8g%2F3iEYIgzCQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "560"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "168 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM-4010V-150157",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-4010V-150-157",
+    "description": "DC Fans 12Vdc 0.38W 5.4CFM DC Axial 40x40x10mm",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 743,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.68,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.95,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 4.52,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_40v.pdf",
+    "photoUrl": "https://www.mouser.com/images/samesky/images/CFM-4010V-150-157_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-4010V-150-157?qs=YCa%2FAAYMW00jp%2FU1Do8WOQ%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "175 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0412H902",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0412H902",
+    "description": "DC Fans DC Axial Fan, 40x40x10mm, 12VDC",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 280,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.92,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce40_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0412H902?qs=Ldb7c5mTB15ZAMnt3Rbt%252BQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "216"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-EF40101BX1UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "EF40101BX-1000U-A99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 10CFM, 0.27\"H2O, Ball, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 156,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.88,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 9.34,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.66,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/EF40101BX_1000U_A99_D04174450G_00_0_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_EF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/EF40101BX-1000U-A99?qs=EU6FO9ffTwf3IidX91KkqQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-ASB0412VHA-AF00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "ASB0412VHA-AF00",
+    "description": "DC Fans Tubeaxial Fan, 40x10mm, 12VDC, Sleeve, 3x Lead Wires, Lock Rotor Sensor, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 874,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.67,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.96,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.46,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/ASB0412VHA_AF00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/ASB4010_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/ASB0412VHA-AF00?qs=%2FW4LtXOBxKtOFprvQLhKnQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "640"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-EF40101B11UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "EF40101B1-1000U-A99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 8CFM, 0.19\"H2O, Ball, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 122,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.85,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.93,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.39,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/EF40101B1_1000U_A99_D04111650G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_EF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/EF40101B1-1000U-A99?qs=EU6FO9ffTwfE5oJuAlM6uQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 117,
+       "date": "2026-11-18T00:00:00"
+      },
+      {
+       "quantity": 200,
+       "date": "2026-12-28T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101V11Q04AG9",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101V1-1Q04A-G99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, Vapo, 3x Wire, Auto Restart, Tach, Infotainment",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 180,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.94,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.68,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Sunon_4507HQ-MF40101V1-1Q04A-G99.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/MF40101V1-1Q04A-A99_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101V1-1Q04A-G99?qs=sPbYRqrBIVmsXTKMnSUujw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0412HA-A",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0412HA-A",
+    "description": "DC Fans DC Tubeaxial Fan, 40x10mm, 12VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 379,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.63,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.75,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.29,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0412HA_A.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB40x10_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0412HA-A?qs=%2FW4LtXOBxKvEYNYWYlZ88g%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "640"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0412VHA-A",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0412VHA-A",
+    "description": "DC Fans DC Tubeaxial Fan, 40x10mm, 12VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 298,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.06,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.45,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0412VHA_A.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB40x10_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0412VHA-A?qs=%2FW4LtXOBxKtPTF3QWwpgLw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "640"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 41,
+       "date": "2026-10-21T00:00:00"
+      },
+      {
+       "quantity": 1239,
+       "date": "2027-02-16T00:00:00"
+      },
+      {
+       "quantity": 1280,
+       "date": "2027-04-15T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD401012MB",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD4010-12MB",
+    "description": "DC Fans DC Fan, 40x40x10mm, 12VDC, 6CFM, 0.08A, 20dBA, 4800RPM, Dual Ball, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 97,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.79,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.19,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/knightelectronics/images/OD4010-05HB_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD4010-12MB?qs=ugWpKuv%252BIIC9NPFf%2F6L%252Bpw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 172,
+       "date": "2026-10-30T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0412H9D01",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0412H9D01",
+    "description": "DC Fans DC Axial Fan, 40x40x10mm, 12VDC, Locked Rotor Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 92,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.79,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.95,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/1215062118.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0412H9D01?qs=Ldb7c5mTB145D690zkzKUA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "216"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 216,
+       "date": "2026-11-02T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-EF40101B21UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "EF40101B2-1000U-A99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 5.5CFM, 0.1\"H2O, Ball, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 71,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.86,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.94,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.17,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/EF40101B2_1000U_A99_D04111720G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_EF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/EF40101B2-1000U-A99?qs=EU6FO9ffTwdDDteRXQm08Q%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 81,
+       "date": "2026-10-22T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0412VHA-AF00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0412VHA-AF00",
+    "description": "DC Fans DC Tubeaxial Fan, 40x10mm, 12VDC, Ball Bearing, 3x Lead Wires, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 62,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.71,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0412VHA_AF00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB40x10_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0412VHA-AF00?qs=%2FW4LtXOBxKvyahhMWKdfVg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "640"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "365 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 640,
+       "date": "2027-04-20T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD401012LB",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD4010-12LB",
+    "description": "DC Fans DC Fan, 40x40x10mm, 12VDC, 5CFM, 0.07A, 14dBA, 4200RPM, Dual Ball, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 50,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.76,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.19,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/knightelectronics/images/OD4010-05HB_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD4010-12LB?qs=ugWpKuv%252BIIBG2ipxWUfapw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD4010-12HB01A",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD4010-12HB01A",
+    "description": "DC Fans DC Fan, 40x40x10mm, 12VDC, 7CFM, 0.1A, 25dBA, Ball, Wire, Open Collector Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 41,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 15.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 12.75,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/knightelectronics/images/OD4010-12HB01A_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD4010-12HB01A?qs=hkHaMJ1Nh7ra0NVj7RAJDQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0412M901",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0412M901",
+    "description": "DC Fans DC Axial Fan, 40x40x10mm, 12VDC, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 40,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.82,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.95,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce40-20mm_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0412M901?qs=Ldb7c5mTB15tDO1e1O48kw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "216"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 216,
+       "date": "2027-04-26T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM-4010V-158206",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-4010V-158-206",
+    "description": "DC Fans 12Vdc 0.48W 7CFM DC Axial 40x40x10mm",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 39,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.78,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.22,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 4.64,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_40v.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/cfm-4010v-058-206_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-4010V-158-206?qs=YCa%2FAAYMW00KuzZ5gazPoQ%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "175 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 1200,
+       "date": "2027-03-05T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101VX100UF99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101VX-1000U-F99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 0.25\"H2O, Vapo, 3x Wire, Auto Restart, Lock Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 37,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.52,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.31,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 4.85,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF40101VX_1000U_F99_D04111090G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/MFG_MF4010_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101VX-1000U-F99?qs=l4Gc20tDgJKJJQf1Bi8zew%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 125,
+       "date": "2027-04-06T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM-4010V-185314",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-4010V-185-314",
+    "description": "DC Fans 12Vdc 1.22w 9.9CFM DC Axial 40x40x10mm",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 29,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.01,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 4.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_40v.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/cfm-4010v-058-206_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-4010V-185-314?qs=YCa%2FAAYMW00hVvGbDPl84Q%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "175 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 1200,
+       "date": "2027-02-12T00:00:00"
+      },
+      {
+       "quantity": 1200,
+       "date": "2027-03-09T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF40101V1100UF99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF40101V1-1000U-F99",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 0.19\"H2O, Vapo, 3x Wire, Auto Restart, Lock Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 20,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.76,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.74,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.24,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF40101V1_1000U_F99_D04111100G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/MFG_MF4010_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF40101V1-1000U-F99?qs=T3oQrply3y9UNcOj%252B9A6TA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "664-AD0412HB-G76LF",
+    "manufacturer": "ADDA",
+    "manufacturerPartNumber": "AD0412HB-G76-LF",
+    "description": "DC Fans DC Axial Fan, 40x40x10mm, 12VDC, 6.7CFM, High Speed, Ball Bearing",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 20,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.53,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.27,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.55,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/359/1/dclist.pdf",
+    "photoUrl": "https://www.mouser.com/images/adda/images/ITP_AD0412HB-G76-LF_t.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ADDA/AD0412HB-G76-LF?qs=hTx6WCxFMbgOkc747ifeqA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "126 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "664-AD0412HX-G70XT1",
+    "manufacturer": "ADDA",
+    "manufacturerPartNumber": "AD0412HX-G70(XT1)",
+    "description": "DC Fans DC Axial Fan, 40x40x10mm, 12VDC, High Speed, Hypro Bearing",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 10,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 9.85,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ad0412hx-g70(xt1)-c-5779360.pdf",
+    "photoUrl": "https://www.mouser.com/images/adda/images/ITP_AD0424MX-G70-LF.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ADDA/AD0412HX-G70XT1?qs=PzGy0jfpSMuyZkr5DcVSQg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "126 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-412FH",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "412FH",
+    "description": "DC Fans DC Axial Fan with Wallring, 40x40x10mm, 10-14VDC, 10m3/h, Twin Bearing",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 406,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.49,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.71,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 11.56,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm_papst_9291705004_Datasheet_ENU.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/412F39_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/412FH?qs=fklqa858Eesisvm5Cg2mxw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "60"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-412F/2H",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "412F/2H",
+    "description": "DC Fans DC Axial Fan+Wallring, 40x40x10mm, 10-14VDC, 10m3/h, 3Wire, Open Collector Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 372,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.55,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 13.46,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm_papst_9291705026_Datasheet_ENU.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/412F39_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/412F-2H?qs=RViDcLGODe0L6I1ZuLE%252BAg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "60"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-EE40101S21U999",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "EE40101S2-1000U-999",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 7.1CFM, 0.82W, 23dBA, 0.12\"H2O, Sleeve, Wire",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 327,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.45,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.64,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 3.42,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/EE40101S2_1000U_999_D04121370G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_EE_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/EE40101S2-1000U-999?qs=EU6FO9ffTwdm9Ai%252Br93GkA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "369-MF40101V21UA99",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-EE40101S11U999",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "EE40101S1-1000U-999",
+    "description": "DC Fans Axial Fan, 40x40x10mm, 12VDC, 8.2CFM, 0.99W, 28.2dBA, 0.19\"H2O, Sleeve, Wire",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 326,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.94,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.42,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 3.13,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/EE40101S1_1000U_999_D04121350G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/4010_EE_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/EE40101S1-1000U-999?qs=EU6FO9ffTwc5OvFGel7ZqQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "369-MF40101V11UA99",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 445,
+       "date": "2026-10-29T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-412FM",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "412FM",
+    "description": "DC Fans DC Axial Fan with Wallring, 40x40x10mm, 10-14VDC, 6.5m3/h, Twin Bearing",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 239,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.82,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.56,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 11.43,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm_papst_9291705011_Datasheet_ENU.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/412F39_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/412FM?qs=fklqa858Ees%2FoyCU%252BZ8Okg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "60"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "567-DC0401012V2B-2T0",
+    "manufacturer": "Wakefield Thermal",
+    "manufacturerPartNumber": "DC0401012V2B-2T0",
+    "description": "DC Fans Fan, 40x10mm, 12VDC, 12.23CFM, 2.16W, 0.18A, 39dBA, 2Ball Bearing, 2 Leads",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 2,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.75,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.84,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/264/1/wfv-dc-fans-rev-a3 (1).pdf",
+    "photoUrl": "https://www.mouser.com/images/wakefield/images/MFG_DC0401012V2B_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wakefield-Thermal/DC0401012V2B-2T0?qs=GBLSl2AkirvBZ22YskaO2g%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "600"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 600,
+       "date": "2026-10-22T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ]
+ }
+}

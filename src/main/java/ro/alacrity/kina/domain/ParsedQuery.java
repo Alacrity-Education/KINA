@@ -291,21 +291,27 @@ public record ParsedQuery(
      */
     public record Frame(double width, double length, Double depth) {
 
-        /** Largest difference in millimetres between two dimensions that are the same. */
+        /** Largest difference in millimetres between a width or length and the same one. */
         public static final double TOLERANCE_MM = 0.5;
+        /**
+         * Largest difference in millimetres between two depths that are the same: a nominal 10 mm fan measures 10 to
+         * 10.6 mm (Mouser {@code 40x40x10.6mm}), a 15 mm one is another fan.
+         */
+        public static final double DEPTH_TOLERANCE_MM = 1.0;
 
         /**
          * True when {@code actual} is this frame: width and length within {@value #TOLERANCE_MM} mm (in either order),
-         * and the depth within it when both state one.
+         * and the depth within {@value #DEPTH_TOLERANCE_MM} mm when both state one.
          */
         public boolean matches(Frame actual) {
-            boolean straight = same(width, actual.width) && same(length, actual.length);
-            boolean crossed = same(width, actual.length) && same(length, actual.width);
-            return (straight || crossed) && (depth == null || actual.depth == null || same(depth, actual.depth));
+            boolean straight = same(width, actual.width, TOLERANCE_MM) && same(length, actual.length, TOLERANCE_MM);
+            boolean crossed = same(width, actual.length, TOLERANCE_MM) && same(length, actual.width, TOLERANCE_MM);
+            return (straight || crossed)
+                    && (depth == null || actual.depth == null || same(depth, actual.depth, DEPTH_TOLERANCE_MM));
         }
 
-        private static boolean same(double a, double b) {
-            return Math.abs(a - b) <= TOLERANCE_MM + 1e-9;
+        private static boolean same(double a, double b, double tolerance) {
+            return Math.abs(a - b) <= tolerance + 1e-9;
         }
 
         /** {@code 40x40x10mm}, {@code 120mm} (width and length only, square), {@code 97x94x33mm}. */

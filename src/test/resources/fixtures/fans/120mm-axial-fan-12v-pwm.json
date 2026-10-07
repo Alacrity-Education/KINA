@@ -1,0 +1,5773 @@
+{
+ "query": "120mm axial fan 12V PWM",
+ "recorded": "2026-10-07 live probe (detail=full, allow_below_spec, max_results 50) of the fan phrasing (Mouser and TME one search each; LCSC with the first phrase \"Cooling fan\" + voltage, whose relaxation reached non-fans for the blower); attributes are the raw distributor attributes (canonical keys removed), prices the three smallest breaks",
+ "phrases": {
+  "LCSC": "\"Cooling fan\" 12V",
+  "TME": "fan DC axial 12V 120x120",
+  "MOUSER": "DC fan 120x120 12V"
+ },
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729751",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF5015SM12",
+    "description": "、37.7dB(A) 0.14A 1.68W 12V 13.4CFM 50mm×50mm×15mm 5500RPM DC cooling fan",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 101,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.684,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2104212111_SHENG-FENG-SF5015SM12_C729751.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729751.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729751"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729761",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF6025SM12",
+    "description": "、34.3dB(A) 0.17A 12V 2.04W 21.5CFM 4000RPM 60mm×60mm×25mm DC cooling fan",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 42,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.799,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2105241518_SHENG-FENG-SF6025SM12_C729761.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729761.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729761"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "PMD1212PMB1A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "PMD1212PMB1-A(2).GN",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 322.8m3/h; 54dBA; ball; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 5551,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 19.4,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 16.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 40,
+      "unitPrice": 13.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/78a82a4c563b234694f3bba2d3281ea2/High_Air_Flow_Series_e_2012.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/28/2B/50/00/0/373378_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b97f12c4b1050ddd3756a5ce3dfeaf842211d94b",
+    "productUrl": "https://www.tme.eu/en/details/pmd1212pmb1a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6.5...13.8V DC",
+     "Power consumption": "19.2W",
+     "Current rating": "1.6A",
+     "Fan efficiency": "322.8m<sup>3</sup>/h",
+     "Noise level": "54dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "4200 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "16.5mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MEC0251V2-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MEC0251V2-000U-A99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 158.1m3/h; 40.5dBA; Vapo; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 6187,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.33,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.32,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 5.61,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F6/82/50/00/0/338031_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ce96c3af6677937b8016eeb5946688cee33f76e2",
+    "productUrl": "https://www.tme.eu/en/details/mec0251v2-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "3.4W",
+     "Current rating": "0.279A",
+     "Fan efficiency": "158.1m<sup>3</sup>/h",
+     "Noise level": "40.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "2700 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "5.58mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT2",
+       "amount": 20
+      },
+      {
+       "id": "CT1",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "PMD1212PTB1A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "PMD1212PTB1-A.(2).GN",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 254.84m3/h; 54dBA; ball; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1890,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 15.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 14.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 40,
+      "unitPrice": 13.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/59b1ba5b1f8601c6ba8dfb3f65766ec3/PMD1212PTB1A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/48/2B/50/00/0/373380_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0f8fadbac49b67449d3513bc6a5ac620e7d4a47e",
+    "productUrl": "https://www.tme.eu/en/details/pmd1212ptb1a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "12W",
+     "Current rating": "1A",
+     "Fan efficiency": "254.84m<sup>3</sup>/h",
+     "Noise level": "54dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "4500 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "15.74mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "HAC0251S4-999",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "HAC0251S4-1000U-999",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 93.6m3/h; 28.8dBA; slide",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3382,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 3.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/7ea5b7f6768eab82717efba6ba06cd41/HAC0251S4.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/43/A3/31/00/0/1260084_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2045e70fc80e48b63f42218a2ed5238813766f48",
+    "productUrl": "https://www.tme.eu/en/details/hac0251s4-999/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "4.5...13.8V DC",
+     "Power consumption": "1.06W",
+     "Fan efficiency": "93.6m<sup>3</sup>/h",
+     "Noise level": "28.8dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "1600rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MEC0381V1-G99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MEC0381V1-000U-G99",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 234.46m3/h; 48dBA; Vapo; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 4596,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 5.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B8/06/60/00/0/417931_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=dc87ffbbab4629f8c7ddbae3534b391d6dba4174",
+    "productUrl": "https://www.tme.eu/en/details/mec0381v1-g99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "10W",
+     "Current rating": "0.833A",
+     "Fan efficiency": "234.46m<sup>3</sup>/h",
+     "Noise level": "48dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "3100 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "9.14mm H<sub>2</sub>O",
+     "Wire size": "24AWG",
+     "Signal output": "F type"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "PMD1212PTB1AF",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "PMD1212PTB1-A.(2).F.GN",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 254.84m3/h; 54dBA; ball; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 836,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 19.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 16.4,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 40,
+      "unitPrice": 14.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/78a82a4c563b234694f3bba2d3281ea2/High_Air_Flow_Series_e_2012.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/79/92/50/00/0/338327_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8ee812cacc9f41672bd9243726620ae0ccd66ce0",
+    "productUrl": "https://www.tme.eu/en/details/pmd1212ptb1af/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "12W",
+     "Current rating": "1A",
+     "Fan efficiency": "254.84m<sup>3</sup>/h",
+     "Noise level": "54dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "4500 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "15.74mm H<sub>2</sub>O",
+     "Wire size": "24AWG",
+     "Signal output": "F type"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EEC0251B3-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EEC0251B3-000U-A99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 127.42m3/h; 34dBA; ball; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2480,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.15,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 5.8,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/8C/5E/40/00/0/320968_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=27f38905df273519b134a1a41d7f79d13cdfbf43",
+    "productUrl": "https://www.tme.eu/en/details/eec0251b3-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "1.9W",
+     "Current rating": "0.161A",
+     "Fan efficiency": "127.42m<sup>3</sup>/h",
+     "Noise level": "34dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "2200 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.06mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EEC0251B1-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EEC0251B1-000U-A99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 183.83m3/h; 44.5dBA; ball",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 4590,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 5.8,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3D/F7/50/00/0/360403_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2538ea747d82bceb1e14ca406f695a1a45c46226",
+    "productUrl": "https://www.tme.eu/en/details/eec0251b1-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "5.3W",
+     "Current rating": "0.445A",
+     "Fan efficiency": "183.83m<sup>3</sup>/h",
+     "Noise level": "44.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "3100 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "7.11mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT2",
+       "amount": 20
+      },
+      {
+       "id": "CT1",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MEC0251V1-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MEC0251V1-000U-A99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 183.8m3/h; 44.5dBA; Vapo; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 4248,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.01,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 5.34,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/fbd4f17a464ab48e247cc329761ee414/(D12017040G-00)-2.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/44/2D/50/00/0/381508_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2db21a2049c2c4313557a42259344ca338c1821f",
+    "productUrl": "https://www.tme.eu/en/details/mec0251v1-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "5.4W",
+     "Current rating": "0.451A",
+     "Fan efficiency": "183.8m<sup>3</sup>/h",
+     "Noise level": "44.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "3100 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "7.11mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EEC0251B3-G99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EEC0251B3-000U-G99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 127.5m3/h; 34dBA; ball; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1605,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.01,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.82,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 7.94,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1D/F7/50/00/0/360401_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=3cbe40702768b8731ad2a7612fb3dead2692ab5a",
+    "productUrl": "https://www.tme.eu/en/details/eec0251b3-g99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "2W",
+     "Current rating": "0.17A",
+     "Fan efficiency": "127.5m<sup>3</sup>/h",
+     "Noise level": "34dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "2200 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.06mm H<sub>2</sub>O",
+     "Wire size": "24AWG",
+     "Signal output": "F type"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT2",
+       "amount": 20
+      },
+      {
+       "id": "CT3",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MEC0251V3-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MEC0251V3-000U-A99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 127.4m3/h; 34dBA; Vapo; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1432,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.35,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 4.79,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1A/59/50/00/0/365985_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c7a6968c1fc522ee51eb4331a9737772a86fed4b",
+    "productUrl": "https://www.tme.eu/en/details/mec0251v3-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "1.9W",
+     "Current rating": "0.161A",
+     "Fan efficiency": "127.4m<sup>3</sup>/h",
+     "Noise level": "34dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "2200 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.06mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MEC0251V1-G99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MEC0251V1-000U-G99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 183.83m3/h; 44.5dBA; Vapo",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2845,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 5.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E4/2F/50/00/0/389710_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=00df4470a7fef480f1a974b5341809ad38fb3cc9",
+    "productUrl": "https://www.tme.eu/en/details/mec0251v1-g99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "5.4W",
+     "Current rating": "0.451A",
+     "Fan efficiency": "183.83m<sup>3</sup>/h",
+     "Noise level": "44.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "3100 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "7.11mm H<sub>2</sub>O",
+     "Wire size": "24AWG",
+     "Signal output": "F type"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EEC0251B1-G99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EEC0251B1-000U-G99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 183.83m3/h; 44.5dBA; ball",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 346,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.4,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 6.8,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/9221cd39a5ff11a769a1db52803d30d0/EEC0251B1-G99-DTE.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/2D/F7/50/00/0/360402_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=27d91f079da876647b2520c7cc0592c1907922ab",
+    "productUrl": "https://www.tme.eu/en/details/eec0251b1-g99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "5.4W",
+     "Current rating": "0.451A",
+     "Fan efficiency": "183.83m<sup>3</sup>/h",
+     "Noise level": "44.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "3100 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "7.11mm H<sub>2</sub>O",
+     "Wire size": "24AWG",
+     "Signal output": "F type"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EEC0251B2-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EEC0251B2-000U-A99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 158m3/h; 40.5dBA; ball; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1156,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.76,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.93,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 7.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1D/4D/50/00/0/382161_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d9f11e3c5690bce96950ef50a3515675c97c4434",
+    "productUrl": "https://www.tme.eu/en/details/eec0251b2-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "3.4W",
+     "Current rating": "0.279A",
+     "Fan efficiency": "158m<sup>3</sup>/h",
+     "Noise level": "40.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "2700 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "5.59mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EEC0381B2-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EEC0381B2-000U-A99",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 197.2m3/h; 44dBA; ball; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 1311,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.42,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 6.58,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/73/36/60/00/0/418615_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=db717454a32c2f68da839eb6590800dfcd9df91f",
+    "productUrl": "https://www.tme.eu/en/details/eec0381b2-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "5.1W",
+     "Current rating": "0.421A",
+     "Fan efficiency": "197.2m<sup>3</sup>/h",
+     "Noise level": "44dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "2600 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "6.6mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EEC0381B3-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EEC0381B3-000U-A99",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 158m3/h; 37dBA; ball; 4.57mmH2O",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 301,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 7.33,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/656f901be8839c48afd57a5179a7780b/(D12017280G-00)-0.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/A4/4E/50/00/0/386122_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=cfd5466db5e7a700048e5ce76c77e63b3e458cbb",
+    "productUrl": "https://www.tme.eu/en/details/eec0381b3-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "2.9W",
+     "Current rating": "0.255A",
+     "Fan efficiency": "158m<sup>3</sup>/h",
+     "Noise level": "37dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "2100 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.31m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.57mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MFC0251V2-S99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MFC0251V2-1Q02U-S99",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 100.55m3/h; 31.8dBA; Vapo",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 449,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.84,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 6,
+      "unitPrice": 6.15,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 12,
+      "unitPrice": 5.68,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/ae987a810de3cb05d01c36b0ab7f4189/MFC0251V2-1Q02U-S99.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C8/5E/F0/00/0/1041804_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=3b5777795068526298108752f1e6f66426d14998",
+    "productUrl": "https://www.tme.eu/en/details/mfc0251v2-s99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10.2...13.2V DC",
+     "Power consumption": "1.28W",
+     "Current rating": "88mA",
+     "Fan efficiency": "100.55m<sup>3</sup>/h",
+     "Noise level": "31.8dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "1900rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x4",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Engineering PN": "MF12025",
+     "Application": "personal computer"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 6
+      },
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      },
+      {
+       "id": "CT3",
+       "amount": 42
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MEC0381V3-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MEC0381V3-000U-A99",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 158m3/h; 37dBA; Vapo; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 660,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 6.01,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/5A/59/50/00/0/365989_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8c44c6a22545d8d0c00f48a38f4f4276319e4bd2",
+    "productUrl": "https://www.tme.eu/en/details/mec0381v3-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "2.9W",
+     "Current rating": "0.241A",
+     "Fan efficiency": "158m<sup>3</sup>/h",
+     "Noise level": "37dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "2100 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT2",
+       "amount": 20
+      },
+      {
+       "id": "CT1",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EEC0381B1-G99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EEC0381B1-000U-G99",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 234.4m3/h; 48dBA; ball; 24AWG",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 249,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 40,
+      "unitPrice": 9.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/FC/F7/50/00/0/360399_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d9adfe6db363dc9193da3a75aaa727418abbfaa2",
+    "productUrl": "https://www.tme.eu/en/details/eec0381b1-g99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "9.6W",
+     "Current rating": "0.8A",
+     "Fan efficiency": "234.4m<sup>3</sup>/h",
+     "Noise level": "48dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "3100 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "9.14mm H<sub>2</sub>O",
+     "Wire size": "24AWG",
+     "Signal output": "F type"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MEC0381V2-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MEC0381V2-000U-A99",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 197m3/h; 44dBA; Vapo; 2600rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 413,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.89,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 6.13,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/6696fef38fa8928f1770cdaf0578ac35/MEC0381V2-A99.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C2/13/D0/00/0/864556_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8be806ead55d9155050adf7fd91918e8bb9d17ee",
+    "productUrl": "https://www.tme.eu/en/details/mec0381v2-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6...13.8V DC",
+     "Power consumption": "5.1W",
+     "Current rating": "0.421A",
+     "Fan efficiency": "197m<sup>3</sup>/h",
+     "Noise level": "44dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "2600rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.33m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "PMD1212PMB2A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "PMD1212PMB2-A(2).GN",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 289m3/h; 51dBA; ball; 13.7mmH2O",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 186,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 21.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 19.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 40,
+      "unitPrice": 15.8,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/495865b3ea2f2305d9c06ceee4b97aec/pmd1212pmb2a(2)gn(d12006280g-00)0.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/6D/45/60/00/0/414934_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=91018657745329b20399954917dbec696b5d6035",
+    "productUrl": "https://www.tme.eu/en/details/pmd1212pmb2a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "6.5...13.8V DC",
+     "Power consumption": "14.4W",
+     "Current rating": "1.2A",
+     "Fan efficiency": "289m<sup>3</sup>/h",
+     "Noise level": "51dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "3800 (±10%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "13.7mm H<sub>2</sub>O",
+     "Wire size": "24AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 20
+      },
+      {
+       "id": "CT2",
+       "amount": 40
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "DFS122512L",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "DFS122512L",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 22.52dBA; HDB; 1200rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 125,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.45,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/dfs122512l/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/CE/C3/F0/00/0/998636_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=903141b520e1a2cb161073734a95c7cbcf7ed8a0",
+    "productUrl": "https://www.tme.eu/en/details/dfs122512l/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.14A",
+     "Noise level": "22.52dBA",
+     "Kind of Bearing": "HDB",
+     "Rotational rate/speed": "1200rpm",
+     "Leads": "3pin"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 5
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "9GL1212F101",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "9GL1212F101",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 147m3/h; 36dBA; ball; 2280rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 105,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 35.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 24.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 24.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/e57e0c9ecb0d1526babfe1d0ba44ba50/9GL1212F101.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/88/B0/01/00/0/1051528_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=27aac4fe11ab45dcf24e6a828559cbbd4f3c2dc7",
+    "productUrl": "https://www.tme.eu/en/details/9gl1212f101/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "7...13.8V DC",
+     "Power consumption": "3.36W",
+     "Current rating": "0.28A",
+     "Fan efficiency": "147m<sup>3</sup>/h",
+     "Noise level": "36dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "2280rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "aluminium",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-20...70°C",
+     "Flammability rating": "UL94V-1",
+     "Additional functions": "lock sensor, reverse polarity protection"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 21
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-174BK-S",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-174BK-S",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 17.5dBA; slide; 1200rpm; black",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 79,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.84,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/bc5b1f890c041760fe9bb31ccb0c8c4c/AK-174BK-S.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/79/C3/F0/00/0/998551_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=06b846708f92e04c6e85428be70c1be96eaaba9e",
+    "productUrl": "https://www.tme.eu/en/details/ak-174bk-s/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.14A",
+     "Noise level": "17.5dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "1200rpm",
+     "Leads": "3pin",
+     "Additional functions": "silent operation, speed sensor, temperature sensor",
+     "Static pressure": "1.4mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "30000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "9WP1212M1011",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "9WP1212M1011",
+    "description": "Fan: DC; 120x120x38mm; axial; 7÷13.8VDC; 126m3/h; 32dBA; ball; IP68",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 40,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 46.51,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 35.82,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 34.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/51bfb1770b6189f8f3b7c345fcc36aae/9WP1212M1011.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/7A/E0/01/00/0/1052327_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=04f9dd48b6b8b642603aac5da3042e2d93246a42",
+    "productUrl": "https://www.tme.eu/en/details/9wp1212m1011/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "7...13.8V DC",
+     "Operating voltage": "12V DC",
+     "Power consumption": "2.52W",
+     "Current rating": "0.21A",
+     "Fan efficiency": "126m<sup>3</sup>/h",
+     "Noise level": "32dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "1950rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-20...70°C",
+     "Flammability rating": "UL94V-1",
+     "Additional functions": "lock sensor, reverse polarity protection",
+     "IP rating": "IP68",
+     "Kind of material": "flame retardant"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 21
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "9S1212H402",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "9S1212H402",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 147m3/h; 36dBA; ball; 2700rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 33,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 29.47,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 20.09,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 18.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a06f2e86f21094ef634dc7f4c0d77657/San_Ace_E.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/07/20/F0/00/0/983664_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=045cd53a54757ed9635e114729b204080d3e1e33",
+    "productUrl": "https://www.tme.eu/en/details/9s1212h402/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "5...13.2V DC",
+     "Power consumption": "4.68W",
+     "Current rating": "0.39A",
+     "Fan efficiency": "147m<sup>3</sup>/h",
+     "Noise level": "36dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "2700rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...60°C",
+     "Flammability rating": "UL94V-1",
+     "Additional functions": "lock sensor, reverse polarity protection",
+     "Kind of material": "flame retardant"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 30
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN109",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN109",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 30.2dBA; ball; 0÷2000rpm; IP68",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 18,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 24.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/89e02d9db58db5624ec715f459a2986e/AK-FN109.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/37/A6/F0/00/0/1010291_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6ee38fbcb1921b350e7dcdbee69c7c312687bbfa",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn109/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.21A",
+     "Noise level": "30.2dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "0...2000rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, speed sensor",
+     "Static pressure": "3.84mm H<sub>2</sub>O",
+     "IP rating": "IP68",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black, grey",
+     "Storage time": "80000h",
+     "Application": "for water cooling, heatsink, industry"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN078",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN078",
+    "description": "Fan: DC; 120x120x15mm; axial; 12VDC; 30.32dBA; EBR; 600÷1600rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 17,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.97,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/7ce1a847cb98600fde0698017048d244/AK-FN078.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/CA/C3/F0/00/0/998572_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9ea24a1c99f2d7c2ebd02416e703c14d25844195",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn078/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.22A",
+     "Noise level": "30.32dBA",
+     "Kind of Bearing": "EBR",
+     "Rotational rate/speed": "600...1600rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, speed sensor",
+     "Static pressure": "1.36mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "40000h",
+     "Version": "HTPC",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "9G1212E402",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "9G1212E402",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 195m3/h; 48dBA; ball; 3650rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 14,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 28.65,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 20.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 18.53,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a06f2e86f21094ef634dc7f4c0d77657/San_Ace_E.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/08/15/11/00/0/1134976_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=37db99fc4f62320587d5a9eb21db5ddb1001f5ef",
+    "productUrl": "https://www.tme.eu/en/details/9g1212e402/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "10.2...13.8V DC",
+     "Power consumption": "6.96W",
+     "Current rating": "0.58A",
+     "Fan efficiency": "195m<sup>3</sup>/h",
+     "Noise level": "48dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "3650rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-20...70°C",
+     "Flammability rating": "UL94V-1",
+     "Additional functions": "lock sensor, reverse polarity protection",
+     "Kind of material": "flame retardant"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 30
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-174BKT-B",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-174BKT-B",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 38dBA; ball; 800÷2300rpm; black",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 13,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/c2bcf7ef5c074ebe66f2ec3ab97f6587/AK-174BKT-B.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/FF/86/F0/00/0/1009919_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8370e16d0667652215f710aa51128b0c0ca686f8",
+    "productUrl": "https://www.tme.eu/en/details/ak-174bkt-b/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.4A",
+     "Noise level": "38dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "800...2300rpm",
+     "Leads": "3pin",
+     "Additional functions": "speed sensor, temperature sensor",
+     "Static pressure": "2.99mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "50000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN065",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN065",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 28.9dBA; HDB; 600÷1900rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 11,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.63,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/812dc8f91e2a944172152d199f9053d3/AK-FN065.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/AA/C3/F0/00/0/998570_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d5d363b7baf6cd4aa0867453a9aa278f1c985740",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn065/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.17A",
+     "Noise level": "28.9dBA",
+     "Kind of Bearing": "HDB",
+     "Rotational rate/speed": "600...1900rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, silent operation, speed sensor",
+     "Static pressure": "2.98mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "50000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ASFP12391",
+    "manufacturer": "PANASONIC",
+    "manufacturerPartNumber": "ASFP12391",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 114m3/h; 30dBA; ball; 1900rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 22,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 38.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 35.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 32.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/asfp12391/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/34/D0/F0/00/0/986435_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0001922f92f7e99e51bfd8565faf0ec4d36adffc",
+    "productUrl": "https://www.tme.eu/en/details/asfp12391/",
+    "attributes": {
+     "Manufacturer": "PANASONIC",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "1.56W",
+     "Current rating": "0.13A",
+     "Fan efficiency": "114m<sup>3</sup>/h",
+     "Noise level": "30dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "1900rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...60°C",
+     "Additional functions": "lock sensor"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112524,
+     "manufacturer_id": 131,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-174BK-B",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-174BK-B",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 25.2dBA; ball; 1700rpm; black",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 9,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.94,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/57228ca37a888a1c90f77f60d5c3f70d/AK-174BK-B.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/69/C3/F0/00/0/998550_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0c3c97dfbb5d2f119a152eaf0106716c81c96397",
+    "productUrl": "https://www.tme.eu/en/details/ak-174bk-b/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.12A",
+     "Noise level": "25.2dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "1700rpm",
+     "Leads": "3pin",
+     "Additional functions": "speed sensor",
+     "Static pressure": "1.78mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "80000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN078-KT02",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN078-KT02",
+    "description": "Fan: DC; 120x120x15mm; axial; 12VDC; 30.32dBA; EBR; 600÷1600rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 9,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 15.8,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/6bac5264eab79f8de7ea107b64fbacea/AK-FN078-KT02.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/DA/C3/F0/00/0/998573_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=35e98dbf58a47bfe933915fff28a0e03fff1bc06",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn078-kt02/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.22A",
+     "Noise level": "30.32dBA",
+     "Kind of Bearing": "EBR",
+     "Rotational rate/speed": "600...1600rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, speed sensor",
+     "Static pressure": "1.36mm H<sub>2</sub>O",
+     "Quantity in set/package": "2pcs.",
+     "Colour": "black",
+     "Storage time": "40000h",
+     "Version": "HTPC",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 2
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ASFP14371",
+    "manufacturer": "PANASONIC",
+    "manufacturerPartNumber": "ASFP14371",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 98m3/h; 26.5dBA; ball; 1600rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 9,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 36.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 34.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/asfp14371/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/04/C2/D0/00/0/863296_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=865f1a8c1cc3bc9bb96d71ee198917533114d7bb",
+    "productUrl": "https://www.tme.eu/en/details/asfp14371/",
+    "attributes": {
+     "Manufacturer": "PANASONIC",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Power consumption": "1.08W",
+     "Current rating": "90mA",
+     "Fan efficiency": "98m<sup>3</sup>/h",
+     "Noise level": "26.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "1600rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...60°C"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112524,
+     "manufacturer_id": 131,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "9GL1212M101",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "9GL1212M101",
+    "description": "Fan: DC; 120x120x38mm; axial; 12VDC; 126m3/h; 32dBA; ball; 1950rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 7,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 27.86,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 25.97,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 24.53,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/4e66ca17524a85f5975b74a507e7b7c0/9GL1212M101.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/67/DE/E0/00/0/978294_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=652185cf3bbf485db723f7f493ae572801aaf1e5",
+    "productUrl": "https://www.tme.eu/en/details/9gl1212m101/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x38mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "7...13.8V DC",
+     "Power consumption": "2.52W",
+     "Current rating": "0.21A",
+     "Fan efficiency": "126m<sup>3</sup>/h",
+     "Noise level": "32dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "1950rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "aluminium",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-20...70°C",
+     "Flammability rating": "UL94V-1",
+     "Additional functions": "lock sensor, reverse polarity protection"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 21
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN091-BL",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN091-BL",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 23.2dBA; slide; 1200rpm; blue",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.21,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/6b8a9585f61b5ee56861b0055830e53f/AK-FN091-BL.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/31/96/F0/00/0/1009939_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7f4889d68fa90ce4f15a5d5730b02407a6a1cd4b",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn091-bl/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.3A",
+     "Noise level": "23.2dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "1200rpm",
+     "Leads": "3pin",
+     "Additional functions": "blue LED, silent operation, speed sensor",
+     "Static pressure": "1.14mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "blue",
+     "Storage time": "30000h",
+     "Application": "PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN120",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN120",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 32dBA; HDB; 600÷1600rpm; black",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.25,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/df90d3b48d81eedc2768d1cced24db69/AK-FN120.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/91/96/F0/00/0/1009945_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=31dcea67b2f3ec1d2e689a94a1cde37c7e293827",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn120/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.13A",
+     "Noise level": "32dBA",
+     "Kind of Bearing": "HDB",
+     "Rotational rate/speed": "600...1600rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, silent operation, speed sensor",
+     "Static pressure": "3.48mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "40000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN092",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN092",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 23.2dBA; slide; 1200rpm; 1pcs.",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.05,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/53da92e82698a5d5c326b1f07808425f/AK-FN092.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/0B/C3/F0/00/0/998576_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b6e8a8c0b573ba7bd7b158ad52ea44277030d65c",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn092/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.26A",
+     "Noise level": "23.2dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "1200rpm",
+     "Leads": "3pin",
+     "Additional functions": "LED RGB, silent operation, speed sensor",
+     "Static pressure": "1.14mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black, white",
+     "Storage time": "30000h",
+     "Application": "PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN091-GN",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN091-GN",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 23.2dBA; slide; 1200rpm; green",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 5,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.21,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/4211f5aba5cdf24c689cb60e7b1fd833/AK-FN091-GN.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/EA/C3/F0/00/0/998574_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=914247c66453da9cd6e87426ca43fd80cd71250d",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn091-gn/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.3A",
+     "Noise level": "23.2dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "1200rpm",
+     "Leads": "3pin",
+     "Additional functions": "green LED, silent operation, speed sensor",
+     "Static pressure": "1.14mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "green",
+     "Storage time": "30000h",
+     "Application": "PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN110",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN110",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 31.7dBA; ball; 0÷2000rpm; IP68",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 5,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 24.45,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/436022646f33f9d54c25f3f91d31ee78/AK-FN110.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B4/A3/F0/00/0/997963_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9f8008d365080b638b2a91cf942416c56cac9268",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn110/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.16A",
+     "Noise level": "31.7dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "0...2000rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, speed sensor",
+     "Static pressure": "3.59mm H<sub>2</sub>O",
+     "IP rating": "IP68",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black, grey",
+     "Storage time": "80000h",
+     "Application": "for water cooling, industry, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN091-WH",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN091-WH",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 23.2dBA; slide; 1200rpm; white",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 4,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.21,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/da171a705127541ed89ca4f42d13919d/AK-FN091-WH.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/FA/C3/F0/00/0/998575_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e99c0180b4993afac340dc30622e7c1f7e2643a2",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn091-wh/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.3A",
+     "Noise level": "23.2dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "1200rpm",
+     "Leads": "3pin",
+     "Additional functions": "silent operation, speed sensor, white LED",
+     "Static pressure": "1.14mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "white",
+     "Storage time": "30000h",
+     "Application": "PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN117",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN117",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 33.1dBA; HDB; 500÷2000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 4,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.58,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f625e84c68d4ae2cfed15ce80427c153/AK-FN117.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E4/A3/F0/00/0/997966_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6e49f6796d0a613820e3d6011a6fc739a7b323c2",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn117/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.2A",
+     "Noise level": "33.1dBA",
+     "Kind of Bearing": "HDB",
+     "Rotational rate/speed": "500...2000rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, silent operation, speed sensor",
+     "Static pressure": "1.94mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black, blue",
+     "Storage time": "40000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN111-WH",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN111-WH",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 32.7dBA; ball; 900÷2000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 4,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.57,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/ac5b8e7b081f5f39cfeba38654fd34b6/AK-FN111-WH.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/47/A6/F0/00/0/1010292_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d287aa5fda99336f9a080cbc5f35bff213f9a04b",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn111-wh/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.25A",
+     "Noise level": "32.7dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "900...2000rpm",
+     "Leads": "4pin",
+     "Additional functions": "LED RGB, PWM, silent operation, speed sensor",
+     "Static pressure": "1.99mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "white",
+     "Storage time": "80000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN093",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN093",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 23.2dBA; FD; 1200rpm; 1.14mmH2O",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.68,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/c85354cc56db657d992b3497839a1282/AK-FN093.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/51/96/F0/00/0/1009941_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=44409dd906e89f035e01d475c671a25aa47b6925",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn093/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.33A",
+     "Noise level": "23.2dBA",
+     "Kind of Bearing": "FD",
+     "Rotational rate/speed": "1200rpm",
+     "Leads": "3pin",
+     "Additional functions": "adjustable backlight, LED RGB, silent operation, speed sensor",
+     "Static pressure": "1.14mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black, white",
+     "Storage time": "40000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN122-BL",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN122-BL",
+    "description": "Fan: DC; 120x120x15mm; axial; 12VDC; 31.5dBA; HDB; 700÷2000rpm; slim",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.48,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/308e1896c864942c5cf96c8c4c405148/AK-FN122-BL.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B1/96/F0/00/0/1009947_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=35812576d0a0e6986c794622efd3ed9fe79d8a63",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn122-bl/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.16A",
+     "Noise level": "31.5dBA",
+     "Kind of Bearing": "HDB",
+     "Rotational rate/speed": "700...2000rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, silent operation, speed sensor",
+     "Static pressure": "1.41mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black, blue",
+     "Storage time": "40000h",
+     "Version": "slim",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN108",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN108",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 31.8dBA; HDB; 500÷2000rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 17.69,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/ad2c3dd85a68ce459b90dc3b38bc8397/AK-FN108.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/A4/A3/F0/00/0/997962_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f06455f699c0b7a6036a1e42b3f5cfc788566323",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn108/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.13A",
+     "Noise level": "31.8dBA",
+     "Kind of Bearing": "HDB",
+     "Rotational rate/speed": "500...2000rpm",
+     "Leads": "4pin",
+     "Additional functions": "adjustable backlight, LED RGB, PWM, silent operation, speed sensor",
+     "Static pressure": "1.75mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black",
+     "Storage time": "40000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN107",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN107",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 23.8dBA; FD; 1500rpm; 1.04mmH2O",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 31.06,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/b52cde64e6c180e76c654a9436ab542e/AK-FN107.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/81/96/F0/00/0/1009944_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9fdec6fcf52ef6529373ac9446508f3410a14680",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn107/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.12A",
+     "Noise level": "23.8dBA",
+     "Kind of Bearing": "FD",
+     "Rotational rate/speed": "1500rpm",
+     "Leads": "3pin",
+     "Additional functions": "adjustable backlight, LED RGB, speed sensor",
+     "Static pressure": "1.04mm H<sub>2</sub>O",
+     "Quantity in set/package": "3pcs.",
+     "Colour": "black, white",
+     "Storage time": "40000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN065-WKT03",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN065-WKT03",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 28.9dBA; HDB; 600÷1900rpm",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 36.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/924ec851173c6d81e1acb293e405087a/AK-FN065-WKT03.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/23/D4/11/00/0/1133874_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=797dcf47a813037f6d1d88c3e46168d21c3f64f4",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn065-wkt03/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.17A",
+     "Noise level": "28.9dBA",
+     "Kind of Bearing": "HDB",
+     "Rotational rate/speed": "600...1900rpm",
+     "Leads": "4pin",
+     "Additional functions": "PWM, silent operation, speed sensor",
+     "Static pressure": "2.98mm H<sub>2</sub>O",
+     "Quantity in set/package": "3pcs.",
+     "Colour": "white",
+     "Storage time": "50000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 3
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "AK-FN098",
+    "manufacturer": "Akasa",
+    "manufacturerPartNumber": "AK-FN098",
+    "description": "Fan: DC; 120x120x25mm; axial; 12VDC; 23.8dBA; FD; 1500rpm; 1.04mmH2O",
+    "category": "DC12V Fans",
+    "packageName": null,
+    "stock": 2,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.68,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/7a6c30ec5dfe0ac198dbe11a9e03b204/AK-FN098.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/61/96/F0/00/0/1009942_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e149dd426f94c0152dd8dbf83788813c9ff89d69",
+    "productUrl": "https://www.tme.eu/en/details/ak-fn098/",
+    "attributes": {
+     "Manufacturer": "Akasa",
+     "Type of fan": "DC",
+     "Fan dimensions": "120x120x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "12V DC",
+     "Operating voltage": "12V DC",
+     "Current rating": "0.33A",
+     "Noise level": "23.8dBA",
+     "Kind of Bearing": "FD",
+     "Rotational rate/speed": "1500rpm",
+     "Leads": "3pin",
+     "Additional functions": "adjustable backlight, LED RGB, silent operation, speed sensor",
+     "Static pressure": "1.04mm H<sub>2</sub>O",
+     "Quantity in set/package": "1pcs.",
+     "Colour": "black, white",
+     "Storage time": "40000h",
+     "Application": "heatsink, PC case"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112524,
+     "manufacturer_id": 1862,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "MOUSER": [
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-PMD1212PTB1A2GN",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "PMD1212PTB1-A.(2).GN",
+    "description": "DC Fans Axial Fan, 120x120x25mm, 12VDC, 150CFM, 0.62\"H2O, Ball, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 638,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 24.87,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 22.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 21.52,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/PMD1212PTB1_A.2.GN_D12005980G_03_1_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/12025_PMD_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/PMD1212PTB1-A.2.GN?qs=EU6FO9ffTwe%252B5klaE61KEw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-PFR1212DHE-SP00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "PFR1212DHE-SP00",
+    "description": "DC Fans Fan, 120x38mm, 12VDC, 254.35CFM, 44.4W, Ball, 4x Lead Wires, Tach/PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 561,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 36.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 30.69,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 27.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/PFR1212DHE_SP00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/PFR_Generic.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/PFR1212DHE-SP00?qs=%2FW4LtXOBxKtcf65o8Vc3PA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "664-AD1212UB-F51-LF",
+    "manufacturer": "ADDA",
+    "manufacturerPartNumber": "AD1212UB-F51-LF",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, 120CFM, 0.394\"H2O, 3x Lead Wire, Speed Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 327,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 20.25,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 17.68,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 17.01,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/AD12038-1081296.pdf",
+    "photoUrl": "https://www.mouser.com/images/adda/images/ad12038.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ADDA/AD1212UB-F51-LF?qs=3cDLNOBdYaWXHRRAyDCRcA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "126 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "664-AD1212UBF514967",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9GV1212P1J01",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9GV1212P1J01",
+    "description": "DC Fans DC Axial Fan, 120x120x38mm, 12VDC, Guide Vane, Tachometer, PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 177,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 65.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 58.85,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 54.98,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9GV1212P1J01?qs=t9Lg9qrXjEzHl1uxCfYBIg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFC1212D-SP19",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFC1212D-SP19",
+    "description": "DC Fans Fan, 120x25mm, 12VDC, 89.7CFM, 3.84W, 0.32A, 46dBA, Ball, 4-Leads, Tach/PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 245,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 17.08,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 15.08,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 14.34,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFC1212D_SP19.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaelectronics/images/ITP_AFC1212D-SP19_t.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFC1212D-SP19?qs=%2FW4LtXOBxKtjki%2FXm5KfuQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "54"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9RA1212G10021",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9RA1212G10021",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, 130CFM, Low Noise, Ribless, Ball, Sensorless",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 81,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 36.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 32.54,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 31.31,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/120SanAce_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9RA1212G10021?qs=By6Nw2ByBD16Uh1KxiFdJw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9S1212M402",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9S1212M402",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Silent Series",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 78,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 30.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 27.63,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 26.58,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce_120T_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9S1212M402?qs=t9Lg9qrXjExRhF5SBRZDzg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9RA1212E10011",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9RA1212E10011",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, 120CFM, Low Noise, Ribless, Ball, Wire, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 71,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 34.93,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 28.22,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 28.19,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/9RA120-series_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9RA1212E10011?qs=t7xnP681wgUp1QxaYFAzcA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9S1212L402",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9S1212L402",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Silent Series",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 77,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 30.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 27.63,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 26.58,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce_120T_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9S1212L402?qs=t9Lg9qrXjExZKP2WnBXFJA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9S1212L4011",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9S1212L4011",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Silent Series, Ribless, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 73,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 31.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 28.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 27.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce_120T_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9S1212L4011?qs=t9Lg9qrXjEzhfx9zfOvPJQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9S1212L401",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9S1212L401",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Silent Series, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 64,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 31.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 28.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 27.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce_120T_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9S1212L401?qs=t9Lg9qrXjEwENqPM1%2FtnyQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB1212SH-R00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB1212SH-R00",
+    "description": "DC Fans Tubeaxial Fan, 120x25.4mm, 12VDC, Ball Bearing, 3x Lead Wires, Lock Rotor Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 540,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.76,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 14.64,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 13.48,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB1212SH_R00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB120x25_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB1212SH-R00?qs=%2FW4LtXOBxKsRivvR3vfj2Q%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "54"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB1212VH",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB1212VH",
+    "description": "DC Fans DC Tubeaxial Fan, 120x25.4mm, 12VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 504,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 21.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 19.52,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 18.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB1212VH.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB120x25_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB1212VH?qs=%2FW4LtXOBxKur%252BRAJsGU4Gg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "54"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB1212HHE-R00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB1212HHE-R00",
+    "description": "DC Fans Tubeaxial Fan, 120x38mm, 12VDC, Ball Bearing, 3x Lead Wires, Locked Rotor Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 510,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 18.32,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 15.55,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 14.96,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB1212HHE_R00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaelectronics/images/AFB1212GHE-CF00_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB1212HHE-R00?qs=cgQJD%2FpJz0ybw%252BAm1UWlLg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "364 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB1212SHE",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB1212SHE",
+    "description": "DC Fans DC Tubeaxial Fan, 120x38mm, 12VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 414,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 18.46,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 16.22,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 14.26,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB1212SHE.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB120x38_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB1212SHE?qs=%2FW4LtXOBxKsDvXKGLU%2FIRg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "365 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD1225-12HSS",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD1225-12HSS",
+    "description": "DC Fans DC Fan, 120x120x25mm, 12VDC, 85CFM, 0.44A, 39dBA, 2200RPM, Sealed Sleeve, Leads",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 225,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.51,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 12.42,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6002/1/OD1225_sealedsleeve.pdf",
+    "photoUrl": "https://www.mouser.com/images/orion/images/od1225-12hss_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD1225-12HSS?qs=vrNx6sfu2%2FXMRmm7nXhwyQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD122512LB",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD1225-12LB",
+    "description": "DC Fans DC Fan, 120x120x25mm, 12VDC, 72CFM, 0.24A, 34dBA, 1800RPM, Dual Ball, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 86,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 21.18,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 18.49,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 16.97,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6002/1/OD1225.pdf",
+    "photoUrl": "https://www.mouser.com/images/orion/images/od1225-12hb_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD1225-12LB?qs=Wo5SZer1LATZlhW6x7zrPA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "670-OD122512MTB",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-FFB1212EH-F00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "FFB1212EH-F00",
+    "description": "DC Fans DC Tubeaxial Fan, 120x25.4mm, 12VDC, Ball Bearing, 3x Lead Wires, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 71,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 37.45,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 34.43,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 33.32,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/FFB1212EH_F00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/FFB120x25_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/FFB1212EH-F00?qs=%2FW4LtXOBxKtS1kKWU25%252BAQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "54"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "364 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9S1212M4011",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9S1212M4011",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Silent Series, Ribless, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 63,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 31.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 28.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 27.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce_120T_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9S1212M4011?qs=t9Lg9qrXjEzmz5AiRHddDQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9S1212H401",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9S1212H401",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Silent Series, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 60,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 31.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 28.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 27.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce_120T_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9S1212H401?qs=t9Lg9qrXjEwgReOe5hWJaA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9RA1212E1001",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9RA1212E1001",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, 120CFM, Low Noise, Ribbed, Ball, Wire, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 56,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 36.31,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 28.22,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 28.21,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/9RA120-series_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9RA1212E1001?qs=t7xnP681wgULI8U9dFy%2FBA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-PMB1212PLB3A2GN",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "PMB1212PLB3-A.(2).GN",
+    "description": "Blowers & Centrifugal Fans Blower, 120x120x32mm, 12VDC, 31.4CFM, 0.64\"H2O, Ball, Wire, Auto Restart",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 51,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 28.29,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 24.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 23.98,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/PMB1212PLB3_A.2.GN_D12006630G_00_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/PMB1212PLB2-A_-2-_GN_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/PMB1212PLB3-A.2.GN?qs=EU6FO9ffTwd6PG1hLCVpVw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "44"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD1238-12HBIP68",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD1238-12HBIP68",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, 124CFM, 6W, 44dBA, Ball, Wire, IP68",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 50,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 41.35,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 36.01,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 32.14,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/orion/images/od1238-12mbip68_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD1238-12HBIP68?qs=17u8i%2FzlE888cSD08YMgyA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "10"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9GL1212M101",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9GL1212M101",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, Long Life/High Performance, Ribless, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 37,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 46.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 41.23,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 38.51,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120L_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9GL1212M101?qs=t9Lg9qrXjEyP422C22M%252B6w%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-8315100143",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "8315100143",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, Tach/PWM, IP10, AF120-00143 12V P/2 6.500",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 37,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 65.31,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Axiforce_06302021_120_mm_PN_8315100143.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/83151_series_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/8315100143?qs=TuK3vfAjtkXkcFA%252BEanMPw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9S1212H4011",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9S1212H4011",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Silent Series, Ribless, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 36,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 31.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 28.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 27.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce_120T_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9S1212H4011?qs=t9Lg9qrXjEzMWICNEmxEHA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD1238-12HB-VXC",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD1238-12HB-VXC",
+    "description": "DC Fans DC Vane Axial Fan, High Static Pressure, 120x120x38mm, 12VDC, 226CFM, Ball, Wire",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 34,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 50.91,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 45.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 45.27,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/orion/images/37%20Right%20OD1238.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD1238-12HB-VXC?qs=Z3Dcwn12tY1UYt3ReVkI3A%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9S1212F402",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9S1212F402",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Silent Series",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 31,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 27.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 22.52,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce_120T_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9S1212F402?qs=t9Lg9qrXjEy8TO9dA7JW0w%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-7PFC381BX160USC9",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "5627HQ/PFC0381BX-1Q60U-SC9",
+    "description": "DC Fans DC Axial Fan, 120x120x38mm, 12VDC, 232.3CFM, 32.4W, 1.14\"H2O, 4xWire, Tach, IP56",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 30,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 23.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 20.49,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 20.46,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/PFC0381BX_1Q60U_SC9_D12046250G_01_0_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/5627HQ-PFC0381BX-1Q60U-SC9_SPL_t.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/5627HQ-PFC0381BX-1Q60U-SC9?qs=G4MbTVxgV4HwRmepK6AjAw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9WPA1212J4001",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9WPA1212J4001",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, 210Pa, Splash/Dust Proof, Rib, Tach, IP68",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 30,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 74.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 62.27,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 60.79,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/971/1/San_Ace_120WPA25_E.pdf",
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/9WPA1212H4001_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9WPA1212J4001?qs=jcD%2FCkGBYeMvy8mBRxsiUw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9RA1212H10011",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9RA1212H10011",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, 99CFM, Low Noise, Ribless, Ball, Wire, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 29,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 34.51,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 31.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 29.98,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/9RA120-series_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9RA1212H10011?qs=t7xnP681wgWu8ft%2F%2FyjG2w%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-EEC0251B2000UG99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "EEC0251B2-000U-G99",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, Ball, 3x Lead Wires, Auto Restart, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 28,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.57,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 14.47,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 13.79,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/EEC0251B2_000U_G99_D12017000G_01_1.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/EEC0251B2-000U-G99?qs=l4Gc20tDgJKLDmy0a165xA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": "New at Mouser",
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "567-DC1202512V2B-2T0",
+    "manufacturer": "Wakefield Thermal",
+    "manufacturerPartNumber": "DC1202512V2B-2T0",
+    "description": "DC Fans Fan, 120x25mm, 12VDC, 121.1CFM, 7.8W, 0.65A, 52dBA, 2Ball Bearing, 2 Leads",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 28,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 20.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 18.86,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 18.1,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/264/1/wfv-dc-fans-rev-a3 (1).pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wakefield-Thermal/DC1202512V2B-2T0?qs=GBLSl2Akirv6B7Ax%252BGX%252B8g%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "540"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "182 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9GA1212P4S001",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9GA1212P4S001",
+    "description": "DC Fans Axial Fan, 120x120x25mm, 12VDC, 113CFM, 7.32W, 54dBA, Low Power, Rib, Tach/PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 28,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 60.03,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 53.57,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9GA1212P4S001?qs=5aG0NVq1C4wZbfZ0WwcOXg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 60,
+       "date": "2027-01-18T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9WG1212G101",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9WG1212G101",
+    "description": "DC Fans DC Axial Fan, 120x120x38mm, 12VDC, 137CFM, Splash Proof, Ribless, Tach, IP55",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 28,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 65.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 56.33,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 54.24,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120w_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9WG1212G101?qs=t9Lg9qrXjEzW6vNLHqU2Nw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9CR1212P0G03",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9CR1212P0G03",
+    "description": "DC Fans DC Axial Fan, 120x120x76mm, 12VDC, Counter Rotating, Tachometer, PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 18,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 124.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 9,
+      "unitPrice": 106.96,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 27,
+      "unitPrice": 106.91,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/9CR1212P0G03_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9CR1212P0G03?qs=t9Lg9qrXjEzaIskuv0a4hg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "9"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9GA1212G40011",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9GA1212G40011",
+    "description": "DC Fans Axial Fan, 120x120x25mm, 12VDC, 134CFM, 11.16W, 57dBA, Low Power, Ribless, PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 16,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 69.45,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 62.84,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 58.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/ITP_9GA1212G40011_t.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9GA1212G40011?qs=5aG0NVq1C4xUqmH24DqkyA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-EEC0251B2000UF99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "EEC0251B2-000U-F99",
+    "description": "DC Fans Axial Fan, 120x120x25mm, 12VDC, 0.22\"H2O, 3x Wire, Auto Restart, Lock Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 15,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 14.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 14.38,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/EEC0251B2_000U_F99_D12016990G_02_0_Ref.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/EEC0251B2-000U-F99?qs=T3oQrply3y%2FT808s%252B3kxNA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9RA1212P4H003",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9RA1212P4H003",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, 99CFM, Low Noise, Ribbed, Ball, Wire, Tach/PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 14,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 26.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 23.95,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 23.04,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/971/1/San_Ace_E.pdf",
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/9RA1212P4H003_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9RA1212P4H003?qs=PBDs2xEllI%252BPXE8oBs14tg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 60,
+       "date": "2027-02-22T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB1212VHE-T50F",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB1212VHE-T50F",
+    "description": "DC Fans Fan, 120x38mm, 12VDC, 129.6CFM, 7.2W, 48dBA, Ball, 3x Lead Wires, Tach, IP55",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 12,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 19.91,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 17.43,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 16.38,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB1212VHE_T50F.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB120x38_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB1212VHE-T50F?qs=%2FW4LtXOBxKuDY72ewQ7r6w%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-EEC0381B2000UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "EEC0381B2-000U-A99",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, 116CFM, 0.26\"H2O, Ball, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 254,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.49,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 12.59,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/EEC0381B2_000U_A99_D12017250G_02_2.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/EE60251B2-000U-999_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/EEC0381B2-000U-A99?qs=EU6FO9ffTweqanz6HLSRpQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "369-FC0381B21000UA9H",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9G1212E401",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9G1212E401",
+    "description": "DC Fans Axial Fan, 120x120x25mm, 12VDC, 115CFM, 6.96W, 48dBA, 3650RPM, Performance, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 83,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 27.89,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 24.78,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 24.23,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9G1212E401?qs=t9Lg9qrXjEyihyf%2Ft%252BUbcg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9RA1212E4001",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9G1212E101",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9G1212E101",
+    "description": "DC Fans DC Axial Fan, 120x120x38mm, 12VDC, High Performance, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 72,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 34.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 29.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 27.87,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Sanyo Denki_03-11-2026_0900766b8172fb75.pdf",
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9G1212E101?qs=t9Lg9qrXjEw83nr4KR8SuA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9RA1212E1001",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9G1212H1011",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9G1212H1011",
+    "description": "DC Fans DC Axial Fan, 120x120x38mm, 12VDC, High Performance, Ribless, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 55,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 37.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 28.47,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 28.29,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9G1212H1011?qs=t9Lg9qrXjEwY9psX4aNm%2Fw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9RA1212H10011",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9G1212H102",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9G1212H102",
+    "description": "DC Fans DC Axial Fan, 120x120x38mm, 12VDC, High Performance",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 46,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 33.45,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 29.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 29.13,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9G1212H102?qs=t9Lg9qrXjEw82RBewdQchg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9RA1212H1002",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9G1212G1011",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9G1212G1011",
+    "description": "DC Fans DC Axial Fan, 120x120x38mm, 12VDC, High Performance, Ribless, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 41,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 34.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 26.16,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9G1212G1011?qs=t9Lg9qrXjEy3QnPvp58DxQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9RA1212G10011",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-RL90-18/12N",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "RL90-18/12N",
+    "description": "Blowers & Centrifugal Fans DC Centrifugal Fan, Forward Curved, 120x120x38mm, 7-15VDC, 40m3/h, Ball, FlatPak",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 36,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 112.69,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 89.72,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 88.93,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm_papst_9594310401_Datasheet_ENU.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/RL90-1814N39_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/RL90-18-12N?qs=2%252B8WEkFBDJTvEF19ugfZig%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9G1212M402",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9G1212M402",
+    "description": "DC Fans DC Axial Fan, 120x120x25mm, 12VDC, High Performance",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 12,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 28.17,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 23.78,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 22.55,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9G1212M402?qs=t9Lg9qrXjEx6p44Rl6Rq9A%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9RA1212M4002",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB1212H-F00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB1212H-F00",
+    "description": "DC Fans DC Tubeaxial Fan, 120x25.4mm, 12VDC, Ball Bearing, 3x Lead Wires, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 8,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 18.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 17.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 14.85,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB1212H_F00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB120x25_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB1212H-F00?qs=%2FW4LtXOBxKs1sqgJ18u5Ww%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "54"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 540,
+       "date": "2027-03-29T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9GL1212H101",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9GL1212H101",
+    "description": "DC Fans Axial Fan, 120x120x38mm, 12VDC, Long Life, High Performance, Ribless, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 5,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 46.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 41.23,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 38.51,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120L_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9GL1212H101?qs=t9Lg9qrXjEyWmJiFMGxBdA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ]
+ }
+}

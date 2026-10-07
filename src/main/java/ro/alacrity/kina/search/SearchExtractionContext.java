@@ -103,6 +103,7 @@ final class SearchExtractionContext implements ExtractionContext {
                     .map(Recognizers::mounting).filter(m -> m != null).findFirst().orElse(null);
             case PACKAGE -> Recognizers.findPackage(text, family, false);
             case METRIC_PACKAGE -> Recognizers.findPackage(text, family, true);
+            case FAN_TYPE, FAN_SUPPLY, FRAME_SIZE, BEARING, FAN_FEATURES -> FanVocabulary.word(vocabulary, text);
         };
     }
 

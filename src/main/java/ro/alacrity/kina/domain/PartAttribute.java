@@ -4,6 +4,7 @@ import ro.alacrity.kina.domain.extract.CanDimensions;
 import ro.alacrity.kina.domain.extract.ConnectorOrientation;
 import ro.alacrity.kina.domain.extract.ConnectorTypeWord;
 import ro.alacrity.kina.domain.extract.Described;
+import ro.alacrity.kina.domain.extract.DescribedWord;
 import ro.alacrity.kina.domain.extract.DescriptionDimensions;
 import ro.alacrity.kina.domain.extract.DescriptionTemperatureRange;
 import ro.alacrity.kina.domain.extract.DielectricCode;
@@ -18,6 +19,7 @@ import ro.alacrity.kina.domain.extract.LayoutPositions;
 import ro.alacrity.kina.domain.extract.LayoutRows;
 import ro.alacrity.kina.domain.extract.LifetimeAtTemperature;
 import ro.alacrity.kina.domain.extract.MaxTemperature;
+import ro.alacrity.kina.domain.extract.MergedWords;
 import ro.alacrity.kina.domain.extract.MetricPackageCode;
 import ro.alacrity.kina.domain.extract.Millimetres;
 import ro.alacrity.kina.domain.extract.MountingWord;
@@ -34,6 +36,7 @@ import ro.alacrity.kina.domain.extract.SeriesPower;
 import ro.alacrity.kina.domain.extract.ShortSeries;
 import ro.alacrity.kina.domain.extract.StatedGender;
 import ro.alacrity.kina.domain.extract.TemperatureRange;
+import ro.alacrity.kina.domain.extract.VocabularyWord;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -46,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static ro.alacrity.kina.domain.ComponentFamily.FAN;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.ARRAYS;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.INDUCTIVE;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.PASSIVE;
@@ -106,7 +110,8 @@ public enum PartAttribute {
 
     /**
      * The voltage: a regulator's output voltage (TME {@code Output voltage}, Mouser {@code Output Voltage}) first, a
-     * Zener diode's Zener voltage (Mouser {@code Vz - Zener Voltage}) first, then the voltage ratings (Mouser
+     * Zener diode's Zener voltage (Mouser {@code Vz - Zener Voltage}) first, a fan's supply voltage (TME
+     * {@code Supply voltage} = {@code 12V DC}, not its {@code Operating voltage} range) first, then the voltage ratings (Mouser
      * {@code Voltage Rating DC}, TME {@code Operating voltage}, LCSC {@code Voltage Rated}), then any attribute named
      * with {@code voltage} that is no forward, clamp, breakdown... voltage, last the description (for a transistor or
      * diode its largest unlabelled voltage, {@link LargestVoltage}).
@@ -116,6 +121,8 @@ public enum PartAttribute {
             "fixed output voltage"}, families = ComponentFamily.REGULATOR)
     @Source(precedence = 1, names = {"vz - zener voltage", "zener voltage", "voltage - zener (nom) (vz)",
             "zener voltage (vz)", "voltage - zener"}, families = ComponentFamily.ZENER)
+    @Source(precedence = 1, names = {"supply voltage", "rated voltage", "nominal voltage", "voltage rating dc",
+            "voltage rating", "voltage"}, families = FAN)
     @Source(precedence = 2, names = {"voltage rating dc", "voltage rating - dc", "voltage rating", "voltage rated",
             "rated voltage", "voltage - rated", "operating voltage", "dc voltage rating", "voltage", "output voltage",
             "voltage - output", "voltage - output (min/fixed)", "vr - reverse voltage", "reverse voltage (vr)",
@@ -189,22 +196,40 @@ public enum PartAttribute {
     @Source(precedence = 9, logic = Described.class)
     TOLERANCE(ParsedQuery.TOLERANCE, "Tolerance"),
 
-    /** The rotational speed of a fan ({@code 3000 rpm}; {@code r/min} is read as rpm). */
-    @Unit(symbols = "rpm", base = "rpm", display = ValueDisplay.Spaced.class, families = ComponentFamily.FAN)
+    /** The rotational speed of a fan ({@code 3000 rpm}; {@code r/min} is read as rpm; TME {@code Rotational rate/speed}). */
+    @Unit(symbols = "rpm", base = "rpm", display = ValueDisplay.Spaced.class, families = FAN)
+    @Source(names = {"rotational rate/speed", "rotational speed", "speed", "fan speed", "rated speed",
+            "speed (rpm)", "nominal speed"}, families = FAN)
+    @Source(precedence = 9, logic = Described.class, families = FAN)
     SPEED(ParsedQuery.SPEED, "Speed"),
 
-    /** The airflow of a fan in m³/h, shown with its CFM ({@code 68 m³/h (40 CFM)}); {@code m3/h} is read as m3h. */
+    /**
+     * The airflow of a fan in m³/h, shown with its CFM ({@code 68 m³/h (40 CFM)}); {@code m3/h} is read as m3h. TME
+     * calls it {@code Fan efficiency} ({@code 13.52m<sup>3</sup>/h}); Mouser and LCSC state it in the description.
+     */
     @Unit(symbols = {"cfm", "m3h", "m3min", "lmin"}, factors = {1.699011, 1, 60, 0.06}, base = "m³/h",
-            display = ValueDisplay.WithAlternative.class, alternative = "CFM", families = ComponentFamily.FAN)
+            display = ValueDisplay.WithAlternative.class, alternative = "CFM", families = FAN)
+    @Source(names = {"fan efficiency", "air flow", "air flow rate", "max air flow", "maximum air flow", "air volume"},
+            families = FAN)
+    @Source(precedence = 9, logic = Described.class, families = FAN)
     AIRFLOW(ParsedQuery.AIRFLOW, "Airflow"),
 
-    /** The static pressure of a fan in pascal, shown with its mmH2O ({@code 24.5 Pa (2.5 mmH2O)}). */
+    /**
+     * The static pressure of a fan in pascal, shown with its mmH2O ({@code 24.5 Pa (2.5 mmH2O)}): TME
+     * {@code 4.83mm H<sub>2</sub>O}, Mouser {@code 0.25"H2O} (inches of water).
+     */
     @Unit(symbols = {"pa", "mmh2o", "mmaq", "inh2o"}, factors = {1, 9.80665, 9.80665, 249.089}, base = "Pa",
-            display = ValueDisplay.WithAlternative.class, alternative = "mmH2O", families = ComponentFamily.FAN)
+            display = ValueDisplay.WithAlternative.class, alternative = "mmH2O", families = FAN)
+    @Source(names = {"static pressure", "max static pressure", "maximum static pressure", "static air pressure",
+            "air pressure"}, families = FAN)
+    @Source(precedence = 9, logic = Described.class, families = FAN)
     STATIC_PRESSURE(ParsedQuery.STATIC_PRESSURE, "StaticPressure"),
 
     /** The acoustic noise of a fan ({@code 25 dBA}; {@code dB(A)} and a bare {@code dB} are read as dBA). */
-    @Unit(symbols = {"dba", "db"}, base = "dBA", display = ValueDisplay.Spaced.class, families = ComponentFamily.FAN)
+    @Unit(symbols = {"dba", "db"}, base = "dBA", display = ValueDisplay.Spaced.class, families = FAN)
+    @Source(names = {"noise level", "noise", "acoustic noise", "sound level", "sound pressure level", "noise (dba)"},
+            families = FAN)
+    @Source(precedence = 9, logic = Described.class, families = FAN)
     NOISE(ParsedQuery.NOISE, "Noise"),
 
     // ---------------------------------------------------------------- numeric details
@@ -279,6 +304,40 @@ public enum PartAttribute {
             logic = TemperatureRange.class)
     @Source(precedence = 1, logic = DescriptionTemperatureRange.class)
     OPERATING_TEMPERATURE(null, "OperatingTemperature"),
+
+    // ---------------------------------------------------------------- fans (TME parameters verified live 2026-10-07:
+    // "Kind of fan" = axial / blower, "Type of fan" = DC, "Fan dimensions" = 40x40x10mm, "Kind of Bearing" = ball /
+    // slide / Vapo, "Additional functions" = autorestart, "Signal output" = F type, "Leads" = leads x3; Mouser sends
+    // no fan attributes: its category and description say it, as LCSC's do)
+
+    /** The fan type: axial, or radial for a blower or centrifugal fan; a part that says fan and no more is axial. */
+    @Source(names = {"kind of fan", "fan type", "type of fan", "product type", "type"}, families = FAN,
+            logic = VocabularyWord.class)
+    @Source(precedence = 1, families = FAN, logic = DescribedWord.class)
+    FAN_TYPE(null, "FanType", Vocabulary.FAN_TYPE),
+
+    /** DC or AC (TME {@code Type of fan} = {@code DC}, {@code Supply voltage} = {@code 12V DC}; Mouser {@code 12VDC}). */
+    @Source(names = {"type of fan", "supply voltage", "fan motor", "kind of fan"}, families = FAN,
+            logic = VocabularyWord.class)
+    @Source(precedence = 1, families = FAN, logic = DescribedWord.class)
+    FAN_SUPPLY(null, "FanSupply", Vocabulary.FAN_SUPPLY),
+
+    /** The frame size of a fan ({@code 40x40x10mm}; Mouser {@code 120x38mm} is 120x120x38mm). */
+    @Source(names = {"fan dimensions", "frame size", "fan size", "dimensions", "size", "body dimensions"},
+            families = FAN, logic = VocabularyWord.class)
+    @Source(precedence = 1, families = FAN, logic = DescribedWord.class)
+    FRAME_SIZE(null, "FrameSize", Vocabulary.FRAME_SIZE),
+
+    /** The bearing of a fan: ball (dual ball), sleeve (TME {@code slide}), fluid dynamic, rifle, magnetic, vapo. */
+    @Source(names = {"kind of bearing", "bearing", "bearing type", "type of bearing"}, families = FAN,
+            logic = VocabularyWord.class)
+    @Source(precedence = 1, families = FAN, logic = DescribedWord.class)
+    BEARING(null, "Bearing", Vocabulary.BEARING),
+
+    /** A fan's features (PWM, tacho, locked rotor, auto restart, 2/3/4-wire, IP rating): every name counts. */
+    @Source(names = {"additional functions", "signal output", "leads", "features", "control", "output signal"},
+            families = FAN, logic = MergedWords.class)
+    FAN_FEATURES(null, "Features", Vocabulary.FAN_FEATURES),
 
     // ---------------------------------------------------------------- passive details
 
@@ -377,10 +436,21 @@ public enum PartAttribute {
 
     private final String kind;
     private final String key;
+    private final Vocabulary vocabulary;
 
     PartAttribute(String kind, String key) {
+        this(kind, key, null);
+    }
+
+    PartAttribute(String kind, String key, Vocabulary vocabulary) {
         this.kind = kind;
         this.key = key;
+        this.vocabulary = vocabulary;
+    }
+
+    /** The vocabulary a word attribute is read in ({@code VocabularyWord}, {@code DescribedWord}), else null. */
+    public Vocabulary vocabulary() {
+        return vocabulary;
     }
 
     /** The {@link ParsedQuery} value kind of a numeric attribute, null for a word or text attribute. */

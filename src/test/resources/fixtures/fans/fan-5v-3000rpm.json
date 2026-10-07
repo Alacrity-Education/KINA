@@ -1,0 +1,5770 @@
+{
+ "query": "fan 5V 3000rpm",
+ "recorded": "2026-10-07 live probe (detail=full, allow_below_spec, max_results 50) of the fan phrasing (Mouser and TME one search each; LCSC with the first phrase \"Cooling fan\" + voltage, whose relaxation reached non-fans for the blower); attributes are the raw distributor attributes (canonical keys removed), prices the three smallest breaks",
+ "phrases": {
+  "LCSC": "\"Cooling fan\" 5V",
+  "TME": "fan DC axial 5V",
+  "MOUSER": "DC fan 5V"
+ },
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729730",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SFS2510SL5",
+    "description": "0.14A 0.7W 1.01CFM 17.8dB(A) 25mm×25mm×10mm 5V 8500RPM DC cooling fan",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 29,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.005,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2105241517_SHENG-FENG-SFS2510SL5_C729730.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729730.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729730"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729746",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF5010SM5",
+    "description": "、35.1dB(A) 0.14A 0.7W 50mm×50mm×11.5mm 5500RPM 5V 9.12CFM DC cooling fan",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 23,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.654,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2105241518_SHENG-FENG-SF5010SM5_C729746.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729746.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729746"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40200V3-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40200V3-1000U-A99",
+    "description": "Fan: DC; 40x40x20mm; axial; 5VDC; 10.65m3/h; 16.5dBA; Vapo; 5000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 3242,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/159011daab6774c0fd9b7c012245cc81/MF40200V3-1000U-A99  D04115060G-00.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/19/1E/80/00/0/582033_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e97bfeb7bbc297546405f179255c265621f56c99",
+    "productUrl": "https://www.tme.eu/en/details/mf40200v3-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x20mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.4W",
+     "Current rating": "75mA",
+     "Fan efficiency": "10.65m<sup>3</sup>/h",
+     "Noise level": "16.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.305m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2.79mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 100
+      },
+      {
+       "id": "CT1",
+       "amount": 200
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40060V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40060V2-1000U-A99",
+    "description": "Fan: DC; 40x40x6mm; axial; 5VDC; 9.3m3/h; 25.3dBA; Vapo; 6000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 3162,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.17,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.27,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 5.65,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/168c9e2d020eba5d91c0f9d3b55e6594/MF40060V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F1/92/A0/00/0/665887_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f4d3170a36219f5683557a3522c2fc1bed96a4e8",
+    "productUrl": "https://www.tme.eu/en/details/mf40060v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x6mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.33W",
+     "Current rating": "65mA",
+     "Fan efficiency": "9.3m<sup>3</sup>/h",
+     "Noise level": "25.3dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "6000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.145m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2.03mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 25
+      },
+      {
+       "id": "CT1",
+       "amount": 250
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF35100V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF35100V2-1000U-A99",
+    "description": "Fan: DC; 35x35x10mm; axial; 5VDC; 10.99m3/h; 21.8dBA; Vapo; 7500rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 4389,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f907cbc854e0f9dca82dd03528d812e5/MF35100V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/CF/86/90/00/0/616700_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e79afd149bdb63e1f2c434332d9ca2b802c95018",
+    "productUrl": "https://www.tme.eu/en/details/mf35100v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "35x35x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.4W",
+     "Current rating": "80mA",
+     "Fan efficiency": "10.99m<sup>3</sup>/h",
+     "Noise level": "21.8dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "7500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.14m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3.3mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40200V1-G99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40200V1-1000U-G99",
+    "description": "Fan: DC; 40x40x20mm; axial; 5VDC; 15.04m3/h; 25.5dBA; Vapo; 7000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 1176,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.74,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.97,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 2.79,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/bbf91dce5c50c95571f9041a0e0ab23b/MF40200V1-1000U-G99 D04114960G-00.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F5/3F/80/00/0/586591_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=67660bcccbf02279f1788f821e27c75982fd2889",
+    "productUrl": "https://www.tme.eu/en/details/mf40200v1-g99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x20mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.75W",
+     "Current rating": "0.15A",
+     "Fan efficiency": "15.04m<sup>3</sup>/h",
+     "Noise level": "25.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Signal output": "F type",
+     "Rotational rate/speed": "7000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.305m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "5.59mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      },
+      {
+       "id": "CT2",
+       "amount": 200
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "EE40100S2-999-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "EE40100S2-1000U-999",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 11.99m3/h; 23dBA; slide; 6100rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 5044,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 1.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 1.38,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/8acfb993d8ba6d57f3e554995a6349d3/EE40100S2-999-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/16/14/90/00/0/606561_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a51205bb998cbb641efff171b58cefe21cdf495e",
+    "productUrl": "https://www.tme.eu/en/details/ee40100s2-999-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.8W",
+     "Current rating": "0.12A",
+     "Fan efficiency": "11.99m<sup>3</sup>/h",
+     "Noise level": "23dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6100rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3.05mm H<sub>2</sub>O",
+     "Wire size": "26AWG",
+     "Related items": "SR4-15.5"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40200V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40200V1-1000U-A99",
+    "description": "Fan: DC; 40x40x20mm; axial; 5VDC; 15.04m3/h; 25.5dBA; Vapo; 7000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 1218,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 3.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 2.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/df7c1ec31928b325c794d2e135bdd305/MF40200V1-1000U-A99  D04114940G-00.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C3/FD/80/00/0/581436_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8a7a81197fd7103d7e94a9918f22e2096cf9ecff",
+    "productUrl": "https://www.tme.eu/en/details/mf40200v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x20mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.75W",
+     "Current rating": "0.15A",
+     "Fan efficiency": "15.04m<sup>3</sup>/h",
+     "Noise level": "25.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "7000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.305m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "5.59mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      },
+      {
+       "id": "CT2",
+       "amount": 200
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF50100V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF50100V1-1000U-A99",
+    "description": "Fan: DC; 50x50x10mm; axial; 5VDC; 23.32m3/h; 30.7dBA; Vapo; 5800rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 3118,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 2.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 2.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.25,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a8dc3b06c13ea1516ba004282b73ad3b/MF50100V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/7E/85/90/00/0/612583_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=cfd5e3815485e21e887817114245734c1caa49ac",
+    "productUrl": "https://www.tme.eu/en/details/mf50100v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "50x50x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.78W",
+     "Current rating": "0.155A",
+     "Fan efficiency": "23.32m<sup>3</sup>/h",
+     "Noise level": "30.7dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5800rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.295m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3.81mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 154
+      },
+      {
+       "id": "CT2",
+       "amount": 308
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF50100V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF50100V2-1000U-A99",
+    "description": "Fan: DC; 50x50x10mm; axial; 5VDC; 18.7m3/h; 25.6dBA; Vapo; 4800rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 1985,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.46,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.71,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 2.46,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/519e746126d0dde0a70f7a39bd526ac4/MF50100V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F3/12/B0/00/0/729407_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0ef997b1a3665e97da9c9cf976aa99579684f7b2",
+    "productUrl": "https://www.tme.eu/en/details/mf50100v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "50x50x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.43W",
+     "Current rating": "85mA",
+     "Fan efficiency": "18.7m<sup>3</sup>/h",
+     "Noise level": "25.6dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "4800rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.295m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2.79mm H<sub>2</sub>O"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT2",
+       "amount": 154
+      },
+      {
+       "id": "CT3",
+       "amount": 308
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF50100V3-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF50100V3-1000U-A99",
+    "description": "Fan: DC; 50x50x10mm; axial; 5VDC; 14.26m3/h; 22.4dBA; Vapo; 4300rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 991,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 3.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/515d24366a7fd8cfc4d06a3250546567/MF50100V3-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B3/42/B0/00/0/730171_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=51111080a0c7c6baff49fcb1589fae007bd4387a",
+    "productUrl": "https://www.tme.eu/en/details/mf50100v3-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "50x50x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.38W",
+     "Current rating": "75mA",
+     "Fan efficiency": "14.26m<sup>3</sup>/h",
+     "Noise level": "22.4dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "4300rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.295m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2mm H<sub>2</sub>O"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 154
+      },
+      {
+       "id": "CT2",
+       "amount": 308
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF20100V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF20100V1-1000U-A99",
+    "description": "Fan: DC; 20x20x10mm; axial; 5VDC; 3.22m3/h; 25dBA; Vapo; 16500rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 2473,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.74,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.51,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 3.83,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/9a5ecce9d52a475e0c57d0492f686cf5/MF20100V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/81/BA/A0/00/0/699160_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=4f3cc53590ed041b0b48be37ca23cddab68bd83d",
+    "productUrl": "https://www.tme.eu/en/details/mf20100v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "20x20x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.8...6V DC",
+     "Power consumption": "0.53W",
+     "Current rating": "106mA",
+     "Fan efficiency": "3.22m<sup>3</sup>/h",
+     "Noise level": "25dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "16500rpm",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Fan motor": "brushless DC",
+     "Static pressure": "7.36mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF30100V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF30100V2-1000U-A99",
+    "description": "Fan: DC; 30x30x10mm; axial; 5VDC; 7.94m3/h; 21dBA; Vapo; 9500rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 2814,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.28,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 40,
+      "unitPrice": 3.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 80,
+      "unitPrice": 3.35,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/5ca6f01097e5a12e98e898d408585a15/MF30100V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/AF/86/90/00/0/616698_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=be3e90004377e1c4ed1fb5962ba40e4c208483ed",
+    "productUrl": "https://www.tme.eu/en/details/mf30100v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "30x30x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.4W",
+     "Current rating": "80mA",
+     "Fan efficiency": "7.94m<sup>3</sup>/h",
+     "Noise level": "21dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "9500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.145m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.32mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 40
+      },
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF30100V1-G99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF30100V1-1000U-G99",
+    "description": "Fan: DC; 30x30x10mm; axial; 5VDC; 9.3m3/h; 23dBA; Vapo; Out: F type",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 3995,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.69,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 40,
+      "unitPrice": 3.83,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 80,
+      "unitPrice": 3.69,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/9a0c361d41cc594d8f6bb52748b0afc6/MF30100V1-G99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/9F/86/90/00/0/616697_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d092718bc9bb930ded2e2b23241543a28b142a3b",
+    "productUrl": "https://www.tme.eu/en/details/mf30100v1-g99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "30x30x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.6W",
+     "Current rating": "0.12A",
+     "Fan efficiency": "9.3m<sup>3</sup>/h",
+     "Noise level": "23dBA",
+     "Kind of Bearing": "Vapo",
+     "Signal output": "F type",
+     "Rotational rate/speed": "11000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.145m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "5.08mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 40
+      },
+      {
+       "id": "CT1",
+       "amount": 200
+      },
+      {
+       "id": "CT2",
+       "amount": 400
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF45100V1-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF45100V1-1000U-A99",
+    "description": "Fan: DC; 45x45x10mm; axial; 5VDC; 21.31m3/h; 32.5dBA; Vapo; 6500rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 1130,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.56,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.32,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.08,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/6382a105344911cdb72c4e2e28657ad8/sunon2.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/55/FF/F0/00/0/1048405_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7ab0d0cdc76dcfdcffcffd1ee33365dbeffbbe68",
+    "productUrl": "https://www.tme.eu/en/details/mf45100v1-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "45x45x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "1.18W",
+     "Current rating": "0.205A",
+     "Fan efficiency": "21.31m<sup>3</sup>/h",
+     "Noise level": "32.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "6500rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.57mm H<sub>2</sub>O"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 128
+      },
+      {
+       "id": "CT2",
+       "amount": 384
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF50100V1-G99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF50100V1-1000U-G99",
+    "description": "Fan: DC; 50x50x10mm; axial; 5VDC; 23.32m3/h; 30.7dBA; Vapo; 5800rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 788,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.4,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 2.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d2beb99b37c07fc3555c8129585c299c/MF50100V1-G99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1A/15/90/00/0/610721_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=23584b29b20a5c7fbb04937130de733fddcea041",
+    "productUrl": "https://www.tme.eu/en/details/mf50100v1-g99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "50x50x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.78W",
+     "Current rating": "0.155A",
+     "Fan efficiency": "23.32m<sup>3</sup>/h",
+     "Noise level": "30.7dBA",
+     "Kind of Bearing": "Vapo",
+     "Signal output": "F type",
+     "Rotational rate/speed": "5800rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.295m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3.81mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 154
+      },
+      {
+       "id": "CT2",
+       "amount": 308
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF20080V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF20080V2-1000U-A99",
+    "description": "Fan: DC; 20x20x8mm; axial; 5VDC; 2.21m3/h; 21dBA; Vapo; 12000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 1593,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a50c7241780e83ce0a13aa39c3beaa73/MF20080V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/93/42/B0/00/0/730169_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ae1e2e46402e4c90b1f2ad795cfb5e1a802cccdf",
+    "productUrl": "https://www.tme.eu/en/details/mf20080v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "20x20x8mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.3...6V DC",
+     "Power consumption": "0.38W",
+     "Current rating": "68mA",
+     "Fan efficiency": "2.21m<sup>3</sup>/h",
+     "Noise level": "21dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "12000rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3.8mm H<sub>2</sub>O"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF17080V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF17080V1-1000U-A99",
+    "description": "Fan: DC; 17x17x8mm; axial; 5VDC; 1.52m3/h; 21.5dBA; Vapo; 21000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 477,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 5.03,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 4.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/2dafa39b5682670ebd2f219a961487b8/MF17080V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F6/14/90/00/0/606575_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7c4fb8e6ebd320bddb520fb4c0c79a48f40304fb",
+    "productUrl": "https://www.tme.eu/en/details/mf17080v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "17x17x8mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.8...6V DC",
+     "Power consumption": "0.47W",
+     "Current rating": "93mA",
+     "Fan efficiency": "1.52m<sup>3</sup>/h",
+     "Noise level": "21.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "21000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "7.11mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF17080V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF17080V2-1000U-A99",
+    "description": "Fan: DC; 17x17x8mm; axial; 5VDC; 1.19m3/h; 34.2dBA; Vapo; 16500rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 387,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.52,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.47,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/75a0b06c316542d9b9c47b3cc66c0b02/MF17080V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/94/B5/B0/00/0/744265_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0ed60daf5eeefb88d9f4e8bb130f7610205d49ce",
+    "productUrl": "https://www.tme.eu/en/details/mf17080v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "17x17x8mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.3...6V DC",
+     "Power consumption": "0.33W",
+     "Current rating": "66mA",
+     "Fan efficiency": "1.19m<sup>3</sup>/h",
+     "Noise level": "34.2dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "16500rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart, protection against reverse connection of power supply",
+     "Fan motor": "brushless DC"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF35060V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF35060V1-1000U-A99",
+    "description": "Fan: DC; 35x35x6mm; axial; 5VDC; 9.35m3/h; 26dBA; Vapo; 7600rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 365,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.33,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 6.38,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/c58bacc14028d1513b25f8592b7356aa/MF35060V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/48/D1/B0/00/0/728452_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a012c8e0d3f3d362a2af27d70e896a29f64ed39d",
+    "productUrl": "https://www.tme.eu/en/details/mf35060v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "35x35x6mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.6W",
+     "Current rating": "0.12A",
+     "Fan efficiency": "9.35m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "7600rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.14m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF45100V2-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF45100V2-1000U-A99",
+    "description": "Fan: DC; 45x45x10mm; axial; 5VDC; 13.93m3/h; 29.3dBA; Vapo; 26AWG",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 806,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 3.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 3.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/mf45100v2-a99/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3D/15/11/00/0/1135059_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=dce429d19e1c3550d8f497469aa1ec36807329f9",
+    "productUrl": "https://www.tme.eu/en/details/mf45100v2-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "45x45x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.59W",
+     "Current rating": "118mA",
+     "Fan efficiency": "13.93m<sup>3</sup>/h",
+     "Noise level": "29.3dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5000 (±15%)rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2.29mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 128
+      },
+      {
+       "id": "CT2",
+       "amount": 384
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF35060V2-A99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF35060V2-1000U-A99",
+    "description": "Fan: DC; 35x35x6.5mm; axial; 5VDC; 7.31m3/h; 18.3dBA; Vapo; 28AWG",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 419,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.27,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.67,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 5.51,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/mf35060v2-a99/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/14/09/01/00/0/1085505_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a314b36a89b0e780214b2faf9d91c39675d48ed3",
+    "productUrl": "https://www.tme.eu/en/details/mf35060v2-a99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "35x35x6.5mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.38W",
+     "Current rating": "76mA",
+     "Fan efficiency": "7.31m<sup>3</sup>/h",
+     "Noise level": "18.3dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5800 (±15%)rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "1.78mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF25150V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF25150V2-1000U-A99",
+    "description": "Fan: DC; 25x25x15mm; axial; 5VDC; 3.74m3/h; Vapo; 6800rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 362,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 35,
+      "unitPrice": 5.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/ce1d855abc6e27aa086053b6919930c5/MF25150V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/82/F0/B0/00/0/724776_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9beafacd2f97ab9e93043524e79bf9987224a087",
+    "productUrl": "https://www.tme.eu/en/details/mf25150v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "25x25x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "230mW",
+     "Current rating": "46mA",
+     "Fan efficiency": "3.74m<sup>3</sup>/h",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "6800rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 35
+      },
+      {
+       "id": "CT1",
+       "amount": 350
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF25150V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF25150V1-1000U-A99",
+    "description": "Fan: DC; 25x25x15mm; axial; 5VDC; 5.24m3/h; 20dBA; Vapo; 10000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 327,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.77,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 35,
+      "unitPrice": 5.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 70,
+      "unitPrice": 5.33,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/b04bbfb6355055844fb09b14daae0c73/MF25150V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/8F/86/90/00/0/616696_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b9b1b0e3979d7d14c4c622b21eec8dffe4e44bbe",
+    "productUrl": "https://www.tme.eu/en/details/mf25150v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "25x25x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.43W",
+     "Current rating": "85mA",
+     "Fan efficiency": "5.24m<sup>3</sup>/h",
+     "Noise level": "20dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "10000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.06mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 35
+      },
+      {
+       "id": "CT1",
+       "amount": 350
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF30150V3-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF30150V3-1000U-A99",
+    "description": "Fan: DC; 30x30x15mm; axial; 5VDC; 4.75m3/h; Vapo; 5200rpm; 1.26mmH2O",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 290,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 35,
+      "unitPrice": 4.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1a3756cdbdc9a91e7dbdbbbfde0dde7b/MF30150V3-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B3/12/B0/00/0/729403_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9983b7b71c709a420d9f01e29b167da2e0e1fdce",
+    "productUrl": "https://www.tme.eu/en/details/mf30150v3-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "30x30x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "230mW",
+     "Current rating": "45mA",
+     "Fan efficiency": "4.75m<sup>3</sup>/h",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5200rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.145m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "1.26mm H<sub>2</sub>O"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 35
+      },
+      {
+       "id": "CT1",
+       "amount": 350
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF40200V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF40200V2-1000U-A99",
+    "description": "Fan: DC; 40x40x20mm; axial; 5VDC; 13.01m3/h; 21dBA; Vapo; 6000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 260,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 3.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 2.8,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/9ca22720412a09ff95b7fca6cb1e1e14/MF40200V2-1000U-A99 D04115000G-00.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/09/1E/80/00/0/582032_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9fcbf3df63525710ec1fa81a6e4c7dacb55f1a15",
+    "productUrl": "https://www.tme.eu/en/details/mf40200v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x20mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "0.54W",
+     "Current rating": "0.107A",
+     "Fan efficiency": "13.01m<sup>3</sup>/h",
+     "Noise level": "21dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "6000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.305m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.31mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      },
+      {
+       "id": "CT2",
+       "amount": 200
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF35100V1-G99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF35100V1-1000U-G99",
+    "description": "Fan: DC; 35x35x10mm; axial; 5VDC; 12.17m3/h; 28dBA; Vapo; Out: F type",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 232,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.96,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a62bff6afb965b842def62e835e8e4a4/MF35100V1-G99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/BF/86/90/00/0/616699_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=5f0ccca59f7031800372b642b9879f88ba16d46d",
+    "productUrl": "https://www.tme.eu/en/details/mf35100v1-g99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "35x35x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.68W",
+     "Current rating": "0.135A",
+     "Fan efficiency": "12.17m<sup>3</sup>/h",
+     "Noise level": "28dBA",
+     "Kind of Bearing": "Vapo",
+     "Signal output": "F type",
+     "Rotational rate/speed": "10000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.14m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "5.59mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF25060V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF25060V1-1000U-A99",
+    "description": "Fan: DC; 25x25x6mm; axial; 5VDC; 5.1m3/h; 24.8dBA; Vapo; 13000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 203,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.55,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.35,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.85,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a65e0931c5b64b33e7f2a9cc7d08e9c3/MF25060V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/63/12/B0/00/0/729398_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=dbeee917c936fc04160f4032461bf5d1911674f7",
+    "productUrl": "https://www.tme.eu/en/details/mf25060v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "25x25x6mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.8...6V DC",
+     "Power consumption": "0.58W",
+     "Current rating": "0.115A",
+     "Fan efficiency": "5.1m<sup>3</sup>/h",
+     "Noise level": "24.8dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "13000rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MFB40H05A-004",
+    "manufacturer": "SEPA Europe GMBH",
+    "manufacturerPartNumber": "MFB40H05A-004",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 11m3/h; 25dBA; ball; 5800rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 148,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 15.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 14.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/mfb40h05a-004/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/26/C4/11/00/0/1133666_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6ba77049001d1c3be5c2af72430fb772f60eeec1",
+    "productUrl": "https://www.tme.eu/en/details/mfb40h05a-004/",
+    "attributes": {
+     "Manufacturer": "SEPA Europe GMBH",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Current rating": "90mA",
+     "Fan efficiency": "11m<sup>3</sup>/h",
+     "Noise level": "25dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "5800rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "3pin, leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-40...85°C",
+     "Additional functions": "speed sensor"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 2029,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 25
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF20080V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF20080V1-1000U-A99",
+    "description": "Fan: DC; 20x20x8mm; axial; 5VDC; 2.7m3/h; 23dBA; Vapo; 15000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 145,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.91,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.92,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/4e87589b3f0d031431e2a9c802e4704d/MF20080V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/BD/85/90/00/0/612571_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=19a87f73804916f9e408f54368000c6998aa230f",
+    "productUrl": "https://www.tme.eu/en/details/mf20080v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "20x20x8mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.8...6V DC",
+     "Power consumption": "0.45W",
+     "Current rating": "90mA",
+     "Fan efficiency": "2.7m<sup>3</sup>/h",
+     "Noise level": "23dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "15000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "6.1mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT2",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF25150V3-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF25150V3-1000U-A99",
+    "description": "Fan: DC; 25x25x15mm; axial; 5VDC; 2.21m3/h; Vapo; 5300rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 124,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 35,
+      "unitPrice": 5.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/29f4a47326332acce6c8d0591aed5f5e/MF25150V3-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/92/F0/B0/00/0/724777_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b90b3ac14c9f18aee81136ab606ee8fabdb1cf0f",
+    "productUrl": "https://www.tme.eu/en/details/mf25150v3-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "25x25x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.6...6V DC",
+     "Power consumption": "180mW",
+     "Current rating": "35mA",
+     "Fan efficiency": "2.21m<sup>3</sup>/h",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5300rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 35
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF35100V3-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF35100V3-1000U-A99",
+    "description": "Fan: DC; 35x35x10mm; axial; 5VDC; 9m3/h; Vapo; 5300rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 96,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 3.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/af162795c761c7d68a66bd65a1ab43b9/MF35100V3-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/D3/12/B0/00/0/729405_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=bb92a868b2851f8c8f396760a71284d8fc4f6fc8",
+    "productUrl": "https://www.tme.eu/en/details/mf35100v3-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "35x35x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "3.5...6V DC",
+     "Power consumption": "230mW",
+     "Current rating": "45mA",
+     "Fan efficiency": "9m<sup>3</sup>/h",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "5300rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.14m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "405F",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "405F",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 8m3/h; 22.1dBA; slide; 5400rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 79,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.23,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/16b10ad55e65df68a9361c5701e146a6/EBMdocumentation.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/88/56/A0/00/0/681352_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=76ec1812b16564a5f512e73ddbc2d2b2ed338a05",
+    "productUrl": "https://www.tme.eu/en/details/405f/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "0.7W",
+     "Fan efficiency": "8m<sup>3</sup>/h",
+     "Noise level": "22.1dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "5400rpm",
+     "Impeller material": "polyamide",
+     "Enclosure material": "PBT",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 60
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF35100V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF35100V1-1000U-A99",
+    "description": "Fan: DC; 35x35x10mm; axial; 5VDC; 12.17m3/h; 28dBA; Vapo; 10000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 52,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 4.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 4.1,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/9413948ef18a2c55e8e116c0f4531984/MF35100V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/2E/85/90/00/0/612578_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=81603fc1805a61522327c30bdcab564b362d9f70",
+    "productUrl": "https://www.tme.eu/en/details/mf35100v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "35x35x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.68W",
+     "Current rating": "0.135A",
+     "Fan efficiency": "12.17m<sup>3</sup>/h",
+     "Noise level": "28dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "10000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.14m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "5.59mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "109P0405H301",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "109P0405H301",
+    "description": "Fan: DC; 40x40x28mm; axial; 5VDC; 19.2m3/h; 37dBA; ball; 8700rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 49,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.14,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 11.65,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.73,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/9075e62887fb2a5e18995cbef0d3a049/109P0405H301.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/4A/11/01/00/0/1053092_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ee9959c37750da32ff39b6428565c361e45c68f2",
+    "productUrl": "https://www.tme.eu/en/details/109p0405h301/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x28mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "3.4W",
+     "Current rating": "0.68A",
+     "Fan efficiency": "19.2m<sup>3</sup>/h",
+     "Noise level": "37dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "8700rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.32m",
+     "Operating temperature": "-20...70°C",
+     "Flammability rating": "UL94V-1",
+     "Additional functions": "lock sensor, reverse polarity protection",
+     "Kind of material": "flame retardant"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 126
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF30150V1-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF30150V1-1000U-A99",
+    "description": "Fan: DC; 30x30x15mm; axial; 5VDC; 10.19m3/h; 27dBA; Vapo; 9500rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 48,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 35,
+      "unitPrice": 4.75,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/e34c65e64ac0bce417e9c7bbb4ee41dc/MF30150V1-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/93/12/B0/00/0/729401_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=1f69ad30edcf050b54ce1b5176455eee715184a4",
+    "productUrl": "https://www.tme.eu/en/details/mf30150v1-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "30x30x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.7W",
+     "Current rating": "0.14A",
+     "Fan efficiency": "10.19m<sup>3</sup>/h",
+     "Noise level": "27dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "9500rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.145m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "4.31mm H<sub>2</sub>O"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 35
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "LF40P05PSE00A",
+    "manufacturer": "SEPA Europe GMBH",
+    "manufacturerPartNumber": "LF40P05PSE00A",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 13.8m3/h; 28dBA; MagFix; 7500rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 36,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.15,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 8.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.32,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/lf40p05pse00a/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/35/B4/11/00/0/1133395_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=abaddec28ade50d5d2f2bcb453af2b8d2a4ab06e",
+    "productUrl": "https://www.tme.eu/en/details/lf40p05pse00a/",
+    "attributes": {
+     "Manufacturer": "SEPA Europe GMBH",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Current rating": "0.1A",
+     "Fan efficiency": "13.8m<sup>3</sup>/h",
+     "Noise level": "28dBA",
+     "Kind of Bearing": "MagFix",
+     "Rotational rate/speed": "7500rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "4pin, leads x4",
+     "Lead length": "0.145m",
+     "Operating temperature": "-20...85°C",
+     "Additional functions": "PWM, speed sensor"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 2029,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 25
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "255H",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "255H",
+    "description": "Fan: DC; 25x25x8mm; axial; 5VDC; 4.42m3/h; 23dBA; rolling; 12000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 35,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 26.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 24.69,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 23.83,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f2b4b99b5e5ee57745ab1dafd9b1bcd5/EBM.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/33/76/A0/00/0/681779_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=71d9b9d2b065c6483bfe9aaa9a4fc6398c49b72b",
+    "productUrl": "https://www.tme.eu/en/details/255h/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "25x25x8mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "0.6W",
+     "Fan efficiency": "4.42m<sup>3</sup>/h",
+     "Noise level": "23dBA",
+     "Kind of Bearing": "rolling",
+     "Rotational rate/speed": "12000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.16m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "405",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "405",
+    "description": "Fan: DC; 40x40x20mm; axial; 5VDC; 10m3/h; 18dBA; slide; 6000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 19,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.41,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f2b4b99b5e5ee57745ab1dafd9b1bcd5/EBM.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E9/42/A0/00/0/664734_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=37d80cfa31cc1a28cff7f97a3c663eb8cc33e3b2",
+    "productUrl": "https://www.tme.eu/en/details/405/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x20mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "0.9W",
+     "Fan efficiency": "10m<sup>3</sup>/h",
+     "Noise level": "18dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "405FH",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "405FH",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 8.8m3/h; 26dBA; slide; 6000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 15,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 15.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f2b4b99b5e5ee57745ab1dafd9b1bcd5/EBM.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/FA/42/A0/00/0/664751_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=401df3c7b3f68ed9fd39d8f0f61ed203b786d51f",
+    "productUrl": "https://www.tme.eu/en/details/405fh/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "0.9W",
+     "Fan efficiency": "8.8m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "405/2",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "405/2",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 8m3/h; 22.1dBA; slide; 5400rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 11,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 21.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 19.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 18.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/405_2/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/04/4B/E0/00/0/963648_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=1a8711ebec0540e4c2588d2815adcd792baee03a",
+    "productUrl": "https://www.tme.eu/en/details/405_2/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "0.7W",
+     "Fan efficiency": "8m<sup>3</sup>/h",
+     "Noise level": "22.1dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "5400rpm",
+     "Impeller material": "plastic",
+     "Leads": "leads x3",
+     "Engineering PN": "9291708039"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "255N",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "255N",
+    "description": "Fan: DC; 25x25x8mm; axial; 5VDC; 3.22m3/h; 15dBA; rolling; 600rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 10,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 22.35,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 2,
+      "unitPrice": 21.56,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 20.66,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f2b4b99b5e5ee57745ab1dafd9b1bcd5/EBM.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/08/42/A0/00/0/664704_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6ec7dc3bfe409727f5ba010cdfff47aecfa1f564",
+    "productUrl": "https://www.tme.eu/en/details/255n/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "25x25x8mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "0.4W",
+     "Fan efficiency": "3.22m<sup>3</sup>/h",
+     "Noise level": "15dBA",
+     "Kind of Bearing": "rolling",
+     "Rotational rate/speed": "600rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x2",
+     "Lead length": "0.16m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF30150V2-A99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF30150V2-1000U-A99",
+    "description": "Fan: DC; 30x30x15mm; axial; 5VDC; 8.32m3/h; 20dBA; Vapo; 7300rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 1010,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 35,
+      "unitPrice": 4.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/49f86427b77f4ab9831d5c8a6a9d900c/MF30150V2-A99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/A3/12/B0/00/0/729402_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f8ff219405f6715eef4fc3e74c89c0555e32b390",
+    "productUrl": "https://www.tme.eu/en/details/mf30150v2-a99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "30x30x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.5...6V DC",
+     "Power consumption": "0.4W",
+     "Current rating": "80mA",
+     "Fan efficiency": "8.32m<sup>3</sup>/h",
+     "Noise level": "20dBA",
+     "Kind of Bearing": "Vapo",
+     "Rotational rate/speed": "7300rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x2",
+     "Lead length": "0.145m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "3mm H<sub>2</sub>O"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 35
+      },
+      {
+       "id": "CT1",
+       "amount": 350
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ME45100V1-G99",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "ME45100V1-000U-G99",
+    "description": "Fan: DC; 45x45x10mm; axial; 5VDC; 15.63m3/h; 32dBA; Vapo; Out: F type",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 257,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.26,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.59,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 3.69,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/d9b9aca923bd28fbba8dcfa95ef5af46/Sunon DC Brushless Fan & Blower.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/EF/77/60/00/0/423934_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0ec4a2b1023f4498e989a7298f678750f843c7ba",
+    "productUrl": "https://www.tme.eu/en/details/me45100v1-g99/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "45x45x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4...6V DC",
+     "Power consumption": "1.12W",
+     "Current rating": "0.223A",
+     "Fan efficiency": "15.63m<sup>3</sup>/h",
+     "Noise level": "32dBA",
+     "Kind of Bearing": "Vapo",
+     "Signal output": "F type",
+     "Rotational rate/speed": "6000 (±15%)rpm",
+     "Current and power consumption tolerance": "±15%",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "2.54mm H<sub>2</sub>O",
+     "Wire size": "26AWG"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      },
+      {
+       "id": "CT2",
+       "amount": 200
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "MF17080V1-G99-A",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "MF17080V1-1000U-G99",
+    "description": "Fan: DC; 17x17x8mm; axial; 5VDC; 1.52m3/h; 21.5dBA; Vapo; Out: F type",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 202,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.5,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 5.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/8f1fa9623f7b7b6d8c3508112560cead/MF17080V1-G99-A.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/07/14/90/00/0/606576_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=0d302effd40cf8e5f7ef57cf338c262d75ed0001",
+    "productUrl": "https://www.tme.eu/en/details/mf17080v1-g99-a/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Type of fan": "DC",
+     "Fan dimensions": "17x17x8mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "2.8...6V DC",
+     "Power consumption": "0.47W",
+     "Current rating": "93mA",
+     "Fan efficiency": "1.52m<sup>3</sup>/h",
+     "Noise level": "21.5dBA",
+     "Kind of Bearing": "Vapo",
+     "Signal output": "F type",
+     "Rotational rate/speed": "21000rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "thermoplastic",
+     "Enclosure material": "thermoplastic",
+     "Insulation class": "A",
+     "Leads": "leads x3",
+     "Lead length": "0.15m",
+     "Operating temperature": "-10...70°C",
+     "Flammability rating": "UL94V-0",
+     "Additional functions": "autorestart",
+     "Fan motor": "brushless DC",
+     "Static pressure": "7.11mm H<sub>2</sub>O",
+     "Wire size": "28AWG"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112523,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "109R0605F401",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "109R0605F401",
+    "description": "Fan: DC; 60x60x25mm; axial; 5VDC; 26.4m3/h; 24dBA; ball; 3200rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 8,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.49,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.22,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.45,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/2a474e7921c5fa90afc7460888c159a4/109R0605F401.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/5A/11/01/00/0/1053093_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c42426d03d74751331e515322b6a08f939ca2ed4",
+    "productUrl": "https://www.tme.eu/en/details/109r0605f401/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Type of fan": "DC",
+     "Fan dimensions": "60x60x25mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "1W",
+     "Current rating": "0.2A",
+     "Fan efficiency": "26.4m<sup>3</sup>/h",
+     "Noise level": "24dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "3200rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-20...60°C",
+     "Flammability rating": "UL94V-1",
+     "Additional functions": "lock sensor, reverse polarity protection",
+     "Kind of material": "flame retardant"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "ASFP44790",
+    "manufacturer": "PANASONIC",
+    "manufacturerPartNumber": "ASFP44790",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 8.4m3/h; 21.5dBA; ball; 5500rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 8,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 25.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 22.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/asfp44790/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/6E/B5/D0/00/0/875494_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=242c8345e835029decee8284194145c156fe55e8",
+    "productUrl": "https://www.tme.eu/en/details/asfp44790/",
+    "attributes": {
+     "Manufacturer": "PANASONIC",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Power consumption": "0.4W",
+     "Current rating": "80mA",
+     "Fan efficiency": "8.4m<sup>3</sup>/h",
+     "Noise level": "21.5dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "5500rpm",
+     "Min. insulation resistance": "10MΩ",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.2m",
+     "Operating temperature": "-10...60°C",
+     "Additional functions": "lock sensor"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112523,
+     "manufacturer_id": 131,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 10
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "HZ25B05A",
+    "manufacturer": "SEPA Europe GMBH",
+    "manufacturerPartNumber": "HZ25B05A-BLI",
+    "description": "Fan: DC; 25x25x7mm; axial; 5VDC; 11dBA; MagFix; chip cooling",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 7,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 15.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 14.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/hz25b05a/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C3/14/11/00/0/1130812_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6d679b3bf3d6655f7cfa31dff40e67d4f774dea7",
+    "productUrl": "https://www.tme.eu/en/details/hz25b05a/",
+    "attributes": {
+     "Manufacturer": "SEPA Europe GMBH",
+     "Type of fan": "DC",
+     "Fan dimensions": "25x25x7mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Noise level": "11dBA",
+     "Kind of Bearing": "MagFix",
+     "Enclosure material": "aluminium",
+     "Operating temperature": "-10...80°C",
+     "Application": "chip cooling"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 2029,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "405F/2",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "405F/2",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 8m3/h; 22.1dBA; slide; 5400rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 19.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 18.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/405f_2/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/27/C9/B0/00/0/760946_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2dd23c164b3ebbb8b77ecebab1b0b4c840a3a121",
+    "productUrl": "https://www.tme.eu/en/details/405f_2/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "0.7W",
+     "Fan efficiency": "8m<sup>3</sup>/h",
+     "Noise level": "22.1dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "5400rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Engineering PN": "9291705049"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "HXB25B05-002",
+    "manufacturer": "SEPA Europe GMBH",
+    "manufacturerPartNumber": "HXB25B05-002-BLI",
+    "description": "Fan: DC; 25x25x15mm; axial; 5VDC; 19dBA; ball; 10000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 2,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.2,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 15.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 14.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/hxb25b05-002/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/23/14/11/00/0/1130802_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=691cb5c4a9fa481d2ab3b487e0b0e6bc92b0d908",
+    "productUrl": "https://www.tme.eu/en/details/hxb25b05-002/",
+    "attributes": {
+     "Manufacturer": "SEPA Europe GMBH",
+     "Type of fan": "DC",
+     "Fan dimensions": "25x25x15mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Current rating": "60mA",
+     "Noise level": "19dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "10000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "aluminium",
+     "Leads": "3pin, leads x3",
+     "Lead length": "0.15m",
+     "Operating temperature": "-40...80°C",
+     "Additional functions": "speed sensor",
+     "Application": "chip cooling"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 2029,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "405F/2H",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "405F/2H",
+    "description": "Fan: DC; 40x40x10mm; axial; 5VDC; 8.8m3/h; 26dBA; slide; 6000rpm",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 2,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 17.57,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/f2b4b99b5e5ee57745ab1dafd9b1bcd5/EBM.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/EA/42/A0/00/0/664750_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=80a08d938fd3621ec00915a5f187dcd859c4ddf1",
+    "productUrl": "https://www.tme.eu/en/details/405f_2h/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x10mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Power consumption": "0.9W",
+     "Fan efficiency": "8.8m<sup>3</sup>/h",
+     "Noise level": "26dBA",
+     "Kind of Bearing": "slide",
+     "Rotational rate/speed": "6000rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "plastic",
+     "Leads": "leads x3",
+     "Lead length": "0.31m"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "HXB40H05-006",
+    "manufacturer": "SEPA Europe GMBH",
+    "manufacturerPartNumber": "HXB40H05-006-BLI",
+    "description": "Fan: DC; 40x40x20mm; axial; 5VDC; 25dBA; ball; 5800rpm; chip cooling",
+    "category": "DC5V Fans",
+    "packageName": null,
+    "stock": 1,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 21.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 21.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 19.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/hxb40h05-006/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/95/9C/11/00/0/1165657_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a764b901b4a3c422e284e63bf212266bd308e101",
+    "productUrl": "https://www.tme.eu/en/details/hxb40h05-006/",
+    "attributes": {
+     "Manufacturer": "SEPA Europe GMBH",
+     "Type of fan": "DC",
+     "Fan dimensions": "40x40x20mm",
+     "Kind of fan": "axial",
+     "Supply voltage": "5V DC",
+     "Operating voltage": "4.5...5.5V DC",
+     "Current rating": "90mA",
+     "Noise level": "25dBA",
+     "Kind of Bearing": "ball",
+     "Rotational rate/speed": "5800rpm",
+     "Impeller material": "plastic",
+     "Enclosure material": "aluminium",
+     "Leads": "3pin, leads x3",
+     "Lead length": "0.3m",
+     "Operating temperature": "-40...85°C",
+     "Additional functions": "speed sensor",
+     "Application": "chip cooling"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112523,
+     "manufacturer_id": 2029,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "MOUSER": [
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF25150V11UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF25150V1-1000U-A99",
+    "description": "DC Fans Axial Fan, 25x25x15mm, 5VDC, 3.1CFM, 0.16\"H2O, Vapo, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 2397,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.03,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.64,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF25150V1_1000U_A99_D02026750G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/2515_MF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF25150V1-1000U-A99?qs=EU6FO9ffTweJgjSa3wsRgA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "350"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB02505LA-CF00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB02505LA-CF00",
+    "description": "DC Fans Fan, 25x25x10mm, 5VDC, 0.85CFM, 0.2W, 18dBA, 5000RPM, Ball Bearing, 3 Wire, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 574,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.97,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.93,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.29,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB02505LA_CF00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaelectronics/images/AFB025_series_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB02505LA-CF00?qs=doiCPypUmgHkR8otHrAFyQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "720"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD401005HB",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD4010-05HB",
+    "description": "DC Fans DC Fan, 40x40x10mm, 5VDC, 7CFM, 0.19A, 25dBA, 6000RPM, Dual Ball, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1119,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.19,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/knightelectronics/images/OD4010-05HB_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD4010-05HB?qs=mn0HGFZz2DIFY7l3OYcYlg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "133 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF50100V31000U99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF50100V3-1000U-A99",
+    "description": "DC Fans Axial Fan, 50x50x10mm, 5VDC, 8.4CFM, 0.08\"H2O, Vapo, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 2866,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.59,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 4.65,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF50100V3_1000U_A99_D05062390G_01_1.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/MF50100V3-1000U-A99_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF50100V3-1000U-A99?qs=r5DSvlrkXmJBE0UQP%252BHosg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "308"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM-4020V-050165",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-4020V-050-165",
+    "description": "DC Fans 5Vdc 0.38W 6.3CFM DC Axial 40x40x20mm",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1074,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.85,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.26,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_40v.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/cfm-4010v-058-206_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-4020V-050-165?qs=YCa%2FAAYMW03CbYaO023YNw%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "175 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM2510B0130-275",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-2510B-0130-275",
+    "description": "DC Fans 5 V, 0.23 A, 25 x 25 x 10 mm, Dc Fan",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 559,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.42,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.65,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_25b.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/cfm-2510b-0100-218_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-2510B-0130-275?qs=GedFDFLaBXE25Z6flzZ9Pw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM4010V07027320",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-4010V-070-273-20",
+    "description": "DC Fans 5Vdc 0.68W 8CFM DC Axial 40x10mm TS",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1653,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.4,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 4.93,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_40v.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/cfm-4010v-058-206_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-4010V-070-273-20?qs=YCa%2FAAYMW01Qd5N05KlSyg%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "400"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "175 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF17080V21UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF17080V2-1000U-A99",
+    "description": "DC Fans Axial Fan, 17x17x8mm, 5VDC, 0.7CFM, 0.17\"H2O, Vapo, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 623,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.78,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 9.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.35,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF17080V2_1000U_A99_D01005330G_01_0_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/1708_MF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF17080V2-1000U-A99?qs=EU6FO9ffTwcUhjMlMSqZrQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "500"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "94 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "369-MF20100V21UA99",
+    "manufacturer": "Sunon",
+    "manufacturerPartNumber": "MF20100V2-1000U-A99",
+    "description": "DC Fans Axial Fan, 20x20x10mm, 5VDC, 1.5CFM, 0.2\"H2O, Vapo, Wire, Auto Restart",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 669,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.77,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.09,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1161/1/MF20100V2_1000U_A99_D02026250G_03_0_Ref.pdf",
+    "photoUrl": "https://www.mouser.com/images/sunon/images/2010_MF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sunon/MF20100V2-1000U-A99?qs=EU6FO9ffTwfW7WifQpmNwA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "500"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "190 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM4010C050195",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-4010C-050-195",
+    "description": "DC Fans dc axial fan, 40 mm square, 10 mm, 5 Vdc",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1198,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.94,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 4.45,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 4.06,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_40c.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-4010_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-4010C-050-195?qs=QNEnbhJQKvbR08zcXMkZIA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "472-04010SS-05N-AA00",
+    "manufacturer": "NMB",
+    "manufacturerPartNumber": "04010SS-05N-AA-00",
+    "description": "DC Fans Tubeaxial Fan, 40x40x10mm, 5VDC, 6.7CFM, Rib Mount, Sleeve Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 560,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.47,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.31,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6001/1/04010SS-05N-AA-00.pdf",
+    "photoUrl": "https://www.mouser.com/images/nmb/images/04010SS_series_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/NMB/04010SS-05N-AA-00?qs=wnTfsH77Xs5iSk07fCY6Mw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "560"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "168 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "472-03010SS-05N-AT00",
+    "manufacturer": "NMB",
+    "manufacturerPartNumber": "03010SS-05N-AT-00",
+    "description": "DC Fans DC Tubeaxial Fan, 30x30x10mm, 5VDC, 4.2CFM, Rib Mount, Sleeve, 3 Wire, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 696,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.38,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.93,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6001/1/03010SS-05N-AT-00.pdf",
+    "photoUrl": "https://www.mouser.com/images/nmb/images/03010SS_series_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/NMB/03010SS-05N-AT-00?qs=r5DSvlrkXmKYf%2FcqlN2GwA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "700"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "168 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "567-DB0301005H1A-2T0",
+    "manufacturer": "Wakefield Thermal",
+    "manufacturerPartNumber": "DB0301005H1A-2T0",
+    "description": "Blowers & Centrifugal Fans Blower, 30x30x10, 5VDC, 1.09CFM, 1.1W, 28dBA, Lead, No Connector, Slim-Line",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 820,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.04,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.62,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Wakefield_Vette_Slim_Line_Blower_Datasheet_Rev_A-1947880.pdf",
+    "photoUrl": null,
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wakefield-Thermal/DB0301005H1A-2T0?qs=81r%252BiQLm7BRoxhm65SMlvQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "210"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "185 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CFM2010CF0170292",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-2010CF-0170-292",
+    "description": "DC Fans dc axial fan, 20 mm square, 10 mm, 5 Vdc, omniCOOL, 17000 RPM, 1.56 CFM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 403,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.57,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.78,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.37,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_20cf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-2010CF-0170-292_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-2010CF-0170-292?qs=ulEaXIWI0c%2FmrdxYpgAl%252Bg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "80"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-C2507CF05008922",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-2507CF-050-089-22",
+    "description": "DC Fans dc axial fan, 25 mm square, 7 mm, 5 Vdc, omniCOOL, 5000 RPM, 1.10 CFM, TS/PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 437,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.96,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.49,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_25cf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-2507CF-050-089-22_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-2507CF-050-089-22?qs=ulEaXIWI0c9v8N763eAs1A%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "472-03515SS-05N-AT00",
+    "manufacturer": "NMB",
+    "manufacturerPartNumber": "03515SS-05N-AT-00",
+    "description": "DC Fans DC Tubeaxial Fan, 35x35x15mm, 5VDC, 5.6CFM, Rib Mount, Sleeve, 3 Wire, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 305,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.34,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.81,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6001/1/03515SS data sheet.pdf",
+    "photoUrl": "https://www.mouser.com/images/nmb/images/03510SS_series_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/NMB/03515SS-05N-AT-00?qs=r5DSvlrkXmJzTUoaeTM%252B0A%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "360"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "168 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CBM3507CF085295",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CBM-3507CF-085-295",
+    "description": "Blowers & Centrifugal Fans dc blower, 35 mm square, 10 mm, 5 Vdc, omniCOOL, 8500 RPM, 1.11 CFM",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 455,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.26,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.45,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.07,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cbm_35cf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CBM-3507CF-085-295_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CBM-3507CF-085-295?qs=ulEaXIWI0c8wyhNh12olqQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CFM2010CF060066",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-2010CF-060-066",
+    "description": "DC Fans dc axial fan, 20 mm square, 10 mm, 5 Vdc, omniCOOL, 6000 RPM, 0.55 CFM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 359,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.83,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.71,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_20cf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-2010CF-060-066_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-2010CF-060-066?qs=ulEaXIWI0c8Ns9xjOG8yvg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "80"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM7015C03029520",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-7015C-030-295-20",
+    "description": "DC Fans dc axial fan, 70 mm square, 15 mm, 5 Vdc",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 278,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.36,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.84,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_70c.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-7015_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-7015C-030-295-20?qs=QNEnbhJQKvaVjc9rSloHng%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "96"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM7015B03029520",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-7015B-030-295-20",
+    "description": "DC Fans dc axial fan, 70 mm square, 15 mm, 5 Vdc",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 257,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.65,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.56,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.81,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_70b.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-7015_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-7015B-030-295-20?qs=QNEnbhJQKvbmMsanDk7aDQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "96"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM7015B04035720",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-7015B-040-357-20",
+    "description": "DC Fans dc axial fan, 70 mm square, 15 mm, 5 Vdc",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 254,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.84,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 9.88,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_70b.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-7015_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-7015B-040-357-20?qs=QNEnbhJQKvbXCH1pIyi1SA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "96"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD601505HB",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD6015-05HB",
+    "description": "DC Fans DC Axial Fan, 60x60x15mm, 5VDC, 20.2CFM, 1.5W, 32.4dBA, 0.19\"H2O, 2x Wire",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 250,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.15,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 9.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/orion/images/od6015-12ls_spl.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD6015-05HB?qs=ugWpKuv%252BIIBulesN0CHWZQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM7015C04035720",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-7015C-040-357-20",
+    "description": "DC Fans dc axial fan, 70 mm square, 15 mm, 5 Vdc",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 243,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.76,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.72,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_70c.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-7015_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-7015C-040-357-20?qs=QNEnbhJQKva7PTgtLp9K5w%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "96"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM6020B040320",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-6020B-040-320",
+    "description": "DC Fans dc axial fan, 60 mm square, 20 mm, 5 Vdc",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 215,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.53,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.64,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.97,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_60b.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-6020_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-6020B-040-320?qs=QNEnbhJQKvYWlaOIPKeZ5A%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "50"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM6020B03025720",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-6020B-030-257-20",
+    "description": "DC Fans dc axial fan, 60 mm square, 20 mm, 5 Vdc",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 200,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.47,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.67,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_60b.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-6020_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-6020B-030-257-20?qs=QNEnbhJQKvYBWeZTucxK7Q%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "50"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": null,
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0405H9D01",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0405H9D01",
+    "description": "DC Fans DC Axial Fan, 40x40x10mm, 5VDC, Locked Rotor Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 192,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.79,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.67,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 12.88,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Sanyo_109P0405H9D01_RevG.pdf",
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/1215062118.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0405H9D01?qs=Ldb7c5mTB15D6RmIWL8GMw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "216"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-C2010CF012021720",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-2010CF-0120-217-20",
+    "description": "DC Fans dc axial fan, 20 mm square, 10 mm, 5 Vdc, omniCOOL, 12000 RPM, 1.10 CFM, TS",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 180,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.64,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.84,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.24,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_20cf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-2010CF-0120-217-20_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-2010CF-0120-217-20?qs=ulEaXIWI0c%252BJl33LtMaNkg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "80"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "229-F17HA-05HC",
+    "manufacturer": "Nidec Components",
+    "manufacturerPartNumber": "F17HA-05HC",
+    "description": "DC Fans Brushless DC Fan, 17 X 17 X 8mm, 5V DC, .018m3/min Air flow, 17 Pa Static pressure, 15db Noise, 1 sleeve bearing",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 150,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.85,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.97,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.18,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/nidec/images/f17ha_series_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Nidec-Components/F17HA-05HC?qs=XeJtXLiO41QmX5c7t4DdGA%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "50"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "129 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CBM5015BF045348",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CBM-5015BF-045-348",
+    "description": "Blowers & Centrifugal Fans dc blower, 51.7 x 51.25 x 14.9 mm, 5 Vdc, ball, 4500 RPM, 2.85 CFM",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 144,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.35,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 7.62,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cbm-50bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CBM-5015BF-045-348_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CBM-5015BF-045-348?qs=ulEaXIWI0c%2Fb50WeHP8vTg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "100"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM6020S040320",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-6020S-040-320",
+    "description": "DC Fans dc axial fan, 60 mm square, 20 mm, 5 Vdc",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 143,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.27,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.92,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_60s.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-6020_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-6020S-040-320?qs=QNEnbhJQKvbNLxLK%252BpSEiw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "50"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-C2006CF015027720",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-2006CF-0150-277-20",
+    "description": "DC Fans dc axial fan, 20 mm square, 6 mm, 5 Vdc, omniCOOL, 15000 RPM, 0.82 CFM, TS",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 137,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.55,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.64,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 6.97,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_20cf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-2006CF-0150-277-20_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-2006CF-0150-277-20?qs=ulEaXIWI0c94qEfgT9Adzg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "80"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "229-F17HA-05MC",
+    "manufacturer": "Nidec Components",
+    "manufacturerPartNumber": "F17HA-05MC",
+    "description": "DC Fans Brushless DC Fan, 17 X 17 X 8mm, 5V DC, .015m3/min Air flow, 10 Pa Static pressure, 7db Noise, 1 sleeve bearing",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 110,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.47,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.77,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.01,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/nidec/images/f17ha_series_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Nidec-Components/F17HA-05MC?qs=XeJtXLiO41T8%2FOpQtqGjsA%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "50"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "126 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-M5015BG03018620",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-5015BG-030-186-20",
+    "description": "DC Fans dc axial fan, 50 mm square, 15 mm, 5 Vdc, ball, 3000 RPM, 6.89 CFM, TS",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 100,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 6.84,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 6.24,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_50bg.pdf",
+    "photoUrl": "https://www.mouser.com/images/samesky/images/CFM-5015BG-030-186-20_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-5015BG-030-186-20?qs=FmjOKN4Os87lJSuLki6UaA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "100"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "670-OD3510-05MB01A",
+    "manufacturer": "Orion Fans",
+    "manufacturerPartNumber": "OD3510-05MB01A",
+    "description": "DC Fans DC Fan, 35x35x10mm, 5VDC, 6CFM, 0.075A, 32dBA, Ball, 3xWire, Open Collector Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 95,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 17.08,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 15.38,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 14.56,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6002/1/OD3510.pdf",
+    "photoUrl": "https://www.mouser.com/images/knightelectronics/images/OD3510-05LLB_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Orion-Fans/OD3510-05MB01A?qs=DXqDLUyyb5UszV7koBYVKA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "7 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-M6015BF05034522",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-6015BF-050-345-22",
+    "description": "DC Fans dc axial fan, 60 mm square, 15 mm, 5 Vdc, ball, 5000 RPM, 22.23 CFM, TS/PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 44,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.68,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.25,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.53,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_60bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/samesky/images/CFM-6015BF-050-345-22_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-6015BF-050-345-22?qs=FmjOKN4Os850zHwHokP4vw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "72"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0405H701",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0405H701",
+    "description": "DC Fans DC Axial Fan, 40x40x15mm, 5VDC, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 311,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.49,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.39,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.65,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce40-20mm_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0405H701?qs=Ldb7c5mTB14KSr2iLIh9MQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "180"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0405J601",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0405J601",
+    "description": "DC Fans DC Axial Fan, 40x40x20mm, 5VDC, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 191,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.41,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.28,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce40-20mm_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0405J601?qs=Ldb7c5mTB14oNntjM8jiXg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "70"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9GA0405H6001",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109R0605F4D01",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109R0605F4D01",
+    "description": "DC Fans Axial Fan, 60x60x25mm, 5VDC, 15.5CFM, 1W, 24dBA, Ball, 3 Wire, Lock Rotor Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 134,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.62,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.07,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.35,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/109R0612J401_series_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109R0605F4D01?qs=Ldb7c5mTB16wB%2FelwMeHiQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "80"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9RA0612H4D001",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0605M702",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0605M702",
+    "description": "DC Fans DC Axial Fan, 60x60x15mm, 5VDC",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 123,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.74,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.47,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 9.56,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/1215063672.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0605M702?qs=Ldb7c5mTB15sUaoXDAEIqg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "100"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9GA0612L702",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0405M701",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0405M701",
+    "description": "DC Fans DC Axial Fan, 40x40x15mm, 5VDC, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 122,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.49,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.97,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.25,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce40-20mm_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0405M701?qs=Ldb7c5mTB16gbFEbr9obmw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "180"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109R0805F401",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109R0805F401",
+    "description": "DC Fans Axial Fan, 80x80x25mm, 5VDC, 32.5CFM, 1.25W, 26dBA, 2600RPM, Ball, 3 Leads, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 83,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.33,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.39,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/109R0612J401_series_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109R0805F401?qs=Ldb7c5mTB15fwAtoIg%252Bi7A%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": "978-9RA0812H4001",
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109P0405M702",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109P0405M702",
+    "description": "DC Fans DC Axial Fan, 40x40x15mm, 5VDC",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 70,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.21,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.13,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/1215062118.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109P0405M702?qs=Ldb7c5mTB16WVcpdQPdQtw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "180"
+    },
+    "extra": {
+     "lifecycle_status": "End of Life",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CFM4020BF0552122",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-4020BF-055-212-20",
+    "description": "DC Fans dc axial fan, 40 mm square, 20 mm, 5 Vdc, ball, 5500 RPM, 6.88 CFM, TS",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 9,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.21,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 7.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_40bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-40BF_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-4020BF-055-212-20?qs=A6eO%252BMLsxmQzB9WC4Z4vqA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "100"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ]
+ }
+}

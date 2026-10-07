@@ -1,0 +1,4316 @@
+{
+ "query": "radial blower 24V",
+ "recorded": "2026-10-07 live probe (detail=full, allow_below_spec, max_results 50) of the fan phrasing (Mouser and TME one search each; LCSC with the first phrase \"Cooling fan\" + voltage, whose relaxation reached non-fans for the blower); attributes are the raw distributor attributes (canonical keys removed), prices the three smallest breaks",
+ "phrases": {
+  "LCSC": "\"Cooling fan\" 24V",
+  "TME": "fan DC blower 24V",
+  "MOUSER": "blower 24V"
+ },
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C369661",
+    "manufacturer": "Shenzhen Jinkaisheng Elec",
+    "manufacturerPartNumber": "0603-24V-0.2PF",
+    "description": "0.2pF@1MHz 24V 45V",
+    "category": "Circuit Protection / Varistors",
+    "packageName": "0603",
+    "stock": 5831,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.035,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.023,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/1912111437_Shenzhen-Jinkaisheng-Elec-0603-24V-0-2PF_C369661.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C369661.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Varistors",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C369661"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C31981776",
+    "manufacturer": "CUI",
+    "manufacturerPartNumber": "CFM-5015V-258-330-20",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 203,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.748,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/CUI-CFM_5015V_258_33020/C31981776",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C31981776.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C31981776"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729782",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF12025SM24",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 18,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 1.364,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2201131100_SHENG-FENG-SF12025SM24_C729782.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729782.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729782"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53457879",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC6038B24UC1-B362",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 10,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.64,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC6038B24UC1B362/C53457879",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53457879.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53457879"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729744",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF4020SH24",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 10,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.572,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2105241518_SHENG-FENG-SF4020SH24_C729744.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729744.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729744"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54622600",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC5010B24UC1-B254",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 10,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.492,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC5010B24UC1B254/C54622600",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54622600.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54622600"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2149497",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF8015SM12",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 22,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.812,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2104212113_SHENG-FENG-SF8015SM12_C2149497.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2149497.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2149497"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54622596",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC5215B24UC1-24101910",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 10,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.275,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC5215B24UC124101910/C54622596",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54622596.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54622596"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53457874",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC8015B12UC1-BB42",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 8,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.297,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC8015B12UC1BB42/C53457874",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53457874.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53457874"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C456963",
+    "manufacturer": "SUNON(Sunonwealth Elec Machine Industry)",
+    "manufacturerPartNumber": "MF40060V1-1000C-A99",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 8,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.127,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2104212038_SUNON-Sunonwealth-Elec-Machine-Industry-MF40060V1-1000C-A99_C456963.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C456963.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C456963"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53457877",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC8020B24UC1-B641",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 7,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.275,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC8020B24UC1B641/C53457877",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53457877.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53457877"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53457884",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC6025B24HC2-B575",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 6,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.078,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC6025B24HC2B575/C53457884",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53457884.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53457884"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729752",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF5020SM5",
+    "description": "、 、 50*50*20mm",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 5,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.851,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHENGFENG-SF5020SM5/C729752",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729752.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729752"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54622602",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC3510B05UC1-B638",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 5,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.907,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC3510B05UC1B638/C54622602",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54622602.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54622602"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53457885",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC8015B24UC1-BB34",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 3,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 4.297,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC8015B24UC1BB34/C53457885",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53457885.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53457885"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729765",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF8015SM24",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 2,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.762,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2201131100_SHENG-FENG-SF8015SM24_C729765.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729765.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729765"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729760",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF6025SM5",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 2,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.817,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2105241518_SHENG-FENG-SF6025SM5_C729760.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729760.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729760"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53457876",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC8020B12UC1-B468",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 2,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.275,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC8020B12UC1B468/C53457876",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53457876.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53457876"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53457882",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC6038B12UC1-B360",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 2,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.64,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC6038B12UC1B360/C53457882",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53457882.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53457882"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C729772",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF9225SM5",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.851,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2201131100_SHENG-FENG-SF9225SM5_C729772.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C729772.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C729772"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C2149494",
+    "manufacturer": "SHENG FENG",
+    "manufacturerPartNumber": "SF7015SM5",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.856,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2202031800_SHENG-FENG-SF7015SM5_C2149494.pdf",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C2149494.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C2149494"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C456903",
+    "manufacturer": "SUNON(Sunonwealth Elec Machine Industry)",
+    "manufacturerPartNumber": "MC20100V3-Q00C-G99",
+    "description": null,
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 3.47,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/459890-MC20100V3_Q00CG99/C456903",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C456903.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C456903"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53457883",
+    "manufacturer": "JIANCE",
+    "manufacturerPartNumber": "JC7025B24UC1-BB13",
+    "description": "not ROHS",
+    "category": "Industrial control electrical / Cooling fan",
+    "packageName": "-",
+    "stock": 1,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 5.078,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JIANCE-JC7025B24UC1BB13/C53457883",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53457883.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Cooling fan",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53457883"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "PF75302B3-A99-B",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "PF75302B3-1B00U-A99",
+    "description": "Fan: DC; 75x75x30mm; blower; 24VDC; 18.35m3/h; 32.9dBA; ball",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 2030,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 7.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 6.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/4067e1a49eda20b8ee977258746d0afa/Product 3.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/CE/00/C0/00/0/786668_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=70636d1c4360227d6f27e47768450cefe768fbf0",
+    "productUrl": "https://www.tme.eu/en/details/pf75302b3-a99-b/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "18.35m<sup>3</sup>/h",
+     "Operating temperature": "-10...70°C",
+     "Min. insulation resistance": "10MΩ",
+     "Power consumption": "1.13W",
+     "Impeller material": "thermoplastic",
+     "Type of fan": "DC",
+     "Noise level": "32.9dBA",
+     "Additional functions": "autorestart",
+     "Lead length": "0.295m",
+     "Operating voltage": "10...27.6V DC",
+     "Kind of fan": "blower",
+     "Insulation class": "A",
+     "Flammability rating": "UL94V-0",
+     "Current rating": "47mA",
+     "Rotational rate/speed": "2400rpm",
+     "Enclosure material": "thermoplastic",
+     "Kind of Bearing": "ball",
+     "Fan motor": "brushless DC",
+     "Leads": "leads x2",
+     "Current and power consumption tolerance": "±15%",
+     "Fan dimensions": "75x75x30mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 50
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "PF75302B1-A99-B",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "PF75302B1-1B00U-A99",
+    "description": "Fan: DC; 75x75x30mm; blower; 24VDC; 26.34m3/h; 42dBA; ball; 3400rpm",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 315,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 9.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/7fb53e27f61032fd0bf91a7c4c141462/Product 4.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1B/FF/B0/00/0/786353_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b4f8c50751244e0561208d31ebe19e3893eaf047",
+    "productUrl": "https://www.tme.eu/en/details/pf75302b1-a99-b/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "26.34m<sup>3</sup>/h",
+     "Operating temperature": "-10...70°C",
+     "Min. insulation resistance": "10MΩ",
+     "Power consumption": "2.76W",
+     "Impeller material": "thermoplastic",
+     "Type of fan": "DC",
+     "Noise level": "42dBA",
+     "Additional functions": "autorestart",
+     "Lead length": "0.295m",
+     "Operating voltage": "10...27.6V DC",
+     "Kind of fan": "blower",
+     "Insulation class": "A",
+     "Flammability rating": "UL94V-0",
+     "Current rating": "0.115A",
+     "Rotational rate/speed": "3400rpm",
+     "Enclosure material": "thermoplastic",
+     "Kind of Bearing": "ball",
+     "Fan motor": "brushless DC",
+     "Leads": "leads x2",
+     "Current and power consumption tolerance": "±15%",
+     "Fan dimensions": "75x75x30mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 50
+      },
+      {
+       "id": "CT2",
+       "amount": 150
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "PF75302B2-A99-B",
+    "manufacturer": "SUNON",
+    "manufacturerPartNumber": "PF75302B2-1B00U-A99",
+    "description": "Fan: DC; 75x75x30mm; blower; 24VDC; 23.44m3/h; 38.6dBA; ball",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 146,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.4,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.4,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 12.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/aaffb2841c976c6e0a7c5e31365575d7/Product 1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/BE/00/C0/00/0/786667_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=fdf5145bf061a07af66d9d83fcb61bbb1f0bb15e",
+    "productUrl": "https://www.tme.eu/en/details/pf75302b2-a99-b/",
+    "attributes": {
+     "Manufacturer": "SUNON",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "23.44m<sup>3</sup>/h",
+     "Operating temperature": "-10...70°C",
+     "Min. insulation resistance": "10MΩ",
+     "Power consumption": "1.92W",
+     "Impeller material": "thermoplastic",
+     "Type of fan": "DC",
+     "Noise level": "38.6dBA",
+     "Additional functions": "autorestart",
+     "Lead length": "0.295m",
+     "Operating voltage": "10...27.6V DC",
+     "Kind of fan": "blower",
+     "Insulation class": "A",
+     "Flammability rating": "UL94V-0",
+     "Current rating": "80mA",
+     "Rotational rate/speed": "3000rpm",
+     "Enclosure material": "thermoplastic",
+     "Kind of Bearing": "ball",
+     "Fan motor": "brushless DC",
+     "Leads": "leads x2",
+     "Current and power consumption tolerance": "±15%",
+     "Fan dimensions": "75x75x30mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 391,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "RLF100-11/14",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "RLF100-11/14",
+    "description": "Fan: DC; 127x127x25mm; blower; 24VDC; 64m3/h; ball; 5100rpm",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 35,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 84.03,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/26cb1f537ca5c5a728b429c4e0d7cb21/RLF100series.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/9D/56/A0/00/0/681433_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c12a3dc461cc20385a5e741111eec5796053469a",
+    "productUrl": "https://www.tme.eu/en/details/rlf100-11_14/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "64m<sup>3</sup>/h",
+     "Power consumption": "8W",
+     "Impeller material": "plastic",
+     "Type of fan": "DC",
+     "Operating voltage": "16...30V DC",
+     "Kind of fan": "blower",
+     "Rotational rate/speed": "5100rpm",
+     "Enclosure material": "plastic",
+     "Kind of Bearing": "ball",
+     "Leads": "leads x2",
+     "Fan dimensions": "127x127x25mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "RL48-19/14",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "RL48-19/14",
+    "description": "Fan: DC; 75x75x27mm; blower; 24VDC; 28m3/h; 51dBA; ball; 4400rpm",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 30,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 36.76,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/48bc0672f1954cdabe61cb1b832df44f/RL48series.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/AC/89/A0/00/0/694474_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=52ded479383039711614cec70b59d44c4bfa06a4",
+    "productUrl": "https://www.tme.eu/en/details/rl48-19_14/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "28m<sup>3</sup>/h",
+     "Power consumption": "5W",
+     "Impeller material": "plastic",
+     "Type of fan": "DC",
+     "Noise level": "51dBA",
+     "Operating voltage": "18...26V DC",
+     "Kind of fan": "blower",
+     "Rotational rate/speed": "4400rpm",
+     "Enclosure material": "plastic",
+     "Kind of Bearing": "ball",
+     "Leads": "leads x2",
+     "Fan dimensions": "75x75x27mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "RL65-21/14H",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "RL65-21/14H",
+    "description": "Fan: DC; 97x94x33mm; blower; 24VDC; 60m3/h; 69dBA; ball; 4900rpm",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 23,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 54.85,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 52.82,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/899aaec15b8ce32d57855429ab639941/RL65series.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/8D/56/A0/00/0/681432_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b9b5b9b23bb83d0171fe39e0a397295480553f58",
+    "productUrl": "https://www.tme.eu/en/details/rl65-21_14h/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "60m<sup>3</sup>/h",
+     "Power consumption": "18W",
+     "Impeller material": "plastic",
+     "Type of fan": "DC",
+     "Noise level": "69dBA",
+     "Operating voltage": "12...26.4V DC",
+     "Kind of fan": "blower",
+     "Rotational rate/speed": "4900rpm",
+     "Enclosure material": "plastic",
+     "Kind of Bearing": "ball",
+     "Leads": "leads x2",
+     "Fan dimensions": "97x94x33mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1026.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "371371,01",
+    "description": "Heating element: blower; heating; CIRRUS 40/1; 60W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 21,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 95.76,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 85.68,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 75.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/CC/C6/60/00/0/421068_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7d63cf881524f814fcbc6aa4a211ea02ebe30c38",
+    "productUrl": "https://www.tme.eu/en/details/fgc1026.2/",
+    "attributes": {
+     "Manufacturer": "DBK Technitherm",
+     "Type of heating element": "blower",
+     "Version": "heating",
+     "Manufacturer series": "CIRRUS 40/1",
+     "Heating capacity": "60W",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Supply voltage": "24V",
+     "IP rating": "IP20",
+     "Protection class": "I",
+     "Inrush current max": "7.5A",
+     "Fan efficiency": "13.6m<sup>3</sup>/h",
+     "Body dimensions": "42x42x72mm",
+     "Mounting rail size": "TS35",
+     "Operating temperature": "-10...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 100694,
+     "manufacturer_id": 717,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1030.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "371680,01",
+    "description": "Heating element: blower; heating; CIRRUS 40/1; 80W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 20,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 82.25,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 73.08,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 68.04,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/0A/35/00/00/0/21408_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=41a647c2ea7c9ab808903a3b2c88ffe6e520ab7d",
+    "productUrl": "https://www.tme.eu/en/details/fgc1030.2/",
+    "attributes": {
+     "Manufacturer": "DBK Technitherm",
+     "Type of heating element": "blower",
+     "Version": "heating",
+     "Manufacturer series": "CIRRUS 40/1",
+     "Heating capacity": "80W",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Supply voltage": "230V",
+     "IP rating": "IP20",
+     "Protection class": "I",
+     "Inrush current max": "6.5A",
+     "Fan efficiency": "13.6m<sup>3</sup>/h",
+     "Body dimensions": "42x42x72mm",
+     "Mounting rail size": "TS35",
+     "Operating temperature": "-10...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 100694,
+     "manufacturer_id": 717,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC0524.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "371604,01",
+    "description": "Heating element: blower; heating; CIRRUS 25/2; 40W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 10,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 105.15,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 98.28,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 89.12,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a97efef0d45069d591348cfe7ecc2e36/En_DBK_DB_Cirrus25_DE231012.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/D9/35/00/00/0/21405_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=311cb4eee11246085fa4920cb19826978008e4dc",
+    "productUrl": "https://www.tme.eu/en/details/fgc0524.2/",
+    "attributes": {
+     "Manufacturer": "DBK Technitherm",
+     "Type of heating element": "blower",
+     "Version": "heating",
+     "Manufacturer series": "CIRRUS 25/2",
+     "Heating capacity": "40W",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Supply voltage": "24V",
+     "IP rating": "IP20",
+     "Protection class": "I",
+     "Inrush current max": "9.5A",
+     "Fan efficiency": "5.1m<sup>3</sup>/h",
+     "Body dimensions": "27x27x50mm",
+     "Mounting rail size": "TS35",
+     "Operating temperature": "-10...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 100694,
+     "manufacturer_id": 717,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "RG125-19/14N/2",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "RG125-19/14N/2",
+    "description": "Fan: DC; 180x180x40mm; blower; 24VDC; 86.4m3/h; 58dBA; ball; 2550rpm",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 7,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 99.6,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 92.97,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/525f1550e57975acd14485d8f0c858a5/RG125series.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B7/D2/A0/00/0/667003_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9f0d5927e082f35fb70694e3e564580cde87f3ca",
+    "productUrl": "https://www.tme.eu/en/details/rg125-19_14n_2/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "86.4m<sup>3</sup>/h",
+     "Power consumption": "5W",
+     "Impeller material": "plastic",
+     "Type of fan": "DC",
+     "Noise level": "58dBA",
+     "Operating voltage": "12...28V DC",
+     "Kind of fan": "blower",
+     "Rotational rate/speed": "2550rpm",
+     "Enclosure material": "plastic",
+     "Kind of Bearing": "ball",
+     "Leads": "leads x3",
+     "Fan dimensions": "180x180x40mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1031.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "15661,2",
+    "description": "Heating element: blower; heating; CIRRUS 40/1; 100W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 7,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 109.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 101.26,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 89.35,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/4C/F1/80/00/0/532420_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9e75ef23a99885d852295e37b36f2acc954d66f5",
+    "productUrl": "https://www.tme.eu/en/details/fgc1031.2/",
+    "attributes": {
+     "Manufacturer": "DBK Technitherm",
+     "Type of heating element": "blower",
+     "Version": "heating",
+     "Manufacturer series": "CIRRUS 40/1",
+     "Heating capacity": "100W",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Supply voltage": "230V",
+     "IP rating": "IP20",
+     "Protection class": "I",
+     "Inrush current max": "4.5A",
+     "Fan efficiency": "13.6m<sup>3</sup>/h",
+     "Body dimensions": "42x42x72mm",
+     "Mounting rail size": "TS35",
+     "Operating temperature": "-10...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 100694,
+     "manufacturer_id": 717,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "9BMB24S201",
+    "manufacturer": "SANYO DENKI",
+    "manufacturerPartNumber": "9BMB24S201",
+    "description": "Fan: DC; Ø97x33mm; blower; 24VDC; 73.2m3/h; 59dBA; ball; 5250rpm",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 26.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 5,
+      "unitPrice": 24.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 23.31,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1a11daca5eef4ba3d5734454c3ef3e28/9BMB24S201.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F4/4D/51/00/0/1430607_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=4e4dbfb035ac5f3729f044c7d8f3f837f34b8da9",
+    "productUrl": "https://www.tme.eu/en/details/9bmb24s201/",
+    "attributes": {
+     "Manufacturer": "SANYO DENKI",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "73.2m<sup>3</sup>/h",
+     "Operating temperature": "-20...70°C",
+     "Min. insulation resistance": "10MΩ",
+     "Kind of material": "flame retardant",
+     "Power consumption": "16.8W",
+     "Impeller material": "plastic",
+     "Type of fan": "DC",
+     "Noise level": "59dBA",
+     "Additional functions": "lock sensor, reverse polarity protection",
+     "Lead length": "0.3m",
+     "Operating voltage": "12...26.4V DC",
+     "Kind of fan": "blower",
+     "Flammability rating": "UL94V-0",
+     "Current rating": "0.7A",
+     "Rotational rate/speed": "5250rpm",
+     "Enclosure material": "plastic",
+     "Kind of Bearing": "ball",
+     "Leads": "leads x3",
+     "Fan dimensions": "Ø97x33mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 571,
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 32
+      }
+     ],
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC0017.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "370306,01",
+    "description": "Heating element: blower; heating; CIRRUS 25/1; 10W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 110.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 98.74,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 86.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a97efef0d45069d591348cfe7ecc2e36/En_DBK_DB_Cirrus25_DE231012.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3E/3D/70/00/0/512995_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2324b29ecef97c730e2af62ccf8a070cbb4330cc",
+    "productUrl": "https://www.tme.eu/en/details/fgc0017.2/",
+    "attributes": {
+     "Manufacturer": "DBK Technitherm",
+     "Type of heating element": "blower",
+     "Version": "heating",
+     "Manufacturer series": "CIRRUS 25/1",
+     "Heating capacity": "10W",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Supply voltage": "24V",
+     "IP rating": "IP20",
+     "Protection class": "III/3",
+     "Inrush current max": "1.3A",
+     "Fan efficiency": "5.1m<sup>3</sup>/h",
+     "Body dimensions": "27x27x50mm",
+     "Mounting rail size": "TS35",
+     "Operating temperature": "-10...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 100694,
+     "manufacturer_id": 717,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1515.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "370090,01",
+    "description": "Heating element: blower; heating; CIRRUS 40/2; 230W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 5,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 109.74,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 98.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 86.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3C/F1/80/00/0/532419_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c11f7f54804ac6fc138765b719036f14e35783b2",
+    "productUrl": "https://www.tme.eu/en/details/fgc1515.2/",
+    "attributes": {
+     "Manufacturer": "DBK Technitherm",
+     "Type of heating element": "blower",
+     "Version": "heating",
+     "Manufacturer series": "CIRRUS 40/2",
+     "Heating capacity": "230W",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Supply voltage": "230V",
+     "IP rating": "IP20",
+     "Protection class": "I",
+     "Inrush current max": "9A",
+     "Fan efficiency": "17m<sup>3</sup>/h",
+     "Body dimensions": "42x42x107mm",
+     "Mounting rail size": "TS35",
+     "Operating temperature": "-10...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 100694,
+     "manufacturer_id": 717,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "D1G133-DC13-52",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "D1G133DC1352",
+    "description": "Fan: EC; 203x213x232mm; blower; 24VDC; ball; 1580rpm; IP42",
+    "category": "EC Fans",
+    "packageName": null,
+    "stock": 4,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 380.0,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/d1g133-dc13-52/",
+    "photoUrl": null,
+    "productUrl": "https://www.tme.eu/en/details/d1g133-dc13-52/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Supply voltage": "24V DC",
+     "IP rating": "IP42",
+     "Power consumption": "118W",
+     "Impeller material": "steel",
+     "Type of fan": "EC",
+     "Lead length": "0.3m",
+     "Operating voltage": "16...28V DC",
+     "Kind of fan": "blower",
+     "Rotational rate/speed": "1580rpm",
+     "Enclosure material": "steel",
+     "Kind of Bearing": "ball",
+     "Leads": "leads x4",
+     "Fan dimensions": "203x213x232mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 113467,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1513.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "15662",
+    "description": "Heating element: blower; heating; CIRRUS 40/2; 150W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 109.74,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 98.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 86.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/4A/35/00/00/0/21412_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=475c41846dbe9462220378b6be877fa13e646db5",
+    "productUrl": "https://www.tme.eu/en/details/fgc1513.2/",
+    "attributes": {
+     "Manufacturer": "DBK Technitherm",
+     "Type of heating element": "blower",
+     "Version": "heating",
+     "Manufacturer series": "CIRRUS 40/2",
+     "Heating capacity": "150W",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Supply voltage": "230V",
+     "IP rating": "IP20",
+     "Protection class": "I",
+     "Inrush current max": "10A",
+     "Fan efficiency": "12.4m<sup>3</sup>/h",
+     "Body dimensions": "42x42x107mm",
+     "Mounting rail size": "TS35",
+     "Operating temperature": "-10...70°C"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 100694,
+     "manufacturer_id": 717,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "04640.1-00",
+    "manufacturer": "STEGO",
+    "manufacturerPartNumber": "04640.1-00",
+    "description": "Heating element: blower; heating; HGL 046; 250W; Uoper: 24V; IP20",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 155.14,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 137.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/04640.1-00/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/BD/9C/01/00/0/1100251_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e8a52e43b790fd4f9ef76553ea1ffbfb9b6f67e5",
+    "productUrl": "https://www.tme.eu/en/details/04640.1-00/",
+    "attributes": {
+     "Manufacturer": "STEGO",
+     "Type of heating element": "blower",
+     "Version": "heating",
+     "Manufacturer series": "HGL 046",
+     "Heating capacity": "250W",
+     "Supply voltage": "24V DC",
+     "IP rating": "IP20",
+     "Operating temperature": "-45...70°C",
+     "Operating voltage": "24V",
+     "Rated voltage": "24V",
+     "Leads": "clamps 1.5mm<sup>2</sup>"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 100694,
+     "manufacturer_id": 627,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "RV45-3/14",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "RV45-3/14",
+    "description": "Fan: DC; 69.5x63.9x54.95mm; blower; 24VDC; 24.62m3/h; 49dBA; ball",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 2,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 157.81,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/41ed0811f9e7982e01e1dfed8acb16e6/RV45-3_14.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/49/4B/E0/00/0/963732_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f3aba1e7ab55ec3097eb4078e56ce49505de9ce1",
+    "productUrl": "https://www.tme.eu/en/details/rv45-3_14/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "24.62m<sup>3</sup>/h",
+     "Power consumption": "43W",
+     "Type of fan": "DC",
+     "Noise level": "49dBA",
+     "Operating voltage": "7...30V DC",
+     "Kind of fan": "blower",
+     "Rotational rate/speed": "40000rpm",
+     "Kind of Bearing": "ball",
+     "Fan dimensions": "69.5x63.9x54.95mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "RG160-28/14N",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "RG160-28/14N",
+    "description": "Fan: DC; 220x220x56mm; blower; 24VDC; 209m3/h; ball; 2850rpm; 22AWG",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 1,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 144.43,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/bce24cf0a48c52a393374d735e615bf7/RG1602814N-ENG.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/13/A6/60/00/0/420401_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=d95428eb5f9620922bae861aaa053d733780d0b4",
+    "productUrl": "https://www.tme.eu/en/details/rg160-28_14n/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "209m<sup>3</sup>/h",
+     "Power consumption": "20W",
+     "Type of fan": "DC",
+     "Lead length": "0.325m",
+     "Operating voltage": "12...28V DC",
+     "Kind of fan": "blower",
+     "Wire size": "22AWG",
+     "Rotational rate/speed": "2850rpm",
+     "Kind of Bearing": "ball",
+     "Leads": "leads x2",
+     "Fan dimensions": "220x220x56mm"
+    },
+    "extra": {
+     "product_status": [],
+     "category_id": 112525,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "RV45-3/14S",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "RV45-3/14S",
+    "description": "Fan: DC; 69.5x63.9x54.95mm; blower; 24VDC; 24.62m3/h; 49dBA; ball",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 1,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 184.19,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 172.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 24,
+      "unitPrice": 165.54,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/e6b759a48d64b4ecf5d025adb1eea680/RV45-3_14S.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/1D/52/C0/00/0/796113_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=524e0c6344970ea2d902434e6092dc86a24aed90",
+    "productUrl": "https://www.tme.eu/en/details/rv45-3_14s/",
+    "attributes": {
+     "Manufacturer": "EBM-PAPST",
+     "Supply voltage": "24V DC",
+     "Fan efficiency": "24.62m<sup>3</sup>/h",
+     "Power consumption": "43W",
+     "Type of fan": "DC",
+     "Noise level": "49dBA",
+     "Additional functions": "Hall sensor",
+     "Operating voltage": "7...30V DC",
+     "Kind of fan": "blower",
+     "Rotational rate/speed": "40000rpm",
+     "Kind of Bearing": "ball",
+     "Fan dimensions": "69.5x63.9x54.95mm"
+    },
+    "extra": {
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "category_id": 112525,
+     "manufacturer_id": 1049,
+     "unit": "pcs",
+     "price_type": "NET",
+     "tax_rate": 21.0,
+     "special_prices": false,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "MOUSER": [
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109BD24HC2",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109BD24HC2",
+    "description": "Blowers & Centrifugal Fans DC Blower, 76x30mm, 24VDC, Tachometer",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 1311,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 46.33,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 40.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 37.19,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/1017799018_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109BD24HC2?qs=Ldb7c5mTB15fRV35PcxwNg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CBM9794S23050720",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CBM-979433S-230-507-20",
+    "description": "Blowers & Centrifugal Fans dc blower, 97 x 94 x 33 mm, 24 Vdc, slee",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 404,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 9.32,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.21,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cbm_97s.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CBM-979433_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CBM-979433S-230-507-20?qs=QNEnbhJQKvYlgC8c5umGHg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "35"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": null,
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFM-A225V-231445",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-A225V-231-445",
+    "description": "DC Fans 24Vdc 5W 108.2CFM DC Axial 120x25mm",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 2147,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.96,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.92,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 9.56,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_120v.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/cfm-a225v-122-340_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-A225V-231-445?qs=YCa%2FAAYMW00epMnFqM8ETQ%3D%3D",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": null,
+     "lead_time": "175 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CB7530BF24045422",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CBM-7530BF-240-454-22",
+    "description": "Blowers & Centrifugal Fans dc blower, 49.2 x 49.8 x 20 mm, 24 Vdc, ball, 4000 RPM, 11.77 CFM, TS/PWM",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 200,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.54,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.52,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cbm_75bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CBM-7530BF-240-454-22_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CBM-7530BF-240-454-22?qs=ulEaXIWI0c%252BK%2FgJjzvfVow%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CBM7530BF250493",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CBM-7530BF-250-493",
+    "description": "Blowers & Centrifugal Fans dc blower, 49.2 x 49.8 x 20 mm, 24 Vdc, ball, 5000 RPM, 14.70 CFM",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 177,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.76,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 14.63,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 13.5,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cbm_75bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CBM-7530BF-250-493_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CBM-7530BF-250-493?qs=ulEaXIWI0c%2FmDkf9cwEAng%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CB7530BF23040420",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CBM-7530BF-230-404-20",
+    "description": "Blowers & Centrifugal Fans dc blower, 49.2 x 49.8 x 20 mm, 24 Vdc, ball, 3000 RPM, 9.89 CFM, TS",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 161,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.29,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 9.17,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.36,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cbm_75bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CBM-7530BF-230-404-20_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CBM-7530BF-230-404-20?qs=ulEaXIWI0c8N883rKQZOeg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9A0824H402",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9A0824H402",
+    "description": "DC Fans DC Axial Fan, 80x80x25mm, 24VDC",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 770,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 17.42,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 15.54,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanCooler80_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9A0824H402?qs=t9Lg9qrXjEzLuvhgUK2TTQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "40"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-BFB0524HH-R00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "BFB0524HH-R00",
+    "description": "Blowers & Centrifugal Fans DC Blower, 51x15mm, 24VDC, Ball Bearing, 3x Lead Wires, Locked Rotor Sensor",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 140,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 15.67,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.87,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 12.11,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/BFB0524HH-R00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaelectronics/images/BFB0524HH-R00_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/BFB0524HH-R00?qs=%2FW4LtXOBxKtFww5ryvbnog%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "224"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "365 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CB7530BF22028220",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CBM-7530BF-220-282-20",
+    "description": "Blowers & Centrifugal Fans dc blower, 49.2 x 49.8 x 20 mm, 24 Vdc, ball, 2000 RPM, 6.59 CFM, TS",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 154,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 10.11,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 9.01,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.22,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cbm_75bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CBM-7530BF-220-282-20_SPL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CBM-7530BF-220-282-20?qs=ulEaXIWI0c%2FZCrB%2Fq44hHg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "200"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB1224VHE-R00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB1224VHE-R00",
+    "description": "DC Fans Tubeaxial Fan, 120x38mm, 24VDC, Ball Bearing, 3x Lead Wires, Locked Rotor Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 302,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 19.36,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 16.11,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 14.49,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB1224VHE_R00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB120x38_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB1224VHE-R00?qs=%2FW4LtXOBxKuodksH%252BAZLeA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "352 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 14,
+       "date": "2026-11-19T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-FMA751BF24558822",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-A751BF-245-588-22",
+    "description": "DC Fans dc axial fan 172 x 151.5 x 51 mm 24 Vdc ball 4500 RPM 324.90 CFM TSPWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 488,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 60.91,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 49.33,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 46.41,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm-a7bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-A7BF_DSL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-A751BF-245-588-22?qs=tlsG%2FOw5FFj7832dGS6I7Q%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "20"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "490-CFMA225C22035020",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-A225C-220-350-20",
+    "description": "DC Fans dc axial fan, 120 mm square, 25 mm, 24 V",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 246,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 8.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 7.48,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 6.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_120c.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/CFM-A225C_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-A225C-220-350-20?qs=QNEnbhJQKvb637fSRND8hw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": null,
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0724VH-AF00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0724VH-AF00",
+    "description": "DC Fans DC Tubeaxial Fan, 70x25.4mm, 24VDC, Ball Bearing, 3x Lead Wires, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 452,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0724VH_AF00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB07_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0724VH-AF00?qs=%2FW4LtXOBxKss1AqE%252Bl0UNQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "162"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "364 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-EFB1324SHE-EP",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "EFB1324SHE-EP",
+    "description": "DC Fans Fan, 127x38mm, 24VDC, 200CFM, Ball, 4x Lead Wire, Tach/PWM, IP56/GR-487 Salt Fog",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1017,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 61.93,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 53.4,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 51.6,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/EFB1324SHE_EP.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/EFB_Generic.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/EFB1324SHE-EP?qs=%2FW4LtXOBxKtOL2gTX4IzAA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0524VHD-R00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0524VHD-R00",
+    "description": "DC Fans Tubeaxial Fan, 50x20mm, 24VDC, Ball Bearing, 3x Lead Wires, Locked Rotor Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 290,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 11.08,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 9.82,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 8.95,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0524VHD_R00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB50x20.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0524VHD-R00?qs=%2FW4LtXOBxKvduLIrMs%252BtXw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "252"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CFM8038BF215066",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-8038BF-2150-662-20",
+    "description": "DC Fans 24 V, 1.46 A, 80 x 80 x 38 mm, Dc Fan, Tachometer Signal",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 236,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 27.71,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 24.36,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 28,
+      "unitPrice": 21.91,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_80bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/ITP_179-CFM8038BF215066_t.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-8038BF-2150-662-20?qs=MyNHzdoqoQI%2FsCfoqhqnZQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "28"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-EFB0424VHD-CP0",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "EFB0424VHD-CP0",
+    "description": "DC Fans DC Axial Fan, 40x40x20mm, 24VDC, 9.398CFM, 1.44W, 37.3dBA, 9000RPM, Tach/PWM",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 215,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.91,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.68,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.56,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/EFB0424VHD-CP0.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaelectronics/images/EFB0424VHD-CP0_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/EFB0424VHD-CP0?qs=MyNHzdoqoQJno2wDNPS6jw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "336"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "365 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0424VHB",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0424VHB",
+    "description": "DC Fans DC Tubeaxial Fan, 40x15mm, 24VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 249,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.59,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.18,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 9.29,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0424VHB.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB40x15_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0424VHB?qs=%2FW4LtXOBxKtPr3dQd7caTA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "448"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0924VHD-F00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0924VHD-F00",
+    "description": "DC Fans Tubeaxial Fan, 92x20mm, 24VDC, Ball, 3x Lead Wire, Lock Rotor Sensor, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 99,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 9.57,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 8.13,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 7.51,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0924VHD_F00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB92x20_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0924VHD-F00?qs=Tx9Tc1LIQ%252BHe2%252B%2F4zjIhWQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "88"
+    },
+    "extra": {
+     "lifecycle_status": "Factory Special Order",
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-FFB0424VHN-B",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "FFB0424VHN-B",
+    "description": "DC Fans DC Tubeaxial Fan, 40x28mm, 24VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 205,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 12.91,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.58,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.56,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/FFB0424VHN_B.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/FFB0412SN-00Y2F_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/FFB0424VHN-B?qs=%2FW4LtXOBxKsUqtIbDxbSIg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "288"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 576,
+       "date": "2027-09-02T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0924VH-A",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0924VH-A",
+    "description": "DC Fans DC Tubeaxial Fan, 92x25.4mm, 24VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 127,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 15.91,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 12.84,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 11.7,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0924VH_A.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB92x25_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0924VH-A?qs=Tx9Tc1LIQ%252BFcFFlIpw5e5Q%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "72"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "365 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9GL1224H102",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9GL1224H102",
+    "description": "DC Fans DC Axial Fan, 120x120x38mm, 24VDC, Long Life, High Performance, Ribless",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 69,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 45.85,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 40.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 21,
+      "unitPrice": 37.99,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce120L_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9GL1224H102?qs=t9Lg9qrXjEzps84Z2Iu2xQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "21"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "179-CFM8038BF211059",
+    "manufacturer": "Same Sky",
+    "manufacturerPartNumber": "CFM-8038BF-2110-595",
+    "description": "DC Fans 24 V, 0.88 A, 80 x 80 x 38 mm, Dc Fan",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 102,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 24.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 21.88,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 28,
+      "unitPrice": 19.69,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/6118/1/cfm_80bf.pdf",
+    "photoUrl": "https://www.mouser.com/images/cuiinc/images/ITP_179-CFM8038BF211059_t.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Same-Sky/CFM-8038BF-2110-595?qs=MyNHzdoqoQJc9NfRug11Dg%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "28"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "119 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9G0924M201",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9G0924M201",
+    "description": "DC Fans DC Axial Fan, 92x92x32mm, 24VDC, High Performance, Tachometer",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 62,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 28.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 26.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 25.02,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SanAce92_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9G0924M201?qs=t9Lg9qrXjExGax7YxUndqw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "32"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9BMB24F201",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9BMB24F201",
+    "description": "Blowers & Centrifugal Fans DC Blower, 97x33mm, 24VDC, High Performance, Tachometer",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 61,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 56.99,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 51.01,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 47.65,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/San_Ace_B97_DSL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9BMB24F201?qs=t9Lg9qrXjEykJ%2F1f7NGXOQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "32"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "472-06025VE24PCUD2",
+    "manufacturer": "NMB",
+    "manufacturerPartNumber": "06025VE-24P-CUD-2",
+    "description": "DC Fans DC Axial Fan, 60x60x25mm, 24VDC, 0.76\"H2O, 4x Wire, Tach/PWM, Potting II, IP68",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 48,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 23.97,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 22.84,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 21.82,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/MinebeaMitsumi_1-29-2026_06025VE - Potting II NPI 20251124.pdf",
+    "photoUrl": "https://www.mouser.com/images/minebeamitsumi/images/06025VE-12P-CUD-1_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/NMB/06025VE-24P-CUD-2?qs=G4MbTVxgV4E0XrtKkG52DA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "90"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "168 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-EFB1524VHG-EP",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "EFB1524VHG-EP",
+    "description": "DC Fans Fan, 172x150x51mm, 24VDC, 302CFM, Ball, 4Leads, Tach/PWM, IP56/GR-487 Salt Fog",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 39,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 92.42,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 8,
+      "unitPrice": 77.96,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/EFB1524VHG_EP.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/EFB172x150x50_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/EFB1524VHG-EP?qs=%2FW4LtXOBxKvCUK6%252BrrLyAA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "8"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "364 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 288,
+       "date": "2027-09-27T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9RA0824G1D001",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9RA0824G1D001",
+    "description": "DC Fans Axial Fan, 80x80x38mm, 24VDC, 85.5CFM, 9.84W, 48dBA, Rib, Low Noise, Lock Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 36,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 23.87,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 21.25,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 20.44,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/971/1/San_Ace_E.pdf",
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/9RA0824G1D001_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9RA0824G1D001?qs=PBDs2xEllI8nqVRv2YYiFg%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 36,
+       "date": "2027-03-01T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-8300100868",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "8300100868",
+    "description": "DC Fans DC Axial Fan, 40x40x28mm, 24VDC, 26.48CFM, 1030Pa, Ball, 4x Wire, Tach/PWM, IP20",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 34,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 28.36,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 24.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 22.56,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm-papst_8300100868_AxiForce40_PDB_EN_V1.1.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/8300100443_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/8300100868?qs=bpu3f%2FCR1jx5uTxmaDPGGA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "171 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9RA1424M1D001",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9RA1424M1D001",
+    "description": "DC Fans Fan, 140x140x38mm, 24VDC, Low Noise/Power, High Performance, Rib, Lock Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 34,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 60.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 53.83,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 28,
+      "unitPrice": 53.45,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/9RA1412P1G001_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9RA1424M1D001?qs=amGC7iS6iy9xdbXROX9Upw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "14"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-RE7542142TDMLPU",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "RER175-42/14/2TDMLPU",
+    "description": "Blowers & Centrifugal Fans EC Blower, 175x69mm, 24VDC, 353CFM, 48W, 3400RPM, Ball, Open Speed Signal, IP68",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 32,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 219.38,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 191.32,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 183.87,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/RER175TDU_DSL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/RER175-42-14-2TDMLPU?qs=ZHqvjIXELwui%2FwYcJkqfAA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "32"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "197 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-REF100-11/14",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "REF100-11/14",
+    "description": "Blowers & Centrifugal Fans DC Radial Blower, 104x25mm Round, 24VDC, 50.6CFM, 7.5W, 5400RPM, Ball, FlatPak",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 31,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 72.21,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 65.52,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm_papst_9593507003_PDB_EN_V1_2.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/REF100_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/REF100-11-14?qs=fklqa858Eet6t5oMK%2FOdRQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "24"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-8315100162",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "8315100162",
+    "description": "DC Fans Axial Fan, 80x80x38mm, 24VDC, Open Coll Tach/PWM, IP68, AF80-0016224VP/2U15.500",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 29,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 116.1,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 91.36,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 88.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm-papst_Datasheet 8315100162.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/83151_series_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/8315100162?qs=TuK3vfAjtkXdp%252B5m94zTLw%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0624VH-A",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0624VH-A",
+    "description": "DC Fans DC Tubeaxial Fan, 60x25mm, 24VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 27,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 16.38,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 13.22,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 12.05,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0624VH-A.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB_Generic.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0624VH-A?qs=%2FW4LtXOBxKtbZPeZhGDqYA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "180"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 540,
+       "date": "2027-05-05T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-RLF100-11/14/19",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "RLF100-11/14/19",
+    "description": "Blowers & Centrifugal Fans DC Radial Blower, 127x127x25mm, 24VDC, 37.7CFM, 8W, 5100RPM, Ball, FlatPak",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 25,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 95.8,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 85.64,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 28,
+      "unitPrice": 83.03,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm_papst_DC_centrifugal_fans.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/ITP_5912-RLF100-111419_t.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/RLF100-11-14-19?qs=in9s7fx0B9UooMH8kDvjlA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "28"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "364 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-109BG24HC1",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "109BG24HC1",
+    "description": "Blowers & Centrifugal Fans DC Blower, 160x40mm, 24VDC, Tachometer",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 24,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 124.16,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 108.26,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 107.84,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/SciroccoAce160_DSL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/109BG24HC1?qs=Ldb7c5mTB1677SwqqAunXQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "15"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AUB0524VHD",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AUB0524VHD",
+    "description": "DC Fans DC Tubeaxial Fan, 50x20mm, 24VDC, Superflo Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 23,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 6.94,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 5.65,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 5.18,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AUB0524VHD.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AUB0524_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AUB0524VHD?qs=%2FW4LtXOBxKvX%252B0X6HlUAuA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "252"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 504,
+       "date": "2027-04-27T00:00:00"
+      },
+      {
+       "quantity": 504,
+       "date": "2027-05-27T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-RV45-3/14S",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "RV45-3/14S",
+    "description": "Blowers & Centrifugal Fans DC Radial Blower, 63.9x69.5x55mm, 24VDC, 14.5CFM, 43W, 49dBA, 40000RPM, FlatPak",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 23,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 225.38,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 181.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 24,
+      "unitPrice": 178.79,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm-papst_RV45 Datasheet.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/RV45_DSL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/RV45-3-14S?qs=W%2FMpXkg%252BdQ5V3xhOQCkqWQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "24"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-FFB0424VHN",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "FFB0424VHN",
+    "description": "DC Fans DC Tubeaxial Fan, 40x28mm, 24VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 22,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 11.33,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 10.66,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/FFB0424VHN.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/FFB40x28_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/FFB0424VHN?qs=%2FW4LtXOBxKs5Az%2FOzX24%252BA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "288"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 576,
+       "date": "2026-11-26T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-REF100-11/14/2U",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "REF100-11/14/2U",
+    "description": "Blowers & Centrifugal Fans DC Radial Blower, 24VDC, 7.5W, 5400RPM, Speed Signal/Open Collector Output",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 21,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 135.64,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 112.57,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 24,
+      "unitPrice": 107.29,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/REF100_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/REF100-11-14-2U?qs=%2FtUMGyzD9cIk6nTweHrItA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "24"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-RG125-19/14N/2",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "RG125-19/14N/2",
+    "description": "Blowers & Centrifugal Fans DC Radial Blower, 180x180x40mm, 24VDC, 4.9W, 2550RPM, Sensor Signal, FlatPak",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 18,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 112.45,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 97.7,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 20,
+      "unitPrice": 96.12,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm_papst_DC_centrifugal_fans.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/RG125DC2EPDF.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/RG125-19-14N-2?qs=RViDcLGODe34nRWrGLV6YQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "20"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "472-09238DE24QGUG9",
+    "manufacturer": "NMB",
+    "manufacturerPartNumber": "09238DE-24Q-GUG-9",
+    "description": "DC Fans DC Axial Fan, 92x92x38mm, 24VDC, 1.32\"H2O, 4x Wire, Tach/PWM, Potting II, IP68",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 16,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 36.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 33.05,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 30,
+      "unitPrice": 31.64,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/MinebeaMitsumi_1-29-2026_09238DE- NPI Potting II 20251211.pdf",
+    "photoUrl": "https://www.mouser.com/images/minebeamitsumi/images/09238DE-24Q-GUG-9_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/NMB/09238DE-24Q-GUG-9?qs=G4MbTVxgV4HPkoJ3HNSlcA%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "30"
+    },
+    "extra": {
+     "lifecycle_status": "New Product",
+     "rohs": "RoHS Compliant",
+     "lead_time": "168 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-8315100165",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "8315100165",
+    "description": "DC Fans Axial Fan, 80x80x38mm, 24VDC, Open Coll Tach/PWM, IP68, AF80-0016524VP/2U13.200",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 12,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 100.02,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 79.54,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 78.65,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm-papst_Datasheet 8315100165.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/83151_series_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/8315100165?qs=TuK3vfAjtkXidJyamhHK2g%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "169 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 36,
+       "date": "2027-03-25T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-FFB1424VHG-EP",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "FFB1424VHG-EP",
+    "description": "DC Fans Fan, 140x51mm, 24VDC, 252.11CFM, Ball, 4Leads, Tach/PWM, IP56/GR-487 Salt Fog",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 12,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 151.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 117.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/FFB1424VHG_EP.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/FFB140x50_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/FFB1424VHG-EP?qs=%2FW4LtXOBxKuYYkLk8GZEfA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "24"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 500,
+       "date": "2027-05-06T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "5912-8414NH",
+    "manufacturer": "ebm-papst",
+    "manufacturerPartNumber": "8414NH",
+    "description": "DC Fans DC Axial Fan with Wallring, 80x80x25mm, 18-26VDC, 78m3/h, Ball Bearing",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1434,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 25.04,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 20.82,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 20.4,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/ebm_papst_9292506124_Datasheet_ENU.pdf",
+    "photoUrl": "https://www.mouser.com/images/ebm-papst/images/8412NG39_SPL.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/ebm-papst/8414NH?qs=DB9cKZ5ZWfWSo3hOlWoo7A%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "240 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9BMB24H201",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9BMB24H201",
+    "description": "Blowers & Centrifugal Fans DC Blower, 97x33mm, 24VDC, High Performance, Tachometer",
+    "category": "Blowers & Centrifugal Fans",
+    "packageName": null,
+    "stock": 9,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 57.0,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 51.02,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 43.2,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": null,
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/San_Ace_B97_DSL.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9BMB24H201?qs=t9Lg9qrXjEwVSSTaFpOoDQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "32"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant By Exemption",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "Blowers & Centrifugal Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 32,
+       "date": "2027-02-22T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB0724VH-A",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB0724VH-A",
+    "description": "DC Fans Tubeaxial Fan, 70x25.4mm, 24VDC, Ball Bearing, Lead Wires, Locked Rotor Sensor",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 8,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 13.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 10.81,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 9.48,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB0724VH_A.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB07_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB0724VH-A?qs=Tx9Tc1LIQ%252BEYorFvKO9ENA%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "162"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 324,
+       "date": "2026-10-30T00:00:00"
+      },
+      {
+       "quantity": 324,
+       "date": "2027-08-25T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "978-9WL1424H5002",
+    "manufacturer": "Sanyo Denki",
+    "manufacturerPartNumber": "9WL1424H5002",
+    "description": "DC Fans Axial Fan, 140x140x51mm, 24VDC, Splash/Dust Proof, Long Life 100K, Ribless, IP68",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 8,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 232.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 12,
+      "unitPrice": 201.12,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 24,
+      "unitPrice": 188.18,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/971/1/Splash_Proof_Oil_Proof_Fan.pdf",
+    "photoUrl": "https://www.mouser.com/images/sanyodenki/images/ITP_978-9WL1424H5002_t.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Sanyo-Denki/9WL1424H5002?qs=y6ZabgHbY%252BxwTxjAwJAfkQ%3D%3D",
+    "attributes": {
+     "Standard Pack Qty": "12"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "154 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 12,
+       "date": "2027-03-15T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-FFB1224VHE",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "FFB1224VHE",
+    "description": "DC Fans DC Tubeaxial Fan, 120x38mm, 24VDC, Ball Bearing, Lead Wires",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 7,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 31.56,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 25.9,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 25,
+      "unitPrice": 24.91,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/FFB1224VHE.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaelectronics/images/ITP_FFB1224VHE_t.JPG",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/FFB1224VHE?qs=cgQJD%2FpJz0wdi7fBWstuIQ%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "36"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": []
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "MOUSER",
+    "distributorPartNumber": "108-AFB1224VH-F00",
+    "manufacturer": "Delta Electronics",
+    "manufacturerPartNumber": "AFB1224VH-F00",
+    "description": "DC Fans Tubeaxial Fan, 120x25.4mm, 24VDC, Ball, 3x Lead Wires, Lock Rotor Sensor, Tach",
+    "category": "DC Fans",
+    "packageName": null,
+    "stock": 1,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 14.37,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 14.11,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 108,
+      "unitPrice": 14.1,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/1208/1/AFB1224VH_F00.pdf",
+    "photoUrl": "https://www.mouser.com/images/deltaproductcorporation/images/AFB120x25_series.jpg",
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Delta-Electronics/AFB1224VH-F00?qs=Tx9Tc1LIQ%252BGWbW9rbB9l%252Bw%3D%3D",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "54"
+    },
+    "extra": {
+     "lifecycle_status": null,
+     "rohs": "RoHS Compliant",
+     "lead_time": "350 Days",
+     "factory_stock": 0,
+     "category": "DC Fans",
+     "suggested_replacement": null,
+     "reeling": false,
+     "sales_maximum_order_qty": null,
+     "availability_on_order": [
+      {
+       "quantity": 540,
+       "date": "2027-02-15T00:00:00"
+      }
+     ]
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ]
+ }
+}

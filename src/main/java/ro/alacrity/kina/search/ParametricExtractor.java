@@ -104,6 +104,19 @@ public class ParametricExtractor {
     public static final String FORM_FACTOR = "FormFactor";
     /** Operating temperature range as printed by the distributor, normalised ("-55...155°C"). */
     public static final String OPERATING_TEMPERATURE = "OperatingTemperature";
+    // fans (DESIGN.md 3.4 "Fans")
+    public static final String SPEED = "Speed";
+    public static final String AIRFLOW = "Airflow";
+    public static final String STATIC_PRESSURE = "StaticPressure";
+    public static final String NOISE = "Noise";
+    /** "axial" or "radial". */
+    public static final String FAN_TYPE = "FanType";
+    /** "DC" or "AC". */
+    public static final String FAN_SUPPLY = "FanSupply";
+    /** "40x40x10mm". */
+    public static final String FRAME_SIZE = "FrameSize";
+    /** "ball", "sleeve", "fluid dynamic", "vapo"... */
+    public static final String BEARING = "Bearing";
 
     /**
      * Every canonical key {@link #extract} can produce: the {@code compact} response detail returns only these and
@@ -114,7 +127,8 @@ public class ParametricExtractor {
             "Dielectric", "Package", "Mounting", "Family", "Technology", "ConnectorType", "Gender", "Positions", "Rows",
             "Pitch", "Orientation", "Series", "UsbType", "UsbStandard", "UsbSpeedGbps", "PinConfiguration",
             "ShieldPinsCounted", "MountingStyle", "Waterproof", "Features", ELEMENTS, RIPPLE_CURRENT, ESR, DIMENSIONS,
-            QUALIFICATION, CASE, POLARITY, SUBTYPE, FORM_FACTOR, OPERATING_TEMPERATURE);
+            QUALIFICATION, CASE, POLARITY, SUBTYPE, FORM_FACTOR, OPERATING_TEMPERATURE, SPEED, AIRFLOW, STATIC_PRESSURE,
+            NOISE, FAN_TYPE, FAN_SUPPLY, FRAME_SIZE, BEARING);
 
     /**
      * Canonical keys no distributor sends (verified against the recorded TME and Mouser responses; LCSC parts have no
@@ -206,6 +220,16 @@ public class ParametricExtractor {
         putIfNotNull(out, ELEMENTS, PassiveDetails.elementsDisplay(f.elements()));
         if (FormFactor.ofPackage(f.packageName()) == null) {
             putIfNotNull(out, FORM_FACTOR, f.formFactor());   // a package (0805, SOT-227) already says it
+        }
+        ParsedQuery.Fan fan = f.fan();
+        if (fan != null) {
+            putIfNotNull(out, FAN_TYPE, fan.type());
+            putIfNotNull(out, FAN_SUPPLY, fan.supply());
+            putIfNotNull(out, FRAME_SIZE, fan.frame() == null ? null : fan.frame().display());
+            putIfNotNull(out, BEARING, fan.bearing());
+            if (!fan.features().isEmpty()) {
+                out.put(FEATURES, String.join(", ", fan.features()));
+            }
         }
         f.details().forEach(out::putIfAbsent);
         ParsedQuery.Connector c = f.connector();
@@ -421,7 +445,22 @@ public class ParametricExtractor {
         return new Features(family, values, dielectric, packageName, mounting,
                 Recognizers.normalizeKey(text.toString()), connector, connector != null ? null : technology,
                 connector == null ? ctx.read(PartAttribute.ELEMENTS, Integer.class) : null, details, polarity, subtype,
-                voltages, formFactor, null);
+                voltages, formFactor, connector == null ? fan(ctx) : null);
+    }
+
+    /**
+     * The fan attributes of a part as their declared sources read them ({@link PartAttribute#FAN_TYPE},
+     * {@link PartAttribute#FAN_SUPPLY}, {@link PartAttribute#FRAME_SIZE}, {@link PartAttribute#BEARING},
+     * {@link PartAttribute#FAN_FEATURES}: fan family only), null when none says anything.
+     */
+    private static ParsedQuery.Fan fan(SearchExtractionContext ctx) {
+        String frame = ctx.read(PartAttribute.FRAME_SIZE, String.class);
+        String features = ctx.read(PartAttribute.FAN_FEATURES, String.class);
+        ParsedQuery.Fan fan = new ParsedQuery.Fan(ctx.read(PartAttribute.FAN_TYPE, String.class),
+                ctx.read(PartAttribute.FAN_SUPPLY, String.class), frame == null ? null : FanVocabulary.frame(frame),
+                ctx.read(PartAttribute.BEARING, String.class),
+                features == null ? List.of() : List.of(features.split(", ")));
+        return fan.isEmpty() ? null : fan;
     }
 
     /**

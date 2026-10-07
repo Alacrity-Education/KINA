@@ -145,6 +145,8 @@ class FanParserTest {
     void framesCompareWithinHalfAMillimetreAndTheDepthWhenBothStateIt() {
         ParsedQuery.Frame wanted = FanVocabulary.frame("40x40x10mm");
         assertThat(wanted.matches(FanVocabulary.frame("40 x 40 x 10.3 mm"))).isTrue();
+        assertThat(wanted.matches(FanVocabulary.frame("40x40x10.6mm"))).as("depth within 1 mm").isTrue();
+        assertThat(wanted.matches(FanVocabulary.frame("40x40x15mm"))).isFalse();
         assertThat(wanted.matches(FanVocabulary.frame("40x40x20mm"))).isFalse();
         assertThat(wanted.matches(FanVocabulary.frame("40.6x40.6x10mm"))).isFalse();
         assertThat(wanted.matches(FanVocabulary.frame("40mm"))).isTrue();

@@ -3,6 +3,7 @@ package ro.alacrity.kina.search;
 import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ComponentFamily;
 import ro.alacrity.kina.domain.ParsedQuery;
+import ro.alacrity.kina.domain.Vocabulary;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -39,6 +40,14 @@ class FanVocabulary {
 
     /** Fan unit spellings rewritten to one token each, so {@code /} and brackets do not split them. */
     private static final List<Map.Entry<Pattern, String>> UNIT_SPELLINGS = List.of(
+            // JLCPCB lists values with the ideographic comma: "、37.7dB(A) 0.14A"
+            Map.entry(Pattern.compile("、"), " "),
+            // TME writes "13.52m<sup>3</sup>/h" and "4.83mm H<sub>2</sub>O"
+            Map.entry(Pattern.compile("(?i)<su[bp]>\\s?(\\w+)\\s?</su[bp]>"), "$1"),
+            // TME "4200 (±10%)rpm": the tolerance of a rated value is no value of its own
+            Map.entry(Pattern.compile("\\s?\\(\\s?±\\s?\\d+(?:\\.\\d+)?\\s?%\\s?\\)\\s?(?=\\p{L})"), ""),
+            // Mouser 0.25"H2O: inches of water
+            Map.entry(Pattern.compile("(?i)(\\d)\\s?(?:\"|''|”|″)\\s?h2o(?![\\p{L}\\d])"), "$1inH2O"),
             Map.entry(Pattern.compile("(?i)m\\^?3\\s?/\\s?h(?:r|our)?(?![\\p{L}\\d])"), "m3h"),
             Map.entry(Pattern.compile("(?i)m\\^?3\\s?/\\s?min(?![\\p{L}\\d])"), "m3min"),
             Map.entry(Pattern.compile("(?i)(?<![\\p{L}])l\\s?/\\s?min(?![\\p{L}\\d])|(?<![\\p{L}])lpm(?![\\p{L}\\d])"),
@@ -95,29 +104,39 @@ class FanVocabulary {
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:fluid[- ]dynamic|fluid|fdb|hydro(?:dynamic|lic)?|hypro"
                     + "|hydraulic)" + AFTER), "fluid dynamic"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:ball|bb)" + AFTER), "ball"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "sleeve" + AFTER), "sleeve"),
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:sleeve|slide)" + AFTER), "sleeve"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "rifle" + AFTER), "rifle"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:magnetic|maglev|vapo)" + AFTER), "magnetic"));
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:magnetic|maglev|mag-lev)" + AFTER), "magnetic"),
+            // Sunon's Vapo bearing (TME "Kind of Bearing: Vapo", Mouser "Vapo")
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "vapo" + AFTER), "vapo"));
     private static final Pattern BEARING_WORD = Pattern.compile("(?i)" + BEFORE + "bearings?" + AFTER);
 
     /** Feature words and their canonical name. */
     private static final List<Map.Entry<Pattern, String>> FEATURES = List.of(
             Map.entry(Pattern.compile("(?i)" + BEFORE + "pwm" + AFTER), "PWM"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:tacho(?:meter)?|tach|fg|speed[- ]sensor|rpm[- ]signal"
-                    + "|frequency[- ]generator)" + AFTER), "tacho"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:locked[- ]rotor|lock[- ]rotor|rotor[- ]lock|alarm)" + AFTER),
-                    "locked rotor"),
+            // TME "Signal output: F type" (FG, a tacho signal) and "R type" (rotation detection, a locked-rotor alarm)
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:tacho(?:meter)?|tach|fg|f[- ]type|speed[- ]sensor"
+                    + "|rpm[- ]signal|frequency[- ]generator)" + AFTER), "tacho"),
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:locked[- ]rotor|lock[- ]rotor|rotor[- ]lock|lock[- ]sensor|alarm|r[- ]type)"
+                    + AFTER), "locked rotor"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "auto(?:matic)?[- ]?restart" + AFTER), "auto restart"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "2[- ]?(?:wires?|leads?)" + AFTER), "2-wire"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "3[- ]?(?:wires?|leads?|pins?)" + AFTER), "3-wire"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "4[- ]?(?:wires?|leads?|pins?)" + AFTER), "4-wire"));
+            // "2 wire", "3-wire", "4 pin"; TME "leads x3", Mouser "4x Lead Wires", "2xWire"
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:2[- ]?(?:wires?|leads?)|leads?\\s?x\\s?2"
+                    + "|2\\s?x\\s?(?:lead\\s)?(?:wires?|leads?))" + AFTER), "2-wire"),
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:3[- ]?(?:wires?|leads?|pins?)|leads?\\s?x\\s?3"
+                    + "|3\\s?x\\s?(?:lead\\s)?(?:wires?|leads?))" + AFTER), "3-wire"),
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:4[- ]?(?:wires?|leads?|pins?)|leads?\\s?x\\s?4"
+                    + "|4\\s?x\\s?(?:lead\\s)?(?:wires?|leads?))" + AFTER), "4-wire"));
     private static final Pattern IP_RATING = Pattern.compile("(?i)" + BEFORE + "ip\\s?([0-6x][0-9])" + AFTER);
 
     // ---------------------------------------------------------------- frame size
 
     private static final String MM = "(\\d{1,3}(?:\\.\\d+)?)\\s?(?:mm)?";
-    /** {@code 40x40x10mm}, {@code 40 x 40 x 10 mm}, {@code 25mm×25mm×10mm}, {@code 50*50*20mm}, {@code 50x15 mm}. */
-    private static final Pattern FRAME = Pattern.compile("(?i)" + BEFORE + MM + "\\s?[x×*]\\s?" + MM
+    /**
+     * {@code 40x40x10mm}, {@code 40 x 40 x 10 mm}, {@code 25mm×25mm×10mm}, {@code 50*50*20mm}, {@code 50x15 mm}; a round
+     * blower {@code Ø97x33mm} (TME) as its diameter and depth.
+     */
+    private static final Pattern FRAME = Pattern.compile("(?i)(?:(?<=[Øø])|" + BEFORE + ")" + MM + "\\s?[x×*]\\s?" + MM
             + "(?:\\s?[x×*]\\s?" + MM + ")?(?![\\p{L}\\d.])");
     /** A bare size: {@code 120mm}, {@code 40 mm}, {@code Ø50mm}. */
     private static final Pattern BARE_FRAME = Pattern.compile("(?i)(?<![\\p{L}\\d.x×*])[Øø]?\\s?(\\d{2,3})\\s?mm"
@@ -271,6 +290,32 @@ class FanVocabulary {
             out.add("IP" + ip.group(1).toUpperCase(Locale.ROOT));
         }
         return out;
+    }
+
+    /**
+     * The word of a fan vocabulary in a part's attribute value, description or category ({@link ParametricExtractor}
+     * sources): the type with the part default (a text that says fan is axial), the supply, the frame size displayed,
+     * the bearing, the features comma separated; null when the text names none.
+     */
+    static String word(Vocabulary vocabulary, String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        String prepared = normaliseUnits(Recognizers.prepare(text));
+        return switch (vocabulary) {
+            case FAN_TYPE -> type(prepared, true);
+            case FAN_SUPPLY -> supply(prepared);
+            case FRAME_SIZE -> {
+                ParsedQuery.Frame frame = frame(prepared);
+                yield frame == null ? null : frame.display();
+            }
+            case BEARING -> bearing(prepared);
+            case FAN_FEATURES -> {
+                List<String> features = features(prepared);
+                yield features.isEmpty() ? null : String.join(", ", features);
+            }
+            default -> null;
+        };
     }
 
     /** True when {@code token} is a fan type word a fan text claims ({@code axial}, {@code radial}): no mounting. */
