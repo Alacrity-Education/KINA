@@ -22,6 +22,7 @@ import java.time.ZoneOffset;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -187,6 +188,60 @@ public class MetricsGauges {
                                 Long::sum);
                     }
                 });
+    }
+
+    // ---- reading (the Status tab) ---------------------------------------------------------------------------------
+
+    /**
+     * The cache gauges of one distributor, as of the last refresh.
+     *
+     * @param partsByType    {@code kina_cache_parts} per type, types with no rows left out
+     * @param searchesByType {@code kina_cache_searches} per type, types with no rows left out
+     */
+    public record CacheCounts(long parts, long fresh, long stale, long staleStock, long searches,
+                              Map<String, Long> partsByType, Map<String, Long> searchesByType) {
+    }
+
+    /** The cache gauges per cached distributor (Mouser, TME), as of the last refresh. */
+    public Map<Distributor, CacheCounts> cacheCounts() {
+        Map<Distributor, CacheCounts> out = new EnumMap<>(Distributor.class);
+        for (Distributor d : CACHED) {
+            Map<String, Long> parts = byType(CACHE_PARTS, d);
+            Map<String, Long> searches = byType(CACHE_SEARCHES, d);
+            out.put(d, new CacheCounts(sum(parts), fresh.get(d).get(), stale.get(d).get(), staleStock.get(d).get(),
+                    sum(searches), parts, searches));
+        }
+        return out;
+    }
+
+    /** {@code kina_users_known}, as of the last refresh. */
+    public long usersKnown() {
+        return usersKnown.get();
+    }
+
+    /** {@code kina_users_revoked}, as of the last refresh. */
+    public long usersRevoked() {
+        return usersRevoked.get();
+    }
+
+    /** {@code kina_tokens_active}, as of the last refresh. */
+    public long tokensActive() {
+        return tokensActive.get();
+    }
+
+    private Map<String, Long> byType(Metric metric, Distributor distributor) {
+        Map<String, Long> out = new TreeMap<>();
+        typed.forEach((key, holder) -> {
+            if (key.name().equals(metric.meterName()) && distributor.name().equals(key.tag("distributor"))
+                    && holder.get() > 0) {
+                out.put(key.tag("type"), holder.get());
+            }
+        });
+        return out;
+    }
+
+    private static long sum(Map<String, Long> values) {
+        return values.values().stream().mapToLong(Long::longValue).sum();
     }
 
     private static Metric metricOf(MetricKey key) {

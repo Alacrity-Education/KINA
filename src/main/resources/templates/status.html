@@ -6,19 +6,144 @@
 <body>
 <header th:replace="~{fragments :: pageHeader(${user})}"></header>
 <main class="wide">
-    <div class="card">
-        <h1>System</h1>
-        <dl class="kv">
-            <dt>Version</dt><dd id="version" th:text="${system.version}">0.9.0</dd>
-            <dt>Mode</dt><dd th:text="${system.mode}">prod</dd>
-            <dt>Public URL</dt><dd th:text="${system.baseUrl}">https://kina.example.com</dd>
-            <dt>Uptime</dt><dd th:text="${system.uptime}">1h 2m</dd>
-            <dt>JVM memory</dt>
-            <dd th:text="${#numbers.formatInteger(system.memoryUsedMb, 1, 'COMMA')} + ' MB in use of '
-                         + ${#numbers.formatInteger(system.memoryMaxMb, 1, 'COMMA')} + ' MB'">100 MB</dd>
-        </dl>
-        <p class="muted">Reload the page to refresh.</p>
+    <div class="grid" style="margin-bottom:20px">
+        <div class="card" id="system">
+            <h2>System</h2>
+            <dl class="kv">
+                <dt>Version</dt><dd id="version" th:text="${system.version}">0.9.0</dd>
+                <dt>Mode</dt><dd th:text="${system.mode}">prod</dd>
+                <dt>Public URL</dt><dd th:text="${system.baseUrl}">https://kina.example.com</dd>
+                <dt>Uptime</dt><dd th:text="${system.uptime}">1h 2m</dd>
+                <dt>JVM memory</dt>
+                <dd th:text="${#numbers.formatInteger(system.memoryUsedMb, 1, 'COMMA')} + ' MB in use of '
+                             + ${#numbers.formatInteger(system.memoryMaxMb, 1, 'COMMA')} + ' MB'">100 MB</dd>
+            </dl>
+        </div>
+        <div class="card" id="ranking">
+            <h2>Ranking</h2>
+            <dl class="kv">
+                <dt>Mode</dt><dd th:text="${ranking.mode}">blended</dd>
+                <dt>Cross-encoder</dt>
+                <dd th:text="${ranking.crossEncoderEnabled} ? (${ranking.ready} ? 'ready' : 'not loaded') : 'disabled'">ready</dd>
+                <dt>Model</dt><dd th:text="${ranking.model}">cross-encoder/ms-marco-MiniLM-L6-v2</dd>
+                <dt>Variant</dt><dd th:text="${ranking.modelVariant}">int8</dd>
+                <dt>Threads</dt><dd th:text="${ranking.threads}">2</dd>
+                <dt>Average latency</dt>
+                <dd th:text="${ranking.avgLatencyMs != null} ? ${#numbers.formatDecimal(ranking.avgLatencyMs, 1, 'COMMA', 1, 'POINT')} + ' ms' : 'no query scored yet'">40 ms</dd>
+                <dt>Weight</dt><dd th:text="${ranking.weight}">0.5</dd>
+                <dt>Last error</dt><dd th:text="${ranking.lastError != null} ? ${ranking.lastError} : 'none'">none</dd>
+            </dl>
+        </div>
+        <div class="card" id="users">
+            <h2>Users</h2>
+            <dl class="kv">
+                <dt>Users known</dt><dd th:text="${#numbers.formatInteger(users.known, 1, 'COMMA')}">3</dd>
+                <dt>Users revoked</dt><dd th:text="${#numbers.formatInteger(users.revoked, 1, 'COMMA')}">0</dd>
+                <dt>Active tokens</dt><dd th:text="${#numbers.formatInteger(users.activeTokens, 1, 'COMMA')}">5</dd>
+            </dl>
+        </div>
     </div>
+
+    <div class="card" id="distributors">
+        <h2>Distributors</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr><th>Distributor</th><th>Configured</th><th>Available</th><th>Detail</th>
+                    <th class="num">Max per search</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${distributors}">
+                    <td th:text="${d.distributor}">LCSC</td>
+                    <td th:text="${d.configured} ? 'yes' : 'no'" th:class="${d.configured} ? 'status-active' : 'muted'">yes</td>
+                    <td th:text="${d.available} ? 'yes' : 'no'" th:class="${d.available} ? 'status-active' : 'muted'">yes</td>
+                    <td th:text="${d.detail}">JLCPCB parts database</td>
+                    <td class="num" th:text="${d.maxResultsPerSearch}">50</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" id="cache">
+        <h2>Cache</h2>
+        <p class="muted">Mouser and TME results are kept in PostgreSQL for <span th:text="${ttl}">5d</span>; LCSC is
+            served from its own database. The rows below are counted every 30 seconds.</p>
+        <dl class="kv" th:if="${cache != null}" style="margin-bottom:12px">
+            <dt>Parts</dt>
+            <dd th:text="${#numbers.formatInteger(cache.parts, 1, 'COMMA')} + ' (' + ${#numbers.formatInteger(cache.freshParts, 1, 'COMMA')} + ' fresh)'">100</dd>
+            <dt>Searches</dt><dd th:text="${#numbers.formatInteger(cache.searches, 1, 'COMMA')}">10</dd>
+            <dt>Oldest fetch</dt><dd th:text="${cache.oldestFetch != null} ? ${cache.oldestFetch} : 'none'">2026-10-01</dd>
+        </dl>
+        <p class="error" th:if="${cache == null}">The cache statistics could not be read.</p>
+        <div class="table-wrap">
+            <table id="cache-by-distributor">
+                <thead>
+                <tr><th>Distributor</th><th class="num">Parts</th><th class="num">Fresh</th><th class="num">Stale</th>
+                    <th class="num">Stale stock</th><th class="num">Searches</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${cacheRows}">
+                    <td th:text="${c.distributor}">TME</td>
+                    <td class="num" th:text="${#numbers.formatInteger(c.counts.parts, 1, 'COMMA')}">1</td>
+                    <td class="num" th:text="${#numbers.formatInteger(c.counts.fresh, 1, 'COMMA')}">1</td>
+                    <td class="num" th:text="${#numbers.formatInteger(c.counts.stale, 1, 'COMMA')}">0</td>
+                    <td class="num" th:text="${#numbers.formatInteger(c.counts.staleStock, 1, 'COMMA')}">0</td>
+                    <td class="num" th:text="${#numbers.formatInteger(c.counts.searches, 1, 'COMMA')}">1</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <h2 style="margin-top:16px">By type</h2>
+        <p class="muted" th:if="${#lists.isEmpty(typeRows)}">Nothing is cached yet.</p>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(typeRows)}">
+            <table id="cache-by-type">
+                <thead>
+                <tr>
+                    <th>Type</th>
+                    <th:block th:each="col : ${typeColumns}">
+                        <th class="num" th:text="${col} + ' parts'">TME parts</th>
+                        <th class="num" th:text="${col} + ' searches'">TME searches</th>
+                    </th:block>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${typeRows}">
+                    <td th:text="${t.type}">resistor</td>
+                    <td class="num" th:each="v : ${t.values}" th:text="${#numbers.formatInteger(v, 1, 'COMMA')}">1</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" id="counters">
+        <h2>Counters</h2>
+        <p class="muted">Since the counters were first saved to the database (they survive restarts).</p>
+        <dl class="kv" style="margin-bottom:12px">
+            <dt>Searches</dt><dd th:text="${#numbers.formatInteger(summary.searches, 1, 'COMMA')}">10</dd>
+            <dt>Search queries</dt><dd th:text="${#numbers.formatInteger(summary.searchQueries, 1, 'COMMA')}">12</dd>
+            <dt>Cross-encoder runs</dt>
+            <dd th:text="${#numbers.formatInteger(summary.crossEncoderExecutions, 1, 'COMMA')}">8</dd>
+        </dl>
+        <div class="grid">
+            <div class="card" th:each="group : ${counterGroups}">
+                <h2 th:text="${group.title}">Tool calls</h2>
+                <p class="muted" th:if="${#maps.isEmpty(group.values)}">none</p>
+                <table th:unless="${#maps.isEmpty(group.values)}">
+                    <tbody>
+                    <tr th:each="e : ${group.values}">
+                        <td th:text="${e.key}">search_parts</td>
+                        <td class="num" th:text="${#numbers.formatInteger(e.value, 1, 'COMMA')}">3</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <p class="muted" style="margin-top:12px">Metrics backfill, last completed run:
+            <span id="backfill-last-run" th:text="${backfill.lastRun != null} ? ${backfill.lastRun} : 'never'">never</span>.</p>
+    </div>
+    <p class="muted">As of <span th:text="${now}">now</span>. Reload the page to refresh.</p>
 </main>
 <footer th:replace="~{fragments :: pageFooter}"></footer>
 </body>

@@ -18,6 +18,7 @@ import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -91,6 +92,24 @@ public class MetricsBackfill {
         public long totalMoved() {
             return moved.values().stream().mapToLong(Long::longValue).sum();
         }
+    }
+
+    /**
+     * The backfill for the Status tab.
+     *
+     * @param lastRun when a run last completed; null when none did
+     * @param runs    runs by outcome ({@code ok}, {@code failed})
+     * @param moved   amount moved from {@code type=unknown} per counter name, over all runs
+     */
+    public record Status(Instant lastRun, Map<String, Long> runs, Map<String, Long> moved) {
+    }
+
+    /** The last completed run, the run counters and what the runs moved. */
+    public Status status() {
+        long last = lastRunEpochSeconds.get();
+        return new Status(last == 0 ? null : Instant.ofEpochSecond(last),
+                new TreeMap<>(store.sumBy(METRICS_BACKFILL_RUNS, "outcome")),
+                new TreeMap<>(store.sumBy(METRICS_BACKFILL_MOVED, "name")));
     }
 
     @PostConstruct
