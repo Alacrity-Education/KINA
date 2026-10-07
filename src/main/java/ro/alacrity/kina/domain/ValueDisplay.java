@@ -58,6 +58,41 @@ public interface ValueDisplay {
         }
     }
 
+    /** The value, a space and the base unit: units written as words ({@code 3000 rpm}, {@code 25 dBA}). */
+    final class Spaced implements ValueDisplay {
+
+        @Override
+        public String display(double value, Unit unit) {
+            return format(value) + " " + unit.base();
+        }
+    }
+
+    /**
+     * The value in the base unit and in the {@link Unit#alternative()} unit in brackets, three significant digits each
+     * ({@code 68 m³/h (40 CFM)}, {@code 24.5 Pa (2.5 mmH2O)}): one display rule whatever unit the text used.
+     */
+    final class WithAlternative implements ValueDisplay {
+
+        @Override
+        public String display(double value, Unit unit) {
+            String base = significant(value) + " " + unit.base();
+            String alternative = unit.alternative();
+            for (int i = 0; i < unit.symbols().length && i < unit.factors().length; i++) {
+                if (unit.symbols()[i].equalsIgnoreCase(alternative) && unit.factors()[i] > 0) {
+                    return base + " (" + significant(value / unit.factors()[i]) + " " + alternative + ")";
+                }
+            }
+            return base;
+        }
+
+        private static String significant(double v) {
+            if (v == 0) {
+                return "0";
+            }
+            return new BigDecimal(v).round(new MathContext(3)).stripTrailingZeros().toPlainString();
+        }
+    }
+
     /** Hours, with the test temperature as the condition ({@code 2000h @105°C}). */
     final class HoursAtTemperature implements ValueDisplay {
 

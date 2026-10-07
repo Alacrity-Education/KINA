@@ -258,7 +258,7 @@ public class DistributorPhraser {
         List<String> terms = new ArrayList<>();
         for (String kind : List.of(ParsedQuery.VOLTAGE, ParsedQuery.CURRENT, ParsedQuery.POWER)) {
             ParsedQuery.Constraint c = query.constraint(kind);
-            if (c != null && !ConstraintKind.isExactRating(kind, query.family())
+            if (c != null && ConstraintKind.isMinimumRating(kind, query.family())
                     && RATING_TERM.matcher(c.display()).matches()) {
                 terms.add(">=" + c.display());
             }

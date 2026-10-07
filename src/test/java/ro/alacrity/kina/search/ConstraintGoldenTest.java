@@ -36,6 +36,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * set and the queries of the search tests) is scored against every part of the evaluation set; the full records are
  * summarised per query by a SHA-256 digest, and a sample is kept readable.
  *
+ * <p>The master covers the vocabulary it was captured with: the policy families and constraint names of
+ * {@link #CAPTURED_FAMILIES} and {@link #CAPTURED_NAMES}. Families and names added later (fans, 0.13) are left out of
+ * the tables and name lists here and covered by their own tests ({@code FanTest}); every query and part of the master
+ * must still give the same results.
+ *
  * <p>Scores are compared as {@link Double#toString} strings, so they must stay bit-identical. On a mismatch the
  * current dump is written to {@code target/golden/constraints-actual.jsonl}. To recapture (only for an intended
  * behaviour change), run with {@code -Dkina.golden.write=true}.
@@ -65,6 +70,15 @@ class ConstraintGoldenTest {
             "MOSFET N-channel 60V 5A SOT-23 THT", "0805", "SMD resistor", "chassis mount resistor 50W",
             "1206 1% thick film 10k 0.25W", "tantalum 47uF 10V 1206", "4.7uF 0603", "JST XH 4 pin male",
             "pin header 1x8 2.54mm right angle male", "female header 1x4 2.0mm");
+
+    /** The policy families of the captured master, in table order. */
+    static final List<String> CAPTURED_FAMILIES = List.of("resistor", "capacitor", "inductor", "ferrite", "crystal",
+            "oscillator", "diode", "transistor", "regulator", "connector", "usb", "default");
+    /** The constraint names (policy kinds) of the captured master, sorted. */
+    static final List<String> CAPTURED_NAMES = List.of("connector type", "dcr", "dielectric", "elements", "esr",
+            "form factor", "gender", "load capacitance", "mounting", "orientation", "package", "pin configuration",
+            "pitch", "polarity", "positions", "tcr", "technology", "tolerance", "type", "usb standard", "usb type",
+            "value", "voltage");
 
     private final QueryParser parser = new QueryParser();
     private final ParametricExtractor extractor = new ParametricExtractor();
@@ -124,9 +138,9 @@ class ConstraintGoldenTest {
         String pairsFile = System.getProperty("kina.golden.pairs");
         List<String> allPairs = new ArrayList<>();
         Map<String, Object> tables = new LinkedHashMap<>();
-        policies.forEach((name, p) -> tables.put(name, p.table().entrySet().stream().collect(
-                LinkedHashMap::new, (m, e) -> m.put(e.getKey(), e.getValue().stream().sorted().toList()),
-                Map::putAll)));
+        policies.forEach((name, p) -> tables.put(name, p.table().entrySet().stream()
+                .filter(e -> CAPTURED_FAMILIES.contains(e.getKey())).collect(
+                LinkedHashMap::new, (m, e) -> m.put(e.getKey(), captured(e.getValue())), Map::putAll)));
         out.add(line(Map.of("policies", tables)));
 
         List<String> samples = new ArrayList<>();
@@ -180,10 +194,10 @@ class ConstraintGoldenTest {
 
     private Map<String, Object> perPolicy(ParsedQuery q, ConstraintPolicy p) {
         Map<String, Object> r = new LinkedHashMap<>();
-        r.put("hard", p.hardFor(q).stream().sorted().toList());
+        r.put("hard", captured(p.hardFor(q)));
         r.put("stated_hard", p.statedHard(q));
-        r.put("relaxable", ConstraintPolicy.NAMES.stream().sorted().filter(n -> p.isRelaxable(q, n)).toList());
-        r.put("reportable", ResponseAssembler.relaxable(q, ConstraintPolicy.NAMES.stream().sorted().toList(), p));
+        r.put("relaxable", CAPTURED_NAMES.stream().filter(n -> p.isRelaxable(q, n)).toList());
+        r.put("reportable", ResponseAssembler.relaxable(q, CAPTURED_NAMES, p));
         Map<String, Integer> excluded = new LinkedHashMap<>();
         excluded.put("package", 3);
         excluded.put("capacitance", 1);
@@ -199,6 +213,11 @@ class ConstraintGoldenTest {
         }
         r.put("ladders", ladders);
         return r;
+    }
+
+    /** The captured names of a set of constraint names, sorted. */
+    private static List<String> captured(java.util.Collection<String> names) {
+        return names.stream().filter(CAPTURED_NAMES::contains).sorted().toList();
     }
 
     private static List<String> steps(List<DistributorPhraser.Relaxation> steps) {
@@ -247,6 +266,9 @@ class ConstraintGoldenTest {
             all.put(family, ConstraintPolicy.NAMES.stream().sorted().toList());
             none.put(family, List.of());
         }
+        // the families added after the capture keep their defaults in the policies the master was captured with
+        all.keySet().retainAll(CAPTURED_FAMILIES);
+        none.keySet().retainAll(CAPTURED_FAMILIES);
         m.put("all_hard", ConstraintPolicy.from(search(null, all)));
         m.put("none_hard", ConstraintPolicy.from(search(null, none)));
         return m;

@@ -30,6 +30,7 @@ import static ro.alacrity.kina.domain.PolicyFamily.CAPACITOR;
 import static ro.alacrity.kina.domain.PolicyFamily.CRYSTAL;
 import static ro.alacrity.kina.domain.PolicyFamily.DEFAULT;
 import static ro.alacrity.kina.domain.PolicyFamily.DIODE;
+import static ro.alacrity.kina.domain.PolicyFamily.FAN;
 import static ro.alacrity.kina.domain.PolicyFamily.FERRITE;
 import static ro.alacrity.kina.domain.PolicyFamily.INDUCTOR;
 import static ro.alacrity.kina.domain.PolicyFamily.OSCILLATOR;
@@ -56,6 +57,10 @@ import static ro.alacrity.kina.domain.RelaxStrategy.SOFT;
  * Kinds that share a label are one attribute matched differently by request: the exact voltage of a Zener or a fixed
  * regulator and the minimum voltage rating of everything else; the gender, orientation and mounting of USB and of
  * other connectors. The policy names ({@link #policyKinds()}) are the labels of the kinds a family can make hard.
+ *
+ * <p>A numeric kind declared for some families ({@code onlyFor}) is that measure's rule for those families, and the
+ * general kind of the measure leaves them alone: the exact voltage of a Zener diode, a fixed regulator or a fan, the
+ * exact current of a fuse, the maximum current of a fan.
  */
 public enum ConstraintKind {
 
@@ -134,13 +139,15 @@ public enum ConstraintKind {
     },
 
     /**
-     * The exact voltage of a Zener diode or a fixed regulator (within 2 %): one of the voltages the part states as its
-     * specification. A rating of the group shared with the minimum ratings.
+     * The exact voltage of a Zener diode, a fixed regulator or a fan (within 2 %: a fan runs from its supply, a 24 V fan
+     * is no 12 V fan): one of the voltages the part states as its specification. A rating of the group shared with the
+     * minimum ratings.
      */
     @Relax(strategy = SOFT)
-    @Relax(strategy = NEVER, families = {DIODE, REGULATOR, DEFAULT})
+    @Relax(strategy = NEVER, families = {DIODE, REGULATOR, FAN, DEFAULT})
     @Match(mode = CUSTOM, tolerance = 0.02, weight = 0.10, group = Match.RATING, order = 16, report = 7)
-    EXACT_VOLTAGE("voltage", ParsedQuery.VOLTAGE, ComponentFamily.REGULATOR, ComponentFamily.ZENER) {
+    EXACT_VOLTAGE("voltage", ParsedQuery.VOLTAGE, ComponentFamily.REGULATOR, ComponentFamily.ZENER,
+            ComponentFamily.FAN) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
             Boolean same = exactVoltage(c);
@@ -310,6 +317,68 @@ public enum ConstraintKind {
             }
             return wanted != ParsedQuery.ANY_ELEMENTS && actual != ParsedQuery.ANY_ELEMENTS && !wanted.equals(actual)
                     ? label() + ": " + actual + " instead of " + wantedDisplay : null;
+        }
+    },
+
+    /**
+     * The fan type: axial or radial (a blower never answers an axial request, nor the reverse) and, when both sides
+     * state it, AC or DC. A part that states neither is unverified.
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = FAN)
+    @Match(mode = CUSTOM, weight = 0.15, order = 30, report = 23)
+    FAN_TYPE("fan type", q -> fanType(q.fan()), f -> fanType(f.fan())) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            ParsedQuery.Fan w = (ParsedQuery.Fan) wanted;
+            ParsedQuery.Fan a = (ParsedQuery.Fan) actual;
+            Boolean type = same(w.type(), a.type());
+            Boolean supply = same(w.supply(), a.supply());
+            if (type == Boolean.FALSE || supply == Boolean.FALSE) {
+                return -1.0;
+            }
+            return type == null && supply == null ? null : 1.0;
+        }
+
+        @Override
+        public String mismatch(MatchContext c) {
+            Double g = compare(c);
+            if (g == null || g >= 0) {
+                return null;
+            }
+            return label() + ": " + fanTypeWords(c.part().fan()) + " instead of " + fanTypeWords(c.query().fan());
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return wanted(q) == null ? null : fanTypeWords(q.fan());
+        }
+    },
+
+    /**
+     * The frame size of a fan: width and length within 0.5 mm, the depth when both state it ({@code 40x40x10mm} is no
+     * {@code 40x40x20mm}; a bare {@code 40mm} fixes width and length only).
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = NEVER, families = FAN)
+    @Match(mode = CUSTOM, weight = 0.20, order = 31, report = 24)
+    FRAME_SIZE("frame size", q -> q.fan() == null ? null : q.fan().frame(),
+            f -> f.fan() == null ? null : f.fan().frame()) {
+        @Override
+        Double grade(MatchContext c, Object wanted, Object actual) {
+            return grade(((ParsedQuery.Frame) wanted).matches((ParsedQuery.Frame) actual));
+        }
+
+        @Override
+        public String mismatch(MatchContext c) {
+            Double g = compare(c);
+            return g == null || g >= 0 ? null : label() + ": " + c.part().fan().frame().display() + " instead of "
+                    + c.query().fan().frame().display();
+        }
+
+        @Override
+        public String describes(ParsedQuery q) {
+            return q.fan() == null || q.fan().frame() == null ? null : q.fan().frame().display();
         }
     },
 
@@ -562,6 +631,22 @@ public enum ConstraintKind {
     @Relax(strategy = LADDER, order = 6)
     DCR("dcr", q -> null, f -> null),
 
+    /**
+     * The speed of a fan, within 15 % (a fan twice as fast is another, louder product): outside it a mismatch, never an
+     * exclusion; the ladder may loosen it for fans.
+     */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = LADDER, order = 7, families = FAN)
+    @Match(mode = WITHIN, tolerance = 0.15, weight = 0.10, order = 32, report = 25)
+    SPEED("speed", ParsedQuery.SPEED),
+
+    /** The bearing of a fan (ball, sleeve, fluid dynamic...): a preference; a different one is a mismatch. */
+    @Relax(strategy = SOFT)
+    @Relax(strategy = LADDER, order = 8, families = FAN)
+    @Match(mode = EQUAL, weight = 0.05, order = 33, report = 26)
+    BEARING("bearing", q -> q.fan() == null ? null : q.fan().bearing(),
+            f -> f.fan() == null ? null : f.fan().bearing()),
+
     // ---------------------------------------------------------------- ratings (not in the policy table)
 
     /**
@@ -584,6 +669,11 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Match(mode = WITHIN, tolerance = 0.02, weight = 0.10, group = Match.RATING, order = 17, report = 8)
     EXACT_CURRENT("current", ParsedQuery.CURRENT, ComponentFamily.FUSE),
+
+    /** The current a fan draws: a maximum (a fan drawing more than requested is below spec). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 17, report = 8)
+    MAX_CURRENT("current", ParsedQuery.CURRENT, ComponentFamily.FAN),
 
     /** A minimum saturation current (I_sat) of an inductor. */
     @Relax(strategy = BELOW_SPEC)
@@ -609,6 +699,21 @@ public enum ConstraintKind {
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 22, report = 13)
     MAX_DCR("dcr", ParsedQuery.DCR),
+
+    /** A minimum airflow of a fan (m³/h; CFM, m³/min and l/min are converted). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 34, report = 27)
+    AIRFLOW("airflow", ParsedQuery.AIRFLOW),
+
+    /** A minimum static pressure of a fan (Pa; mmH2O and inH2O are converted). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 35, report = 28)
+    STATIC_PRESSURE("static pressure", ParsedQuery.STATIC_PRESSURE),
+
+    /** A maximum noise of a fan (dBA). */
+    @Relax(strategy = BELOW_SPEC)
+    @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 36, report = 29)
+    NOISE("noise", ParsedQuery.NOISE),
 
     // ---------------------------------------------------------------- preferences and connector-only signals
 
@@ -636,6 +741,27 @@ public enum ConstraintKind {
             Double r = c.part().value(ParsedQuery.RESISTANCE);
             return wanted(c.query()) != null && r != null && r >= 0
                     ? Outcome.counted(weight / (1 + r / LOW_RDS_ON_REFERENCE_OHM), weight) : Outcome.NOT_STATED;
+        }
+    },
+
+    /**
+     * The features a fan request names (PWM, tacho, 4-wire, IP55...): the share of them the part states earns the
+     * weight (score only; a part that states none earns nothing).
+     */
+    @Relax(strategy = PREFERENCE)
+    @Match(mode = CUSTOM, weight = 0.04, inGrade = false, order = 37)
+    FAN_FEATURES("fan features", q -> q.fan() == null || q.fan().features().isEmpty() ? null : q.fan().features(),
+            f -> f.fan() == null || f.fan().features().isEmpty() ? null : f.fan().features()) {
+        @Override
+        public Outcome score(MatchContext c, double weight) {
+            Object wanted = wanted(c.query());
+            Object actual = actual(c.query(), c.part());
+            if (wanted == null || actual == null) {
+                return Outcome.NOT_STATED;
+            }
+            List<?> w = (List<?>) wanted;
+            long found = w.stream().filter(((List<?>) actual)::contains).count();
+            return Outcome.counted(weight * found / w.size(), weight);
         }
     },
 
@@ -776,7 +902,9 @@ public enum ConstraintKind {
     private static final List<ConstraintKind> LADDER_KINDS;
     private static final List<String> RATING_MEASURES;
     private static final Map<String, ConstraintKind> BY_POLICY_NAME = new HashMap<>();
-    /** The families of the exact ratings, by measure ({@code voltage} -&gt; regulator, zener). */
+    /** The families with a rule of their own for a measure ({@code voltage} -&gt; regulator, zener, fan). */
+    private static final Map<String, Set<String>> VARIANT_FAMILIES = new HashMap<>();
+    /** The families whose rule of a measure is exact (not a minimum or maximum), by measure. */
     private static final Map<String, Set<String>> EXACT_FAMILIES = new HashMap<>();
 
     static {
@@ -809,11 +937,14 @@ public enum ConstraintKind {
                     reported.add(k);
                 }
             }
-            if (k.generalStrategy() == LADDER) {
+            if (k.relax.stream().anyMatch(r -> r.strategy() == LADDER)) {
                 ladder.add(k);
             }
             if (!k.onlyFor.isEmpty()) {
-                EXACT_FAMILIES.computeIfAbsent(k.measure, m -> new LinkedHashSet<>()).addAll(k.onlyFor);
+                VARIANT_FAMILIES.computeIfAbsent(k.measure, m -> new LinkedHashSet<>()).addAll(k.onlyFor);
+                if (k.match.mode() != AT_LEAST && k.match.mode() != AT_MOST) {
+                    EXACT_FAMILIES.computeIfAbsent(k.measure, m -> new LinkedHashSet<>()).addAll(k.onlyFor);
+                }
             }
         }
         scored.sort(Comparator.comparingInt(k -> k.match.order()));
@@ -836,6 +967,9 @@ public enum ConstraintKind {
         if (generalStrategy() == NEVER) {
             throw new IllegalStateException(this + ": the general @Relax is the strategy when a family does not make "
                     + "the kind hard; NEVER belongs to family-specific declarations");
+        }
+        if (relax.stream().filter(r -> r.strategy() == LADDER).count() > 1) {
+            throw new IllegalStateException(this + ": one LADDER declaration (its order is the ladder position)");
         }
         if (match != null && !match.group().isEmpty() && measure == null) {
             throw new IllegalStateException(this + ": a group member needs a measure");
@@ -882,6 +1016,15 @@ public enum ConstraintKind {
      */
     public RelaxStrategy strategy(PolicyFamily family) {
         return declaration(family).strategy();
+    }
+
+    /**
+     * The strategy for a policy family when it does not make the kind hard: its own declaration unless that is
+     * {@link RelaxStrategy#NEVER} (the speed of a fan is {@link RelaxStrategy#LADDER}), else the general one.
+     */
+    public RelaxStrategy relaxedStrategy(PolicyFamily family) {
+        RelaxStrategy declared = strategy(family);
+        return declared == NEVER ? generalStrategy() : declared;
     }
 
     /** The ladder position of a {@link RelaxStrategy#LADDER} kind. */
@@ -961,7 +1104,7 @@ public enum ConstraintKind {
         return REPORTED;
     }
 
-    /** The {@link RelaxStrategy#LADDER} kinds in ladder order. */
+    /** The kinds with a {@link RelaxStrategy#LADDER} declaration (general or for a family), in ladder order. */
     public static List<ConstraintKind> ladder() {
         return LADDER_KINDS;
     }
@@ -982,7 +1125,7 @@ public enum ConstraintKind {
         if (c == null) {
             return null;
         }
-        return onlyFor.isEmpty() ? (isExactRating(measure, q.family()) ? null : c)
+        return onlyFor.isEmpty() ? (hasVariant(measure, q.family()) ? null : c)
                 : q.family() != null && onlyFor.contains(q.family()) ? c : null;
     }
 
@@ -999,6 +1142,14 @@ public enum ConstraintKind {
     /** True when a hint names the kind as a stated hard constraint. */
     public boolean namedInHint(ParsedQuery q) {
         return wanted(q) != null;
+    }
+
+    /**
+     * The words a hint describes the request with for this kind ({@code DC axial}, {@code 40x40x10mm}), null for the
+     * kinds the description names otherwise (value, polarity, package...).
+     */
+    public String describes(ParsedQuery q) {
+        return null;
     }
 
     /** The comparison of the stated and the known value: 1 match, -1 miss, between for partial, null not comparable. */
@@ -1108,10 +1259,27 @@ public enum ConstraintKind {
 
     /**
      * True when a rating of {@code kind} must match rather than be exceeded: the output voltage of a regulator, the
-     * Zener voltage, the current of a fuse (the families of the exact rating kinds).
+     * Zener voltage, the supply voltage of a fan, the current of a fuse (the families of the exact rating kinds).
      */
     public static boolean isExactRating(String kind, String family) {
         return family != null && EXACT_FAMILIES.getOrDefault(kind, Set.of()).contains(family);
+    }
+
+    /**
+     * True when a rating of {@code kind} is a minimum for {@code family} (a part rated higher satisfies it): the
+     * general rule of the measure is a minimum and the family has no rule of its own (a fan's current is a maximum).
+     */
+    public static boolean isMinimumRating(String kind, String family) {
+        if (hasVariant(kind, family)) {
+            return false;
+        }
+        return SCORED.stream().anyMatch(k -> kind.equals(k.measure) && k.onlyFor.isEmpty() && k.isRating()
+                && k.match.mode() == AT_LEAST);
+    }
+
+    /** True when {@code family} has a rule of its own for the measure {@code kind} ({@link #EXACT_VOLTAGE}...). */
+    private static boolean hasVariant(String kind, String family) {
+        return family != null && VARIANT_FAMILIES.getOrDefault(kind, Set.of()).contains(family);
     }
 
     /** True when {@code actual} is within {@code relativeTolerance} of {@code wanted}. */
@@ -1237,6 +1405,21 @@ public enum ConstraintKind {
         }
         return ComponentFamily.REGULATOR.label().equals(wanted) && q.subtype() != null && f.subtype() != null
                 && !q.subtype().equals(f.subtype());
+    }
+
+    /** The fan attributes of a request or part when they state the type or the supply, else null. */
+    private static ParsedQuery.Fan fanType(ParsedQuery.Fan fan) {
+        return fan == null || fan.type() == null && fan.supply() == null ? null : fan;
+    }
+
+    /** {@code DC axial}, {@code radial}, {@code AC}: the supply and the type words. */
+    private static String fanTypeWords(ParsedQuery.Fan fan) {
+        return ((fan.supply() == null ? "" : fan.supply()) + " " + (fan.type() == null ? "" : fan.type())).strip();
+    }
+
+    /** Equal, different, or null when either is unknown. */
+    private static Boolean same(String wanted, String actual) {
+        return wanted == null || actual == null ? null : wanted.equals(actual);
     }
 
     /** A Schottky, Zener, TVS or LED family (a standard rectifier is none of them). */

@@ -48,6 +48,9 @@ public interface PartFeatures {
 
     ParsedQuery.Connector connector();
 
+    /** The fan attributes of a fan (type, supply, frame size, bearing, features), else null. */
+    ParsedQuery.Fan fan();
+
     /** The voltages the part states as its specification (Zener voltage, output voltages), never null. */
     List<Double> voltages();
 

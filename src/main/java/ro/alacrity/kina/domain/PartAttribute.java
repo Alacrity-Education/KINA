@@ -189,6 +189,24 @@ public enum PartAttribute {
     @Source(precedence = 9, logic = Described.class)
     TOLERANCE(ParsedQuery.TOLERANCE, "Tolerance"),
 
+    /** The rotational speed of a fan ({@code 3000 rpm}; {@code r/min} is read as rpm). */
+    @Unit(symbols = "rpm", base = "rpm", display = ValueDisplay.Spaced.class, families = ComponentFamily.FAN)
+    SPEED(ParsedQuery.SPEED, "Speed"),
+
+    /** The airflow of a fan in m³/h, shown with its CFM ({@code 68 m³/h (40 CFM)}); {@code m3/h} is read as m3h. */
+    @Unit(symbols = {"cfm", "m3h", "m3min", "lmin"}, factors = {1.699011, 1, 60, 0.06}, base = "m³/h",
+            display = ValueDisplay.WithAlternative.class, alternative = "CFM", families = ComponentFamily.FAN)
+    AIRFLOW(ParsedQuery.AIRFLOW, "Airflow"),
+
+    /** The static pressure of a fan in pascal, shown with its mmH2O ({@code 24.5 Pa (2.5 mmH2O)}). */
+    @Unit(symbols = {"pa", "mmh2o", "mmaq", "inh2o"}, factors = {1, 9.80665, 9.80665, 249.089}, base = "Pa",
+            display = ValueDisplay.WithAlternative.class, alternative = "mmH2O", families = ComponentFamily.FAN)
+    STATIC_PRESSURE(ParsedQuery.STATIC_PRESSURE, "StaticPressure"),
+
+    /** The acoustic noise of a fan ({@code 25 dBA}; {@code dB(A)} and a bare {@code dB} are read as dBA). */
+    @Unit(symbols = {"dba", "db"}, base = "dBA", display = ValueDisplay.Spaced.class, families = ComponentFamily.FAN)
+    NOISE(ParsedQuery.NOISE, "Noise"),
+
     // ---------------------------------------------------------------- numeric details
 
     /** The test frequency of a ferrite bead's impedance (Mouser {@code Test Frequency}), read by {@link #IMPEDANCE}. */
@@ -354,7 +372,8 @@ public enum PartAttribute {
 
     /** The numeric attributes the extractor reports, in output order. */
     public static final List<PartAttribute> VALUES = List.of(CAPACITANCE, RESISTANCE, INDUCTANCE, IMPEDANCE,
-            FREQUENCY, VOLTAGE, CURRENT, SATURATION_CURRENT, DCR, POWER, TEMPERATURE, LIFETIME, TOLERANCE);
+            FREQUENCY, VOLTAGE, CURRENT, SATURATION_CURRENT, DCR, POWER, TEMPERATURE, LIFETIME, TOLERANCE, SPEED,
+            AIRFLOW, STATIC_PRESSURE, NOISE);
 
     private final String kind;
     private final String key;
@@ -448,6 +467,19 @@ public enum PartAttribute {
         return Declarations.SYMBOLS;
     }
 
+    /** The base units of one {@code symbol} ({@link Unit#factors()}): 1.699011 for {@code cfm}, 1 for most. */
+    public static double symbolFactor(String symbol) {
+        return Declarations.FACTORS.getOrDefault(symbol, 1.0);
+    }
+
+    /**
+     * The labels of the families whose texts read {@code symbol} ({@link Unit#families()}); empty when every text
+     * does.
+     */
+    public static java.util.Set<String> symbolFamilies(String symbol) {
+        return Declarations.SYMBOL_FAMILIES.getOrDefault(symbol, java.util.Set.of());
+    }
+
     /** The attribute reported under a canonical name, null for none. */
     public static PartAttribute ofKey(String key) {
         for (PartAttribute a : VALUES) {
@@ -522,6 +554,8 @@ public enum PartAttribute {
         static final Map<PartAttribute, Unit> UNITS = new EnumMap<>(PartAttribute.class);
         static final Map<PartAttribute, List<Declared>> SOURCES = new EnumMap<>(PartAttribute.class);
         static final Map<String, String> SYMBOLS;
+        static final Map<String, Double> FACTORS = new java.util.HashMap<>();
+        static final Map<String, java.util.Set<String>> SYMBOL_FAMILIES = new java.util.HashMap<>();
 
         static {
             Map<String, String> symbols = new LinkedHashMap<>();
@@ -530,9 +564,21 @@ public enum PartAttribute {
                 Unit unit = field.getAnnotation(Unit.class);
                 if (unit != null) {
                     UNITS.put(a, unit);
-                    for (String symbol : unit.symbols()) {
+                    if (unit.factors().length > 0 && unit.factors().length != unit.symbols().length) {
+                        throw new IllegalStateException(a + ": one factor per unit symbol");
+                    }
+                    java.util.Set<String> families = Arrays.stream(unit.families()).map(ComponentFamily::label)
+                            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+                    for (int i = 0; i < unit.symbols().length; i++) {
+                        String symbol = unit.symbols()[i];
                         if (symbols.putIfAbsent(symbol, a.kind) != null) {
                             throw new IllegalStateException("unit symbol declared twice: " + symbol);
+                        }
+                        if (unit.factors().length > 0) {
+                            FACTORS.put(symbol, unit.factors()[i]);
+                        }
+                        if (!families.isEmpty()) {
+                            SYMBOL_FAMILIES.put(symbol, families);
                         }
                     }
                 }

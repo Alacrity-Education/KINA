@@ -15,6 +15,8 @@ public enum PolicyFamily {
     /** Transistors and MOSFETs. */
     TRANSISTOR,
     REGULATOR, CONNECTOR, USB,
+    /** Fans and blowers. */
+    FAN,
     /** Every other family, and requests whose family is not known. */
     DEFAULT;
 

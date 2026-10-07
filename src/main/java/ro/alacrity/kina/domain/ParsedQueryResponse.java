@@ -17,7 +17,9 @@ import java.util.Map;
  * ("4", or "array" without a count) when it asks for an array or network; {@code polarity} ("N-channel", "NPN"...) and
  * {@code subtype} ("standard" diode, "fixed" or "adjustable" regulator) when stated or implied; {@code form_factor}
  * ("chassis") when the words ask for a chassis or heatsink mounted part; {@code part_numbers} ({@code ["uP1966E"]}) when it
- * names part numbers (DESIGN.md 3.4 "Requested part numbers").
+ * names part numbers (DESIGN.md 3.4 "Requested part numbers"); for a fan request {@code fan_type} ("axial", "radial"),
+ * {@code fan_supply} ("DC", "AC"), {@code frame_size} ("40x40x10mm"), {@code bearing} ("ball") and
+ * {@code fan_features} ({@code ["PWM"]}) when stated (DESIGN.md 3.4 "Fans").
  * Constraints are flattened into the object by kind using their display form; absent values are omitted.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -35,24 +37,34 @@ public record ParsedQueryResponse(
         @JsonProperty("polarity") String polarity,
         @JsonProperty("subtype") String subtype,
         @JsonProperty("form_factor") String formFactor,
-        @JsonProperty("part_numbers") List<String> partNumbers
+        @JsonProperty("part_numbers") List<String> partNumbers,
+        @JsonProperty("fan_type") String fanType,
+        @JsonProperty("fan_supply") String fanSupply,
+        @JsonProperty("frame_size") String frameSize,
+        @JsonProperty("bearing") String bearing,
+        @JsonProperty("fan_features") List<String> fanFeatures
 ) {
 
     /** A parsed query without connector attributes and technology. */
     public ParsedQueryResponse(String family, Map<String, String> constraints, String dielectric, String packageName,
                                String mounting, List<String> keywords) {
-        this(family, constraints, dielectric, packageName, mounting, null, keywords, null, null, null, null, null, null);
+        this(family, constraints, dielectric, packageName, mounting, null, keywords, null, null, null, null, null, null,
+                null, null, null, null, null);
     }
 
     public static ParsedQueryResponse from(ParsedQuery query) {
         Map<String, String> constraints = new LinkedHashMap<>();
         query.constraints().forEach((kind, c) -> constraints.put(kind, c.display()));
+        ParsedQuery.Fan fan = query.fan();
         return new ParsedQueryResponse(query.family(), constraints, query.dielectric(), query.packageName(),
                 query.mounting(), query.technology(), query.keywords(), ConnectorResponse.from(query.connector()),
                 query.elements() == null ? null
                         : query.elements() == ParsedQuery.ANY_ELEMENTS ? "array" : query.elements().toString(),
                 query.polarity(), query.subtype(), query.formFactor(),
-                query.partNumbers().isEmpty() ? null : query.partNumbers());
+                query.partNumbers().isEmpty() ? null : query.partNumbers(),
+                fan == null ? null : fan.type(), fan == null ? null : fan.supply(),
+                fan == null || fan.frame() == null ? null : fan.frame().display(), fan == null ? null : fan.bearing(),
+                fan == null || fan.features().isEmpty() ? null : fan.features());
     }
 
     /**

@@ -51,10 +51,20 @@ class ExtractionTableDocumentationTest {
         }
         StringBuilder out = new StringBuilder("`" + unit.base() + "`");
         if (unit.symbols().length > 0) {
-            out.append(" from ").append(code(unit.symbols()));
+            List<String> symbols = new ArrayList<>();
+            for (int i = 0; i < unit.symbols().length; i++) {
+                double factor = unit.factors().length > 0 ? unit.factors()[i] : 1;
+                symbols.add("`" + unit.symbols()[i] + "`" + (factor == 1 ? "" : " ×" + ValueDisplay.format(factor)));
+            }
+            out.append(" from ").append(String.join(", ", symbols));
+        }
+        if (unit.families().length > 0) {
+            out.append(" in ").append(code(Arrays.stream(unit.families()).map(ComponentFamily::label)
+                    .toArray(String[]::new)));
         }
         if (unit.display() != ValueDisplay.Prefixed.class) {
-            out.append(" (").append(unit.display().getSimpleName()).append(")");
+            out.append(" (").append(unit.display().getSimpleName())
+                    .append(unit.alternative().isEmpty() ? "" : ", `" + unit.alternative() + "`").append(")");
         }
         return out.toString();
     }

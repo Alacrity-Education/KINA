@@ -174,10 +174,11 @@ public final class ConstraintPolicy {
 
     /**
      * The strategy of a kind for the request under this policy: {@link RelaxStrategy#NEVER} when the family makes it
-     * hard, else its general strategy.
+     * hard, else the family's own declaration when that is not NEVER (the speed of a fan is relaxable), else its general
+     * strategy ({@link ConstraintKind#relaxedStrategy}).
      */
     public RelaxStrategy strategy(ParsedQuery query, ConstraintKind kind) {
-        return hardKinds(query).contains(kind) ? RelaxStrategy.NEVER : kind.generalStrategy();
+        return hardKinds(query).contains(kind) ? RelaxStrategy.NEVER : kind.relaxedStrategy(PolicyFamily.of(query));
     }
 
     /** True when {@code name} may be loosened for the request: a ladder kind its family does not make hard. */
@@ -276,8 +277,9 @@ public final class ConstraintPolicy {
     }
 
     /**
-     * A short description of the request for a hint: the primary value, the polarity or subtype, the family and the
-     * package ({@code 22uF capacitor in package 1206}, {@code N-channel mosfet in package SOT-23}).
+     * A short description of the request for a hint: the primary value, the polarity or subtype, the words of the
+     * declared kinds ({@link ConstraintKind#describes}), the family and the package ({@code 22uF capacitor in package
+     * 1206}, {@code N-channel mosfet in package SOT-23}, {@code 12V DC axial 40x40x10mm fan}).
      */
     static String describe(ParsedQuery query) {
         List<String> words = new ArrayList<>();
@@ -294,6 +296,13 @@ public final class ConstraintPolicy {
         }
         if (query.subtype() != null) {
             words.add(query.subtype());
+        }
+        // the words the declared kinds describe the request with (a fan's type and frame size)
+        for (ConstraintKind kind : ConstraintKind.policyKinds()) {
+            String described = kind.describes(query);
+            if (described != null) {
+                words.add(described);
+            }
         }
         ParsedQuery.Connector c = query.connector();
         if (c != null) {

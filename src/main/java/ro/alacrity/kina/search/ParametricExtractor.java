@@ -168,7 +168,7 @@ public class ParametricExtractor {
     record Features(String family, Map<String, Recognizers.Value> values, String dielectric, String packageName,
                     String mounting, String text, ParsedQuery.Connector connector, String technology,
                     Integer elements, Map<String, String> details, String polarity, String subtype,
-                    List<Double> voltages, String formFactor) implements PartFeatures {
+                    List<Double> voltages, String formFactor, ParsedQuery.Fan fan) implements PartFeatures {
 
         Features {
             details = details == null ? Map.of() : details;
@@ -421,7 +421,7 @@ public class ParametricExtractor {
         return new Features(family, values, dielectric, packageName, mounting,
                 Recognizers.normalizeKey(text.toString()), connector, connector != null ? null : technology,
                 connector == null ? ctx.read(PartAttribute.ELEMENTS, Integer.class) : null, details, polarity, subtype,
-                voltages, formFactor);
+                voltages, formFactor, null);
     }
 
     /**

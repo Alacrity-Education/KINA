@@ -47,7 +47,9 @@ public enum ComponentFamily {
     CONNECTOR("connector", PolicyFamily.CONNECTOR),
     FUSE("fuse", PolicyFamily.DEFAULT),
     RELAY("relay", PolicyFamily.DEFAULT),
-    SWITCH("switch", PolicyFamily.DEFAULT);
+    SWITCH("switch", PolicyFamily.DEFAULT),
+    /** Fans and blowers: axial or radial, with a frame size, an exact supply voltage and airflow ratings. */
+    FAN("fan", PolicyFamily.FAN);
 
     /** What a family's parts have in common. */
     public enum Trait {

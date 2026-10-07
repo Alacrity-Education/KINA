@@ -23,6 +23,7 @@ import static ro.alacrity.kina.domain.ComponentFamily.COMPARATOR;
 import static ro.alacrity.kina.domain.ComponentFamily.CONNECTOR;
 import static ro.alacrity.kina.domain.ComponentFamily.CRYSTAL;
 import static ro.alacrity.kina.domain.ComponentFamily.DIODE;
+import static ro.alacrity.kina.domain.ComponentFamily.FAN;
 import static ro.alacrity.kina.domain.ComponentFamily.FERRITE;
 import static ro.alacrity.kina.domain.ComponentFamily.FUSE;
 import static ro.alacrity.kina.domain.ComponentFamily.INDUCTOR;
@@ -200,6 +201,9 @@ class Recognizers {
         // spaced forms serve the lexical family check of part texts); they win over "MOSFET", "FET", "transistor"
         family(4, false, ComponentFamily.GATE_DRIVER, "gate-driver", "power-stage", "half-bridge-driver",
                 "gate driver", "gate drivers", "power stage");
+        // fans and blowers ("axial fan", "cooling fan", "DC fan": the type and supply words are FanVocabulary's);
+        // the lowest priority, so "fan connector" stays a connector and "fan driver" names no fan
+        family(1, false, FAN, "fan", "fans", "blower", "blowers");
     }
 
 
@@ -598,10 +602,32 @@ class Recognizers {
      * KEMET {@code vol} and {@code vo}; {@code a}; {@code w}, {@code watt}, {@code watts}; {@code hz}), longest first.
      */
     private static String unitAlternation() {
-        return String.join("|", PartAttribute.unitSymbols().keySet().stream()
+        return alternation(PartAttribute.unitSymbols().keySet().stream()
+                .filter(symbol -> PartAttribute.symbolFamilies(symbol).isEmpty()).toList());
+    }
+
+    private static String alternation(List<String> symbols) {
+        return String.join("|", symbols.stream()
                 .sorted(java.util.Comparator.comparingInt(String::length).reversed()
                         .thenComparing(java.util.Comparator.naturalOrder()))
                 .toList());
+    }
+
+    /**
+     * The value patterns of the units only some families' texts use ({@code @Unit(families = ...)}: {@code rpm},
+     * {@code cfm}, {@code Pa}, {@code dBA} of fans), by family label. Tried before the general pattern, so {@code 50Pa}
+     * of a fan is a pressure (and {@code 10pA} of an op amp stays a current).
+     */
+    private static final Map<String, Pattern> FAMILY_UNIT_VALUES = familyUnitValues();
+
+    private static Map<String, Pattern> familyUnitValues() {
+        Map<String, List<String>> byFamily = new LinkedHashMap<>();
+        PartAttribute.unitSymbols().keySet().forEach(symbol -> PartAttribute.symbolFamilies(symbol)
+                .forEach(f -> byFamily.computeIfAbsent(f, x -> new ArrayList<>()).add(symbol)));
+        Map<String, Pattern> out = new LinkedHashMap<>();
+        byFamily.forEach((f, symbols) -> out.put(f, Pattern.compile(
+                "^(\\d+(?:\\.\\d+)?|\\.\\d+)(kilo|[kKmM]?)(" + alternation(symbols) + ")$", Pattern.CASE_INSENSITIVE)));
+        return Map.copyOf(out);
     }
 
     /** Parses a tolerance token ("±5%", "1%", ".1%") to percent, or null. */
@@ -621,6 +647,17 @@ class Recognizers {
      * always henry: hours never carry one.
      */
     static Value value(String token, String family) {
+        Pattern familyUnits = family == null ? null : FAMILY_UNIT_VALUES.get(family);
+        if (familyUnits != null) {
+            Matcher f = familyUnits.matcher(token);
+            if (f.matches()) {
+                String symbol = f.group(3).toLowerCase(Locale.ROOT);
+                String kind = PartAttribute.unitSymbols().get(symbol);
+                Double multiplier = multiplier(f.group(2), kind);
+                return multiplier == null ? null
+                        : of(kind, Double.parseDouble(f.group(1)) * multiplier * PartAttribute.symbolFactor(symbol));
+            }
+        }
         Matcher m = P_FRACTION_POWER.matcher(token);
         if (m.matches()) {
             double den = Double.parseDouble(m.group(2));

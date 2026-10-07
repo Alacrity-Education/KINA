@@ -130,7 +130,7 @@ class KinaMetricsTest {
         assertThat(KinaMetrics.typeOf((SearchResponse) null)).isEqualTo("unknown");
         assertThat(QueryParser.families()).containsExactlyInAnyOrder("capacitor", "resistor", "inductor", "ferrite",
                 "diode", "schottky", "zener", "led", "mosfet", "transistor", "regulator", "opamp", "comparator", "mcu",
-                "crystal", "oscillator", "connector", "fuse", "tvs", "relay", "switch", "gate driver");
+                "crystal", "oscillator", "connector", "fuse", "tvs", "relay", "switch", "gate driver", "fan");
         assertThat(QueryParser.families()).allSatisfy(f -> assertThat(KinaMetrics.typeOf(f)).isEqualTo(f));
     }
 

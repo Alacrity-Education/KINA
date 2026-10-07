@@ -44,6 +44,8 @@ import java.util.Map;
  *                     and digits mixed, at least 5 characters, no value, unit, package or vocabulary word
  *                     ({@code search.PartNumbers}); a part whose MPN or distributor part number equals one or starts
  *                     with it is the requested part (DESIGN.md 3.4 "Requested part numbers"); empty when none
+ * @param fan          the fan attributes of a fan request (family {@code "fan"}: type, supply, frame size, bearing,
+ *                     features; DESIGN.md 3.4 "Fans"), else null
  */
 @Builder(toBuilder = true)
 public record ParsedQuery(
@@ -62,7 +64,8 @@ public record ParsedQuery(
         String polarity,
         String subtype,
         String formFactor,
-        List<String> partNumbers
+        List<String> partNumbers,
+        Fan fan
 ) {
 
     /** {@link #elements()} of a request for an array or network whose element count is not stated. */
@@ -86,6 +89,21 @@ public record ParsedQuery(
     public static final String TEMPERATURE = "temperature";
     /** Rated lifetime (endurance) in hours, at the temperature in {@link Constraint#condition()} when stated. */
     public static final String LIFETIME = "lifetime";
+    /** Rotational speed of a fan, in rpm; within 15 % (DESIGN.md 3.4 "Fans"). */
+    public static final String SPEED = "speed";
+    /** Airflow of a fan, in m³/h; a minimum. */
+    public static final String AIRFLOW = "airflow";
+    /** Static pressure of a fan, in pascal; a minimum. */
+    public static final String STATIC_PRESSURE = "static_pressure";
+    /** Acoustic noise of a fan, in dBA; a maximum. */
+    public static final String NOISE = "noise";
+
+    /** Fan types ({@link Fan#type()}): an axial fan, a radial (centrifugal) fan or blower. */
+    public static final String AXIAL = "axial";
+    public static final String RADIAL = "radial";
+    /** Fan supplies ({@link Fan#supply()}). */
+    public static final String DC = "DC";
+    public static final String AC = "AC";
 
     /** Preference: lower DC resistance ranks higher ("low DCR"). */
     public static final String LOW_DCR = "low dcr";
@@ -147,7 +165,7 @@ public record ParsedQuery(
     public ParsedQuery(String originalText, String normalizedKey, String family, Map<String, Constraint> constraints,
                        String dielectric, String packageName, String mounting, List<String> keywords) {
         this(originalText, normalizedKey, family, constraints, dielectric, packageName, mounting, keywords, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 
     /**
@@ -158,7 +176,7 @@ public record ParsedQuery(
     public boolean understood() {
         return family != null || !constraints.isEmpty() || dielectric != null || packageName != null
                 || mounting != null || technology != null || connector != null || elements != null
-                || formFactor != null;
+                || formFactor != null || fan != null;
     }
 
     /** True when the query names a part number ({@link #partNumbers}). */
@@ -241,6 +259,66 @@ public record ParsedQuery(
             }
             String s = java.math.BigDecimal.valueOf(pitchMm).stripTrailingZeros().toPlainString();
             return s + "mm";
+        }
+    }
+
+    /**
+     * Fan attributes of a query or a part (DESIGN.md 3.4 "Fans"). Every field is null when unknown.
+     *
+     * @param type     {@link #AXIAL} or {@link #RADIAL} (a blower, a centrifugal fan)
+     * @param supply   {@link #DC} or {@link #AC}
+     * @param frame    the frame size
+     * @param bearing  {@code ball}, {@code sleeve}, {@code fluid dynamic}, {@code rifle} or {@code magnetic}
+     * @param features {@code PWM}, {@code tacho}, {@code 3-wire}, {@code 4-wire}, {@code IP55}, {@code auto restart}...,
+     *                 never null
+     */
+    @Builder(toBuilder = true)
+    public record Fan(String type, String supply, Frame frame, String bearing, List<String> features) {
+
+        public Fan {
+            features = features == null ? List.of() : List.copyOf(features);
+        }
+
+        /** True when no attribute is known. */
+        public boolean isEmpty() {
+            return type == null && supply == null && frame == null && bearing == null && features.isEmpty();
+        }
+    }
+
+    /**
+     * The frame size of a fan in millimetres: width and length (equal for a square frame) and the depth when stated
+     * ({@code 40x40x10mm}; a bare {@code 120mm} states width and length only).
+     */
+    public record Frame(double width, double length, Double depth) {
+
+        /** Largest difference in millimetres between two dimensions that are the same. */
+        public static final double TOLERANCE_MM = 0.5;
+
+        /**
+         * True when {@code actual} is this frame: width and length within {@value #TOLERANCE_MM} mm (in either order),
+         * and the depth within it when both state one.
+         */
+        public boolean matches(Frame actual) {
+            boolean straight = same(width, actual.width) && same(length, actual.length);
+            boolean crossed = same(width, actual.length) && same(length, actual.width);
+            return (straight || crossed) && (depth == null || actual.depth == null || same(depth, actual.depth));
+        }
+
+        private static boolean same(double a, double b) {
+            return Math.abs(a - b) <= TOLERANCE_MM + 1e-9;
+        }
+
+        /** {@code 40x40x10mm}, {@code 120mm} (width and length only, square), {@code 97x94x33mm}. */
+        public String display() {
+            String w = number(width);
+            if (depth == null && Math.abs(width - length) < 1e-9) {
+                return w + "mm";
+            }
+            return w + "x" + number(length) + (depth == null ? "" : "x" + number(depth)) + "mm";
+        }
+
+        private static String number(double v) {
+            return java.math.BigDecimal.valueOf(v).stripTrailingZeros().toPlainString();
         }
     }
 

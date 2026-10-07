@@ -1047,6 +1047,7 @@ each kind (resistance, capacitance, "a higher USB standard is accepted"...) are 
 | `regulator` | `type`, `voltage`, `package`, `mounting` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `connector` | `type`, `package`, `mounting`, `connector type`, `positions`, `pitch`, `gender` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 | `usb` | `type`, `mounting`, `usb type`, `pin configuration`, `usb standard`, `gender` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
+| `fan` | `type`, `voltage`, `mounting`, `fan type`, `frame size` | `dielectric`, `package`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr`, `speed`, `bearing` |
 | `default` | `type`, `polarity`, `value`, `voltage`, `package`, `mounting`, `technology`, `form factor`, `elements` | `dielectric`, `tolerance`, `orientation`, `tcr`, `esr`, `dcr` |
 
 Ratings (minimum voltage, current, saturation current, power, temperature, lifetime; maximum DCR) are not in the
@@ -1431,7 +1432,7 @@ numbers, only counts with the bounded tags below.
 search counters is the component type of the query: the parser family (`ParsedQuery.family()`, section 3.4) in lower
 case, one of `resistor`, `capacitor`, `inductor`, `ferrite`, `crystal`, `oscillator`, `diode`, `schottky`, `zener`,
 `tvs`, `led`, `transistor`, `mosfet`, `gate driver`, `regulator`, `opamp`, `comparator`, `mcu`, `connector`, `fuse`,
-`relay`, `switch` (the labels of `domain.ComponentFamily`, `QueryParser.families()`), or `unknown` when the parser
+`relay`, `switch`, `fan` (the labels of `domain.ComponentFamily`, `QueryParser.families()`), or `unknown` when the parser
 recognised no family.
 No other value is possible (connector and USB sub-types are not tags), so the tag set stays bounded.
 
