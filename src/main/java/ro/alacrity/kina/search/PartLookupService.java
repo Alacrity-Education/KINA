@@ -34,7 +34,9 @@ import java.util.concurrent.TimeoutException;
 /**
  * Looks up one part by distributor part number ({@code get_part}; the clients also accept a manufacturer part number
  * where a retry is cheap, see {@link DistributorClient#lookup}). A part the distributor lists without ships-now stock is
- * reported as {@code out_of_stock} with its identity, never returned as a part and never cached. Mouser/TME: the
+ * reported as {@code out_of_stock} with its identity and, when the distributor gives its data, the part itself with
+ * stock 0 (the part number was requested explicitly: the one exception to the stock rule, DESIGN.md 2); its cached
+ * row carries {@code in_stock = false} and is never served from the cache. Mouser/TME: the
  * {@code cached_parts} row unless {@code bypassCache} (its stock refreshed when older than {@code kina.cache.stock-ttl};
  * beyond {@code kina.cache.ttl} without a refresh the part is looked up live and served with {@code stale: true} only
  * when that fails or the distributor is not configured), else the distributor, caching the result. LCSC: the JLCPCB
@@ -79,7 +81,7 @@ public class PartLookupService {
      * @throws IllegalArgumentException when the part number is blank
      */
     public Optional<PartResponse> getPart(Distributor distributor, String partNumber, boolean bypassCache) {
-        return Optional.ofNullable(lookup(distributor, partNumber, bypassCache).part());
+        return Optional.ofNullable(lookup(distributor, partNumber, bypassCache).part()).filter(p -> p.stock() > 0);
     }
 
     /**
@@ -152,9 +154,19 @@ public class PartLookupService {
             if (stale != null) {
                 markSoldOut(distributor, stale.distributorPartNumber());
             }
+            // the part number was requested explicitly: the listed part is returned with stock 0 (DESIGN.md 2)
+            Part listed = result.listed().map(this::prepare).orElse(null);
+            if (listed != null && cached) {
+                try {
+                    partCache.upsertListed(List.of(listed));
+                } catch (RuntimeException e) {
+                    log.warn("Caching listed {} part {} failed: {}", distributor, number, e.toString());
+                }
+            }
             PartLookupResult.Identity id = result.identity();
             return PartLookupResponse.outOfStock(distributor, number, status, new PartLookupResponse.Identity(
-                    id.partNumber(), id.manufacturer(), id.mpn(), id.description()));
+                    id.partNumber(), id.manufacturer(), id.mpn(), id.description()),
+                    listed == null ? null : response(listed, quantity, detail, false));
         }
         Optional<Part> part = result.asOptional().filter(p -> p.stock() > 0).map(this::prepare);
         if (part.isEmpty()) {

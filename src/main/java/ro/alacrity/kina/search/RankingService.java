@@ -361,19 +361,25 @@ public class RankingService {
                 for (Part p : dedupe(parts)) {
                     ConstraintPolicy.Result check = safeCheck(query, p);
                     List<String> naming = PartNumbers.requestedBy(query, p);
+                    // a requested part listed without stock (stock 0) is not part of fetched: never counted
+                    boolean listed = p.stock() <= 0;
                     if (check.conflict()) {
-                        excluded.merge(distributor, 1, Integer::sum);
-                        detail.computeIfAbsent(distributor, d -> new LinkedHashMap<>())
-                                .merge(check.reason(), 1, Integer::sum);
+                        if (!listed) {
+                            excluded.merge(distributor, 1, Integer::sum);
+                            detail.computeIfAbsent(distributor, d -> new LinkedHashMap<>())
+                                    .merge(check.reason(), 1, Integer::sum);
+                        }
                         naming.forEach(n -> requestedLeftOut.computeIfAbsent(distributor, d -> new ArrayList<>())
                                 .add(new ExcludedRequest(n, p, check.reason())));
                         continue;
                     }
                     DeterministicRanker.Assessment a = safeAssess(query, p);
                     if (a.isBelowSpec() && !opts.allowBelowSpec()) {
-                        excludedBelowSpec.merge(distributor, 1, Integer::sum);
-                        belowSpecLeftOut.computeIfAbsent(distributor, d -> new ArrayList<>())
-                                .add(new BelowSpecCandidate(p, a));
+                        if (!listed) {
+                            excludedBelowSpec.merge(distributor, 1, Integer::sum);
+                            belowSpecLeftOut.computeIfAbsent(distributor, d -> new ArrayList<>())
+                                    .add(new BelowSpecCandidate(p, a));
+                        }
                         naming.forEach(n -> requestedLeftOut.computeIfAbsent(distributor, d -> new ArrayList<>())
                                 .add(new ExcludedRequest(n, p, shortfallText(a))));
                         continue;
@@ -386,9 +392,10 @@ public class RankingService {
                     penalties.put(key, penalty + a.overshoot());
                     det.put(key, Math.clamp(a.score() - penalty, 0.0, 1.0));
                     distances.put(key, a.isBelowSpec() ? a.belowSpecDistance() : 0.0);
-                    // the part the query names by part number comes first (DESIGN.md 3.3, "requested part first")
-                    tiers.put(key, (naming.isEmpty() ? 0 : REQUESTED_TIER) + (a.isBelowSpec() ? 8 : 0)
-                            + (p.stock() < qty ? 4 : 0) + (a.complete() ? 0 : 1));
+                    // the part the query names by part number comes first (DESIGN.md 3.3, "requested part first"); one
+                    // listed without stock comes after every part in stock
+                    tiers.put(key, listed ? LISTED_TIER : (naming.isEmpty() ? 0 : REQUESTED_TIER)
+                            + (a.isBelowSpec() ? 8 : 0) + (p.stock() < qty ? 4 : 0) + (a.complete() ? 0 : 1));
                 }
                 kept.sort(byScore(tiers, distances, det, det));
                 sorted.put(distributor, kept);
@@ -684,6 +691,11 @@ public class RankingService {
 
     /** Tier offset of a part the query names by part number: before every other part of its distributor. */
     static final int REQUESTED_TIER = -16;
+    /**
+     * Tier of a requested part listed without stock (stock 0, DESIGN.md 2): after every part in stock, below spec
+     * included.
+     */
+    static final int LISTED_TIER = 32;
 
     /** A part left out below spec, with its assessment (for {@code excluded_below_spec_detail}). */
     private record BelowSpecCandidate(Part part, DeterministicRanker.Assessment assessment) {

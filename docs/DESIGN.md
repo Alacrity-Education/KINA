@@ -64,7 +64,8 @@ public enum RankingMode { BLENDED, FALLBACK }   // JSON "blended" / "fallback"
 
 public record PriceBreak(int quantity, BigDecimal unitPrice, String currency) {}
 
-/** A single in-stock offer from one distributor. Never construct one with stock <= 0. */
+/** A single in-stock offer from one distributor. Never construct one with stock <= 0, except the stock rule's
+ *  exception below: a part requested explicitly by its part number, listed without stock, has stock 0. */
 public record Part(
     Distributor distributor,
     String distributorPartNumber,      // LCSC "Cxxxxx", TME symbol, Mouser part number
@@ -73,7 +74,7 @@ public record Part(
     String description,
     String category,                   // distributor category path, may be null
     String packageName,                // "0805", "SOT-23", may be null
-    int stock,                         // quantity that ships now; always > 0
+    int stock,                         // quantity that ships now; > 0 (0 only for the exception of the stock rule)
     Integer minimumOrderQuantity,      // null when unknown
     Integer orderMultiple,             // null when unknown
     List<PriceBreak> prices,           // ascending by quantity, complete list as fetched
@@ -105,8 +106,9 @@ public interface DistributorClient {
      *  and their deadline-less methods use Deadline.immediate() (rate limits fail fast). */
     default DistributorSearchPage search(String query, int offset, int limit, Deadline deadline) { ... }
     default Optional<Part> getPart(String distributorPartNumber, Deadline deadline) { ... }
-    /** get_part: FOUND (in-stock Part), OUT_OF_STOCK (listed without ships-now stock: identity only, never a Part)
-     *  or NOT_FOUND. The default wraps getPart (every miss is NOT_FOUND); Mouser, TME and LCSC override it. */
+    /** get_part and requested part numbers: FOUND (in-stock Part), OUT_OF_STOCK (listed without ships-now stock: its
+     *  identity and, when the distributor gives the data, the listed Part with stock 0) or NOT_FOUND. The default
+     *  wraps getPart (every miss is NOT_FOUND); Mouser, TME and LCSC override it. */
     default PartLookupResult lookup(String partNumber, Deadline deadline) { ... }
     /** Current stock and prices by part number, as few calls as possible (TME /products/data, 50 per call; Mouser
      *  part-number search, 10 per call); a number missing from the result is unknown. Default (LCSC): empty. */
@@ -135,7 +137,17 @@ public class DistributorException extends RuntimeException {
 
 Stock rule (all distributors): only quantity that ships now counts. "Expected", "on order",
 "factory stock" and lead-time quantities are ignored. Parts with no ships-now stock are **never**
-returned, cached or ranked.
+returned, cached or ranked, with one exception (user decision 2026-10-07): a part requested **explicitly by its part
+number** (a part-number token in a search query, section 3.4 "Requested part numbers", or `get_part`) that the
+distributor lists without ships-now stock is returned anyway, with `stock: 0`, its prices as listed and
+`availability.status: "out_of_stock"` (note `Out of stock at MOUSER; shown because the part number was requested
+explicitly.`). Only the distributor lookup builds such a part (`PartLookupResult.listed`, the mappers' `mapListed` /
+`toListedPart`); search pages never carry it (`PageCollector` keeps dropping stock-0 records, which still count in
+`out_of_stock_matches`). In a search it ranks after every part in stock (`RankingService.LISTED_TIER`), is never
+counted in `fetched` or the exclusion counts, and takes the last returned place when it would fall outside
+`max_results` (with at least 2 places). Its `cached_parts` row carries `in_stock = false`
+(`PartCacheRepository.upsertListed`): the metadata is kept, the finders never serve it, so a keyword or parametric
+search never sees it.
 
 ## 3. Search semantics
 
@@ -339,7 +351,7 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    moved below the fresh ones ("Cache model"). LCSC reads its local database anyway. Every part reports `stock_as_of`
    (its `fetchedAt`, to the second). Each refreshed part counts in `kina_cache_stock_refreshes_total` (`ok`,
    `out_of_stock`, `failed`). `get_part` (`PartLookupService`) does the same for a cache hit: a sold-out part is marked
-   and looked up live (reported `out_of_stock`); a part whose refresh failed is served as it is within the TTL; beyond
+   and looked up live (reported `out_of_stock`, with the listed part at stock 0, section 2); a part whose refresh failed is served as it is within the TTL; beyond
    the TTL it is looked up live and served with `stale: true` only when that lookup fails; with the distributor not
    configured a cached part is served without a refresh (stale beyond the TTL), an uncached one reports
    `not_configured`.
@@ -347,10 +359,20 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
 **Counts** of a distributor entry: `fetched` is every in-stock part received from the distributor for the query
 (after deduplication, before any exclusion); `excluded_by_constraints` and `excluded_below_spec` are subsets of it
 (`excluded_by_constraints_detail` splits the first by the constraint each part contradicts first, so it adds up);
-`returned <= fetched - excluded_by_constraints - excluded_below_spec` (and `<= max_results`); `out_of_stock_matches`
+`returned <= fetched - excluded_by_constraints - excluded_below_spec` (and `<= max_results`), plus at most the requested
+parts listed without stock (section 2, stock rule; never in `fetched` or the exclusion counts); `out_of_stock_matches`
 are records without ships-now stock and are not part of `fetched`; `total_results` is what the distributor reported for
 the phrase that produced the parts. The third audit saw `total 55, fetched 6, excluded_by_constraints 40, out_of_stock
 9` because `fetched` used to count the parts left after the exclusions.
+
+**Requested part numbers** (`RequestedLookup`, the last step of both retrievers): when the query names part numbers
+(section 3.4) and a part number is carried by none of the fetched parts (MPN or distributor part number equal to it or
+starting with it), it is looked up directly (`DistributorClient.lookup`, one call per missing part number, within the
+distributor's budget; skipped when the retrieval failed). An in-stock part joins the fetched parts (and `cached_parts`;
+it is not added to the cached search list, so a repeated search looks it up again); a part listed without stock joins
+`Fetched.listed` (section 2, stock rule); a failed lookup is logged and changes nothing. Live 2026-10-07: Mouser's
+keyword search for `uP1966E GaN half bridge gate driver` does not return 65-UP1966E (3685 in stock); the lookup does,
+and it ranks first. A part number in a cached search list costs no call.
 
 LCSC parts are read from the SQLite file and are **not** written to `cached_parts`/`cached_searches`
 (the SQLite database is the cache). Only Mouser and TME use the Postgres cache.
@@ -1350,7 +1372,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 |---|---|---|
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`), `allow_below_spec` (bool, default false, section 3.4 "Below spec") | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | `{ "results": [SearchResponse...] }` |
-| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part, attributions}`; `found: false` instead of a tool error with `reason` `not_found` (unknown) or `out_of_stock` (listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, no stock or prices), or with `error` (and `reason` null) when the lookup failed. Out-of-stock parts are never returned as a part and never cached. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
+| `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part, attributions}`; `found: false` instead of a tool error with `reason` `not_found` (unknown), or with `error` (and `reason` null) when the lookup failed. `reason` `out_of_stock`: listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, and, when the distributor gives the part's data, `part` with `stock` 0, prices as listed and `availability.status` `out_of_stock` (`found: true`: the part number was requested explicitly, section 2); a Mouser catalogue part without a Mouser part number (`N/A`) has the identity only (`found: false`). The listed part is cached with `in_stock = false` and never served from the cache. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
 | `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
@@ -1425,7 +1447,8 @@ fields; LCSC library type), and always the order fields. Fields a level leaves o
 **Availability** (every part): `{"status", "note"}`, the stock situation only: status `in_stock`, `low_stock` (stock
 below `kina.search.low-stock-threshold`, default 10, or below twice the quantity), `limited` (stock below `quantity`),
 `last_units` (no restocking: TME `AVAILABLE_WHILE_STOCKS_LAST`, Mouser end of life / obsolete / NRND),
-`special_order` (TME `ONLY_FOR_SPECIAL_ORDER`, `CANNOT_BE_ORDERED`), `external_warehouse` (TME) or `stale` (stock and
+`special_order` (TME `ONLY_FOR_SPECIAL_ORDER`, `CANNOT_BE_ORDERED`), `external_warehouse` (TME), `out_of_stock`
+(stock 0: a part requested explicitly by its part number and listed without stock, section 2) or `stale` (stock and
 prices older than `kina.cache.ttl`, the part's `stale` flag; the note says when they were last confirmed and the last
 known stock, then the other notes); the note is plain
 sentences (TME `HARDLY_AVAILABLE` as a supply warning, `MOQ_VALID_WHILE_STOCKS_LAST`, `DANGEROUS`/`OVERSIZED`, the
@@ -1473,7 +1496,7 @@ Tool parameter names are the Java parameter names (`-parameters`), so the tool m
 |---|---|
 | `GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=` | `SearchResponse`; `quantity` 1..10 000 000 (default 1), `detail` `compact` (default) or `full` |
 | `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case: `queries[{query, max_results, quantity}]`, `distributors`, `bypass_cache`, `detail`), returns `{results: [...]}` |
-| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; an MPN works as for `get_part`; 404 problem with `reason` `not_found` or `out_of_stock` (then also `identity`) |
+| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded; an MPN works as for `get_part`; a part listed without stock is returned with `stock` 0 and `availability.status` `out_of_stock`; 404 problem with `reason` `not_found` or `out_of_stock` (identity only: then also `identity`) |
 | `GET /api/v1/distributors` | same as `list_distributors` |
 | `GET /api/v1/metrics/summary` | key counters and every persisted counter and timer as JSON (section 3.7) |
 | `GET /actuator/health`, `GET /actuator/info`, `GET /actuator/prometheus` | management port only (`KINA_METRICS_PORT`, 9090), no authentication (section 3.7); not served on the main port |

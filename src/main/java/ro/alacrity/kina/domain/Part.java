@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A single in-stock offer from one distributor. Never construct one with {@code stock <= 0}.
+ * A single offer from one distributor, in stock: {@code stock > 0}. The one exception (DESIGN.md 2, stock rule) is a
+ * part requested explicitly by its part number (a part number in a search query, or {@code get_part}) that the
+ * distributor lists without ships-now stock: it is built with {@code stock == 0} (never negative), only by the
+ * distributor lookup, and is never served to a keyword or parametric search.
  *
  * <p>This record is also the JSON payload stored in {@code cached_parts.payload}; keep it
  * serialisable with the default (camelCase) Jackson mapping.
@@ -19,7 +22,8 @@ import java.util.Map;
  * @param description            distributor description
  * @param category               distributor category path, may be null
  * @param packageName            "0805", "SOT-23", may be null
- * @param stock                  quantity that ships now; always &gt; 0
+ * @param stock                  quantity that ships now; &gt; 0, or 0 for an explicitly requested part listed without
+ *                               stock
  * @param minimumOrderQuantity   null when unknown
  * @param orderMultiple          null when unknown
  * @param prices                 ascending by quantity, complete list as fetched

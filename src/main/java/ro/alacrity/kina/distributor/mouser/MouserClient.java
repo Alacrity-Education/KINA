@@ -125,7 +125,8 @@ public class MouserClient implements DistributorClient {
      * answer is matched by Mouser part number, then by MPN, both compared with {@link PartLookupResult#normalize}.
      * Several Mouser part numbers may share one MPN: the first one in stock wins; a matching part without ships-now
      * stock ({@code AvailabilityInStock} 0 or missing) is {@code OUT_OF_STOCK}, also a catalogue part Mouser does not sell
-     * (part number {@code N/A}; its identity then has no part number).
+     * (part number {@code N/A}; its identity then has no part number); it carries the listed part (stock 0) of the first
+     * match that has a Mouser part number.
      */
     @Override
     public PartLookupResult lookup(String partNumber, Deadline deadline) throws DistributorException {
@@ -163,11 +164,14 @@ public class MouserClient implements DistributorClient {
                 return PartLookupResult.found(part.get());
             }
         }
-        // Mouser lists catalogue parts it does not sell with MouserPartNumber "N/A" (live: ERA-6ARB5361V)
+        // Mouser lists catalogue parts it does not sell with MouserPartNumber "N/A" (live: ERA-6ARB5361V); the listed
+        // part (stock 0) is the first match with a real Mouser part number
+        Part listed = matches.stream().map(p -> mapper.mapListed(p, now)).flatMap(Optional::stream).findFirst()
+                .orElse(null);
         return matches.stream().findFirst()
                 .map(p -> PartLookupResult.outOfStock(new PartLookupResult.Identity(mouserNumber(p.mouserPartNumber()),
                         blankToNull(p.manufacturer()), blankToNull(p.manufacturerPartNumber()),
-                        blankToNull(p.description()))))
+                        blankToNull(p.description())), listed))
                 .orElseGet(PartLookupResult::notFound);
     }
 

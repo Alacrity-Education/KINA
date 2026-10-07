@@ -72,7 +72,7 @@ A request goes through five stages. Only the first and the third are models of t
 
 ## Features
 
-- **Only stock that ships now.** Out-of-stock, on-order and factory-stock offers are never ranked, cached or returned.
+- **Only stock that ships now.** Out-of-stock, on-order and factory-stock offers are never ranked, cached or returned. The one exception: a part you ask for by its part number (in the query, or with `get_part`) is returned even when the distributor lists it without stock, with `stock: 0`, `availability.status: "out_of_stock"`, after every part in stock.
 - **Three distributors in one call.** LCSC, TME and Mouser, with `search_parts_batch` for up to 20 queries at once.
 - **Prometheus metrics.** Searches, distributor calls and rate limits, cache contents, ranking model runs, tool calls, logins and users, on a separate unauthenticated port (`/actuator/prometheus` on 9090); counters survive restarts.
 - **Prices that fit in a chat.** The three smallest price brackets, plus `total_price` at the `quantity` you ask for (minimum order quantity and multiples included).

@@ -6,7 +6,7 @@ Details of how KINA reads a request, what it returns and how it ranks. The overv
 
 - MCP over Streamable HTTP (stateless) at `/mcp`, plus a REST API under `/api/v1`.
 - Three distributors: LCSC (JLCPCB database), TME, Mouser. Each one fails on its own; a broken distributor never fails the whole search.
-- Only stock that ships now is returned. Out-of-stock, on-order and factory-stock offers are never ranked, cached or returned.
+- Only stock that ships now is returned. Out-of-stock, on-order and factory-stock offers are never ranked, cached or returned. The one exception: a part you ask for by its part number (in the query, or with `get_part`) is returned even when the distributor lists it without stock, with `stock: 0` and `availability.status: "out_of_stock"`, after every part in stock.
 - Prices are trimmed to the 3 smallest quantity brackets.
 - `max_results` is per distributor (1 to 50, default 10). Every distributor entry also reports how many matches the distributor found, how many KINA holds, and how many it returned.
 - Cache of 3 days for TME and Mouser search lists; component data is kept, stock and prices are refreshed after 24 hours and flagged `stale` when older than 3 days and not refreshable. Ask again with a larger `max_results` and the answer comes from the cache; KINA only calls the distributor when the cache holds too few parts.
@@ -86,7 +86,7 @@ Examples, checked live on 2026-10-07:
 |---|---|---|
 | `search_parts` | `query` (required), `max_results` (1 to 50, default 10, per distributor), `distributors` (`LCSC`, `TME`, `MOUSER`; default all configured), `bypass_cache` (default false), `quantity` (default 1), `detail` (`compact` or `full`), `allow_below_spec` (default false) | Search and rank in-stock parts. Can take up to 2 minutes when a distributor is rate limited. |
 | `search_parts_batch` | `queries` (1 to 20 of `{query, max_results, quantity}`), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | Several searches in one call. Returns `{"results": [...]}` in request order. The whole batch shares one 2-minute limit for rate-limit waits. |
-| `get_part` | `distributor`, `part_number`, `bypass_cache`, `quantity`, `detail` (default `full`) | One part by distributor part number (LCSC `C15850`, TME symbol, Mouser number) or by MPN (hyphens and spaces ignored: `HCMA0703 2R2 R` finds `HCMA0703-2R2-R`), with every attribute the distributor gives. Returns `found: false` with `reason` `not_found` or `out_of_stock` (then `identity` names the listed part). Can take up to 2 minutes when the distributor is rate limited. |
+| `get_part` | `distributor`, `part_number`, `bypass_cache`, `quantity`, `detail` (default `full`) | One part by distributor part number (LCSC `C15850`, TME symbol, Mouser number) or by MPN (hyphens and spaces ignored: `HCMA0703 2R2 R` finds `HCMA0703-2R2-R`), with every attribute the distributor gives. Returns `found: false` with `reason` `not_found`, or `reason` `out_of_stock` for a part listed without stock: then `identity` names it and, when the distributor gives its data, `part` has `stock` 0 and `availability.status` `out_of_stock` (`found: true`). Can take up to 2 minutes when the distributor is rate limited. |
 | `list_distributors` | none | State of each distributor, cache statistics and ranking status (mode, model, readiness, latency, last error). Never calls the Mouser or TME APIs. |
 | `ping` | none | `{"status":"ok","version":"..."}`. |
 

@@ -89,7 +89,7 @@ public class PartSearchService {
         this.assembler = new ResponseAssembler(properties, extractor, ranking, stockRefresher, clock);
         this.pageCollector = new PageCollector(extractor, clock);
         this.retrieval = new ParallelRetrieval(properties, registry, parser, executor,
-                new LcscRetriever(properties, pageCollector, ranking),
+                new LcscRetriever(properties, pageCollector, ranking, extractor, clock),
                 new CachedDistributorRetriever(properties, pageCollector, ranking, extractor, partCache, searchCache,
                         clock));
     }
@@ -259,9 +259,18 @@ public class PartSearchService {
         return out.append(']').toString();
     }
 
+    /** The fetched parts per distributor, with the requested parts listed without stock (ranked last). */
     private static Map<Distributor, List<Part>> partsByDistributor(Map<Distributor, Fetched> fetched) {
         Map<Distributor, List<Part>> parts = new EnumMap<>(Distributor.class);
-        fetched.forEach((d, f) -> parts.put(d, f.parts()));
+        fetched.forEach((d, f) -> {
+            if (f.listed().isEmpty()) {
+                parts.put(d, f.parts());
+            } else {
+                List<Part> all = new ArrayList<>(f.parts());
+                all.addAll(f.listed());
+                parts.put(d, all);
+            }
+        });
         return parts;
     }
 }

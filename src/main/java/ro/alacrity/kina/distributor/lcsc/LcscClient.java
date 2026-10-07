@@ -135,7 +135,7 @@ public class LcscClient implements DistributorClient {
     /**
      * By LCSC number ({@code "LCSC Part"}); on a miss by manufacturer part number ({@link JlcpcbSqliteSearch#findByMpn},
      * compared with letters and digits only), preferring the row with the most stock. A row with {@code Stock} 0 is
-     * {@code OUT_OF_STOCK}.
+     * {@code OUT_OF_STOCK}, with the listed part (stock 0).
      */
     @Override
     public PartLookupResult lookup(String partNumber, Deadline deadline) {
@@ -154,7 +154,8 @@ public class LcscClient implements DistributorClient {
             JlcpcbRow r = row.get();
             return LcscPartMapper.map(r, clock.instant()).map(PartLookupResult::found)
                     .orElseGet(() -> PartLookupResult.outOfStock(new PartLookupResult.Identity(r.lcscPart(),
-                            blankToNull(r.manufacturer()), blankToNull(r.mfrPart()), blankToNull(r.description()))));
+                            blankToNull(r.manufacturer()), blankToNull(r.mfrPart()), blankToNull(r.description())),
+                            LcscPartMapper.mapListed(r, clock.instant()).orElse(null)));
         } catch (SQLException | IllegalStateException e) {
             throw failure(e);
         }

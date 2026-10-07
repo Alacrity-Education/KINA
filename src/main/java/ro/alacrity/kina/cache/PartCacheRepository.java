@@ -36,7 +36,8 @@ import java.util.Set;
  * <p>Cache model (DESIGN.md 3.2): the metadata of a row (everything but stock, prices and availability) is kept for the
  * distributor's {@code kina.cache.metadata-retention} ({@code metadata_fetched_at}); its stock and prices carry their
  * own age ({@code stock_fetched_at}, equal to {@link Part#fetchedAt()}). A row a stock refresh found sold out keeps its
- * metadata with {@code in_stock = false} and is never served until a live fetch finds it in stock again.
+ * metadata with {@code in_stock = false} and is never served until a live fetch finds it in stock again; so does a part
+ * an explicit part-number lookup found listed without stock ({@link #upsertListed}).
  */
 @Repository
 @Slf4j
@@ -49,6 +50,15 @@ public class PartCacheRepository {
             DO UPDATE SET payload = EXCLUDED.payload, stock_fetched_at = EXCLUDED.stock_fetched_at,
               metadata_fetched_at = GREATEST(cached_parts.metadata_fetched_at, EXCLUDED.metadata_fetched_at),
               in_stock = true""";
+
+    /** A part listed without ships-now stock: metadata kept, never served ({@code in_stock = false}). */
+    private static final String UPSERT_LISTED = """
+            INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at, metadata_fetched_at, in_stock)
+            VALUES (?, ?, ?::jsonb, ?, ?, false)
+            ON CONFLICT (distributor, part_number)
+            DO UPDATE SET payload = EXCLUDED.payload, stock_fetched_at = EXCLUDED.stock_fetched_at,
+              metadata_fetched_at = GREATEST(cached_parts.metadata_fetched_at, EXCLUDED.metadata_fetched_at),
+              in_stock = false""";
 
     private static final String UPDATE_STOCK = """
             UPDATE cached_parts SET payload = ?::jsonb, stock_fetched_at = ?, in_stock = true
@@ -117,6 +127,32 @@ public class PartCacheRepository {
                 metrics.cachePartsWritten(d, numbers.size() - before, before);
             }
         });
+    }
+
+    /**
+     * Writes the parts an explicit part-number lookup found listed without ships-now stock (stock 0; DESIGN.md 2, stock
+     * rule): the metadata is kept like any fetched part, the row carries {@code in_stock = false} and the finders never
+     * return it. A part with stock is not written here ({@link #upsertAll} is for those).
+     */
+    public void upsertListed(Collection<Part> parts) {
+        if (parts == null || parts.isEmpty()) {
+            return;
+        }
+        Instant now = clock.instant();
+        List<Object[]> rows = new ArrayList<>(parts.size());
+        for (Part part : parts) {
+            Objects.requireNonNull(part.distributor(), "part.distributor");
+            Objects.requireNonNull(part.distributorPartNumber(), "part.distributorPartNumber");
+            if (part.stock() > 0) {
+                continue;
+            }
+            Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
+            rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
+                    jsonMapper.writeValueAsString(part), utc(fetchedAt), utc(fetchedAt)});
+        }
+        if (!rows.isEmpty()) {
+            jdbcTemplate.batchUpdate(UPSERT_LISTED, rows);
+        }
     }
 
     /** How many of {@code partNumbers} already have a row, per distributor; a distributor is missing on failure. */

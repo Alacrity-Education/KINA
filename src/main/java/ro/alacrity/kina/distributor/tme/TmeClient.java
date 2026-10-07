@@ -157,7 +157,7 @@ public class TmeClient implements DistributorClient {
      * written and with letters and digits only, so {@code ERA-6AEB5361V} finds TME's {@code ERA6AEB5361V}), accepting a
      * product whose symbol or manufacturer symbol equals the input after {@link PartLookupResult#normalize}. A listed
      * product without ships-now stock ({@code stock_quantity} 0, or an excluded {@code product_status}) is
-     * {@code OUT_OF_STOCK}.
+     * {@code OUT_OF_STOCK}, with the listed part (stock 0).
      */
     @Override
     public PartLookupResult lookup(String partNumber, Deadline deadline) throws DistributorException {
@@ -193,16 +193,18 @@ public class TmeClient implements DistributorClient {
         if (products.isEmpty()) {
             return PartLookupResult.notFound();
         }
-        List<Part> parts = enrich(products, deadline);
-        if (!parts.isEmpty()) {
-            return PartLookupResult.found(parts.getFirst());
+        List<Part> parts = enrich(products, deadline, true);
+        Optional<Part> inStock = parts.stream().filter(part -> part.stock() > 0).findFirst();
+        if (inStock.isPresent()) {
+            return PartLookupResult.found(inStock.get());
         }
         TmeResponses.Product p = products.getFirst();
         return PartLookupResult.outOfStock(new PartLookupResult.Identity(p.symbol(),
                 p.manufacturer() == null ? null : p.manufacturer().name(),
                 p.manufacturerSymbols() == null ? null : p.manufacturerSymbols().stream()
                         .filter(m -> m != null && !m.isBlank()).findFirst().orElse(null),
-                p.description()));
+                p.description()), parts.stream().filter(part -> part.distributorPartNumber().equals(p.symbol()))
+                .findFirst().orElse(null));
     }
 
     /** {@code /products/data} for the symbols, 50 per call (DESIGN.md 3.2 "Stock refresh"). */
@@ -244,6 +246,14 @@ public class TmeClient implements DistributorClient {
 
     /** Fetches stock/prices, parameters and datasheets for the products and maps the in-stock ones, keeping order. */
     private List<Part> enrich(List<TmeResponses.Product> products, Deadline deadline) {
+        return enrich(products, deadline, false);
+    }
+
+    /**
+     * As {@link #enrich(List, Deadline)}; with {@code listed} a product without ships-now stock is mapped too, with
+     * stock 0 ({@link TmePartMapper#toListedPart}: a lookup of an explicitly requested part number).
+     */
+    private List<Part> enrich(List<TmeResponses.Product> products, Deadline deadline, boolean listed) {
         if (products.isEmpty()) {
             return List.of();
         }
@@ -271,9 +281,13 @@ public class TmeClient implements DistributorClient {
             if (symbol == null) {
                 continue;
             }
-            TmePartMapper.toPart(product, data.get(symbol), parameters.get(symbol), datasheets.get(symbol), now,
-                            properties.excludedStatuses())
-                    .ifPresent(parts::add);
+            Optional<Part> part = TmePartMapper.toPart(product, data.get(symbol), parameters.get(symbol),
+                    datasheets.get(symbol), now, properties.excludedStatuses());
+            if (part.isEmpty() && listed) {
+                part = TmePartMapper.toListedPart(product, data.get(symbol), parameters.get(symbol),
+                        datasheets.get(symbol), now);
+            }
+            part.ifPresent(parts::add);
         }
         return parts;
     }

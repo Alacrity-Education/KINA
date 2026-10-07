@@ -9,9 +9,12 @@ import java.util.List;
 
 /**
  * Result of a single part lookup ({@code get_part}). {@code found} is false (and {@code part} null) when the
- * distributor does not know the part ({@code reason} {@code not_found}), lists it without ships-now stock
- * ({@code reason} {@code out_of_stock}, with the listed part's {@code identity}), or when the lookup failed
- * ({@code error} then carries the distributor error code and {@code reason} is null).
+ * distributor does not know the part ({@code reason} {@code not_found}) or when the lookup failed ({@code error} then
+ * carries the distributor error code and {@code reason} is null). A part the distributor lists without ships-now stock
+ * has {@code reason} {@code out_of_stock} and its {@code identity}; when the distributor gives its data, {@code part}
+ * is returned too, with {@code stock} 0 and {@code availability.status} {@code out_of_stock} ({@code found} true: the
+ * part number was requested explicitly, the one exception to the stock rule, DESIGN.md 2); a catalogue part without a
+ * distributor part number (Mouser {@code N/A}) has the identity only ({@code found} false).
  *
  * @param found       whether {@code part} is present
  * @param distributor the distributor asked
@@ -19,10 +22,11 @@ import java.util.List;
  * @param cache       {@code hit} (served from the Postgres cache), {@code miss}, {@code bypassed}, or
  *                    {@code not_applicable} (LCSC)
  * @param error       null, or "rate_limited", "unavailable", "not_configured", "timeout", "bad_response"
- * @param reason      null when found or failed, else {@value #OUT_OF_STOCK} or {@value #NOT_FOUND}
+ * @param reason      null when found in stock or failed, else {@value #OUT_OF_STOCK} or {@value #NOT_FOUND}
  * @param identity    for {@value #OUT_OF_STOCK}: the listed part (distributor part number, manufacturer, mpn,
  *                    description; no stock, no prices), else null (omitted)
- * @param part        the part (prices trimmed to the 3 smallest brackets), null when not found
+ * @param part        the part (prices trimmed to the 3 smallest brackets; stock 0 for {@value #OUT_OF_STOCK}), null
+ *                    when not found
  * @param attributions the distributor's notice ({@link Distributor#attribution()}) when the response carries its data
  *                    (a part or an identity), else empty
  */
@@ -84,9 +88,19 @@ public record PartLookupResponse(
                 null, null);
     }
 
-    /** The distributor lists the part but has no ships-now stock for it. */
+    /** The distributor lists the part but has no ships-now stock for it (identity only). */
     public static PartLookupResponse outOfStock(Distributor distributor, String partNumber, CacheStatus cache,
                                                 Identity identity) {
-        return new PartLookupResponse(false, distributor, partNumber, cache, null, OUT_OF_STOCK, identity, null);
+        return outOfStock(distributor, partNumber, cache, identity, null);
+    }
+
+    /**
+     * The distributor lists the part but has no ships-now stock for it; {@code listed} is the part with stock 0 (null
+     * when the distributor gives only the identity).
+     */
+    public static PartLookupResponse outOfStock(Distributor distributor, String partNumber, CacheStatus cache,
+                                                Identity identity, PartResponse listed) {
+        return new PartLookupResponse(listed != null, distributor, partNumber, cache, null, OUT_OF_STOCK, identity,
+                listed);
     }
 }

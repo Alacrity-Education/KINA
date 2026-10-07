@@ -85,16 +85,36 @@ class TmePartMapper {
         if (stock <= 0) {
             return Optional.empty();
         }
+        return Optional.of(build(product, data, parameters, datasheet, fetchedAt, stock));
+    }
+
+    /**
+     * The product as listed when it has no ships-now stock (stock 0 despite a stock record, or an excluded
+     * {@code product_status}): stock 0, prices as listed. Only for a part number the user requested explicitly
+     * (DESIGN.md 2, stock rule). Empty without a symbol.
+     */
+    static Optional<Part> toListedPart(TmeResponses.Product product, TmeResponses.ProductData data,
+                                       TmeResponses.ProductParameters parameters, Datasheet datasheet,
+                                       Instant fetchedAt) {
+        if (product == null || product.symbol() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(build(product, data, parameters, datasheet, fetchedAt, 0));
+    }
+
+    private static Part build(TmeResponses.Product product, TmeResponses.ProductData data,
+                              TmeResponses.ProductParameters parameters, Datasheet datasheet, Instant fetchedAt,
+                              int stock) {
         String symbol = product.symbol();
         List<TmeResponses.Parameter> params = parameters == null || parameters.parameters() == null
                 || parameters.parameters().elements() == null ? List.of() : parameters.parameters().elements();
 
-        TmeResponses.Prices prices = data.prices();
+        TmeResponses.Prices prices = data == null ? null : data.prices();
         Datasheet sheet = datasheet != null && datasheet.url() != null ? datasheet
                 : new Datasheet(productUrl(symbol), SOURCE_PRODUCT_PAGE);
         Map<String, Object> extra = extra(product, data);
         extra.put("datasheet_source", sheet.source());
-        return Optional.of(Part.builder()
+        return Part.builder()
                 .distributor(Distributor.TME)
                 .distributorPartNumber(symbol)
                 .manufacturer(product.manufacturer() == null ? null : product.manufacturer().name())
@@ -113,7 +133,7 @@ class TmePartMapper {
                 .attributes(attributes(params))
                 .extra(extra)
                 .fetchedAt(fetchedAt)
-                .build());
+                .build();
     }
 
     /**
@@ -225,7 +245,7 @@ class TmePartMapper {
         extra.put("product_status", product.productStatus() == null ? List.of() : List.copyOf(product.productStatus()));
         putIfNotNull(extra, "category_id", product.category() == null ? null : product.category().id());
         putIfNotNull(extra, "manufacturer_id", product.manufacturer() == null ? null : product.manufacturer().id());
-        TmeResponses.Unit unit = product.unit() != null ? product.unit() : data.unit();
+        TmeResponses.Unit unit = product.unit() != null ? product.unit() : data == null ? null : data.unit();
         putIfNotNull(extra, "unit", unit == null ? null : (unit.shortName() != null ? unit.shortName() : unit.id()));
         if (product.packing() != null && product.packing().elements() != null && !product.packing().elements().isEmpty()) {
             List<Map<String, Object>> packing = new ArrayList<>();
@@ -237,7 +257,7 @@ class TmePartMapper {
             }
             extra.put("packing", packing);
         }
-        TmeResponses.Prices prices = data.prices();
+        TmeResponses.Prices prices = data == null ? null : data.prices();
         if (prices != null) {
             putIfNotNull(extra, "price_type", prices.type());
             putIfNotNull(extra, "tax_rate", prices.tax() == null ? null : prices.tax().rate());

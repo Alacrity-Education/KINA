@@ -38,7 +38,8 @@ import java.util.stream.Collectors;
  *               {@code AVAILABLE_WHILE_STOCKS_LAST}, Mouser end of life / obsolete / not recommended for new
  *               designs), {@value #SPECIAL_ORDER} (TME {@code ONLY_FOR_SPECIAL_ORDER}, {@code CANNOT_BE_ORDERED}) or
  *               {@value #EXTERNAL_WAREHOUSE} (TME {@code EXTERNAL_WAREHOUSE}); the last two are excluded from
- *               results by default; {@value #STALE} when the stock and prices are older than {@code kina.cache.ttl}
+ *               results by default; {@value #OUT_OF_STOCK} for a part listed without ships-now stock (stock 0),
+ *               returned only because its part number was requested explicitly; {@value #STALE} when the stock and prices are older than {@code kina.cache.ttl}
  *               and could not be refreshed ({@link #stale})
  * @param note   one or more plain sentences
  */
@@ -58,6 +59,11 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
      * part's {@code stale} flag is true.
      */
     public static final String STALE = "stale";
+    /**
+     * Listed without ships-now stock (stock 0): only a part requested explicitly by its part number (a part number in
+     * the query, or {@code get_part}) is returned like this (DESIGN.md 2, stock rule).
+     */
+    public static final String OUT_OF_STOCK = "out_of_stock";
 
     /** {@code lifecycle} values ({@link #lifecycleOf}). */
     public static final String ACTIVE = "active";
@@ -113,6 +119,10 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
 
     /** As {@link #of(Part, int, boolean)} with the given {@code kina.search.low-stock-threshold}. */
     public static Availability of(Part part, int quantity, boolean full, int lowStockThreshold) {
+        if (part.stock() <= 0) {
+            return new Availability(OUT_OF_STOCK, "Out of stock at " + distributorName(part.distributor())
+                    + "; shown because the part number was requested explicitly.");
+        }
         String status = IN_STOCK;
         List<String> notes = new ArrayList<>();
         Set<String> tme = statuses(part.extra().get("product_status"));
@@ -204,6 +214,10 @@ public record Availability(@JsonProperty("status") String status, @JsonProperty(
             note.append(' ').append(rest);
         }
         return new Availability(STALE, note.toString());
+    }
+
+    private static String distributorName(Distributor distributor) {
+        return distributor == null ? "the distributor" : distributor.name();
     }
 
     private static String mouserLifecycle(Part part) {

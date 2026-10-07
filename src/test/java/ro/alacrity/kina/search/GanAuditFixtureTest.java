@@ -6,9 +6,13 @@ import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorRegistry;
+import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.PartLookupResult;
+import ro.alacrity.kina.distributor.mouser.MouserPart;
 import ro.alacrity.kina.distributor.mouser.MouserPartMapper;
 import ro.alacrity.kina.distributor.mouser.MouserSearchResponse;
+import ro.alacrity.kina.domain.Availability;
 import ro.alacrity.kina.domain.BelowSpecPart;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
@@ -58,14 +62,42 @@ class GanAuditFixtureTest {
         }
     }
 
-    /** Mouser serving one recorded keyword search (the in-stock records, like {@code MouserClient}). */
+    /**
+     * Mouser serving one recorded keyword search (the in-stock records, like {@code MouserClient}) and the recorded
+     * part-number lookups ({@code mouser-partnumber-<number>.json}; any other number is not found).
+     */
     static class RecordedMouser implements DistributorClient {
         final MouserSearchResponse keyword;
         final List<String> queries = new ArrayList<>();
+        final List<String> lookups = new ArrayList<>();
         private final MouserPartMapper mapper = new MouserPartMapper();
 
         RecordedMouser(String keywordFixture) {
             this.keyword = fixture(keywordFixture);
+        }
+
+        /** As {@code MouserClient.lookup}: by Mouser part number, then by MPN; the listed part when none is in stock. */
+        @Override
+        public PartLookupResult lookup(String partNumber, Deadline deadline) {
+            lookups.add(partNumber);
+            String name = "mouser-partnumber-" + partNumber.toUpperCase(java.util.Locale.ROOT) + ".json";
+            if (GanAuditFixtureTest.class.getResource("/fixtures/gan-audit/" + name) == null) {
+                return PartLookupResult.notFound();
+            }
+            List<MouserPart> matches = fixture(name).searchResults().parts()
+                    .stream().filter(p -> PartLookupResult.samePartNumber(partNumber, p.mouserPartNumber())
+                            || PartLookupResult.samePartNumber(partNumber, p.manufacturerPartNumber())).toList();
+            for (MouserPart p : matches) {
+                Optional<Part> part = mapper.map(p, NOW);
+                if (part.isPresent()) {
+                    return PartLookupResult.found(part.get());
+                }
+            }
+            return matches.stream().findFirst().map(p -> PartLookupResult.outOfStock(new PartLookupResult.Identity(
+                            p.mouserPartNumber(), p.manufacturer(), p.manufacturerPartNumber(), p.description()),
+                            matches.stream().map(m -> mapper.mapListed(m, NOW)).flatMap(Optional::stream).findFirst()
+                                    .orElse(null)))
+                    .orElseGet(PartLookupResult::notFound);
         }
 
         @Override
@@ -103,14 +135,15 @@ class GanAuditFixtureTest {
         return search(mouser, query, allowBelowSpec, 5);
     }
 
+    final PartCacheRepository partCache = mock(PartCacheRepository.class);
+
     SearchResponse search(DistributorClient mouser, String query, boolean allowBelowSpec, int maxResults) {
         KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
         ParametricExtractor extractor = new ParametricExtractor();
         RankingService ranking = new RankingService(props, new DeterministicRanker(extractor),
                 mock(PartRanker.class), () -> null, new RankingScoreCache(Duration.ofHours(1)));
         PartSearchService service = new PartSearchService(props, new DistributorRegistry(List.of(mouser)),
-                new QueryParser(), extractor, ranking, mock(PartCacheRepository.class),
-                mock(SearchCacheRepository.class), clock);
+                new QueryParser(), extractor, ranking, partCache, mock(SearchCacheRepository.class), clock);
         return service.search(new SearchRequest(query, maxResults, Set.of(Distributor.MOUSER), false, 1,
                 ResponseDetail.FULL, allowBelowSpec));
     }
@@ -181,37 +214,73 @@ class GanAuditFixtureTest {
         assertThat(part.match()).isEqualTo(1.0);
     }
 
-    // ---- uP1966E GaN half bridge gate driver: parsed as a GaN gate driver request
+    // ---- uP1966E GaN half bridge gate driver: not in the keyword results, found by its part number, first
 
     @Test
-    void up1966e_isAGanGateDriverRequestAndMosfetsAreExcluded() {
-        SearchResponse response = search(new RecordedMouser("mouser-keyword-up1966e.json"),
-                "uP1966E GaN half bridge gate driver", false);
+    void up1966e_isLookedUpAndRankedFirst() {
+        RecordedMouser mouserClient = new RecordedMouser("mouser-keyword-up1966e.json");
+        SearchResponse response = search(mouserClient, "uP1966E GaN half bridge gate driver", false);
 
         assertThat(response.queryUnderstood()).isTrue();
         assertThat(response.parsed().family()).isEqualTo(Recognizers.GATE_DRIVER);
         assertThat(response.parsed().technology()).isEqualTo(TechnologyVocabulary.GAN);
         assertThat(response.parsed().partNumbers()).containsExactly("uP1966E");
+        // the keyword search of Mouser does not bring it: one part-number lookup does
+        assertThat(mouserClient.lookups).containsExactly("uP1966E");
         DistributorResult mouser = mouser(response);
+        assertThat(mouser.parts().getFirst().partNumber()).isEqualTo("65-UP1966E");
+        assertThat(mouser.parts().getFirst().stock()).isEqualTo(3685);
+        assertThat(mouser.requestedPartFound()).isTrue();
+        assertThat(mouser.hint()).isNull();
+        assertThat(mouser.fetched()).isEqualTo(51);   // 50 keyword results and the looked-up part
         // the CoolGaN Drive HB listed under "GaN FETs" without the word "driver" is a MOSFET: excluded by type
         assertThat(mpns(mouser)).doesNotContain("IGI60L1111B1MXUMA1");
         assertThat(mouser.excludedByConstraintsDetail()).containsKey("type");
+        org.mockito.Mockito.verify(partCache).upsertAll(org.mockito.ArgumentMatchers.argThat(
+                (java.util.Collection<Part> parts) -> parts.stream()
+                        .anyMatch(p -> p.distributorPartNumber().equals("65-UP1966E"))));
+    }
+
+    @Test
+    void up1966e_withoutTheLookupTheHintSaysItIsNotListed() {
+        RecordedMouser mouserClient = new RecordedMouser("mouser-keyword-up1966e.json") {
+            @Override
+            public PartLookupResult lookup(String partNumber, Deadline deadline) {
+                return PartLookupResult.notFound();
+            }
+        };
+        DistributorResult mouser = mouser(search(mouserClient, "uP1966E GaN half bridge gate driver", false));
         assertThat(mouser.requestedPartFound()).isFalse();
         assertThat(mouser.hint()).isEqualTo(
                 "uP1966E is not listed in stock at MOUSER; the parts below are keyword matches.");
     }
 
-    // ---- EPC23101 eGaN ePower stage: only another power stage, and the response says so
+    // ---- EPC23101 eGaN ePower stage: listed without stock (an engineering sample), shown last with stock 0
 
     @Test
-    void epc23101_isNotListedAndTheHintSaysSo() {
+    void epc23101_isNotInStockAndTheHintSaysSo() {
         DistributorResult mouser = mouser(search(new RecordedMouser("mouser-keyword-epc23101.json"),
                 "EPC23101 eGaN ePower stage", false));
 
-        assertThat(mpns(mouser)).containsExactly("EPC2152");
+        assertThat(mouser.parts()).extracting(PartResponse::partNumber).containsExactly("65-EPC2152",
+                "65-EPC23101-ES");
+        PartResponse listed = mouser.parts().getLast();
+        assertThat(listed.stock()).isZero();
+        assertThat(listed.availability().status()).isEqualTo(Availability.OUT_OF_STOCK);
+        assertThat(listed.availability().note()).isEqualTo(
+                "Out of stock at MOUSER; shown because the part number was requested explicitly.");
+        assertThat(mouser.fetched()).isEqualTo(1);   // the listed part is not part of fetched
+        assertThat(mouser.exactMatches()).isLessThanOrEqualTo(1);
         assertThat(mouser.requestedPartFound()).isFalse();
-        assertThat(mouser.hint()).isEqualTo(
-                "EPC23101 is not listed in stock at MOUSER; the parts below are keyword matches.");
+        assertThat(mouser.hint()).isEqualTo("EPC23101 is not in stock at MOUSER: 65-EPC23101-ES is listed without "
+                + "stock and shown last, with stock 0; the parts below are keyword matches.");
+        // cached with in_stock = false, never as an in-stock part
+        org.mockito.Mockito.verify(partCache).upsertListed(org.mockito.ArgumentMatchers.argThat(
+                (java.util.Collection<Part> parts) -> parts.size() == 1
+                        && parts.iterator().next().distributorPartNumber().equals("65-EPC23101-ES")));
+        org.mockito.Mockito.verify(partCache, org.mockito.Mockito.never()).upsertAll(
+                org.mockito.ArgumentMatchers.argThat((java.util.Collection<Part> parts) -> parts.stream()
+                        .anyMatch(p -> p.stock() <= 0)));
     }
 
     // ---- EPC2302 GaN FET 100V: the 600 V half-bridge below the 100 V parts
@@ -233,11 +302,42 @@ class GanAuditFixtureTest {
             assertThat(p.attributes()).containsEntry("Voltage", "100V").doesNotContainKey("Resistance");
             assertThat(p.score()).isGreaterThan(v600.score());
         });
-        assertThat(mouser.parts().subList(4, mouser.parts().size())).allSatisfy(p ->
+        // then the parts that state no voltage, and last the requested EPC2302, listed without stock
+        assertThat(mouser.parts().subList(4, mouser.parts().size() - 1)).allSatisfy(p ->
                 assertThat(p.unverified()).contains("voltage"));
+        assertThat(mouser.parts().getLast().partNumber()).isEqualTo("65-EPC2302");
+        assertThat(mouser.parts().getLast().stock()).isZero();
         // the RF HEMTs rated 48 V are below spec, named with their rating
         assertThat(mouser.excludedBelowSpec()).isPositive();
         assertThat(mouser.excludedBelowSpecDetail()).extracting(BelowSpecPart::rating).containsOnly("voltage");
-        assertThat(mouser.requestedPartFound()).isFalse();   // EPC2302 is not in the keyword results
+        assertThat(mouser.requestedPartFound()).isFalse();   // listed without stock only
+    }
+
+    @Test
+    void epc2302_theListedPartTakesTheLastPlaceBelowEveryPartInStock() {
+        DistributorResult mouser = mouser(search(new RecordedMouser("mouser-keyword-epc2302.json"),
+                "EPC2302 GaN FET 100V", false));
+
+        assertThat(mouser.parts()).hasSize(5);
+        assertThat(mpns(mouser).subList(0, 4)).doesNotContain("EPC2302");
+        PartResponse listed = mouser.parts().getLast();
+        assertThat(listed.partNumber()).isEqualTo("65-EPC2302");
+        assertThat(listed.rank()).isEqualTo(5);
+        assertThat(listed.stock()).isZero();
+        assertThat(listed.availability().status()).isEqualTo(Availability.OUT_OF_STOCK);
+        assertThat(listed.prices()).isNotEmpty();   // prices as listed
+        assertThat(listed.attributes()).containsEntry("Voltage", "100V").containsEntry("Resistance", "1.8mohm");
+        assertThat(mouser.requestedPartFound()).isFalse();
+        assertThat(mouser.hint()).startsWith("EPC2302 is not in stock at MOUSER: 65-EPC2302 is listed without stock");
+    }
+
+    @Test
+    void aSearchWithoutThePartNumberNeverServesTheListedPart() {
+        RecordedMouser mouserClient = new RecordedMouser("mouser-keyword-epc2302.json");
+        DistributorResult mouser = mouser(search(mouserClient, "GaN FET 100V", false, 50));
+
+        assertThat(mouserClient.lookups).isEmpty();
+        assertThat(mouser.parts()).allSatisfy(p -> assertThat(p.stock()).isPositive());
+        assertThat(mouser.requestedPartFound()).isNull();
     }
 }

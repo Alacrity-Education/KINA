@@ -58,7 +58,7 @@ final class ResponseAssembler {
             }
             List<RankedPart> rankedParts = ranked.byDistributor().getOrDefault(distributor, List.of());
             int returned = Math.min(prepared.maxResults(), rankedParts.size());
-            List<RankedPart> top = rankedParts.subList(0, returned);
+            List<RankedPart> top = withListedPart(rankedParts, returned);
             List<PartResponse> parts = new ArrayList<>(returned);
             for (int i = 0; i < returned; i++) {
                 RankedPart rp = top.get(i);
@@ -69,7 +69,8 @@ final class ResponseAssembler {
                         request.quantity(), request.detail(), canonical, lowStockThreshold,
                         staleness.isStale(rp.part(), now), now));
             }
-            Integer exact = understood ? (int) top.stream().filter(RankedPart::exact).count() : null;
+            Integer exact = understood
+                    ? (int) top.stream().filter(r -> r.exact() && r.part().stock() > 0).count() : null;
             Map<String, Integer> detail = ranked.excludedDetailBy(distributor);
             String hint = null;
             if (understood && parts.isEmpty() && f.error() == null) {
@@ -83,10 +84,11 @@ final class ResponseAssembler {
             Boolean requestedFound = null;
             if (parsed.namesPartNumber() && !(f.error() != null && top.isEmpty())) {
                 List<String> missing = parsed.partNumbers().stream()
-                        .filter(n -> top.stream().noneMatch(r -> PartNumbers.requests(n, r.part()))).toList();
+                        .filter(n -> top.stream().noneMatch(r -> r.part().stock() > 0
+                                && PartNumbers.requests(n, r.part()))).toList();
                 requestedFound = missing.isEmpty();
                 String requestedHint = missing.isEmpty() ? null
-                        : requestedHint(distributor, missing, ranked.excludedRequestedBy(distributor), top.isEmpty(),
+                        : requestedHint(distributor, missing, ranked.excludedRequestedBy(distributor), top,
                         request.allowBelowSpec());
                 hint = requestedHint == null ? hint : hint == null ? requestedHint : requestedHint + " " + hint;
             }
@@ -127,10 +129,19 @@ final class ResponseAssembler {
      * the parts are.
      */
     static String requestedHint(Distributor distributor, List<String> missing,
-                                List<RankingService.ExcludedRequest> leftOut, boolean nothingReturned,
+                                List<RankingService.ExcludedRequest> leftOut, List<RankedPart> returned,
                                 boolean allowBelowSpec) {
         List<String> sentences = new ArrayList<>();
+        boolean others = returned.stream().anyMatch(r -> r.part().stock() > 0);
         for (String number : missing) {
+            RankedPart listed = returned.stream()
+                    .filter(r -> r.part().stock() <= 0 && PartNumbers.requests(number, r.part())).findFirst()
+                    .orElse(null);
+            if (listed != null) {
+                sentences.add(number + " is not in stock at " + distributor.name() + ": " + listed.part()
+                        .distributorPartNumber() + " is listed without stock and shown last, with stock 0");
+                continue;
+            }
             RankingService.ExcludedRequest why = leftOut.stream().filter(e -> e.partNumber().equals(number))
                     .findFirst().orElse(null);
             if (why == null) {
@@ -144,7 +155,26 @@ final class ResponseAssembler {
                     + (rating ? why.reason() + (allowBelowSpec ? "" : " (pass \"allow_below_spec\": true to see it)")
                     : "it contradicts the requested " + why.reason()));
         }
-        return String.join("; ", sentences) + (nothingReturned ? "." : "; the parts below are keyword matches.");
+        return String.join("; ", sentences) + (others ? "; the parts below are keyword matches." : ".");
+    }
+
+    /**
+     * The top {@code returned} parts; when a requested part listed without stock (stock 0) ranks below them, it takes
+     * the last place (with at least 2 places), so an explicit part-number search shows it while it stays below every
+     * part in stock.
+     */
+    static List<RankedPart> withListedPart(List<RankedPart> ranked, int returned) {
+        List<RankedPart> top = ranked.subList(0, returned);
+        if (returned < 2 || ranked.size() <= returned || top.stream().anyMatch(r -> r.part().stock() <= 0)) {
+            return top;
+        }
+        return ranked.subList(returned, ranked.size()).stream().filter(r -> r.part().stock() <= 0).findFirst()
+                .map(listed -> {
+                    List<RankedPart> out = new ArrayList<>(top.subList(0, returned - 1));
+                    out.add(listed);
+                    return List.copyOf(out);
+                })
+                .orElse(top);
     }
 
     /**

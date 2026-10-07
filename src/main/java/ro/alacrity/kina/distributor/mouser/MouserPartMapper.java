@@ -28,8 +28,26 @@ public final class MouserPartMapper {
         if (stock == null || stock <= 0) {
             return Optional.empty();
         }
+        return Optional.of(build(source, fetchedAt, stock));
+    }
+
+    /**
+     * The part as listed, with stock 0 when it has no ships-now stock: only for a part number the user requested
+     * explicitly (DESIGN.md 2, stock rule). Empty without a Mouser part number (blank or {@code N/A}: a catalogue part
+     * Mouser does not sell).
+     */
+    public Optional<Part> mapListed(MouserPart source, Instant fetchedAt) {
+        if (source == null || isBlank(source.mouserPartNumber())
+                || source.mouserPartNumber().strip().equalsIgnoreCase("N/A")) {
+            return Optional.empty();
+        }
+        Integer stock = parseCount(source.availabilityInStock());
+        return Optional.of(build(source, fetchedAt, stock == null ? 0 : Math.max(0, stock)));
+    }
+
+    private Part build(MouserPart source, Instant fetchedAt, int stock) {
         Map<String, String> attributes = attributes(source);
-        return Optional.of(Part.builder()
+        return Part.builder()
                 .distributor(Distributor.MOUSER)
                 .distributorPartNumber(source.mouserPartNumber().trim())
                 .manufacturer(blankToNull(source.manufacturer()))
@@ -47,7 +65,7 @@ public final class MouserPartMapper {
                 .attributes(attributes)
                 .extra(extra(source))
                 .fetchedAt(fetchedAt)
-                .build());
+                .build();
     }
 
     /** {@code ProductAttributes} by name, insertion-ordered; repeated names are joined with {@code ", "}. */

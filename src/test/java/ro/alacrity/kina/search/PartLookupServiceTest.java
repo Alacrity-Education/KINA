@@ -9,6 +9,7 @@ import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.PartLookupResult;
+import ro.alacrity.kina.domain.Availability;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartLookupResponse;
@@ -156,6 +157,39 @@ class PartLookupServiceTest {
                 "ERA-6AEB5361V", "Thin Film Resistors - SMD 0805 5.36Kohm 0.1% 25ppm"));
         assertThat(service.getPart(Distributor.MOUSER, "ERA6AEB5361V", false)).isEmpty();
         verify(cache, never()).upsertAll(anyCollection());
+    }
+
+    @Test
+    void listedWithoutStockIsReturnedWithStockZeroAndCachedNotInStock() {
+        // get_part names the part explicitly: the listed part is returned with stock 0 (DESIGN.md 2, stock rule)
+        Part listed = part(Distributor.MOUSER, "65-EPC2302").toBuilder().stock(0).build();
+        FakeClient mouser = new FakeClient(Distributor.MOUSER) {
+            @Override
+            public PartLookupResult lookup(String partNumber, Deadline deadline) {
+                return PartLookupResult.outOfStock(new PartLookupResult.Identity("65-EPC2302", "EPC", "EPC2302",
+                        "GaN FETs EPC eGaN FET,100 V, 1.8 milliohm"), listed);
+            }
+        };
+        when(cache.find(any(), any())).thenReturn(Optional.empty());
+        service(mouser);
+
+        PartLookupResponse response = service.lookup(Distributor.MOUSER, "EPC2302", false);
+
+        assertThat(response.found()).isTrue();
+        assertThat(response.reason()).isEqualTo(PartLookupResponse.OUT_OF_STOCK);
+        assertThat(response.identity().mpn()).isEqualTo("EPC2302");
+        assertThat(response.part().partNumber()).isEqualTo("65-EPC2302");
+        assertThat(response.part().stock()).isZero();
+        assertThat(response.part().prices()).isNotEmpty();
+        assertThat(response.part().availability().status()).isEqualTo(Availability.OUT_OF_STOCK);
+        assertThat(response.part().availability().note()).isEqualTo(
+                "Out of stock at MOUSER; shown because the part number was requested explicitly.");
+        // cached with in_stock = false, never as an in-stock part; getPart (in stock only) stays empty
+        verify(cache).upsertListed(org.mockito.ArgumentMatchers.argThat((Collection<Part> parts) -> parts.size() == 1
+                && parts.iterator().next().distributorPartNumber().equals("65-EPC2302")
+                && parts.iterator().next().stock() == 0));
+        verify(cache, never()).upsertAll(anyCollection());
+        assertThat(service.getPart(Distributor.MOUSER, "EPC2302", false)).isEmpty();
     }
 
     @Test

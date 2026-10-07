@@ -86,6 +86,25 @@ class GanRankingTest {
                 .containsExactly("A80=80V<100V", "A65=65V<100V", "A60=60V<100V", "A40=40V<100V", "A30=30V<100V");
     }
 
+    @Test
+    void aRequestedPartListedWithoutStockRanksAfterEveryPartInStockAndIsNeverCounted() {
+        Part listed = fet("EPC2302", "EPC eGaN FET,100 V, 1.8 milliohm").toBuilder().stock(0).build();
+        Part below = fet("EPC2218A", "EPC eGaN FET,80 V, 3.2 milliohm");
+        Part other = fet("EPC2619", "EPC eGaN FET,100 V, 3.3 milliohm");
+        RankedResults ranked = ranking().rank(parser.parse("EPC2302 GaN FET 100V"),
+                Map.of(Distributor.MOUSER, List.of(listed, below, other)), null,
+                new RankingService.RankOptions(1, true));
+        assertThat(ranked.byDistributor().get(Distributor.MOUSER)).extracting(r -> r.part().manufacturerPartNumber())
+                .containsExactly("EPC2619", "EPC2218A", "EPC2302");   // after the below-spec part too
+        // a listed part that fails a rating is left out without being counted (it is not part of fetched)
+        RankedResults strict = ranking().rank(parser.parse("EPC2302 GaN FET 200V"),
+                Map.of(Distributor.MOUSER, List.of(listed, other)), null);
+        assertThat(strict.excludedBelowSpecBy(Distributor.MOUSER)).isEqualTo(1);   // EPC2619 only
+        assertThat(strict.belowSpecDetailBy(Distributor.MOUSER)).extracting(b -> b.mpn()).containsExactly("EPC2619");
+        assertThat(strict.excludedRequestedBy(Distributor.MOUSER)).singleElement()
+                .satisfies(e -> assertThat(e.reason()).isEqualTo("voltage 100V below 200V"));
+    }
+
     // ---- voltage overshoot
 
     private DeterministicRanker.Assessment assess(String query, Part part) {

@@ -21,9 +21,21 @@ public class LcscPartMapper {
 
     /** Empty when the row has no LCSC number or no ships-now stock. */
     public static Optional<Part> map(JlcpcbRow row, Instant fetchedAt) {
-        String lcsc = blankToNull(row.lcscPart());
         int stock = row.stockQuantity();
-        if (lcsc == null || stock <= 0) {
+        return stock <= 0 ? Optional.empty() : build(row, fetchedAt, stock);
+    }
+
+    /**
+     * The part of a row without ships-now stock (stock 0): only for a part number the user requested explicitly
+     * (DESIGN.md 2, stock rule). Empty when the row has no LCSC number.
+     */
+    public static Optional<Part> mapListed(JlcpcbRow row, Instant fetchedAt) {
+        return build(row, fetchedAt, Math.max(0, row.stockQuantity()));
+    }
+
+    private static Optional<Part> build(JlcpcbRow row, Instant fetchedAt, int stock) {
+        String lcsc = blankToNull(row.lcscPart());
+        if (lcsc == null) {
             return Optional.empty();
         }
         Map<String, Object> extra = new LinkedHashMap<>();

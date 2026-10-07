@@ -395,7 +395,11 @@ class TmeClientTest {
 
         server.verify();
         assertThat(result.status()).isEqualTo(PartLookupResult.Status.OUT_OF_STOCK);
-        assertThat(result.part()).isNull();
+        assertThat(result.asOptional()).isEmpty();
+        assertThat(result.listed()).hasValueSatisfying(p -> {
+            assertThat(p.distributorPartNumber()).isEqualTo("CL21B106KPQNNNE");
+            assertThat(p.stock()).isZero();
+        });
         assertThat(result.identity()).isEqualTo(new PartLookupResult.Identity("CL21B106KPQNNNE", "SAMSUNG",
                 "CL21B106KPQNNNE", "Capacitor: ceramic; MLCC; 10uF; 10V; X7R; \u00b110%; SMD; 0805"));
     }

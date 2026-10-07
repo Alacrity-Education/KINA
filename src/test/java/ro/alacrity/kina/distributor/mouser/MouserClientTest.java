@@ -401,7 +401,13 @@ class MouserClientTest {
 
         server.verify();
         assertThat(outOfStock.status()).isEqualTo(PartLookupResult.Status.OUT_OF_STOCK);
-        assertThat(outOfStock.part()).isNull();
+        assertThat(outOfStock.asOptional()).isEmpty();
+        // the listed part with its prices, stock 0: returned only for an explicitly requested part number
+        assertThat(outOfStock.listed()).hasValueSatisfying(p -> {
+            assertThat(p.distributorPartNumber()).isEqualTo("603-CC0805MKX77BB106");
+            assertThat(p.stock()).isZero();
+            assertThat(p.prices()).isNotEmpty();
+        });
         assertThat(outOfStock.identity().partNumber()).isEqualTo("603-CC0805MKX77BB106");
         assertThat(outOfStock.identity().mpn()).isEqualTo("CC0805MKX7R7BB106");
         assertThat(outOfStock.identity().manufacturer()).isEqualTo("YAGEO");
@@ -422,6 +428,7 @@ class MouserClientTest {
 
         assertThat(result.status()).isEqualTo(PartLookupResult.Status.OUT_OF_STOCK);
         assertThat(result.identity().partNumber()).isNull();
+        assertThat(result.listed()).isEmpty();   // no Mouser part number: identity only
         assertThat(result.identity().mpn()).isEqualTo("CC0805MKX7R7BB106");
     }
 

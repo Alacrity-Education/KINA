@@ -35,6 +35,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
     private final PartCacheRepository partCache;
     private final SearchCacheRepository searchCache;
     private final Clock clock;
+    private final RequestedLookup requested;
 
     CachedDistributorRetriever(KinaProperties properties, PageCollector pages, RankingService ranking,
                                ParametricExtractor extractor, PartCacheRepository partCache,
@@ -46,6 +47,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         this.partCache = partCache;
         this.searchCache = searchCache;
         this.clock = clock;
+        this.requested = new RequestedLookup(extractor, partCache, clock);
     }
 
     /** One rung of the relaxation ladder that produced parts: its result, its phrase and what it loosened. */
@@ -59,6 +61,12 @@ final class CachedDistributorRetriever implements DistributorRetriever {
     @Override
     public Fetched retrieve(DistributorClient client, Prepared prepared, Progress progress,
                             DistributorBudget deadline) {
+        // a part number the query names that the search did not bring is looked up directly
+        return requested.complete(client, prepared, search(client, prepared, progress, deadline), deadline);
+    }
+
+    private Fetched search(DistributorClient client, Prepared prepared, Progress progress,
+                           DistributorBudget deadline) {
         Distributor distributor = client.distributor();
         ParsedQuery parsed = prepared.parsed();
         DistributorRetriever.Plan plan = DistributorRetriever.plan(properties, ranking, distributor, prepared);

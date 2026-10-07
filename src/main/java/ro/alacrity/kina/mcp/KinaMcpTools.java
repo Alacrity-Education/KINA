@@ -92,7 +92,9 @@ public class KinaMcpTools {
             distributor and for the response) names the constraints that could not be met: no substitutes are \
             returned; try another package or value, or check whether allow_below_spec is the issue.
             Only stock that ships now is returned: parts with only factory stock, on-order or lead-time quantities \
-            are never returned. For BOM work always pass quantity (pieces to order, default 1): parts with less \
+            are never returned. The one exception: a part the query names by its part number that the distributor \
+            lists without stock is still returned, after every part in stock (it takes the last place), with stock 0 \
+            and availability.status "out_of_stock" (requested_part_found stays false: it cannot ship now). For BOM work always pass quantity (pieces to order, default 1): parts with less \
             stock rank last, low stock and a minimum order quantity far above the quantity cost rank, and each part \
             gets the order price.
             Results are grouped per distributor. Each distributor entry has: total_results = matches the distributor \
@@ -276,10 +278,11 @@ public class KinaMcpTools {
             Impedance, Dimensions, Qualification and Features plus the raw distributor attributes, photo_url and \
             the extra fields; pass detail "compact" for the canonical attributes only) and stock_as_of. found is \
             false when the lookup failed (error says why, reason is null) or the part is not available: reason \
-            "not_found" = the \
-            distributor does not know the part; reason "out_of_stock" = the distributor lists it but has no stock \
-            that ships now, and identity {part_number, manufacturer, mpn, description} tells which part it is (no \
-            stock or prices). Prices are the 3 smallest quantity brackets; with quantity the part also gets \
+            "not_found" = the distributor does not know the part. reason "out_of_stock" = the distributor lists it \
+            but has no stock that ships now: identity {part_number, manufacturer, mpn, description} tells which \
+            part it is, and part is returned too (found true) with stock 0, the listed prices and \
+            availability.status "out_of_stock", because you asked for it explicitly; when the distributor gives \
+            only the identity (a Mouser catalogue part without a Mouser number), found is false and part null. Prices are the 3 smallest quantity brackets; with quantity the part also gets \
             ordered_quantity, unit_price_at_quantity and total_price. Mouser/TME data comes from the cache unless \
             bypass_cache is true; stock and prices older than a day are refreshed first, and when they are older \
             than 3 days and neither a refresh nor a live lookup succeeds the part carries stale: true and \

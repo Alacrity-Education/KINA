@@ -144,6 +144,23 @@ class CacheRepositoriesTest {
     }
 
     @Test
+    void aListedPartOfAnExplicitLookupIsCachedNotInStockAndNeverServed() {
+        // DESIGN.md 2: a part requested by its part number and listed without stock keeps its metadata, in_stock false
+        parts.upsertListed(List.of(part(Distributor.MOUSER, "65-EPC2302", 0, NOW),
+                part(Distributor.MOUSER, "in-stock", 5, NOW)));
+        assertThat(count("cached_parts")).isEqualTo(1);   // a part with stock is not written by upsertListed
+        assertThat(jdbc.sql("SELECT in_stock FROM cached_parts WHERE part_number = '65-EPC2302'")
+                .query(Boolean.class).single()).isFalse();
+        assertThat(parts.find(Distributor.MOUSER, "65-EPC2302")).isEmpty();
+        assertThat(parts.findInStock(Distributor.MOUSER, List.of("65-EPC2302"))).isEmpty();
+
+        // a later fetch that finds it in stock serves it again
+        parts.upsertAll(List.of(part(Distributor.MOUSER, "65-EPC2302", 7, NOW)));
+        assertThat(parts.find(Distributor.MOUSER, "65-EPC2302")).hasValueSatisfying(p ->
+                assertThat(p.stock()).isEqualTo(7));
+    }
+
+    @Test
     void stats() {
         parts.upsertAll(List.of(
                 part(Distributor.TME, "a", 1, NOW),

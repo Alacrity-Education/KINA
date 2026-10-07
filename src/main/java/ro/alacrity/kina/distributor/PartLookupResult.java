@@ -8,10 +8,12 @@ import java.util.Optional;
 
 /**
  * Outcome of one distributor part lookup ({@link DistributorClient#lookup}): the in-stock part, a part the distributor
- * lists without ships-now stock (only its identity, never a {@link Part}: the stock rule holds), or nothing.
+ * lists without ships-now stock (its identity and, when the distributor gives enough data, the listed part with stock
+ * 0: the stock rule allows it only for a part number the user requested explicitly, DESIGN.md 2), or nothing.
  *
  * @param status   what the distributor said
- * @param part     the part when {@link Status#FOUND}, else null
+ * @param part     the in-stock part when {@link Status#FOUND}; the listed part with stock 0 (or null) when
+ *                 {@link Status#OUT_OF_STOCK}; else null
  * @param identity the listed part's identity when {@link Status#OUT_OF_STOCK}, else null
  */
 public record PartLookupResult(Status status, Part part, Identity identity) {
@@ -33,6 +35,9 @@ public record PartLookupResult(Status status, Part part, Identity identity) {
         if (status == Status.FOUND && (part == null || part.stock() <= 0)) {
             throw new IllegalArgumentException("a found part must have ships-now stock");
         }
+        if (status == Status.OUT_OF_STOCK && part != null && part.stock() > 0) {
+            throw new IllegalArgumentException("a listed out-of-stock part has stock 0");
+        }
     }
 
     public static PartLookupResult found(Part part) {
@@ -41,6 +46,11 @@ public record PartLookupResult(Status status, Part part, Identity identity) {
 
     public static PartLookupResult outOfStock(Identity identity) {
         return new PartLookupResult(Status.OUT_OF_STOCK, null, identity);
+    }
+
+    /** Listed without ships-now stock, with the listed part (stock 0, prices as listed; may be null). */
+    public static PartLookupResult outOfStock(Identity identity, Part listed) {
+        return new PartLookupResult(Status.OUT_OF_STOCK, listed, identity);
     }
 
     public static PartLookupResult notFound() {
@@ -52,8 +62,14 @@ public record PartLookupResult(Status status, Part part, Identity identity) {
         return part == null ? notFound() : part.filter(p -> p.stock() > 0).map(PartLookupResult::found).orElseGet(PartLookupResult::notFound);
     }
 
+    /** The in-stock part ({@link Status#FOUND}), else empty. */
     public Optional<Part> asOptional() {
-        return Optional.ofNullable(part);
+        return status == Status.FOUND ? Optional.ofNullable(part) : Optional.empty();
+    }
+
+    /** The part listed without ships-now stock ({@link Status#OUT_OF_STOCK}, stock 0), else empty. */
+    public Optional<Part> listed() {
+        return status == Status.OUT_OF_STOCK ? Optional.ofNullable(part) : Optional.empty();
     }
 
     /**

@@ -73,7 +73,12 @@ class LcscClientTest {
 
         PartLookupResult byNumber = client.lookup("C2075020", Deadline.immediate());
         assertThat(byNumber.status()).isEqualTo(PartLookupResult.Status.OUT_OF_STOCK);
-        assertThat(byNumber.part()).isNull();
+        assertThat(byNumber.asOptional()).isEmpty();
+        // the listed part, stock 0: returned only for an explicitly requested part number (DESIGN.md 2)
+        assertThat(byNumber.listed()).hasValueSatisfying(p -> {
+            assertThat(p.distributorPartNumber()).isEqualTo("C2075020");
+            assertThat(p.stock()).isZero();
+        });
         assertThat(byNumber.identity()).isEqualTo(new PartLookupResult.Identity("C2075020", "PANASONIC",
                 "ERA-6AEB5361V", "125mW Thin Film Resistor 100V ±0.1% ±25ppm/℃ 5.36kΩ"));
 
