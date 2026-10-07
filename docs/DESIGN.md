@@ -849,8 +849,8 @@ sensors, which any part's text may name (they make a part no mechanical switch).
 - **Switch type** (`parsed.switch.type`, the part's `SwitchType`): `tactile` (`tact`, `touch switch`), `pushbutton`
   (`push button`, `push-button`, `push switch`, `momentary button`), `toggle` (`lever`), `slide`, `rocker`, `DIP`
   (`DIP switch`, `DIL`, `piano`), `rotary` (`thumbwheel`, `coded rotary`), `keylock` (`key lock`, `key switch`), `snap
-  action` (`micro switch`, `microswitch`, `limit`, `travel switch`), `reed`, `membrane`, `detector`, `navigation`
-  (`joystick`, `multi-directional`). A request that names no type takes every mechanical switch; a pushbutton request
+  action` (`micro switch`, `microswitch`, `limit`, `travel switch`), `reed`, `membrane`, `detector` (`door`,
+  `interlock`), `navigation` (`joystick`, `multi-directional`, `5-way`). A request that names no type takes every mechanical switch; a pushbutton request
   takes tactile switches too, a tactile request tactile switches only (`panel` narrows a pushbutton request through
   the termination). No mechanical switch, in any family's text: `IC` (analog, load, power distribution, Ethernet, RF,
   signal, video or USB switches, multiplexers), `sensor` (Hall, proximity and thermostat switches), `accessory` (caps,
@@ -875,7 +875,9 @@ sensors, which any part's text may name (they make a part no mechanical switch).
   **Panel cut-out** (`hole_diameter`): `12mm hole`, `Ø16mm`, `M12`, and a bare `12mm` of a panel switch (pushbutton,
   toggle, rocker, keylock, a panel termination); a bare size of a tactile, DIP or slide switch is its body (`tactile
   12mm` is 12x12mm); within 0.1 mm. **Positions** (`positions`): `8 position`, `8 pos`, `8-way`, `8 bit` (DIP and
-  rotary switches).
+  rotary switches). TME states a DIP switch's number of switches as `Poles number` (8) and the positions of each as
+  `Number of positions` (2): the positions of a DIP part are its `Poles number` (`DIP_SWITCHES`), of any other switch
+  its `Number of positions` (2 for ON-ON, 3 for ON-OFF-ON).
 - **Illumination**: `illuminated`, `lighted`, `backlit`, `LED`, `LED ring`; `non-illuminated`, `without LED` on a part;
   the colour from `red LED`, `blue ring`, `LED colour: red`, Mouser `Illumination Color`. **Orientation**: `right angle`
   (`side actuated`, `horizontal`, JLCPCB `Push Switches - Horizontal Type`), `vertical` (`top actuated`).
@@ -913,7 +915,20 @@ sensors, which any part's text may name (they make a part no mechanical switch).
 `illuminated`, `illumination_colour`, `orientation` and `voltage_supply`; the values are constraints (`voltage`,
 `current`, `force`, `life`, `ip_rating`). A part's canonical attributes add `SwitchType`, `Contacts`,
 `SwitchFunction`, `Termination`, `SwitchSize`, `HoleDiameter`, `SwitchPositions`, `Illuminated`,
-`IlluminationColour`, `Orientation`, `Force`, `Life`, `IpRating`, `VoltageAC` and `VoltageDC`.
+`IlluminationColour`, `Orientation`, `Force`, `Life`, `IpRating`, `VoltageAC` and `VoltageDC`. Without a stated AC or
+DC the voltage of a switch part is its largest contact rating (TME's `Voltage` can be a 1.5kV dielectric strength).
+
+Distributor data (verified live 2026-10-07): TME sends `Type of switch`, `Contacts configuration`, `Switching method`
+(`ON-ON`, `OFF-(ON)`, `ON-(OFF)`), `Leads` (`for PCB`, `for soldering`, `connectors`, `M3 screws`, `screw terminals`),
+`Mounting` (`THT`, `SMT`, `on panel`), `Body dimensions`, `Number of positions`, `Poles number`, `AC contacts rating
+@R` and `DC contacts rating @R` (`2A / 250V AC`), `Mechanical durability`, `Operating Force`, `IP rating`,
+`Illumination` (`none`, `LED`); its descriptions add `Cutout: Ø12mm`. Mouser's search sends no switch attributes: its
+categories (`Tactile Switches`, `Toggle Switches`, `Pushbutton Switches - Industrial`, `DIP Switches/SIP Switches`,
+`Coded Rotary Switches`) and descriptions (`Tactile Switches 6X6X4.3mm 160gF`, `Toggle Switches SPDT Off-None-On
+Solder Lug`) say it. JLCPCB has the type in its category and the rest unlabelled in the description; many tactile
+switches have no description at all, only the package field `SMD-4P,6x6mm` (SMD, a 6x6mm body: `PackageFieldPrefix`,
+`PackageFieldWord`). An SMD or THT switch has a PCB termination when nothing else says, a tactile switch is momentary.
+`connectors` with a solder word (TME `connectors, for soldering`, Mouser `Solder Lug QC`) is a solder lug.
 
 **Attribute sources** (`domain.PartAttribute`, the `@Source` and `@Unit` annotations; user decision 2026-10-07).
 Every attribute KINA reads from a part is a constant of `PartAttribute`, with its sources declared on it. A source
@@ -1028,6 +1043,7 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 | `MOUNTING` |  | `MountingWord` |  | `mounting`, `mounting style`, `mounting type`, `mounting method`, `termination style`, `montage`, `electrical mounting` |
 |  |  | `Described` |  |  |
 |  |  | `PackageFieldMounting` |  |  |
+|  |  | `PackageFieldPrefix` | `led`, `switch` |  |
 | `TECHNOLOGY` |  | `Simple` |  | `type of resistor`, `type of capacitor`, `type of inductor`, `kind of capacitor`, `kind of resistor`, `technology`, `composition`, `construction`, `resistor type`, `capacitor type`, `inductor type` |
 | `SEMICONDUCTOR_TYPE` |  | `Simple` |  | `type of transistor`, `type of diode`, `kind of voltage regulator`, `type of voltage regulator`, `transistor polarity`, `polarity`, `channel type`, `output type`, `regulator type`, `transistor type`, `diode type`, `configuration`, `number of channels`, `technology` |
 | `CRYSTAL_BODY` |  | `Simple` |  | `body dimensions`, `dimensions`, `size / dimension`, `size`, `case size`, `body size` |
@@ -1051,9 +1067,9 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `DescribedWord` | `led` |  |
 | `SWITCH_TYPE` |  | `VocabularyWord` |  | `type of switch`, `switch type`, `kind of switch`, `product`, `product type`, `type` |
 |  |  | `DescribedWord` |  |  |
-| `CONTACTS` |  | `VocabularyWord` | `switch` | `contact form`, `contact configuration`, `type of contacts`, `switch configuration`, `configuration`, `circuit`, `contact arrangement` |
+| `CONTACTS` |  | `VocabularyWord` | `switch` | `contacts configuration`, `contact form`, `contact configuration`, `type of contacts`, `switch configuration`, `configuration`, `circuit`, `contact arrangement` |
 |  |  | `DescribedWord` | `switch` |  |
-| `SWITCH_FUNCTION` |  | `VocabularyWord` | `switch` | `switch function`, `function`, `switch type`, `operation`, `actuator type`, `action`, `switching function` |
+| `SWITCH_FUNCTION` |  | `VocabularyWord` | `switch` | `switching method`, `switch function`, `function`, `switch type`, `operation`, `actuator type`, `action`, `switching function` |
 |  |  | `DescribedWord` | `switch` |  |
 | `TERMINATION` |  | `MergedWords` | `switch` | `termination style`, `termination`, `terminals`, `leads`, `switch leads`, `electrical mounting`, `mounting style`, `mounting`, `connection`, `type of terminals` |
 | `SWITCH_SIZE` |  | `VocabularyWord` | `switch` | `dimensions`, `body dimensions`, `size / dimension`, `size`, `switch dimensions`, `body size` |
@@ -1061,8 +1077,9 @@ extraction of 0.6.0 (every evaluation part, and probe parts for every attribute 
 |  |  | `DescribedWord` | `switch` |  |
 | `HOLE_DIAMETER` |  | `VocabularyWord` | `switch` | `mounting hole diameter`, `mounting hole diam.`, `mounting hole dia.`, `hole diameter`, `panel cutout`, `panel cut-out`, `cut-out` |
 |  |  | `DescribedWord` | `switch` |  |
-| `SWITCH_POSITIONS` |  | `FirstInteger` | `switch` | `number of positions`, `number of switches`, `number of sections`, `positions` |
+| `SWITCH_POSITIONS` |  | `FirstInteger` | `switch` | `number of positions`, `positions` |
 |  |  | `DescribedWord` | `switch` |  |
+| `DIP_SWITCHES` |  | `FirstInteger` | `switch` | `poles number`, `number of switches`, `number of sections` |
 | `ILLUMINATED` |  | `VocabularyWord` | `switch` | `illuminated`, `illumination`, `illumination type`, `lighting`, `backlight`, `backlighting` |
 |  |  | `DescribedWord` | `switch` |  |
 | `ILLUMINATION_COLOUR` |  | `VocabularyWord` | `switch` | `illumination color`, `illumination colour`, `led colour`, `led color`, `backlight colour`, `colour of backlight` |

@@ -92,6 +92,17 @@ class Recognizers {
             Map.entry(Pattern.compile("(?i)\\bsurface[- ]mount(?:ed)?\\b"), "SMD"),
             Map.entry(Pattern.compile("(?i)\\b([np])[- ]channel\\b"), "$1-channel"),
             Map.entry(Pattern.compile("(?i)\\bmicro[- ]?controllers?\\b"), "mcu"),
+            // switches (SwitchVocabulary): "push button" is one word; switch ICs and switching sensors, "switch mode"
+            // power supplies name no switch ("ic-switch", "sensor-switch", "switch-mode" are no family words)
+            Map.entry(Pattern.compile("(?i)\\bpush[- ]buttons?\\b"), "pushbutton"),
+            Map.entry(Pattern.compile("(?i)\\bmicro[- ]switch(es)?\\b"), "microswitch$1"),
+            Map.entry(Pattern.compile("(?i)\\bswitch(?:ed)?[- ]mode\\b"), "switch-mode"),
+            Map.entry(Pattern.compile("(?i)\\b(?:(?:analog(?:ue)?|signal|rf|ethernet|load|power[- ]distribution"
+                    + "|high[- ]side|low[- ]side|smart(?:[- ]power)?|video|audio|usb(?:[- ]power)?|bus|i2c|battery"
+                    + "|crosspoint|matrix)\\s+switch(?:es)?(?:\\s+ics?)?|(?:power\\s+)?switch(?:es)?\\s+ics?)\\b"),
+                    "ic-switch"),
+            Map.entry(Pattern.compile("(?i)\\b(?:hall(?:[- ]effect)?|proximity|thermostat|thermal|temperature|pressure"
+                    + "|float|flow|level)\\s+switch(?:es)?\\b"), "sensor-switch"),
             // infrared emitters (Mouser category "Infrared Emitters", "IR EMITTR", "IREMITTER"): an LED family token
             Map.entry(Pattern.compile("(?i)\\b(?:infra-?red|ir)[- ]?emitt?e?rs?\\b"), "ir-emitter"),
             // gate drivers (Mouser "Gate Drivers", "Half Bridge Gate Dvr", "HALF BRDG DRVR", "Iso 1/2 Bridge Drv",
@@ -143,10 +154,13 @@ class Recognizers {
         return normaliseUnits(prepare(text), family);
     }
 
-    /** The family's unit spellings in a prepared text (fans, LEDs), else the text unchanged. */
+    /** The family's unit spellings in a prepared text (fans, LEDs, switches), else the text unchanged. */
     private static String normaliseUnits(String prepared, String family) {
         if (FanVocabulary.FAN.equals(family)) {
             return FanVocabulary.normaliseUnits(prepared);
+        }
+        if (SwitchVocabulary.SWITCH.equals(family)) {
+            return SwitchVocabulary.normaliseUnits(prepared);
         }
         return LedVocabulary.LED.equals(family) ? LedVocabulary.normaliseUnits(prepared) : prepared;
     }
@@ -220,7 +234,12 @@ class Recognizers {
         family(3, false, TVS, "tvs");
         family(3, true, TVS, "esd");
         family(2, false, RELAY, "relay", "relays");
-        family(2, false, SWITCH, "switch", "switches");
+        // switches: "switch" at the priority of MOSFETs and LEDs, the first family word winning a tie ("MOSFET to switch a
+        // 12V LED strip" is a MOSFET request, "switch with LED" a switch); the type words beat every other family word
+        // ("pushbutton switch with red LED"); "switching", "switch-mode", "ic-switch" and "sensor-switch" name no switch
+        family(3, false, SWITCH, "switch", "switches");
+        family(4, false, SWITCH, "tactile", "tact", "pushbutton", "pushbuttons", "push-button", "push-buttons", "toggle",
+                "rocker", "microswitch", "microswitches", "keylock", "dip-switch", "dipswitch");
         // gate drivers, GaN power stages and half-bridges with an integrated driver (PHRASES make them one token; the
         // spaced forms serve the lexical family check of part texts); they win over "MOSFET", "FET", "transistor"
         family(4, false, ComponentFamily.GATE_DRIVER, "gate-driver", "power-stage", "half-bridge-driver",
@@ -1052,7 +1071,7 @@ class Recognizers {
             ParsedQuery.TEMPERATURE, ParsedQuery.LIFETIME, ParsedQuery.TOLERANCE, ParsedQuery.SPEED,
             ParsedQuery.AIRFLOW, ParsedQuery.STATIC_PRESSURE, ParsedQuery.NOISE, ParsedQuery.WAVELENGTH,
             ParsedQuery.COLOUR_TEMPERATURE, ParsedQuery.FORWARD_VOLTAGE, ParsedQuery.LUMINOUS_INTENSITY,
-            ParsedQuery.LUMINOUS_FLUX, ParsedQuery.VIEWING_ANGLE);
+            ParsedQuery.LUMINOUS_FLUX, ParsedQuery.VIEWING_ANGLE, ParsedQuery.FORCE, ParsedQuery.LIFE);
 
     /** The reverse voltage most LED descriptions list beside the forward voltage: never read as the forward voltage. */
     private static final double LED_REVERSE_VOLTAGE = 5.0;
@@ -1098,9 +1117,10 @@ class Recognizers {
             // an LED of the category "LED Indication - Discrete"): the values are read with the hint's family
             family = familyHint;
         }
-        if (text != null && (FanVocabulary.FAN.equals(family) || LedVocabulary.LED.equals(family))) {
+        if (text != null && (FanVocabulary.FAN.equals(family) || LedVocabulary.LED.equals(family)
+                || SwitchVocabulary.SWITCH.equals(family))) {
             // fan units in token spelling ("8.5m3/h", "25dB(A)", "3000 r/min"); LED units ("120°" is a viewing
-            // angle, "470 nm", a range "1.8V~2.4V" as its upper end)
+            // angle, "470 nm", a range "1.8V~2.4V" as its upper end); switch units ("100,000 cycles", "160 gf")
             residual = normaliseUnits(residual, family);
             tokens = tokenize(residual);
         }
@@ -1147,8 +1167,8 @@ class Recognizers {
                 values.putIfAbsent(ParsedQuery.TOLERANCE, of(ParsedQuery.TOLERANCE, tol));
                 continue;
             }
-            if (FanVocabulary.claims(family, t)) {
-                continue;   // "axial" / "radial" of a fan is its type, not a capacitor's leads (FanVocabulary)
+            if (FanVocabulary.claims(family, t) || SwitchVocabulary.claims(family, t)) {
+                continue;   // "axial" / "radial" of a fan is its type, not a capacitor's leads; "DIP" of a switch no package
             }
             String mnt = mounting(t);
             if (mnt != null) {

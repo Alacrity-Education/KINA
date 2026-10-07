@@ -1,0 +1,5097 @@
+{
+ "query": "SPST momentary pushbutton 12mm panel",
+ "recorded": "2026-10-07 live probe (one search per query through the stack, detail=full, allow_below_spec, max_results 50): Mouser and TME parts are every part the search fetched, read back from the part cache (raw distributor attributes); LCSC parts are the returned ones without the derived attributes; prices as listed",
+ "phrases": {
+  "LCSC": "\"Pushbutton Switches\" SPST",
+  "TME": "push-button switch SPST",
+  "MOUSER": "pushbutton switch SPST momentary 12mm"
+ },
+ "parts": {
+  "LCSC": [],
+  "TME": [
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 10
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 621,
+     "datasheet_source": "dte"
+    },
+    "stock": 5,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 17.39
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 15.46
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 13.52
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/06/BE/A0/00/0/715616_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=1b8b335f8fd1a1665441e34616c4afacc93b6495",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for PCB",
+     "Mounting": "on panel, THT",
+     "Button shape": "round",
+     "Manufacturer": "ALPS",
+     "Type of switch": "push-button",
+     "Body dimensions": "17.5x23x17.9mm",
+     "Electrical life": "1000000 cycles",
+     "Operating Force": "6N",
+     "Switching method": "OFF-(ON)",
+     "Switches features": "Energy Harvester",
+     "Number of positions": "2",
+     "Operating temperature": "-20...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1"
+    },
+    "productUrl": "https://www.tme.eu/en/details/spga110100/",
+    "description": "Switch: push-button; Pos: 2; SPST; OFF-(ON); Leads: for PCB",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/b68e1ad48b0b1cca52a500c0390c10c6/SPGA110100.PDF",
+    "manufacturer": "ALPS",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "SPGA110100",
+    "manufacturerPartNumber": "SPGA110100"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113679,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1793,
+     "datasheet_source": "dte"
+    },
+    "stock": 35,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.01
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.56
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.34
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.11
+     }
+    ],
+    "category": "Detect Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/9D/36/E0/00/0/943065_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=682ca45cd7a6a0c90883e226da0cc31bd55aa870",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel",
+     "IP rating": "IP65",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "SWITCH COMPONENTS",
+     "Type of switch": "push-button",
+     "Actuator colour": "black",
+     "Contact plating": "silver plated",
+     "Contact material": "copper alloy",
+     "Leads dimensions": "4.8x0.8mm",
+     "Switching method": "OFF-(ON)",
+     "Flammability rating": "UL94V-2",
+     "Manufacturer series": "PB",
+     "Number of positions": "2",
+     "DC contacts rating @R": "20A / 14V DC",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/pb-1b-dc-2-b/",
+    "description": "Switch: push-button; Pos: 2; SPST; 20A/14VDC; black; Illumin: none",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/fd4dc970cafa31dea511ecb936230bec/PB-1B-DC-2-B.pdf",
+    "manufacturer": "SWITCH COMPONENTS",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PB-1B-DC-2-B",
+    "manufacturerPartNumber": "PB-1B-DC-2-B"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113679,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1793,
+     "datasheet_source": "dte"
+    },
+    "stock": 27,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.97
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 5.31
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 4.98
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.64
+     }
+    ],
+    "category": "Detect Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/97/A3/E0/00/0/932473_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=fa37bf9cbb5c250f27fda1d6e38987d90ec3611d",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel",
+     "IP rating": "IP65",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "LED",
+     "Manufacturer": "SWITCH COMPONENTS",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Contact plating": "silver plated",
+     "Backlight colour": "red",
+     "Contact material": "copper alloy",
+     "Leads dimensions": "4.8x0.8mm",
+     "Switching method": "OFF-(ON)",
+     "Flammability rating": "UL94V-2",
+     "Manufacturer series": "PB",
+     "Number of positions": "2",
+     "Illumination voltage": "12V DC",
+     "DC contacts rating @R": "20A / 14V DC",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/pb-1b-dc-2-ril/",
+    "description": "Switch: push-button; Pos: 2; SPST; 20A/14VDC; red; Illumin: LED; PB",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/269eb98b63901ed1fceb227fcaafac2b/PB-1B-DC-2-RIL.pdf",
+    "manufacturer": "SWITCH COMPONENTS",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PB-1B-DC-2-RIL",
+    "manufacturerPartNumber": "PB-1B-DC-2-RIL"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113679,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1793,
+     "datasheet_source": "dte"
+    },
+    "stock": 12,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.05
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.62
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.37
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.15
+     }
+    ],
+    "category": "Detect Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/AD/36/E0/00/0/943066_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=96d61bc61430ebb86097541ceb664b994a0ba595",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel",
+     "IP rating": "IP65",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "SWITCH COMPONENTS",
+     "Type of switch": "push-button",
+     "Actuator colour": "black",
+     "Contact plating": "silver plated",
+     "Contact material": "copper alloy",
+     "Leads dimensions": "4.8x0.8mm",
+     "Switching method": "ON-OFF",
+     "Flammability rating": "UL94V-2",
+     "Manufacturer series": "PB",
+     "Number of positions": "2",
+     "DC contacts rating @R": "20A / 14V DC",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "50mΩ",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/pb-1a-dc-2-b/",
+    "description": "Switch: push-button; Pos: 2; SPST; 20A/14VDC; black; Illumin: none",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/3bf00f5145832cf43e70ce6416ed3b06/PB-1A-DC-2-B.pdf",
+    "manufacturer": "SWITCH COMPONENTS",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PB-1A-DC-2-B",
+    "manufacturerPartNumber": "PB-1A-DC-2-B"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113679,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1793,
+     "datasheet_source": "dte"
+    },
+    "stock": 6,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.93
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 5.27
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 4.94
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.61
+     }
+    ],
+    "category": "Detect Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E3/74/E0/00/0/935742_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a38d9dd0544ee6fd154314c0ba2d252f6c632a88",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel",
+     "IP rating": "IP65",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "LED",
+     "Manufacturer": "SWITCH COMPONENTS",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Contact plating": "silver plated",
+     "Backlight colour": "red",
+     "Contact material": "copper alloy",
+     "Leads dimensions": "4.8x0.8mm",
+     "Switching method": "ON-OFF",
+     "Flammability rating": "UL94V-2",
+     "Manufacturer series": "PB",
+     "Number of positions": "2",
+     "Illumination voltage": "12V DC",
+     "DC contacts rating @R": "20A / 14V DC",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "50mΩ",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/pb-1a-dc-2-ril/",
+    "description": "Switch: push-button; Pos: 2; SPST; 20A/14VDC; red; Illumin: LED; PB",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/5a2570ab5650c2f015641900c8839f7c/PB-1A-DC-2-RIL.pdf",
+    "manufacturer": "SWITCH COMPONENTS",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PB-1A-DC-2-RIL",
+    "manufacturerPartNumber": "PB-1A-DC-2-RIL"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113679,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1793,
+     "datasheet_source": "dte"
+    },
+    "stock": 3,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 6.05
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 5.45
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.84
+     }
+    ],
+    "category": "Detect Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/B7/A3/E0/00/0/932475_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=529c73ac59f901b9924dc70a05e32c16d675a8e3",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel",
+     "IP rating": "IP65",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "LED",
+     "Manufacturer": "SWITCH COMPONENTS",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Backlight colour": "red",
+     "Contact material": "copper alloy",
+     "Leads dimensions": "6.35x0.8mm",
+     "Switching method": "ON-OFF",
+     "Flammability rating": "UL94V-2",
+     "Manufacturer series": "PC",
+     "Number of positions": "2",
+     "Illumination voltage": "12V DC",
+     "DC contacts rating @R": "10A / 14V DC",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "50mΩ",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/pc-1a-dc-1-rl/",
+    "description": "Switch: push-button; Pos: 2; SPST; 10A/14VDC; red; Illumin: LED; PC",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/1464d8af7933a3da63554d697ae61e9c/PC-1A-DC-1-RL.pdf",
+    "manufacturer": "SWITCH COMPONENTS",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PC-1A-DC-1-RL",
+    "manufacturerPartNumber": "PC-1A-DC-1-RL"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 40
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 828,
+     "datasheet_source": "dte"
+    },
+    "stock": 35,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 2.17
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 2.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 120,
+      "unitPrice": 1.82
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/71/95/60/00/0/416023_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=35f8cdd095d6226fc43d0ceff4065eabda9e6fd5",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Manufacturer": "ONPOW",
+     "Related items": "S09-S1Y",
+     "Type of switch": "push-button",
+     "Actuator colour": "yellow",
+     "Switching method": "ON-(ON)",
+     "Number of positions": "2",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "Ø16mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/v16-a11-y/",
+    "description": "Switch: push-button; Pos: 2; SPST; ON-(ON); IP40; Ø16mm",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/4e47b580f45e967a06ebfc7dae803522/LAS1-AY without LED (2).pdf",
+    "manufacturer": "ONPOW",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "V16-A11-Y",
+    "manufacturerPartNumber": "LAS1-AY-11/Y-IP40"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 152,
+     "datasheet_source": "dte"
+    },
+    "stock": 153,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.66
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 1.41
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 1.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 1.18
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.09
+     },
+     {
+      "currency": "EUR",
+      "quantity": 600,
+      "unitPrice": 0.89
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/60/1C/90/00/0/639238_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=1512077a0535f3cee75f9d3c8f6837af7ffed010",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Button shape": "flat, round",
+     "Manufacturer": "SCI",
+     "Type of switch": "push-button",
+     "Actuator colour": "black",
+     "Leads dimensions": "6.35mm",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "DC contacts rating @R": "5A / 24V DC",
+     "Contacts configuration": "SPST",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø12mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/r13-566a2-01/",
+    "description": "Switch: push-button; Pos: 2; SPST; 5A/24VDC; OFF-(ON); Cutout: Ø12mm",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/c268888ef1b141fd2c809b204e6b36e5/R13-566.R9.133L.pdf",
+    "manufacturer": "SCI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "R13-566A2-01",
+    "manufacturerPartNumber": "R13-566A2-01"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1609,
+     "datasheet_source": "dte"
+    },
+    "stock": 5,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 6.5
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 5.85
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 5.2
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 4.55
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.06
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/D6/D5/B0/00/0/744813_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=71dde91c4dde453efb0673719ba3ecfbfa60c588",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Button shape": "round",
+     "Illumination": "neon lamp",
+     "Manufacturer": "COMELUX",
+     "Type of switch": "push-button",
+     "Leads dimensions": "6.35x0.8mm",
+     "Switching method": "OFF-ON",
+     "Number of positions": "2",
+     "AC contacts rating @R": "16A / 250V AC",
+     "Operating temperature": "max. 125°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "bistable",
+     "Mounting hole dimensions": "22x30mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/4010ttr1503/",
+    "description": "Switch: push-button; Pos: 2; SPST; 16A/250VAC; OFF-ON",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/d06f73b74596ba25ebb0b794f1adc180/Comelux.pdf",
+    "manufacturer": "COMELUX",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "4010TTR1503",
+    "manufacturerPartNumber": "4010TTR1503"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 2257,
+     "datasheet_source": "dte"
+    },
+    "stock": 9,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 7.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 7.19
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/08/2E/60/00/0/451200_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=107bc64e2d69cfe17b9deba3ac212100ae3fabff",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel",
+     "Body colour": "black",
+     "Button shape": "prominent, rectangular",
+     "Illumination": "none",
+     "Manufacturer": "ARATAS",
+     "Body material": "plastic",
+     "Type of switch": "push-button",
+     "Actuator colour": "red/white",
+     "Panel thickness": "1...2.8mm",
+     "Leads dimensions": "6.3x0.8mm",
+     "Switching method": "OFF-ON",
+     "Manufacturer series": "A8N",
+     "Number of positions": "2",
+     "AC contacts rating @R": "16A / 250V AC",
+     "Operating temperature": "-25...55°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Mounting hole dimensions": "22.3x14.8mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/a8ns-3162/",
+    "description": "Switch: push-button; Pos: 2; SPST; 16A/250VAC; OFF-ON; Illumin: none",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/107f820153ac3b8bec85c37a9a52677c/A8N.pdf",
+    "manufacturer": "ARATAS",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "A8NS-3162",
+    "manufacturerPartNumber": "A8NS-3162"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 870,
+     "datasheet_source": "dte"
+    },
+    "stock": 40,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.84
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 5.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 5.06
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 4.98
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/28/5C/90/00/0/640386_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a3520d9d48817967d40f44e48ee03e3dddb1e52b",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "NKK SWITCHES",
+     "Type of switch": "push-button",
+     "Body dimensions": "27.7x25.5x13.2mm",
+     "Electrical life": "10000 cycles",
+     "Switching method": "ON-(ON)",
+     "Manufacturer series": "SB",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 125V AC",
+     "Mechanical durability": "30000 cycles",
+     "Operating temperature": "-10...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "10mΩ",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/sb61b/",
+    "description": "Switch: push-button; Pos: 2; SPST; 3A/125VAC; ON-(ON); Illumin: none",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/23aaf5fb02ed21eb1c471f8b5a7d0c02/SBseries.pdf",
+    "manufacturer": "NKK SWITCHES",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "SB61B",
+    "manufacturerPartNumber": "SB61B"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1265,
+     "datasheet_source": "dte"
+    },
+    "stock": 1112,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.88
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 2.65
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 2.34
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 1.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 70,
+      "unitPrice": 1.76
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.73
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/2F/0D/90/00/0/643314_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f0b078b641dfdb6b834f58081d98f82cd3f1222a",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for PCB",
+     "Mounting": "PCB, THT",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "C&K",
+     "Type of switch": "push-button",
+     "Actuator colour": "white-black",
+     "Body dimensions": "12.7x12.7x3.4mm",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "MDP",
+     "Number of positions": "2",
+     "DC contacts rating @R": "1A / 100V DC",
+     "Operating temperature": "-25...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "100mΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/mdps/",
+    "description": "Switch: push-button; Pos: 2; SPST; 1A/100VDC; OFF-(ON); PCB,THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/ac37a958d8dedc6d2b6098d1b97d40cc/MDMDP.pdf",
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "MDPS",
+    "manufacturerPartNumber": "MDPS LFS"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1705,
+     "datasheet_source": "dte"
+    },
+    "stock": 874,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.39
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.14
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.97
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/72/83/D0/00/0/866343_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=560d86c31376e5e7c6cefdd6a388475274496dee",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "Button shape": "square",
+     "Illumination": "none",
+     "Manufacturer": "E-SWITCH",
+     "Type of switch": "push-button",
+     "Body dimensions": "15.5x34mm",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "DC contacts rating @R": "3A / 125V DC",
+     "Mechanical durability": "6000 cycles",
+     "Operating temperature": "-20...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ps1023ablk/",
+    "description": "Switch: push-button; Pos: 2; SPST; 3A/125VDC; OFF-(ON); on panel",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/e1930714e00c4557a3e35464aa0b6b71/PS1023ABLK.pdf",
+    "manufacturer": "E-SWITCH",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PS1023ABLK",
+    "manufacturerPartNumber": "PS1023ABLK"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 870,
+     "datasheet_source": "dte"
+    },
+    "stock": 4,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.83
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/C7/7A/B0/00/0/763772_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a179c830d9f69a05d77f5614ab2a7723693667a7",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "NKK SWITCHES",
+     "Type of switch": "push-button",
+     "Body dimensions": "27.7x25.5x13.2mm",
+     "Electrical life": "10000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "SB",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 125V AC",
+     "Mechanical durability": "50000 cycles",
+     "Operating temperature": "-10...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "10mΩ",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/sb221no/",
+    "description": "Switch: push-button; Pos: 2; SPST; 3A/125VAC; OFF-(ON); 1000MΩ; SB",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/23aaf5fb02ed21eb1c471f8b5a7d0c02/SBseries.pdf",
+    "manufacturer": "NKK SWITCHES",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "SB221NO",
+    "manufacturerPartNumber": "SB221NO"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 870,
+     "datasheet_source": "dte"
+    },
+    "stock": 31,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.84
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F7/5C/90/00/0/640383_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7046949e98fe06529a21d6efc751ac327909c38f",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "NKK SWITCHES",
+     "Type of switch": "push-button",
+     "Body dimensions": "27.7x25.5x13.2mm",
+     "Electrical life": "10000 cycles",
+     "Switching method": "ON-(OFF)",
+     "Manufacturer series": "SB",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 125V AC",
+     "Mechanical durability": "50000 cycles",
+     "Operating temperature": "-10...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "10mΩ",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/sb221nc/",
+    "description": "Switch: push-button; Pos: 2; SPST; 3A/125VAC; ON-(OFF); 1000MΩ; SB",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/23aaf5fb02ed21eb1c471f8b5a7d0c02/SBseries.pdf",
+    "manufacturer": "NKK SWITCHES",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "SB221NC",
+    "manufacturerPartNumber": "SB221NC"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1289,
+     "datasheet_source": "dte"
+    },
+    "stock": 120,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.42
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 4.97
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.79
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 4.62
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/6B/92/B0/00/0/731574_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=509044670aba3094d478f129b12b4f3b9a037f37",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Shape": "rectangular",
+     "Mounting": "on panel",
+     "IP rating": "IP40",
+     "Dimensions": "23.9x16.6x38.6mm",
+     "Body colour": "black, black",
+     "Button shape": "round, round",
+     "Illumination": "none",
+     "Manufacturer": "Marquardt",
+     "Button marking": "blank",
+     "Type of switch": "push-button",
+     "Body dimensions": "23.9x16.6x23mm",
+     "Contact plating": "silver plated",
+     "Contact material": "copper",
+     "Leads dimensions": "4.8x0.8mm",
+     "Switching method": "ON-OFF",
+     "Key button colour": "black",
+     "Manufacturer series": "1840",
+     "Number of positions": "2",
+     "AC contacts rating @R": "6A / 250V AC",
+     "Operating temperature": "-20...100°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "100mΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/1841.1101/",
+    "description": "Switch: push-button; Pos: 2; SPST; 6A/250VAC; ON-OFF; IP40; copper",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/3520f4d277321442f1ee707ce919291d/1841.1101.PDF",
+    "manufacturer": "Marquardt",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "1841.1101",
+    "manufacturerPartNumber": "1841.1101"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "BG1",
+       "amount": 100
+      },
+      {
+       "id": "CT1",
+       "amount": 500
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 152,
+     "datasheet_source": "dte"
+    },
+    "stock": 577,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.73
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 2.98
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.68
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 2.37
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 2.24
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/73/C0/80/00/0/527415_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2ba6634a5f1b90f43b3bccc9a37070c302d6440b",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel",
+     "IP rating": "IP65",
+     "Button shape": "round",
+     "Illumination": "LED",
+     "Manufacturer": "SCI",
+     "Body material": "polyamide",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Electrical life": "20000 cycles",
+     "Panel thickness": "max. 7mm",
+     "Backlight colour": "red",
+     "Leads dimensions": "6.3mm",
+     "Switching method": "OFF-ON",
+     "Manufacturer series": "R13-553",
+     "Number of positions": "2",
+     "DC contacts rating @R": "10A / 14V DC",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø22mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/r13-553b2l-01/",
+    "description": "Switch: push-button; Pos: 2; SPST; 10A/14VDC; OFF-ON; IP65; red",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/af5bbe8f75ee639ffff2a81eeccf3549/R13-553B2L-01_DRAWING.pdf",
+    "manufacturer": "SCI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "R13-553B2L-01",
+    "manufacturerPartNumber": "R13-553B2L-01"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "BG1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 152,
+     "datasheet_source": "dte"
+    },
+    "stock": 287,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.42
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 2.19
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 2.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 1.96
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.85
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.73
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 1.62
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/63/C0/80/00/0/527414_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8d18d068fe61f3554258e31392d876f12e9eed45",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Illumination": "LED",
+     "Manufacturer": "SCI",
+     "Body material": "polyamide",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Electrical life": "20000 cycles",
+     "Panel thickness": "max. 9mm",
+     "Backlight colour": "red",
+     "Leads dimensions": "6.3mm",
+     "Switching method": "OFF-ON",
+     "Manufacturer series": "R13-553",
+     "Number of positions": "2",
+     "DC contacts rating @R": "10A / 14V DC",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø22mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/r13-553bl-01/",
+    "description": "Switch: push-button; Pos: 2; SPST; 10A/14VDC; OFF-ON; IP40; red",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/40981702f3848ad463a103e5548c3566/R13-553BL-01_DRAWING.pdf",
+    "manufacturer": "SCI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "R13-553BL-01",
+    "manufacturerPartNumber": "R13-553BL-01"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 60
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 131,
+     "datasheet_source": "dte"
+    },
+    "stock": 865,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.82
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.73
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/EB/39/E0/00/0/955326_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ee512bfefd0afd4e459a95e9fc3b11ef0b32d417",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "PCB, THT",
+     "Button shape": "square",
+     "Illumination": "none",
+     "Manufacturer": "PANASONIC",
+     "Type of switch": "push-button",
+     "Operating Force": "2N",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "ESE20",
+     "Number of positions": "2",
+     "DC contacts rating @R": "0.1A / 14V DC",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ese20c321/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.1A/14VDC; OFF-(ON); PCB,THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/f12ec073e43e80c6f0bdf978d05b6b2d/ESE20series.pdf",
+    "manufacturer": "PANASONIC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "ESE20C321",
+    "manufacturerPartNumber": "ESE20C321"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 169,
+     "datasheet_source": "dte"
+    },
+    "stock": 159,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.04
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.99
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.93
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.88
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.81
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/87/D3/71/00/0/1523064_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e610d75e26f694a3b08937ad3d9dacc4fcf2b057",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "Button shape": "prominent, square",
+     "Illumination": "none",
+     "Manufacturer": "CANAL ELECTRONIC",
+     "Type of switch": "push-button",
+     "Body dimensions": "14x14x12.8mm",
+     "Switching method": "OFF-ON",
+     "Number of positions": "2",
+     "AC contacts rating @R": "6A / 250V AC",
+     "DC contacts rating @R": "3A / 48V DC",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "20mΩ",
+     "Mounting hole dimensions": "12.4x11.2mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ps611bbac1/",
+    "description": "Switch: push-button; Pos: 2; SPST; 6A/250VAC; 3A/48VDC; OFF-ON",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/50611359ac4b65d80c386f88780e7c6f/PS6-11BBA-C1.pdf",
+    "manufacturer": "CANAL ELECTRONIC",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PS611BBAC1",
+    "manufacturerPartNumber": "PS6-11BBA-C1"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 870,
+     "datasheet_source": "dte"
+    },
+    "stock": 33,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.49
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.91
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.63
+     },
+     {
+      "currency": "EUR",
+      "quantity": 30,
+      "unitPrice": 3.58
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.45
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.29
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 3.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 3.02
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 2.85
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/33/B5/C0/00/0/809779_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=aad3cbb1c98341ce6eeffc4ac648b59c4fe87ae2",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel, THT",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "NKK SWITCHES",
+     "Type of switch": "push-button",
+     "Actuator colour": "white",
+     "Body dimensions": "Ø7x12mm",
+     "Electrical life": "50000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "FB",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.5A / 125V AC",
+     "Mechanical durability": "50000 cycles",
+     "Operating temperature": "-10...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "30mΩ",
+     "Mounting hole dimensions": "Ø7mm",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/fb15anep2/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.5A/125VAC; OFF-(ON); 100MΩ",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/ae0852175293d8c4ab70bd3514c1f3c2/FBseries.pdf",
+    "manufacturer": "NKK SWITCHES",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "FB15ANEP2",
+    "manufacturerPartNumber": "FB15ANEP2"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 5
+      },
+      {
+       "id": "CT1",
+       "amount": 40
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 828,
+     "datasheet_source": "dte"
+    },
+    "stock": 55,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.27
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 2.17
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 2.06
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.82
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/81/95/60/00/0/416024_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a270761712f895ab0e0801da6f5433dee5a278ae",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Manufacturer": "ONPOW",
+     "Related items": "S09-S1Y",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Switching method": "ON-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.5A / 220V AC",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "Ø16mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/v16-a11-r/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.5A/220VAC; ON-(ON); IP40; Ø16mm",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/4e47b580f45e967a06ebfc7dae803522/LAS1-AY without LED (2).pdf",
+    "manufacturer": "ONPOW",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "V16-A11-R",
+    "manufacturerPartNumber": "LAS1-AY-11/R-IP40"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 80
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1265,
+     "datasheet_source": "dte"
+    },
+    "stock": 57,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 7.7
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 6.9
+     },
+     {
+      "currency": "EUR",
+      "quantity": 80,
+      "unitPrice": 6.5
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1040,
+      "unitPrice": 6.05
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/A4/37/11/00/0/1143626_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=af645e03fba89a37ede4dbf212dd9a77f7e27980",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "screw",
+     "Application": "personal computer, telecommunication",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "C&K",
+     "Terminal pitch": "5.31mm",
+     "Type of switch": "push-button",
+     "Body dimensions": "Ø9.53x16.35mm",
+     "Electrical life": "250000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Contact resistance": "30mΩ",
+     "Manufacturer series": "8500",
+     "Number of positions": "2",
+     "AC contacts rating @R": "1A / 120V AC",
+     "DC contacts rating @R": "1A / 28V DC",
+     "Operating temperature": "-30...65°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "30mΩ",
+     "Min. insulation resistance": "10MΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/8532mzqe2/",
+    "description": "Switch: push-button; Pos: 2; SPST; 1A/120VAC; 1A/28VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/e1bb9a2d7a981c48b22a68a1f9251916/8532MZQE2.PDF",
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "8532MZQE2",
+    "manufacturerPartNumber": "8532MZQE2"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 870,
+     "datasheet_source": "product_page"
+    },
+    "stock": 180,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.56
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.36
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 2.96
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/7F/EB/90/00/0/638711_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=cd5bd6f0e10b5762b4a5855a72d9a8e4bb7ddcaa",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "THT",
+     "Button shape": "square",
+     "Illumination": "LED",
+     "Manufacturer": "NKK SWITCHES",
+     "Type of switch": "push-button",
+     "Body dimensions": "12x12x10.2mm",
+     "Electrical life": "500000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "NP01",
+     "Number of positions": "2",
+     "DC contacts rating @R": "0.01A / 28V DC",
+     "Mechanical durability": "500000 cycles",
+     "Operating temperature": "-25...50°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Min. insulation resistance": "500MΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/np0115hg03lf/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.01A/28VDC; OFF-(ON); 500MΩ; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/en/details/np0115hg03lf/",
+    "manufacturer": "NKK SWITCHES",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "NP0115HG03LF",
+    "manufacturerPartNumber": "NP0115HG03LF"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 70
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113679,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1705,
+     "datasheet_source": "dte"
+    },
+    "stock": 210,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.75
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.55
+     },
+     {
+      "currency": "EUR",
+      "quantity": 35,
+      "unitPrice": 3.34
+     },
+     {
+      "currency": "EUR",
+      "quantity": 70,
+      "unitPrice": 3.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 140,
+      "unitPrice": 2.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 210,
+      "unitPrice": 2.67
+     },
+     {
+      "currency": "EUR",
+      "quantity": 280,
+      "unitPrice": 2.63
+     }
+    ],
+    "category": "Detect Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/14/C8/71/00/0/1543233_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=fe5bf675389ec0b899ce2fdf164f230944c96f1f",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP67",
+     "Button shape": "round",
+     "Manufacturer": "E-SWITCH",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Body dimensions": "Ø17.5x14.4mm",
+     "Electrical life": "500000 cycles",
+     "Operating Force": "3.43N",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "RP8100",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.125A / 125V AC",
+     "DC contacts rating @R": "0.1A / 50V DC",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø13.6mm",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/rp8100b1m1ceblkrdn/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.1A/50VDC; 0.125A/125VAC; red",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/9626851f21ef178fd9cd36a958c17ba4/RP8100B1M1CEBLKREDNIL.pdf",
+    "manufacturer": "E-SWITCH",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "RP8100B1M1CEBLKRDN",
+    "manufacturerPartNumber": "RP8100B1M1CEBLKREDNIL"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 25
+      },
+      {
+       "id": "CT1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 870,
+     "datasheet_source": "dte"
+    },
+    "stock": 92,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 6.54
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 5.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 5.69
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 5.45
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 5.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 4.91
+     },
+     {
+      "currency": "EUR",
+      "quantity": 750,
+      "unitPrice": 4.79
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 4.7
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 4.58
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 4.44
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/18/5C/90/00/0/640385_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f2a83fe3aefee7553248f6c4f19645c49e416aee",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "NKK SWITCHES",
+     "Type of switch": "push-button",
+     "Body dimensions": "Ø12x18mm",
+     "Electrical life": "10000 cycles",
+     "Contact material": "silver",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "SB",
+     "Number of positions": "2",
+     "AC contacts rating @R": "2A / 250V AC",
+     "DC contacts rating @R": "2A / 30V DC",
+     "Operating temperature": "-10...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "10mΩ",
+     "Mounting hole dimensions": "Ø12.5mm",
+     "Min. insulation resistance": "200MΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/sb4011nom/",
+    "description": "Switch: push-button; Pos: 2; SPST; 2A/250VAC; 2A/30VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/23aaf5fb02ed21eb1c471f8b5a7d0c02/SBseries.pdf",
+    "manufacturer": "NKK SWITCHES",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "SB4011NOM",
+    "manufacturerPartNumber": "SB4011NOM"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 25
+      },
+      {
+       "id": "CT1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 870,
+     "datasheet_source": "dte"
+    },
+    "stock": 102,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 6.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 5.56
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 5.34
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 5.11
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 4.82
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 4.61
+     },
+     {
+      "currency": "EUR",
+      "quantity": 750,
+      "unitPrice": 4.49
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 4.41
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 4.31
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 4.18
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/08/5C/90/00/0/640384_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=56946d8d1ddbc61710202db0034ed2670978cfb6",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "NKK SWITCHES",
+     "Type of switch": "push-button",
+     "Body dimensions": "Ø12x18mm",
+     "Electrical life": "10000 cycles",
+     "Contact material": "silver",
+     "Switching method": "ON-(OFF)",
+     "Manufacturer series": "SB",
+     "Number of positions": "2",
+     "AC contacts rating @R": "2A / 250V AC",
+     "DC contacts rating @R": "2A / 30V DC",
+     "Operating temperature": "-10...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "10mΩ",
+     "Mounting hole dimensions": "Ø12.5mm",
+     "Min. insulation resistance": "200MΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/sb4011ncm/",
+    "description": "Switch: push-button; Pos: 2; SPST; 2A/250VAC; 2A/30VDC; ON-(OFF)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/23aaf5fb02ed21eb1c471f8b5a7d0c02/SBseries.pdf",
+    "manufacturer": "NKK SWITCHES",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "SB4011NCM",
+    "manufacturerPartNumber": "SB4011NCM"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 652,
+     "datasheet_source": "dte"
+    },
+    "stock": 6,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.75
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 2.55
+     },
+     {
+      "currency": "EUR",
+      "quantity": 26,
+      "unitPrice": 2.37
+     },
+     {
+      "currency": "EUR",
+      "quantity": 40,
+      "unitPrice": 2.29
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.17
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/E9/C5/11/00/0/1137822_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=eaaa90f197e0588f4c45f3435e4e006c140edc01",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for PCB",
+     "Mounting": "THT",
+     "Button shape": "round, round",
+     "Illumination": "none",
+     "Manufacturer": "TE Connectivity",
+     "Button height": "3.94mm",
+     "Type of switch": "push-button",
+     "Body dimensions": "5.08x8.13x8.63mm",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "1A / 250V AC",
+     "DC contacts rating @R": "3A / 28V DC",
+     "Mechanical durability": "50000 cycles",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "20mΩ",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/2267072-4/",
+    "description": "Switch: push-button; Pos: 2; SPST; 1A/250VAC; 3A/28VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/89e7631fc8d3c0ef7d69295c22a8f25b/2267072-4.pdf",
+    "manufacturer": "TE Connectivity",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "2267072-4",
+    "manufacturerPartNumber": "2267072-4"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1932,
+     "datasheet_source": "dte"
+    },
+    "stock": 204,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.44
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 5.22
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 5.09
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 4.93
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.83
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 4.51
+     },
+     {
+      "currency": "EUR",
+      "quantity": 300,
+      "unitPrice": 4.28
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/93/0D/51/00/0/1429561_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9c969c562f2328cf045fa78142f09cdfe8294279",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "screw terminals",
+     "Mounting": "on panel",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Illumination": "none",
+     "Manufacturer": "RAFI",
+     "Type of switch": "push-button",
+     "Actuator colour": "green",
+     "Contact material": "silver",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.7A / 250V AC",
+     "Mechanical durability": "25000 cycles",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "Ø15.2mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/1.10.001.001_0507/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.7A/250VAC; OFF-(ON); IP40",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/b99aab95d6c3ff80c9fe145470d3021e/1.10.001.0010507.pdf",
+    "manufacturer": "RAFI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "1.10.001.001/0507",
+    "manufacturerPartNumber": "1.10.001.001/0507"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1932,
+     "datasheet_source": "dte"
+    },
+    "stock": 220,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.47
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 5.15
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 4.99
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 4.83
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.51
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/73/0D/51/00/0/1429559_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6814345848797aec253c2f1ef9cd3b535dec6a00",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "screw terminals",
+     "Mounting": "on panel",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Illumination": "none",
+     "Manufacturer": "RAFI",
+     "Type of switch": "push-button",
+     "Actuator colour": "black",
+     "Contact material": "silver",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.7A / 250V AC",
+     "Mechanical durability": "25000 cycles",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "Ø15.2mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/1.10.001.001_0104/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.7A/250VAC; OFF-(ON); IP40",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/8e36df32b86fde1955da7e7a09a72c86/1.10.001.0010104.pdf",
+    "manufacturer": "RAFI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "1.10.001.001/0104",
+    "manufacturerPartNumber": "1.10.001.001/0104"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1932,
+     "datasheet_source": "dte"
+    },
+    "stock": 115,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 6.44
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 6.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 5.86
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 5.62
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 5.42
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 5.17
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 4.92
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/83/0D/51/00/0/1429560_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=12b8170177e8612898d76c4169d8a8e95d8b8275",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "screw terminals",
+     "Mounting": "on panel",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Illumination": "none",
+     "Manufacturer": "RAFI",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Contact material": "silver",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.7A / 250V AC",
+     "Mechanical durability": "25000 cycles",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "Ø15.2mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/1.10.001.001_0301/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.7A/250VAC; OFF-(ON); IP40",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/36db7ece0d4a0f42b059a434c2074da2/1.10.001.0010301.pdf",
+    "manufacturer": "RAFI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "1.10.001.001/0301",
+    "manufacturerPartNumber": "1.10.001.001/0301"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1932,
+     "datasheet_source": "dte"
+    },
+    "stock": 45,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.25
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 4.0
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.75
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.63
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.5
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/68/6B/61/00/0/1488518_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e4299973f0cb021cd749f313a04a763856c36869",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "screw terminals",
+     "Mounting": "on panel",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Illumination": "none",
+     "Manufacturer": "RAFI",
+     "Type of switch": "push-button",
+     "Actuator colour": "white",
+     "Operating Force": "7.5N",
+     "Contact material": "silver",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.7A / 250V AC",
+     "Mechanical durability": "25000 cycles",
+     "Operating temperature": "-25...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "Ø15.2mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/1.10.001.001_0205/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.7A/250VAC; OFF-(ON); IP40",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/39a0b9e2da9cc2790652c8d071a5ecdb/1.10.001.0010205.pdf",
+    "manufacturer": "RAFI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "1.10.001.001/0205",
+    "manufacturerPartNumber": "1.10.001.001/0205"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 652,
+     "datasheet_source": "dte"
+    },
+    "stock": 14,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.49
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.35
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.21
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/74/B4/01/00/0/1067847_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=b661f4bfc540d63de5f45506d1d0ea5a5ece41a6",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for PCB",
+     "Mounting": "THT",
+     "Button shape": "round, round",
+     "Illumination": "none",
+     "Manufacturer": "TE Connectivity",
+     "Button height": "3.94mm",
+     "Type of switch": "push-button",
+     "Body dimensions": "6.22x8.13x16.51mm",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "20mA / 20V AC",
+     "DC contacts rating @R": "20mA / 20V DC",
+     "Mechanical durability": "50000 cycles",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "20mΩ",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/2267075-1/",
+    "description": "Switch: push-button; Pos: 2; SPST; 20mA/20VAC; 0.02A/20VDC; 1GΩ; THT",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/46439ab3d5b278ac1c2267967c1e4785/2267075-1.pdf",
+    "manufacturer": "TE Connectivity",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "2267075-1",
+    "manufacturerPartNumber": "2267075-1"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "PB1",
+       "amount": 1
+      },
+      {
+       "id": "PB2",
+       "amount": 10
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1265,
+     "datasheet_source": "dte"
+    },
+    "stock": 171,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 6.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 5.75
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 5.35
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 5.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 150,
+      "unitPrice": 4.52
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 4.42
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 4.32
+     },
+     {
+      "currency": "EUR",
+      "quantity": 300,
+      "unitPrice": 4.27
+     },
+     {
+      "currency": "EUR",
+      "quantity": 400,
+      "unitPrice": 4.15
+     },
+     {
+      "currency": "EUR",
+      "quantity": 600,
+      "unitPrice": 3.99
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/35/70/A0/00/0/657235_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=34e8920fd48ff2d096d6887d9fe9bca39c7cd727",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering, straight",
+     "Mounting": "on panel",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "C&K",
+     "Type of switch": "push-button",
+     "Body dimensions": "5.08x8.13x8.64mm",
+     "Contact plating": "silver plated",
+     "Electrical life": "60000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "TP",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.4A / 20V AC",
+     "DC contacts rating @R": "0.4A / 20V DC",
+     "Mechanical durability": "60000 cycles",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "20mΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tp11shzqe/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.4A/20VAC; 0.4A/20VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/806f39ac7f10b7ba2548df7ee03420e7/TPseries.pdf",
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "TP11SHZQE",
+    "manufacturerPartNumber": "TP11SHZQE"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1265,
+     "datasheet_source": "dte"
+    },
+    "stock": 20,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.72
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 4.85
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/25/70/A0/00/0/657234_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=3c3aaa7df620f1f6a0584fe040a5a0eb851cacd7",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for PCB, straight",
+     "Mounting": "PCB, THT",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "C&K",
+     "Type of switch": "push-button",
+     "Body dimensions": "5.08x8.13x8.64mm",
+     "Contact plating": "gold-plated",
+     "Electrical life": "60000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "TP",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.4A / 20V AC",
+     "DC contacts rating @R": "0.4A / 20V DC",
+     "Mechanical durability": "60000 cycles",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "20mΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tp11sh9cbe/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.4A/20VAC; 0.4A/20VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/806f39ac7f10b7ba2548df7ee03420e7/TPseries.pdf",
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "TP11SH9CBE",
+    "manufacturerPartNumber": "TP11SH9CBE"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 80
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1265,
+     "datasheet_source": "dte"
+    },
+    "stock": 5,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 7.74
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 6.3
+     },
+     {
+      "currency": "EUR",
+      "quantity": 80,
+      "unitPrice": 5.71
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/05/70/A0/00/0/657232_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=5efc7e495493ae9f6a5b9896f7b74088846b81ab",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "curved, for PCB",
+     "Mounting": "THT",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "C&K",
+     "Type of switch": "push-button",
+     "Body dimensions": "5.08x8.13x8.64mm",
+     "Contact plating": "gold-plated",
+     "Electrical life": "60000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "TP",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.4A / 20V AC",
+     "DC contacts rating @R": "0.4A / 20V DC",
+     "Mechanical durability": "60000 cycles",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "20mΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tp11sh8avbe/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.4A/20VAC; 0.4A/20VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/806f39ac7f10b7ba2548df7ee03420e7/TPseries.pdf",
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "TP11SH8AVBE",
+    "manufacturerPartNumber": "TP11SH8AVBE"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 200
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1265,
+     "datasheet_source": "dte"
+    },
+    "stock": 26,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 6.46
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 5.9
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/15/70/A0/00/0/657233_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=f81d43d37c489f87e56e0786dcc470a775a89d1b",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for PCB, from bottom",
+     "Mounting": "PCB, THT",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "C&K",
+     "Type of switch": "push-button",
+     "Body dimensions": "5.08x8.13x8.64mm",
+     "Contact plating": "gold-plated",
+     "Electrical life": "60000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "TP",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.4A / 20V AC",
+     "DC contacts rating @R": "0.4A / 20V DC",
+     "Mechanical durability": "60000 cycles",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "20mΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/tp11sh9abe/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.4A/20VAC; 0.4A/20VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/806f39ac7f10b7ba2548df7ee03420e7/TPseries.pdf",
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "TP11SH9ABE",
+    "manufacturerPartNumber": "TP11SH9ABE"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1932,
+     "datasheet_source": "dte"
+    },
+    "stock": 698,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.3
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 5.01
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 4.83
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.8
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.66
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/A3/0D/51/00/0/1429562_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=a2a0d0085634ab11191d2127f42f85c2afd9e760",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Illumination": "none",
+     "Manufacturer": "RAFI",
+     "Type of switch": "push-button",
+     "Actuator colour": "black",
+     "Operating Force": "7N",
+     "Contact material": "silver",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.1A / 24V AC",
+     "DC contacts rating @R": "0.1A / 24V DC",
+     "Mechanical durability": "40000 cycles",
+     "Operating temperature": "-25...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "Ø9.1mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/1.10.107.011_0104/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.1A/24VAC; 0.1A/24VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/96e742db08d844c1855bc895c0ed5af4/1.10.107.0110104.pdf",
+    "manufacturer": "RAFI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "1.10.107.011/0104",
+    "manufacturerPartNumber": "1.10.107.011/0104"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1932,
+     "datasheet_source": "dte"
+    },
+    "stock": 297,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 4.95
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 4.68
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.54
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 4.4
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 4.13
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F7/5B/61/00/0/1488255_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e5ceb2cc7b9a4e0e30c3baee72c6f6cdd42bd4f5",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP40",
+     "Button shape": "prominent, round",
+     "Illumination": "none",
+     "Manufacturer": "RAFI",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Operating Force": "7N",
+     "Contact material": "silver",
+     "Switching method": "OFF-(ON)",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.1A / 24V AC",
+     "DC contacts rating @R": "0.1A / 24V DC",
+     "Mechanical durability": "40000 cycles",
+     "Operating temperature": "-25...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "Ø9.1mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/1.10.107.011_0301/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.1A/24VAC; 0.1A/24VDC; OFF-(ON)",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/465c322f02a877bd87d3c1a821766626/1.10.107.0110301.pdf",
+    "manufacturer": "RAFI",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "1.10.107.011/0301",
+    "manufacturerPartNumber": "1.10.107.011/0301"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "PB1",
+       "amount": 1
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "NEW"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 895,
+     "datasheet_source": "product_page"
+    },
+    "stock": 83,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.51
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.03
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 2.72
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.56
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 2.4
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 2.24
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/2D/88/71/00/0/1542354_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=55697f431d767d8c6298e2d3a99e9d42bbeb5952",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP67 (from the front)",
+     "Button shape": "convex, round",
+     "Manufacturer": "ADAM TECH",
+     "Type of switch": "push-button",
+     "Actuator colour": "green",
+     "Body dimensions": "Ø17.5x17.9mm",
+     "Electrical life": "500000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Switches features": "sealed terminals",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.125A / 125V AC",
+     "DC contacts rating @R": "0.1A / 50V DC",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø13.6mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/pb11-1csg-10/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.125A/125VAC; 0.1A/50VDC",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/en/details/pb11-1csg-10/",
+    "manufacturer": "ADAM TECH",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PB11-1CSG-10",
+    "manufacturerPartNumber": "SW-PB11-1CSG-10"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "PB1",
+       "amount": 1
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "NEW"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 895,
+     "datasheet_source": "product_page"
+    },
+    "stock": 80,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.96
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.52
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.03
+     },
+     {
+      "currency": "EUR",
+      "quantity": 70,
+      "unitPrice": 2.94
+     },
+     {
+      "currency": "EUR",
+      "quantity": 140,
+      "unitPrice": 2.8
+     },
+     {
+      "currency": "EUR",
+      "quantity": 280,
+      "unitPrice": 2.66
+     },
+     {
+      "currency": "EUR",
+      "quantity": 560,
+      "unitPrice": 2.53
+     },
+     {
+      "currency": "EUR",
+      "quantity": 700,
+      "unitPrice": 2.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1050,
+      "unitPrice": 2.4
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3D/88/71/00/0/1542355_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8b58a094bdac477dc92671c08e25c33df8e120b9",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP67 (from the front)",
+     "Button shape": "convex, round",
+     "Manufacturer": "ADAM TECH",
+     "Type of switch": "push-button",
+     "Actuator colour": "black",
+     "Body dimensions": "Ø17.5x17.9mm",
+     "Electrical life": "500000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Switches features": "sealed terminals",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.125A / 125V AC",
+     "DC contacts rating @R": "0.1A / 50V DC",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø13.6mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/pb11-1csk-10/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.125A/125VAC; 0.1A/50VDC",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/en/details/pb11-1csk-10/",
+    "manufacturer": "ADAM TECH",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PB11-1CSK-10",
+    "manufacturerPartNumber": "SW-PB11-1CSK-10"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "PB1",
+       "amount": 1
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "NEW"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 895,
+     "datasheet_source": "product_page"
+    },
+    "stock": 95,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.51
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.03
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 2.72
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.56
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 2.4
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 2.24
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/D4/88/71/00/0/1542221_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7a1fffcf95fd4fbeb0fde61809d69576f48dea22",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP67 (from the front)",
+     "Button shape": "convex, round",
+     "Manufacturer": "ADAM TECH",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Body dimensions": "Ø17.5x17.9mm",
+     "Electrical life": "500000 cycles",
+     "Switching method": "OFF-(ON)",
+     "Switches features": "sealed terminals",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.125A / 125V AC",
+     "DC contacts rating @R": "0.1A / 50V DC",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø13.6mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/pb11-1csr-10/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.125A/125VAC; 0.1A/50VDC",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/en/details/pb11-1csr-10/",
+    "manufacturer": "ADAM TECH",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "PB11-1CSR-10",
+    "manufacturerPartNumber": "SW-PB11-1CSR-10"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 70
+      },
+      {
+       "id": "BG1",
+       "amount": 210
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1705,
+     "datasheet_source": "dte"
+    },
+    "stock": 277,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.4
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 4.02
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.83
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.6
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.44
+     },
+     {
+      "currency": "EUR",
+      "quantity": 70,
+      "unitPrice": 3.37
+     },
+     {
+      "currency": "EUR",
+      "quantity": 210,
+      "unitPrice": 3.2
+     },
+     {
+      "currency": "EUR",
+      "quantity": 420,
+      "unitPrice": 3.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1050,
+      "unitPrice": 2.96
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2520,
+      "unitPrice": 2.84
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/AF/46/E0/00/0/943354_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c4b5ee12406365757d70281ad3b0e5ec5e246fce",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP67",
+     "Button shape": "round",
+     "Manufacturer": "E-SWITCH",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Body dimensions": "Ø17.5x14.4mm",
+     "Electrical life": "500000 cycles",
+     "Operating Force": "3.43N",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "RP8100",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.125A / 125V AC",
+     "DC contacts rating @R": "0.1A / 50V DC",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø13.6mm",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/rp8100b2m1ceblkrdn/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.125A/125VAC; 0.1A/50VDC; IP67",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/abda1dad1cf8b88a7baf9371539555b1/RP8100B2M1CEBLKREDNIL.pdf",
+    "manufacturer": "E-SWITCH",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "RP8100B2M1CEBLKRDN",
+    "manufacturerPartNumber": "RP8100B2M1CEBLKREDNIL"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1705,
+     "datasheet_source": "dte"
+    },
+    "stock": 14,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.77
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.81
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.6
+     },
+     {
+      "currency": "EUR",
+      "quantity": 150,
+      "unitPrice": 3.52
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 3.46
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 3.42
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 3.29
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/72/5C/41/00/0/1361191_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=cb59ddfadd99a59f26dd874427a81a4b2113795c",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP67",
+     "Button shape": "round",
+     "Manufacturer": "E-SWITCH",
+     "Type of switch": "push-button",
+     "Actuator colour": "green",
+     "Body dimensions": "Ø17.5x16.7mm",
+     "Electrical life": "500000 cycles",
+     "Operating Force": "3.43N",
+     "Backlight colour": "green",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "RP8100",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.125A / 125V AC",
+     "DC contacts rating @R": "0.1A / 50V DC",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø13.6mm",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/rp8100b2m1ceblkgng/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.125A/125VAC; 0.1A/50VDC; IP67",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/45f9bd39e9b39490fd2a755de78677d3/RP8100B2M1CEBLKGRNGRN.pdf",
+    "manufacturer": "E-SWITCH",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "RP8100B2M1CEBLKGNG",
+    "manufacturerPartNumber": "RP8100B2M1CEBLKGRNGRN"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113675,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 1705,
+     "datasheet_source": "dte"
+    },
+    "stock": 101,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.03
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.22
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 3.1
+     }
+    ],
+    "category": "Standard Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/BF/46/E0/00/0/943355_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=134535b877ff5f8d474da68ed0787fc69a2efaf8",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel",
+     "IP rating": "IP67",
+     "Button shape": "round",
+     "Manufacturer": "E-SWITCH",
+     "Type of switch": "push-button",
+     "Actuator colour": "red",
+     "Body dimensions": "Ø17.5x16.7mm",
+     "Electrical life": "500000 cycles",
+     "Operating Force": "3.43N",
+     "Backlight colour": "red",
+     "Switching method": "OFF-(ON)",
+     "Manufacturer series": "RP8100",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.125A / 125V AC",
+     "DC contacts rating @R": "0.1A / 50V DC",
+     "Operating temperature": "-30...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Max. contact resistance:": "50mΩ",
+     "Mounting hole dimensions": "Ø13.6mm",
+     "Min. insulation resistance": "1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/rp8100b2m1cebkrdrd/",
+    "description": "Switch: push-button; Pos: 2; SPST; 0.125A/125VAC; 0.1A/50VDC; IP67",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/a5fb02dfebfb18bdbee743b8363ecd97/RP8100B2M1CEBLKREDRED.pdf",
+    "manufacturer": "E-SWITCH",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "RP8100B2M1CEBKRDRD",
+    "manufacturerPartNumber": "RP8100B2M1CEBLKREDRED"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100054,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 652,
+     "datasheet_source": "dte"
+    },
+    "stock": 567,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.19
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.11
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 1.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 70,
+      "unitPrice": 1.06
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.03
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.99
+     }
+    ],
+    "category": "Rocker Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/7C/CC/90/00/0/642247_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9cd8d55633f12d6dca1d8c9d948bd8c08b886826",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Shape": "rectangular",
+     "Mounting": "on panel, push-in",
+     "Dimensions": "13x19.2mm",
+     "Body colour": "black",
+     "Button shape": "rectangular",
+     "Illumination": "none",
+     "Manufacturer": "TE Connectivity",
+     "Button marking": "O-I",
+     "Type of switch": "ROCKER",
+     "Contact plating": "silver plated",
+     "Contact material": "copper",
+     "Leads dimensions": "4.75x0.8mm",
+     "Switching method": "ON-OFF",
+     "Key button colour": "black",
+     "Manufacturer series": "PRA",
+     "Number of positions": "2",
+     "AC contacts rating @L": "4A / 250V AC",
+     "AC contacts rating @R": "16A / 125V AC",
+     "DC contacts rating @R": "16A / 12V DC",
+     "Operating temperature": "-20...85°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "100mΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/1-1571076-0/",
+    "description": "ROCKER; SPST; Pos: 2; ON-OFF; 16A/125VAC; 16A/12VDC; black; PRA",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/6fd9881559a59d4ad1ff0ce555aedc78/1-1571076-0 datasheet.pdf",
+    "manufacturer": "TE Connectivity",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "1-1571076-0",
+    "manufacturerPartNumber": "1-1571076-0"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100054,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 204,
+     "datasheet_source": "dte"
+    },
+    "stock": 126,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.38
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 2.19
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 2.0
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.75
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 1.6
+     }
+    ],
+    "category": "Rocker Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/F2/71/90/00/0/595759_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e7a57a98b07a9c53c4a8506516189c1332fccfaa",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel, push-in",
+     "Body colour": "black",
+     "Button shape": "rectangular",
+     "Illumination": "none",
+     "Manufacturer": "MIYAMA",
+     "Button marking": "OFF, ON",
+     "Type of switch": "ROCKER",
+     "AC test voltage": "2kV",
+     "Actuator colour": "black",
+     "Panel thickness": "1...2.5mm",
+     "Switching method": "ON-OFF",
+     "Manufacturer series": "DS-850",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 250V AC",
+     "Operating temperature": "-10...55°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "20mΩ",
+     "Mounting hole dimensions": "13x19.2mm",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ds-850k-s-on-k/",
+    "description": "ROCKER; SPST; Pos: 2; ON-OFF; 3A/250VAC; black; DS-850; Body: black",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/40b7929418e12d801fd7488ae366a603/DS-850.pdf",
+    "manufacturer": "MIYAMA",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "DS-850K-S-ON-K",
+    "manufacturerPartNumber": "DS-850K-S-ON-K"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "BG1",
+       "amount": 10
+      },
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100054,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 204,
+     "datasheet_source": "dte"
+    },
+    "stock": 90,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.74
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 2.52
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 2.3
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.02
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 1.84
+     }
+    ],
+    "category": "Rocker Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/5C/31/90/00/0/594885_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=fc050bc364896fd3fc6ae2cb5560ddf450c18ca0",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel, push-in",
+     "Body colour": "black",
+     "Button shape": "rectangular",
+     "Illumination": "none",
+     "Manufacturer": "MIYAMA",
+     "Button marking": "O-I",
+     "Type of switch": "ROCKER",
+     "AC test voltage": "2kV",
+     "Actuator colour": "black",
+     "Panel thickness": "1...2.5mm",
+     "Switching method": "ON-OFF",
+     "Manufacturer series": "DS-850",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 250V AC",
+     "Operating temperature": "-10...55°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "20mΩ",
+     "Mounting hole dimensions": "13x19.2mm",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ds850k-s-io-k/",
+    "description": "ROCKER; SPST; Pos: 2; ON-OFF; 3A/250VAC; black; DS-850; Body: black",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/40b7929418e12d801fd7488ae366a603/DS-850.pdf",
+    "manufacturer": "MIYAMA",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "DS850K-S-IO-K",
+    "manufacturerPartNumber": "DS-850K-S-IO-K"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100054,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 204,
+     "datasheet_source": "dte"
+    },
+    "stock": 254,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.35
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 3.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 2.81
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.46
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 2.27
+     }
+    ],
+    "category": "Rocker Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/5B/31/90/00/0/594869_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=8ecece0ed5e100927542ac2142012146619f8f98",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel, push-in",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "MIYAMA",
+     "Button marking": "•",
+     "Type of switch": "ROCKER",
+     "AC test voltage": "1.5kV",
+     "Actuator colour": "black",
+     "Panel thickness": "1...2.5mm",
+     "Switching method": "ON-OFF",
+     "Manufacturer series": "DS-059",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 250V AC",
+     "Operating temperature": "-10...55°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "20mΩ",
+     "Mounting hole dimensions": "Ø20.4mm",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ds059k-wd-k/",
+    "description": "ROCKER; SPST; Pos: 2; ON-OFF; 3A/250VAC; black; DS-059; Body: black",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/099e5a3e52917c78715df18645428a20/DS-059.pdf",
+    "manufacturer": "MIYAMA",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "DS059K-WD-K",
+    "manufacturerPartNumber": "DS059K-WD-K"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100054,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 204,
+     "datasheet_source": "dte"
+    },
+    "stock": 160,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.35
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 3.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 2.81
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.46
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 2.27
+     }
+    ],
+    "category": "Rocker Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/4B/31/90/00/0/594868_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=6b81034ad4b7bdbec50e399a3590efe7e6577304",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel, push-in",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "none",
+     "Manufacturer": "MIYAMA",
+     "Button marking": "OFF, ON",
+     "Type of switch": "ROCKER",
+     "AC test voltage": "1.5kV",
+     "Actuator colour": "black",
+     "Panel thickness": "1...2.5mm",
+     "Switching method": "ON-OFF",
+     "Manufacturer series": "DS-059",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 250V AC",
+     "Operating temperature": "-10...55°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "20mΩ",
+     "Mounting hole dimensions": "Ø20.4mm",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ds059kon-k/",
+    "description": "ROCKER; SPST; Pos: 2; ON-OFF; 3A/250VAC; black; DS-059; Body: black",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/099e5a3e52917c78715df18645428a20/DS-059.pdf",
+    "manufacturer": "MIYAMA",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "DS059KON-K",
+    "manufacturerPartNumber": "DS059K-ON-K"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 113677,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 172,
+     "datasheet_source": "dte"
+    },
+    "stock": 215,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 5.41
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 4.96
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 4.51
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 4.07
+     }
+    ],
+    "category": "Door Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/50/28/60/00/0/426501_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=db7356972c7adbaf7731e056a5f48c650a9d716e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "connectors",
+     "Mounting": "on panel, push-in",
+     "Body colour": "white",
+     "Knob height": "13mm",
+     "Manufacturer": "BULGIN",
+     "Button marking": "blank",
+     "Type of switch": "door",
+     "Leads dimensions": "6.3x0.8mm",
+     "Switching method": "(ON)-OFF",
+     "Key button colour": "white",
+     "Switches features": "with lever",
+     "Manufacturer series": "3000",
+     "Number of positions": "2",
+     "AC contacts rating @R": "0.3A / 250V AC",
+     "Operating temperature": "-25...70°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "1",
+     "Mounting hole dimensions": "25.4x12.1mm"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ae-c3006craaa/",
+    "description": "Switch: door; Pos: 2; SPST; 0.3A/250VAC; Leads: connectors; 3000",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/b07b163365f2bb900ac08788f2eb3b15/BG-C3005CBAAA-DTE.pdf",
+    "manufacturer": "BULGIN",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "AE-C3006CRAAA",
+    "manufacturerPartNumber": "C3006CRWW"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100054,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 204,
+     "datasheet_source": "dte"
+    },
+    "stock": 250,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.43
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 4.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 3.73
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.26
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 3.01
+     }
+    ],
+    "category": "Rocker Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/6B/31/90/00/0/594870_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=58e6da148faed75f353d701be9ecff78d1d121d6",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel, push-in",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "LED",
+     "Manufacturer": "MIYAMA",
+     "Button marking": "blank",
+     "Type of switch": "ROCKER",
+     "AC test voltage": "1.5kV",
+     "Actuator colour": "black",
+     "Panel thickness": "1...2.5mm",
+     "Backlight colour": "green",
+     "Switching method": "ON-OFF",
+     "Manufacturer series": "DS-060",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 250V AC",
+     "Operating temperature": "-10...55°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "20mΩ",
+     "Mounting hole dimensions": "Ø20.4mm",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ds-060k-s-lg/",
+    "description": "ROCKER; SPST; Pos: 2; ON-OFF; 3A/250VAC; black; DS-060; Body: black",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/e9026275aca7872eadc611f20c34d104/DS-060.pdf",
+    "manufacturer": "MIYAMA",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "DS-060K-S-LG",
+    "manufacturerPartNumber": "DS-060K-S-LG"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "TR1",
+       "amount": 50
+      },
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100054,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 204,
+     "datasheet_source": "dte"
+    },
+    "stock": 36,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.43
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 4.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 3.73
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.26
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 3.01
+     }
+    ],
+    "category": "Rocker Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/7B/31/90/00/0/594871_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=ff03606ab5feee3d36c31171dc719d8c7bcfa02e",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel, push-in",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "LED",
+     "Manufacturer": "MIYAMA",
+     "Button marking": "blank",
+     "Type of switch": "ROCKER",
+     "AC test voltage": "1.5kV",
+     "Actuator colour": "black",
+     "Panel thickness": "1...2.5mm",
+     "Backlight colour": "red",
+     "Switching method": "ON-OFF",
+     "Manufacturer series": "DS-060",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 250V AC",
+     "Operating temperature": "-10...55°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "20mΩ",
+     "Mounting hole dimensions": "Ø20.4mm",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ds-060k-s-lr/",
+    "description": "ROCKER; SPST; Pos: 2; ON-OFF; 3A/250VAC; black; DS-060; Body: black",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/e9026275aca7872eadc611f20c34d104/DS-060.pdf",
+    "manufacturer": "MIYAMA",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "DS-060K-S-LR",
+    "manufacturerPartNumber": "DS-060K-S-LR"
+   },
+   {
+    "extra": {
+     "unit": "pcs",
+     "packing": [
+      {
+       "id": "CT1",
+       "amount": 100
+      }
+     ],
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100054,
+     "product_status": [
+      "AVAILABLE_WHILE_STOCKS_LAST"
+     ],
+     "special_prices": false,
+     "manufacturer_id": 204,
+     "datasheet_source": "dte"
+    },
+    "stock": 38,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.17
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5,
+      "unitPrice": 2.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 20,
+      "unitPrice": 2.67
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.33
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 2.15
+     }
+    ],
+    "category": "Rocker Switches",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/82/71/90/00/0/595752_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=994f69066164095f1774e6129967f42c228b5978",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Leads": "for soldering",
+     "Mounting": "on panel, push-in",
+     "Body colour": "black",
+     "Button shape": "round",
+     "Illumination": "LED",
+     "Manufacturer": "MIYAMA",
+     "Button marking": "blank",
+     "Type of switch": "ROCKER",
+     "AC test voltage": "1.5kV",
+     "Actuator colour": "black",
+     "Panel thickness": "1...2.5mm",
+     "Backlight colour": "yellow",
+     "Switching method": "ON-OFF",
+     "Manufacturer series": "DS-060",
+     "Number of positions": "2",
+     "AC contacts rating @R": "3A / 250V AC",
+     "Operating temperature": "-10...55°C",
+     "Contacts configuration": "SPST",
+     "Stable positions number": "2",
+     "Max. contact resistance:": "20mΩ",
+     "Mounting hole dimensions": "Ø20.4mm",
+     "Min. insulation resistance": "0.1GΩ"
+    },
+    "productUrl": "https://www.tme.eu/en/details/ds-060k-s-ly/",
+    "description": "ROCKER; SPST; Pos: 2; ON-OFF; 3A/250VAC; black; DS-060; Body: black",
+    "distributor": "TME",
+    "packageName": null,
+    "datasheetUrl": "https://www.tme.eu/Document/e9026275aca7872eadc611f20c34d104/DS-060.pdf",
+    "manufacturer": "MIYAMA",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "DS-060K-S-LY",
+    "manufacturerPartNumber": "DS-060K-S-LY"
+   }
+  ],
+  "MOUSER": [
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Pushbutton Switches - Board Mount",
+     "lead_time": "84 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1694,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.998
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.963
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.937
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.912
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.841
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.746
+     }
+    ],
+    "category": "Pushbutton Switches - Board Mount",
+    "photoUrl": "https://www.mouser.com/images/ckcomponents/images/d6_series_new_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "250"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/CK/D6R30-F1-LFS?qs=ljbEvF4DwONZW54EjsJJiA%3D%3D",
+    "description": "Pushbutton Switches - Board Mount 100mA, 250V SPST-NO Momentary Key Switch",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "611-D6R30F1LFS",
+    "manufacturerPartNumber": "D6R30 F1 LFS"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Pushbutton Switches - Industrial",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 9,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 26.66
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 23.06
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 21.99
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 20.73
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 19.83
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 18.7
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 18.69
+     }
+    ],
+    "category": "Pushbutton Switches - Industrial",
+    "photoUrl": "https://www.mouser.com/images/apem/images/IP-series_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {},
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Apem/IPR3FAD3-104-X1203?qs=wnTfsH77Xs6HYnGLVqsRTA%3D%3D",
+    "description": "Pushbutton Switches - Industrial Round Pushbutton, 12mm, 5A 28VDC, IP67, N.O., momentary, Flying leads, High green actuator",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Apem",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "642-IPR3FAD3104X1203",
+    "manufacturerPartNumber": "IPR3FAD3-104-X1203"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "112 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 145,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.01
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.929
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.853
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.717
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.715
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.623
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.606
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.563
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/grayhill/images/95C12A3GWRT_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Grayhill/95C12B4T?qs=ls7QRyWmRk48%2FDGC3B50Fg%3D%3D",
+    "description": "Tactile Switches TACT,TH,12,500B,LF",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/grhls01183-1.pdf",
+    "manufacturer": "Grayhill",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "706-95C12B4T",
+    "manufacturerPartNumber": "95C12B4T"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "112 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 79,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.29
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.972
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 700,
+      "unitPrice": 0.791
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1400,
+      "unitPrice": 0.693
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2100,
+      "unitPrice": 0.677
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4900,
+      "unitPrice": 0.628
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/grayhill/images/95C12A3GWRT_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "700"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Grayhill/95C12A4GWRT?qs=ls7QRyWmRk6zCi0Y%2FOtGYQ%3D%3D",
+    "description": "Tactile Switches TACT,GW,12,700T&R,LF",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/grhls01183-1.pdf",
+    "manufacturer": "Grayhill",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "706-95C12A4GWRT",
+    "manufacturerPartNumber": "95C12A4GWRT"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Pushbutton Switches - Board Mount",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 38,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 18.31
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 15.95
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 13.55
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 12.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 12.27
+     }
+    ],
+    "category": "Pushbutton Switches - Board Mount",
+    "photoUrl": "https://www.mouser.com/images/apem/images/8000_series_str_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "50"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Apem/8632AB-9UL?qs=HXFqYaX1Q2ylakfWVHVKPQ%3D%3D",
+    "description": "Pushbutton Switches - Board Mount 4A 30VDC 1P ON-(ON) Plngr 8.8mm Sldr",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Apem",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "642-8632AB-9UL",
+    "manufacturerPartNumber": "8632AB-9UL"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Pushbutton Switches - Board Mount",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 2260,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.51
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.32
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.25
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 1.2
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.14
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.946
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.894
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.869
+     }
+    ],
+    "category": "Pushbutton Switches - Board Mount",
+    "photoUrl": "https://www.mouser.com/images/ckcomponents/images/d6_series_new_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "250"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/CK/D6L90-F1-LFS?qs=ljbEvF4DwOPdFBWG5IMMtg%3D%3D",
+    "description": "Pushbutton Switches - Board Mount Key Switch N.O. SPDT 100 mA",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "611-D6L90F1LFS",
+    "manufacturerPartNumber": "D6L90 F1 LFS"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Pushbutton Switches - Board Mount",
+     "lead_time": "118 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2027-01-13T00:00:00",
+       "quantity": 5000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 127,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.38
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.3
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 1.24
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.19
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.01
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.963
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.903
+     }
+    ],
+    "category": "Pushbutton Switches - Board Mount",
+    "photoUrl": "https://www.mouser.com/images/ckcomponents/images/d6_series_new_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Tray",
+     "Standard Pack Qty": "250"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/CK/D6R40-F1-LFS?qs=ljbEvF4DwOPOI%252B1PQMJiOg%3D%3D",
+    "description": "Pushbutton Switches - Board Mount Key Switch N.O. SPDT 100 mA",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "611-D6R40F1LFS",
+    "manufacturerPartNumber": "D6R40 F1 LFS"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant By Exemption",
+     "reeling": false,
+     "category": "Pushbutton Switches - Industrial",
+     "lead_time": "126 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 25,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 10.25
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 9.28
+     }
+    ],
+    "category": "Pushbutton Switches - Industrial",
+    "photoUrl": "https://www.mouser.com/images/nkkswitches/images/sb4011nom-2a_DFI_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "1"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/NKK-Switches/SB4011NOM-2A?qs=jEMM5CddDUxGW8JAKCYcxg%3D%3D",
+    "description": "Pushbutton Switches - Industrial OFF(ON) NORM OPEN 3A BLK CAP LUG 12MM",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/339/1/SB4011.pdf",
+    "manufacturer": "NKK Switches",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "633-SB4011NOM-2A",
+    "manufacturerPartNumber": "SB4011NOM-2A"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Pushbutton Switches - Industrial",
+     "lead_time": "70 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 86,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.83
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 4.28
+     }
+    ],
+    "category": "Pushbutton Switches - Industrial",
+    "photoUrl": "https://www.mouser.com/images/apem/images/ITP_1413NC2_t.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "60"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Apem/1413NC2?qs=I9SSmEJgdchTV3dN6hhCjw%3D%3D",
+    "description": "Pushbutton Switches - Industrial Momentary psh btn NO",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/348/1/pusbutton_switches_serie_1400N.pdf",
+    "manufacturer": "Apem",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "642-1413NC2",
+    "manufacturerPartNumber": "1413NC2"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "112 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 58,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.24
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.877
+     },
+     {
+      "currency": "EUR",
+      "quantity": 120,
+      "unitPrice": 0.837
+     },
+     {
+      "currency": "EUR",
+      "quantity": 280,
+      "unitPrice": 0.773
+     },
+     {
+      "currency": "EUR",
+      "quantity": 520,
+      "unitPrice": 0.744
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.635
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/grayhill/images/95C12A3GWRT_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Tube",
+     "Standard Pack Qty": "40"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Grayhill/95C12C3GWT?qs=ls7QRyWmRk4pNo9kMi6HnA%3D%3D",
+    "description": "Tactile Switches TACT,GW,12,40T,LF",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/grhls00978-1.pdf",
+    "manufacturer": "Grayhill",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "706-95C12C3GWT",
+    "manufacturerPartNumber": "95C12C3GWT"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "112 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 163,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.989
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.894
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.716
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.686
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.639
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.611
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.531
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.513
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.469
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/grayhill/images/95C12A3GWRT_DSL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Grayhill/95C12C3T?qs=ls7QRyWmRk6g3nAN%252BidHiQ%3D%3D",
+    "description": "Tactile Switches TACT,TH,12,500B,LF",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/grhls01183-1.pdf",
+    "manufacturer": "Grayhill",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "706-95C12C3T",
+    "manufacturerPartNumber": "95C12C3T"
+   }
+  ]
+ }
+}

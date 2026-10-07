@@ -507,7 +507,7 @@ public class ParametricExtractor {
                 connector == null ? ctx.read(PartAttribute.ELEMENTS, Integer.class) : null, details, polarity, subtype,
                 voltages, formFactor, connector == null ? fan(ctx) : null,
                 connector == null ? led(ctx, values.get(ParsedQuery.WAVELENGTH)) : null,
-                null);
+                connector == null ? sw(ctx, mounting) : null);
     }
 
     /**
@@ -538,6 +538,43 @@ public class ParametricExtractor {
         ParsedQuery.Led led = new ParsedQuery.Led(colour, ctx.read(PartAttribute.LENS, String.class),
                 ctx.read(PartAttribute.LED_TYPE, String.class), ctx.read(PartAttribute.LED_ORIENTATION, String.class));
         return led.isEmpty() ? null : led;
+    }
+
+    /**
+     * The switch attributes of a part as their declared sources read them ({@link PartAttribute#SWITCH_TYPE} for every
+     * family, the others for switches only), null when none says anything. A tactile switch is momentary when nothing
+     * says otherwise, an SMD or THT switch has a PCB termination, and the positions of a DIP switch are its number of
+     * switches ({@link PartAttribute#DIP_SWITCHES}).
+     */
+    private static ParsedQuery.Switch sw(SearchExtractionContext ctx, String mounting) {
+        String type = ctx.read(PartAttribute.SWITCH_TYPE, String.class);
+        String contacts = ctx.read(PartAttribute.CONTACTS, String.class);
+        String size = ctx.read(PartAttribute.SWITCH_SIZE, String.class);
+        String hole = ctx.read(PartAttribute.HOLE_DIAMETER, String.class);
+        Object positions = "DIP".equals(type) && ctx.read(PartAttribute.DIP_SWITCHES, Object.class) != null
+                ? ctx.read(PartAttribute.DIP_SWITCHES, Object.class) : ctx.read(PartAttribute.SWITCH_POSITIONS, Object.class);
+        String termination = ctx.read(PartAttribute.TERMINATION, String.class);
+        if (termination == null && type != null && mounting != null && !SwitchVocabulary.isNotMechanical(type)) {
+            termination = ParsedQuery.Switch.PCB;   // JLCPCB "SMD-4P,6x6mm": soldered to the board
+        }
+        String illuminated = ctx.read(PartAttribute.ILLUMINATED, String.class);
+        String function = ctx.read(PartAttribute.SWITCH_FUNCTION, String.class);
+        if (function == null && ParsedQuery.Switch.TACTILE.equals(type)) {
+            function = ParsedQuery.Switch.MOMENTARY;   // a tactile switch springs back
+        }
+        ParsedQuery.Switch sw = ParsedQuery.Switch.builder()
+                .type(type)
+                .contacts(contacts == null ? null : SwitchVocabulary.parseContacts(contacts))
+                .function(function)
+                .termination(termination)
+                .size(size == null ? null : SwitchVocabulary.parseSize(size))
+                .holeDiameter(hole == null ? null : SwitchVocabulary.bare(hole))
+                .positions(positions == null ? null : Integer.valueOf(positions.toString()))
+                .illuminated(illuminated == null ? null : illuminated.equals("yes"))
+                .illuminationColour(ctx.read(PartAttribute.ILLUMINATION_COLOUR, String.class))
+                .orientation(ctx.read(PartAttribute.SWITCH_ORIENTATION, String.class))
+                .build();
+        return sw.isEmpty() ? null : sw;
     }
 
     /**

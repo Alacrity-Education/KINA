@@ -511,17 +511,25 @@ public record ParsedQuery(
         }
 
         /**
-         * {@link #MOMENTARY} or {@link #LATCHING} for a function: a pattern whose every ON is bracketed is momentary
-         * ({@code OFF-(ON)}, {@code (ON)-OFF-(ON)}), one without brackets latching ({@code ON-OFF}); a mixed one
-         * ({@code ON-OFF-(ON)}) neither.
+         * {@link #MOMENTARY} or {@link #LATCHING} for a function: a pattern with brackets and one rest position at most
+         * is momentary ({@code OFF-(ON)}, {@code ON-(OFF)}, {@code (ON)-OFF-(ON)}), one without brackets latching
+         * ({@code ON-OFF}); a mixed one ({@code ON-OFF-(ON)}) neither.
          */
         public static String action(String function) {
             if (!function.contains("ON")) {
                 return function;
             }
-            int on = function.split("ON", -1).length - 1;
-            int bracketed = function.split("\\(ON\\)", -1).length - 1;
-            return bracketed == 0 ? LATCHING : bracketed == on ? MOMENTARY : null;
+            String[] positions = function.split("-");
+            int bracketed = 0;
+            for (String p : positions) {
+                if (p.startsWith("(")) {
+                    bracketed++;
+                }
+            }
+            if (bracketed == 0) {
+                return LATCHING;
+            }
+            return positions.length - bracketed <= 1 ? MOMENTARY : null;
         }
 
         /**

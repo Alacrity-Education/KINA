@@ -3,6 +3,7 @@ package ro.alacrity.kina.search;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.domain.ComponentFamily;
 import ro.alacrity.kina.domain.ParsedQuery;
+import ro.alacrity.kina.domain.PartAttribute;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -23,7 +24,9 @@ import java.util.Set;
  * ({@link FanVocabulary}: type, supply, frame size, bearing, features; speed, airflow, static pressure and noise are
  * values), the LED attributes of an LED request ({@link LedVocabulary}: colour, lens, LED type, orientation, the LED
  * package names; wavelength, colour temperature, luminous intensity and flux and viewing angle are values, a voltage
- * is the forward voltage) and the remaining free-text keywords. Stateless and thread-safe.
+ * is the forward voltage), the switch attributes of a switch request ({@link SwitchVocabulary}: switch type,
+ * contacts, function, termination class, size, panel cut-out, positions, illumination, orientation, the AC or DC of the
+ * voltage, the IP code; force and life are values) and the remaining free-text keywords. Stateless and thread-safe.
  *
  * <p>When no family keyword is present the family is inferred from the value kind (capacitance or dielectric -&gt;
  * capacitor, resistance -&gt; resistor, inductance -&gt; inductor).
@@ -59,6 +62,7 @@ public class QueryParser {
         List<String> keywords = analysis.keywords();
         ParsedQuery.Fan fan = null;
         ParsedQuery.Led led = null;
+        ParsedQuery.Switch sw = null;
         if (connector == null) {
             polarity = family == null || ComponentFamily.has(family, ComponentFamily.Trait.POLARISED) ? ComponentTypes.polarity(original) : null;
             if (family == null && polarity != null) {
@@ -92,6 +96,17 @@ public class QueryParser {
                 }
                 keywords = keywords.stream().filter(k -> !l.consumed().contains(k)).toList();
             }
+            if (SwitchVocabulary.SWITCH.equals(family)) {
+                // type, contacts, function, termination, size, cut-out, positions, illumination, orientation, AC or DC
+                // (SwitchVocabulary); their words are no keywords
+                SwitchVocabulary.Analysis a = SwitchVocabulary.analyze(original, analysis.mounting());
+                sw = a.sw();
+                if (a.ipCode() != null) {
+                    constraints.put(ParsedQuery.IP_RATING, new ParsedQuery.Constraint(ParsedQuery.IP_RATING,
+                            a.ipCode(), PartAttribute.display(ParsedQuery.IP_RATING, a.ipCode())));
+                }
+                keywords = keywords.stream().filter(k -> !a.consumed().contains(k)).toList();
+            }
             if (packageName == null && "capacitor".equals(family)) {
                 String can = canSize(original, analysis.technology());
                 if (can != null) {
@@ -119,6 +134,7 @@ public class QueryParser {
                 .partNumbers(PartNumbers.in(original, keywords))
                 .fan(fan)
                 .led(led)
+                .sw(sw)
                 .build();
     }
 

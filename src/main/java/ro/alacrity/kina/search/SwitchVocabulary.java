@@ -95,7 +95,7 @@ class SwitchVocabulary {
             Map.entry(word("rotary|thumbwheel|coded rotary|bcd"), "rotary"),
             Map.entry(word("reed"), "reed"),
             Map.entry(word("membrane"), "membrane"),
-            Map.entry(word("detector|detect switch(?:es)?|detection switch(?:es)?"), "detector"),
+            Map.entry(word("detector|detect switch(?:es)?|detection switch(?:es)?|door|interlock"), "detector"),
             Map.entry(word("navigation|joystick|multi-?directional|5-way|five-way"), "navigation"),
             Map.entry(word("pushbuttons?|push-buttons?|push switch(?:es)?|momentary buttons?|push buttons?"),
                     ParsedQuery.Switch.PUSHBUTTON));
@@ -122,6 +122,11 @@ class SwitchVocabulary {
             }
         }
         return null;
+    }
+
+    /** True for the part types that are no mechanical switch ({@code IC}, {@code sensor}, {@code accessory}). */
+    static boolean isNotMechanical(String type) {
+        return ParsedQuery.Switch.NOT_MECHANICAL.contains(type);
     }
 
     // ---------------------------------------------------------------- contacts, function
@@ -212,9 +217,9 @@ class SwitchVocabulary {
     private static final Pattern SOLDER_LUG = word("solder[- ]?lugs?|lugs?|solder[- ]?tags?|solder[- ]?terminals?"
             + "|solder[- ]?eyelets?");
     private static final Pattern QUICK_CONNECT = word("quick[- ]?connect(?:s|ors?)?|faston|spade|blade terminals?"
-            + "|\\d\\.\\d\\s?mm (?:tabs?|terminals?|connectors?)|connectors? \\d[.,]\\dmm");
+            + "|\\d\\.\\d\\s?mm (?:tabs?|terminals?|connectors?)|connectors? \\d[.,]\\dmm|connectors?|qc");
     private static final Pattern WIRE_LEADS = word("wire[- ]leads?|flying leads?|with wires?|pre-?wired|lead wires?");
-    private static final Pattern SCREW = word("screw[- ]?terminals?|screw");
+    private static final Pattern SCREW = word("screw[- ]?terminals?|screws?|m\\d screws?");
     private static final Pattern GENERIC_SOLDER = word("for (?:wire )?soldering|wire soldering|solder|soldering");
     private static final Pattern PCB = word("pc[- ]?pins?|pcb|pcb[- ]mount|board[- ]mount|smd|smt|surface[- ]mount"
             + "|tht|through[- ]hole|gull[- ]wing|j[- ]lead|插件");
@@ -233,7 +238,8 @@ class SwitchVocabulary {
             return "solder lug";
         }
         if (QUICK_CONNECT.matcher(text).find()) {
-            return "quick connect";
+            // tabs for a quick connect or for soldering (TME "connectors, for soldering", Mouser "Solder Lug QC")
+            return GENERIC_SOLDER.matcher(text).find() ? "solder lug" : "quick connect";
         }
         if (WIRE_LEADS.matcher(text).find()) {
             return "wire leads";
@@ -336,7 +342,7 @@ class SwitchVocabulary {
 
     /** {@code 8 position(s)}, {@code 8 pos}, {@code 8-way}, {@code 8 bit}, {@code 8 channels} of a DIP switch. */
     private static final Pattern POSITION_COUNT = Pattern.compile("(?i)(?<![\\p{L}\\d.])(\\d{1,2})\\s?-?\\s?"
-            + "(?:positions?|pos\\.?|ways?|bits?|channels?|switches|sections?)(?![\\p{L}\\d])");
+            + "(?:positions?|pos\\.?|ways?|bits?|channels?|switch(?:es)?(?:\\s+sections?)?|sections?)(?![\\p{L}\\d])");
 
     /** The positions a text states ({@code 8 position}), else null. */
     static Integer positions(String text) {
@@ -352,7 +358,9 @@ class SwitchVocabulary {
     private static final Pattern NOT_ILLUMINATED = word("non[- ]?illuminated|not illuminated|without (?:led|light|lamp)"
             + "|no (?:led|light|lamp)|unlit");
     private static final Pattern ILLUMINATED = word("illuminated|lighted|lit|backlit|backlight|with led|led ring"
-            + "|ring led|led|lamp");
+            + "|ring led|led|lamp|ill");
+    /** TME {@code Illumin: none}, an attribute {@code Illumination: none}: a bare none counts only there. */
+    private static final Pattern ILLUMINATION_NONE = Pattern.compile("(?i)illumin(?:ation|\\.)?\\s?:\\s?none");
     private static final Pattern ILLUMINATION_COLOUR = Pattern.compile("(?i)" + BEFORE
             + "(red|green|blue|yellow|amber|orange|white|rgb|bi-?colou?r)\\s(?:led|ring|illumination|illuminated|light)"
             + AFTER + "|" + BEFORE + "(?:illumination|led)\\s?(?:colou?r)?\\s?[:=]?\\s?"
@@ -363,8 +371,10 @@ class SwitchVocabulary {
         if (text == null) {
             return null;
         }
-        if (NOT_ILLUMINATED.matcher(text).find()) {
-            return false;
+        String bare = text.strip().toLowerCase(Locale.ROOT);
+        if (NOT_ILLUMINATED.matcher(text).find() || ILLUMINATION_NONE.matcher(text).find() || bare.equals("none")
+                || bare.equals("no")) {
+            return false;   // TME "Illumination: none", "Illumin: none"
         }
         return ILLUMINATED.matcher(text).find() ? Boolean.TRUE : null;
     }
@@ -478,7 +488,8 @@ class SwitchVocabulary {
                 hole = bare;
             }
         }
-        Boolean illuminated = illuminated(prepared);
+        String illuminationColour = illuminationColour(prepared);
+        Boolean illuminated = illuminationColour != null ? Boolean.TRUE : illuminated(prepared);   // "blue ring"
         ParsedQuery.Switch sw = ParsedQuery.Switch.builder()
                 .type(type)
                 .contacts(contacts(prepared))
@@ -488,7 +499,7 @@ class SwitchVocabulary {
                 .holeDiameter(hole)
                 .positions(positions(prepared))
                 .illuminated(Boolean.TRUE.equals(illuminated) ? Boolean.TRUE : null)
-                .illuminationColour(illuminationColour(prepared))
+                .illuminationColour(illuminationColour)
                 .orientation(orientation(prepared))
                 .voltageSupply(supply(prepared))
                 .build();

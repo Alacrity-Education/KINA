@@ -35,8 +35,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * in parallel (the extractor is stateless).
  *
  * <p>The master covers the attributes it was captured with: the canonical keys and value kinds added later
- * ({@link #LATER_KEYS}, {@link #LATER_KINDS}: the LED attributes, 0.13) are left out of every record, and the enriched
- * part is read again without them. They are covered by their own tests ({@code LedExtractionTest}); every captured
+ * ({@link #LATER_KEYS}, {@link #LATER_KINDS}: the LED and switch attributes, 0.13) are left out of every record, and the enriched
+ * part is read again without them. They are covered by their own tests ({@code LedExtractionTest},
+ * {@code SwitchExtractionTest}); every captured
  * attribute of every part and probe must stay the same.
  *
  * <p>On a mismatch the current dump is written to {@code target/golden/extraction-actual.jsonl}. To recapture (only
@@ -80,16 +81,23 @@ class ExtractionGoldenTest {
     /** Contexts of the pair probes (indexes into {@link #CONTEXTS}). */
     private static final List<Integer> PAIR_CONTEXTS = List.of(0, 2, 4, 7, 10);
 
-    /** Canonical keys added after the capture (LEDs, 0.13). */
+    /** Canonical keys added after the capture (LEDs and switches, 0.13). */
     static final java.util.Set<String> LATER_KEYS = java.util.Set.of(ParametricExtractor.WAVELENGTH,
             ParametricExtractor.COLOUR_TEMPERATURE, ParametricExtractor.FORWARD_VOLTAGE,
             ParametricExtractor.LUMINOUS_INTENSITY, ParametricExtractor.LUMINOUS_FLUX, ParametricExtractor.VIEWING_ANGLE,
-            ParametricExtractor.COLOUR, ParametricExtractor.LENS, ParametricExtractor.LED_TYPE);
-    /** Value kinds added after the capture (LEDs, 0.13). */
+            ParametricExtractor.COLOUR, ParametricExtractor.LENS, ParametricExtractor.LED_TYPE, ParametricExtractor.FORCE,
+            ParametricExtractor.LIFE, ParametricExtractor.IP_RATING, ParametricExtractor.VOLTAGE_AC,
+            ParametricExtractor.VOLTAGE_DC, ParametricExtractor.SWITCH_TYPE, ParametricExtractor.CONTACTS,
+            ParametricExtractor.SWITCH_FUNCTION, ParametricExtractor.TERMINATION, ParametricExtractor.SWITCH_SIZE,
+            ParametricExtractor.HOLE_DIAMETER, ParametricExtractor.SWITCH_POSITIONS, ParametricExtractor.ILLUMINATED,
+            ParametricExtractor.ILLUMINATION_COLOUR);
+    /** Value kinds added after the capture (LEDs and switches, 0.13). */
     static final java.util.Set<String> LATER_KINDS = java.util.Set.of(ro.alacrity.kina.domain.ParsedQuery.WAVELENGTH,
             ro.alacrity.kina.domain.ParsedQuery.COLOUR_TEMPERATURE, ro.alacrity.kina.domain.ParsedQuery.FORWARD_VOLTAGE,
             ro.alacrity.kina.domain.ParsedQuery.LUMINOUS_INTENSITY, ro.alacrity.kina.domain.ParsedQuery.LUMINOUS_FLUX,
-            ro.alacrity.kina.domain.ParsedQuery.VIEWING_ANGLE);
+            ro.alacrity.kina.domain.ParsedQuery.VIEWING_ANGLE, ro.alacrity.kina.domain.ParsedQuery.FORCE,
+            ro.alacrity.kina.domain.ParsedQuery.LIFE, ro.alacrity.kina.domain.ParsedQuery.IP_RATING,
+            ro.alacrity.kina.domain.ParsedQuery.VOLTAGE_AC, ro.alacrity.kina.domain.ParsedQuery.VOLTAGE_DC);
 
     private final ParametricExtractor extractor = new ParametricExtractor();
 

@@ -1,0 +1,5799 @@
+{
+ "query": "tactile switch 6x6 SMD",
+ "recorded": "2026-10-07 live probe (one search per query through the stack, detail=full, allow_below_spec, max_results 50): Mouser and TME parts are every part the search fetched, read back from the part cache (raw distributor attributes); LCSC parts are the returned ones without the derived attributes; prices as listed",
+ "phrases": {
+  "LCSC": "\"Tactile Switches\" 6x6mm SMD",
+  "TME": "tactile switch 6x6 SMT",
+  "MOUSER": "tactile switch 6x6 SMD"
+ },
+ "parts": {
+  "LCSC": [
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54864118",
+    "manufacturer": "JMEconn",
+    "manufacturerPartNumber": "JME-6x6x5.0WSKG260g-SMT",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD,6x6mm",
+    "stock": 970,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.107,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.085,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.074,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/JMEconn-JME_6x6x5_0WSKG260gSMT/C54864118",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54864118.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54864118"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C56112523",
+    "manufacturer": "FG",
+    "manufacturerPartNumber": "TC-6650-5.0-200",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD,6x6mm",
+    "stock": 2000,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.196,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.155,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.137,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/FG-TC_6650_5_0200/C56112523",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C56112523.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C56112523"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786669",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6650H-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD,6x6mm",
+    "stock": 490,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.09,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.072,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.063,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6650HTG/C55786669",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786669.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786669"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54333896",
+    "manufacturer": "Minlenda",
+    "manufacturerPartNumber": "MLD-TS-6X6X5-WS",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD,6x6mm",
+    "stock": 244,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.077,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.061,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.053,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/Minlenda-MLD_TS_6X6X5WS/C54333896",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54333896.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54333896"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53447026",
+    "manufacturer": "LXWCONN",
+    "manufacturerPartNumber": "LXW-TS-6X6X85-SMD",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 2470,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.018,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LXWCONN-LXW_TS_6X6X85SMD/C53447026",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53447026.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53447026"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53447020",
+    "manufacturer": "LXWCONN",
+    "manufacturerPartNumber": "LXW-TS-6X6X5-SMD",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 39982,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.022,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LXWCONN-LXW_TS_6X6X5SMD/C53447020",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53447020.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53447020"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53463536",
+    "manufacturer": "SAMZO",
+    "manufacturerPartNumber": "JT4E901120",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-6P,6x6mm",
+    "stock": 4898,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.306,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.242,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.214,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SAMZO-JT4E901120/C53463536",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53463536.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53463536"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53447024",
+    "manufacturer": "LXWCONN",
+    "manufacturerPartNumber": "LXW-TS-6X6X75-SMD",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 2265,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.016,
+      "currency": "USD"
+     },
+     {
+      "quantity": 2100,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LXWCONN-LXW_TS_6X6X75SMD/C53447024",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53447024.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53447024"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C48533252",
+    "manufacturer": "CAX",
+    "manufacturerPartNumber": "TS-1102S-6x6x7-250",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 2005,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.031,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.024,
+      "currency": "USD"
+     },
+     {
+      "quantity": 800,
+      "unitPrice": 0.021,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/CAX-TS_1102S_6x6x7250/C48533252",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C48533252.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C48533252"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53447025",
+    "manufacturer": "LXWCONN",
+    "manufacturerPartNumber": "LXW-TS-6X6X8-SMD",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 1202,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.032,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.025,
+      "currency": "USD"
+     },
+     {
+      "quantity": 700,
+      "unitPrice": 0.021,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LXWCONN-LXW_TS_6X6X8SMD/C53447025",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53447025.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53447025"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54864112",
+    "manufacturer": "JMEconn",
+    "manufacturerPartNumber": "JME-6x6x5.0SJTP9.0J260g-SMT",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 1985,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.047,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.037,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.033,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/C54864112",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54864112.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54864112"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C48533256",
+    "manufacturer": "CAX",
+    "manufacturerPartNumber": "TS-1102S-6x6x9.0-250",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 1982,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.181,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.177,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.174,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/CAX-TS_1102S_6x6x9_0250/C48533256",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C48533256.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C48533256"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53403942",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6609-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 2428,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.18,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.14,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.123,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6609TG/C53403942",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53403942.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53403942"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C48533245",
+    "manufacturer": "CAX",
+    "manufacturerPartNumber": "TS-1102S-6x6x4.5-250",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 1332,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.021,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.018,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/CAX-TS_1102S_6x6x4_5250/C48533245",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C48533245.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C48533245"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55014084",
+    "manufacturer": "Hong Cheng",
+    "manufacturerPartNumber": "HC-QC6660-T-R",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 1134,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.023,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.018,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/HongCheng-HC_QC6660_TR/C55014084",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55014084.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55014084"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55014086",
+    "manufacturer": "Hong Cheng",
+    "manufacturerPartNumber": "HC-QC6670-T-R",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 1520,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.032,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.025,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.021,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/HongCheng-HC_QC6670_TR/C55014086",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55014086.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55014086"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55014082",
+    "manufacturer": "Hong Cheng",
+    "manufacturerPartNumber": "HC-QC6650-T-R",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 1208,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.022,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/HongCheng-HC_QC6650_TR/C55014082",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55014082.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55014082"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55079549",
+    "manufacturer": "BXCONN",
+    "manufacturerPartNumber": "TS-1002S-TZ43HBM",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 940,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.035,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.023,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/BXCONN-TS_1002STZ43HBM/C55079549",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55079549.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55079549"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53463537",
+    "manufacturer": "SAMZO",
+    "manufacturerPartNumber": "J4B050231L",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 1000,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.088,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.07,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.061,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SAMZO-J4B050231L/C53463537",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53463537.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53463537"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55014080",
+    "manufacturer": "Hong Cheng",
+    "manufacturerPartNumber": "HC-QC6643-T-R",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 980,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.022,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.014,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/HongCheng-HC_QC6643_TR/C55014080",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55014080.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55014080"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53447023",
+    "manufacturer": "LXWCONN",
+    "manufacturerPartNumber": "LXW-TS-6X6X7-SMD",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 921,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.029,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.023,
+      "currency": "USD"
+     },
+     {
+      "quantity": 800,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LXWCONN-LXW_TS_6X6X7SMD/C53447023",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53447023.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53447023"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C48533249",
+    "manufacturer": "CAX",
+    "manufacturerPartNumber": "TS-1102S-6x6x6-250",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 869,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.03,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.023,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/CAX-TS_1102S_6x6x6250/C48533249",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C48533249.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C48533249"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C54451013",
+    "manufacturer": "SAMZO",
+    "manufacturerPartNumber": "J4G731110",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 750,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.188,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.149,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.132,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SAMZO-J4G731110/C54451013",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C54451013.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C54451013"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55232418",
+    "manufacturer": "JMEconn",
+    "manufacturerPartNumber": "JME-6x6x4.3SJTP9.0J260g-SMT",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 734,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.053,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.042,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.037,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/C55232418",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55232418.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55232418"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53447021",
+    "manufacturer": "LXWCONN",
+    "manufacturerPartNumber": "LXW-TS-6X6X6-SMD",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 690,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LXWCONN-LXW_TS_6X6X6SMD/C53447021",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53447021.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53447021"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786638",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6643-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 500,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.014,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.011,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6643TG/C55786638",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786638.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786638"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786729",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6645-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 500,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.014,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.011,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6645TG/C55786729",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786729.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786729"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786637",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6655-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 500,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     },
+     {
+      "quantity": 2000,
+      "unitPrice": 0.01,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6655TG/C55786637",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786637.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786637"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55185816",
+    "manufacturer": "FG",
+    "manufacturerPartNumber": "FG-TC-6601-9.0-260",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 500,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.042,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.033,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.029,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/FG-FG_TC_6601_9_0260/C55185816",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55185816.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55185816"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786658",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6640-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 495,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     },
+     {
+      "quantity": 2000,
+      "unitPrice": 0.01,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6640TG/C55786658",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786658.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786658"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786664",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6660-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 485,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     },
+     {
+      "quantity": 2000,
+      "unitPrice": 0.01,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6660TG/C55786664",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786664.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786664"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786662",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6670-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 400,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.014,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1600,
+      "unitPrice": 0.012,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6670TG/C55786662",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786662.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786662"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786660",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6690-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 250,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.022,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6690TG/C55786660",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786660.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786660"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786655",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6695-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 250,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.024,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.016,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6695TG/C55786655",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786655.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786655"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786728",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6610-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 250,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.024,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.016,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6610TG/C55786728",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786728.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786728"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C231679",
+    "manufacturer": "GANGYUAN",
+    "manufacturerPartNumber": "KAN0642-0751B-L",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 250,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.038,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.03,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.025,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/GANGYUAN-KAN0642_0751BL/C231679",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C231679.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C231679"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786641",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6650-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 249,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.014,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.011,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6650TG/C55786641",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786641.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786641"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53447022",
+    "manufacturer": "LXWCONN",
+    "manufacturerPartNumber": "LXW-TS-6X6X65-SMD",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 95,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.014,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LXWCONN-LXW_TS_6X6X65SMD/C53447022",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53447022.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53447022"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C56112504",
+    "manufacturer": "FG",
+    "manufacturerPartNumber": "TC-6619T-9.5-260",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 95,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.178,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.141,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.125,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/FG-TC_6619T_9_5260/C56112504",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C56112504.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C56112504"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C56112503",
+    "manufacturer": "FG",
+    "manufacturerPartNumber": "TC-6619T-6.0-210",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 80,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.167,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.133,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.118,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/FG-TC_6619T_6_0210/C56112503",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C56112503.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C56112503"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55232898",
+    "manufacturer": "JMEconn",
+    "manufacturerPartNumber": "JME-6X6X4.3SJTP9.0J120g-SMT-3.0",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 60,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.059,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.047,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.041,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/C55232898",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55232898.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55232898"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C53447019",
+    "manufacturer": "LXWCONN",
+    "manufacturerPartNumber": "LXW-TS-6X6X43-SMD",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 51,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.011,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/LXWCONN-LXW_TS_6X6X43SMD/C53447019",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C53447019.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C53447019"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C48533260",
+    "manufacturer": "CAX",
+    "manufacturerPartNumber": "TS-1102S-6x6x11-250",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 50,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.041,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.032,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.028,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/CAX-TS_1102S_6x6x11250/C48533260",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C48533260.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C48533260"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55382918",
+    "manufacturer": "HOOYA",
+    "manufacturerPartNumber": "TC-06104H-120E-03",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 50,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.114,
+      "currency": "USD"
+     },
+     {
+      "quantity": 50,
+      "unitPrice": 0.091,
+      "currency": "USD"
+     },
+     {
+      "quantity": 150,
+      "unitPrice": 0.079,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/HOOYA-TC_06104H_120E03/C55382918",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55382918.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55382918"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C56127552",
+    "manufacturer": "Shenzhen Kinghelm Elec",
+    "manufacturerPartNumber": "KH-6X6X5.5H-SMT",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 35,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.022,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.017,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1000,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/60321717-KH_6X6X5_5HSMT/C56127552",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C56127552.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C56127552"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C56127584",
+    "manufacturer": "Shenzhen Kinghelm Elec",
+    "manufacturerPartNumber": "KH-6X6X9.5H-SMT-160G",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 35,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.034,
+      "currency": "USD"
+     },
+     {
+      "quantity": 200,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     },
+     {
+      "quantity": 600,
+      "unitPrice": 0.023,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/60321749-KH_6X6X9_5H_SMT160G/C56127584",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C56127584.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C56127584"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55786667",
+    "manufacturer": "SHETIME",
+    "manufacturerPartNumber": "TAT-6680-TG",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 30,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.019,
+      "currency": "USD"
+     },
+     {
+      "quantity": 500,
+      "unitPrice": 0.015,
+      "currency": "USD"
+     },
+     {
+      "quantity": 1400,
+      "unitPrice": 0.013,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/SHETIME-TAT_6680TG/C55786667",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55786667.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55786667"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55232899",
+    "manufacturer": "JMEconn",
+    "manufacturerPartNumber": "JME-6X6X4.3SJTP9.0J260g-SMT-3.0",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 30,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.039,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.031,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/C55232899",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55232899.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55232899"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55232417",
+    "manufacturer": "JMEconn",
+    "manufacturerPartNumber": "JME-6x6x4.5SJTP9.0J260g-SMT",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 20,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.039,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.031,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/C55232417",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55232417.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55232417"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   },
+   {
+    "distributor": "LCSC",
+    "distributorPartNumber": "C55232421",
+    "manufacturer": "JMEconn",
+    "manufacturerPartNumber": "JME-6x6x5.0SJTP9.0J160g-SMT",
+    "description": null,
+    "category": "Switches / Tactile Switches",
+    "packageName": "SMD-4P,6x6mm",
+    "stock": 17,
+    "minimumOrderQuantity": null,
+    "orderMultiple": null,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 0.039,
+      "currency": "USD"
+     },
+     {
+      "quantity": 100,
+      "unitPrice": 0.031,
+      "currency": "USD"
+     },
+     {
+      "quantity": 300,
+      "unitPrice": 0.027,
+      "currency": "USD"
+     }
+    ],
+    "datasheetUrl": "https://jlcpcb.com/partdetail/C55232421",
+    "photoUrl": null,
+    "productUrl": "https://www.lcsc.com/product-detail/C55232421.html",
+    "attributes": {},
+    "extra": {
+     "library_type": "Extended",
+     "solder_joints": 0,
+     "second_category": "Tactile Switches",
+     "jlcpcb_url": "https://jlcpcb.com/partdetail/C55232421"
+    },
+    "fetchedAt": "2026-10-07T00:00:00Z"
+   }
+  ],
+  "TME": [],
+  "MOUSER": [
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "105 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-12-07T00:00:00",
+       "quantity": 2200
+      },
+      {
+       "date": "2026-12-09T00:00:00",
+       "quantity": 1100
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 211,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.81
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.71
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.43
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 1.42
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1100,
+      "unitPrice": 1.36
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2200,
+      "unitPrice": 1.29
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/ckcomponents/images/TLSMDT3C020GLFS_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1100"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/CK/TLSMDT3C020GLFS?qs=QNEnbhJQKvZpNzUHXUSeJA%3D%3D",
+    "description": "Tactile Switches 6x6.1x3.45mm Tactile Switch",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Littelfuse_ck_tlsm_datasheet.pdf",
+    "manufacturer": "C&K",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "611-TLSMDT3C020GLFS",
+    "manufacturerPartNumber": "TLSMDT3C020GLFS"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "68 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 18284,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.378
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.333
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.307
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.246
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.218
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.201
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 0.19
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.178
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/1-1437565-6_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-PB/FSM1LPATR?qs=g%252BEszo6zu8Mp9YhXiBgnfw%3D%3D",
+    "description": "Tactile Switches TACTILE SWITCH 12VDC 2.54N",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/45/ENG_CD_1_1437565_8_E.pdf",
+    "manufacturer": "TE Connectivity / P&B",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSM1LPATR",
+    "manufacturerPartNumber": "FSM1LPATR"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1274,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.6
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 4.02
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.8
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.47
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 3.18
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 3.12
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.55
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 2.49
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM65AW04?qs=kSQU7otX9tZi%252BQV%252BEVTMXw%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 520GF LI COLD WHITE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/32/ENG_CS_1308111_1_SWITCHES_CORE_PROGRAM_CATALOG_0308.pdf",
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM65AW04",
+    "manufacturerPartNumber": "FSMIJM65AW04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1309,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.89
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.74
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 1.32
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 1.21
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4950,
+      "unitPrice": 1.15
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM62APG04?qs=kSQU7otX9tYWGXlmpkz8%2Fg%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 160GF LI PURE GREEN",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM62APG04",
+    "manufacturerPartNumber": "FSMIJM62APG04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": "653-B3FS-1000P",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 6957,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.654
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.527
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.462
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.433
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.417
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.394
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.354
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 0.341
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4500,
+      "unitPrice": 0.325
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/flat3.1.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3FS-1000?qs=0w99tykdtPLYKc0K5k%252BuQA%3D%3D",
+    "description": "Tactile Switches 6X6X3.1mm 100gF",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/omron_B3FS.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3FS-1000",
+    "manufacturerPartNumber": "B3FS-1000"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 26691,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.267
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.205
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.165
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.163
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.145
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.139
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.11
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.108
+     },
+     {
+      "currency": "EUR",
+      "quantity": 15000,
+      "unitPrice": 0.108
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/panasonic/images/EVP-BF_series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "15000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Panasonic-Industry/EVP-BF6C1A000?qs=PzGy0jfpSMutIa6W1Rsdhg%3D%3D",
+    "description": "Tactile Switches 6x6x3.5mm 3.5N 0.32mm Travel",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Panasonic Industry",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "667-EVP-BF6C1A000",
+    "manufacturerPartNumber": "EVP-BF6C1A000"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": "655-3-2213819-9",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1197,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.89
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.74
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 1.3
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 1.14
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 1.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4950,
+      "unitPrice": 1.12
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM63AR04?qs=oOQ3ApaRe9CNatwg%252B8iUTg%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 260GF LI RED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM63AR04",
+    "manufacturerPartNumber": "FSMIJM63AR04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1092,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.45
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.89
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.68
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.36
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 3.26
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 2.93
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.54
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM62BW04?qs=kSQU7otX9tYUhSISLd5MXQ%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 160GF HI COLD WHITE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM62BW04",
+    "manufacturerPartNumber": "FSMIJM62BW04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1250,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.45
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.89
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.68
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.36
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 3.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 2.98
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.65
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-PB/FSMIJM61BW04?qs=kSQU7otX9taCsiMyjvGZmA%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 100GF HI COLD WHITE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / P&B",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM61BW04",
+    "manufacturerPartNumber": "FSMIJM61BW04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 544,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 4.22
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.61
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.35
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.98
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 2.72
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 2.62
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.54
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 2.49
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM63BW04?qs=kSQU7otX9tZ6e5CXoD%2F2oA%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 260GF HI COLD WHITE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/18/ENG_CS_1308111_1_SWITCHES_CORE_PROGRAM_CATALOG_0308.pdf",
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM63BW04",
+    "manufacturerPartNumber": "FSMIJM63BW04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": "655-2-2213819-4",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 664,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.97
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.62
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.5
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 3.0
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 2.55
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM62AW04?qs=kSQU7otX9tZDatCndBcK%252Bw%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 160GF LI COLD WHITE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM62AW04",
+    "manufacturerPartNumber": "FSMIJM62AW04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1327,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.97
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.62
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.37
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 3.18
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 3.04
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 3.02
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.5
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM63AW04?qs=kSQU7otX9tZ8VAngnA3I5A%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 260GF LI COLD WHITE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM63AW04",
+    "manufacturerPartNumber": "FSMIJM63AW04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "159 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 6254,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.507
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.452
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.421
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.375
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.348
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.316
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.311
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.289
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.268
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/schurter/images/1301-93xx-lsh.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Schurter/1301.9319?qs=tGaZrb6HVSZtBq84TpBRhA%3D%3D",
+    "description": "Tactile Switches 6X6 SHORT TRAVEL SWITCH 9.5MM",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/386/1/typ_6x6_mm_tact_switches.pdf",
+    "manufacturer": "Schurter",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "693-1301.9319",
+    "manufacturerPartNumber": "1301.9319"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "159 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 4967,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.507
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.475
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.443
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.381
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.359
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.323
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.316
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.294
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.262
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/schurter/images/1301-93xx-lsh.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Schurter/1301.9318?qs=tGaZrb6HVSaxYojxkk2y5w%3D%3D",
+    "description": "Tactile Switches 6X6 SHORT TRAVEL SWITCH 8.0MM",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/386/1/typ_6x6_mm_tact_switches.pdf",
+    "manufacturer": "Schurter",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "693-1301.9318",
+    "manufacturerPartNumber": "1301.9318"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1164,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.87
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.0
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.67
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 2.43
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 2.25
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 2.01
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4950,
+      "unitPrice": 1.99
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-PB/FSMIJM62BB04?qs=oOQ3ApaRe9DoYOTCXv1tsQ%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 160GF HI BLUE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/46/ENG_DS_1_1773878_5_IlluminatedTactileSwitch_0917.pdf",
+    "manufacturer": "TE Connectivity / P&B",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM62BB04",
+    "manufacturerPartNumber": "FSMIJM62BB04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1115,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.65
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.33
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.16
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.98
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 2.73
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 2.54
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.24
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4950,
+      "unitPrice": 2.23
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-AMP/FSMIJM63AB04?qs=oOQ3ApaRe9BeqJU4qIcg1A%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 260GF LI BLUE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / AMP",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM63AB04",
+    "manufacturerPartNumber": "FSMIJM63AB04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1138,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.89
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.74
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 1.3
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 1.1
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 1.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4950,
+      "unitPrice": 1.06
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM62BG04?qs=oOQ3ApaRe9CCwnH5cpNhzA%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 160GF HI YELLOW GRN",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM62BG04",
+    "manufacturerPartNumber": "FSMIJM62BG04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 20808,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.464
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.419
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.39
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.348
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.323
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.304
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.288
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.268
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.258
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/panasonic/images/EVP-AS_series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Panasonic-Industry/EVP-ASKC1A?qs=gTYE2QTfZfQol0eOIUHCMQ%3D%3D",
+    "description": "Tactile Switches 3N 6x6.1x5mm 1.3mm Travel Black",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Panasonic Industry",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "667-EVP-ASKC1A",
+    "manufacturerPartNumber": "EVP-ASKC1A"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 779,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.89
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.74
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 1.32
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 1.15
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 1.07
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4950,
+      "unitPrice": 1.05
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-AMP/FSMIJM63BR04?qs=oOQ3ApaRe9BtRD9DW9bwkA%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 260GF HI RED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / AMP",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM63BR04",
+    "manufacturerPartNumber": "FSMIJM63BR04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1092,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.06
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.89
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.7
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 1.32
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 1.14
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 1.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4950,
+      "unitPrice": 1.12
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-AMP/FSMIJM61BPG04?qs=kSQU7otX9tZl0FkCmtJQIQ%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 100GF HI PURE GREEN",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / AMP",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM61BPG04",
+    "manufacturerPartNumber": "FSMIJM61BPG04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 375,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 3.77
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 3.23
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 3.0
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 2.83
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 2.67
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 2.37
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 2.12
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 2.08
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-PB/FSMIJM63BB04?qs=oOQ3ApaRe9BR%2FoShvMQgIQ%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 260GF HI BLUE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/45/ENG_DS_1_1773878_5_IlluminatedTactileSwitch_0917.pdf",
+    "manufacturer": "TE Connectivity / P&B",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM63BB04",
+    "manufacturerPartNumber": "FSMIJM63BB04"
+   },
+   {
+    "extra": {
+     "rohs": null,
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "159 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 3492,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.507
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.471
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.439
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.38
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.359
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.321
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.316
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.293
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.291
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/schurter/images/ITP_1301_9316.JPG",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Schurter/1301.9316?qs=tGaZrb6HVSYxxjgTyXtdJQ%3D%3D",
+    "description": "Tactile Switches SHORT TRAVEL SWITCH 6X6, 7.00MM",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/386/1/typ_6x6_mm_tact_switches.pdf",
+    "manufacturer": "Schurter",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "693-1301.9316",
+    "manufacturerPartNumber": "1301.9316"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "0 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 589,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.43
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.354
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.322
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.303
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.256
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.237
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.214
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10000,
+      "unitPrice": 0.204
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25000,
+      "unitPrice": 0.191
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/diptronicsmanufacturinginc/images/DTSMG-62R-V-T-R_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Diptronics/DTSMG-62R-V-T-R?qs=DPoM0jnrROX2qD%2FK8wQpIg%3D%3D",
+    "description": "Tactile Switches 6x6mm 260gf RED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/Diptronics_02-26-2026_464_DTSMJ_6-1571536.pdf",
+    "manufacturer": "Diptronics",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "113-DTSMG62RVTR",
+    "manufacturerPartNumber": "DTSMG-62R-V-T/R"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "28 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-12-04T00:00:00",
+       "quantity": 18000
+      }
+     ],
+     "suggested_replacement": "653-B3S-1002",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 46141,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.774
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.697
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.62
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.574
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.504
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.488
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.444
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.426
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.422
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/b3st.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3S-1002P?qs=VO24nqdQNUCtpi6pYm2hHQ%3D%3D",
+    "description": "Tactile Switches 6x6x4.3mm 230gF T/R Sealed",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/39/1/en_b3s.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3S-1002P",
+    "manufacturerPartNumber": "B3S-1002P"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "28 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": "653-B3S-1000",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 66288,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.645
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.589
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.542
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.504
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.443
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.429
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.412
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.39
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.38
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/b3st.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3S-1000P?qs=VO24nqdQNUCU2XaZiLnzsQ%3D%3D",
+    "description": "Tactile Switches 6X6X4.3mm 160gF T/R",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/39/1/en_b3s.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3S-1000P",
+    "manufacturerPartNumber": "B3S-1000P"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "68 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 84807,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.31
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.268
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.251
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.225
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.208
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.197
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1200,
+      "unitPrice": 0.156
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2400,
+      "unitPrice": 0.151
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4800,
+      "unitPrice": 0.143
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/1571527-1_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1200"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSM4JSMATR?qs=wvf%252BmaPDr9OW%2FGIpfy5A8Q%3D%3D",
+    "description": "Tactile Switches SPST OF(0N) RND SMT MINI PB TACT SWITCH",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSM4JSMATR",
+    "manufacturerPartNumber": "FSM4JSMATR"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "68 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": "506-3-1437565-0",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 34835,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.361
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.329
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.308
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.275
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.273
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.255
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1200,
+      "unitPrice": 0.191
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2400,
+      "unitPrice": 0.19
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/1571527-1_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1200"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Raychem/FSM2JSMATR?qs=WGv6JurbshdZYN8XLDBFWg%3D%3D",
+    "description": "Tactile Switches 6x6x4.3mm 160g Tactile tape & reel",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/45/ENG_CD_2_1437565_7_Z1.pdf",
+    "manufacturer": "TE Connectivity / Raychem",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSM2JSMATR",
+    "manufacturerPartNumber": "FSM2JSMATR"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "28 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-11-06T00:00:00",
+       "quantity": 3000
+      }
+     ],
+     "suggested_replacement": "653-B3FS-1000",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 15920,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.611
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.551
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.461
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.425
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.406
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.38
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.365
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.335
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.327
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/flat3.1.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3FS-1000P?qs=ImaqFqjHA4k6odVF2%2FXWpQ%3D%3D",
+    "description": "Tactile Switches 6X6X3.1mm 100gF TR",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/omron_B3FS.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3FS-1000P",
+    "manufacturerPartNumber": "B3FS-1000P"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": "653-B3S-1002P",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 10250,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.714
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.608
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.521
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.505
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.468
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.442
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.405
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 0.384
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4500,
+      "unitPrice": 0.366
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/b3st.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "1500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3S-1002?qs=0w99tykdtPJgNGmIRoq%2F5Q%3D%3D",
+    "description": "Tactile Switches 6X6X4.3mm 230gF",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/39/1/en_b3s.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3S-1002",
+    "manufacturerPartNumber": "B3S-1002"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "68 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-12-14T00:00:00",
+       "quantity": 18000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 2451,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.378
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.345
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.322
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.288
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.267
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.223
+     },
+     {
+      "currency": "EUR",
+      "quantity": 750,
+      "unitPrice": 0.212
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4500,
+      "unitPrice": 0.2
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSM_square_SMD.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "750"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-PB/5-1437565-0?qs=%2FwXgF%2FfIho9mO1nArmyR6A%3D%3D",
+    "description": "Tactile Switches SWITCH TACTILE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/45/ENG_CD_2_1437565_7_Z1.pdf",
+    "manufacturer": "TE Connectivity / P&B",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-5-1437565-0",
+    "manufacturerPartNumber": "5-1437565-0"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2027-01-26T00:00:00",
+       "quantity": 1500
+      }
+     ],
+     "suggested_replacement": "653-B3FS-1052P",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1505,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 2.24
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 2.14
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.63
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.52
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 1.48
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 1.41
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 1.4
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4500,
+      "unitPrice": 1.38
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/B3FS_series.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3FS-1052?qs=0w99tykdtPLBiw0xAG9YQw%3D%3D",
+    "description": "Tactile Switches 6x6x7.3mm 150gf",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/omron_B3FS.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3FS-1052",
+    "manufacturerPartNumber": "B3FS-1052"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 3080,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.576
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.493
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.482
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/flat4.3.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3FS-1012?qs=0w99tykdtPIzAHsWqyyVug%3D%3D",
+    "description": "Tactile Switches 6X6 Proj 4.3mm Btn Oper Force 150g",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/omron_B3FS.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3FS-1012",
+    "manufacturerPartNumber": "B3FS-1012"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-10-30T00:00:00",
+       "quantity": 15000
+      },
+      {
+       "date": "2027-01-01T00:00:00",
+       "quantity": 18000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 17046,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.611
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.547
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.462
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.441
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.421
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.373
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.359
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.33
+     },
+     {
+      "currency": "EUR",
+      "quantity": 6000,
+      "unitPrice": 0.321
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/b3fst.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "3000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3FS-1002P?qs=ImaqFqjHA4mR4r86JYSSCA%3D%3D",
+    "description": "Tactile Switches 6x6x3.1mm Flat 150OF PhosphorBronze Ag T",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/omron_B3FS.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3FS-1002P",
+    "manufacturerPartNumber": "B3FS-1002P"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-10-09T00:00:00",
+       "quantity": 10000
+      },
+      {
+       "date": "2026-10-19T00:00:00",
+       "quantity": 14000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 5455,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.8
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.724
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.627
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.579
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.525
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.508
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.489
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.466
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.464
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/landingpageomrontactileswit-2.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3SL-1002P?qs=h8kCHL4kpM7r31L1Z%2F%2FPBA%3D%3D",
+    "description": "Tactile Switches 6x6mm, 3.4mm Height Flat Type Plunger",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3SL-1002P",
+    "manufacturerPartNumber": "B3SL-1002P"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "105 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 4365,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.49
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.486
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 0.449
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.409
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.372
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.323
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.289
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/wurthelectronics/images/430481035816_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Wurth-Elektronik/430481035816?qs=wr8lucFkNMVwB7gZn3u1xA%3D%3D",
+    "description": "Tactile Switches SMD 6x6mm 3.5mm Black 160gf WS-TASV",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Wurth Elektronik",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "710-430481035816",
+    "manufacturerPartNumber": "430481035816"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 330,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.08
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.92
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.74
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.61
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.53
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 1.35
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 1.14
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 1.13
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4950,
+      "unitPrice": 1.12
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM62AR04?qs=kSQU7otX9tb438ZK4aK8%252BQ%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 160GF LI RED",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/80/20/ENG_CS_1308111_1_SWITCHES_CORE_PROGRAM_CATALOG_0308.pdf",
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM62AR04",
+    "manufacturerPartNumber": "FSMIJM62AR04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "132 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 101,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 1.81
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 1.66
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 1.57
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.47
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 1.45
+     },
+     {
+      "currency": "EUR",
+      "quantity": 450,
+      "unitPrice": 1.28
+     },
+     {
+      "currency": "EUR",
+      "quantity": 900,
+      "unitPrice": 1.14
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2250,
+      "unitPrice": 1.1
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/FSMIJ_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "450"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSMIJM63BA04?qs=oOQ3ApaRe9A25upV%252BhK29w%3D%3D",
+    "description": "Tactile Switches 6X6 ILL TACT SMT 260GF HI SOFT ORANGE",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSMIJM63BA04",
+    "manufacturerPartNumber": "FSMIJM63BA04"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 2520,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.301
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.261
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.251
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.197
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.172
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.161
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.149
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.136
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/panasonic/images/EVQ-7Q_series_t_.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Panasonic-Industry/EVQ-7Q201W?qs=PzGy0jfpSMtXep4dt4ZPsQ%3D%3D",
+    "description": "Tactile Switches 6x6x2mm 0.8N With Grnd Term",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Panasonic Industry",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "667-EVQ-7Q201W",
+    "manufacturerPartNumber": "EVQ-7Q201W"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 716,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.301
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.261
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.251
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.197
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.172
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.161
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.142
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.135
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/panasonic/images/EVQ-7Q_series_t_.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Panasonic-Industry/EVQ-7Q202W?qs=PzGy0jfpSMvBXpR9Z3gAdw%3D%3D",
+    "description": "Tactile Switches 6x6x2.5mm 0.8N With Grnd Term",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Panasonic Industry",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "667-EVQ-7Q202W",
+    "manufacturerPartNumber": "EVQ-7Q202W"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 207,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.301
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.261
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.251
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.197
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.172
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.161
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.146
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.135
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/panasonic/images/EVQ-7Q_series_t_.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Panasonic-Industry/EVQ-7Q203W?qs=PzGy0jfpSMvNf4Bh6n5m7A%3D%3D",
+    "description": "Tactile Switches 6x6x3.1mm 0.8N With Grnd Term",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Panasonic Industry",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "667-EVQ-7Q203W",
+    "manufacturerPartNumber": "EVQ-7Q203W"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 215,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.258
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.227
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.218
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.189
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.172
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.161
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.152
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.138
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.133
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/panasonic/images/EVQ-6Q_series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Panasonic-Industry/EVQ-6Q202W?qs=PzGy0jfpSMvCwn%2Fm7G6s4Q%3D%3D",
+    "description": "Tactile Switches 6x6x2.5mm 0.8N W/O Grnd Term",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Panasonic Industry",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "667-EVQ-6Q202W",
+    "manufacturerPartNumber": "EVQ-6Q202W"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 3551,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.267
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.234
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.225
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.195
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.177
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.166
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.157
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.143
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.135
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/panasonic/images/EVQ-6Q_series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Panasonic-Industry/EVQ-6Q203W?qs=PzGy0jfpSMuDDgPRzX5WLA%3D%3D",
+    "description": "Tactile Switches 6x6x3.1mm 0.8N W/O Grnd Term",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Panasonic Industry",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "667-EVQ-6Q203W",
+    "manufacturerPartNumber": "EVQ-6Q203W"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "98 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 3446,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.301
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.261
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.251
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.206
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.197
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.172
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.161
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.149
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.136
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/panasonic/images/EVQ-6Q_series_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape",
+     "Standard Pack Qty": "4000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Panasonic-Industry/EVQ-6Q201W?qs=PzGy0jfpSMsfxVKNJ%2FGEzg%3D%3D",
+    "description": "Tactile Switches 6x6x2mm 0.8N W/O Grnd Term",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Panasonic Industry",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "667-EVQ-6Q201W",
+    "manufacturerPartNumber": "EVQ-6Q201W"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "68 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 92,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.619
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.594
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.547
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.489
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.469
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.384
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.368
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.349
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.341
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/tycoelectronics/images/1-1437565-6_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/TE-Connectivity-Alcoswitch/FSM1LPA?qs=1decC%2Fpd%2FUgUKqOc836w1A%3D%3D",
+    "description": "Tactile Switches Tactile 6x6mm 260g",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "TE Connectivity / Alcoswitch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "506-FSM1LPA",
+    "manufacturerPartNumber": "FSM1LPA"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "28 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-10-09T00:00:00",
+       "quantity": 8400
+      },
+      {
+       "date": "2027-01-29T00:00:00",
+       "quantity": 18200
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 290,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.851
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.727
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.667
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.603
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.559
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.528
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1400,
+      "unitPrice": 0.487
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2800,
+      "unitPrice": 0.449
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4200,
+      "unitPrice": 0.433
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/B3SL1022P9812_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1400"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3SL-1022P?qs=h8kCHL4kpM7Kb%2F3YbWgTRQ%3D%3D",
+    "description": "Tactile Switches 6x6mm, 5.1mm Height Flat Type Plunger",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": null,
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3SL-1022P",
+    "manufacturerPartNumber": "B3SL-1022P"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": "653-B3FS-1010P",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1630,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.645
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.538
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.491
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 0.456
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.441
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.418
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 0.39
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 0.362
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/flat4.3.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "100"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3FS-1010?qs=0w99tykdtPIVcYtF1KpCYQ%3D%3D",
+    "description": "Tactile Switches 6x6x4.3mm 100gf",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/omron_B3FS.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3FS-1010",
+    "manufacturerPartNumber": "B3FS-1010"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-11-20T00:00:00",
+       "quantity": 1300
+      }
+     ],
+     "suggested_replacement": "653-B3FS-1050P",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 435,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 2.5
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 2.18
+     },
+     {
+      "currency": "EUR",
+      "quantity": 50,
+      "unitPrice": 2.15
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 1.9
+     },
+     {
+      "currency": "EUR",
+      "quantity": 200,
+      "unitPrice": 1.87
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 1.81
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 1.71
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2500,
+      "unitPrice": 1.61
+     },
+     {
+      "currency": "EUR",
+      "quantity": 5000,
+      "unitPrice": 1.54
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/B3FS_series.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "100"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3FS-1050?qs=0w99tykdtPLrVDRzMjq9%252BQ%3D%3D",
+    "description": "Tactile Switches 6x6x7.3mm 100gf",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/omron_B3FS.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3FS-1050",
+    "manufacturerPartNumber": "B3FS-1050"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "180 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-11-20T00:00:00",
+       "quantity": 1500
+      }
+     ],
+     "suggested_replacement": "653-B3FS-1002P",
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1324,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.602
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.505
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.483
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.448
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.414
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.388
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 0.368
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4500,
+      "unitPrice": 0.351
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/omron/images/b3fst.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Bulk",
+     "Standard Pack Qty": "1500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Aratas/B3FS-1002?qs=0w99tykdtPLWqfXfKLPpPw%3D%3D",
+    "description": "Tactile Switches 6x6x3.1mm Flat 150OF PhosphorBronze AgPlt",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/catalog/specsheets/omron_B3FS.pdf",
+    "manufacturer": "Aratas",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "653-B3FS-1002",
+    "manufacturerPartNumber": "B3FS-1002"
+   },
+   {
+    "extra": {
+     "rohs": null,
+     "reeling": false,
+     "category": "Tactile Switches",
+     "lead_time": "159 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [
+      {
+       "date": "2026-11-05T00:00:00",
+       "quantity": 4000
+      }
+     ],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 1603,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.507
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.486
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.468
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.405
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.369
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.342
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.335
+     },
+     {
+      "currency": "EUR",
+      "quantity": 2000,
+      "unitPrice": 0.293
+     },
+     {
+      "currency": "EUR",
+      "quantity": 4000,
+      "unitPrice": 0.279
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/schurter/images/ITP_1301.9315.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Standard Pack Qty": "2000"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/Schurter/1301.9315?qs=tGaZrb6HVSaeSttQbZxh%2FA%3D%3D",
+    "description": "Tactile Switches SHORT TRAVEL SWITCH 6X6, 5.0MM",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/386/1/typ_6x6_mm_tact_switches.pdf",
+    "manufacturer": "Schurter",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "693-1301.9315",
+    "manufacturerPartNumber": "1301.9315"
+   },
+   {
+    "extra": {
+     "rohs": "RoHS Compliant",
+     "reeling": true,
+     "category": "Tactile Switches",
+     "lead_time": "77 Days",
+     "factory_stock": 0,
+     "lifecycle_status": null,
+     "availability_on_order": [],
+     "suggested_replacement": null,
+     "sales_maximum_order_qty": null
+    },
+    "stock": 4643,
+    "prices": [
+     {
+      "currency": "EUR",
+      "quantity": 1,
+      "unitPrice": 0.731
+     },
+     {
+      "currency": "EUR",
+      "quantity": 10,
+      "unitPrice": 0.634
+     },
+     {
+      "currency": "EUR",
+      "quantity": 25,
+      "unitPrice": 0.59
+     },
+     {
+      "currency": "EUR",
+      "quantity": 100,
+      "unitPrice": 0.526
+     },
+     {
+      "currency": "EUR",
+      "quantity": 250,
+      "unitPrice": 0.488
+     },
+     {
+      "currency": "EUR",
+      "quantity": 500,
+      "unitPrice": 0.461
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1000,
+      "unitPrice": 0.431
+     },
+     {
+      "currency": "EUR",
+      "quantity": 1500,
+      "unitPrice": 0.409
+     },
+     {
+      "currency": "EUR",
+      "quantity": 3000,
+      "unitPrice": 0.397
+     }
+    ],
+    "category": "Tactile Switches",
+    "photoUrl": "https://www.mouser.com/images/e-switch/images/TL3303F160QG_SPL.jpg",
+    "fetchedAt": "2026-10-07T00:00:00Z",
+    "attributes": {
+     "Packaging": "Reel, Cut Tape, MouseReel",
+     "Standard Pack Qty": "1500"
+    },
+    "productUrl": "https://ro.mouser.com/en/ProductDetail/E-Switch/TL3303F160QG?qs=6C6BR4UgC3PoJykoBtIYtA%3D%3D",
+    "description": "Tactile Switches 6x6mm 160G",
+    "distributor": "MOUSER",
+    "packageName": null,
+    "datasheetUrl": "https://www.mouser.com/datasheet/3/315/1/TL3303F160QG.pdf",
+    "manufacturer": "E-Switch",
+    "orderMultiple": 1,
+    "minimumOrderQuantity": 1,
+    "distributorPartNumber": "612-TL3303F160QG",
+    "manufacturerPartNumber": "TL3303F160QG"
+   }
+  ]
+ }
+}

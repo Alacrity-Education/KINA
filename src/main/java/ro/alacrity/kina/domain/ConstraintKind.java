@@ -525,7 +525,10 @@ public enum ConstraintKind {
         @Override
         public String describes(ParsedQuery q) {
             Object t = wanted(q);
-            return t == null || ParsedQuery.Switch.PCB.equals(t) ? null : "panel-mount " + t;
+            if (t == null || ParsedQuery.Switch.PCB.equals(t)) {
+                return null;
+            }
+            return ParsedQuery.Switch.PANEL.equals(t) ? "panel-mount" : "panel-mount " + t;
         }
     },
 
@@ -1002,7 +1005,7 @@ public enum ConstraintKind {
 
     /**
      * The voltage rating of a switch, a minimum; AC and DC when the request states one (a 12 VDC rating never satisfies
-     * 250 VAC): the part's rating of that supply, else its plain voltage.
+     * 250 VAC): the part's rating of that supply, else its largest AC or DC rating, else its plain voltage.
      */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 16, report = 7)
@@ -1019,7 +1022,11 @@ public enum ConstraintKind {
             if (ParsedQuery.DC.equals(supply)) {
                 return dc != null ? dc : ac != null ? ac : plain;
             }
-            return plain != null ? plain : ac != null ? ac : dc;
+            if (ac != null || dc != null) {
+                // the largest contact rating (TME "Voltage" can be the dielectric strength, 1.5kV)
+                return ac == null ? dc : dc == null || ac.value() >= dc.value() ? ac : dc;
+            }
+            return plain;
         }
 
         @Override

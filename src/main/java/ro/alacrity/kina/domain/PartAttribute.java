@@ -31,6 +31,7 @@ import ro.alacrity.kina.domain.extract.PackageCode;
 import ro.alacrity.kina.domain.extract.PackageField;
 import ro.alacrity.kina.domain.extract.PackageFieldDimensions;
 import ro.alacrity.kina.domain.extract.PackageFieldMounting;
+import ro.alacrity.kina.domain.extract.PackageFieldPrefix;
 import ro.alacrity.kina.domain.extract.PackageFieldWord;
 import ro.alacrity.kina.domain.extract.PartNumberPackage;
 import ro.alacrity.kina.domain.extract.PitchValue;
@@ -371,11 +372,15 @@ public enum PartAttribute {
     @Source(precedence = 6, logic = PartNumberPackage.class, traits = PASSIVE)
     PACKAGE(null, "Package", Vocabulary.LED_PACKAGE),
 
-    /** SMD or THT; the extractor falls back to the category and the package's prefix. */
+    /**
+     * SMD or THT; for an LED or a switch also the JLCPCB package field written with a pin count ({@code SMD-4P,6x6mm});
+     * the extractor falls back to the category and the package's prefix.
+     */
     @Source(names = {"mounting", "mounting style", "mounting type", "mounting method", "termination style", "montage",
             "electrical mounting"}, logic = MountingWord.class)
     @Source(precedence = 1, logic = Described.class)
     @Source(precedence = 2, logic = PackageFieldMounting.class)
+    @Source(precedence = 3, families = {LED, SWITCH}, logic = PackageFieldPrefix.class)
     MOUNTING(null, "Mounting"),
 
     /**
@@ -489,14 +494,15 @@ public enum PartAttribute {
     SWITCH_TYPE(null, "SwitchType", Vocabulary.SWITCH_TYPE),
 
     /** The contact configuration ({@code SPDT}, {@code SPST-NO}, {@code 2P2T} is DPDT, {@code 1 Form C} SPDT). */
-    @Source(names = {"contact form", "contact configuration", "type of contacts", "switch configuration",
-            "configuration", "circuit", "contact arrangement"}, families = SWITCH, logic = VocabularyWord.class)
+    @Source(names = {"contacts configuration", "contact form", "contact configuration", "type of contacts",
+            "switch configuration", "configuration", "circuit", "contact arrangement"}, families = SWITCH,
+            logic = VocabularyWord.class)
     @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
     CONTACTS(null, "Contacts", Vocabulary.CONTACTS),
 
-    /** Momentary or latching, or the positions ({@code ON-OFF-ON}); TME {@code monostable}, {@code bistable}. */
-    @Source(names = {"switch function", "function", "switch type", "operation", "actuator type", "action",
-            "switching function"}, families = SWITCH, logic = VocabularyWord.class)
+    /** Momentary or latching, or the positions ({@code ON-OFF-ON}): TME {@code Switching method}, Mouser descriptions. */
+    @Source(names = {"switching method", "switch function", "function", "switch type", "operation", "actuator type",
+            "action", "switching function"}, families = SWITCH, logic = VocabularyWord.class)
     @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
     SWITCH_FUNCTION(null, "SwitchFunction", Vocabulary.SWITCH_FUNCTION),
 
@@ -523,11 +529,22 @@ public enum PartAttribute {
     @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
     HOLE_DIAMETER(null, "HoleDiameter", Vocabulary.HOLE_DIAMETER),
 
-    /** The switches of a DIP switch or the positions of a rotary switch ({@code 8 Position}, {@code 8 pos}). */
-    @Source(names = {"number of positions", "number of switches", "number of sections", "positions"},
-            families = SWITCH, logic = FirstInteger.class)
+    /**
+     * The positions of a switch (TME {@code Number of positions}: 2 for ON-ON, 3 for ON-OFF-ON; a rotary switch's
+     * positions), or of a DIP switch the number of its switches as the description states it (Mouser
+     * {@code 8 Position}, {@code 8POS}).
+     */
+    @Source(names = {"number of positions", "positions"}, families = SWITCH, logic = FirstInteger.class)
     @Source(precedence = 1, families = SWITCH, logic = DescribedWord.class)
     SWITCH_POSITIONS(null, "SwitchPositions", Vocabulary.SWITCH_POSITIONS),
+
+    /**
+     * The number of switches of a DIP switch (TME {@code Poles number}: 8, where its {@code Number of positions} is the
+     * 2 positions of each switch); read for DIP switches before {@link #SWITCH_POSITIONS}.
+     */
+    @Source(names = {"poles number", "number of switches", "number of sections"}, families = SWITCH,
+            logic = FirstInteger.class)
+    DIP_SWITCHES(null, null),
 
     /** {@code yes} for an illuminated switch, {@code no} for one that says it is not (Mouser {@code Non-Illuminated}). */
     @Source(names = {"illuminated", "illumination", "illumination type", "lighting", "backlight", "backlighting"},
