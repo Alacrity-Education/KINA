@@ -247,6 +247,27 @@ class FanRankingTest {
     }
 
     @Test
+    void aWireCountRequestAsksForItsSignals() {
+        Part fourWire = tmeFan("P4", "Fan: DC; 40x40x10mm; axial; 12VDC", "Supply voltage", "12V DC", "Leads",
+                "leads x4");
+        Part threeWire = tmeFan("T3", "Fan: DC; 40x40x10mm; axial; 12VDC", "Supply voltage", "12V DC", "Leads",
+                "leads x3");
+        Part twoWire = tmeFan("T2", "Fan: DC; 40x40x10mm; axial; 12VDC", "Supply voltage", "12V DC", "Leads",
+                "leads x2");
+        assertThat(assess("4-wire fan 12V", fourWire).mismatches()).isEmpty();
+        assertThat(assess("4-wire fan 12V", threeWire).mismatches()).containsExactly("feature: PWM missing");
+        assertThat(assess("4-wire fan 12V", twoWire).mismatches())
+                .containsExactly("feature: PWM missing", "feature: tacho missing");
+        assertThat(assess("3-wire fan 12V", threeWire).mismatches()).isEmpty();
+        assertThat(assess("3-wire fan 12V", fourWire).mismatches()).as("a 4-wire fan has a tacho too").isEmpty();
+        assertThat(assess("3-wire fan 12V", twoWire).mismatches()).containsExactly("feature: tacho missing");
+        // a stated feature wins over the wire count (distributor data, no safeguards)
+        Part threeWirePwm = tmeFan("X3", "Fan: DC; 40x40x10mm; axial; 12VDC; PWM", "Supply voltage", "12V DC",
+                "Leads", "leads x3");
+        assertThat(assess("40x40x10 fan 12V PWM", threeWirePwm).mismatches()).isEmpty();
+    }
+
+    @Test
     void aTachoRequestNamesItsWords() {
         Part fg = tmeFan("F1", "Fan: DC; 40x40x10mm; axial; 12VDC", "Supply voltage", "12V DC", "Signal output",
                 "F type");

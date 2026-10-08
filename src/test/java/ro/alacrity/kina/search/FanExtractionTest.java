@@ -46,6 +46,15 @@ class FanExtractionTest {
                     + "Voltage=24V;Speed=3400 rpm;Airflow=26.3 m³/h (15.5 CFM);Bearing=ball",
             // "Signal output: F type" is a tacho signal, "leads x3" a 3-wire fan
             "fan-5v-3000rpm | TME | MF40200V1-1000U-G99 | Voltage=5V;Features=tacho, auto restart, 3-wire",
+            // the wire count implies the signals: "leads x4" PWM and tacho, "leads x3" a tacho, "leads x2" none
+            "120mm-axial-fan-12v-pwm | TME | MFC0251V2-1Q02U-S99 | Features=PWM, tacho, auto restart, 4-wire",
+            "40x40x10-fan-12v | TME | HA40101V4-1000U-G99 | Features=tacho, auto restart, 3-wire",
+            "40x40x10-fan-12v | TME | 412F/2H-136 | Features=tacho, 3-wire",
+            "40x40x10-fan-12v | TME | 412F | Features=2-wire",
+            "radial-blower-24v | TME | D1G133DC1352 | Features=PWM, tacho, 4-wire, IP42",
+            // "Hall sensor" is a tacho; a "lock sensor" and a "temperature sensor" are not
+            "radial-blower-24v | TME | RV45-3/14S | Features=tacho",
+            "40x40x10-fan-12v | TME | ASFP40791 | Features=tacho, locked rotor, 3-wire",
             // Mouser: the category and the description only (0.25"H2O is inches of water)
             "40x40x10-fan-12v | MOUSER | MF40101VX-1000U-A99 | Voltage=12V;Airflow=16.8 m³/h (9.9 CFM);"
                     + "StaticPressure=62.3 Pa (6.35 mmH2O);FanType=axial;FanSupply=DC;FrameSize=40x40x10mm;"

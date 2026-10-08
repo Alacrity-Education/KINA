@@ -138,6 +138,15 @@ class FanVocabulary {
                     + "|3\\s?x\\s?(?:lead\\s)?(?:wires?|leads?))" + AFTER), "3-wire"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:4[- ]?(?:wires?|leads?|pins?)|leads?\\s?x\\s?4"
                     + "|4\\s?x\\s?(?:lead\\s)?(?:wires?|leads?))" + AFTER), "4-wire"));
+    /**
+     * What a wire count says about a fan's signals, on a request and on a part: two wires carry none, three a tacho,
+     * four PWM and a tacho. A signal a row leaves out is absent (a 3-wire fan has no PWM input); a feature the text
+     * states stays whatever its wire count (distributor data wins).
+     */
+    private static final Map<String, List<String>> WIRES = Map.of(
+            "2-wire", List.of(),
+            "3-wire", List.of(ParsedQuery.TACHO),
+            "4-wire", List.of(ParsedQuery.PWM, ParsedQuery.TACHO));
     private static final Pattern IP_RATING = Pattern.compile("(?i)" + BEFORE + "ip\\s?([0-6x][0-9])" + AFTER);
 
     // ---------------------------------------------------------------- frame size
@@ -307,14 +316,26 @@ class FanVocabulary {
         return null;
     }
 
-    /** The features a text names, in vocabulary order ({@code PWM}, {@code tacho}, ..., the IP rating last). */
+    /**
+     * The features a text names and those its wire count implies ({@link #WIRES}), in vocabulary order ({@code PWM},
+     * {@code tacho}, ..., the IP rating last).
+     */
     static List<String> features(String text) {
         List<String> out = new ArrayList<>();
         if (text == null) {
             return out;
         }
+        Set<String> named = new LinkedHashSet<>();
         for (Map.Entry<Pattern, String> f : FEATURES) {
-            if (f.getKey().matcher(text).find() && !out.contains(f.getValue())) {
+            if (f.getKey().matcher(text).find()) {
+                named.add(f.getValue());
+            }
+        }
+        for (String wires : List.copyOf(named)) {
+            named.addAll(WIRES.getOrDefault(wires, List.of()));
+        }
+        for (Map.Entry<Pattern, String> f : FEATURES) {
+            if (named.contains(f.getValue()) && !out.contains(f.getValue())) {
                 out.add(f.getValue());
             }
         }

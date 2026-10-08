@@ -37,7 +37,11 @@ class FanParserTest {
             "DC fan 60x60x25 dual ball bearing     | -      | DC | 60x60x25mm | ball  | -      | -",
             "cooling fan 80mm sleeve bearing       | -      | -  | 80mm       | sleeve| -      | -",
             "fan 120mm fluid dynamic bearing       | -      | -  | 120mm      | fluid dynamic | - | -",
-            "fan 140mm hydro bearing 4-wire        | -      | -  | 140mm      | fluid dynamic | 4-wire | -",
+            // a wire count implies the signals: 4 wires PWM and a tacho, 3 wires a tacho, 2 wires none
+            "fan 140mm hydro bearing 4-wire        | -      | -  | 140mm      | fluid dynamic | PWM,tacho,4-wire | -",
+            "4-wire fan 12V                        | -      | -  | -          | -     | PWM,tacho,4-wire | -",
+            "3-wire fan 12V                        | -      | -  | -          | -     | tacho,3-wire | -",
+            "2-wire fan 12V                        | -      | -  | -          | -     | 2-wire | -",
             "fan 120mm HDB                         | -      | -  | 120mm      | fluid dynamic | - | -",
             "fan 12V tacho auto restart IP55       | -      | -  | -          | -     | tacho,auto restart,IP55 | -",
             "fan 24V FG locked rotor 3 wire        | -      | -  | -          | -     | tacho,locked rotor,3-wire | -",
