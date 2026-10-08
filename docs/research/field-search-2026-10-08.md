@@ -9,9 +9,10 @@ JLCPCB SQLite data into Postgres, the index and storage cost on SQLite too, and 
 new file arrives, ideally as one atomic transaction.
 
 This is research only. No code was changed. The code read is KINA 0.14.0 (`a2f188f`). Facts marked **verified** were
-read in the code or measured today. Facts marked **inference** are estimates. Numbers in `{{...}}` come from three
-measurement runs made in parallel (Postgres on the 7.1 M-row JLCPCB data, the same on SQLite, and the coverage of the
-real attribute extractor); they are filled in section 12.
+read in the code or measured today. Facts marked **inference** are estimates. The measured numbers come from three
+runs made in parallel on the same host (Postgres on the 7.1 M-row JLCPCB data, the same on SQLite, and the coverage
+and speed of the real attribute extractor); section 12 summarises them and section 14 lists the input documents.
+The host was under memory pressure during all three runs: treat timings within a factor of 2 as equal.
 
 Live observations made for this report (read-only): the local compose stack's `cached_parts` and `cached_searches`
 (SQL counts below), and one LCSC-only `search_parts_batch` call with the three worked examples (no Mouser quota used).
@@ -60,8 +61,12 @@ typed field table of the in-stock rows inside the SQLite file, read through a sm
 
 The three biggest risks (section 7): (R1) the SQL filter drifts from the Java check and silently drops good parts;
 (R2) a field hit hides better parts the distributor has, because the cache only holds what earlier searches happened
-to fetch; (R3) Mouser parts carry almost no structured attributes (4.4 attributes per part on average, all packaging;
-**verified** locally), so most Mouser fields come from parsing descriptions and many are NULL.
+to fetch; (R3) thin Mouser and TME data: Mouser sends 4.4 attributes per part, all packaging, so its fields come from
+parsing descriptions. Measured, that recovers the primary value for 86 to 96 % of Mouser passives, but a package for
+only 27.9 % of Mouser parts (8 % of inductors, 2.5 % of connectors) and 44.5 % of TME parts. Those requests keep many
+unverified rows, and the "at least one confirmed" rule sends them to the distributor as today. Wrong families for whole
+LCSC categories and blank LCSC descriptions (14.7 % of in-stock rows) are carried into the index as they are into
+today's ranking.
 
 ## 2. How KINA searches today (what the change touches)
 
@@ -156,6 +161,26 @@ Rules for the table:
   declared `attrs`-only.
 - `search_text` is the description, category, MPN and manufacturer, normalised exactly like the query key (NFKC,
   lower case, `µ` to `u`, `Ω` to `ohm`), so `10µF` and `10uF` match.
+- **Values are stored rounded.** The extractor's SI values are plain doubles with floating-point noise: 470 nH is
+  `4.6999999999999995E-7` when read from `0.47uH` and `4.7000000000000005E-7` from `470nH` (measured). Spellings do
+  collapse correctly (`4.7K`, `4K7`, `4.7kOhms`, `4.7kΩ` give one value), but only up to the last bits. The writer
+  rounds every value to 9 significant digits before storing it (this merged 1 to 4 distinct values per family in the
+  sample and never merged two different quantities). The SQL never tests a value for equality; it uses the
+  `BETWEEN` ranges of 4.3, which absorb the noise either way. Alternative: integer base units (pico-farads,
+  milli-ohms, pico-henries) in `bigint` columns, exact and just as fast; rounding is simpler to read.
+- **The package column is normalised, never the raw text.** The extracted `Package` attribute is the distributor's raw
+  string: 5 869 distinct values in the sample, 635 for capacitors alone (`Plugin,P=2.54mm`, `D6.3 x 7.7mm`,
+  `SMD-4P,6x6mm`). The judge normalises it only at comparison time (`Recognizers.samePackage`, `packageKey`). The index
+  stores `package_key = Recognizers.packageKey(...)` of the imperial code, `package_readable` from
+  `Recognizers.isRecognisedPackage`, and the can size as numbers, so the hard package filter is one equality. The raw
+  string stays in the payload.
+- **Do not index `Current` for transistors and op-amps.** The extractor reads the first current of a JLCPCB description,
+  which for 2 801 transistors and 3 407 op-amps and comparators in the sample was a leakage or bias current in
+  microamps. A current request on those families keeps NULL-or-filter semantics and the judge decides.
+- **Family errors are carried into the index.** Some LCSC categories resolve to the wrong family (isolated power modules
+  to `capacitor`, common mode filters to `resistor`) or to none (DC-DC converters, varistors). The family predicate
+  therefore always keeps `family IS NULL`, and a wrong family only costs wasted candidates that the judge excludes.
+  Fixing the mapping belongs in `ComponentFamily` and `Recognizers`, as a separate change with labelled tests.
 
 ### 3.3 Keeping the index consistent with the running extractor
 
@@ -172,9 +197,12 @@ the same guarantee for the filter, or it must be harmless when it lags.
    (`WHERE (part_index.*) IS DISTINCT FROM (EXCLUDED.*)`), so a refetch of an unchanged part costs no index writes.
 3. **Re-index job.** A background task in the style of `PartCacheRepository.retype` and `MetricsBackfill`: after
    `ApplicationReadyEvent`, read `cached_parts` in key order, 500 rows at a time, for rows whose index row is missing or
-   has an older version, enrich, write. It never blocks startup. Cost: rows divided by the extractor rate
-   ({{EXTRACT_ROWS_PER_S}} rows/s measured), so 6 660 rows take about {{EXTRACT_CACHE_REINDEX_S}} s, and 310 000 rows
-   (TME filler) about {{EXTRACT_310K_REINDEX_S}} s.
+   has an older version, enrich, write. It never blocks startup. Cost: the real extractor ran at about 2 900 rows/s on
+   one thread and about 33 000 rows/s on 16 threads (measured, JDK 27, about 350 us per row; database reads and
+   writes excluded). So the 6 660 cached parts take about 2.3 s on one thread (0.2 s on 16), and 310 000 parts (TME
+   filler) about 107 s on one thread (9 s on 16), plus the writes. A single background thread is enough.
+   The extraction is deterministic (identical hashes across runs, JVMs and thread counts). One caveat for the version
+   test: `Part.derivedAttributes()` is a `Set.copyOf`, whose order changes per JVM, so it must be sorted before hashing.
 4. **While rows are stale.** The field query is only a candidate filter, so a stale row has two possible effects: a
    part included wrongly (the Java check excludes it; cost: one wasted candidate), or a part dropped wrongly (lost
    recall). The second is mitigated by making SQL looser than Java (slack on values, NULL kept everywhere) and, during
@@ -401,8 +429,11 @@ checks it.
 |---|---|---|---|---|
 | R1 | SQL predicates drift from the Java check (new comparator, tolerance change, vocabulary added) | Good parts silently dropped by SQL | High over time | SQL is a filter only, always looser (slack, NULL kept); an invariant test: for every eval candidate and every cached fixture part, `Check.returnable` true implies the SQL predicate true; predicates declared on the model next to `@Match`; extractor version and re-index |
 | R2 | Coverage bias: the cache holds what earlier phrases fetched; a hit hides better parts the distributor has | Worse or narrower answers, no visible signal | High for narrow earlier searches (`... Murata`) | Hit only with a fresh journal row for the step's own phrase (5.1); later, a journal of TME category enumerations (filler) as coverage |
-| R3 | Mouser gives almost no attributes (4.4 per part, packaging) | Most Mouser columns NULL; field query degenerates to family + text; unverified branch large | Certain | Description parsing coverage {{EXTRACT_MOUSER_VALUE_PCT}} % value, {{EXTRACT_MOUSER_PACKAGE_PCT}} % package (section 12); keep the distributor call path for Mouser when coverage of the stated kinds is low |
-| R4 | Normalisation and multi-valued data: a part states two standards, several voltages, metric and imperial codes | One column records one reading | Medium | Arrays for multi-valued fields (`voltages_v`); canonical package key from `Recognizers.packageKey`; the judge decides anyway |
+| R3 | Mouser gives almost no attributes (4.4 per part, packaging); the extractor reads its descriptions | Primary values are mostly there (capacitors 96.1 %, resistors 95.1 %, inductors 85.8 %; MLCC 96.5 % capacitance, 98.9 % voltage, 89.4 % package), but packages are thin (27.9 % overall; inductors 8.0 %, connectors 2.5 %, USB connectors 4.3 %), as are resistor voltage (11.8 %) and connector pitch (5.4 %). For those kinds the field query keeps many unverified rows | Certain for packages and connectors | Measured (section 12.3). Keep NULLs (they are unverified, not excluded) and require at least one confirmed part for "enough" (4.4), so a Mouser USB or inductor request with no package still goes to the distributor. Mouser package from the MPN would need the `PartNumberPackage` rule widened (not proposed) |
+| R3b | Wrong family for whole categories (LCSC isolated power modules 72 % `capacitor`, common mode filters 73 % `resistor`; DC-DC converters 99 % and varistors 93 % no family; TME 9.1 %, Mouser 2.7 %, random in-stock LCSC 12.1 % without family); noise values extracted for them (capacitor "tolerance" on 77 to 90 % of the power modules); `Current` read as a leakage or bias current in uA for 2 801 LCSC transistors and 3 407 op-amps and comparators | A wrong family puts parts into the wrong partial index: a capacitor request gets power modules (the judge excludes them on value or type, a wasted candidate), and a varistor request finds nothing by family | High for those categories | `family IS NULL` kept by every family predicate (3.2); fix the category mapping in `ComponentFamily`/`Recognizers` with labelled tests, independent of this project; never index `Current` for transistors and op-amps (ratings are filters with NULL kept anyway) |
+| R3c | Blank LCSC descriptions: 10.8 % of the stratified sample, 14.7 % of random in-stock rows; they cause 74 to 98 % of the missing primary values of passives (the value is only in the MPN) | Those parts have no value column and land in the unverified group, or are missed by text search | Certain | Unchanged from today (the FTS search misses them too); MPN decoding is out of scope (DESIGN 3.4: distributor data is taken as given) |
+| R4 | Normalisation and multi-valued data: a part states two standards, several voltages, metric and imperial codes; SI doubles with floating-point noise (470 nH stored two ways, measured); raw package strings (5 869 distinct) | One column records one reading; exact comparisons miss rows | Medium | Arrays for multi-valued fields (`voltages_v`); values rounded to 9 significant digits and compared by range only; normalised `package_key` from `Recognizers.packageKey`, never the raw string; the judge decides anyway |
+| R4b | Input-order dependence: the first matching distributor attribute wins (TME `1N4148W-YGO` reads 150 mA or 300 mA depending on the attribute order) | An index row can differ from a re-extraction of a re-ordered payload | Low (1 part of 6 660) | The stored JSON keeps the distributor's order, so a row is stable; the re-index reads the same payload |
 | R5 | Value tolerance and E-series neighbours (4.7k vs 4.75k, 10uF vs 10.5uF) | Wrong inclusion or exclusion at the edge | Low | SQL slack 1.5 %, Java 1 % decides |
 | R6 | Package equivalences (0805 = 2012 metric, SOT-23 = TO-236AB, can sizes) | Missed parts | Medium | Store the imperial key; never index raw strings; unreadable package stored as "not readable", never a conflict |
 | R7 | CJK and symbols in LCSC descriptions (`℃`, `Ω`, `±`, `弯插`) | Text search misses or matches noise | Medium for LCSC | Normalise like the query key; `simple` tsvector; CJK only used by the extractor as today; pg_trgm behaviour with the database locale is unverified (section 11) |
@@ -431,7 +462,7 @@ CREATE TABLE part_index (
   policy_family      TEXT,
   subtype            TEXT,
   polarity           TEXT,
-  package_key        TEXT,                      -- Recognizers.packageKey of the imperial package
+  package_key        TEXT,                      -- Recognizers.packageKey of the imperial package, never the raw string
   package_readable   BOOLEAN NOT NULL DEFAULT false,
   can_d_mm REAL, can_l_mm REAL,
   mounting           TEXT,                      -- SMD / THT; NULL unknown or hybrid
@@ -439,7 +470,7 @@ CREATE TABLE part_index (
   dielectric         TEXT,
   form_factor        TEXT,
   elements           SMALLINT,                  -- NULL single element; 0 array of unstated size
-  capacitance_f      DOUBLE PRECISION,
+  capacitance_f      DOUBLE PRECISION,          -- every value rounded to 9 significant digits by the writer
   resistance_ohm     DOUBLE PRECISION,
   inductance_h       DOUBLE PRECISION,
   impedance_ohm      DOUBLE PRECISION,
@@ -585,7 +616,7 @@ become comparisons on typed columns instead of LIKE scans.
 | Field query | no (text + value boundaries, extractor on 200 rows) | yes, btree on SQLite | yes | yes |
 | Text search | FTS5 trigram | FTS5 trigram (join by rowid) | pg_trgm GIN + tsvector GIN | FTS5 in SQLite, then join in Java |
 | Extra disk | 0 | 849 MB measured for all 7.1 M rows (330 MiB table + 503 MB for six indexes); about 85 to 100 MB for the in-stock rows only (**inference**: 10 % of the rows) | 3.78 GB in Postgres for all 7.1 M rows (heap 1.81 GB, PK 320 MB, trigram GIN 253 MB description + 271 MB MPN, tsvector GIN 73 MB, jsonb GIN 37 MB, btrees 841 MB); 2.28x the 1.66 GB CSV; plus 3.5 GB transient during each reload | Postgres typed table of in-stock rows only, about 0.4 GB (**inference**: 10 % of the rows) |
-| Refresh cost | download + validate (`count(*)` 0.8 s warm, 19.6 s cold) + rename (3 ms) | + extraction ({{EXTRACT_LCSC_FULL_S}} s with KINA's extractor; 132 s for all rows with the benchmark's Python regexes, of which 20 s inserts) + index build 11.0 s + ANALYZE 1.3 s (all rows), before the rename | + extraction ({{EXTRACT_LCSC_FULL_S}} s with KINA's extractor; 5.4 s with the benchmark's regexes) + COPY 17.5 to 27 s + PK 9 s + 12 indexes about 64 s + ANALYZE 0.3 s: 94 s measured end to end | + extraction + COPY of the typed rows |
+| Refresh cost | download + validate (`count(*)` 0.8 s warm, 19.6 s cold) + rename (3 ms) | + extraction (KINA's extractor: about 22 s for the 723 865 in-stock rows on 16 threads, 4.2 min on one; 132 s for all rows with the benchmark's Python regexes, of which 20 s inserts) + index build 11.0 s + ANALYZE 1.3 s (all rows), before the rename | + extraction (KINA's extractor: about 215 s for all 7.1 M rows, 22 s for in-stock rows, on 16 threads; 5.4 s with the benchmark's regexes) + COPY 17.5 to 27 s + PK 9 s + 12 indexes about 64 s + ANALYZE 0.3 s: 94 s measured end to end | + extraction + COPY of the typed rows |
 | Atomic swap | yes (file rename under the write lock) | yes, the same rename | yes, rename swap in one transaction (9.3) | two stores to swap together: not atomic without extra work |
 | Concurrency | one connection, serialised: 20.1 searches/s measured | a small pool with `immutable=1`: up to 88.2 searches/s measured (8 processes) | the Hikari pool (default 10) | both |
 | Typical query, example 1 | 23 ms warm, 354 ms cold (FTS count + page) | 12.7 ms with the planner's index; 0.91 ms on the partial in-stock index | 3.8 ms with a `BETWEEN` value range (47.3 ms with `abs`) | two round trips |
@@ -653,8 +684,11 @@ build runs on a copy of the current file and is swapped the same way (risk R14).
 Measured cost (SQLite run, all 7.1 M rows with crude Python regexes): reading the FTS table and extracting took
 112.6 s, inserting 19.8 s, the six indexes 11.0 s and `ANALYZE` 1.3 s; the file grew by 849 MB. The read is a full scan
 whatever is extracted (`Stock` is an unindexed FTS column), but KINA only needs the in-stock rows, so the extraction,
-inserts, indexes and disk shrink to about a tenth (**inference**). KINA's real extractor rate is
-{{EXTRACT_ROWS_PER_S}} rows/s, so its pass over the in-stock rows takes {{EXTRACT_LCSC_FULL_S}} s.
+inserts, indexes and disk shrink to about a tenth (**inference**). KINA's real extractor (mapping plus `enrich`) runs
+at about 33 000 rows/s on 16 threads and 2 900 rows/s on one, so its pass over the 723 865 in-stock rows takes about
+22 s on 16 threads or 4.2 minutes on one (measured rate, extrapolated; the SQLite scan and the writes are extra). It
+needs about 512 MB of heap with the rows resident, much less when streaming. This runs on the download thread every
+5 days, so even the single-thread figure is acceptable.
 
 A typed table of in-stock rows only also fixes a planner issue the run found. With all rows in the table, SQLite chose
 the `(family, package)` index for example 1 and read every 0805 capacitor (about 100 000 rows, 12.7 ms); forced onto
@@ -848,7 +882,49 @@ by KINA's extractor. The 14x extrapolations from the 510 k-row subset assume lin
 
 ### 12.3 Extractor coverage (JLCPCB, cached Mouser and TME)
 
-{{EXTRACT_COVERAGE_TABLE}}
+Source: `docs/research/data/extraction-coverage-2026-10-08.md` (full tables; runner in
+`scripts/research/extraction_coverage/`). The real `ParametricExtractor` of 0.14.0 (`LcscPartMapper.map` plus
+`enrich`) ran over 194 274 stratified LCSC rows, 2 000 random in-stock LCSC rows and all 6 660 cached Mouser and TME
+parts (from `Part.asStored()`, as the cache path reads them), JDK 27, host under memory pressure.
+
+LCSC, stratified sample, percent of parts with a typed value:
+
+| Group | Parts | Primary value | Voltage | Tolerance | Package | Mounting | Other |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Capacitors (family `capacitor`) | 23 906 | 93.7 | 93.7 | 87.8 | 99.6 | 85.7 | dielectric 19.4, technology 83.5 |
+| MLCC category | 5 296 | 91.5 | 91.3 | 78.1 | 99.7 | 100.0 | dielectric 87.6 |
+| Resistors (family `resistor`) | 18 724 | 94.0 | 54.0 | 75.5 | 99.4 | 85.0 | power 74.3 |
+| Chip resistor category | 5 263 | 93.2 | 81.2 | 93.0 | 100.0 | 100.0 | power 93.0 |
+| Inductors (family `inductor`) | 15 247 | 91.8 | n/a | 84.3 | 99.9 | 98.2 | rated current 90.4 |
+| Connectors (family `connector`) | 44 183 | n/a | 40.3 | n/a | 98.1 | 64.6 | type 90.9, positions 71.1, pitch 77.9, gender 43.2, orientation 46.6 |
+
+All distributors:
+
+| Distributor | Parts | Family unknown % | Typed attributes per part | With a package % | With a key electrical value % |
+|---|---:|---:|---:|---:|---:|
+| LCSC, stratified | 194 274 | 5.6 | 8.26 | 99.1 | 81.3 |
+| LCSC, random in-stock | 2 000 | 12.1 | 7.42 | 93.8 | 79.8 |
+| TME | 3 596 | 9.1 | 9.04 | 44.5 | 88.2 |
+| Mouser | 3 064 | 2.7 | 5.45 | 27.9 | 64.1 |
+
+Mouser and TME per family: primary value of capacitors 96.1 % (Mouser) and 100 % (TME), resistors 95.1 and 99.6,
+inductors 85.8 and 100. Mouser packages: capacitors 51.7 %, resistors 42.8 %, inductors 8.0 %, connectors 2.5 %;
+Mouser MLCC category 89.4 %. TME packages: connectors 0.8 %, inductors 36.8 %, resistors 37.2 %. Mouser resistor
+voltage 11.8 %, connector pitch 5.4 %, MOSFET voltage 58.2 %.
+
+Largest gaps: blank LCSC descriptions (10.8 % of the stratified sample, 14.7 % of random in-stock rows; 74 to 98 % of
+the missing primary values of passives); wrong or missing family for whole LCSC categories (isolated power modules,
+common mode filters, DC-DC converters, varistors); thin Mouser and TME packages, and `Current` read as a leakage or
+bias current for transistors and op-amps.
+
+Throughput (mapping plus `enrich`, rows in memory): 2 835 to 3 039 rows/s on one thread, about 20 000 on 8, about
+33 000 on 16 (11.5x). Extrapolated: 7 146 764 rows in about 215 s, the 723 865 in-stock rows in about 22 s, on 16
+threads. Excludes the SQLite read and the index writes. About 512 MB of heap with the sample resident.
+
+Index-design findings: SI values carry floating-point noise (round to 9 significant digits); `Package` is raw text with
+5 869 distinct values (index a normalised key); output is deterministic across runs, JVMs and thread counts, except
+that `Part.derivedAttributes()` iterates in a per-JVM order (sort before hashing) and one TME part depends on the
+distributor's attribute order.
 
 ## 13. Code locations relied on
 
@@ -878,3 +954,26 @@ by KINA's extractor. The 14x extrapolations from the 510 k-row subset assume lin
   TME 60 and 3 pages.
 - `docs/DESIGN.md` sections 2, 3.2, 3.4, 8, 9.3; `docs/research/cache-fill-2026-10-07.md` (Mouser attributes, quota,
   TME filler); `docs/research/ranking-evaluation-2026-10-05.md` (ranker latency).
+
+## 14. Input documents
+
+Measurement reports and scripts, copied into this branch for traceability (the raw data, CSV and database files were
+not copied):
+
+- `docs/research/data/pg-field-index-benchmark-2026-10-08.md`: the Postgres benchmark report (load, indexes, queries
+  with plans, write overhead, reload approaches A, B, B2 and C). Scripts in `scripts/research/field-search-bench/pg/`.
+- `docs/research/data/sqlite-field-index-benchmark-2026-10-08.md`: the SQLite benchmark report (FTS5 baseline,
+  concurrency, typed table, in-place and generation refreshes, trigram share). Scripts in
+  `scripts/research/field-search-bench/sqlite/`.
+- `docs/research/data/extraction-coverage-2026-10-08.md`: the extractor coverage, speed and determinism report.
+  Runner in `scripts/research/extraction_coverage/`.
+- `scripts/research/field-search-bench/README.md`: how the two benchmarks were run.
+
+Earlier documents relied on:
+
+- `docs/DESIGN.md` sections 2, 3.2, 3.4, 8, 9.3.
+- `docs/research/cache-fill-2026-10-07.md` (Mouser attributes and quota, the TME category filler).
+- `docs/research/ranking-evaluation-2026-10-05.md` (ranker and cross-encoder latency).
+- `docs/research/data/ranking-eval.jsonl` (the labelled set proposed for validation).
+- Live reads of the local compose stack (`cached_parts`, `cached_searches`) and one LCSC-only `search_parts_batch`
+  call on 2026-10-08.
