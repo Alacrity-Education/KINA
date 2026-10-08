@@ -603,7 +603,12 @@ with a zero budget (fallback ranking, `ranking_note` `"batch ranking budget of 6
   half-bridges with integrated driver under `GaN FETs`). Gate drivers and MOSFETs are different families, so the type
   check excludes gate drivers from a MOSFET request and the reverse (like crystals and oscillators). `fan`, `fans`,
   `blower`, `blowers` name the fan family (`axial fan`, `cooling fan`, `DC fan` included) at the lowest priority, so
-  `fan connector` stays a connector and `fan driver mosfet` a MOSFET
+  `fan connector` stays a connector and `fan driver mosfet` a MOSFET. `heater`, `heaters` and `heating`
+  (`FanVocabulary.HEATER_WORDS`) name the `heater` family one step above the fan words: a fan heater or a heating
+  element blows air but is no fan (TME category `Heating Elements`, descriptions `Heating element: blower; heating;
+  CIRRUS 40/1` and `fan heater`), and a description naming a heater wins over a fan category. Fans and heaters are
+  different families, so the type check excludes heaters from a fan request (counted under `type`), like crystals and
+  oscillators
 - value with SI prefix and unit, including RKM notation (`4k7`, `4u7`, `10R`, `2R2`):
   capacitance (`pF nF uF µF mF F`), resistance (`Ω ohm R`, `k`, `M`, `m`), inductance (`nH uH mH H`),
   voltage (`V`, `kV`, `mV`; KEMET's truncated `10Volt`, `10Vol`, `6.3Vo` at Mouser), current (`A`, `mA`, `uA`), power
@@ -785,9 +790,21 @@ it (TME `Mounting: screw` and flange words are ignored).
   `vapo` (Sunon's Vapo bearing). TME's `EBR` (Akasa) and `MagFix` (SEPA) are not mapped: the part's bearing stays
   unknown.
 - **Features** (`fan_features`, the part's `Features`): `PWM`; `tacho` (`tach`, `tachometer`, `FG`, `speed sensor`,
-  TME `Signal output: F type`); `locked rotor` (`lock sensor`, `rotor lock`, `alarm`, TME `R type`); `auto restart`
-  (TME `autorestart`); `2-wire`, `3-wire`, `4-wire` (`3 wire`, `4 pin`, TME `leads x3`, Mouser `4x Lead Wires`); the IP
-  rating (`IP55`).
+  `speed signal`, `sensor` such as TME `Hall sensor` but not a `lock sensor` or `temperature sensor`, TME `Signal
+  output: F type`); `locked rotor` (`lock sensor`, `rotor lock`, `alarm`, TME `R type`); `auto restart` (TME
+  `autorestart`); `2-wire`, `3-wire`, `4-wire` (`3 wire`, `4 pin`, TME `leads x3`, Mouser `4x Lead Wires`); the IP
+  rating (`IP55`). A wire count implies the signals (`FanVocabulary.WIRES`, a table), on a request and on a part alike:
+
+  | Wires | Implies | Absent |
+  |---|---|---|
+  | `2-wire` | nothing | PWM, tacho |
+  | `3-wire` | `tacho` | PWM |
+  | `4-wire` | `PWM`, `tacho` | nothing |
+
+  So `4-wire fan 12V` asks for PWM and tacho, and a TME fan with `Leads: leads x3` states a tacho. A feature the text
+  states stays whatever its wire count (distributor data wins: a `3-wire` part that says `PWM` keeps PWM).
+- **Not fans**: fan heaters and heating elements are the `heater` family (family words above), so a fan request
+  excludes them under `type`; they get no fan attributes.
 - **Units** (`@Unit` on `PartAttribute`, fan texts only, so `10pA` stays a current and `80dB` of an op amp no noise):
   speed in rpm (`3000rpm`, `3000 RPM`, `3k rpm`, `r/min`; shown `3000 rpm`); airflow in m³/h from `CFM` (×1.699011),
   `m³/h`, `m3/h`, `m³/min` (×60), `l/min` (×0.06), shown `68 m³/h (40 CFM)`; static pressure in Pa from `Pa`, `kPa`,
@@ -806,7 +823,8 @@ it (TME `Mounting: screw` and flange words are ignored).
 | airflow, static pressure | minimums | rating |
 | speed | within 15 %; outside it a mismatch (`speed: 5000 rpm instead of 3000 rpm`), never an exclusion | relaxable for fans (ladder order 7) |
 | bearing | equal; a different one is a mismatch | relaxable for fans (ladder order 8) |
-| features | share of the requested features the part states | score only (`FAN_FEATURES`, a preference) |
+| PWM, tacho | `FEATURE` kinds `FAN_PWM` and `FAN_TACHO` (0.05 each), `absence = PENALIZE`: a part that states it earns the weight; one that does not (a 3-wire fan for PWM, a fan stating no wires) loses it, lists `feature: PWM missing` in `mismatches` and has a lower `match` | soft: a mismatch, never an exclusion |
+| other features | share of the requested features the part states (auto restart, locked rotor, wire count, IP rating) | score only (`FAN_FEATURES`, a preference) |
 
 Form factor, package and technology do not apply to fans. `parsed` shows `fan_type`, `fan_supply`, `frame_size`,
 `bearing` and `fan_features`, the values as constraints (`speed`, `airflow`, `static_pressure`, `noise` beside
@@ -1292,8 +1310,8 @@ instead of 1206` (an inductor, crystal or oscillator), `polarity: P-channel inst
 8pF instead of 18pF`, `dielectric: X5R instead of X7R`, `technology: tantalum polymer instead of aluminium polymer`,
 `voltage: 16V below 25V`, `dcr: 40mohm above 20mohm`, `tolerance: 10% instead of 1%`, `mounting: THT instead of SMD`,
 `family: ...`, `elements: single instead of array` / `elements: array instead of single`, `form factor: chip instead of
-chassis`, and for non-USB connectors
-positions, gender, pitch and orientation. An attribute the part does not state is not a mismatch (it is unverified).
+chassis`, `feature: PWM missing` (a requested feature declared `absence = PENALIZE` that the part does not state),
+and for non-USB connectors positions, gender, pitch and orientation. An attribute the part does not state is not a mismatch (it is unverified).
 The distributor entry's `exact_matches` counts the returned parts with `match` 1.0, nothing unverified and not below
 spec (null when the query was not understood): every typed constraint of the request (family, value, tolerance,
 ratings, package, mounting, technology, dielectric, polarity, subtype, elements, form factor) met and verified.
@@ -1342,16 +1360,23 @@ them. Change a rule on the constant, not in the ranker.
 - `@Overshoot(ratio, perOctave, maxOctaves, families)` (repeatable, on an `AT_LEAST` rating) declares a score penalty
   for a rating far above the request ("Rating overshoot" above); resolved like `@Relax`: the family's own declaration,
   then the general one.
-- `@Match(mode, tolerance, weight, group, inGrade, scope, order, report)` declares the comparison. `MatchMode`:
-  `EQUAL`, `EQUAL_IGNORE_CASE`, `AT_LEAST` and `AT_MOST` (relative `tolerance`), `WITHIN` (relative `tolerance`),
-  `FEATURE` (a USB feature the request names: a part that has it earns the weight, one without it earns nothing),
+- `@Match(mode, tolerance, weight, group, inGrade, scope, order, report, absence)` declares the comparison.
+  `MatchMode`: `EQUAL`, `EQUAL_IGNORE_CASE`, `AT_LEAST` and `AT_MOST` (relative `tolerance`), `WITHIN` (relative
+  `tolerance`), `FEATURE` (a feature the request names: a part that has it earns the weight; what a part without it
+  means is the kind's `absence`, below),
   `COMPATIBLE` (a graded comparison such as the technology) and `CUSTOM` (the constant's own comparator: the type and
   family, the package, form factor, elements, connector and USB rules). A match earns `weight`, a miss loses it, an
   attribute the part does not state is unverified. The ratings form the group `rating`: its weight (0.10) is shared
   equally at run time between the ratings the request states. `inGrade = false` marks a score-only signal. `scope`
   limits a signal to part, connector or USB requests. `order` is the order of the score and of the `unverified` list,
   `report` the order of the `mismatches`; the enum order is the check order (the first conflict names the part's entry
-  in `excluded_by_constraints_detail`).
+  in `excluded_by_constraints_detail`). `absence` (`domain.Absence`, `FEATURE` kinds only) says what a requested
+  feature the part does not state means: `OK` (the default) costs nothing and is no mismatch (the USB features
+  `WATERPROOF`, `BOARD_LOCK`, `POWER_ONLY`: the part earns nothing, as before); `PENALIZE` is a mismatch
+  (`feature: <name> missing`) that loses the weight in the score and counts in the match grade (the feature is part of
+  what the part could have earned). Declared `PENALIZE`: a fan's `PWM` and `tacho` (`FAN_PWM`, `FAN_TACHO`). Neither
+  value excludes a part: a `FEATURE` kind is never hard (checked at startup), and the rule lives in the generic
+  `FEATURE` handling of `ConstraintKind` only.
 - Each constant declares how the wanted value is read from `ParsedQuery` and the actual value from `PartFeatures` (a
   domain interface that `ParametricExtractor.Features` implements), and its comparator when the mode is `CUSTOM` or
   `COMPATIBLE`. The comparators use the component vocabularies of the search package through `MatchContext` (package
@@ -1374,8 +1399,10 @@ them. Change a rule on the constant, not in the ranker.
 `mosfet` specialises `transistor`; `led` has a policy row of its own), its policy family and its traits: `PASSIVE` (resistors, capacitors, inductors,
 ferrite beads: chip package codes, form factor classes, dimensions, qualification, features), `ARRAYS` (resistors,
 capacitors, ferrite beads), `INDUCTIVE` (inductors, ferrite beads), `FREQUENCY_VALUED` (crystals, oscillators),
-`LARGEST_VOLTAGE` and `POLARISED` (transistors and MOSFETs: polarity and on-resistance). The words that name a family
-stay in `Recognizers`; `ComponentFamilyTest` checks that they name exactly the declared families.
+`LARGEST_VOLTAGE` and `POLARISED` (transistors and MOSFETs: polarity and on-resistance). `heater` (fan heaters and
+heating elements, policy family `default`) has no attributes: it only keeps those parts apart from fans. The words that
+name a family stay in `Recognizers` (the heater words are declared in `FanVocabulary.HEATER_WORDS` and registered
+there); `ComponentFamilyTest` checks that they name exactly the declared families.
 
 **Hard constraints** (declared on `ConstraintKind` with `@Relax`, read by `search.ConstraintPolicy`; user decision
 2026-10-07; they replace the former strict constraints). A hard constraint is never relaxed: when the request states it and the part's **known** value

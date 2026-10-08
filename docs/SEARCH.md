@@ -90,7 +90,7 @@ Examples, checked live on 2026-10-07:
 
 ### Fans
 
-`fan`, `fans`, `blower` or `blowers` make a fan request. In a fan request `axial` and `radial` name the fan type; in every other request they still mean leaded capacitor and diode bodies (THT). KINA reads the type (axial, tube-axial; radial, centrifugal, blower, squirrel cage), AC or DC, the frame size (`40x40x10`, `40x40x10mm`, `120mm`, `92x92x25`, or the shorthand code `4010`, `12025`), the supply voltage, the current, the speed, the airflow, the static pressure, the noise, the bearing and the features (PWM, tacho, locked rotor, auto restart, 3-wire, 4-wire, IP rating).
+`fan`, `fans`, `blower` or `blowers` make a fan request. In a fan request `axial` and `radial` name the fan type; in every other request they still mean leaded capacitor and diode bodies (THT). KINA reads the type (axial, tube-axial; radial, centrifugal, blower, squirrel cage), AC or DC, the frame size (`40x40x10`, `40x40x10mm`, `120mm`, `92x92x25`, or the shorthand code `4010`, `12025`), the supply voltage, the current, the speed, the airflow, the static pressure, the noise, the bearing and the features (PWM, tacho, locked rotor, auto restart, 3-wire, 4-wire, IP rating). A wire count implies the signals, in a request and in a part: a 2-wire fan has neither PWM nor tacho, a 3-wire fan has a tacho, a 4-wire fan PWM and a tacho. So `4-wire fan 12V` asks for PWM and tacho, and a TME fan with `Leads: leads x3` has a tacho. A feature the distributor states stays whatever its wire count. Fan heaters and heating elements (`heater`, `heating`; TME category `Heating Elements`) blow air but are no fans: a fan request leaves them out and counts them under `type`.
 
 | Attribute | Written as | Matched |
 |---|---|---|
@@ -103,7 +103,8 @@ Examples, checked live on 2026-10-07:
 | Static pressure | `50 Pa`, `2.5 mmH2O`, `2.5 mmAq`, `0.1 inH2O` | a minimum; shown as `24.5 Pa (2.5 mmH2O)` |
 | Noise | `25 dBA`, `25dB(A)` | a maximum |
 | Bearing | ball, dual ball, sleeve, fluid dynamic, hydro, HDB, rifle, Vapo | a preference: a different one is a mismatch, never an exclusion |
-| Features | PWM, tacho, FG, 4-wire, IP55, auto restart, locked rotor | score only |
+| PWM, tacho | `PWM`; `tacho`, `tach`, `tachometer`, `FG`, `speed signal`, `sensor`; `4-wire` (both), `3-wire` (tacho) | a requested one the part does not state is a mismatch (`feature: PWM missing`, a 3-wire fan or a fan that states no wires): it lowers `match` and the rank, never excludes |
+| Other features | 4-wire, IP55, auto restart, locked rotor | score only: a part without them is no mismatch |
 
 A part whose text says fan and names no radial word is axial (Mouser `DC Fans`, JLCPCB `Cooling fan`). Mouser sends no fan attributes: KINA reads its category and description (`DC Fans Axial Fan, 40x40x10mm, 12VDC, 9.9CFM, 0.25"H2O, Vapo`). TME has the richest data (`Kind of fan`, `Fan dimensions`, `Supply voltage`, `Fan efficiency`, `Static pressure`, `Rotational rate/speed`, `Kind of Bearing`). Most in-stock JLCPCB fans have no description, so their voltage and frame size are unverified.
 
