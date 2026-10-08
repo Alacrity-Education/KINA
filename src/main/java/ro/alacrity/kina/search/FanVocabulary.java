@@ -144,6 +144,18 @@ class FanVocabulary {
     /** A bare size: {@code 120mm}, {@code 40 mm}, {@code Ø50mm}. */
     private static final Pattern BARE_FRAME = Pattern.compile("(?i)(?<![\\p{L}\\d.x×*])[Øø]?\\s?(\\d{2,3})\\s?mm"
             + "(?![\\p{L}\\d.x×*])");
+    /**
+     * The shorthand frame code of the trade: four digits as a two-digit width and a two-digit depth ({@code 2510} is
+     * 25x25x10, {@code 9225} 92x92x25), five digits as a three-digit width and a two-digit depth ({@code 12025} is
+     * 120x120x25); {@code 4010mm} too. Not inside a part number ({@code SF4020SH24}, {@code AK-4010MS}), a decimal or a
+     * rated value ({@code 4020rpm}, {@code 2510 h}).
+     */
+    private static final Pattern FRAME_CODE = Pattern.compile("(?i)(?<![\\p{L}\\d/_-])(?<!\\d[.,])"
+            + "(\\d{2,3})(\\d{2})(?:\\s?mm)?(?![\\p{L}\\d/_-])(?![.,]\\d)"
+            + "(?!\\s?(?:rpm|cfm|m3h|pa|kpa|dba?|v|vdc|vac|w|a|ma|h|hrs?|hours?|pcs)(?![\\p{L}\\d]))");
+    /** The shallowest and deepest frame a shorthand code states, in millimetres. */
+    private static final double MIN_CODE_DEPTH_MM = 4;
+    private static final double MAX_CODE_DEPTH_MM = 60;
     /** The smallest and largest frame of a fan, in millimetres. */
     private static final double MIN_FRAME_MM = 15;
     private static final double MAX_FRAME_MM = 300;
@@ -153,7 +165,9 @@ class FanVocabulary {
     /**
      * The frame size a fan text states: three dimensions as width, length and depth; two equal ones as width and
      * length; two different ones as a square frame and its depth ({@code 50x15 mm}: 50x50x15); a bare {@code 120mm} as
-     * width and length. Null when none, or when the size is no fan's (below 15 mm or above 300 mm).
+     * width and length; a shorthand code ({@code 2510}, {@code 12025}) as width, length and depth (width 15 to 300 mm,
+     * depth 4 to 60 mm). Null when none, or when the size is no fan's (below 15 mm or above 300 mm). Callers read only
+     * texts of the fan family: {@code 2512} is a resistor's package elsewhere.
      */
     static ParsedQuery.Frame frame(String text) {
         if (text == null || text.isBlank()) {
@@ -176,6 +190,14 @@ class FanVocabulary {
                 return frame;
             }
         }
+        m = FRAME_CODE.matcher(text);
+        while (m.find()) {
+            double side = Double.parseDouble(m.group(1));
+            double depth = Double.parseDouble(m.group(2));
+            if (fanSized(side) && depth >= MIN_CODE_DEPTH_MM && depth <= MAX_CODE_DEPTH_MM) {
+                return new ParsedQuery.Frame(side, side, depth);
+            }
+        }
         m = BARE_FRAME.matcher(text);
         while (m.find()) {
             double side = Double.parseDouble(m.group(1));
@@ -192,8 +214,8 @@ class FanVocabulary {
 
     /** The spans whose tokens the vocabulary reads (never free-text keywords of a fan request). */
     private static final List<Pattern> CONSUMED = List.of(RADIAL_WORDS, AXIAL_WORDS, DC_WORDS, AC_WORDS,
-            Pattern.compile("(?i)" + BEFORE + "(?:cooling|brushless)" + AFTER), BEARING_WORD, FRAME, BARE_FRAME,
-            IP_RATING, union(BEARINGS), union(FEATURES));
+            Pattern.compile("(?i)" + BEFORE + "(?:cooling|brushless)" + AFTER), BEARING_WORD, FRAME, FRAME_CODE,
+            BARE_FRAME, IP_RATING, union(BEARINGS), union(FEATURES));
 
     /** One pattern matching any of {@code words} (each a {@code (?i)} pattern). */
     private static Pattern union(List<Map.Entry<Pattern, String>> words) {
@@ -228,7 +250,7 @@ class FanVocabulary {
         for (Pattern p : CONSUMED) {
             Matcher m = p.matcher(prepared);
             while (m.find()) {
-                if (p != FRAME && p != BARE_FRAME || frame(m.group()) != null) {
+                if (p != FRAME && p != FRAME_CODE && p != BARE_FRAME || frame(m.group()) != null) {
                     Recognizers.tokenize(m.group()).forEach(t -> consumed.add(Recognizers.normalizeKey(t)));
                 }
             }

@@ -115,6 +115,22 @@ class FanExtractionTest {
     }
 
     @Test
+    void theShorthandFrameCodeOfAFanDescriptionIsItsFrame() {
+        // the Mouser description shape "DC Fans <code> ..."; the code inside the part number is not read
+        Part blower = RankingFixtures.mouser("SF5015SH12", "Example", "Blowers & Centrifugal Fans 5015 Blower, 12VDC, "
+                + "0.15A, 4.2CFM, 5000RPM, Ball", "Blowers & Centrifugal Fans", null, attrs());
+        assertThat(extractor.extract(blower)).containsEntry("Family", "fan").containsEntry("FanType", "radial")
+                .containsEntry("FrameSize", "50x50x15mm").containsEntry("Speed", "5000 rpm");
+        Part axial = RankingFixtures.mouser("SF4020SH24", "Example", "DC Fans DC Fan, 24VDC, 9CFM, 6000RPM",
+                "DC Fans", null, attrs());
+        assertThat(extractor.extract(axial)).containsEntry("Family", "fan").doesNotContainKey("FrameSize");
+        // the same code in another family's text: a chip resistor's 2512 package stays a package
+        Part resistor = RankingFixtures.mouser("RC2512", "Example", "Thick Film Resistors - SMD 2512 1W 10k 1%",
+                "Thick Film Resistors - SMD", "2512", attrs());
+        assertThat(extractor.extract(resistor)).doesNotContainKeys("FrameSize", "FanType");
+    }
+
+    @Test
     void theRecordedNonFansHaveNoFanAttributes() {
         // the first LCSC phrase ("Cooling fan" 24V) relaxed to any part stating 24 V
         Part varistor = FanFixtures.part("radial-blower-24v", Distributor.LCSC, "0603-24V-0.2PF");

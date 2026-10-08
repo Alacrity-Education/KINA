@@ -90,12 +90,12 @@ Examples, checked live on 2026-10-07:
 
 ### Fans
 
-`fan`, `fans`, `blower` or `blowers` make a fan request. In a fan request `axial` and `radial` name the fan type; in every other request they still mean leaded capacitor and diode bodies (THT). KINA reads the type (axial, tube-axial; radial, centrifugal, blower, squirrel cage), AC or DC, the frame size (`40x40x10`, `40x40x10mm`, `120mm`, `92x92x25`), the supply voltage, the current, the speed, the airflow, the static pressure, the noise, the bearing and the features (PWM, tacho, locked rotor, auto restart, 3-wire, 4-wire, IP rating).
+`fan`, `fans`, `blower` or `blowers` make a fan request. In a fan request `axial` and `radial` name the fan type; in every other request they still mean leaded capacitor and diode bodies (THT). KINA reads the type (axial, tube-axial; radial, centrifugal, blower, squirrel cage), AC or DC, the frame size (`40x40x10`, `40x40x10mm`, `120mm`, `92x92x25`, or the shorthand code `4010`, `12025`), the supply voltage, the current, the speed, the airflow, the static pressure, the noise, the bearing and the features (PWM, tacho, locked rotor, auto restart, 3-wire, 4-wire, IP rating).
 
 | Attribute | Written as | Matched |
 |---|---|---|
 | Fan type | `axial`, `tube-axial`; `radial`, `centrifugal`, `blower`; `DC`, `AC` | hard: an axial request never returns a blower and the reverse; a part that states no type is kept and listed in `unverified` |
-| Frame size | `40x40x10`, `40x40x10mm`, `40 mm`, `120mm`, `92x92x25` | hard: width and length within 0.5 mm, the depth within 1 mm when the request states it; a bare `120mm` fixes width and length only |
+| Frame size | `40x40x10`, `40x40x10mm`, `40 mm`, `120mm`, `92x92x25`; the shorthand code `2510` (25x25x10), `5015`, `9225`, `12025` (120x120x25), `4010mm` | hard: width and length within 0.5 mm, the depth within 1 mm when the request states it; a bare `120mm` fixes width and length only |
 | Voltage | `12V`, `24V DC`, `5V`, `230V AC` | exact within 2 %: a 24 V fan is no 12 V fan |
 | Current | `0.2A`, `200mA` | a maximum: a fan drawing more is below spec |
 | Speed | `3000rpm`, `3000 RPM`, `3k rpm`, `2800 r/min` | within 15 %; outside it a mismatch, never an exclusion |

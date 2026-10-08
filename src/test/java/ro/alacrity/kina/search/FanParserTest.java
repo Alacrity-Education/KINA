@@ -41,7 +41,25 @@ class FanParserTest {
             "fan 12V tacho auto restart IP55       | -      | -  | -          | -     | tacho,auto restart,IP55 | -",
             "fan 24V FG locked rotor 3 wire        | -      | -  | -          | -     | tacho,locked rotor,3-wire | -",
             "AC fan 172x150x51 115V                | -      | AC | 172x150x51mm | -   | -      | -",
-            "fan 12VDC 40x40x20 quiet              | -      | DC | 40x40x20mm | -     | -      | quiet"})
+            "fan 12VDC 40x40x20 quiet              | -      | DC | 40x40x20mm | -     | -      | quiet",
+            // the shorthand frame code: two-digit width and depth, or three-digit width and two-digit depth
+            "2510 fan 5V                           | -      | -  | 25x25x10mm | -     | -      | -",
+            "3010 fan 5V                           | -      | -  | 30x30x10mm | -     | -      | -",
+            "4010 fan 12V                          | -      | -  | 40x40x10mm | -     | -      | -",
+            "4010mm fan 12V                        | -      | -  | 40x40x10mm | -     | -      | -",
+            "4020 fan 12V                          | -      | -  | 40x40x20mm | -     | -      | -",
+            "5010 fan 5V                           | -      | -  | 50x50x10mm | -     | -      | -",
+            "5015 blower 12V                       | radial | -  | 50x50x15mm | -     | -      | -",
+            "6015 fan 12V                          | -      | -  | 60x60x15mm | -     | -      | -",
+            "6025 fan 24V                          | -      | -  | 60x60x25mm | -     | -      | -",
+            "7015 blower 24V                       | radial | -  | 70x70x15mm | -     | -      | -",
+            "8015 fan 12V                          | -      | -  | 80x80x15mm | -     | -      | -",
+            "8025 fan 24V ball bearing             | -      | -  | 80x80x25mm | ball  | -      | -",
+            "9225 fan 12V                          | -      | -  | 92x92x25mm | -     | -      | -",
+            "12025 fan 12V PWM                     | -      | -  | 120x120x25mm | -   | PWM    | -",
+            "12038 fan 24V                         | -      | -  | 120x120x38mm | -   | -      | -",
+            "14025 fan 12V                         | -      | -  | 140x140x25mm | -   | -      | -",
+            "fan 4010 12V 6000rpm                  | -      | -  | 40x40x10mm | -     | -      | -"})
     void fanAttributesAreRead(String query, String type, String supply, String frame, String bearing,
                               String features, String keywords) {
         ParsedQuery q = parser.parse(query);
@@ -141,6 +159,53 @@ class FanParserTest {
         expected.put("noise", "30 dBA");
         assertThat(r.constraints()).containsExactlyEntriesOf(expected);
         assertThat(r.keywords()).isEmpty();
+    }
+
+    @Test
+    void theShorthandFrameCodeIsReadOnlyInFanRequests() {
+        // the same digits name a package, a capacitor's case or a connector's pitch in other families
+        ParsedQuery resistor = parser.parse("2512 resistor");
+        assertThat(resistor.family()).as("2512 resistor").isEqualTo("resistor");
+        assertThat(resistor.packageName()).as("2512 resistor").isEqualTo("2512");
+        assertThat(resistor.fan()).as("2512 resistor").isNull();
+        ParsedQuery capacitor = parser.parse("0805 10uF");
+        assertThat(capacitor.packageName()).as("0805 10uF").isEqualTo("0805");
+        assertThat(capacitor.fan()).as("0805 10uF").isNull();
+        ParsedQuery led = parser.parse("1206 LED");
+        assertThat(led.family()).as("1206 LED").isEqualTo("led");
+        assertThat(led.fan()).as("1206 LED").isNull();
+        ParsedQuery chip = parser.parse("2010 resistor 1W");
+        assertThat(chip.packageName()).as("2010 resistor 1W").isEqualTo("2010");
+        assertThat(chip.fan()).as("2010 resistor 1W").isNull();
+        ParsedQuery header = parser.parse("pin header 2.54mm 1x6");
+        assertThat(header.family()).as("pin header 2.54mm 1x6").isEqualTo("connector");
+        assertThat(header.fan()).as("pin header 2.54mm 1x6").isNull();
+    }
+
+    /** text | frame read by the vocabulary ("-" when none). */
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(delimiter = '|', nullValues = "-", value = {
+            "2510                    | 25x25x10mm",
+            "DC Fans 5015, 12VDC     | 50x50x15mm",
+            "12025 mm                | 120x120x25mm",
+            // a code inside a part number is no frame (part-number decoding is not done here)
+            "SF4020SH24              | -",
+            "AK-4010MS               | -",
+            "CFM-4010-13-10          | -",
+            // rated values, decimals and out-of-range codes
+            "4020rpm                 | -",
+            "4500 rpm                | -",
+            "40000h                  | -",
+            "2510.5                  | -",
+            "0805                    | -",
+            "2502                    | -",
+            "3070                    | -",
+            "31025                   | -",
+            // an explicit frame wins over a code
+            "4010 40x40x20mm         | 40x40x20mm"})
+    void theShorthandFrameCodeHasLimits(String text, String frame) {
+        ParsedQuery.Frame f = FanVocabulary.frame(FanVocabulary.normaliseUnits(Recognizers.prepare(text)));
+        assertThat(f == null ? null : f.display()).isEqualTo(frame);
     }
 
     @Test

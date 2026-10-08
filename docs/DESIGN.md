@@ -772,7 +772,13 @@ it (TME `Mounting: screw` and flange words are ignored).
   `25mm×25mm×10mm`, `50*50*20mm` (width, length, depth); two equal numbers are width and length, two different ones a
   square frame and its depth (Mouser `120x38mm` is 120x120x38mm, `Blowers 50x15 mm` 50x50x15mm); TME's round blower
   `Ø97x33mm` is 97x97x33mm; a bare `120mm` or `40 mm` (20 to 250 mm, fan requests only) states width and length only.
-  Sizes outside 15 to 300 mm are no frame. Width and length match within 0.5 mm (in either order), the depth within
+  The shorthand code of the trade is a square frame and its depth: four digits are a two-digit width and a two-digit
+  depth (`2510` is 25x25x10mm, `4010`, `5015`, `8025`, `9225`), five digits a three-digit width and a two-digit depth
+  (`12025` is 120x120x25mm, `12038`, `14025`); `4010mm` too. A code counts only with a width of 15 to 300 mm and a
+  depth of 4 to 60 mm, as a word of its own (not inside a part number such as `SF4020SH24` or `AK-4010MS`, not
+  before a unit such as `rpm` or `h`), and only in texts of the fan family: a fan request, or a part the family
+  resolution already calls a fan. `2512 resistor`, `0805 10uF`, `1206 LED` and the `2010` chip package keep their
+  meaning. An explicit `40x40x10` wins over a code. Sizes outside 15 to 300 mm are no frame. Width and length match within 0.5 mm (in either order), the depth within
   1 mm when both state one (a nominal 10 mm fan measures 10 to 10.6 mm; `40x40x20mm` is no `40x40x10mm`).
 - **Bearing** (`bearing`): `ball` (`dual ball`, `twin ball`, `2Ball`, `BB`), `sleeve` (TME `slide`), `fluid dynamic`
   (`FDB`, `hydro`, `hydraulic`, ADDA `Hypro`), `rifle`, `magnetic` (`maglev`), `vapo` (Sunon's Vapo bearing).
