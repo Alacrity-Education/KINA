@@ -104,9 +104,11 @@ class FanVocabulary {
     /** Bearing words, most specific first, and their canonical name. */
     private static final List<Map.Entry<Pattern, String>> BEARINGS = List.of(
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:(?:dual|double|two|twin|2)[- ]?balls?|twin[- ]bearings?)" + AFTER), "ball"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:fluid[- ]dynamic|fluid|fdb|hydro(?:dynamic|lic)?|hypro"
-                    + "|hydraulic)" + AFTER), "fluid dynamic"),
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:ball|bb)" + AFTER), "ball"),
+            // TME "Kind of Bearing: HDB" (Akasa's hydro dynamic bearing) and "FD" (fluid dynamic)
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:fluid[- ]dynamic|fluid|fdb|fd|hdb|hydro(?:dynamic|lic)?"
+                    + "|hypro|hydraulic)" + AFTER), "fluid dynamic"),
+            // TME "Kind of Bearing: rolling": a rolling-element bearing, in a fan a ball bearing
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:ball|bb|rolling)" + AFTER), "ball"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:sleeve|slide)" + AFTER), "sleeve"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "rifle" + AFTER), "rifle"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:magnetic|maglev|mag-lev)" + AFTER), "magnetic"),

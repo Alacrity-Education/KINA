@@ -780,8 +780,10 @@ it (TME `Mounting: screw` and flange words are ignored).
   resolution already calls a fan. `2512 resistor`, `0805 10uF`, `1206 LED` and the `2010` chip package keep their
   meaning. An explicit `40x40x10` wins over a code. Sizes outside 15 to 300 mm are no frame. Width and length match within 0.5 mm (in either order), the depth within
   1 mm when both state one (a nominal 10 mm fan measures 10 to 10.6 mm; `40x40x20mm` is no `40x40x10mm`).
-- **Bearing** (`bearing`): `ball` (`dual ball`, `twin ball`, `2Ball`, `BB`), `sleeve` (TME `slide`), `fluid dynamic`
-  (`FDB`, `hydro`, `hydraulic`, ADDA `Hypro`), `rifle`, `magnetic` (`maglev`), `vapo` (Sunon's Vapo bearing).
+- **Bearing** (`bearing`): `ball` (`dual ball`, `twin ball`, `2Ball`, `BB`, TME `rolling`), `sleeve` (TME `slide`),
+  `fluid dynamic` (`FDB`, `hydro`, `hydraulic`, ADDA `Hypro`, TME `HDB` and `FD`), `rifle`, `magnetic` (`maglev`),
+  `vapo` (Sunon's Vapo bearing). TME's `EBR` (Akasa) and `MagFix` (SEPA) are not mapped: the part's bearing stays
+  unknown.
 - **Features** (`fan_features`, the part's `Features`): `PWM`; `tacho` (`tach`, `tachometer`, `FG`, `speed sensor`,
   TME `Signal output: F type`); `locked rotor` (`lock sensor`, `rotor lock`, `alarm`, TME `R type`); `auto restart`
   (TME `autorestart`); `2-wire`, `3-wire`, `4-wire` (`3 wire`, `4 pin`, TME `leads x3`, Mouser `4x Lead Wires`); the IP

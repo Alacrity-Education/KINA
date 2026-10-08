@@ -38,6 +38,7 @@ class FanParserTest {
             "cooling fan 80mm sleeve bearing       | -      | -  | 80mm       | sleeve| -      | -",
             "fan 120mm fluid dynamic bearing       | -      | -  | 120mm      | fluid dynamic | - | -",
             "fan 140mm hydro bearing 4-wire        | -      | -  | 140mm      | fluid dynamic | 4-wire | -",
+            "fan 120mm HDB                         | -      | -  | 120mm      | fluid dynamic | - | -",
             "fan 12V tacho auto restart IP55       | -      | -  | -          | -     | tacho,auto restart,IP55 | -",
             "fan 24V FG locked rotor 3 wire        | -      | -  | -          | -     | tacho,locked rotor,3-wire | -",
             "AC fan 172x150x51 115V                | -      | AC | 172x150x51mm | -   | -      | -",

@@ -102,7 +102,7 @@ Examples, checked live on 2026-10-07:
 | Airflow | `40 CFM`, `1.2 m3/min`, `70 m³/h`, `600 l/min` | a minimum; shown as `68 m³/h (40 CFM)` |
 | Static pressure | `50 Pa`, `2.5 mmH2O`, `2.5 mmAq`, `0.1 inH2O` | a minimum; shown as `24.5 Pa (2.5 mmH2O)` |
 | Noise | `25 dBA`, `25dB(A)` | a maximum |
-| Bearing | ball, dual ball, sleeve, fluid dynamic, hydro, rifle, Vapo | a preference: a different one is a mismatch, never an exclusion |
+| Bearing | ball, dual ball, sleeve, fluid dynamic, hydro, HDB, rifle, Vapo | a preference: a different one is a mismatch, never an exclusion |
 | Features | PWM, tacho, FG, 4-wire, IP55, auto restart, locked rotor | score only |
 
 A part whose text says fan and names no radial word is axial (Mouser `DC Fans`, JLCPCB `Cooling fan`). Mouser sends no fan attributes: KINA reads its category and description (`DC Fans Axial Fan, 40x40x10mm, 12VDC, 9.9CFM, 0.25"H2O, Vapo`). TME has the richest data (`Kind of fan`, `Fan dimensions`, `Supply voltage`, `Fan efficiency`, `Static pressure`, `Rotational rate/speed`, `Kind of Bearing`). Most in-stock JLCPCB fans have no description, so their voltage and frame size are unverified.
