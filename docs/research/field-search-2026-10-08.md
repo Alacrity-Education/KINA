@@ -24,7 +24,9 @@ in section 12), go later for a typed field table for LCSC kept inside the SQLite
 1. The field index is cheap at today's scale and the idea is sound. The local cache holds 6 660 parts (3 064 Mouser,
    3 596 TME), 25 MB in total, with 1.6 KB of JSON per part (**verified**). Any field query over this is a few
    milliseconds even without an index. Cost only becomes a question with the TME category filler of the earlier study
-   (about 310 000 parts) or with LCSC (7.1 M rows).
+   (about 310 000 parts) or with LCSC (7.1 M rows). Measured on 7.1 M rows, a field query takes 3.8 ms when the value
+   test is written as a range (`BETWEEN`) and 47 ms when written as `abs(value - x) <= y`, which no index can serve:
+   the query builder must only emit ranges and plain comparisons.
 2. The hard part is not speed. It is keeping the SQL filter consistent with the Java judge
    (`ConstraintPolicy.check`, `PageCollector.Check`). The design that stays stable is: **SQL is a recall filter, Java
    is the judge.** SQL must always return a superset of what the Java check would keep. It may be looser, never
@@ -46,8 +48,10 @@ in section 12), go later for a typed field table for LCSC kept inside the SQLite
 6. LCSC: the JLCPCB data is replaced as a whole every 5 days and is never written by KINA. SQLite with an atomic file
    rename is already the right refresh model. A typed field table of the in-stock rows can be built **inside the new
    file before the rename**, so the refresh stays atomic for free. Moving 7.1 M rows into Postgres is possible (load
-   into a new table, `ANALYZE`, then rename-swap in one short transaction), but it adds {{PG_TOTAL_GB}} GB to the
-   Postgres volume, WAL and backups every 5 days, for a gain that section 9 weighs with the measured numbers.
+   into a new table, `ANALYZE`, then rename-swap in one short transaction; measured: 94 s for the whole reload, a
+   30 ms swap, no reader interrupted, field queries 4 to 80 ms). But it adds 3.78 GB to the Postgres volume and its
+   backups, plus 3.5 GB of transient disk during each 5-day reload, for a gain that section 9 weighs once the SQLite
+   numbers are in.
 7. Effort: about 4 to 6 weeks of one engineer for Mouser and TME (phases 0 to 3), plus 1 to 2 weeks for the LCSC
    typed table (phase 4). Every phase sits behind a flag and keeps today's path as the fallback.
 
@@ -202,18 +206,27 @@ today.
 ### 4.3 The "unknown attribute" rule without losing the index
 
 Today a part that does not state a requested rating or attribute still meets the request (unverified). In SQL that is
-`(col IS NULL OR col >= x)`. Postgres can serve that with a BitmapOr of two btree scans (btree indexes `IS NULL`), but
-with several such predicates the planner's estimates multiply badly and it often falls back to a sequential scan
-({{PG_ISNULL_PLAN}}). Two better forms:
+`(col IS NULL OR col >= x)`. Measured on 7.1 M rows (section 12.1): the planner never uses such a predicate as an
+index condition; it applies it as a filter to the rows the other, indexed predicates found, and that costs nothing
+extra (Q1 47.3 ms, Q1 with two more `IS NULL OR` ratings 49.0 ms). So the rule is cheap **as long as at least one
+predicate is sargable**: the family plus a value range, or the family plus a package.
+
+**The value filter must be a range.** The same query took 47.3 ms with `abs(value_num - 10e-6) <= 10e-6 * 0.01` (not
+sargable: Postgres used the `(family, package)` index and filtered 88 434 heap rows) and 3.8 ms with `value_num
+BETWEEN 9.9e-6 AND 10.1e-6` (it used the partial in-stock `(family, value_num)` index), 12x faster for the same 5
+rows. The builder must emit every value, tolerance and rating comparison as a bare column against constants
+(`BETWEEN`, `>=`, `<=`, `=`), never as an expression over the column; a test should assert this (for example by
+checking that the plans of the eval queries use an index condition on a value column).
+
+Two ways to keep the confirmed parts first:
 
 1. **Two branches.** `confirmed` (every stated column `IS NOT NULL` and in range) `UNION ALL` `unverified` (at least one
-   stated column NULL, the rest in range), each with its own `LIMIT`. The confirmed branch is selective and uses the
-   multi-column indexes; the unverified branch is capped. It also gives the "at least one confirmed" count that paging
-   needs (`PageCollector`, line 130) without a second query.
-2. **Coalesce sentinels** for minimum ratings: index `COALESCE(voltage_v, 'Infinity')` and query `>= x`. Simple, but
-   it hides NULL from the ordering. Use only for ratings, never for values.
+   stated column NULL, the rest in range), each with its own `LIMIT`. It also gives the "at least one confirmed" count
+   that paging needs (`PageCollector`, line 130) without a second query.
+2. **One query ordered by a confirmed flag** (the examples in 4.5). Simpler; with the measured filter cost it is just
+   as fast while a sargable predicate bounds the rows.
 
-Recommended: form 1. The candidate list is ordered confirmed first, then by stock (descending), then by part number,
+Recommended: form 2 first, form 1 only if a family proves to have a large unverified share (Mouser, risk R3). The candidate list is ordered confirmed first, then by stock (descending), then by part number,
 and capped at `kina.search.field-index.max-candidates` (proposal 200; the deterministic ranker scores 40 candidates
 in 1.8 ms, so 200 cost about 10 ms; the cross-encoder still takes the top 40).
 
@@ -253,7 +266,9 @@ LIMIT 200;
 -- step 1 (dielectric relaxed): the same without the dielectric line; phrase "MLCC 10uF 0805"
 ```
 
-Index used: `(family, capacitance_f)` partial on `capacitance_f IS NOT NULL`, or `(package_key, capacitance_f)`.
+Index used: `(family, capacitance_f)` partial on `capacitance_f IS NOT NULL`, or `(package_key, capacitance_f)`. The
+Postgres run measured this query on 7.1 M LCSC rows: 3.8 ms with the `BETWEEN` range shown here, 47.3 ms when the
+value test was written as `abs(...) <= ...` (section 4.3).
 Live LCSC found 5 parts for this request (all 25 V X7R 0805, `total_results 5`); the field query over LCSC would also
 return the 50 V and 100 V parts if the text search missed any (it did not here, `kina_at_least` already checks `>=`).
 
@@ -388,7 +403,7 @@ checks it.
 | R5 | Value tolerance and E-series neighbours (4.7k vs 4.75k, 10uF vs 10.5uF) | Wrong inclusion or exclusion at the edge | Low | SQL slack 1.5 %, Java 1 % decides |
 | R6 | Package equivalences (0805 = 2012 metric, SOT-23 = TO-236AB, can sizes) | Missed parts | Medium | Store the imperial key; never index raw strings; unreadable package stored as "not readable", never a conflict |
 | R7 | CJK and symbols in LCSC descriptions (`℃`, `Ω`, `±`, `弯插`) | Text search misses or matches noise | Medium for LCSC | Normalise like the query key; `simple` tsvector; CJK only used by the extractor as today; pg_trgm behaviour with the database locale is unverified (section 11) |
-| R8 | `IS NULL OR` predicates and planner estimates | Slow plans at scale | Low now, medium at 300 k+ rows | Two-branch query (4.3); partial indexes `WHERE col IS NOT NULL`; `ANALYZE` after bulk loads |
+| R8 | Non-sargable predicates (`abs(col - x) <= y`, functions over columns); `IS NULL OR` | 12x slower plans at scale (47 ms vs 3.8 ms measured) | Medium (an easy mistake) | Emit ranges only (4.3) and test the plans; `IS NULL OR` measured free as a filter; `ANALYZE` after bulk loads |
 | R9 | Concurrency: two requests upsert the same parts; the re-index job writes at the same time | Deadlocks, lost updates | Low | Sort batches by key; one statement per batch; re-index writes only rows with an older version (`WHERE extractor_version < :v`) |
 | R10 | Semantic change of `cache`, `fetched`, `total_results` | LLM misreads counts | Medium | Document in DESIGN 3.2 and the tool descriptions; add `fetched_live` |
 | R11 | Mouser quota: the ladder now runs on short results | More calls per request | Medium | Per-request call cap; journal; shadow-mode counts before enabling |
@@ -468,49 +483,79 @@ CREATE INDEX part_index_version ON part_index (extractor_version);
 ```
 
 Ratings (`voltage_v`, `current_a`, `power_w`...) get no index of their own: they are never selective alone and are
-always combined with a value or package. `pg_trgm` needs `CREATE EXTENSION pg_trgm` (in `postgres:17-alpine`,
-**inference**; to be confirmed by the Postgres run).
+always combined with a value or package. `pg_trgm` is available in `postgres:17-alpine` (**verified** by the
+Postgres run: `CREATE EXTENSION pg_trgm` on 17.11).
 
-### 8.2 Expected selectivity
+Two lessons from the measurements shape the DDL:
 
-With the cache at 6 660 rows, every index is optional: a sequential scan of the whole table is about
-{{PG_SEQSCAN_7K_MS}} ms. Indexes matter for the TME filler (310 000 parts) and for LCSC in Postgres. On the 7.1 M-row
-JLCPCB data the measured plans were:
+- **Never put `stock` or `in_stock` into an index or an index predicate.** The benchmark's partial index
+  `WHERE stock_int > 0` made every stock update a non-HOT update (`n_tup_hot_upd` 0 with all indexes): each update
+  then writes into every index. In the sketch above neither column is indexed, so `UPDATE_STOCK` and `markSoldOut`
+  stay HOT. (For LCSC, where stock only changes at a reload, a partial in-stock index is fine and was the fastest plan.)
+- **Stored tsvector column or expression index.** On 7.1 M rows the stored generated column cost 524 MB of heap and
+  made the GIN build 2.7x faster (5.5 s vs 14.6 s); the expression index `to_tsvector('simple', description)` costs no
+  heap; query speed is equal. For the cache (thousands of rows) either is fine; for LCSC in Postgres use the
+  expression index.
 
-| Query | Rows matched | Plan | p50 / p95 ms |
+### 8.2 Measured selectivity and latency
+
+With the cache at 6 660 rows, every index is optional: a sequential scan of the whole table is a few milliseconds
+(**inference**: 25 MB, fully cached; not measured). Indexes matter for the TME filler (310 000 parts) and for LCSC in
+Postgres. On the 7.1 M-row JLCPCB data (Postgres 17.11, warm, host under memory pressure; timings within 2x are equal)
+the measured plans were (section 12.1 has every query):
+
+| Query | Rows returned | Plan | warm median / first ms |
 |---|---|---|---|
-| example 1 (10uF X7R 0805 >= 25V) | {{PG_Q1_ROWS}} | {{PG_Q1_PLAN}} | {{PG_Q1_MS}} |
-| example 2 (4.7k 1% 0603 thin film) | {{PG_Q2_ROWS}} | {{PG_Q2_PLAN}} | {{PG_Q2_MS}} |
-| example 3 (USB-C 16P SMD 2.0) | {{PG_Q3_ROWS}} | {{PG_Q3_PLAN}} | {{PG_Q3_MS}} |
-| keyword only (`ESP32-WROOM-32 antenna`, tsquery) | {{PG_QK_ROWS}} | {{PG_QK_PLAN}} | {{PG_QK_MS}} |
-| short token by trigram (`XH`, MPN fragment) | {{PG_QT_ROWS}} | {{PG_QT_PLAN}} | {{PG_QT_MS}} |
-| same as example 1 with `IS NULL OR` on every column | {{PG_QN_ROWS}} | {{PG_ISNULL_PLAN}} | {{PG_QN_MS}} |
+| example 1, value as `BETWEEN` range (10uF X7R 0805, voltage `IS NULL OR >= 25`, in stock, LIMIT 40) | 5 | partial in-stock `(family, value_num)` btree | 3.8 / 5.8 |
+| example 1, value as `abs(value - x) <= y` | 5 | `(family, package)` bitmap, 88 434 heap rows filtered | 47.3 / 64.3 |
+| example 2 (resistor 4.7k 1% 0603, `abs` form; thin film not in this query) | 40 | `(family, package)` | 64.0 / 107.9 |
+| example 3 (USB-C) | not measured: the benchmark schema had no connector or USB columns | | |
+| full text `thin film` + resistor + 5.36k | 15 | tsvector GIN BitmapAnd value btree | 34.6 / 35.0 |
+| full text `thin film` only, count (266 245 matches) | 1 | tsvector GIN | 79.8 / 77.9 |
+| `description ILIKE '%X7R%'`, in stock, LIMIT 40 | 40 | trigram GIN + value btree | 37.3 / 41.4 |
+| MPN fragment `mpn ILIKE '%ERA6AEB%'`, LIMIT 40 | 40 | trigram GIN on MPN | 0.50 / 0.52 |
+| jsonb `@> {"Dielectric":"X7R"}` + value | 40 | jsonb GIN + value btree | 35.1 / 34.7 |
+| example 1 (`abs` form) plus two more `IS NULL OR` ratings | 5 | same as example 1 `abs` form | 49.0 / 47.8 |
+| `count(*)` of example 1 (`abs` form), the honest total | 1 | `(family, package)` | 41.5 / 40.9 |
+
+No query used a sequential scan; all are under 130 ms warm. The `abs` form of examples 1 and 2 is what a naive
+translation of `WITHIN` would produce: written as ranges, both should drop to the few-millisecond range of the
+`BETWEEN` row (**inference** for example 2, measured for example 1). The trigram MPN lookup at 0.5 ms makes part-number
+fragments cheap. Note: the benchmark's extraction was a set of regexes over the LCSC description, not KINA's
+extractor, so the NULL rates (74 % of rows without a value) and the selectivity differ from what KINA would store.
 
 ### 8.3 Write amplification and maintenance
 
-| Item | Value |
-|---|---|
-| upsert of one part, `cached_parts` only (today) | {{PG_UPSERT_US_BASE}} us |
-| upsert of one part plus its `part_index` row with the 12 indexes above | {{PG_UPSERT_US_IDX}} us |
-| same, row unchanged (skipped by `IS DISTINCT FROM`) | {{PG_UPSERT_US_SKIP}} us |
-| stock refresh of one part (`UPDATE_STOCK`; `part_index.stock` HOT update) | {{PG_STOCK_US}} us |
-| index size per 1 000 parts (all indexes) | {{PG_IDX_KB_PER_1K}} kB |
+Measured with batches of 50 rows (one multi-row `INSERT ... ON CONFLICT DO UPDATE` per transaction, which is the shape
+of `upsertAll` for one Mouser page), 200 batches, on the 7.1 M-row table:
 
-A search writes at most 3 pages of parts (TME, 180 parts; Mouser 50), so even at a few milliseconds per part the write
-cost per search stays in the tens of milliseconds and runs after the answer is assembled (it could also move to a
-virtual thread). GIN indexes use the pending list (`fastupdate`), so inserts are cheap and autovacuum merges them; the
-table is small enough that default autovacuum settings are fine. The `stock` copy in `part_index` is not indexed, so
-its updates are HOT and do not touch any index (`fillfactor = 90` leaves room on each page).
+| Item | median ms | p95 ms | WAL per batch (median) |
+|---|---|---|---|
+| insert 50 rows, primary key only | 8.5 | 10.9 | 32 KB |
+| insert 50 rows, all 13 indexes | 8.0 (run 2: 14.7) | 20.8 (run 2: 34.6) | 260 KB |
+| update 50 rows, primary key only | 9.2 | 11.6 | 28 KB |
+| update 50 rows, all 13 indexes | 6.6 (run 2: 14.8) | 10.3 (run 2: 29.7) | 153 KB |
+| row unchanged (skipped by `IS DISTINCT FROM`) | not measured | | |
+| index size per 1 000 rows (all indexes incl. PK, LCSC rows) | 263 KB | | |
+| heap per 1 000 rows (LCSC rows) | 266 KB | | |
 
-Disk: at the current 6 660 parts the index table and all indexes are about {{PG_PART_INDEX_MB_7K}} MB (estimate from
-the per-1 000 figure); at 310 000 parts about {{PG_PART_INDEX_MB_310K}} MB.
+So the indexes cost about 8x the WAL and a heavier tail (p95 up to 35 ms vs 11 ms per 50-row batch), while the median
+is dominated by the commit fsync. For the cache path (one batch per search, written after the answer is assembled)
+that is a few milliseconds per search and under 100 ms at p99 even with 13 indexes. Bloat after 10 000 updated rows
+was 0.14 % dead tuples; autovacuum did not even trigger. GIN indexes use the pending list (`fastupdate`), so inserts
+stay cheap; default autovacuum settings are fine.
+
+Disk (**inference**, scaled from the per-1 000 figures; Mouser and TME rows have longer descriptions than LCSC rows,
+so allow up to 2x): at the current 6 660 parts the index table and all its indexes take about 4 to 8 MB; at 310 000
+parts (TME filler) about 160 to 330 MB.
 
 ## 9. LCSC: Postgres or SQLite
 
 ### 9.1 What the data is
 
 The JLCPCB file `parts-fts5.db` is 5.3 GB for 7.1 M rows; most of the size is the FTS5 trigram index
-({{SQLITE_FTS_SHARE_PCT}} % measured). {{SQLITE_IN_STOCK_ROWS}} rows are in stock. Only in-stock rows can ever be
+({{SQLITE_FTS_SHARE_PCT}} % measured). {{SQLITE_IN_STOCK_ROWS}} rows are in stock (the Postgres run's export counted
+723 865 rows with stock above 0, about 10 %, by its own family split). Only in-stock rows can ever be
 returned by a search (stock rule); out-of-stock rows matter only for a lookup by part number (`WHERE "LCSC Part" = ?`)
 and for `out_of_stock_matches`. KINA never writes to this data; it is replaced as a whole every 5 days
 (`refresh-after`).
@@ -521,11 +566,11 @@ and for `out_of_stock_matches`. KINA never writes to this data; it is replaced a
 |---|---|---|---|---|
 | Field query | no (text + value boundaries, extractor on 200 rows) | yes, btree on SQLite | yes | yes |
 | Text search | FTS5 trigram | FTS5 trigram (join by rowid) | pg_trgm GIN + tsvector GIN | FTS5 in SQLite, then join in Java |
-| Extra disk | 0 | {{SQLITE_TYPED_TOTAL_MB}} MB (typed rows of in-stock parts + indexes) | {{PG_TOTAL_GB}} GB in Postgres (table {{PG_RAW_TABLE_GB}} GB, trigram {{PG_IDX_TRGM_MB}} MB, tsvector {{PG_IDX_TSV_MB}} MB, btrees {{PG_IDX_BTREE_MB}} MB), plus the same again during a refresh | Postgres typed table only, {{PG_TYPED_ONLY_MB}} MB |
-| Refresh cost | download + validate + rename | + extraction {{EXTRACT_LCSC_FULL_S}} s + index build {{SQLITE_BUILD_S}} s, before the rename | + COPY {{PG_COPY_S}} s + index builds {{PG_IDX_BUILD_S}} s + ANALYZE {{PG_ANALYZE_S}} s + WAL {{PG_WAL_MB_LOAD}} MB | + extraction + COPY of the typed rows |
+| Extra disk | 0 | {{SQLITE_TYPED_TOTAL_MB}} MB (typed rows of in-stock parts + indexes) | 3.78 GB in Postgres for all 7.1 M rows (heap 1.81 GB, PK 320 MB, trigram GIN 253 MB description + 271 MB MPN, tsvector GIN 73 MB, jsonb GIN 37 MB, btrees 841 MB); 2.28x the 1.66 GB CSV; plus 3.5 GB transient during each reload | Postgres typed table of in-stock rows only, about 0.4 GB (**inference**: 10 % of the rows) |
+| Refresh cost | download + validate + rename | + extraction {{EXTRACT_LCSC_FULL_S}} s + index build {{SQLITE_BUILD_S}} s, before the rename | + extraction ({{EXTRACT_LCSC_FULL_S}} s with KINA's extractor; 5.4 s with the benchmark's regexes) + COPY 17.5 to 27 s + PK 9 s + 12 indexes about 64 s + ANALYZE 0.3 s: 94 s measured end to end | + extraction + COPY of the typed rows |
 | Atomic swap | yes (file rename under the write lock) | yes, the same rename | yes, rename swap in one transaction (9.3) | two stores to swap together: not atomic without extra work |
 | Concurrency | one connection, serialised | a small pool with `immutable=1` | the Hikari pool (default 10) | both |
-| Typical query, example 1 | {{SQLITE_FTS_Q1_MS}} ms | {{SQLITE_FIELD_Q1_MS}} ms | {{PG_Q1_MS}} ms | two round trips |
+| Typical query, example 1 | {{SQLITE_FTS_Q1_MS}} ms | {{SQLITE_FIELD_Q1_MS}} ms | 3.8 ms with a `BETWEEN` value range (47.3 ms with `abs`) | two round trips |
 | Backups | not in Postgres backups | not in Postgres backups | in every `pg_dump` unless excluded | partly |
 
 ### 9.3 Atomic refresh in Postgres (option C)
@@ -551,19 +596,30 @@ and for `out_of_stock_matches`. KINA never writes to this data; it is replaced a
    DDL is transactional in Postgres, so readers see the old table or the new one, never neither. `ALTER TABLE` takes
    an ACCESS EXCLUSIVE lock: it waits for queries already running on `lcsc_parts`, and new queries queue behind it.
    `lock_timeout` keeps a long query from stalling every reader; on timeout the swap is retried a few seconds later.
-   The measured swap took {{PG_SWAP_MS}} ms and readers waited at most {{PG_SWAP_BLOCK_MS}} ms.
+   Measured (approach A below): the swap took 0.03 s; a concurrent reader running example 1 every 200 ms saw a
+   longest read of 197 ms against a 30 to 40 ms baseline, which is host noise, not a lock wait, and no error.
 4. Effect on the app: server-side prepared statements reference the old table's OID; Postgres invalidates cached plans
-   on DDL and re-plans them on the next execution (the columns are the same, so no "cached plan must not change result
-   type" error). Hikari connections are unaffected. `DROP TABLE lcsc_parts_old` also waits for its readers.
+   on DDL and re-plans them on the next execution. **Verified**: the reader's server-side prepared statement switched
+   to the new table (by `tableoid`) without error. The caveat is `SELECT *`: it fails with "cached plan must not change
+   result type" when the columns change, so statements must name their columns, and a schema change ships with a new
+   table definition on both sides of the swap. Hikari connections are unaffected. `DROP TABLE lcsc_parts_old` (0.6 s)
+   also waits for its readers.
 
-Alternatives rejected:
+Measured reload approaches (7.1 M rows, 13 indexes, one run each on a loaded host):
 
-- `TRUNCATE` + `COPY` in one transaction: `TRUNCATE` takes ACCESS EXCLUSIVE at the start and holds it until commit,
-  so every LCSC search blocks for the whole load (minutes). MVCC does not help here: readers wait for the lock.
-- `DELETE` + `COPY` in one transaction: readers keep the old rows (MVCC), but it doubles the table, updates every
-  index row by row (slow), and leaves 7 M dead tuples for vacuum.
-- A table partitioned by generation with a pointer row: attach and detach are cheap (DETACH ... CONCURRENTLY), but the
-  pointer has to be in every query and the extra machinery buys nothing over a rename.
+| Approach | Wall time | Swap | Longest reader query | Reader errors | Peak extra disk |
+|---|---|---|---|---|---|
+| A. New table, COPY 17.5 s, PK 9.1 s, 12 indexes about 64 s, ANALYZE 0.3 s, rename swap, drop old | 94 s | 0.03 s | 197 ms | 0 | 3.5 GB |
+| B. Partitioned by generation: build the new partition standalone with a CHECK, ATTACH (0.01 s), DETACH CONCURRENTLY (0.01 s), drop | 116 s | 0.02 s | 206 ms | 0 | 3.6 GB |
+| B2. Same, `BEGIN; DETACH old; ATTACH new; COMMIT` | 129 s | 0.01 s | 246 ms | 0 | 3.6 GB |
+| C. `BEGIN; TRUNCATE; COPY; COMMIT` with the indexes in place | 209 s | (whole load) | **209.7 s**, blocked for the whole load | 0 | 3.7 GB |
+
+Choice: **A**. B works too, but the partition key must be part of the primary key (`(generation, distributor,
+part_number)`), so uniqueness of a part number is no longer enforced, the partitioned parent is never analyzed by
+autovacuum, and B (not B2) has a window of about 10 ms in which both generations are visible. C blocks every LCSC search
+for 3.5 minutes: `TRUNCATE` takes ACCESS EXCLUSIVE at the start and holds it until commit; MVCC does not help because
+readers wait for the lock. `DELETE` + `COPY` in one transaction (not measured) would keep readers going but doubles the
+table, maintains every index row by row and leaves 7 M dead tuples.
 
 ### 9.4 Atomic refresh on SQLite (option B)
 
@@ -583,11 +639,16 @@ swap renames a new file into place, and an open connection keeps reading the old
 
 ### 9.5 LCSC verdict
 
-To be confirmed with the numbers. Expected: option B wins. It keeps the refresh model that already works (one atomic
-rename), keeps 5 to 10 GB out of Postgres, its WAL and its backups, and gives LCSC the same field query semantics.
-Option C becomes interesting only if the measured Postgres text search is clearly faster than FTS5 for the queries
-KINA sends ({{PG_QK_MS}} vs {{SQLITE_FTS_QK_MS}} ms) and the disk cost is acceptable. Option D is rejected: two stores
-cannot be swapped together atomically without a generation column in both.
+To be confirmed with the SQLite numbers. The Postgres run shows option C is technically sound: a 94 s reload with a
+30 ms swap and no reader interruption, field queries of 4 to 80 ms with the right predicates, 3.78 GB of disk. So the
+choice is about cost and simplicity, not feasibility. Expected: option B still wins. It keeps the refresh model that
+already works (one atomic rename), keeps 3.78 GB (plus 3.5 GB transient every 5 days) out of Postgres and its backups,
+and gives LCSC the same field query semantics. Option C wins if the measured SQLite field and text queries are clearly
+slower than Postgres (full text 35 to 80 ms, trigram 37 ms, MPN fragment 0.5 ms in Postgres vs {{SQLITE_FTS_QK_MS}} ms
+in SQLite) or if a single connection pool for every distributor matters more than the disk. If C is chosen, load only
+the columns KINA reads, create the table `UNLOGGED`, use expression tsvector indexes (no heap cost) and the partial
+in-stock index (stock never changes between reloads). Option D is rejected: two stores cannot be swapped together
+atomically without a generation column in both.
 
 ## 10. Effort and rollout
 
@@ -625,14 +686,18 @@ Tests:
   quota effect of the journal (section 5.3) is not known. Phase 0 measures it.
 - How often a field hit would hide better distributor parts (R2). Only a shadow comparison against live results can
   measure it.
-- `pg_trgm` availability and its treatment of non-ASCII characters under the database locale of `postgres:17-alpine`
-  (trigram extraction depends on the locale's notion of alphanumeric characters).
+- The treatment of non-ASCII characters (`℃`, `Ω`, CJK) by `pg_trgm` under the musl locale of `postgres:17-alpine`
+  (trigram extraction depends on the locale's notion of alphanumeric characters). The extension itself is available.
+- Postgres query latency on a cold cache and on a smaller production host: the benchmark host was never cold (3.8 GB
+  fit in the page cache) and was under memory pressure; first-hit reads will cost more in production.
+- The USB example (example 3) and the field query with KINA's real extractor: the Postgres benchmark used regex
+  extraction and had no connector columns.
 - The technology compatibility set used in example 2 (`thin film` with `metal film`) against
   `TechnologyVocabulary.compare`.
 - Whether `UsbVocabulary` exposes a numeric rank for standards suitable for `usb_class >= n`; the `compare` method
   exists, a rank may need adding.
-- The behaviour of server-side prepared statements across the rename swap was reasoned from Postgres documentation,
-  not tested with PgJDBC and Hikari under load (unless the Postgres run covered it: {{PG_SWAP_PREPARED_OK}}).
+- Server-side prepared statements across the rename swap were verified with psycopg (Python), not with PgJDBC and
+  Hikari; the mechanism (plan invalidation in the server) is the same, but the JDBC path is untested.
 - The cross-encoder effect of a larger candidate pool (section 6).
 - The TME category filler of the 2026-10-07 study does not exist yet; the 310 000-part figures are projections.
 
@@ -642,7 +707,33 @@ This section is filled from the three measurement runs.
 
 ### 12.1 Postgres on the JLCPCB data (7.1 M rows)
 
-{{PG_RESULTS_TABLE}}
+Source: the Postgres benchmark run of 2026-10-08 (scripts, plans and logs in `/var/tmp/kina-bench/pg/`, outside the
+repository). Postgres 17.11 (`postgres:17-alpine`) in a container on a 24-core, 30 GB host with NVMe; the host was
+under memory pressure (22 to 24 GB of swap in use) and ran the SQLite benchmark at the same time, so timings within 2x
+are equal. Settings for queries and writes: `shared_buffers=2GB`, `work_mem=128MB`, `maintenance_work_mem=1GB`. The
+benchmark table is a simplified `part_index` (family, generic `value_num`, `voltage_v`, `tolerance_pct`, `power_w`,
+package, dielectric, mounting, technology, stock, description, MPN, jsonb attributes) filled by regexes over the
+JLCPCB descriptions, not by KINA's extractor.
+
+| Measure | Value |
+|---|---|
+| Rows | 7 146 764 (723 865 with stock above 0) |
+| Export SQLite to CSV (12 processes, regex extraction) | 5.4 s, 1.66 GB CSV |
+| COPY with the primary key in place | 27.1 s (264 000 rows/s) |
+| Heap / PK after load | 1.81 GB / 320 MB |
+| Index builds (one at a time) | partial btrees 0.2 to 0.26 s; full btrees 0.7 to 1.95 s (153 to 254 MB each); jsonb GIN 2.3 s (37 MB); tsvector expression GIN 14.6 s (73 MB); trigram GIN description 21.6 s (253 MB), MPN 15.9 s (271 MB); ANALYZE 0.3 s |
+| Stored tsvector column instead of an expression index | +524 MB heap, GIN build 5.5 s (2.7x faster), same query speed |
+| Total size | 3.78 GB (heap 1.90 GB, indexes 1.88 GB including PK) = 2.28x the CSV |
+| Query, example 1 with `BETWEEN` value range | 3.8 ms warm (partial in-stock btree) |
+| Query, example 1 with `abs(value - x) <= y` | 47.3 ms warm (88 434 heap rows filtered) |
+| Other queries (full text, trigram, jsonb, counts) | 0.5 to 123 ms warm, no sequential scan |
+| `IS NULL OR` ratings | applied as filters, no extra cost (49.0 vs 47.3 ms) |
+| Upsert, 50-row batches, p95 | 13 indexes: insert 20.8 ms, update 10.3 ms (busier run 34.6 / 29.7); PK only 10.9 / 11.6 ms |
+| WAL per 50-row batch (median) | 13 indexes: 260 KB insert, 153 KB update; PK only: 32 KB, 28 KB |
+| Bloat after the update run | 0.14 % dead tuples; autovacuum not triggered; HOT updates 0 with the stock partial index |
+| Reload A (new table, rename swap) | 94 s, swap 0.03 s, longest reader query 197 ms, 0 errors, 3.5 GB transient disk |
+| Reload B / B2 (partition by generation) | 116 s / 129 s, longest reader query 206 / 246 ms, 0 errors |
+| Reload C (TRUNCATE + COPY in one transaction) | 209 s, reader blocked 209.7 s |
 
 ### 12.2 SQLite on the JLCPCB data
 
