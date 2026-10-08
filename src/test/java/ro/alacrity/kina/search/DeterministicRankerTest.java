@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import org.junit.jupiter.api.Test;
 import ro.alacrity.kina.TestWiring;
+import ro.alacrity.kina.domain.Absence;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
@@ -332,6 +333,10 @@ class DeterministicRankerTest {
         String waterproof = "waterproof USB-C receptacle 16 pin";
         assertThat(score(waterproof, sealed) - score(waterproof, TYPE_C_16)).isCloseTo(ConstraintKind.WATERPROOF.weight(),
                 within(1e-9));
+        // a missing USB feature is no mismatch (absence OK): it only earns nothing
+        assertThat(ConstraintKind.WATERPROOF.match().absence()).isEqualTo(Absence.OK);
+        assertThat(ranker.assess(parser.parse(waterproof), TYPE_C_16).mismatches())
+                .noneMatch(m -> m.startsWith("feature:"));
         // gender: a plug request ranks plugs first
         Part plug = usbC("CP", "1 24P 5A Black Clamping plate Male Type-C USB 3.1");
         assertThat(score("USB-C plug 24 pin", plug)).isGreaterThan(score("USB-C plug 24 pin", TYPE_C_24));

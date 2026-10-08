@@ -45,6 +45,12 @@ public @interface Match {
     /** Position in the {@code mismatches} of a part, lower first; 0 when the kind reports no mismatch. */
     int report() default 0;
 
+    /**
+     * {@link MatchMode#FEATURE} only: what a requested feature the part does not state means. {@link Absence#OK} (the
+     * default) costs nothing, {@link Absence#PENALIZE} is a mismatch that loses the weight. Never an exclusion.
+     */
+    Absence absence() default Absence.OK;
+
     /** The requests a signal applies to. */
     enum Scope {
         /** Every request. */

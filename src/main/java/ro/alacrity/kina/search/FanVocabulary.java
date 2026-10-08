@@ -116,12 +116,18 @@ class FanVocabulary {
             Map.entry(Pattern.compile("(?i)" + BEFORE + "vapo" + AFTER), "vapo"));
     private static final Pattern BEARING_WORD = Pattern.compile("(?i)" + BEFORE + "bearings?" + AFTER);
 
-    /** Feature words and their canonical name. */
+    /**
+     * Feature words and their canonical name. {@value ParsedQuery#PWM} and {@value ParsedQuery#TACHO} have kinds of
+     * their own ({@code ConstraintKind.FAN_PWM}, {@code FAN_TACHO}: a part that does not state a requested one is a
+     * mismatch); a {@code sensor} is a tacho unless it is a lock or temperature sensor.
+     */
     private static final List<Map.Entry<Pattern, String>> FEATURES = List.of(
-            Map.entry(Pattern.compile("(?i)" + BEFORE + "pwm" + AFTER), "PWM"),
+            Map.entry(Pattern.compile("(?i)" + BEFORE + "pwm" + AFTER), ParsedQuery.PWM),
             // TME "Signal output: F type" (FG, a tacho signal) and "R type" (rotation detection, a locked-rotor alarm)
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:tacho(?:meter)?|tach|fg|f[- ]type|speed[- ]sensor"
-                    + "|rpm[- ]signal|frequency[- ]generator)" + AFTER), "tacho"),
+                    + "|speed[- ]signal|rpm[- ]signal|frequency[- ]generator"
+                    + "|(?<!lock[- ])(?<!rotor[- ])(?<!temperature[- ])(?<!thermal[- ])(?<!temp[- ])sensor)" + AFTER),
+                    ParsedQuery.TACHO),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "(?:locked[- ]rotor|lock[- ]rotor|rotor[- ]lock|lock[- ]sensor|alarm|r[- ]type)"
                     + AFTER), "locked rotor"),
             Map.entry(Pattern.compile("(?i)" + BEFORE + "auto(?:matic)?[- ]?restart" + AFTER), "auto restart"),

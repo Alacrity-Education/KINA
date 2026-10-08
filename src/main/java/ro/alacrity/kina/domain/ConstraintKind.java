@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static ro.alacrity.kina.domain.Absence.PENALIZE;
 import static ro.alacrity.kina.domain.Match.Scope.CONNECTOR;
 import static ro.alacrity.kina.domain.Match.Scope.PART;
 import static ro.alacrity.kina.domain.Match.Scope.USB;
@@ -1096,13 +1097,13 @@ public enum ConstraintKind {
     },
 
     /**
-     * The features a fan request names (PWM, tacho, 4-wire, IP55...): the share of them the part states earns the
-     * weight (score only; a part that states none earns nothing).
+     * The other features a fan request names (4-wire, locked rotor, IP55...; PWM and tacho are {@link #FAN_PWM} and
+     * {@link #FAN_TACHO}): the share of them the part states earns the weight (score only; a part that states none
+     * earns nothing).
      */
     @Relax(strategy = PREFERENCE)
     @Match(mode = CUSTOM, weight = 0.04, inGrade = false, order = 37)
-    FAN_FEATURES("fan features", q -> q.fan() == null || q.fan().features().isEmpty() ? null : q.fan().features(),
-            f -> f.fan() == null || f.fan().features().isEmpty() ? null : f.fan().features()) {
+    FAN_FEATURES("fan features", q -> otherFanFeatures(q.fan()), f -> otherFanFeatures(f.fan())) {
         @Override
         public Outcome score(MatchContext c, double weight) {
             Object wanted = wanted(c.query());
@@ -1214,7 +1215,23 @@ public enum ConstraintKind {
     /** A requested power-only USB connector: earned when the part is one. */
     @Relax(strategy = SOFT)
     @Match(mode = FEATURE, weight = 0.03, scope = USB, order = 9)
-    POWER_ONLY(ParsedQuery.POWER_ONLY);
+    POWER_ONLY(ParsedQuery.POWER_ONLY),
+
+    /**
+     * A requested PWM fan: earned when the part states PWM (or four wires), else a mismatch ({@code feature: PWM
+     * missing}) that loses the weight; never an exclusion.
+     */
+    @Relax(strategy = SOFT)
+    @Match(mode = FEATURE, absence = PENALIZE, weight = 0.05, scope = PART, order = 60, report = 52)
+    FAN_PWM(ParsedQuery.PWM, fanFeatureWanted(ParsedQuery.PWM), fanFeatureStated(ParsedQuery.PWM)),
+
+    /**
+     * A requested tacho output (tach, tachometer, FG, speed signal, sensor): earned when the part states it (or three
+     * or four wires), else a mismatch ({@code feature: tacho missing}) that loses the weight; never an exclusion.
+     */
+    @Relax(strategy = SOFT)
+    @Match(mode = FEATURE, absence = PENALIZE, weight = 0.05, scope = PART, order = 61, report = 53)
+    FAN_TACHO(ParsedQuery.TACHO, fanFeatureWanted(ParsedQuery.TACHO), fanFeatureStated(ParsedQuery.TACHO));
 
     /** Largest difference in nanometres between two wavelengths that are the same. */
     public static final double WAVELENGTH_TOLERANCE_NM = 10;
@@ -1274,6 +1291,8 @@ public enum ConstraintKind {
     private static final List<ConstraintKind> LADDER_KINDS;
     private static final List<String> RATING_MEASURES;
     private static final Map<String, ConstraintKind> BY_POLICY_NAME = new HashMap<>();
+    /** The fan features with a {@link MatchMode#FEATURE} kind of their own (its label): PWM, tacho. */
+    private static final Set<String> FAN_FEATURE_KINDS = new LinkedHashSet<>();
     /** The families with a rule of their own for a measure ({@code voltage} -&gt; regulator, zener, fan). */
     private static final Map<String, Set<String>> VARIANT_FAMILIES = new HashMap<>();
     /** The families whose rule of a measure is exact (not a minimum or maximum), by measure. */
@@ -1302,6 +1321,9 @@ public enum ConstraintKind {
                 if (BY_POLICY_NAME.put(k.label, k) != null) {
                     throw new IllegalStateException("two policy kinds named " + k.label);
                 }
+            }
+            if (k.match != null && k.match.mode() == FEATURE && k.match.scope() == PART) {
+                FAN_FEATURE_KINDS.add(k.label);
             }
             if (k.match != null) {
                 scored.add(k);
@@ -1345,6 +1367,12 @@ public enum ConstraintKind {
         }
         if (match != null && !match.group().isEmpty() && measure == null) {
             throw new IllegalStateException(this + ": a group member needs a measure");
+        }
+        if (match != null && match.absence() != Absence.OK && match.mode() != FEATURE) {
+            throw new IllegalStateException(this + ": absence applies to FEATURE kinds only");
+        }
+        if (match != null && match.mode() == FEATURE && isPolicyKind()) {
+            throw new IllegalStateException(this + ": a FEATURE kind never excludes a part");
         }
         if (!overshoot.isEmpty() && (match == null || match.mode() != AT_LEAST
                 || overshoot.stream().filter(o -> o.families().length == 0).count() != 1)) {
@@ -1540,7 +1568,7 @@ public enum ConstraintKind {
             case AT_LEAST -> grade(number(actual) >= number(wanted) * (1 - tolerance));
             case AT_MOST -> grade(number(actual) <= number(wanted) * (1 + tolerance));
             case WITHIN -> grade(sameValue(number(wanted), number(actual), tolerance));
-            case FEATURE -> (Boolean) actual ? 1.0 : 0.0;
+            case FEATURE -> (Boolean) actual ? 1.0 : match.absence() == Absence.PENALIZE ? -1.0 : 0.0;
             case COMPATIBLE, CUSTOM -> throw new IllegalStateException(this + " declares its own comparison");
         };
     }
@@ -1565,11 +1593,17 @@ public enum ConstraintKind {
         return g != null && g < 0 ? Verdict.CONFLICT : Verdict.MATCH;
     }
 
-    /** The mismatch in plain words ({@code "package: 1210 instead of 1206"}), null when there is none. */
+    /**
+     * The mismatch in plain words ({@code "package: 1210 instead of 1206"}, a requested {@link Absence#PENALIZE}
+     * feature the part does not state {@code "feature: PWM missing"}), null when there is none.
+     */
     public String mismatch(MatchContext c) {
         Double g = compare(c);
         if (g == null || g >= 0) {
             return null;
+        }
+        if (match.mode() == FEATURE) {
+            return "feature: " + label + " missing";
         }
         String relation = match.mode() == AT_LEAST ? " below " : match.mode() == AT_MOST ? " above " : " instead of ";
         return reported(c.query()) + ": " + display(actual(c.query(), c.part())) + relation
@@ -1808,6 +1842,25 @@ public enum ConstraintKind {
     /** {@code 12mm}, {@code 16.2mm}. */
     private static String millimetres(Double mm) {
         return java.math.BigDecimal.valueOf(mm).stripTrailingZeros().toPlainString() + "mm";
+    }
+
+    /** True when a fan request names {@code feature}, else null (not stated). */
+    private static Function<ParsedQuery, Object> fanFeatureWanted(String feature) {
+        return q -> q.fan() != null && q.fan().features().contains(feature) ? Boolean.TRUE : null;
+    }
+
+    /** Whether the part states the fan feature {@code feature} (false for a part without fan attributes). */
+    private static Function<PartFeatures, Object> fanFeatureStated(String feature) {
+        return f -> f.fan() != null && f.fan().features().contains(feature);
+    }
+
+    /** The features of a fan request or part other than those with a kind of their own, null when none. */
+    private static List<String> otherFanFeatures(ParsedQuery.Fan fan) {
+        if (fan == null) {
+            return null;
+        }
+        List<String> other = fan.features().stream().filter(f -> !FAN_FEATURE_KINDS.contains(f)).toList();
+        return other.isEmpty() ? null : other;
     }
 
     /** The fan attributes of a request or part when they state the type or the supply, else null. */

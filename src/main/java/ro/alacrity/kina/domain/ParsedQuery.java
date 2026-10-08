@@ -185,6 +185,9 @@ public record ParsedQuery(
     public static final String WATERPROOF = "waterproof";
     public static final String BOARD_LOCK = "board lock";
     public static final String FULLY_SMD = "fully SMD";
+    /** Fan features ({@link Fan#features()}) with a kind of their own: the PWM speed input and the tacho output. */
+    public static final String PWM = "PWM";
+    public static final String TACHO = "tacho";
 
     public ParsedQuery {
         constraints = constraints == null ? Map.of() : constraints;

@@ -18,7 +18,11 @@ public enum MatchMode {
     /** The same value within the relative {@link Match#tolerance()}. */
     WITHIN,
 
-    /** A feature the request names: a part that has it earns the weight, one without it earns nothing. */
+    /**
+     * A feature the request names: a part that has it earns the weight; one without it earns nothing, or loses the
+     * weight and reports {@code feature: <name> missing} when the kind declares {@link Absence#PENALIZE}
+     * ({@link Match#absence()}).
+     */
     FEATURE,
 
     /**

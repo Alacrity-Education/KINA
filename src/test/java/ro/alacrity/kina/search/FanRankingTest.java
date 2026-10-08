@@ -7,6 +7,7 @@ import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.domain.Absence;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
@@ -27,13 +28,15 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.mock;
 import static ro.alacrity.kina.search.RankingFixtures.attrs;
 
 /**
  * Fan matching through the declarations only (DESIGN.md 3.4 "Fans"): the fan type, the frame size and the supply
  * voltage are hard; current and noise are maximums, airflow and static pressure minimums; the speed is a relaxable
- * mismatch outside 15 %; the bearing a relaxable preference; the features score only. Then the distributor phrasing
+ * mismatch outside 15 %; the bearing a relaxable preference; a missing PWM or tacho is a mismatch (absence
+ * PENALIZE), the other features score only. Then the distributor phrasing
  * and the recorded searches (fixtures/fans) end to end with the deterministic ranking.
  */
 class FanRankingTest {
@@ -187,15 +190,74 @@ class FanRankingTest {
     }
 
     @Test
-    void featuresScoreOnly() {
+    void theOtherFeaturesScoreOnly() {
+        Part restart = tmeFan("R1", "Fan: DC; 120x120x25mm; axial; 12VDC; ball", "Supply voltage", "12V DC",
+                "Additional functions", "autorestart");
+        Part plain = tmeFan("P1", "Fan: DC; 120x120x25mm; axial; 12VDC; ball", "Supply voltage", "12V DC");
+        String query = "120mm axial fan 12V auto restart";
+        assertThat(assess(query, restart).score()).isGreaterThan(assess(query, plain).score());
+        assertThat(assess(query, plain).match()).as("absence OK: never graded").isEqualTo(1.0);
+        assertThat(assess(query, plain).mismatches()).isEmpty();
+    }
+
+    // ---------------------------------------------------------------- PWM and tacho: a missing one is penalised
+
+    @Test
+    void pwmAndTachoArePenalisedWhenMissing() {
+        assertThat(ConstraintKind.FAN_PWM.match().absence()).isEqualTo(Absence.PENALIZE);
+        assertThat(ConstraintKind.FAN_TACHO.match().absence()).isEqualTo(Absence.PENALIZE);
+        assertThat(ConstraintKind.FAN_FEATURES.match().absence()).isEqualTo(Absence.OK);
+    }
+
+    @Test
+    void aPwmRequestAgainstAPwmFanMatches() {
         Part pwm = RankingFixtures.mouser("PFR1212", "Delta", "DC Fans Fan, 120x38mm, 12VDC, Ball, 4x Lead Wires, "
                 + "Tach/PWM", "DC Fans", null, attrs());
-        Part plain = RankingFixtures.mouser("PMD1212", "Sunon", "DC Fans Axial Fan, 120x120x38mm, 12VDC, Ball, Wire",
-                "DC Fans", null, attrs());
-        String query = "120mm axial fan 12V PWM";
-        assertThat(assess(query, pwm).score()).isGreaterThan(assess(query, plain).score());
-        assertThat(assess(query, plain).match()).as("features never grade").isEqualTo(1.0);
-        assertThat(assess(query, plain).mismatches()).isEmpty();
+        DeterministicRanker.Assessment a = assess("120mm axial fan 12V PWM", pwm);
+        assertThat(a.match()).isEqualTo(1.0);
+        assertThat(a.mismatches()).isEmpty();
+    }
+
+    @Test
+    void aPwmRequestAgainstAThreeWireFanIsAMismatchNeverAnExclusion() {
+        Part pwm = tmeFan("P4", "Fan: DC; 120x120x25mm; axial; 12VDC; ball; PWM", "Supply voltage", "12V DC",
+                "Leads", "leads x4");
+        Part threeWire = tmeFan("T3", "Fan: DC; 120x120x25mm; axial; 12VDC; ball", "Supply voltage", "12V DC",
+                "Leads", "leads x3");
+        String query = "12025 fan 12V PWM";
+        DeterministicRanker.Assessment a = assess(query, threeWire);
+        assertThat(a.mismatches()).containsExactly("feature: PWM missing");
+        assertThat(a.match()).isLessThan(1.0);
+        assertThat(check(query, threeWire).conflict()).as("never excluded").isFalse();
+        assertThat(assess(query, pwm).match()).isEqualTo(1.0);
+        assertThat(assess(query, pwm).score() - a.score()).as("the weight earned and lost")
+                .isCloseTo(2 * ConstraintKind.FAN_PWM.weight(), within(1e-9));
+    }
+
+    @Test
+    void aPwmRequestAgainstAFanStatingNothingIsTheSameMismatch() {
+        Part bare = tmeFan("B0", "Fan: DC; 120x120x25mm; axial; 12VDC; ball", "Supply voltage", "12V DC");
+        Part threeWire = tmeFan("T3", "Fan: DC; 120x120x25mm; axial; 12VDC; ball", "Supply voltage", "12V DC",
+                "Leads", "leads x3");
+        String query = "12025 fan 12V PWM";
+        DeterministicRanker.Assessment a = assess(query, bare);
+        assertThat(a.mismatches()).containsExactly("feature: PWM missing");
+        assertThat(a.match()).isEqualTo(assess(query, threeWire).match());
+        assertThat(check(query, bare).conflict()).isFalse();
+    }
+
+    @Test
+    void aTachoRequestNamesItsWords() {
+        Part fg = tmeFan("F1", "Fan: DC; 40x40x10mm; axial; 12VDC", "Supply voltage", "12V DC", "Signal output",
+                "F type");
+        Part bare = tmeFan("B1", "Fan: DC; 40x40x10mm; axial; 12VDC", "Supply voltage", "12V DC");
+        for (String query : List.of("40x40x10 fan 12V tacho", "40x40x10 fan 12V tach", "40x40x10 fan 12V tachometer",
+                "40x40x10 fan 12V FG", "40x40x10 fan 12V speed signal", "40x40x10 fan 12V sensor")) {
+            assertThat(parser.parse(query).fan().features()).as(query).contains(ParsedQuery.TACHO);
+            assertThat(assess(query, fg).mismatches()).as(query).isEmpty();
+            assertThat(assess(query, bare).mismatches()).as(query).containsExactly("feature: tacho missing");
+        }
+        assertThat(parser.parse("40x40x10 fan 12V lock sensor").fan().features()).doesNotContain(ParsedQuery.TACHO);
     }
 
     @Test
