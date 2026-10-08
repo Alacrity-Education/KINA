@@ -18,8 +18,8 @@ Live observations made for this report (read-only): the local compose stack's `c
 
 ## 1. Summary and recommendation
 
-**Recommendation: phased go for Mouser and TME, no-go for moving the raw LCSC data into Postgres (pending the numbers
-in section 12), go later for a typed field table for LCSC kept inside the SQLite file.**
+**Recommendation: phased go for Mouser and TME; for LCSC, no-go for moving the data into Postgres and go (later) for a
+typed field table of the in-stock rows inside the SQLite file, read through a small connection pool.**
 
 1. The field index is cheap at today's scale and the idea is sound. The local cache holds 6 660 parts (3 064 Mouser,
    3 596 TME), 25 MB in total, with 1.6 KB of JSON per part (**verified**). Any field query over this is a few
@@ -47,11 +47,14 @@ in section 12), go later for a typed field table for LCSC kept inside the SQLite
    repeat. Steps that change only the SQL (dropping free-text keywords) need no distributor call.
 6. LCSC: the JLCPCB data is replaced as a whole every 5 days and is never written by KINA. SQLite with an atomic file
    rename is already the right refresh model. A typed field table of the in-stock rows can be built **inside the new
-   file before the rename**, so the refresh stays atomic for free. Moving 7.1 M rows into Postgres is possible (load
-   into a new table, `ANALYZE`, then rename-swap in one short transaction; measured: 94 s for the whole reload, a
-   30 ms swap, no reader interrupted, field queries 4 to 80 ms). But it adds 3.78 GB to the Postgres volume and its
-   backups, plus 3.5 GB of transient disk during each 5-day reload, for a gain that section 9 weighs once the SQLite
-   numbers are in.
+   file before the rename**, so the refresh stays atomic for free. Measured in SQLite: field queries of 0.35 to 0.91 ms
+   on an in-stock index, six indexes built in 11 s, 849 MB for all rows (about a tenth for the in-stock rows). Moving
+   7.1 M rows into Postgres also works (load into a new table, `ANALYZE`, then rename-swap in one short transaction:
+   94 s for the whole reload, a 30 ms swap, no reader interrupted, field queries 4 to 80 ms). But it adds 3.78 GB to the
+   Postgres volume and its backups, plus 3.5 GB of transient disk at each 5-day reload. Its only clear win is short-token
+   and MPN-fragment text search (0.5 ms against a 2.65 s LIKE scan in SQLite), and the typed columns remove most of
+   those scans. Replacing data inside an open SQLite file is worse than the rename in every variant measured. The
+   pool matters too: one shared connection (today) gave 20 searches/s, one connection per worker up to 88/s.
 7. Effort: about 4 to 6 weeks of one engineer for Mouser and TME (phases 0 to 3), plus 1 to 2 weeks for the LCSC
    typed table (phase 4). Every phase sits behind a flag and keeps today's path as the fallback.
 
@@ -553,12 +556,27 @@ parts (TME filler) about 160 to 330 MB.
 
 ### 9.1 What the data is
 
-The JLCPCB file `parts-fts5.db` is 5.3 GB for 7.1 M rows; most of the size is the FTS5 trigram index
-({{SQLITE_FTS_SHARE_PCT}} % measured). {{SQLITE_IN_STOCK_ROWS}} rows are in stock (the Postgres run's export counted
-723 865 rows with stock above 0, about 10 %, by its own family split). Only in-stock rows can ever be
-returned by a search (stock rule); out-of-stock rows matter only for a lookup by part number (`WHERE "LCSC Part" = ?`)
-and for `out_of_stock_matches`. KINA never writes to this data; it is replaced as a whole every 5 days
-(`refresh-after`).
+The JLCPCB file `parts-fts5.db` is 5.33 GB for 7 146 764 rows; 64.7 % of it (about 3.45 GB) is the FTS5 trigram
+posting lists, 31 % the row text (measured on the full file; 65.4 % on a 510 k-row subset). 723 865 rows (10.1 %) are
+in stock (both runs agree). Only in-stock rows can ever be returned by a search (stock rule); out-of-stock rows matter
+only for a lookup by part number (`WHERE "LCSC Part" = ?`) and for `out_of_stock_matches`. KINA never writes to this
+data; it is replaced as a whole every 5 days (`refresh-after`).
+
+What today's LCSC search costs (SQLite run, count plus page as in `JlcpcbSqliteSearch.search`, warm median / cold):
+
+| Query shape | Warm | Cold |
+|---|---|---|
+| `10uF X7R 0805` (3 trigram terms) | 23 ms | 354 ms |
+| `4.7k 0603` | 25 ms | 525 ms |
+| `"Female Header" 1x6P "Right Angle"` | 63 ms | 1.06 s |
+| `"Thin Film" 5.36k 0805` | 85 ms | 1.20 s |
+| a single 2-character token (`1k`): the LIKE path, a scan of every row | **2.65 s** | **24.8 s** |
+| the 6-term `ANY` (OR) fallback | **1.48 s** | **28.8 s** |
+| a relaxation flow with three drops (4 counts and a page) | 41 ms | 780 ms |
+
+The normal queries are fast. The slow ones are the LIKE path for short tokens and the OR fallback, and both are
+seconds even when warm. A typed table removes most of the first case: short tokens that are values (`1k`, `5%`, `6P`)
+become comparisons on typed columns instead of LIKE scans.
 
 ### 9.2 The options
 
@@ -566,11 +584,13 @@ and for `out_of_stock_matches`. KINA never writes to this data; it is replaced a
 |---|---|---|---|---|
 | Field query | no (text + value boundaries, extractor on 200 rows) | yes, btree on SQLite | yes | yes |
 | Text search | FTS5 trigram | FTS5 trigram (join by rowid) | pg_trgm GIN + tsvector GIN | FTS5 in SQLite, then join in Java |
-| Extra disk | 0 | {{SQLITE_TYPED_TOTAL_MB}} MB (typed rows of in-stock parts + indexes) | 3.78 GB in Postgres for all 7.1 M rows (heap 1.81 GB, PK 320 MB, trigram GIN 253 MB description + 271 MB MPN, tsvector GIN 73 MB, jsonb GIN 37 MB, btrees 841 MB); 2.28x the 1.66 GB CSV; plus 3.5 GB transient during each reload | Postgres typed table of in-stock rows only, about 0.4 GB (**inference**: 10 % of the rows) |
-| Refresh cost | download + validate + rename | + extraction {{EXTRACT_LCSC_FULL_S}} s + index build {{SQLITE_BUILD_S}} s, before the rename | + extraction ({{EXTRACT_LCSC_FULL_S}} s with KINA's extractor; 5.4 s with the benchmark's regexes) + COPY 17.5 to 27 s + PK 9 s + 12 indexes about 64 s + ANALYZE 0.3 s: 94 s measured end to end | + extraction + COPY of the typed rows |
+| Extra disk | 0 | 849 MB measured for all 7.1 M rows (330 MiB table + 503 MB for six indexes); about 85 to 100 MB for the in-stock rows only (**inference**: 10 % of the rows) | 3.78 GB in Postgres for all 7.1 M rows (heap 1.81 GB, PK 320 MB, trigram GIN 253 MB description + 271 MB MPN, tsvector GIN 73 MB, jsonb GIN 37 MB, btrees 841 MB); 2.28x the 1.66 GB CSV; plus 3.5 GB transient during each reload | Postgres typed table of in-stock rows only, about 0.4 GB (**inference**: 10 % of the rows) |
+| Refresh cost | download + validate (`count(*)` 0.8 s warm, 19.6 s cold) + rename (3 ms) | + extraction ({{EXTRACT_LCSC_FULL_S}} s with KINA's extractor; 132 s for all rows with the benchmark's Python regexes, of which 20 s inserts) + index build 11.0 s + ANALYZE 1.3 s (all rows), before the rename | + extraction ({{EXTRACT_LCSC_FULL_S}} s with KINA's extractor; 5.4 s with the benchmark's regexes) + COPY 17.5 to 27 s + PK 9 s + 12 indexes about 64 s + ANALYZE 0.3 s: 94 s measured end to end | + extraction + COPY of the typed rows |
 | Atomic swap | yes (file rename under the write lock) | yes, the same rename | yes, rename swap in one transaction (9.3) | two stores to swap together: not atomic without extra work |
-| Concurrency | one connection, serialised | a small pool with `immutable=1` | the Hikari pool (default 10) | both |
-| Typical query, example 1 | {{SQLITE_FTS_Q1_MS}} ms | {{SQLITE_FIELD_Q1_MS}} ms | 3.8 ms with a `BETWEEN` value range (47.3 ms with `abs`) | two round trips |
+| Concurrency | one connection, serialised: 20.1 searches/s measured | a small pool with `immutable=1`: up to 88.2 searches/s measured (8 processes) | the Hikari pool (default 10) | both |
+| Typical query, example 1 | 23 ms warm, 354 ms cold (FTS count + page) | 12.7 ms with the planner's index; 0.91 ms on the partial in-stock index | 3.8 ms with a `BETWEEN` value range (47.3 ms with `abs`) | two round trips |
+| Field plus text (`thin film` + 4.7k or 5.36k) | 85 ms (FTS only) | 75 ms (FTS join typed table) | 34.6 ms | two round trips |
+| Short token or MPN fragment | LIKE scan, 2.65 s warm | the same LIKE scan unless the token is a typed value | trigram GIN, 0.5 ms (MPN) to 37 ms (description) | as A |
 | Backups | not in Postgres backups | not in Postgres backups | in every `pg_dump` unless excluded | partly |
 
 ### 9.3 Atomic refresh in Postgres (option C)
@@ -628,27 +648,81 @@ The downloader already validates the new file in `<dataDir>/tmp` and then moves 
 `part_fields` (the typed columns of 8.1 for the in-stock rows, keyed by the FTS rowid or `LCSC Part`), insert the
 extracted rows in one transaction, create the indexes, run `ANALYZE`, close, then move. The swap stays one rename under
 the write lock; readers never see a half-built table. When the extractor version changes between downloads, the same
-build runs on a copy of the current file and is swapped the same way (risk R14). Cost: extraction
-{{EXTRACT_LCSC_FULL_S}} s plus index build {{SQLITE_BUILD_S}} s, and the file grows by {{SQLITE_TYPED_TOTAL_MB}} MB.
+build runs on a copy of the current file and is swapped the same way (risk R14).
 
-Concurrency on SQLite: today one connection serves every LCSC query, so the read lock allows concurrent callers but
-SQLite serialises them on the connection. A small pool (2 to 4) of read-only connections opened with `immutable=1`
-removes the serialisation and SQLite's file locking; it is safe because the file is never modified while open (the
-swap renames a new file into place, and an open connection keeps reading the old inode until it is closed). Measured:
-{{SQLITE_POOL_QPS_1}} queries/s with one connection, {{SQLITE_POOL_QPS_4}} with four.
+Measured cost (SQLite run, all 7.1 M rows with crude Python regexes): reading the FTS table and extracting took
+112.6 s, inserting 19.8 s, the six indexes 11.0 s and `ANALYZE` 1.3 s; the file grew by 849 MB. The read is a full scan
+whatever is extracted (`Stock` is an unindexed FTS column), but KINA only needs the in-stock rows, so the extraction,
+inserts, indexes and disk shrink to about a tenth (**inference**). KINA's real extractor rate is
+{{EXTRACT_ROWS_PER_S}} rows/s, so its pass over the in-stock rows takes {{EXTRACT_LCSC_FULL_S}} s.
+
+A typed table of in-stock rows only also fixes a planner issue the run found. With all rows in the table, SQLite chose
+the `(family, package)` index for example 1 and read every 0805 capacitor (about 100 000 rows, 12.7 ms); forced onto
+the partial index `(family, value_num) WHERE stock_int > 0` it took 0.91 ms (example 2: 24.9 ms vs 0.35 ms). When the
+table holds only in-stock rows, every index is effectively that partial index. Otherwise, use a composite
+`(family, package, value_num)` index (not tested) or `INDEXED BY` in the generated SQL. As in Postgres, the
+`IS NULL OR` predicates were residual filters on the rows the index returned, never index seeks, and the value tests
+were `BETWEEN` ranges.
+
+Why not replace the data inside the open file (measured, extrapolated 14x from a 510 k-row subset): replacing the FTS
+table in place takes about 4.5 minutes with the rollback journal, and readers stall for the whole transaction. In WAL
+mode readers are never blocked (longest read 7.6 ms), but it takes about 8 minutes, the WAL grows to about the size of
+the data, and the file stays 1.85x larger until a `VACUUM`. For the typed table alone (full size), dropping the
+indexes, replacing the rows and rebuilding in one WAL transaction took 15.1 s (76.5 s with the indexes live); a
+generation swap took about 3 minutes, with readers blocked 186 s under the rollback journal (36 ms in WAL), a 2 GB WAL
+and a doubled file until `VACUUM`. Building the new file and then renaming it beats every in-place variant. The rename
+itself took 3 ms for a 1 GiB file.
+
+The cost of the rename approach is elsewhere: validating the new file with `count(*)` (19.6 s cold) and a cold page
+cache after the swap (the first search took 353 ms instead of 23 ms). Warming the new file before the rename (a
+`count(*)` and a few typical queries while it is still in `tmp`) moves that cost off the request path.
+
+Concurrency on SQLite: today one connection serves every LCSC query. The read lock lets callers in together, but SQLite
+runs one statement at a time on that connection. Measured with 8 different searches, 160 runs: 20.1 searches/s with
+one shared connection behind a lock (KINA today), 35.6/s with 8 connections in Python threads (limited by the Python
+interpreter lock around the value function), and **88.2/s with 8 processes of one connection each** (4.4x). The last is
+the closer estimate for a JVM pool, where the Java value function has no such lock; it was not measured in Java. A small
+pool (2 to 4) of read-only connections opened with `immutable=1` removes the serialisation and SQLite's file locking.
+It is safe because the file is never modified while open: the swap renames a new file into place, and an open
+connection keeps reading the old inode until it is closed.
 
 ### 9.5 LCSC verdict
 
-To be confirmed with the SQLite numbers. The Postgres run shows option C is technically sound: a 94 s reload with a
-30 ms swap and no reader interruption, field queries of 4 to 80 ms with the right predicates, 3.78 GB of disk. So the
-choice is about cost and simplicity, not feasibility. Expected: option B still wins. It keeps the refresh model that
-already works (one atomic rename), keeps 3.78 GB (plus 3.5 GB transient every 5 days) out of Postgres and its backups,
-and gives LCSC the same field query semantics. Option C wins if the measured SQLite field and text queries are clearly
-slower than Postgres (full text 35 to 80 ms, trigram 37 ms, MPN fragment 0.5 ms in Postgres vs {{SQLITE_FTS_QK_MS}} ms
-in SQLite) or if a single connection pool for every distributor matters more than the disk. If C is chosen, load only
-the columns KINA reads, create the table `UNLOGGED`, use expression tsvector indexes (no heap cost) and the partial
-in-stock index (stock never changes between reloads). Option D is rejected: two stores cannot be swapped together
-atomically without a generation column in both.
+**Verdict: option B. Keep LCSC in SQLite, add a typed table of the in-stock rows to the new file before the rename,
+and read it through a small pool of `immutable=1` connections. Do not move LCSC into Postgres now.**
+
+Both options are technically sound; the measurements decide on cost and on what each one fixes.
+
+| | B. SQLite + typed table | C. Postgres |
+|---|---|---|
+| Field query, example 1 | 0.91 ms (in-stock index) | 3.8 ms |
+| Field query, example 2 (resistor) | 0.35 ms (in-stock index) | 64 ms measured with `abs`; few ms expected as a range |
+| Field plus full text (`thin film`) | 75 ms | 34.6 ms |
+| Short free-text token or MPN fragment | LIKE scan, 2.65 s warm, 25 s cold | 0.5 to 37 ms (trigram GIN) |
+| Refresh | today's download, validation and 3 ms rename, plus extraction and about 2 s of index build on in-stock rows | 94 s load and index build, 30 ms swap |
+| Extra disk | about 0.1 GB in the file (0.85 GB for all rows) | 3.78 GB permanent, 3.5 GB transient every 5 days, in the shared database and its backups |
+| Concurrency | 20 to 88 searches/s (one connection to a pool) | Hikari pool, shared with OAuth and the cache |
+| Change to the refresh model | none: one atomic file rename | new reload job, `UNLOGGED` table, rebuild after a crash |
+
+Reasons for B:
+
+- The field query is as fast or faster in SQLite once the in-stock rows are indexed (0.35 to 0.91 ms).
+- The refresh model stays the one that already works. The in-place SQLite variants are all worse (blocked readers, or
+  slow with a growing WAL and file bloat), and B needs none of them.
+- 3.78 GB of rarely changing, rebuildable data, plus 3.5 GB of churn every 5 days, stays out of the database that holds
+  the users, tokens and cache, and out of its backups.
+- The one clear Postgres advantage is short-token and MPN-fragment text search (trigram GIN, 0.5 ms, against a 2.65 s
+  LIKE scan). Most short tokens KINA sends to LCSC are values, positions or tolerances (`1k`, `6P`, `5%`), and those
+  become typed comparisons in B. Free-text short tokens that remain can be checked as LIKE only on the rows the typed
+  index or an FTS term already selected, instead of a full scan (**inference**: not measured).
+
+When to revisit (move to C): if the shadow phase shows that LIKE-only and OR-fallback queries are frequent in
+production and stay slow after B, or if the cross-distributor field query (one SQL over all three distributors) becomes
+a requirement. If C is chosen: load only the columns KINA reads, create the table `UNLOGGED`, use expression tsvector
+indexes (no heap cost) and the partial in-stock index, and swap by rename (approach A of 9.3).
+
+Option D (SQLite raw, Postgres typed index) is rejected: two stores cannot be swapped together atomically without a
+generation column in both.
 
 ## 10. Effort and rollout
 
@@ -658,7 +732,7 @@ atomically without a generation column in both.
 | 1. Candidates added | Today's flow unchanged; on a HIT or PARTIAL, add the field candidates to the cached list before ranking (better recall, no new calls) | `mode=augment` | 3 to 4 days |
 | 2. Field-first with journal | The flow of 5.2; `cached_searches` keyed by phrase; per-request call caps; new `cache` semantics and `fetched_live`; DESIGN 3.2, API.md and tool descriptions | `mode=on` | 1.5 to 2 weeks |
 | 3. Validation and default | Eval (below), e2e suite, a week of production shadow numbers for Mouser call counts | default `on` | 3 to 5 days |
-| 4. LCSC typed table | Option B: build in the downloader before the rename, read pool with `immutable=1`, field query for LCSC with the FTS5 text terms | `kina.jlcpcb.field-index.enabled` | 1 to 2 weeks |
+| 4. LCSC typed table | Option B: build the in-stock typed table in the downloader before the rename, warm the new file before the swap, read pool with `immutable=1` (this part can ship first on its own: 20 to 88 searches/s measured), field query for LCSC with the FTS5 text terms | `kina.jlcpcb.field-index.enabled` | 1 to 2 weeks |
 
 Fallbacks: any SQL error or a disabled flag returns to today's path (the cache already never fails a search). An
 empty or partly built index is detected by a row count per distributor and treated as "no index".
@@ -690,8 +764,15 @@ Tests:
   (trigram extraction depends on the locale's notion of alphanumeric characters). The extension itself is available.
 - Postgres query latency on a cold cache and on a smaller production host: the benchmark host was never cold (3.8 GB
   fit in the page cache) and was under memory pressure; first-hit reads will cost more in production.
-- The USB example (example 3) and the field query with KINA's real extractor: the Postgres benchmark used regex
-  extraction and had no connector columns.
+- The USB example (example 3) and the field query with KINA's real extractor: both benchmarks used regex extraction
+  and had no connector columns.
+- SQLite concurrency in the JVM: the 88.2 searches/s figure comes from 8 Python processes; a Java pool of
+  `immutable=1` connections through sqlite-jdbc was not measured, nor was the effect of the read lock on today's single
+  connection (expected to behave like the 20.1/s "shared connection behind a lock" row).
+- A typed table of in-stock rows only (both runs indexed all 7.1 M rows); its size, build time and plans are scaled
+  estimates. The composite `(family, package, value_num)` index for SQLite was not built.
+- The SQLite in-place replacement figures are 14x extrapolations from a 510 k-row subset; FTS5 merges may not scale
+  linearly. They do not affect the recommendation, which avoids in-place replacement.
 - The technology compatibility set used in example 2 (`thin film` with `metal film`) against
   `TechnologyVocabulary.compare`.
 - Whether `UsbVocabulary` exposes a numeric rank for standards suitable for `usb_class >= n`; the `compare` method
@@ -737,7 +818,33 @@ JLCPCB descriptions, not by KINA's extractor.
 
 ### 12.2 SQLite on the JLCPCB data
 
-{{SQLITE_RESULTS_TABLE}}
+Source: the SQLite benchmark run of 2026-10-08 (scripts, plans and raw results in `/var/tmp/kina-bench/sqlite/`,
+outside the repository). SQLite 3.53.4 from Python 3.14.7 on the same host (24 cores, btrfs on NVMe, 23 to 25 GB of
+swap in use, the Postgres benchmark running at the same time). "Cold" means the source file was evicted from the page
+cache with `posix_fadvise(DONTNEED)`; "warm" is the median of 5 or 7 runs. The `kina_value` function was a Python port of
+`JlcpcbSqliteSearch.containsValue`. The baseline term lists were written by hand to match `JlcpcbQuery.parse`. The
+typed table was filled by crude regexes (`family` NULL for 25 % of the rows, 64 621 distinct raw package strings), not
+by KINA's extractor. The 14x extrapolations from the 510 k-row subset assume linear scaling and may be optimistic.
+
+| Measure | Value |
+|---|---|
+| Source file | 5 329 715 200 bytes, 7 146 764 rows, 723 865 in stock (10.1 %) |
+| FTS5 trigram share of the file | 64.7 % (about 3.45 GB); row text 31 % |
+| FTS search (count + page), warm / cold | `10uF X7R 0805` 23 ms / 354 ms; `4.7k 0603` 25 ms / 525 ms; female header 63 ms / 1.06 s; `"Thin Film" 5.36k 0805` 85 ms / 1.20 s |
+| LIKE path (`1k`, full scan) | 2.65 s warm / 24.8 s cold |
+| `ANY` fallback (6 OR terms) | 1.48 s warm / 28.8 s cold |
+| Relaxation flow with 3 drops | 41 ms warm / 780 ms cold |
+| Throughput, 8 searches x 20 | one shared connection behind a lock 20.1/s; 8 connections in threads 35.6/s (interpreter-bound); 8 processes 88.2/s |
+| Typed table, extraction of all rows | 132.4 s (112.6 s scan and regexes, 19.8 s inserts), 330 MiB |
+| Typed table, six indexes + ANALYZE | 11.0 s + 1.3 s, +503 MB, 849 MB in total |
+| Field query, example 1 | 12.7 ms (planner: `(family, package)`), 0.91 ms (`INDEXED BY` the partial in-stock index), 147 ms full scan |
+| Field query, resistor 4.7k 1 % 0603 | 24.9 ms (planner), 0.35 ms (forced) |
+| Field query joined with FTS `"thin film"` | 75 ms |
+| `IS NULL OR` predicates | residual filters, never index seeks |
+| Refresh A, rename of a 1 GiB file | 3.1 to 3.8 ms; validation `count(*)` 0.81 s warm, 19.6 s cold; first search after the swap 353 ms |
+| Refresh B, FTS table replaced in place (extrapolated) | rollback journal about 269 s, readers stalled the whole time; WAL about 482 s, readers never blocked (7.6 ms), WAL about the data size; DROP/CREATE 189 s / 334 s; file 1.85x until VACUUM (about 74 s) |
+| Typed table replaced in place (full size) | indexes live 76.5 s; drop, replace, rebuild in one WAL transaction 15.1 s |
+| Typed table generation swap (full size) | about 180 s; readers blocked 185.9 s (rollback) or at most 36 ms (WAL, 2.05 GB WAL); VACUUM afterwards 19.7 s / 11.9 s |
 
 ### 12.3 Extractor coverage (JLCPCB, cached Mouser and TME)
 
