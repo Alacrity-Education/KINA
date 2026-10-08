@@ -328,9 +328,13 @@ class FanRankingTest {
     // ---------------------------------------------------------------- the recorded searches
 
     private SearchResponse search(String query) {
+        return search(query, FanFixtures.QUERIES.get(query));
+    }
+
+    private SearchResponse search(String query, String fixture) {
         Clock clock = Clock.fixed(Instant.parse("2026-10-07T12:00:00Z"), ZoneOffset.UTC);
         List<PartSearchServiceTest.FakeClient> clients = new ArrayList<>();
-        FanFixtures.load(FanFixtures.QUERIES.get(query)).forEach((d, parts) -> {
+        FanFixtures.load(fixture).forEach((d, parts) -> {
             PartSearchServiceTest.FakeClient client = new PartSearchServiceTest.FakeClient(d);
             client.raw.addAll(parts);
             clients.add(client);
@@ -392,8 +396,12 @@ class FanRankingTest {
         });
         assertThat(mouser.parts()).extracting(PartResponse::mpn).doesNotContain("CFM-A225V-231-445");
         assertThat(mouser.excludedByConstraintsDetail()).containsKey("fan type");
-        assertThat(result(response, Distributor.TME).parts()).isNotEmpty()
+        DistributorResult tme = result(response, Distributor.TME);
+        assertThat(tme.parts()).isNotEmpty()
                 .allSatisfy(p -> assertThat(p.attributes()).containsEntry("FanType", "radial"));
+        // the DBK and STEGO heating elements TME lists for the phrase are no fans
+        assertThat(tme.parts()).noneSatisfy(p -> assertThat(p.description()).startsWith("Heating element"));
+        assertThat(tme.excludedByConstraintsDetail()).containsKey("type");
     }
 
     @Test
@@ -408,5 +416,39 @@ class FanRankingTest {
             assertThat(first.mismatches()).as(d + " " + first.mpn()).noneMatch(m -> m.startsWith("speed:"));
             assertThat(r.parts()).anySatisfy(p -> assertThat(p.mismatches()).anyMatch(m -> m.startsWith("speed:")));
         }
+    }
+
+    // ---------------------------------------------------------------- fan heaters are no fans
+
+    @Test
+    void theRecordedFanHeatersAreATypeConflictForABlowerRequest() {
+        List<Part> heaters = FanFixtures.load(FanFixtures.HEATERS).get(Distributor.TME).stream()
+                .filter(p -> "Heating Elements".equals(p.category())).toList();
+        assertThat(heaters).hasSize(8);
+        for (Part heater : heaters) {
+            assertThat(extractor.features(heater).family()).as(heater.manufacturerPartNumber()).isEqualTo("heater");
+            assertThat(extractor.features(heater).fan()).as(heater.manufacturerPartNumber()).isNull();
+            assertThat(check("radial blower 24V 50 Pa", heater).conflicts()).as(heater.manufacturerPartNumber())
+                    .first().isEqualTo("type");
+        }
+    }
+
+    @Test
+    void recordedFanHeatersAreExcludedUnderType() {
+        SearchResponse response = search("radial blower 24V 50 Pa", FanFixtures.HEATERS);
+        DistributorResult tme = result(response, Distributor.TME);
+        assertThat(tme.parts()).extracting(PartResponse::mpn).containsExactly("RLF100-11/14");
+        assertThat(tme.excludedByConstraintsDetail()).containsEntry("type", 8).doesNotContainKey("voltage");
+    }
+
+    @Test
+    void aFanHeaterListedWithTheFansIsAHeater() {
+        // the wording of a DBK fan heater; a description naming a heater wins over a fan category
+        Part listed = RankingFixtures.mouser("HVL031", "DBK", "Fan Heater 24VDC 100W", "Blowers & Centrifugal Fans",
+                null, attrs());
+        assertThat(extractor.features(listed).family()).isEqualTo("heater");
+        assertThat(check("radial blower 24V", listed).conflicts()).first().isEqualTo("type");
+        assertThat(parser.parse("fan heater 230V").family()).as("a request for one names the heater").isEqualTo("heater");
+        assertThat(parser.parse("radial blower 24V").family()).isEqualTo("fan");
     }
 }

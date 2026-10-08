@@ -51,7 +51,12 @@ public enum ComponentFamily {
     /** Mechanical switches: tactile, push-button, toggle, slide, rocker, DIP, rotary, snap action, reed... */
     SWITCH("switch", PolicyFamily.SWITCH),
     /** Fans and blowers: axial or radial, with a frame size, an exact supply voltage and airflow ratings. */
-    FAN("fan", PolicyFamily.FAN);
+    FAN("fan", PolicyFamily.FAN),
+    /**
+     * Fan heaters and heating elements: no attributes of their own; the family keeps them apart from fans (a blower
+     * request excludes a heater as a type conflict).
+     */
+    HEATER("heater", PolicyFamily.DEFAULT);
 
     /** What a family's parts have in common. */
     public enum Trait {

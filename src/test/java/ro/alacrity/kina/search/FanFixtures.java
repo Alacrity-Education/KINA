@@ -28,6 +28,12 @@ class FanFixtures {
             "radial blower 24V", "radial-blower-24v",
             "fan 5V 3000rpm", "fan-5v-3000rpm");
 
+    /**
+     * The fan heaters and heating elements TME returned for {@code radial blower 24V 50 Pa} in the bench of 2026-10-08
+     * (category {@code Heating Elements}), with one blower; not in {@link #all()}.
+     */
+    static final String HEATERS = "tme-fan-heaters";
+
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
     /** The recorded parts of {@code fixtures/fans/<name>.json} per distributor. */

@@ -1,0 +1,530 @@
+{
+ "query": "radial blower 24V 50 Pa",
+ "recorded": "2026-10-08 TME bench of the fan vocabulary (search phrase \"fan DC blower 24V\", every page): the fan heaters and heating elements TME lists in its category \"Heating Elements\" (DBK CIRRUS, STEGO HGL), and one blower for contrast; attributes are the raw TME parameters, prices the three smallest breaks",
+ "phrases": {
+  "TME": "fan DC blower 24V"
+ },
+ "parts": {
+  "TME": [
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "RLF100-11/14",
+    "manufacturer": "EBM-PAPST",
+    "manufacturerPartNumber": "RLF100-11/14",
+    "description": "Fan: DC; 127x127x25mm; blower; 24VDC; 64m3/h; ball; 5100rpm",
+    "category": "DC24V Fans",
+    "packageName": null,
+    "stock": 35,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 84.03,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/26cb1f537ca5c5a728b429c4e0d7cb21/RLF100series.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/9D/56/A0/00/0/681433_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c12a3dc461cc20385a5e741111eec5796053469a",
+    "productUrl": "https://www.tme.eu/en/details/rlf100-11_14/",
+    "attributes": {
+     "Leads": "leads x2",
+     "Kind of fan": "blower",
+     "Type of fan": "DC",
+     "Manufacturer": "EBM-PAPST",
+     "Fan dimensions": "127x127x25mm",
+     "Fan efficiency": "64m<sup>3</sup>/h",
+     "Supply voltage": "24V DC",
+     "Kind of Bearing": "ball",
+     "Impeller material": "plastic",
+     "Operating voltage": "16...30V DC",
+     "Power consumption": "8W",
+     "Enclosure material": "plastic",
+     "Rotational rate/speed": "5100rpm"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 112525,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 1049,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1515.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "370090,01",
+    "description": "Heating element: blower; heating; CIRRUS 40/2; 230W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 5,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 109.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 97.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 86.25,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3C/F1/80/00/0/532419_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=c11f7f54804ac6fc138765b719036f14e35783b2",
+    "productUrl": "https://www.tme.eu/en/details/fgc1515.2/",
+    "attributes": {
+     "Version": "heating",
+     "Mounting": "for DIN rail mounting",
+     "IP rating": "IP20",
+     "Manufacturer": "DBK Technitherm",
+     "Fan efficiency": "17m<sup>3</sup>/h",
+     "Supply voltage": "230V",
+     "Body dimensions": "42x42x107mm",
+     "Heating capacity": "230W",
+     "Protection class": "I",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Inrush current max": "9A",
+     "Mounting rail size": "TS35",
+     "Manufacturer series": "CIRRUS 40/2",
+     "Operating temperature": "-10...70°C",
+     "Type of heating element": "blower"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100694,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 717,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1030.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "371680,01",
+    "description": "Heating element: blower; heating; CIRRUS 40/1; 80W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 20,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 81.92,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 72.79,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 67.77,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/0A/35/00/00/0/21408_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=41a647c2ea7c9ab808903a3b2c88ffe6e520ab7d",
+    "productUrl": "https://www.tme.eu/en/details/fgc1030.2/",
+    "attributes": {
+     "Version": "heating",
+     "Mounting": "for DIN rail mounting",
+     "IP rating": "IP20",
+     "Manufacturer": "DBK Technitherm",
+     "Fan efficiency": "13.6m<sup>3</sup>/h",
+     "Supply voltage": "230V",
+     "Body dimensions": "42x42x72mm",
+     "Heating capacity": "80W",
+     "Protection class": "I",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Inrush current max": "6.5A",
+     "Mounting rail size": "TS35",
+     "Manufacturer series": "CIRRUS 40/1",
+     "Operating temperature": "-10...70°C",
+     "Type of heating element": "blower"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100694,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 717,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1513.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "15662",
+    "description": "Heating element: blower; heating; CIRRUS 40/2; 150W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 109.3,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 97.66,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 86.25,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/4A/35/00/00/0/21412_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=475c41846dbe9462220378b6be877fa13e646db5",
+    "productUrl": "https://www.tme.eu/en/details/fgc1513.2/",
+    "attributes": {
+     "Version": "heating",
+     "Mounting": "for DIN rail mounting",
+     "IP rating": "IP20",
+     "Manufacturer": "DBK Technitherm",
+     "Fan efficiency": "12.4m<sup>3</sup>/h",
+     "Supply voltage": "230V",
+     "Body dimensions": "42x42x107mm",
+     "Heating capacity": "150W",
+     "Protection class": "I",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Inrush current max": "10A",
+     "Mounting rail size": "TS35",
+     "Manufacturer series": "CIRRUS 40/2",
+     "Operating temperature": "-10...70°C",
+     "Type of heating element": "blower"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100694,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 717,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "04640.1-00",
+    "manufacturer": "STEGO",
+    "manufacturerPartNumber": "04640.1-00",
+    "description": "Heating element: blower; heating; HGL 046; 250W; Uoper: 24V; IP20",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 3,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 155.14,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 137.9,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/en/details/04640.1-00/",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/BD/9C/01/00/0/1100251_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=e8a52e43b790fd4f9ef76553ea1ffbfb9b6f67e5",
+    "productUrl": "https://www.tme.eu/en/details/04640.1-00/",
+    "attributes": {
+     "Leads": "clamps 1.5mm<sup>2</sup>",
+     "Version": "heating",
+     "IP rating": "IP20",
+     "Manufacturer": "STEGO",
+     "Rated voltage": "24V",
+     "Supply voltage": "24V DC",
+     "Heating capacity": "250W",
+     "Operating voltage": "24V",
+     "Manufacturer series": "HGL 046",
+     "Operating temperature": "-45...70°C",
+     "Type of heating element": "blower"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100694,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 627,
+     "datasheet_source": "product_page"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC0524.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "371604,01",
+    "description": "Heating element: blower; heating; CIRRUS 25/2; 40W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 10,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 104.73,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 97.89,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 88.76,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a97efef0d45069d591348cfe7ecc2e36/En_DBK_DB_Cirrus25_DE231012.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/D9/35/00/00/0/21405_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=311cb4eee11246085fa4920cb19826978008e4dc",
+    "productUrl": "https://www.tme.eu/en/details/fgc0524.2/",
+    "attributes": {
+     "Version": "heating",
+     "Mounting": "for DIN rail mounting",
+     "IP rating": "IP20",
+     "Manufacturer": "DBK Technitherm",
+     "Fan efficiency": "5.1m<sup>3</sup>/h",
+     "Supply voltage": "24V",
+     "Body dimensions": "27x27x50mm",
+     "Heating capacity": "40W",
+     "Protection class": "I",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Inrush current max": "9.5A",
+     "Mounting rail size": "TS35",
+     "Manufacturer series": "CIRRUS 25/2",
+     "Operating temperature": "-10...70°C",
+     "Type of heating element": "blower"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100694,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 717,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1031.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "15661,2",
+    "description": "Heating element: blower; heating; CIRRUS 40/1; 100W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 7,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 108.61,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 100.86,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 88.99,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/4C/F1/80/00/0/532420_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=9e75ef23a99885d852295e37b36f2acc954d66f5",
+    "productUrl": "https://www.tme.eu/en/details/fgc1031.2/",
+    "attributes": {
+     "Version": "heating",
+     "Mounting": "for DIN rail mounting",
+     "IP rating": "IP20",
+     "Manufacturer": "DBK Technitherm",
+     "Fan efficiency": "13.6m<sup>3</sup>/h",
+     "Supply voltage": "230V",
+     "Body dimensions": "42x42x72mm",
+     "Heating capacity": "100W",
+     "Protection class": "I",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Inrush current max": "4.5A",
+     "Mounting rail size": "TS35",
+     "Manufacturer series": "CIRRUS 40/1",
+     "Operating temperature": "-10...70°C",
+     "Type of heating element": "blower"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100694,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 717,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC0017.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "370306,01",
+    "description": "Heating element: blower; heating; CIRRUS 25/1; 10W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 6,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 109.75,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 98.35,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 86.25,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/a97efef0d45069d591348cfe7ecc2e36/En_DBK_DB_Cirrus25_DE231012.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/3E/3D/70/00/0/512995_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=2324b29ecef97c730e2af62ccf8a070cbb4330cc",
+    "productUrl": "https://www.tme.eu/en/details/fgc0017.2/",
+    "attributes": {
+     "Version": "heating",
+     "Mounting": "for DIN rail mounting",
+     "IP rating": "IP20",
+     "Manufacturer": "DBK Technitherm",
+     "Fan efficiency": "5.1m<sup>3</sup>/h",
+     "Supply voltage": "24V",
+     "Body dimensions": "27x27x50mm",
+     "Heating capacity": "10W",
+     "Protection class": "III/3",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Inrush current max": "1.3A",
+     "Mounting rail size": "TS35",
+     "Manufacturer series": "CIRRUS 25/1",
+     "Operating temperature": "-10...70°C",
+     "Type of heating element": "blower"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100694,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 717,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   },
+   {
+    "distributor": "TME",
+    "distributorPartNumber": "FGC1026.2",
+    "manufacturer": "DBK Technitherm",
+    "manufacturerPartNumber": "371371,01",
+    "description": "Heating element: blower; heating; CIRRUS 40/1; 60W; 24VAC,24VDC",
+    "category": "Heating Elements",
+    "packageName": null,
+    "stock": 21,
+    "minimumOrderQuantity": 1,
+    "orderMultiple": 1,
+    "prices": [
+     {
+      "quantity": 1,
+      "unitPrice": 95.38,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 3,
+      "unitPrice": 85.34,
+      "currency": "EUR"
+     },
+     {
+      "quantity": 10,
+      "unitPrice": 75.3,
+      "currency": "EUR"
+     }
+    ],
+    "datasheetUrl": "https://www.tme.eu/Document/1c9c74049c7d64da2b532b85897d2677/En_DBK_DB_Cirrus40_DE231012-1.pdf",
+    "photoUrl": "https://ce8dc832c.cloudimg.io/v7/_cdn_/CC/C6/60/00/0/421068_1.jpg?width=640&height=480&wat=1&wat_url=_tme-wrk_%2Ftme_new.png&wat_scale=100p&ci_sign=7d63cf881524f814fcbc6aa4a211ea02ebe30c38",
+    "productUrl": "https://www.tme.eu/en/details/fgc1026.2/",
+    "attributes": {
+     "Version": "heating",
+     "Mounting": "for DIN rail mounting",
+     "IP rating": "IP20",
+     "Manufacturer": "DBK Technitherm",
+     "Fan efficiency": "13.6m<sup>3</sup>/h",
+     "Supply voltage": "24V",
+     "Body dimensions": "42x42x72mm",
+     "Heating capacity": "60W",
+     "Protection class": "I",
+     "Fan supply voltage": "24V AC, 24V DC",
+     "Inrush current max": "7.5A",
+     "Mounting rail size": "TS35",
+     "Manufacturer series": "CIRRUS 40/1",
+     "Operating temperature": "-10...70°C",
+     "Type of heating element": "blower"
+    },
+    "extra": {
+     "unit": "pcs",
+     "tax_rate": 21.0,
+     "price_type": "NET",
+     "category_id": 100694,
+     "product_status": [],
+     "special_prices": false,
+     "manufacturer_id": 717,
+     "datasheet_source": "dte"
+    },
+    "fetchedAt": "2026-10-08T01:08:05.012163544Z"
+   }
+  ]
+ }
+}

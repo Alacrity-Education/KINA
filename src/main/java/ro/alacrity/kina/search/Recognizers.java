@@ -26,6 +26,7 @@ import static ro.alacrity.kina.domain.ComponentFamily.DIODE;
 import static ro.alacrity.kina.domain.ComponentFamily.FAN;
 import static ro.alacrity.kina.domain.ComponentFamily.FERRITE;
 import static ro.alacrity.kina.domain.ComponentFamily.FUSE;
+import static ro.alacrity.kina.domain.ComponentFamily.HEATER;
 import static ro.alacrity.kina.domain.ComponentFamily.INDUCTOR;
 import static ro.alacrity.kina.domain.ComponentFamily.LED;
 import static ro.alacrity.kina.domain.ComponentFamily.MCU;
@@ -247,15 +248,18 @@ class Recognizers {
         // fans and blowers ("axial fan", "cooling fan", "DC fan": the type and supply words are FanVocabulary's);
         // the lowest priority, so "fan connector" stays a connector and "fan driver" names no fan
         family(1, false, FAN, "fan", "fans", "blower", "blowers");
+        // fan heaters and heating elements blow air and are no fans (FanVocabulary.HEATER_WORDS): above the fan words
+        family(2, false, HEATER, FanVocabulary.HEATER_WORDS.toArray(String[]::new));
     }
 
 
     /**
      * Families a part's description may name over the family of its category: a GaN half-bridge with an integrated
-     * driver that Mouser lists under {@code GaN FETs} is a gate driver.
+     * driver that Mouser lists under {@code GaN FETs} is a gate driver; a {@code fan heater} listed with the fans is a
+     * heater.
      */
     private static final Map<String, Set<String>> OVERRIDES_CATEGORY = Map.of(GATE_DRIVER,
-            Set.of(MOSFET.label(), TRANSISTOR.label()));
+            Set.of(MOSFET.label(), TRANSISTOR.label()), HEATER.label(), Set.of(FAN.label()));
 
     /** True when a description naming {@code descriptionFamily} decides over a category naming {@code categoryFamily}. */
     static boolean overridesCategory(String descriptionFamily, String categoryFamily) {

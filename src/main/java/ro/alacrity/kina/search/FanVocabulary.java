@@ -36,6 +36,14 @@ class FanVocabulary {
     record Analysis(ParsedQuery.Fan fan, Set<String> consumed) {
     }
 
+    /**
+     * The words of parts that blow air and are no fans: fan heaters and heating elements (TME category {@code Heating
+     * Elements}, descriptions {@code Heating element: blower; heating; CIRRUS 40/1} and {@code fan heater}). They name
+     * the {@code heater} family above the fan words ({@link Recognizers}), so a fan request excludes such a part as a
+     * {@code type} conflict, the way a crystal request excludes oscillators.
+     */
+    static final List<String> HEATER_WORDS = List.of("heater", "heaters", "heating");
+
     // ---------------------------------------------------------------- units
 
     /** Fan unit spellings rewritten to one token each, so {@code /} and brackets do not split them. */

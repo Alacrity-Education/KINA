@@ -1795,7 +1795,7 @@ numbers, only counts with the bounded tags below.
 search counters is the component type of the query: the parser family (`ParsedQuery.family()`, section 3.4) in lower
 case, one of `resistor`, `capacitor`, `inductor`, `ferrite`, `crystal`, `oscillator`, `diode`, `schottky`, `zener`,
 `tvs`, `led`, `transistor`, `mosfet`, `gate driver`, `regulator`, `opamp`, `comparator`, `mcu`, `connector`, `fuse`,
-`relay`, `switch`, `fan` (the labels of `domain.ComponentFamily`, `QueryParser.families()`), or `unknown` when the parser
+`relay`, `switch`, `fan`, `heater` (the labels of `domain.ComponentFamily`, `QueryParser.families()`), or `unknown` when the parser
 recognised no family.
 No other value is possible (connector and USB sub-types are not tags), so the tag set stays bounded.
 
