@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search.field;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -212,6 +213,6 @@ public class SqliteFieldSql extends FieldSql {
     }
 
     private static String placeholders(int n) {
-        return String.join(", ", java.util.Collections.nCopies(n, "?"));
+        return String.join(", ", Collections.nCopies(n, "?"));
     }
 }

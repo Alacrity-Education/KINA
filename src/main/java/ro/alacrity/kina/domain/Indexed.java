@@ -31,6 +31,9 @@ public @interface Indexed {
     /** The JSONB column of the long tail (fan, LED and switch attributes). */
     String ATTRS = "attrs";
 
+    /** The relative slack of a rating's rule: rounding noise only, the Java check compares exactly. */
+    double RATING_SLACK = 1e-6;
+
     /** The column; empty for the column of the kind's measure ({@link PartAttribute} declaration). */
     String column() default "";
 

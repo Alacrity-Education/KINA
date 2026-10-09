@@ -21,9 +21,11 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -307,11 +309,11 @@ public class PartIndexRepository implements CacheWriteListener {
     }
 
     /** Which of {@code partNumbers} of {@code distributor} have an index row. */
-    public java.util.Set<String> indexed(Distributor distributor, Collection<String> partNumbers) {
+    public Set<String> indexed(Distributor distributor, Collection<String> partNumbers) {
         if (partNumbers.isEmpty()) {
-            return java.util.Set.of();
+            return Set.of();
         }
-        return new java.util.HashSet<>(jdbc.sql(
+        return new HashSet<>(jdbc.sql(
                         "SELECT part_number FROM part_index WHERE distributor = ? AND part_number = ANY(?)")
                 .params(distributor.name(), partNumbers.toArray(String[]::new)).query(String.class).list());
     }
