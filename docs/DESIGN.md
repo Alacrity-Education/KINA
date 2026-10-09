@@ -2152,12 +2152,31 @@ its voltage), the connector and USB fields (`usb_type` as the part states it or 
 the fan, LED and switch attributes in `attrs` (JSONB; width and length of a frame or body as `*_min`, `*_max`), the
 normalised MPN and `search_text` (the part's normalised text, MPN, manufacturer and distributor part number). Where a
 numeric attribute is stored is declared on the `PartAttribute` constant (`@Indexed(column = "capacitance_f")` or
-`@Indexed(column = "attrs", keys = "airflow")`).
+`@Indexed(column = "attrs", keys = "airflow")`), with the column of its condition where it has one
+(`@Indexed(column = "impedance_ohm", condition = "impedance_test_hz")`).
+
+**The columns are declared once** (v0.16, review A5). The typed columns are those the `@Indexed` declarations name,
+with their `type` (`IndexColumn.declared()`: the rule columns of `ConstraintKind`, the value and condition columns of
+`PartAttribute`); `PartIndexSql` lists only the structural ones (identity, `extractor_version`, `indexed_at`,
+`in_stock`, `family_path`, `policy_family`, `subtype`, the package's readable flag, class and can size, `attrs`, `mpn`,
+`search_text`). `Indexed.ColumnType` names each type in PostgreSQL (the parameter cast) and in SQLite, so the write
+statement and the SQLite table of the LCSC sidecar (`SqlitePartIndex`) are derived from the same list; a declared
+column is read from the `PartIndexRow` component of its name in camel case (`package_key`: `packageKey()`) or from its
+value map. `PartIndexSchemaTest` compares V14 and V16 (`information_schema.columns`, name and type) and the SQLite
+table with that list in both directions.
 
 **The rules.** Each `ConstraintKind` that can exclude a part (hard for some family, a rating, or on the ladder)
 declares its rule with `@Indexed` next to `@Relax` and `@Match`: the column (empty: the column of the kind's measure,
-`ConstraintKind.indexMeasure`), the predicate, and the relative `slack` or absolute `margin`; or `javaOnly` when the
-comparison stays in Java. Soft kinds and preferences have no rule (they rank, they never exclude). The rule of a
+`ConstraintKind.indexMeasure`), the predicate, the relative `slack` or absolute `margin`, and for `IN_COMPATIBLE` the
+`vocabulary` its comparator runs over; or `javaOnly` when the comparison stays in Java. Soft kinds and preferences
+have no rule (they rank, they never exclude). `FieldQueryBuilder` dispatches on the declared predicate only (v0.16,
+review A4): the request's value of each column of the rule is `ConstraintKind.indexWanted` (by default the stated
+value, for a measure its value and condition; a kind whose column holds another form overrides it: the sorted sides of
+a frame or body, a USB speed class, a canonical pin configuration, the form factor class of a hard package), and an
+`IN_COMPATIBLE` rule runs the kind's own comparator `ConstraintKind.refuses` (by default its `grade` is negative) over
+the declared `Indexed.Vocabulary` (`MatchContext.vocabulary`): a closed vocabulary (the families) becomes the values
+it accepts, an open one the values it refuses. `everyPredicateIsTheFormOfItsDeclaration` checks that every predicate
+the builder emits is the form of its kind's declaration and that every form is reached. The rule of a
 rating whose general strategy is `BELOW_SPEC` (`VOLTAGE_RATING`, `CURRENT`, `POWER`, `TEMPERATURE`, `LIFETIME`...)
 never filters: it only orders the candidates (group `R` below), so the Java check sees the parts below spec, excludes
 them and counts them.
@@ -2168,7 +2187,7 @@ has a rule or is Java only.
 |---|---|---|---|
 | `TYPE` | `family` | text | IN_COMPATIBLE |
 | `POLARITY` | `polarity` | text | EQUAL |
-| `VALUE` | `capacitance_f`, `resistance_ohm`, `inductance_h`, `impedance_ohm`, `frequency_hz` | float8 | RANGE, slack 0.015 |
+| `VALUE` | `capacitance_f`, `resistance_ohm`, `inductance_h`, `impedance_ohm`, `impedance_test_hz`, `frequency_hz` | float8 | RANGE, slack 0.015 |
 | `EXACT_VOLTAGE` | `voltages_v` | float8_array | ARRAY_ANY, slack 0.025 |
 | `LOAD_CAPACITANCE` | `capacitance_f` | float8 | RANGE, slack 0.015 |
 | `PACKAGE` | `package_key` | text | PACKAGE, margin 0.25 |
@@ -2262,9 +2281,17 @@ orders differently, section 9.3), at most
 `kina.search.field-index.max-candidates` (100) rows: confirmed parts first, a part below spec last, so it takes a
 place only when the limit leaves room, and it then reaches the Java check, which excludes and counts it (a first
 order of `confirmed` with the ratings in it filled the 100 rows of `mosfet 55V SOT23` at TME with 83 parts below
-spec, validation C2). The SQLite confirmed-only form (`SqliteFieldSql.CONFIRMED`,
-section 9.3) puts the ratings in its `WHERE` clause as stated only (never compared) and selects the first tier of the
-LCSC order, in a form the indexes can seek. The soft kinds the
+spec, validation C2). **The stated-only form** (`FieldSql.statedOnly`; one renderer, the two forms differ only in the
+branch that keeps an unstated column, `FieldSql.orUnstated`; review A9) selects the first tier of the dialect's
+order: every predicate of the step stated and matching, the ratings stated (SQLite, whose order counts a stated rating)
+or stated and met (PostgreSQL, `PostgresFieldSql.STATED`). It is the form an index can seek: the superset form's
+`col IS NULL OR col BETWEEN` cannot use the partial value indexes of V14 (`WHERE col IS NOT NULL`), PostgreSQL reads
+the family through `part_index_fam_idx` and filters (review A8, `PartIndexPlanTest`: `EXPLAIN` on 40 000 rows in both
+databases). `PartIndexRepository.query` therefore runs the stated-only form first; when it fills the limit, those are
+exactly the superset form's first rows in the same order (the first tier sorts first and the rest of the order is the
+same), checked by `PartIndexPlanTest` and for every query and step of the superset test; otherwise the superset form
+runs. A query with `min-version` rows of an older extractor takes the superset form directly. The SQLite form
+(`SqliteFieldSql.CONFIRMED`, section 9.3) is used the same way by the LCSC typed path. The soft kinds the
 request states (group `S`, `FieldQuery.soft()`: a `SOFT` kind with a rule in the table below, today only `ROWS`) are
 never in a step's filter, so they never exclude a part; a part that states a matching value orders before one that
 does not, so a cut at the limit keeps the better parts (validation 2026-10-09: a `2x3` female header with more stock
@@ -2365,7 +2392,9 @@ of the recorded LED, switch, fan and power-resistor searches (3 130 parts, 911 o
 every query (the 41 evaluation queries, the recordings and extra queries) and every step, that every part the Java check
 keeps with `allow_below_spec` (a superset of what it keeps without; and that misses no ladder kind still in the step,
 and, with free text in the step, states every keyword and a requested part number) is returned, in both dialects, that
-both dialects return the same rows, and that no step holds a rating predicate. The free-text steps (36 of them, 289 expected parts) hold for the substring rule above.
+both dialects return the same rows, that no step holds a rating predicate, that the SQLite stated-only rows are the
+confirmed rows of the superset form, and that the first rows `PartIndexRepository.query` returns (stated-only first)
+are the superset form's. The free-text steps (36 of them, 289 expected parts) hold for the substring rule above.
 
 ## 4. MCP tools
 

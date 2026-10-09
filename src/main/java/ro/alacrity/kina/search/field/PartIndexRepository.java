@@ -379,9 +379,24 @@ public class PartIndexRepository implements CacheWriteListener {
         return query(query, step, limit, null);
     }
 
-    /** The hits of one step of {@code query} among the part numbers {@code among} (null: all), at most {@code limit}. */
+    /**
+     * The hits of one step of {@code query} among the part numbers {@code among} (null: all), at most {@code limit}.
+     * The first tier of the order (every stated column confirmed, every requested rating met) is read first with the
+     * stated-only form, which the partial value indexes serve; when it fills the limit those are the rows the superset
+     * form returns, in the same order (DESIGN.md 3.8, review A8). Otherwise the superset form runs. Rows of an older
+     * extractor ({@code staleBelow}) are not confirmed by the superset form, so a query with them takes it directly.
+     */
     public List<Hit> query(FieldQuery query, FieldQuery.Step step, int limit, List<String> among) {
-        FieldSql.Statement statement = PostgresFieldSql.INSTANCE.select(query, step, limit, among);
+        if (query.staleBelow() == 0 && limit > 0) {
+            List<Hit> first = hits(PostgresFieldSql.STATED.select(query, step, limit, among));
+            if (first.size() >= limit) {
+                return first;
+            }
+        }
+        return hits(PostgresFieldSql.INSTANCE.select(query, step, limit, among));
+    }
+
+    private List<Hit> hits(FieldSql.Statement statement) {
         return jdbc.sql(statement.sql()).params(statement.params())
                 .query((rs, n) -> new Hit(Distributor.valueOf(rs.getString(1)), rs.getString(2), rs.getBoolean(3)))
                 .list();

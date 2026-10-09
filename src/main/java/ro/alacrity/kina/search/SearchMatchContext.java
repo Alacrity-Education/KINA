@@ -1,10 +1,12 @@
 package ro.alacrity.kina.search;
 
 import ro.alacrity.kina.domain.ConstraintKind;
+import ro.alacrity.kina.domain.Indexed;
 import ro.alacrity.kina.domain.MatchContext;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.PartFeatures;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -90,5 +92,15 @@ record SearchMatchContext(ParsedQuery query, PartFeatures part, Set<ConstraintKi
     @Override
     public boolean isHeader(String connectorType) {
         return ConnectorRecognizer.isHeader(connectorType);
+    }
+
+    @Override
+    public Integer requestedUsbClass(String standard) {
+        return FieldVocabulary.requestedUsbClass(standard);
+    }
+
+    @Override
+    public List<String> vocabulary(Indexed.Vocabulary vocabulary) {
+        return FieldVocabulary.vocabulary(vocabulary);
     }
 }

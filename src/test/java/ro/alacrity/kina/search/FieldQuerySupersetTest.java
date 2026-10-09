@@ -95,6 +95,7 @@ class FieldQuerySupersetTest {
 
     private static PostgreSQLContainer postgres;
     private static PartIndexRepository index;
+    private static JdbcClient postgresJdbc;
     private static Connection sqlite;
     private static final ParametricExtractor EXTRACTOR = new ParametricExtractor();
     private static final QueryParser PARSER = new QueryParser();
@@ -121,6 +122,7 @@ class FieldQuerySupersetTest {
                 postgres.getPassword());
         Flyway.configure().dataSource(ds).locations("classpath:db/migration").load().migrate();
         JdbcClient jdbc = JdbcClient.create(ds);
+        postgresJdbc = jdbc;
         OffsetDateTime now = Instant.parse("2026-10-08T00:00:00Z").atOffset(ZoneOffset.UTC);
         for (Part part : POOL.values()) {
             String json = MAPPER.writeValueAsString(part.asStored());
@@ -263,6 +265,18 @@ class FieldQuerySupersetTest {
             }
             if (!lite.equals(pg)) {
                 violations.add(text + " step " + step.index() + ": the dialects differ");
+            }
+            // PostgreSQL reads the first tier with the stated-only form: its first rows are the superset form's
+            for (int limit : List.of(1, 3)) {
+                FieldSql.Statement top = ro.alacrity.kina.search.field.PostgresFieldSql.INSTANCE.select(query, step,
+                        limit);
+                List<String> expectedTop = postgresJdbc.sql(top.sql()).params(top.params())
+                        .query((rs, n) -> PartKey.of(Distributor.valueOf(rs.getString(1)), rs.getString(2))).list();
+                List<String> actualTop = index.query(query, step, limit).stream()
+                        .map(h -> PartKey.of(h.distributor(), h.partNumber())).toList();
+                if (!actualTop.equals(expectedTop)) {
+                    violations.add(text + " step " + step.index() + ": the first " + limit + " rows differ");
+                }
             }
             // the stated-only form is exactly the first tier of the superset form: the rows that state every
             // requested column (review A9: one renderer for both forms)

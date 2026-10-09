@@ -80,7 +80,11 @@ class IndexTableDocumentationTest {
             }
             Indexed indexed = kind.indexed();
             if (indexed != null) {
-                assertThat(indexed.nullKept()).as(kind.name()).isTrue();
+                assertThat(indexed.vocabulary() != Indexed.Vocabulary.NONE).as("%s: vocabulary", kind)
+                        .isEqualTo(indexed.predicate() == Indexed.Predicate.IN_COMPATIBLE);
+                assertThat(ro.alacrity.kina.search.FieldVocabulary.vocabulary(indexed.vocabulary()).isEmpty())
+                        .as("%s: a declared vocabulary has values", kind)
+                        .isEqualTo(indexed.vocabulary() == Indexed.Vocabulary.NONE);
                 if (!indexed.javaOnly()) {
                     assertThat(IndexColumn.all(kind)).as("%s resolves to a column", kind).isNotEmpty();
                 }

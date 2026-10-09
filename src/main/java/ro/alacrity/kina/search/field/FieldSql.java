@@ -50,8 +50,10 @@ public abstract class FieldSql {
 
     /**
      * True for the stated-only form: every value predicate demands a stated, matching value instead of also keeping
-     * the rows that do not state it, and the requested ratings are stated (never compared). These are exactly the rows
-     * the superset form orders first (every requested column stated), in a form an index can seek.
+     * the rows that do not state it, and the requested ratings are those of the first tier of the dialect's order
+     * (SQLite: stated; PostgreSQL: stated and met). These are exactly the rows the superset form orders first, in the
+     * same order, in a form an index can seek: when they fill the limit they are the superset's first rows (review
+     * A8: the {@code col IS NULL OR} form cannot use the partial value indexes, PostgreSQL reads the family).
      */
     private final boolean statedOnly;
 
@@ -219,13 +221,17 @@ public abstract class FieldSql {
                 }
             }
         }
-        // the ratings only order: a part below spec stays a candidate for the Java check; the confirmed-only form
-        // selects the first tier, every rating stated (met or below spec)
+        // the ratings only order: a part below spec stays a candidate for the Java check. The stated-only form
+        // selects the first tier of the dialect's order: SQLite counts a stated rating (met or below spec) among the
+        // stated columns, PostgreSQL orders a rating that is stated and met first ({@link #rated})
         for (FieldPredicate p : query.ratings()) {
             if (ratingsStated()) {
                 stated.addAll(statedSql(p));
-                if (statedOnly) {
-                    inner.addAll(statedSql(p));
+            }
+            if (statedOnly) {
+                inner.addAll(statedSql(p));
+                if (!ratingsStated()) {
+                    inner.add(render(p, innerParams));
                 }
             }
         }

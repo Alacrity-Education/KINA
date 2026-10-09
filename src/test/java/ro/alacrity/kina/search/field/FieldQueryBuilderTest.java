@@ -3,6 +3,7 @@ package ro.alacrity.kina.search.field;
 import org.junit.jupiter.api.Test;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
+import ro.alacrity.kina.domain.Indexed;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.search.ConstraintPolicy;
 import ro.alacrity.kina.search.QueryParser;
@@ -113,6 +114,66 @@ class FieldQueryBuilderTest {
                 assertThat(stored).isBetween(r.low(), r.high());
             }
         }
+    }
+
+    /**
+     * The builder dispatches on the declared predicate of every kind (review A4): each predicate it emits is the form of
+     * its kind's {@code @Indexed} predicate, and every predicate form is reached by some request.
+     */
+    @Test
+    void everyPredicateIsTheFormOfItsDeclaration() {
+        List<String> queries = List.of("10uF X7R 0805 25V", "4.7k 1% 0603 resistor thin film", "Zener 3.3V SOD-123",
+                "ferrite bead 600 ohm 100MHz 0603", "USB-C receptacle 16 pin SMD USB 2.0",
+                "1x6 female header 2.54mm right angle THT", "40x40x10 fan 12V 3000rpm ball bearing",
+                "red LED 0603 20mA", "SPDT toggle switch solder lug illuminated", "6x6mm tactile switch SMD",
+                "chassis mount resistor 50W", "rotary switch 4 position", "LED 5mm warm white 3000K 120 degree",
+                "100uF 25V electrolytic D6.3x7.7mm");
+        java.util.Set<Indexed.Predicate> reached = java.util.EnumSet.noneOf(Indexed.Predicate.class);
+        for (String text : queries) {
+            for (FieldQuery.Group group : build(text).groups()) {
+                for (FieldPredicate p : group.predicates()) {
+                    if (p.kind() == null) {
+                        continue;
+                    }
+                    Indexed.Predicate declared = p.kind().indexed().predicate();
+                    reached.add(declared);
+                    assertThat(form(declared)).as("%s: %s", text, p).contains(p.getClass());
+                }
+            }
+        }
+        assertThat(reached).containsAll(java.util.EnumSet.complementOf(java.util.EnumSet.of(Indexed.Predicate.NONE)));
+    }
+
+    private static List<Class<? extends FieldPredicate>> form(Indexed.Predicate predicate) {
+        return switch (predicate) {
+            case RANGE -> List.of(Range.class);
+            case GTE -> List.of(AtLeast.class);
+            case LTE -> List.of(AtMost.class);
+            case EQUAL, JSONB_CONTAINS -> List.of(Equal.class);
+            case IN_COMPATIBLE -> List.of(OneOf.class, NoneOf.class);
+            case ARRAY_ANY -> List.of(FieldPredicate.AnyInRange.class);
+            case PACKAGE -> List.of(PackageIs.class);
+            case ABSENT -> List.of(FieldPredicate.Absent.class);
+            case NONE -> List.of();
+        };
+    }
+
+    /** Review A11: the declared package margin is the one applied, and it covers the can tolerance of the check. */
+    @Test
+    void theDeclaredPackageMarginCoversTheCanTolerance() {
+        double margin = ConstraintKind.PACKAGE.indexed().margin();
+        assertThat(margin).isGreaterThanOrEqualTo(ro.alacrity.kina.search.FieldVocabulary.canTolerance());
+        assertThat(predicate(build("100uF 25V electrolytic D6.3x7.7mm"), "H", ConstraintKind.PACKAGE, PackageIs.class)
+                .margin()).isEqualTo(margin);
+    }
+
+    @Test
+    void anImpedanceComparesItsTestFrequencyThroughTheDeclaredConditionColumn() {
+        FieldQuery q = build("ferrite bead 600 ohm 100MHz 0603");
+        List<Range> ranges = q.group("H").predicates().stream().filter(p -> p.kind() == ConstraintKind.VALUE)
+                .map(Range.class::cast).toList();
+        assertThat(ranges).extracting(r -> r.column().name()).containsExactly("impedance_ohm", "impedance_test_hz");
+        assertThat(ranges.get(1).low()).isCloseTo(100e6 * 0.985, within(1.0));
     }
 
     @Test

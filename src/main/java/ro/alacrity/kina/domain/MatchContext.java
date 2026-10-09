@@ -59,4 +59,10 @@ public interface MatchContext {
 
     /** Pin headers, female headers, box headers and gender-less headers. */
     boolean isHeader(String connectorType);
+
+    /** The speed class a request for USB {@code standard} needs at least, null for a name KINA does not know. */
+    Integer requestedUsbClass(String standard);
+
+    /** Every value of a vocabulary the field index compares ({@link Indexed#vocabulary()}). */
+    java.util.List<String> vocabulary(Indexed.Vocabulary vocabulary);
 }

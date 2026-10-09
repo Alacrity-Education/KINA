@@ -20,9 +20,6 @@ import java.util.Map;
  */
 public record IndexColumn(String name, String key, ColumnType type) {
 
-    /** The test frequency of an impedance (the condition of {@link ParsedQuery#IMPEDANCE}). */
-    public static final IndexColumn IMPEDANCE_TEST_HZ = new IndexColumn("impedance_test_hz", null, ColumnType.FLOAT8);
-
     /** A typed column. */
     public static IndexColumn of(String name, ColumnType type) {
         return new IndexColumn(name, null, type);
@@ -47,6 +44,12 @@ public record IndexColumn(String name, String key, ColumnType type) {
     public static IndexColumn of(PartAttribute attribute) {
         Indexed indexed = attribute == null ? null : attribute.indexed();
         return indexed == null ? null : of(indexed, 0);
+    }
+
+    /** The column of the condition of a {@link PartAttribute}'s value ({@link Indexed#condition()}), else null. */
+    public static IndexColumn condition(PartAttribute attribute) {
+        Indexed indexed = attribute == null ? null : attribute.indexed();
+        return indexed == null || indexed.condition().isEmpty() ? null : of(indexed.condition(), indexed.type());
     }
 
     /**
@@ -77,8 +80,43 @@ public record IndexColumn(String name, String key, ColumnType type) {
     }
 
     /**
+     * Every typed column the model declares, with its type, in declaration order: the columns of the rules of
+     * {@link ConstraintKind} ({@code family}, {@code package_key}, {@code voltages_v}...), the value columns of
+     * {@link PartAttribute} and their condition columns ({@code impedance_test_hz}). These are the typed columns of
+     * {@code part_index} besides its structural ones ({@code PartIndexSql}); the {@code attrs} keys are not columns.
+     *
+     * @throws IllegalStateException when two declarations give one column two types
+     */
+    public static Map<String, ColumnType> declared() {
+        Map<String, ColumnType> out = new LinkedHashMap<>();
+        for (ConstraintKind kind : ConstraintKind.values()) {
+            Indexed indexed = kind.indexed();
+            if (indexed != null && !indexed.javaOnly() && !indexed.column().isEmpty()
+                    && !Indexed.ATTRS.equals(indexed.column())) {
+                put(out, indexed.column(), indexed.type());
+            }
+        }
+        for (PartAttribute a : PartAttribute.VALUES) {
+            for (IndexColumn c : new IndexColumn[] {of(a), condition(a)}) {
+                if (c != null && !c.json()) {
+                    put(out, c.name(), c.type());
+                }
+            }
+        }
+        return out;
+    }
+
+    private static void put(Map<String, ColumnType> out, String column, ColumnType type) {
+        ColumnType before = out.putIfAbsent(column, type);
+        if (before != null && before != type) {
+            throw new IllegalStateException("part_index." + column + " is declared " + before + " and " + type);
+        }
+    }
+
+    /**
      * The columns a kind's rule reads for a request: its own column (and keys), or the column of the measure the
-     * request states for it ({@link ConstraintKind#indexMeasure}); empty when there is none.
+     * request states for it ({@link ConstraintKind#indexMeasure}) followed by the column of the measure's condition
+     * when it declares one; empty when there is none.
      */
     public static List<IndexColumn> of(ConstraintKind kind, ParsedQuery query) {
         Indexed indexed = kind.indexed();
@@ -88,8 +126,7 @@ public record IndexColumn(String name, String key, ColumnType type) {
         if (!indexed.column().isEmpty()) {
             return own(indexed);
         }
-        IndexColumn c = of(PartAttribute.indexedOf(kind.indexMeasure(query)));
-        return c == null ? List.of() : List.of(c);
+        return measure(PartAttribute.indexedOf(kind.indexMeasure(query)));
     }
 
     /** Every column a kind's rule can read (for the documentation table): its own, or those of its measures. */
@@ -103,12 +140,23 @@ public record IndexColumn(String name, String key, ColumnType type) {
         }
         List<IndexColumn> out = new ArrayList<>();
         for (String measure : kind.indexMeasures()) {
-            IndexColumn c = of(PartAttribute.indexedOf(measure));
-            if (c != null && !out.contains(c)) {
-                out.add(c);
+            for (IndexColumn c : measure(PartAttribute.indexedOf(measure))) {
+                if (!out.contains(c)) {
+                    out.add(c);
+                }
             }
         }
         return out;
+    }
+
+    /** The column of a measure, then the column of its condition when it declares one. */
+    private static List<IndexColumn> measure(PartAttribute attribute) {
+        IndexColumn value = of(attribute);
+        if (value == null) {
+            return List.of();
+        }
+        IndexColumn condition = condition(attribute);
+        return condition == null ? List.of(value) : List.of(value, condition);
     }
 
     private static List<IndexColumn> own(Indexed indexed) {
