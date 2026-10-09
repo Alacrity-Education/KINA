@@ -1008,13 +1008,13 @@ public enum ConstraintKind {
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 16, report = 7)
     @Overshoot(ratio = 2.0)
     @Overshoot(ratio = 3.0, families = CAPACITOR)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     VOLTAGE_RATING("voltage", ParsedQuery.VOLTAGE),
 
     /** A minimum (rated) current (every family but fuses). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 17, report = 8)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     CURRENT("current", ParsedQuery.CURRENT),
 
     /** The current of a fuse, within 2 %. */
@@ -1025,73 +1025,73 @@ public enum ConstraintKind {
     /** The current a fan draws: a maximum (a fan drawing more than requested is below spec). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 17, report = 8)
-    @Indexed(predicate = LTE, slack = 1e-6)
+    @Indexed(predicate = LTE, slack = Indexed.RATING_SLACK)
     MAX_CURRENT("current", ParsedQuery.CURRENT, ComponentFamily.FAN),
 
     /** A minimum saturation current (I_sat) of an inductor. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 18, report = 9)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     SATURATION_CURRENT("saturation current", ParsedQuery.SATURATION_CURRENT),
 
     /** A minimum power rating. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 19, report = 10)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     POWER("power", ParsedQuery.POWER),
 
     /** A minimum maximum operating temperature. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 20, report = 11)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     TEMPERATURE("temperature", ParsedQuery.TEMPERATURE),
 
     /** A minimum rated lifetime. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 21, report = 12)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     LIFETIME("lifetime", ParsedQuery.LIFETIME),
 
     /** A maximum DC resistance of an inductor or ferrite bead. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 22, report = 13)
-    @Indexed(predicate = LTE, slack = 1e-6)
+    @Indexed(predicate = LTE, slack = Indexed.RATING_SLACK)
     MAX_DCR("dcr", ParsedQuery.DCR),
 
     /** A minimum airflow of a fan (m³/h; CFM, m³/min and l/min are converted). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 34, report = 27)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     AIRFLOW("airflow", ParsedQuery.AIRFLOW),
 
     /** A minimum static pressure of a fan (Pa; mmH2O and inH2O are converted). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 35, report = 28)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     STATIC_PRESSURE("static pressure", ParsedQuery.STATIC_PRESSURE),
 
     /** A maximum noise of a fan (dBA). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 36, report = 29)
-    @Indexed(predicate = LTE, slack = 1e-6)
+    @Indexed(predicate = LTE, slack = Indexed.RATING_SLACK)
     NOISE("noise", ParsedQuery.NOISE),
 
     /** The forward voltage of an LED: a request value is a maximum (an LED that needs more is below spec). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 44, report = 36)
-    @Indexed(predicate = LTE, slack = 1e-6)
+    @Indexed(predicate = LTE, slack = Indexed.RATING_SLACK)
     FORWARD_VOLTAGE("forward voltage", ParsedQuery.FORWARD_VOLTAGE),
 
     /** A minimum luminous intensity of an LED (mcd, cd). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 45, report = 37)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     LUMINOUS_INTENSITY("luminous intensity", ParsedQuery.LUMINOUS_INTENSITY),
 
     /** A minimum luminous flux of an LED (lm). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 46, report = 38)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     LUMINOUS_FLUX("luminous flux", ParsedQuery.LUMINOUS_FLUX),
 
     /**
@@ -1157,7 +1157,7 @@ public enum ConstraintKind {
     /** A minimum mechanical life of a switch (cycles). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 59, report = 51)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     LIFE("life", ParsedQuery.LIFE),
 
     // ---------------------------------------------------------------- preferences and connector-only signals
