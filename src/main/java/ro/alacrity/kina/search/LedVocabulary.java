@@ -150,6 +150,11 @@ class LedVocabulary {
      * word (two different ones make a bi-colour LED, more a tri-colour one), a lens colour left out ({@code Blue Frosted
      * White Lens} is a blue LED); null when it names none.
      */
+    /** Every colour {@link #colour} can return, in vocabulary order (the field index refuses by this list). */
+    static List<String> colours() {
+        return COLOURS.stream().map(Map.Entry::getValue).distinct().toList();
+    }
+
     static String colour(String text) {
         if (text == null || text.isBlank()) {
             return null;
@@ -252,6 +257,11 @@ class LedVocabulary {
      * is an indicator LED (a plain emitter); a request's type is only what it says, and the plain words
      * ({@code indicator}, {@code status}) name no type of a request.
      */
+    /** Every LED type {@link #type} can return, in vocabulary order. */
+    static List<String> types() {
+        return TYPES.stream().map(Map.Entry::getValue).distinct().toList();
+    }
+
     static String type(String text, boolean partDefaults) {
         if (text != null) {
             for (Map.Entry<Pattern, String> t : TYPES) {

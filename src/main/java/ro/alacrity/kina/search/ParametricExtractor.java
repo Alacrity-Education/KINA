@@ -41,6 +41,21 @@ import java.util.regex.Pattern;
 @Component
 public class ParametricExtractor {
 
+    /**
+     * The version of the extraction the field index ({@code part_index.extractor_version}, DESIGN.md 3.8) was written
+     * with. Bump it with every change of what the extractor or {@link PartIndexRows} derive: rows of an older version
+     * are re-indexed in the background ({@code PartIndexReindexer}) and, until then, are kept by every rule but the
+     * family. {@code IndexVersionTest} fails when the extraction changes without a bump.
+     */
+    public static final int INDEX_VERSION = 1;
+
+    /**
+     * The SHA-256 of the extraction and the index rows of the evaluation set at {@link #INDEX_VERSION}
+     * ({@code IndexVersionTest}); change it together with the version.
+     */
+    public static final String INDEX_FINGERPRINT =
+            "2030428e0ed10389aac5b605ca2b5da61df03c1a9e6f823b451771a8ff2af6cd";
+
     public static final String CAPACITANCE = "Capacitance";
     public static final String RESISTANCE = "Resistance";
     public static final String INDUCTANCE = "Inductance";

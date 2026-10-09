@@ -335,6 +335,7 @@ public record KinaProperties(
      * @param lifecycle          ranking penalties for last-time-buy and supply-constrained parts
      * @param lowStockThreshold  a part with less stock than this (or less than twice the quantity) is
      *                           {@code low_stock} (DESIGN.md 3.4 "Quantity")
+     * @param fieldIndex         the field index of the cache ({@code part_index}, DESIGN.md 3.8)
      */
     public record Search(
             @DefaultValue("40") int candidateWindow,
@@ -346,7 +347,8 @@ public record KinaProperties(
             Map<String, List<String>> hardConstraints,
             @DefaultValue Quantity quantity,
             @DefaultValue Lifecycle lifecycle,
-            @DefaultValue("10") int lowStockThreshold) {
+            @DefaultValue("10") int lowStockThreshold,
+            @DefaultValue FieldIndex fieldIndex) {
 
         public static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
 
@@ -370,14 +372,92 @@ public record KinaProperties(
             quantity = quantity == null ? Quantity.DEFAULTS : quantity;
             lifecycle = lifecycle == null ? Lifecycle.DEFAULTS : lifecycle;
             lowStockThreshold = lowStockThreshold <= 0 ? DEFAULT_LOW_STOCK_THRESHOLD : lowStockThreshold;
+            fieldIndex = fieldIndex == null ? FieldIndex.DEFAULTS : fieldIndex;
+        }
+
+        /** Without the field index settings (its defaults). */
+        public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
+                      Duration maxRequestDuration, List<String> strictConstraints,
+                      Map<String, List<String>> hardConstraints, Quantity quantity, Lifecycle lifecycle,
+                      int lowStockThreshold) {
+            this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration,
+                    strictConstraints, hardConstraints, quantity, lifecycle, lowStockThreshold, null);
         }
 
         /** With the default hard constraints, penalties and low-stock threshold (tests). */
         public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
                       Duration maxRequestDuration) {
             this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration, null, null,
-                    null, null, DEFAULT_LOW_STOCK_THRESHOLD);
+                    null, null, DEFAULT_LOW_STOCK_THRESHOLD, null);
         }
+    }
+
+    /**
+     * {@code kina.search.field-index.*}: the field index of the Mouser and TME cache ({@code part_index}, DESIGN.md
+     * 3.8). The index is written with every cache write and re-indexed in the background in every mode; the mode only
+     * decides what a search does with it.
+     *
+     * @param mode            {@code off} (default): searches never read it; {@code shadow}: the field query runs next to
+     *                        the cached-search path and only logs and counts (no behaviour change); {@code augment} and
+     *                        {@code on}: the flows of phase B
+     * @param minVersion      rows indexed by an extractor older than this are kept by every rule but the family; 0:
+     *                        {@code ParametricExtractor.INDEX_VERSION} while older rows exist
+     * @param maxCandidates   rows one field query returns at most (default 100), and the most parts per distributor
+     *                        the ranking stage checks and ranks (the parts in front of the list first)
+     * @param reindexBatchSize rows the re-index job reads and writes at a time
+     * @param reindexEnabled  false: no re-index job at startup (the writer still writes)
+     * @param maxLiveCallsPerDistributor distributor calls (one per phrase, paging included) a search of the
+     *                        {@code on} mode may make at most per distributor (Mouser's quota is 1 000 calls a day)
+     * @param requireStatedConstraint true (default): a request whose field query holds nothing the request states
+     *                        (no free text, no part number, no constraint beyond the family: {@code mosfet}) never
+     *                        reads the index ({@code augment} adds nothing, {@code on} takes the cached-search path
+     *                        with reason {@code generic}); false: such a request reads the index too, which then
+     *                        returns the first {@code max-candidates} in-stock parts of the family
+     */
+    public record FieldIndex(@DefaultValue("off") FieldIndexMode mode, @DefaultValue("0") int minVersion,
+                             @DefaultValue("100") int maxCandidates, @DefaultValue("500") int reindexBatchSize,
+                             @DefaultValue("true") boolean reindexEnabled,
+                             @DefaultValue("2") int maxLiveCallsPerDistributor,
+                             @DefaultValue("true") boolean requireStatedConstraint) {
+
+        /** The default of {@code max-candidates}: 100 (DESIGN.md 3.8 "Candidate cap"). */
+        public static final int DEFAULT_MAX_CANDIDATES = 100;
+
+        public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, DEFAULT_MAX_CANDIDATES, 500,
+                true, 2, true);
+
+        @ConstructorBinding
+        public FieldIndex {
+            mode = mode == null ? FieldIndexMode.OFF : mode;
+            minVersion = Math.max(0, minVersion);
+            maxCandidates = maxCandidates <= 0 ? DEFAULT_MAX_CANDIDATES : maxCandidates;
+            reindexBatchSize = reindexBatchSize <= 0 ? 500 : reindexBatchSize;
+            maxLiveCallsPerDistributor = maxLiveCallsPerDistributor <= 0 ? 2 : maxLiveCallsPerDistributor;
+        }
+
+        /** Without the live-call cap (its default). */
+        public FieldIndex(FieldIndexMode mode, int minVersion, int maxCandidates, int reindexBatchSize,
+                          boolean reindexEnabled) {
+            this(mode, minVersion, maxCandidates, reindexBatchSize, reindexEnabled, 2, true);
+        }
+
+        /** With the live-call cap and the stated-constraint rule at its default. */
+        public FieldIndex(FieldIndexMode mode, int minVersion, int maxCandidates, int reindexBatchSize,
+                          boolean reindexEnabled, int maxLiveCallsPerDistributor) {
+            this(mode, minVersion, maxCandidates, reindexBatchSize, reindexEnabled, maxLiveCallsPerDistributor, true);
+        }
+    }
+
+    /** What a search does with the field index ({@code kina.search.field-index.mode}). */
+    public enum FieldIndexMode {
+        /** Never read by a search. */
+        OFF,
+        /** Read next to the cached-search path, logged and counted only. */
+        SHADOW,
+        /** The field query's candidates are added to a cached list (no new distributor calls). */
+        AUGMENT,
+        /** Field-first search with the phrase journal (DESIGN.md 3.2 "Field-first flow"). */
+        ON
     }
 
     /**
@@ -488,11 +568,42 @@ public record KinaProperties(
     public record Distributors(@DefaultValue Mouser mouser, @DefaultValue Tme tme) {
     }
 
+    /**
+     * {@code kina.distributors.<name>.quota}: the API limits the quota tracker shows as {@code used/limit}
+     * (DESIGN.md 3.7, 9.1, 9.2). Both windows slide. Unset or non-positive values take the distributor's default.
+     *
+     * @param perMinute requests per 60 seconds (Mouser 30; TME assumed 30, it publishes no limit)
+     * @param perDay    requests per 24 hours (Mouser 1000; TME assumed 2000)
+     */
+    public record Quota(Integer perMinute, Integer perDay) {
+
+        public static final Quota MOUSER_DEFAULT = new Quota(30, 1000);
+        public static final Quota TME_DEFAULT = new Quota(30, 2000);
+
+        static Quota orDefault(Quota quota, Quota defaults) {
+            if (quota == null) {
+                return defaults;
+            }
+            return new Quota(quota.perMinute == null || quota.perMinute <= 0 ? defaults.perMinute : quota.perMinute,
+                    quota.perDay == null || quota.perDay <= 0 ? defaults.perDay : quota.perDay);
+        }
+    }
+
     public record Mouser(
             String apiKey,
             @DefaultValue("https://api.mouser.com/api/v1") String baseUrl,
             @DefaultValue("50") int maxResultsPerSearch,
-            @DefaultValue("1") int maxPagesPerSearch) {
+            @DefaultValue("1") int maxPagesPerSearch,
+            @DefaultValue Quota quota) {
+
+        @ConstructorBinding
+        public Mouser {
+            quota = Quota.orDefault(quota, Quota.MOUSER_DEFAULT);
+        }
+
+        public Mouser(String apiKey, String baseUrl, int maxResultsPerSearch, int maxPagesPerSearch) {
+            this(apiKey, baseUrl, maxResultsPerSearch, maxPagesPerSearch, null);
+        }
 
         public boolean isConfigured() {
             return apiKey != null && !apiKey.isBlank();
@@ -516,15 +627,24 @@ public record KinaProperties(
             @DefaultValue("3") int maxPagesPerSearch,
             @DefaultValue({"CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE", "NOT_IN_OFFER",
                     "PRODUCT_BLOCKED", "INVALID", "BLOCKED_FOR_ZBL_*"})
-            List<String> excludedStatuses) {
+            List<String> excludedStatuses,
+            @DefaultValue Quota quota) {
 
         /** {@code product_status} values that mean the part does not ship now; such parts are dropped. */
         public static final List<String> DEFAULT_EXCLUDED_STATUSES =
                 List.of("CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE", "NOT_IN_OFFER",
                         "PRODUCT_BLOCKED", "INVALID", "BLOCKED_FOR_ZBL_*");
 
+        @ConstructorBinding
         public Tme {
             excludedStatuses = excludedStatuses == null ? DEFAULT_EXCLUDED_STATUSES : List.copyOf(excludedStatuses);
+            quota = Quota.orDefault(quota, Quota.TME_DEFAULT);
+        }
+
+        public Tme(String token, String secret, String country, String currency, String language, String baseUrl,
+                   int maxResultsPerSearch, int maxPagesPerSearch, List<String> excludedStatuses) {
+            this(token, secret, country, currency, language, baseUrl, maxResultsPerSearch, maxPagesPerSearch,
+                    excludedStatuses, null);
         }
 
         public boolean isConfigured() {
@@ -541,6 +661,13 @@ public record KinaProperties(
         }
     }
 
+    /**
+     * {@code kina.jlcpcb.*}.
+     *
+     * @param fieldIndex the typed table of the in-stock rows, in a sidecar file next to the JLCPCB file (DESIGN.md 9.3)
+     * @param poolSize   read-only connections to the JLCPCB file (default 4)
+     * @param poolWait   the longest a query waits for a free connection (default 10 s)
+     */
     public record Jlcpcb(
             @DefaultValue("./data/jlcpcb") Path dataDir,
             @DefaultValue("parts-fts5.db") String library,
@@ -548,11 +675,41 @@ public record KinaProperties(
             @DefaultValue("5d") Duration refreshAfter,
             @DefaultValue("1h") Duration checkInterval,
             @DefaultValue("200") int maxResultsPerSearch,
-            @DefaultValue("true") boolean autoDownload) {
+            @DefaultValue("true") boolean autoDownload,
+            @DefaultValue JlcpcbFieldIndex fieldIndex,
+            @DefaultValue("4") int poolSize,
+            @DefaultValue("10s") Duration poolWait) {
+
+        @ConstructorBinding
+        public Jlcpcb {
+            fieldIndex = fieldIndex == null ? new JlcpcbFieldIndex(false, 0) : fieldIndex;
+            poolSize = poolSize <= 0 ? 4 : poolSize;
+            poolWait = poolWait == null || poolWait.isNegative() || poolWait.isZero() ? Duration.ofSeconds(10) : poolWait;
+        }
+
+        /** Without the phase B settings (their defaults). */
+        public Jlcpcb(Path dataDir, String library, String baseUrl, Duration refreshAfter, Duration checkInterval,
+                      int maxResultsPerSearch, boolean autoDownload) {
+            this(dataDir, library, baseUrl, refreshAfter, checkInterval, maxResultsPerSearch, autoDownload, null, 4, null);
+        }
 
         /** {@code <data-dir>/<library>}. */
         public Path databaseFile() {
             return dataDir.resolve(library);
+        }
+    }
+
+    /**
+     * {@code kina.jlcpcb.field-index.*}.
+     *
+     * @param enabled build and use the typed table of the in-stock rows (phase B, DESIGN.md 9.3); false by default
+     * @param threads threads that extract the rows while the table is built; 0 (default): {@code min(16, cores)}
+     */
+    public record JlcpcbFieldIndex(@DefaultValue("false") boolean enabled, @DefaultValue("0") int threads) {
+
+        /** The thread count: {@code threads}, else {@code min(16, cores)}. */
+        public int effectiveThreads() {
+            return threads > 0 ? threads : Math.clamp(Runtime.getRuntime().availableProcessors(), 1, 16);
         }
     }
 }

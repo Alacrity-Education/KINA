@@ -46,6 +46,11 @@ final class ResponseAssembler {
         List<String> empty = new ArrayList<>();
         Map<String, Integer> emptyExcluded = new java.util.LinkedHashMap<>();
         int emptyBelowSpec = 0;
+        List<String> unconfirmed = new ArrayList<>();
+        Map<String, Integer> unconfirmedNames = new java.util.LinkedHashMap<>();
+        Map<String, Integer> unconfirmedExcluded = new java.util.LinkedHashMap<>();
+        int unconfirmedBelowSpec = 0;
+        boolean anyConfirmed = false;
         for (Distributor distributor : prepared.distributors()) {
             Fetched f = fetched.get(distributor);
             if (f == null) {
@@ -76,7 +81,20 @@ final class ResponseAssembler {
                 empty.add(distributor.name());
                 detail.forEach((k, v) -> emptyExcluded.merge(k, v, Integer::sum));
                 emptyBelowSpec += ranked.excludedBelowSpecBy(distributor);
+            } else if (understood && f.error() == null && exact != null && exact == 0) {
+                Map<String, Integer> names = unconfirmed(top, returned);
+                if (!names.isEmpty()) {
+                    // parts are returned, but every one leaves a stated constraint unverified: none confirms the
+                    // request (DESIGN.md 3.2 "Unconfirmed parts"); they stay flagged, the hint says so
+                    hint = policy.unconfirmedHint(parsed, List.of(distributor.name()), byFrequency(names), detail,
+                            ranked.excludedBelowSpecBy(distributor), request.allowBelowSpec());
+                    unconfirmed.add(distributor.name());
+                    names.forEach((k, v) -> unconfirmedNames.merge(k, v, Integer::sum));
+                    detail.forEach((k, v) -> unconfirmedExcluded.merge(k, v, Integer::sum));
+                    unconfirmedBelowSpec += ranked.excludedBelowSpecBy(distributor);
+                }
             }
+            anyConfirmed |= exact != null && exact > 0;
             Boolean requestedFound = null;
             if (parsed.namesPartNumber() && !(f.error() != null && top.isEmpty())) {
                 List<String> missing = parsed.partNumbers().stream()
@@ -109,13 +127,68 @@ final class ResponseAssembler {
                     .hint(hint)
                     .requestedPartFound(requestedFound)
                     .excludedBelowSpecDetail(ranked.belowSpecDetailBy(distributor))
+                    .fetchedLive(fetchedLive(f))
+                    .liveCalls(liveCalls(f))
+                    .fieldSteps(f.fieldSteps() == null ? 0 : f.fieldSteps())
                     .build());
         }
         String hint = !understood ? SearchResponse.NOT_UNDERSTOOD_HINT
-                : empty.isEmpty() ? null
-                : policy.hint(parsed, empty, emptyExcluded, emptyBelowSpec, request.allowBelowSpec());
+                : !empty.isEmpty() ? policy.hint(parsed, empty, emptyExcluded, emptyBelowSpec, request.allowBelowSpec())
+                : !unconfirmed.isEmpty() && !anyConfirmed
+                ? policy.unconfirmedHint(parsed, unconfirmed, byFrequency(unconfirmedNames), unconfirmedExcluded,
+                        unconfirmedBelowSpec, request.allowBelowSpec())
+                : null;
         return new SearchResponse(parsed.originalText(), ParsedQueryResponse.from(parsed), ranked.mode(), note,
                 results, understood, hint, SearchResponse.currenciesOf(results));
+    }
+
+    /**
+     * The constraints the returned in-stock parts leave unverified, with how many parts leave each, when every one of
+     * them leaves at least one (none confirms the request); empty otherwise.
+     */
+    static Map<String, Integer> unconfirmed(List<RankedPart> top, int returned) {
+        Map<String, Integer> names = new java.util.LinkedHashMap<>();
+        boolean any = false;
+        for (int i = 0; i < returned; i++) {
+            RankedPart r = top.get(i);
+            if (r.part().stock() <= 0) {
+                continue;
+            }
+            if (r.unverified().isEmpty()) {
+                return Map.of();
+            }
+            any = true;
+            r.unverified().forEach(n -> names.merge(n, 1, Integer::sum));
+        }
+        return any ? names : Map.of();
+    }
+
+    /** The keys of {@code counts}, the largest count first (ties in insertion order). */
+    private static List<String> byFrequency(Map<String, Integer> counts) {
+        return counts.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey).toList();
+    }
+
+    /**
+     * Whether the search called the distributor: {@code live_calls > 0} when the calls are counted (always in a
+     * search), else as the retrieval says, else from the cache status ({@code miss}, {@code partial} and
+     * {@code bypassed} called it).
+     */
+    static boolean fetchedLive(Fetched f) {
+        if (f.liveCalls() != null) {
+            return f.liveCalls() > 0;
+        }
+        if (f.fetchedLive() != null) {
+            return f.fetchedLive();
+        }
+        return f.cache() == ro.alacrity.kina.cache.CacheStatus.MISS
+                || f.cache() == ro.alacrity.kina.cache.CacheStatus.PARTIAL
+                || f.cache() == ro.alacrity.kina.cache.CacheStatus.BYPASSED;
+    }
+
+    /** The distributor search calls of the retrieval ({@code live_calls}): 0 when not counted. */
+    static int liveCalls(Fetched f) {
+        return f.liveCalls() == null ? 0 : f.liveCalls();
     }
 
     /**

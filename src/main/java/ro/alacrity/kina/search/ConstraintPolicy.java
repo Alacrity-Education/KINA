@@ -329,6 +329,23 @@ public final class ConstraintPolicy {
      */
     String hint(ParsedQuery query, List<String> distributors, Map<String, Integer> excludedBy, int belowSpec,
                 boolean allowBelowSpec) {
+        return hint(query, distributors, excludedBy, belowSpec, allowBelowSpec, null);
+    }
+
+    /**
+     * The hint of distributors whose parts all leave a stated constraint unverified (DESIGN.md 3.2 "Empty after the
+     * hard set", "Unconfirmed parts"): the wording of {@link #hint}, with the constraints none of the returned parts
+     * states. The parts are returned, flagged in {@code unverified}; none of them is a confirmed fit.
+     *
+     * @param unverified the constraints left unverified by the returned parts, most frequent first
+     */
+    String unconfirmedHint(ParsedQuery query, List<String> distributors, List<String> unverified,
+                           Map<String, Integer> excludedBy, int belowSpec, boolean allowBelowSpec) {
+        return hint(query, distributors, excludedBy, belowSpec, allowBelowSpec, unverified);
+    }
+
+    private String hint(ParsedQuery query, List<String> distributors, Map<String, Integer> excludedBy, int belowSpec,
+                        boolean allowBelowSpec, List<String> unverified) {
         List<String> names = new ArrayList<>();
         excludedBy.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()))
@@ -340,6 +357,11 @@ public final class ConstraintPolicy {
         }
         StringBuilder out = new StringBuilder("No in-stock ").append(describe(query)).append(" at ")
                 .append(joinAnd(distributors));
+        if (unverified != null) {
+            // parts are returned, but none of them confirms the request: each leaves a stated constraint unverified
+            out.append(" is confirmed: no part returned states its ").append(joinAnd(unverified))
+                    .append(" (listed in unverified; check the datasheet)");
+        }
         if (!names.isEmpty()) {
             out.append("; ").append(joinAnd(names)).append(names.size() == 1 ? " is" : " are")
                     .append(" never relaxed");

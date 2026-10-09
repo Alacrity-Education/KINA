@@ -42,19 +42,19 @@ public class KinaMcpTools {
             20mOhm", "uP1966E GaN half bridge gate driver", "40x40x10 fan 12V 3000rpm", "0603 red LED 20mA", \
             "SPDT toggle switch solder lug".
             Ratings (voltage, current, power, temperature, lifetime) are minimums: 25V also returns 35V and 50V \
-            parts, after the 25V ones (a fan's supply voltage is exact, its current and noise are maximums). A part whose known rating is below the request is never returned (counted in \
-            excluded_below_spec); pass allow_below_spec=true to see such parts, flagged below_spec and listed last.
+            parts, after the 25V ones (a fan's supply voltage is exact, its current and noise are maximums). A part \
+            whose known rating is below the request is never returned (counted in excluded_below_spec); \
+            allow_below_spec=true shows such parts, flagged below_spec and listed last.
             Hard constraints are never relaxed or substituted: the value, package, mounting, technology, component \
             type and polarity, connector type, gender, positions and pitch. A part that contradicts one is left out; \
-            a part that does not state it is kept and listed in unverified. An empty list with a hint means nothing \
-            met them: try another value or package. Only the dielectric, a looser tolerance, the package of an \
-            inductor, crystal or oscillator and a connector's orientation are relaxed, and only when nothing else is \
-            found (constraints_relaxed, mismatches).
+            one that does not state it is kept, listed in unverified. An empty list, or one where every part is \
+            unverified, comes with a hint: try another value or package. Only the dielectric, a looser tolerance, \
+            the package of an inductor, crystal or oscillator and a connector's orientation are relaxed, and only \
+            when nothing else is found (constraints_relaxed, mismatches).
             Packages are imperial: "0603" is imperial 0603; write "1608 metric" for a metric code.
             A part number in the query (parsed.part_numbers) is returned first in its distributor when it is listed \
             and meets the request; requested_part_found is false otherwise and the hint says why. A requested part \
-            the distributor lists without stock is still returned, last, with stock 0 and availability.status \
-            "out_of_stock".
+            listed without stock is still returned, last, with stock 0 and availability.status "out_of_stock".
             Judge a part by match (0..1 over the typed constraints the part states), mismatches and unverified, not \
             by score: match 1.0 with a non-empty unverified list is not a confirmed fit (check the datasheet). rank \
             orders the list.
@@ -63,7 +63,8 @@ public class KinaMcpTools {
             matching only (match is null): rephrase, or use get_part for a part number.
             For BOM work pass quantity (pieces to order): parts that cannot supply it rank last and each part gets \
             the order price. detail="full" adds score and the raw distributor attributes. Under rate limits KINA \
-            waits, so a call can take up to 2 minutes (rate_limit_waited_ms). Results are cached for 3 days.
+            waits, so a call can take up to 2 minutes (rate_limit_waited_ms). Results are cached for 3 days \
+            (live_calls 0: no distributor call).
             Field reference: docs/API.md in the KINA repository.""";
 
     static final String BATCH_DESCRIPTION = """
@@ -197,8 +198,9 @@ public class KinaMcpTools {
 
     @McpTool(name = "list_distributors", description = """
             List the distributors KINA can search with their state: configured, available, a detail line (for LCSC \
-            the JLCPCB database date and part count, or the download progress) and cached part counts; also the \
-            cache statistics, the ranking model state and usage counters. Does not call the distributor APIs.""",
+            the JLCPCB database date and part count, or the download progress), cached part counts and, for Mouser \
+            and TME, the API requests used against the per-minute and per-day quota; also the cache statistics, \
+            the ranking model state and usage counters. Does not call the distributor APIs.""",
             annotations = @McpTool.McpAnnotations(title = "List distributors", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = false))
     public DistributorStatusResponse listDistributors() {

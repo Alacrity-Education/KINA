@@ -16,6 +16,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ro.alacrity.kina.domain.Absence.PENALIZE;
+import static ro.alacrity.kina.domain.Indexed.ColumnType.BOOL;
+import static ro.alacrity.kina.domain.Indexed.ColumnType.FLOAT8;
+import static ro.alacrity.kina.domain.Indexed.ColumnType.FLOAT8_ARRAY;
+import static ro.alacrity.kina.domain.Indexed.ColumnType.INT2;
+import static ro.alacrity.kina.domain.Indexed.ColumnType.TEXT;
+import static ro.alacrity.kina.domain.Indexed.Predicate.ABSENT;
+import static ro.alacrity.kina.domain.Indexed.Predicate.ARRAY_ANY;
+import static ro.alacrity.kina.domain.Indexed.Predicate.GTE;
+import static ro.alacrity.kina.domain.Indexed.Predicate.IN_COMPATIBLE;
+import static ro.alacrity.kina.domain.Indexed.Predicate.JSONB_CONTAINS;
+import static ro.alacrity.kina.domain.Indexed.Predicate.LTE;
+import static ro.alacrity.kina.domain.Indexed.Predicate.RANGE;
 import static ro.alacrity.kina.domain.Match.Scope.CONNECTOR;
 import static ro.alacrity.kina.domain.Match.Scope.PART;
 import static ro.alacrity.kina.domain.Match.Scope.USB;
@@ -76,6 +88,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, allFamilies = true)
     @Match(mode = CUSTOM, weight = 0.05, order = 28, report = 17)
+    @Indexed(column = "family", type = TEXT, predicate = IN_COMPATIBLE)
     TYPE("type", ParsedQuery::family, PartFeatures::family) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -105,6 +118,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {TRANSISTOR, DEFAULT})
     @Match(mode = EQUAL, weight = 0.10, order = 12, report = 3)
+    @Indexed(column = "polarity", type = TEXT, predicate = Indexed.Predicate.EQUAL)
     POLARITY("polarity", ParsedQuery::polarity, PartFeatures::polarity),
 
     /**
@@ -114,6 +128,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, INDUCTOR, FERRITE, CRYSTAL, OSCILLATOR, DEFAULT})
     @Match(mode = WITHIN, tolerance = 0.01, weight = 0.30, order = 10, report = 1)
+    @Indexed(predicate = RANGE, slack = 0.015)
     VALUE("value", q -> {
         String primary = q.isConnector() ? null : primaryKind(q);
         return primary == null ? null : q.constraint(primary);
@@ -128,6 +143,18 @@ public enum ConstraintKind {
         public String reported(ParsedQuery q) {
             String primary = q.isConnector() ? null : primaryKind(q);
             return primary == null ? label() : primary.replace('_', ' ');
+        }
+
+        @Override
+        public String indexMeasure(ParsedQuery q) {
+            return q.isConnector() ? null : primaryKind(q);
+        }
+
+        @Override
+        public List<String> indexMeasures() {
+            List<String> measures = new ArrayList<>(PRIMARY_KINDS);
+            measures.add(ParsedQuery.FREQUENCY);
+            return List.copyOf(measures);
         }
 
         @Override
@@ -149,6 +176,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {DIODE, REGULATOR, FAN, DEFAULT})
     @Match(mode = CUSTOM, tolerance = 0.02, weight = 0.10, group = Match.RATING, order = 16, report = 7)
+    @Indexed(column = "voltages_v", type = FLOAT8_ARRAY, predicate = ARRAY_ANY, slack = 0.025)
     EXACT_VOLTAGE("voltage", ParsedQuery.VOLTAGE, ComponentFamily.REGULATOR, ComponentFamily.ZENER,
             ComponentFamily.FAN) {
         @Override
@@ -167,8 +195,19 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = CRYSTAL)
     @Match(mode = WITHIN, tolerance = 0.01, weight = 0.10, order = 13, report = 2)
+    @Indexed(predicate = RANGE, slack = 0.015)
     LOAD_CAPACITANCE("load capacitance", q -> isLoadCapacitance(q) ? q.constraint(ParsedQuery.CAPACITANCE) : null,
-            f -> f.measure(ParsedQuery.CAPACITANCE)),
+            f -> f.measure(ParsedQuery.CAPACITANCE)) {
+        @Override
+        public String indexMeasure(ParsedQuery q) {
+            return ParsedQuery.CAPACITANCE;
+        }
+
+        @Override
+        public List<String> indexMeasures() {
+            return List.of(ParsedQuery.CAPACITANCE);
+        }
+    },
 
     /**
      * The package: equivalent names (imperial chip codes, SOT-23-3 == SOT-23, can sizes within 0.2 mm); a package KINA
@@ -178,6 +217,7 @@ public enum ConstraintKind {
     @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, FERRITE, DIODE, LED, TRANSISTOR, REGULATOR,
             PolicyFamily.CONNECTOR, SWITCH, DEFAULT})
     @Match(mode = CUSTOM, weight = 0.20, order = 11, report = 4)
+    @Indexed(column = "package_key", type = TEXT, predicate = Indexed.Predicate.PACKAGE, margin = 0.25)
     PACKAGE("package", ParsedQuery::packageName, PartFeatures::packageName) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -193,6 +233,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, allFamilies = true)
     @Match(mode = EQUAL, weight = 0.05, scope = PART, order = 23, report = 15)
+    @Indexed(column = "mounting", type = TEXT, predicate = Indexed.Predicate.EQUAL)
     MOUNTING("mounting", ParsedQuery::mounting, PartFeatures::mounting) {
         @Override
         public Verdict conflict(MatchContext c) {
@@ -224,6 +265,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, INDUCTOR, TRANSISTOR, DEFAULT})
     @Match(mode = COMPATIBLE, weight = 0.15, order = 15, report = 6)
+    @Indexed(column = "technology", type = TEXT, predicate = IN_COMPATIBLE)
     TECHNOLOGY("technology", ParsedQuery::technology, PartFeatures::technology) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -248,6 +290,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, INDUCTOR, DEFAULT})
     @Match(mode = CUSTOM, weight = 0.10, order = 24, report = 16)
+    @Indexed(column = "form_factor", type = TEXT, predicate = IN_COMPATIBLE)
     FORM_FACTOR("form factor", ParsedQuery::formFactor, PartFeatures::formFactor) {
         @Override
         public Outcome score(MatchContext c, double weight) {
@@ -285,6 +328,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, FERRITE, DEFAULT})
     @Match(mode = CUSTOM, weight = 0, order = 27, report = 18)
+    @Indexed(column = "elements", type = INT2, predicate = ABSENT)
     ELEMENTS("elements", ParsedQuery::elements, PartFeatures::elements) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -330,6 +374,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = FAN)
     @Match(mode = CUSTOM, weight = 0.15, order = 30, report = 23)
+    @Indexed(column = Indexed.ATTRS, keys = {"fan_type", "fan_supply"}, type = TEXT, predicate = JSONB_CONTAINS)
     FAN_TYPE("fan type", q -> fanType(q.fan()), f -> fanType(f.fan())) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -365,6 +410,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = FAN)
     @Match(mode = CUSTOM, weight = 0.20, order = 31, report = 24)
+    @Indexed(column = Indexed.ATTRS, keys = {"frame_min", "frame_max"}, type = FLOAT8, predicate = RANGE, margin = 0.55)
     FRAME_SIZE("frame size", q -> q.fan() == null ? null : q.fan().frame(),
             f -> f.fan() == null ? null : f.fan().frame()) {
         @Override
@@ -393,6 +439,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = LED)
     @Match(mode = CUSTOM, weight = 0.10, order = 38, report = 30)
+    @Indexed(column = Indexed.ATTRS, keys = "led_type", type = TEXT, predicate = IN_COMPATIBLE)
     LED_TYPE("led type", q -> q.led() == null ? null : q.led().requestedType(),
             f -> f.led() == null ? null : f.led().type()) {
         @Override
@@ -419,6 +466,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = LED)
     @Match(mode = CUSTOM, weight = 0.20, order = 39, report = 31)
+    @Indexed(column = Indexed.ATTRS, keys = "colour", type = TEXT, predicate = IN_COMPATIBLE)
     COLOUR("colour", q -> q.led() == null ? null : q.led().colour(), f -> f.led() == null ? null : f.led().colour()) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -435,6 +483,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = LED)
     @Match(mode = CUSTOM, weight = 0.10, order = 40, report = 32)
+    @Indexed(predicate = RANGE, margin = 10.5)
     WAVELENGTH("wavelength", ParsedQuery.WAVELENGTH) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -450,6 +499,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.15, order = 48, report = 40)
+    @Indexed(column = Indexed.ATTRS, keys = "switch_type", type = TEXT, predicate = IN_COMPATIBLE)
     SWITCH_TYPE("switch type", q -> q.sw() == null ? null : q.sw().requestedType(),
             f -> f.sw() == null ? null : f.sw().type()) {
         @Override
@@ -472,6 +522,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.15, order = 49, report = 41)
+    @Indexed(column = Indexed.ATTRS, keys = {"contacts", "contacts_form"}, type = TEXT, predicate = JSONB_CONTAINS)
     CONTACTS("contacts", q -> q.sw() == null ? null : q.sw().contacts(),
             f -> f.sw() == null ? null : f.sw().contacts()) {
         @Override
@@ -496,6 +547,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.10, order = 50, report = 42)
+    @Indexed(javaOnly = true)
     SWITCH_FUNCTION("switch function", q -> q.sw() == null ? null : q.sw().function(),
             f -> f.sw() == null ? null : f.sw().function()) {
         @Override
@@ -516,6 +568,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.10, order = 51, report = 43)
+    @Indexed(column = Indexed.ATTRS, keys = "termination", type = TEXT, predicate = IN_COMPATIBLE)
     TERMINATION("termination", q -> q.sw() == null ? null : q.sw().termination(),
             f -> f.sw() == null ? null : f.sw().termination()) {
         @Override
@@ -537,6 +590,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.15, order = 52, report = 44)
+    @Indexed(column = Indexed.ATTRS, keys = {"size_min", "size_max"}, type = FLOAT8, predicate = RANGE, margin = 0.55)
     SWITCH_SIZE("switch size", q -> q.sw() == null ? null : q.sw().size(),
             f -> f.sw() == null ? null : f.sw().size()) {
         @Override
@@ -561,6 +615,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.15, order = 53, report = 45)
+    @Indexed(column = Indexed.ATTRS, keys = "hole_diameter", type = FLOAT8, predicate = RANGE, margin = 0.15)
     HOLE_DIAMETER("hole diameter", q -> q.sw() == null ? null : q.sw().holeDiameter(),
             f -> f.sw() == null ? null : f.sw().holeDiameter()) {
         @Override
@@ -585,6 +640,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = EQUAL, weight = 0.15, order = 54, report = 46)
+    @Indexed(column = Indexed.ATTRS, keys = "switch_positions", type = INT2, predicate = JSONB_CONTAINS)
     SWITCH_POSITIONS("switch positions", q -> q.sw() == null ? null : q.sw().positions(),
             f -> f.sw() == null ? null : f.sw().positions()) {
         @Override
@@ -597,6 +653,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.10, order = 55, report = 47)
+    @Indexed(column = Indexed.ATTRS, keys = "illuminated", type = BOOL, predicate = JSONB_CONTAINS)
     ILLUMINATION("illumination", q -> q.sw() != null && Boolean.TRUE.equals(q.sw().illuminated()) ? Boolean.TRUE : null,
             f -> f.sw() == null ? null : f.sw().illuminated()) {
         @Override
@@ -620,6 +677,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.USB)
     @Match(mode = CUSTOM, weight = 0.30, scope = USB, order = 1)
+    @Indexed(column = "usb_type", type = TEXT, predicate = Indexed.Predicate.EQUAL)
     USB_TYPE("usb type", ConstraintKind::usb, f -> null) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -663,6 +721,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.USB)
     @Match(mode = CUSTOM, weight = 0.20, scope = USB, order = 2)
+    @Indexed(column = "pin_configuration", type = INT2, predicate = Indexed.Predicate.EQUAL)
     PIN_CONFIGURATION("pin configuration", q -> usb(q) == null ? null : wantedPins(q), f -> null) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -706,6 +765,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.USB)
     @Match(mode = CUSTOM, weight = 0.20, scope = USB, order = 3)
+    @Indexed(column = "usb_class", type = INT2, predicate = GTE)
     USB_STANDARD("usb standard", usbWanted(Connector::usbStandard), f -> null) {
         @Override
         public Outcome score(MatchContext c, double weight) {
@@ -743,6 +803,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.CONNECTOR)
     @Match(mode = CUSTOM, weight = 0.10, scope = CONNECTOR, order = 7)
+    @Indexed(column = "connector_type", type = TEXT, predicate = IN_COMPATIBLE)
     CONNECTOR_TYPE("connector type", otherWanted(Connector::type), f -> null) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -782,12 +843,14 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.CONNECTOR)
     @Match(mode = EQUAL, weight = 0.30, scope = CONNECTOR, order = 1, report = 19)
+    @Indexed(column = "positions", type = INT2, predicate = Indexed.Predicate.EQUAL)
     POSITIONS("positions", otherWanted(Connector::positions), partConnector(Connector::positions)),
 
     /** The contact pitch, within 0.03 mm (2.54 mm == 0.1"). */
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.CONNECTOR)
     @Match(mode = CUSTOM, weight = 0.15, scope = CONNECTOR, order = 6, report = 21)
+    @Indexed(column = "pitch_mm", type = FLOAT8, predicate = RANGE, margin = 0.035)
     PITCH("pitch", otherWanted(Connector::pitchMm), partConnector(Connector::pitchMm)) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -805,6 +868,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {PolicyFamily.CONNECTOR, PolicyFamily.USB})
     @Match(mode = EQUAL, weight = 0.20, scope = CONNECTOR, order = 4, report = 20)
+    @Indexed(column = "gender", type = TEXT, predicate = Indexed.Predicate.EQUAL)
     GENDER("gender", anyWanted(Connector::gender), partConnector(Connector::gender)) {
         @Override
         public String mismatch(MatchContext c) {
@@ -815,6 +879,7 @@ public enum ConstraintKind {
     /** Right angle or vertical; for USB connectors scored as {@link #USB_ORIENTATION}. */
     @Relax(strategy = LADDER, order = 3)
     @Match(mode = EQUAL, weight = 0.15, scope = CONNECTOR, order = 5, report = 22)
+    @Indexed(column = "orientation", type = TEXT, predicate = Indexed.Predicate.EQUAL)
     ORIENTATION("orientation", anyWanted(Connector::orientation),
             partConnector(Connector::orientation)) {
         @Override
@@ -831,6 +896,7 @@ public enum ConstraintKind {
     /** The ceramic dielectric (C0G == NP0). */
     @Relax(strategy = LADDER, order = 0)
     @Match(mode = EQUAL_IGNORE_CASE, weight = 0.15, order = 14, report = 5)
+    @Indexed(column = "dielectric", type = TEXT, predicate = Indexed.Predicate.EQUAL)
     DIELECTRIC("dielectric", ParsedQuery::dielectric, PartFeatures::dielectric) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -841,6 +907,7 @@ public enum ConstraintKind {
     /** The tolerance: the part's is at most the requested one. */
     @Relax(strategy = LADDER, order = 2)
     @Match(mode = CUSTOM, weight = 0.10, order = 26, report = 14)
+    @Indexed(predicate = LTE, margin = 1e-6)
     TOLERANCE("tolerance", ParsedQuery.TOLERANCE) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -855,14 +922,17 @@ public enum ConstraintKind {
 
     /** A TCR preference: a policy name only (not matched). */
     @Relax(strategy = LADDER, order = 4)
+    @Indexed(javaOnly = true)
     TCR("tcr", q -> null, f -> null),
 
     /** An ESR preference: a policy name only (not matched). */
     @Relax(strategy = LADDER, order = 5)
+    @Indexed(javaOnly = true)
     ESR("esr", q -> null, f -> null),
 
     /** A DCR preference: a policy name only; the maximum DCR is {@link #MAX_DCR}, "low DCR" is {@link #LOW_DCR}. */
     @Relax(strategy = LADDER, order = 6)
+    @Indexed(javaOnly = true)
     DCR("dcr", q -> null, f -> null),
 
     /**
@@ -872,12 +942,14 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = LADDER, order = 7, families = FAN)
     @Match(mode = WITHIN, tolerance = 0.15, weight = 0.10, order = 32, report = 25)
+    @Indexed(predicate = RANGE, slack = 0.16)
     SPEED("speed", ParsedQuery.SPEED),
 
     /** The bearing of a fan (ball, sleeve, fluid dynamic...): a preference; a different one is a mismatch. */
     @Relax(strategy = SOFT)
     @Relax(strategy = LADDER, order = 8, families = FAN)
     @Match(mode = EQUAL, weight = 0.05, order = 33, report = 26)
+    @Indexed(column = Indexed.ATTRS, keys = "bearing", type = TEXT, predicate = JSONB_CONTAINS)
     BEARING("bearing", q -> q.fan() == null ? null : q.fan().bearing(),
             f -> f.fan() == null ? null : f.fan().bearing()),
 
@@ -885,6 +957,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = LADDER, order = 9, families = LED)
     @Match(mode = EQUAL, weight = 0.05, order = 41, report = 33)
+    @Indexed(column = Indexed.ATTRS, keys = "lens", type = TEXT, predicate = JSONB_CONTAINS)
     LENS("lens", q -> q.led() == null ? null : q.led().lens(), f -> f.led() == null ? null : f.led().lens()),
 
     /**
@@ -894,6 +967,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = LADDER, order = 10, families = LED)
     @Match(mode = CUSTOM, weight = 0.05, order = 42, report = 34)
+    @Indexed(predicate = RANGE, margin = 15.5)
     VIEWING_ANGLE("viewing angle", ParsedQuery.VIEWING_ANGLE) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -908,6 +982,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = LADDER, order = 11, families = LED)
     @Match(mode = CUSTOM, weight = 0.10, order = 43, report = 35)
+    @Indexed(predicate = RANGE, margin = 300.5)
     COLOUR_TEMPERATURE("colour temperature", ParsedQuery.COLOUR_TEMPERATURE) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -919,6 +994,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = LADDER, order = 12, families = SWITCH)
     @Match(mode = WITHIN, tolerance = 0.20, weight = 0.05, order = 57, report = 49)
+    @Indexed(predicate = RANGE, slack = 0.21)
     FORCE("force", ParsedQuery.FORCE),
 
     // ---------------------------------------------------------------- ratings (not in the policy table)
@@ -932,11 +1008,13 @@ public enum ConstraintKind {
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 16, report = 7)
     @Overshoot(ratio = 2.0)
     @Overshoot(ratio = 3.0, families = CAPACITOR)
+    @Indexed(predicate = GTE, slack = 1e-6)
     VOLTAGE_RATING("voltage", ParsedQuery.VOLTAGE),
 
     /** A minimum (rated) current (every family but fuses). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 17, report = 8)
+    @Indexed(predicate = GTE, slack = 1e-6)
     CURRENT("current", ParsedQuery.CURRENT),
 
     /** The current of a fuse, within 2 %. */
@@ -947,61 +1025,73 @@ public enum ConstraintKind {
     /** The current a fan draws: a maximum (a fan drawing more than requested is below spec). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 17, report = 8)
+    @Indexed(predicate = LTE, slack = 1e-6)
     MAX_CURRENT("current", ParsedQuery.CURRENT, ComponentFamily.FAN),
 
     /** A minimum saturation current (I_sat) of an inductor. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 18, report = 9)
+    @Indexed(predicate = GTE, slack = 1e-6)
     SATURATION_CURRENT("saturation current", ParsedQuery.SATURATION_CURRENT),
 
     /** A minimum power rating. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 19, report = 10)
+    @Indexed(predicate = GTE, slack = 1e-6)
     POWER("power", ParsedQuery.POWER),
 
     /** A minimum maximum operating temperature. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 20, report = 11)
+    @Indexed(predicate = GTE, slack = 1e-6)
     TEMPERATURE("temperature", ParsedQuery.TEMPERATURE),
 
     /** A minimum rated lifetime. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 21, report = 12)
+    @Indexed(predicate = GTE, slack = 1e-6)
     LIFETIME("lifetime", ParsedQuery.LIFETIME),
 
     /** A maximum DC resistance of an inductor or ferrite bead. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 22, report = 13)
+    @Indexed(predicate = LTE, slack = 1e-6)
     MAX_DCR("dcr", ParsedQuery.DCR),
 
     /** A minimum airflow of a fan (m³/h; CFM, m³/min and l/min are converted). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 34, report = 27)
+    @Indexed(predicate = GTE, slack = 1e-6)
     AIRFLOW("airflow", ParsedQuery.AIRFLOW),
 
     /** A minimum static pressure of a fan (Pa; mmH2O and inH2O are converted). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 35, report = 28)
+    @Indexed(predicate = GTE, slack = 1e-6)
     STATIC_PRESSURE("static pressure", ParsedQuery.STATIC_PRESSURE),
 
     /** A maximum noise of a fan (dBA). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 36, report = 29)
+    @Indexed(predicate = LTE, slack = 1e-6)
     NOISE("noise", ParsedQuery.NOISE),
 
     /** The forward voltage of an LED: a request value is a maximum (an LED that needs more is below spec). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 44, report = 36)
+    @Indexed(predicate = LTE, slack = 1e-6)
     FORWARD_VOLTAGE("forward voltage", ParsedQuery.FORWARD_VOLTAGE),
 
     /** A minimum luminous intensity of an LED (mcd, cd). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 45, report = 37)
+    @Indexed(predicate = GTE, slack = 1e-6)
     LUMINOUS_INTENSITY("luminous intensity", ParsedQuery.LUMINOUS_INTENSITY),
 
     /** A minimum luminous flux of an LED (lm). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 46, report = 38)
+    @Indexed(predicate = GTE, slack = 1e-6)
     LUMINOUS_FLUX("luminous flux", ParsedQuery.LUMINOUS_FLUX),
 
     /**
@@ -1010,6 +1100,7 @@ public enum ConstraintKind {
      */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 16, report = 7)
+    @Indexed(javaOnly = true)
     SWITCH_VOLTAGE("voltage", ParsedQuery.VOLTAGE, ComponentFamily.SWITCH) {
         @Override
         public Object actual(ParsedQuery q, PartFeatures f) {
@@ -1053,6 +1144,7 @@ public enum ConstraintKind {
     /** A minimum ingress protection of a switch: IP67 satisfies IP65 (both digits at least the request's). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 58, report = 50)
+    @Indexed(javaOnly = true)
     IP_RATING("ip rating", ParsedQuery.IP_RATING) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -1065,6 +1157,7 @@ public enum ConstraintKind {
     /** A minimum mechanical life of a switch (cycles). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 59, report = 51)
+    @Indexed(predicate = GTE, slack = 1e-6)
     LIFE("life", ParsedQuery.LIFE),
 
     // ---------------------------------------------------------------- preferences and connector-only signals
@@ -1135,6 +1228,7 @@ public enum ConstraintKind {
     /** Rows of a connector: a different row count costs the weight, the same earns nothing. */
     @Relax(strategy = SOFT)
     @Match(mode = CUSTOM, weight = 0.10, scope = CONNECTOR, order = 2)
+    @Indexed(column = "rows_count", type = INT2, predicate = Indexed.Predicate.EQUAL)
     ROWS("rows", otherWanted(Connector::rows), partConnector(Connector::rows)) {
         @Override
         public Outcome score(MatchContext c, double weight) {
@@ -1259,6 +1353,7 @@ public enum ConstraintKind {
     private List<Relax> relax;
     private Match match;
     private List<Overshoot> overshoot;
+    private Indexed indexed;
 
     ConstraintKind(String label, Function<ParsedQuery, Object> wanted, Function<PartFeatures, Object> actual) {
         this.label = label;
@@ -1309,6 +1404,7 @@ public enum ConstraintKind {
             k.relax = List.of(field.getAnnotationsByType(Relax.class));
             k.match = field.getAnnotation(Match.class);
             k.overshoot = List.of(field.getAnnotationsByType(Overshoot.class));
+            k.indexed = field.getAnnotation(Indexed.class);
             k.validate();
         }
         List<ConstraintKind> policy = new ArrayList<>();
@@ -1374,6 +1470,10 @@ public enum ConstraintKind {
         if (match != null && match.mode() == FEATURE && isPolicyKind()) {
             throw new IllegalStateException(this + ": a FEATURE kind never excludes a part");
         }
+        if (indexed != null && (!indexed.nullKept()
+                || indexed.javaOnly() == (indexed.predicate() != Indexed.Predicate.NONE))) {
+            throw new IllegalStateException(this + ": @Indexed keeps NULL columns and is either a predicate or Java only");
+        }
         if (!overshoot.isEmpty() && (match == null || match.mode() != AT_LEAST
                 || overshoot.stream().filter(o -> o.families().length == 0).count() != 1)) {
             throw new IllegalStateException(this + ": @Overshoot needs an AT_LEAST rating and one general declaration");
@@ -1393,6 +1493,27 @@ public enum ConstraintKind {
     /** The matching rule, null for a kind that is a policy name only ({@link #TCR}, {@link #ESR}, {@link #DCR}). */
     public Match match() {
         return match;
+    }
+
+    /**
+     * The field index rule (DESIGN.md 3.8), null for a kind that is never in SQL (soft kinds and preferences: they
+     * rank, they never exclude).
+     */
+    public Indexed indexed() {
+        return indexed;
+    }
+
+    /**
+     * The {@link ParsedQuery} measure whose column a rule without its own {@link Indexed#column()} reads for this
+     * request: the kind's measure; the primary value of the request for {@link #VALUE}; null when there is none.
+     */
+    public String indexMeasure(ParsedQuery q) {
+        return measure;
+    }
+
+    /** Every measure {@link #indexMeasure} can return (the columns of the rule), empty when the kind has none. */
+    public List<String> indexMeasures() {
+        return measure == null ? List.of() : List.of(measure);
     }
 
     /** The score weight of the kind ({@link Match#weight()}), 0 when it is not matched. */

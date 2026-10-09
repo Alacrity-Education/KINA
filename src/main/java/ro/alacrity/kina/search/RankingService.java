@@ -345,10 +345,11 @@ public class RankingService {
         Map<Distributor, List<Part>> sorted = new EnumMap<>(Distributor.class);
         int qty = opts.quantity();
         boolean understood = query.understood();
+        int cap = properties.search().fieldIndex().maxCandidates();
         try {
             input.forEach((distributor, parts) -> {
                 List<Part> kept = new ArrayList<>();
-                for (Part p : dedupe(parts)) {
+                for (Part p : capped(dedupe(parts), cap)) {
                     ConstraintPolicy.Result check = safeCheck(query, p);
                     List<String> naming = PartNumbers.requestedBy(query, p);
                     // a requested part listed without stock (stock 0) is not part of fetched: never counted
@@ -395,7 +396,7 @@ public class RankingService {
             sorted.clear();
             tiers.clear();
             distances.clear();
-            input.forEach((distributor, parts) -> sorted.put(distributor, dedupe(parts)));
+            input.forEach((distributor, parts) -> sorted.put(distributor, capped(dedupe(parts), cap)));
             return annotate(fallback(sorted, det, tiers, "ranking failed: " + e.getClass().getSimpleName()),
                     assessments, understood).withExcluded(excluded, excludedBelowSpec, detail,
                     belowSpecDetail(belowSpecLeftOut), requestedLeftOut);
@@ -756,6 +757,29 @@ public class RankingService {
             log.warn("deterministic scoring failed for {}", PartKey.of(part), e);
             return new DeterministicRanker.Assessment(0.0, 0.0);
         }
+    }
+
+    /**
+     * At most {@code cap} in-stock parts of a distributor, in list order, and every requested part listed without
+     * stock (DESIGN.md 3.8 "Candidate cap": {@code kina.search.field-index.max-candidates}). The parts after the cap are
+     * neither checked nor counted: the field paths put the distributor's answer and the cached list first, so only
+     * index candidates are cut. The cached-search lists hold at most a fetch window (50) and are never cut.
+     */
+    static List<Part> capped(List<Part> parts, int cap) {
+        if (cap <= 0 || parts.size() <= cap) {
+            return parts;
+        }
+        List<Part> out = new ArrayList<>(Math.min(parts.size(), cap + 4));
+        int inStock = 0;
+        for (Part p : parts) {
+            if (p.stock() <= 0) {
+                out.add(p);
+            } else if (inStock < cap) {
+                out.add(p);
+                inStock++;
+            }
+        }
+        return out;
     }
 
     private static List<Part> dedupe(List<Part> parts) {

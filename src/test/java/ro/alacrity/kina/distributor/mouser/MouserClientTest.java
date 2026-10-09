@@ -10,6 +10,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
@@ -55,14 +56,17 @@ class MouserClientTest {
     }
 
     private final FakeTime time = new FakeTime(NOW);
+    private ApiQuotaTracker quota;
 
     private MouserClient client(int maxResultsPerSearch) {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
         MouserApi api = new MouserApi(builder, BASE + "/", API_KEY, time.retry(Distributor.MOUSER, 0.5));
+        quota = TestWiring.wire(new ApiQuotaTracker(), "properties", TestWiring.properties("kina.distributors.mouser"
+                + ".quota.per-minute", "30"), "clock", time.clock());
         return TestWiring.wire(new MouserClient(), "properties", TestWiring.properties(new KinaProperties.Distributors(
                 new KinaProperties.Mouser(API_KEY, BASE, maxResultsPerSearch, 1), null)),
-                "api", api, "clock", Clock.fixed(NOW, ZoneOffset.UTC));
+                "api", api, "clock", Clock.fixed(NOW, ZoneOffset.UTC), "quota", quota);
     }
 
     private static final String TOO_MANY_REQUESTS_BODY = """
@@ -179,6 +183,56 @@ class MouserClientTest {
         server.expect(requestTo(KEYWORD_URL)).andRespond(withSuccess(TOO_MANY_REQUESTS_BODY, MediaType.APPLICATION_JSON));
 
         assertKind(() -> client.search("x", 0, 10), Kind.RATE_LIMITED);
+    }
+
+    // ---- API quota (DESIGN.md 3.7) ----
+
+    @Test
+    void everyHttpRequestCountsOnceInTheQuota() {
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.KEYWORD), MediaType.APPLICATION_JSON));
+        server.expect(requestTo(PART_URL))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.KEYWORD), MediaType.APPLICATION_JSON));
+        server.expect(requestTo(KEYWORD_URL)).andRespond(withException(new HttpTimeoutException("request timed out")));
+
+        client.search("10uF X7R 0805", 0, 5);
+        client.getPart("603-CC0805MKX77BB106");
+        assertThat(quota.used(Distributor.MOUSER, ApiQuotaTracker.Window.MINUTE)).isEqualTo(2);
+        assertKind(() -> client.search("x", 0, 10), Kind.TIMEOUT);
+
+        assertThat(quota.used(Distributor.MOUSER, ApiQuotaTracker.Window.MINUTE)).isEqualTo(3);
+        assertThat(quota.used(Distributor.MOUSER, ApiQuotaTracker.Window.DAY)).isEqualTo(3);
+        assertThat(quota.used(Distributor.TME, ApiQuotaTracker.Window.DAY)).isZero();
+        assertThat(quota.limit(Distributor.MOUSER, ApiQuotaTracker.Window.DAY)).isEqualTo(1000);
+        assertThat(quota.throttledUntil(Distributor.MOUSER)).isNull();
+    }
+
+    @Test
+    void anEmptyQueryAndACooldownSendNoRequestAndCountNothing() {
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "3"));
+
+        client.search(" ", 0, 10);
+        assertKind(() -> client.search("x", 0, 10), Kind.RATE_LIMITED);
+        assertThat(quota.used(Distributor.MOUSER, ApiQuotaTracker.Window.MINUTE)).isEqualTo(1);
+        // the cool-down fails the next call fast, without an HTTP request
+        assertKind(() -> client.search("x", 0, 10), Kind.RATE_LIMITED);
+
+        assertThat(quota.used(Distributor.MOUSER, ApiQuotaTracker.Window.MINUTE)).isEqualTo(1);
+        assertThat(quota.throttledUntil(Distributor.MOUSER)).isEqualTo(NOW.plusSeconds(3));
+    }
+
+    @Test
+    void aRetryAfterARateLimitIsAnotherRequest() {
+        server.expect(requestTo(KEYWORD_URL)).andRespond(withSuccess(TOO_MANY_REQUESTS_BODY, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(KEYWORD_URL))
+                .andRespond(withSuccess(MouserFixtures.text(MouserFixtures.KEYWORD), MediaType.APPLICATION_JSON));
+
+        client.search("10uF X7R 0805", 0, 5, time.deadline(Duration.ofMinutes(2)));
+
+        assertThat(quota.used(Distributor.MOUSER, ApiQuotaTracker.Window.MINUTE)).isEqualTo(2);
+        // the backoff has been waited out, so the rate limit is over
+        assertThat(quota.throttledUntil(Distributor.MOUSER)).isNull();
     }
 
     // ---- rate limiting (DESIGN.md 3.6) ------------------------------------------------------------------------------

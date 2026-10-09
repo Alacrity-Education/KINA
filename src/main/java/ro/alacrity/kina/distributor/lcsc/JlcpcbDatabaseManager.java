@@ -49,15 +49,20 @@ public class JlcpcbDatabaseManager {
     @Autowired private JlcpcbDownloader downloader;
     @Autowired private JlcpcbDatabaseRepository repository;
     @Autowired private JlcpcbSqliteSearch search;
+    /** Builds the typed table; null in tests that do not need it (the table is then never built). */
+    @Autowired(required = false) private JlcpcbFieldIndexBuilder indexBuilder;
     @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
     private Clock clock = Clock.systemUTC();
     private KinaProperties.Jlcpcb config;
 
     private final AtomicBoolean downloading = new AtomicBoolean();
+    private final AtomicBoolean indexing = new AtomicBoolean();
+    private volatile Thread indexThread;
     private final Object checkLock = new Object();
     private volatile Thread downloadThread;
     private volatile JlcpcbDatabaseInfo current;
     private volatile String lastError;
+    private volatile String indexFailure;
 
     @PostConstruct
     void init() {
@@ -86,7 +91,11 @@ public class JlcpcbDatabaseManager {
                     startDownload();
                 } else {
                     log.info("JLCPCB database needs a download but kina.jlcpcb.auto-download is false");
+                    // the existing file keeps serving, so it gets its typed table (no-op when the file is missing)
+                    startIndexBuild();
                 }
+            } else {
+                startIndexBuild();
             }
         } catch (RuntimeException e) {
             lastError = e.getMessage();
@@ -152,8 +161,68 @@ public class JlcpcbDatabaseManager {
         }
     }
 
+    /**
+     * Builds the typed table of the file in use in the background when it is enabled and missing or not current (an
+     * adopted file, a new extractor version, an interrupted refresh), while the FTS path serves. Never runs next to a
+     * download (that builds its own).
+     */
+    boolean startIndexBuild() {
+        if (!config.fieldIndex().enabled() || indexBuilder == null || downloading.get()
+                || !Files.isRegularFile(search.databaseFile()) || search.fieldIndexAvailable()) {
+            return false;
+        }
+        if (!indexing.compareAndSet(false, true)) {
+            return false;
+        }
+        indexThread = Thread.ofVirtual().name("jlcpcb-index").start(() -> {
+            try {
+                runIndexBuild();
+            } finally {
+                indexing.set(false);
+                indexThread = null;
+            }
+        });
+        return true;
+    }
+
+    /** Builds the sidecar for the current file and swaps it in under the search write lock. Runs on its own thread. */
+    void runIndexBuild() {
+        Path main = search.databaseFile();
+        Path built = FieldIndexFile.sidecar(config.dataDir().resolve("tmp").resolve(main.getFileName()));
+        try {
+            Files.createDirectories(built.getParent());
+            log.info("Building the typed table of {} (the FTS path serves meanwhile)", main);
+            JlcpcbFieldIndexBuilder.Built result = indexBuilder.buildAndWarm(main, built);
+            search.replaceDatabase(() -> downloader.installIndex(built, search.indexFile()));
+            indexFailure = null;
+            lastError = null;
+            log.info("Typed table ready: {} rows, {} MB", result.rows(), result.sizeBytes() / (1024 * 1024));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.info("Typed table build interrupted");
+            deleteQuietly(built);
+        } catch (IOException | RuntimeException e) {
+            indexFailure = "typed table: " + e.getMessage();
+            lastError = indexFailure;
+            log.warn("Building the typed table failed: {}", e.toString());
+            deleteQuietly(built);
+        }
+    }
+
+    private static void deleteQuietly(Path file) {
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            log.debug("Cannot delete {}", file, e);
+        }
+    }
+
     /** Starts a background download unless one is already running. */
     boolean startDownload() {
+        if (indexing.get()) {
+            log.debug("typed table build running, the download waits for the next check");
+            return false;
+        }
         if (!downloading.compareAndSet(false, true)) {
             log.debug("JLCPCB download already running");
             return false;
@@ -180,11 +249,17 @@ public class JlcpcbDatabaseManager {
         try {
             JlcpcbDownloader.DownloadedDatabase downloaded =
                     downloader.download(config.baseUrl(), config.library(), config.dataDir());
-            search.replaceDatabase(() -> downloader.install(downloaded, target));
+            Path builtIndex = buildIndex(downloaded);
+            search.replaceDatabase(() -> {
+                downloader.install(downloaded, target);
+                if (builtIndex != null) {
+                    downloader.installIndex(builtIndex, search.indexFile());
+                }
+            });
             JlcpcbDatabaseInfo info = new JlcpcbDatabaseInfo(config.library(), target.toString(), clock.instant(),
                     downloaded.metadata().sizeBytes(), downloaded.metadata().partCount(), downloaded.metadata().sourceDate());
             current = info;
-            lastError = null;
+            lastError = indexFailure;   // the new file serves; a failed typed table stays visible until the next build
             repository.save(info);
             metrics.jlcpcbDownload("ok");
         } catch (InterruptedException e) {
@@ -198,6 +273,29 @@ public class JlcpcbDatabaseManager {
             metrics.jlcpcbDownload("failed");
             log.warn("JLCPCB database download failed: {}", e.toString());
             downloader.cleanTemp(config.dataDir(), config.library());
+        }
+    }
+
+    /**
+     * The typed table of a freshly downloaded file, built next to it before the rename; null when it is disabled or
+     * the build failed (the new file then serves through the FTS path until the next check builds the table).
+     */
+    private Path buildIndex(JlcpcbDownloader.DownloadedDatabase downloaded) throws InterruptedException {
+        if (!config.fieldIndex().enabled() || indexBuilder == null) {
+            return null;
+        }
+        Path built = FieldIndexFile.sidecar(downloaded.file());
+        indexFailure = null;
+        try {
+            JlcpcbFieldIndexBuilder.Built result = indexBuilder.buildAndWarm(downloaded.file(), built);
+            log.info("Typed table of the new file ready: {} rows, {} MB", result.rows(), result.sizeBytes() / (1024 * 1024));
+            return built;
+        } catch (IOException | RuntimeException e) {
+            indexFailure = "typed table: " + e.getMessage();
+            lastError = indexFailure;
+            log.warn("Building the typed table of the new file failed, installing the file without it: {}", e.toString());
+            deleteQuietly(built);
+            return null;
         }
     }
 
@@ -216,14 +314,23 @@ public class JlcpcbDatabaseManager {
                 info == null ? null : info.partCount(),
                 info == null ? null : info.sourceDate(),
                 downloading.get(),
-                lastError));
+                lastError,
+                fieldIndexStatus()));
+    }
+
+    private JlcpcbStatus.FieldIndex fieldIndexStatus() {
+        FieldIndexFile.Info info = search.fieldIndex();
+        return new JlcpcbStatus.FieldIndex(config.fieldIndex().enabled(), info != null,
+                info == null ? null : info.version(), info == null ? null : info.rows(),
+                info == null ? null : info.builtAt(), indexing.get());
     }
 
     @PreDestroy
     public void shutdown() {
-        Thread t = downloadThread;
-        if (t != null) {
-            t.interrupt();
+        for (Thread t : new Thread[] {downloadThread, indexThread}) {
+            if (t != null) {
+                t.interrupt();
+            }
         }
     }
 

@@ -1,0 +1,36 @@
+# Validation stack of the field-based search (docs/research/field-search-validation-2026-10-09.md).
+# Always used with the base file and the project name kina-fs (scripts/e2e/field-search/run.sh does both):
+#   docker compose -p kina-fs -f compose.yaml -f scripts/e2e/field-search/compose.override.yaml ...
+# It never touches the project kina: its own image tag, ports 18080/19090 (set by run.sh), the volumes
+# kina-fs_kina-data (external, pre-seeded with /data/jlcpcb/parts-fts5.db and /data/cross-encoder) and kina-fs_pgdata.
+#
+# Mouser and TME are "configured but offline": placeholder credentials make both clients configured, so searches and
+# lookups read the cache and the field index, and every live call goes to a closed local port and fails at once
+# (unavailable). No distributor is ever contacted. Set real credentials in the environment and
+# KINA_FS_MOUSER_URL / KINA_FS_TME_URL to the real base URLs only to exercise live calls on purpose.
+services:
+  kina:
+    image: kina-fs:latest
+    environment:
+      KINA_MODE: dev
+      KINA_FIELD_INDEX_MODE: ${KINA_FIELD_INDEX_MODE:-on}
+      KINA_JLCPCB_FIELD_INDEX_ENABLED: ${KINA_JLCPCB_FIELD_INDEX_ENABLED:-true}
+      KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT: ${KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT:-true}
+      KINA_FIELD_INDEX_MAX_CANDIDATES: ${KINA_FIELD_INDEX_MAX_CANDIDATES:-100}
+      # never download the 5 GB JLCPCB file here: the pre-seeded file serves (and is typed) even when it is old
+      KINA_JLCPCB_AUTODOWNLOAD: "false"
+      MOUSER_API_KEY: ${MOUSER_API_KEY:-offline-placeholder}
+      TME_TOKEN: ${TME_TOKEN:-offline-placeholder}
+      TME_APPLICATION_SECRET: ${TME_APPLICATION_SECRET:-offline-placeholder}
+      KINA_DISTRIBUTORS_MOUSER_BASEURL: ${KINA_FS_MOUSER_URL:-http://127.0.0.1:9/api/v1}
+      KINA_DISTRIBUTORS_TME_BASEURL: ${KINA_FS_TME_URL:-http://127.0.0.1:9}
+    mem_limit: ${KINA_MEM_LIMIT:-2g}
+
+  postgres:
+    volumes:
+      - ${KINA_FS_DUMP_DIR:-/var/tmp/kina-fs}:/dump:ro
+
+volumes:
+  kina-data:
+    external: true
+    name: kina-fs_kina-data

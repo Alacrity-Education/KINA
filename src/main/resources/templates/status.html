@@ -65,6 +65,27 @@
         </div>
     </div>
 
+    <div class="card" id="quota">
+        <h2>Distributor API quota</h2>
+        <p class="muted">Requests KINA sent in the last 60 seconds and the last 24 hours, as used/limit. Both are sliding
+            windows, counted in memory since the start, so the distributor's own count can be higher.</p>
+        <div class="table-wrap">
+            <table id="quota-table">
+                <thead>
+                <tr><th>Distributor</th><th class="num">Minute</th><th class="num">Day</th><th>Rate limit</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="q : ${quotaRows}">
+                    <td th:text="${q.distributor}">MOUSER</td>
+                    <td class="num" th:text="${q.minute}">15/30</td>
+                    <td class="num" th:text="${q.day}">165/1000</td>
+                    <td th:text="${q.throttledUntil != null} ? 'throttled until ' + ${q.throttledUntil} : 'none'">none</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="card" id="cache">
         <h2>Cache</h2>
         <p class="muted">Mouser and TME results are kept in PostgreSQL for <span th:text="${ttl}">5d</span>; LCSC is

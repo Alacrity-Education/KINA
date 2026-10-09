@@ -56,6 +56,24 @@ public enum Metric {
             "outcome"),
     METRICS_BACKFILL_MOVED("kina.metrics.backfill.moved", Type.COUNTER,
             "Counts the metrics backfill moved from type=unknown to a typed series, by counter name", "name"),
+    FIELD_INDEX_REINDEXED("kina.field.index.reindexed", Type.COUNTER,
+            "part_index rows written by the field index re-index job", "distributor"),
+    FIELD_SHADOW_QUERIES("kina.field.shadow.queries", Type.COUNTER,
+            "Shadow field queries by outcome (ok, dropped, incomplete, failed)", "distributor", "outcome"),
+    FIELD_SHADOW_CANDIDATES("kina.field.shadow.candidates", Type.COUNTER,
+            "Candidates the shadow field queries returned (unrelaxed step)", "distributor"),
+    FIELD_SHADOW_DROPPED("kina.field.shadow.dropped", Type.COUNTER,
+            "Returnable parts the shadow field query would have dropped (must stay 0)", "distributor"),
+    FIELD_SERVED("kina.field.served", Type.COUNTER,
+            "Searches answered from the field index without a distributor call (cache hit)", "distributor"),
+    FIELD_LIVE_CALLS("kina.field.live.calls", Type.COUNTER,
+            "Distributor calls of the field-first flow by relaxation step (0: the request's phrase)",
+            "distributor", "step"),
+    FIELD_JOURNAL_HITS("kina.field.journal.hits", Type.COUNTER,
+            "Steps of the field-first flow whose phrase the journal had already asked (no call)", "distributor"),
+    FIELD_FALLBACKS("kina.field.fallbacks", Type.COUNTER,
+            "Searches that took the cached-search path instead of the field-first flow, by reason (mode, bypass, "
+                    + "incomplete, sql_error)", "distributor", "reason"),
 
     // ---- timers (count and total time persisted) ------------------------------------------------------------------
     SEARCH_DURATION("kina.search.duration", Type.TIMER, "Time to answer a search request (single or batch)"),
@@ -82,7 +100,15 @@ public enum Metric {
     JLCPCB_DATABASE_AGE("kina.jlcpcb.database.age", Type.GAUGE,
             "Age of the JLCPCB database download (0 when unknown)"),
     METRICS_BACKFILL_LAST_RUN("kina.metrics.backfill.last.run", Type.GAUGE,
-            "End of the last successful metrics backfill run, Unix epoch (0 when never)");
+            "End of the last successful metrics backfill run, Unix epoch (0 when never)"),
+    DISTRIBUTOR_QUOTA_USED("kina.distributor.quota.used", Type.GAUGE,
+            "API requests KINA sent to the distributor in the sliding window (in memory, not persisted)",
+            "distributor", "window"),
+    DISTRIBUTOR_QUOTA_LIMIT("kina.distributor.quota.limit", Type.GAUGE,
+            "Configured API request limit of the window (kina.distributors.*.quota)", "distributor", "window"),
+    DISTRIBUTOR_QUOTA_THROTTLED_UNTIL("kina.distributor.quota.throttled.until", Type.GAUGE,
+            "End of the rate limit the distributor last answered with, Unix epoch (0 when not throttled)",
+            "distributor");
 
     /** The meter types. */
     public enum Type { COUNTER, TIMER, GAUGE }
@@ -138,7 +164,8 @@ public enum Metric {
 
     /** The base unit of a gauge ({@code seconds} for the JLCPCB age and the last backfill run), else null. */
     public String baseUnit() {
-        return this == JLCPCB_DATABASE_AGE || this == METRICS_BACKFILL_LAST_RUN ? "seconds" : null;
+        return this == JLCPCB_DATABASE_AGE || this == METRICS_BACKFILL_LAST_RUN
+                || this == DISTRIBUTOR_QUOTA_THROTTLED_UNTIL ? "seconds" : null;
     }
 
     /**

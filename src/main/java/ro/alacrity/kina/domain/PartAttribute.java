@@ -60,6 +60,7 @@ import static ro.alacrity.kina.domain.ComponentFamily.SWITCH;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.ARRAYS;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.INDUCTIVE;
 import static ro.alacrity.kina.domain.ComponentFamily.Trait.PASSIVE;
+import static ro.alacrity.kina.domain.Indexed.ColumnType.FLOAT8;
 
 /**
  * Every attribute KINA reads from a part, with its distributor spellings and extraction logic ({@link Source}) and,
@@ -84,6 +85,7 @@ public enum PartAttribute {
     @Source(names = {"capacitance", "capacitance value", "nominal capacitance", "load capacitance",
             "load capacitance (cl)"})
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "capacitance_f", type = FLOAT8)
     CAPACITANCE(ParsedQuery.CAPACITANCE, "Capacitance"),
 
     /**
@@ -94,11 +96,13 @@ public enum PartAttribute {
     @Source(names = {"resistance", "resistance value", "nominal resistance", "rds on - drain-source resistance",
             "drain-source on resistance", "on-state resistance", "rds(on)"}, exceptTraits = INDUCTIVE)
     @Source(precedence = 9, logic = Described.class, exceptTraits = INDUCTIVE)
+    @Indexed(column = "resistance_ohm", type = FLOAT8)
     RESISTANCE(ParsedQuery.RESISTANCE, "Resistance"),
 
     @Unit(symbols = "h", base = "H", prefixes = {"n", "u", "m", ""})
     @Source(names = {"inductance", "nominal inductance"})
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "inductance_h", type = FLOAT8)
     INDUCTANCE(ParsedQuery.INDUCTANCE, "Inductance"),
 
     /**
@@ -108,11 +112,13 @@ public enum PartAttribute {
     @Unit(base = "ohm", prefixes = {"m", "", "k", "M", "G"})
     @Source(names = "impedance", families = ComponentFamily.FERRITE, logic = ImpedanceAtFrequency.class)
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "impedance_ohm", type = FLOAT8)
     IMPEDANCE(ParsedQuery.IMPEDANCE, "Impedance"),
 
     @Unit(symbols = "hz", base = "Hz", prefixes = {"", "k", "M", "G"})
     @Source(names = {"frequency", "nominal frequency", "oscillation frequency"})
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "frequency_hz", type = FLOAT8)
     FREQUENCY(ParsedQuery.FREQUENCY, "Frequency"),
 
     /**
@@ -140,6 +146,7 @@ public enum PartAttribute {
             "breakdown", "input", "supply", "isolation", "threshold", "gate", "ripple", "dropout", "temperature",
             "coefficient", "offset"})
     @Source(precedence = 9, logic = LargestVoltage.class)
+    @Indexed(column = "voltage_v", type = FLOAT8)
     VOLTAGE(ParsedQuery.VOLTAGE, "Voltage"),
 
     /**
@@ -159,6 +166,7 @@ public enum PartAttribute {
             "reverse current", "surge", "quiescent", "supply", "peak", "bias", "offset", "standby", "pulse", "trip",
             "saturation", "ripple"})
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "current_a", type = FLOAT8)
     CURRENT(ParsedQuery.CURRENT, "Current"),
 
     /** An inductor's saturation current (I_sat). */
@@ -166,6 +174,7 @@ public enum PartAttribute {
     @Source(names = {"saturation current", "isat", "current - saturation", "current - saturation (isat)",
             "saturation current (isat)", "isat (max)", "saturation current max."}, traits = INDUCTIVE)
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "isat_a", type = FLOAT8)
     SATURATION_CURRENT(ParsedQuery.SATURATION_CURRENT, "SaturationCurrent"),
 
     /** The DC resistance of an inductor or ferrite bead (TME {@code Resistance}, Mouser {@code Maximum DC Resistance}). */
@@ -174,6 +183,7 @@ public enum PartAttribute {
             "dc resistance max", "dc resistance (dcr) (max)", "resistance - dc", "resistance", "dc resistance (max)"},
             traits = INDUCTIVE)
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "dcr_ohm", type = FLOAT8)
     DCR(ParsedQuery.DCR, "DCR"),
 
     /** The power rating; after the description, the wattage a resistor series implies ({@link SeriesPower}). */
@@ -182,6 +192,7 @@ public enum PartAttribute {
             "power dissipation (pd)", "power dissipation"})
     @Source(precedence = 8, logic = Described.class)
     @Source(precedence = 9, logic = SeriesPower.class)
+    @Indexed(column = "power_w", type = FLOAT8)
     POWER(ParsedQuery.POWER, "Power"),
 
     /** The maximum operating temperature ({@code 105°C}). */
@@ -189,6 +200,7 @@ public enum PartAttribute {
     @Source(names = {"maximum operating temperature", "max. operating temperature", "operating temperature",
             "operating temperature range", "temperature range"}, logic = MaxTemperature.class)
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "max_temp_c", type = FLOAT8)
     TEMPERATURE(ParsedQuery.TEMPERATURE, "MaxTemperature"),
 
     /** The rated lifetime in hours with its test temperature ({@code 2000h @105°C}). */
@@ -196,11 +208,13 @@ public enum PartAttribute {
     @Source(names = {"service life", "lifetime", "life time", "load life", "endurance", "useful life",
             "lifetime @ temp.", "life", "operating life"}, logic = LifetimeAtTemperature.class)
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "lifetime_h", type = FLOAT8)
     LIFETIME(ParsedQuery.LIFETIME, "Lifetime"),
 
     @Unit(base = "%", display = ValueDisplay.Percent.class)
     @Source(names = {"tolerance", "resistance tolerance", "capacitance tolerance", "inductance tolerance"})
     @Source(precedence = 9, logic = Described.class)
+    @Indexed(column = "tolerance_pct", type = FLOAT8)
     TOLERANCE(ParsedQuery.TOLERANCE, "Tolerance"),
 
     /** The rotational speed of a fan ({@code 3000 rpm}; {@code r/min} is read as rpm; TME {@code Rotational rate/speed}). */
@@ -208,6 +222,7 @@ public enum PartAttribute {
     @Source(names = {"rotational rate/speed", "rotational speed", "speed", "fan speed", "rated speed",
             "speed (rpm)", "nominal speed"}, families = FAN)
     @Source(precedence = 9, logic = Described.class, families = FAN)
+    @Indexed(column = Indexed.ATTRS, keys = "speed", type = FLOAT8)
     SPEED(ParsedQuery.SPEED, "Speed"),
 
     /**
@@ -219,6 +234,7 @@ public enum PartAttribute {
     @Source(names = {"fan efficiency", "air flow", "air flow rate", "max air flow", "maximum air flow", "air volume"},
             families = FAN)
     @Source(precedence = 9, logic = Described.class, families = FAN)
+    @Indexed(column = Indexed.ATTRS, keys = "airflow", type = FLOAT8)
     AIRFLOW(ParsedQuery.AIRFLOW, "Airflow"),
 
     /**
@@ -230,6 +246,7 @@ public enum PartAttribute {
     @Source(names = {"static pressure", "max static pressure", "maximum static pressure", "static air pressure",
             "air pressure"}, families = FAN)
     @Source(precedence = 9, logic = Described.class, families = FAN)
+    @Indexed(column = Indexed.ATTRS, keys = "static_pressure", type = FLOAT8)
     STATIC_PRESSURE(ParsedQuery.STATIC_PRESSURE, "StaticPressure"),
 
     /** The acoustic noise of a fan ({@code 25 dBA}; {@code dB(A)} and a bare {@code dB} are read as dBA). */
@@ -237,6 +254,7 @@ public enum PartAttribute {
     @Source(names = {"noise level", "noise", "acoustic noise", "sound level", "sound pressure level", "noise (dba)"},
             families = FAN)
     @Source(precedence = 9, logic = Described.class, families = FAN)
+    @Indexed(column = "noise_dba", type = FLOAT8)
     NOISE(ParsedQuery.NOISE, "Noise"),
 
     /**
@@ -247,6 +265,7 @@ public enum PartAttribute {
     @Source(names = {"dominant wavelength", "wavelength", "wavelength - dominant", "wavelength/color temperature",
             "peak wavelength", "wavelength - peak", "peak emission wavelength"}, families = LED)
     @Source(precedence = 9, logic = Described.class, families = LED)
+    @Indexed(column = Indexed.ATTRS, keys = "wavelength", type = FLOAT8)
     WAVELENGTH(ParsedQuery.WAVELENGTH, "Wavelength"),
 
     /** The colour temperature of a white LED ({@code 3000 K}): Mouser {@code Color Temperature}, TME {@code Colour temperature}. */
@@ -254,6 +273,7 @@ public enum PartAttribute {
     @Source(names = {"colour temperature", "color temperature", "cct", "wavelength/color temperature",
             "color temperature - cct"}, families = LED)
     @Source(precedence = 9, logic = Described.class, families = LED)
+    @Indexed(column = Indexed.ATTRS, keys = "colour_temperature", type = FLOAT8)
     COLOUR_TEMPERATURE(ParsedQuery.COLOUR_TEMPERATURE, "ColourTemperature"),
 
     /**
@@ -265,6 +285,7 @@ public enum PartAttribute {
     @Source(names = {"vf - forward voltage", "forward voltage", "forward voltage (vf)", "voltage - forward (vf) (typ)",
             "vf", "forward voltage typ.", "operating voltage"}, families = LED)
     @Source(precedence = 9, logic = Described.class, families = LED)
+    @Indexed(column = Indexed.ATTRS, keys = "forward_voltage", type = FLOAT8)
     FORWARD_VOLTAGE(ParsedQuery.FORWARD_VOLTAGE, "ForwardVoltage"),
 
     /** The luminous intensity of an LED ({@code 200mcd}, {@code 2.4cd}); a range is read as its upper end. */
@@ -272,6 +293,7 @@ public enum PartAttribute {
     @Source(names = {"luminous intensity", "luminosity", "luminous intensity (iv)", "millicandela rating",
             "luminous intensity iv", "iv"}, families = LED)
     @Source(precedence = 9, logic = Described.class, families = LED)
+    @Indexed(column = Indexed.ATTRS, keys = "luminous_intensity", type = FLOAT8)
     LUMINOUS_INTENSITY(ParsedQuery.LUMINOUS_INTENSITY, "LuminousIntensity"),
 
     /** The luminous flux of an LED ({@code 20lm}). */
@@ -279,6 +301,7 @@ public enum PartAttribute {
     @Source(names = {"luminous flux", "luminous flux @ current/temperature", "flux @ 25°c, current - test",
             "luminous flux (typ)"}, families = LED)
     @Source(precedence = 9, logic = Described.class, families = LED)
+    @Indexed(column = Indexed.ATTRS, keys = "luminous_flux", type = FLOAT8)
     LUMINOUS_FLUX(ParsedQuery.LUMINOUS_FLUX, "LuminousFlux"),
 
     /** The viewing angle of an LED ({@code 120°}; {@code 120 deg}, {@code 2θ1/2=120°}). */
@@ -286,6 +309,7 @@ public enum PartAttribute {
     @Source(names = {"viewing angle", "view angle", "angle of radiation", "viewing angle (2θ1/2)", "beam angle"},
             families = LED)
     @Source(precedence = 9, logic = Described.class, families = LED)
+    @Indexed(column = Indexed.ATTRS, keys = "viewing_angle", type = FLOAT8)
     VIEWING_ANGLE(ParsedQuery.VIEWING_ANGLE, "ViewingAngle"),
 
     /**
@@ -297,6 +321,7 @@ public enum PartAttribute {
     @Source(names = {"operating force", "actuating force", "actuator force", "actuation force", "force",
             "operating force (gf)"}, families = SWITCH)
     @Source(precedence = 9, logic = Described.class, families = SWITCH)
+    @Indexed(column = Indexed.ATTRS, keys = "force", type = FLOAT8)
     FORCE(ParsedQuery.FORCE, "Force"),
 
     /** The mechanical life of a switch in cycles ({@code 100,000 cycles}, {@code 10000 times}, {@code 100k cycles}). */
@@ -305,6 +330,7 @@ public enum PartAttribute {
     @Source(names = {"mechanical life", "mechanical durability", "electrical life", "operating life", "life cycle",
             "durability", "life"}, families = SWITCH)
     @Source(precedence = 9, logic = Described.class, families = SWITCH)
+    @Indexed(column = Indexed.ATTRS, keys = "life", type = FLOAT8)
     LIFE(ParsedQuery.LIFE, "Life"),
 
     /** The ingress protection of a switch ({@code IP67}): TME {@code IP rating}, else the description. */
@@ -312,6 +338,7 @@ public enum PartAttribute {
     @Source(names = {"ip rating", "protection class", "ingress protection", "ip code", "ip protection"},
             families = SWITCH, logic = IpCode.class)
     @Source(precedence = 9, families = SWITCH, logic = IpCode.class)
+    @Indexed(column = Indexed.ATTRS, keys = "ip_rating", type = FLOAT8)
     IP_RATING(ParsedQuery.IP_RATING, "IpRating"),
 
     /** The AC voltage rating of a switch: Mouser {@code Voltage Rating AC}, TME {@code 3A/125VAC}, {@code 250VAC}. */
@@ -319,6 +346,7 @@ public enum PartAttribute {
     @Source(names = {"voltage rating ac", "ac voltage rating", "rated voltage ac", "max. voltage ac", "voltage ac"},
             families = SWITCH)
     @Source(precedence = 1, families = SWITCH, logic = SupplyVoltage.class)
+    @Indexed(column = Indexed.ATTRS, keys = "voltage_ac", type = FLOAT8)
     VOLTAGE_AC(ParsedQuery.VOLTAGE_AC, "VoltageAC"),
 
     /** The DC voltage rating of a switch: Mouser {@code Voltage Rating DC}, TME {@code 0.05A/12VDC}, {@code 30VDC}. */
@@ -326,6 +354,7 @@ public enum PartAttribute {
     @Source(names = {"voltage rating dc", "dc voltage rating", "rated voltage dc", "max. voltage dc", "voltage dc"},
             families = SWITCH)
     @Source(precedence = 1, families = SWITCH, logic = SupplyVoltage.class)
+    @Indexed(column = Indexed.ATTRS, keys = "voltage_dc", type = FLOAT8)
     VOLTAGE_DC(ParsedQuery.VOLTAGE_DC, "VoltageDC"),
 
     // ---------------------------------------------------------------- numeric details
@@ -700,6 +729,27 @@ public enum PartAttribute {
     }
 
     /**
+     * Where the field index stores the attribute's SI value (DESIGN.md 3.8): a typed column or an {@code attrs} key;
+     * null for an attribute the index does not store by itself.
+     */
+    public Indexed indexed() {
+        return Declarations.INDEXED.get(this);
+    }
+
+    /** The numeric attribute of a {@link ParsedQuery} value kind that the field index stores, null when none. */
+    public static PartAttribute indexedOf(String kind) {
+        if (kind == null) {
+            return null;
+        }
+        for (PartAttribute a : VALUES) {
+            if (kind.equals(a.kind) && a.indexed() != null) {
+                return a;
+            }
+        }
+        return null;
+    }
+
+    /**
      * The kind a value of this attribute is parsed as: the kind of the attribute that owns the symbols of its unit
      * ({@code DCR} is parsed in ohm, as a resistance), else its own kind.
      */
@@ -848,6 +898,7 @@ public enum PartAttribute {
         private static final Map<Class<? extends AttributeLogic>, AttributeLogic> LOGIC = new ConcurrentHashMap<>();
         private static final Map<Class<? extends ValueDisplay>, ValueDisplay> DISPLAYS = new ConcurrentHashMap<>();
         static final Map<PartAttribute, Unit> UNITS = new EnumMap<>(PartAttribute.class);
+        static final Map<PartAttribute, Indexed> INDEXED = new EnumMap<>(PartAttribute.class);
         static final Map<PartAttribute, List<Declared>> SOURCES = new EnumMap<>(PartAttribute.class);
         static final Map<String, String> SYMBOLS;
         static final Map<String, Double> FACTORS = new java.util.HashMap<>();
@@ -858,6 +909,13 @@ public enum PartAttribute {
             for (PartAttribute a : values()) {
                 Field field = field(a);
                 Unit unit = field.getAnnotation(Unit.class);
+                Indexed indexed = field.getAnnotation(Indexed.class);
+                if (indexed != null) {
+                    if (a.kind == null || indexed.predicate() != Indexed.Predicate.NONE || indexed.javaOnly()) {
+                        throw new IllegalStateException(a + ": @Indexed on an attribute declares a column of a value");
+                    }
+                    INDEXED.put(a, indexed);
+                }
                 if (unit != null) {
                     UNITS.put(a, unit);
                     if (unit.factors().length > 0 && unit.factors().length != unit.symbols().length) {

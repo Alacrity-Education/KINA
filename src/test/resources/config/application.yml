@@ -12,6 +12,10 @@ kina:
   oauth:
     # Every test of a shared context registers clients from 127.0.0.1; the limit itself is tested in its own context.
     register-rate-limit-per-minute: 100000
+  search:
+    field-index:
+      # A background re-index at startup would race with tests that seed and delete cached parts; tests run it by hand.
+      reindex-enabled: false
   metrics:
     backfill:
       # A background run at startup would race with tests that seed counters; the backfill tests run it by hand.

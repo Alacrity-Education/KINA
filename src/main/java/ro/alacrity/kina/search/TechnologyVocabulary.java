@@ -71,6 +71,12 @@ public class TechnologyVocabulary {
     public static final String SIC = "SiC";
     public static final String SILICON = "silicon";
 
+    /** Every canonical technology, in declaration order (the field index refuses by this list). */
+    public static final List<String> VALUES = List.of(THIN_FILM, THICK_FILM, METAL_FILM, CARBON_FILM,
+            CARBON_COMPOSITION, METAL_OXIDE, WIREWOUND, METAL_FOIL, METAL_STRIP, CURRENT_SENSE, CERAMIC, TANTALUM,
+            TANTALUM_POLYMER, POLYMER, ALUMINIUM_POLYMER, HYBRID_POLYMER, ALUMINIUM_ELECTROLYTIC, FILM, POLYPROPYLENE,
+            POLYESTER, PPS, SUPERCAPACITOR, MULTILAYER, GAN, SIC, SILICON);
+
     /** A recognised technology mention: canonical value and the span in the searched text. */
     public record Match(String technology, int start, int end) {
     }

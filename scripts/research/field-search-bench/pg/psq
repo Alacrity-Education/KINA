@@ -1,0 +1,2 @@
+#!/bin/sh
+docker exec -i kina-pgbench psql -U postgres -d bench -v ON_ERROR_STOP=1 "$@"

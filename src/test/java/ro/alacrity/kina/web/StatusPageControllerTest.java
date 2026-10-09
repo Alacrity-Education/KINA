@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
+import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.metrics.MetricsGauges;
 import ro.alacrity.kina.security.DevModeIntegrationTest;
 
@@ -26,6 +28,9 @@ class StatusPageControllerTest {
 
     @Autowired
     MetricsGauges gauges;
+
+    @Autowired
+    ApiQuotaTracker quota;
 
     @Value("${spring.ai.mcp.server.version:dev}")
     String version;
@@ -58,6 +63,22 @@ class StatusPageControllerTest {
         } finally {
             jdbc.sql("DELETE FROM cached_searches WHERE query_key = ?").param(key).update();
         }
+    }
+
+    @Test
+    void showsTheDistributorApiQuotaAsUsedOverLimit() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            quota.record(Distributor.MOUSER);
+        }
+        quota.throttle(Distributor.TME, Duration.ofSeconds(90));
+
+        String page = mvc.perform(get("/status")).andReturn().getResponse().getContentAsString();
+
+        assertThat(page).contains("id=\"quota\"", "Distributor API quota", "sliding");
+        assertThat(page).containsPattern("<td>MOUSER</td>\\s*<td class=\"num\">\\d+/30</td>\\s*"
+                + "<td class=\"num\">\\d+/1000</td>");
+        assertThat(page).containsPattern("<td>TME</td>\\s*<td class=\"num\">\\d+/30</td>\\s*"
+                + "<td class=\"num\">\\d+/2000</td>\\s*<td>throttled until ");
     }
 
     @Test

@@ -72,7 +72,9 @@ public class PartsController {
     /**
      * {@code GET /api/v1/parts/{distributor}/{partNumber}?bypass_cache=&quantity=&detail=} ({@code detail} defaults to
      * {@code full}: every attribute of the one part). The part number is the rest of the path, so TME symbols
-     * containing {@code /} work unencoded.
+     * containing {@code /} work unencoded; percent-encoded segments are decoded ({@code %25}, {@code %5C},
+     * {@code %2F}, {@code %20}: {@link ro.alacrity.kina.security.PartPathFirewall} and the Tomcat connector accept
+     * them on this path).
      */
     @GetMapping("/{distributor}/{*partNumber}")
     public PartResponse getPart(@PathVariable("distributor") String distributor,
@@ -84,6 +86,24 @@ public class PartsController {
                                 Authentication authentication) {
         String number = partNumber.startsWith("/") ? partNumber.substring(1) : partNumber;
         return lookup(distributor, number, bypassCache, quantity, detail, authentication);
+    }
+
+    /**
+     * {@code GET /api/v1/parts/{distributor}?part_number=&bypass_cache=&quantity=&detail=}: the same lookup as
+     * {@link #getPart} with the part number in a query parameter, the documented form for part numbers with characters
+     * a path does not carry plainly ({@code %}, {@code \}, {@code /}, {@code +}, spaces): percent-encode the value
+     * ({@code +} as {@code %2B}, a plain {@code +} in a query string is a space).
+     */
+    @GetMapping(value = "/{distributor}", params = "part_number")
+    public PartResponse getPartByParameter(@PathVariable("distributor") String distributor,
+                                           @RequestParam("part_number") String partNumber,
+                                           @RequestParam(name = "bypass_cache", defaultValue = "false")
+                                           boolean bypassCache,
+                                           @RequestParam(name = "quantity", required = false) @Min(1)
+                                           @Max(SearchRequest.MAX_QUANTITY) Integer quantity,
+                                           @RequestParam(name = "detail", required = false) String detail,
+                                           Authentication authentication) {
+        return lookup(distributor, partNumber, bypassCache, quantity, detail, authentication);
     }
 
     /**

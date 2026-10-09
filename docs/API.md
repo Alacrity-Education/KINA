@@ -91,17 +91,20 @@ Mounting (`THT` or `SMD`) stays in `parsed.mounting`. The server also knows whet
 | Field | Type | Meaning |
 |---|---|---|
 | `distributor` | string | `LCSC`, `TME` or `MOUSER`. |
-| `total_results` | integer or null | How many matches the distributor reported for the phrase that produced the parts. Null when unknown or on error. |
-| `fetched` | integer | Every in-stock part KINA received from the distributor for the query, before any exclusion. |
+| `total_results` | integer or null | How many matches the distributor reported for the phrase that produced the parts. Null when unknown or on error. With the field index in mode `on` (see [Field-based search](#field-based-search)): the count of the last call this request made; else the count the phrase journal holds for the answering phrase; else the number of index candidates of that step. |
+| `fetched` | integer | Every in-stock part KINA received from the distributor for the query, before any exclusion. With the field index (modes `augment` and `on`) it also counts the cached list and the index candidates, below-spec parts included (they are excluded and counted). |
 | `excluded_by_constraints` | integer | Parts of `fetched` left out because a known attribute contradicts a hard constraint of the request (see [Hard constraints](#hard-constraints)): the value, the package (except for inductors, crystals and oscillators), mounting, technology, the component type, the polarity, an exact voltage, connector attributes, an array or network for a single-element request, the form factor (key `form factor`: a chip or axial resistor for a chassis or SOT-227 request). A part that does not state the attribute stays, lists it in `unverified` and ranks below verified matches. |
 | `excluded_by_constraints_detail` | object | `excluded_by_constraints` per constraint, for example `{"capacitance": 12, "package": 3}`. Each part is counted once, under the first constraint it contradicts, so the values add up to `excluded_by_constraints`. Keys: the value by its kind (`capacitance`, `resistance`, `inductance`, `impedance`, `frequency`), `package`, `mounting`, `technology`, `elements`, `type`, `polarity`, `voltage`, `load capacitance`, `connector type`, `gender`, `positions`, `pitch`, `usb type`, `pin configuration`, `usb standard`, `fan type`, `frame size`, `led type`, `colour`, `wavelength`, `switch type`, `contacts`, `switch function`, `termination`, `switch size`, `hole diameter`, `switch positions`, `illumination`. Empty object when nothing was excluded. |
-| `hint` | string | Present when this distributor returned no part for an understood query and did not fail: which hard constraints could not be met, how many parts were below a stated rating, and that no substitutes are returned, for example `No in-stock 22uF capacitor in package 0201 at TME; capacitance and package are never relaxed. No substitutes are returned; try another package or value.` Also present when `requested_part_found` is false, first: `EPC23101 is not listed in stock at MOUSER; the parts below are keyword matches.` or `EPC2218 is listed at MOUSER (EPC2218A) but was left out: voltage 80V below 100V (pass "allow_below_spec": true to see it).` |
+| `hint` | string | Present when this distributor returned no part for an understood query and did not fail: which hard constraints could not be met, how many parts were below a stated rating, and that no substitutes are returned, for example `No in-stock 22uF capacitor in package 0201 at TME; capacitance and package are never relaxed. No substitutes are returned; try another package or value.` Also present, with the field index, when parts are returned but none confirms the request: `No in-stock 22uF capacitor in package 0201 at LCSC is confirmed: no part returned states its capacitance, voltage, dielectric and package (listed in unverified; check the datasheet); ...` (the parts are returned flagged, not hidden). Also present when `requested_part_found` is false, first: `EPC23101 is not listed in stock at MOUSER; the parts below are keyword matches.` or `EPC2218 is listed at MOUSER (EPC2218A) but was left out: voltage 80V below 100V (pass "allow_below_spec": true to see it).` |
 | `requested_part_found` | boolean or null | Null when the query names no part number (`parsed.part_numbers`) or the distributor failed. True when a returned in-stock part is the requested one for every part number. False otherwise; the `hint` then says why. A requested part the distributor lists without stock is still returned (last, `stock` 0) but leaves this false: it cannot ship now. See [Part numbers in a query](#part-numbers-in-a-query). |
-| `excluded_below_spec` | integer | Parts of `fetched` left out because a known rating is below the request (see [Ratings](#ratings-are-hard-minimums)). 0 with `allow_below_spec`, which returns them flagged instead. |
+| `excluded_below_spec` | integer | Parts of `fetched` left out because a known rating is below the request (see [Ratings](#ratings-are-hard-minimums)). 0 with `allow_below_spec`, which returns them flagged instead. The same on the field-index paths and the LCSC typed path: ratings are never filtered in SQL, so below-spec parts that reach the check are excluded and counted. |
 | `excluded_below_spec_detail` | array | Up to 5 of the `excluded_below_spec` parts, closest to the request first, so a count names the part and the failing rating: `{"part_number": "65-EPC2218A", "mpn": "EPC2218A", "rating": "voltage", "part_value": "80V", "requested": "100V"}`. `part_value` is what the distributor's data says (KINA does not correct it). Empty when nothing was left out. |
 | `returned` | integer | The length of `parts`: at most `max_results` and at most `fetched - excluded_by_constraints - excluded_below_spec`. |
 | `out_of_stock_matches` | integer or null | Matches the distributor has but cannot ship now (dropped by the stock rule) on the pages KINA read: the part exists but is not returned. Not part of `fetched`. While every match is out of stock KINA reads up to 2 more pages and then the next relaxation step. Null when unknown (a cached search stored before this field existed). |
-| `cache` | string | `hit` (served from the cached list), `partial` (the cached list held too few parts for `max_results` and KINA fetched more from the distributor), `miss` (searched live), `bypassed` (`bypass_cache`), `not_applicable` (LCSC, and distributors that were never looked up) or `stale` (the live search failed, `error` says why, and the parts come from the query's expired cached list; their stock and prices may be marked `stale`). |
+| `cache` | string | `hit` (served from the cached list), `partial` (the cached list held too few parts for `max_results` and KINA fetched more from the distributor), `miss` (searched live), `bypassed` (`bypass_cache`), `not_applicable` (LCSC, and distributors that were never looked up) or `stale` (the live search failed, `error` says why, and the parts come from the query's expired cached list; their stock and prices may be marked `stale`). With the field index in mode `on` the values mean: `hit` (answered from the index and the cache, no distributor call), `miss` (asked, only the request's own phrase), `partial` (asked at a relaxed step, at least one call with a relaxed phrase) and `stale` (a call failed; the parts come from the index or an expired list). |
+| `fetched_live` | boolean | True when this search called the distributor (`miss`, `partial`, `bypassed`, and `stale` after a failed call); false for `hit`, `not_applicable` and LCSC. Always `live_calls > 0`. Present in every mode. |
+| `live_calls` | integer | The distributor search calls this request made: one per page and phrase, relaxed steps and fallback phrases included, failed calls included. 0 when none, and always 0 for LCSC. Stock refreshes and direct part-number lookups are not search calls and are not counted. Present in every mode. |
+| `field_steps_tried` | integer | Steps of the field query read before the answer (1: the first step answered; after a failed call every step is read). 0 on the cached-search path (modes `off`, `shadow` and every fallback) and for LCSC. |
 | `fallback_query` | string or null | Set when the first phrase found nothing that meets the request at this distributor and a relaxed phrase produced the parts in the entry. Only Mouser and TME; null otherwise (always present in the JSON). See [Relaxation](#relaxation). |
 | `distributor_query` | string or null | The phrase KINA sent instead of your text: ratings are left out (see [Ratings](#ratings-are-hard-minimums)); at LCSC they are sent as `>=25V` terms that the local database checks; connector requests are rewritten into the distributor's vocabulary. Null when your text went through as written. Always present. If it found nothing that meets the request, `fallback_query` is what was sent after it. |
 | `query_terms_dropped` | array of strings | Informational: the stated terms that were not in the phrase that produced the parts, for example `["voltage"]` (Mouser and TME never get ratings, so a rated request always lists them), `["voltage", "dielectric"]` after a relaxation, and at LCSC the free-text words its database search dropped. The ranker still checks every constraint. Replaces the former `relaxed` field. |
@@ -254,6 +257,21 @@ Data quality differs by distributor. LCSC has description text only (mid-mount a
 
 Checked live on 2026-10-05: `USB-C receptacle 17 pin` returns 16-pin Type-C parts at all three distributors (TME `USB4145-03-0170-C`, Mouser `217182-0001` and `DX07S016JA3R1500`).
 
+### Field-based search
+
+With `KINA_FIELD_INDEX_MODE` set to `augment` or `on`, searches at Mouser and TME also read the field index: every cached part, stored as typed fields. The request contract does not change; the distributor entry changes in how it is filled and gains `live_calls`, `fetched_live` and `field_steps_tried` (see `DistributorResult`).
+
+- `on`: the entry is answered from the index when it holds at least `max_results` parts that meet the request, at least one of them confirmed (every requested rating stated and met). Otherwise KINA loosens one feature at a time (free text, then the ladder of [Relaxation](#relaxation)) and asks the distributor with that step's phrase, at most `KINA_FIELD_INDEX_MAX_LIVE_CALLS` (default 2) calls per distributor. A phrase asked within `kina.cache.ttl` is not asked again (the phrase journal). `constraints_relaxed` and `fallback_query` report the answering step as usual.
+- `augment`: index candidates are added to a cached list; no distributor call. `fetched` counts the merged set.
+- `shadow` and `off`: the response is the same as before the index existed.
+- The index is a recall filter and the same Java check decides. Hard constraints, `unverified`, `mismatches` and the `excluded_*` counts mean what they always meant. Ratings are never filtered in SQL: a part below a requested rating is excluded and counted in `excluded_below_spec` (and `excluded_below_spec_detail`), or returned flagged with `allow_below_spec`.
+- At most `KINA_FIELD_INDEX_MAX_CANDIDATES` (100) index candidates per distributor are checked and ranked.
+- A request that states nothing but its family (`mosfet`) takes the normal path (`KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT`), and so does any request while the distributor's index is `incomplete` or an SQL error happens.
+- When a live call fails, KINA makes no further call to that distributor in the request. It answers from the index and the request's cached list (`cache: "stale"` and the `error`), or with the expired cached list as the normal path does.
+- Parts that do not state what the request asks for are returned as `unverified`. When every returned part leaves a stated constraint unverified, the entry and the response carry the `hint` described above.
+
+LCSC with the typed table (`jlcpcb.field_index.available: true`): a request with at least one typed constraint is answered by field; a free-text-only request (`RP2040`) keeps the text search. When the typed table is missing or not current, LCSC answers as before. A typed answer may return unverified parts where the text search returned nothing, for example `22uF X7R 0201 100V`, with the hint that no part confirms the request.
+
 ### Rate limits and timing
 
 When Mouser or TME rate limit a call, KINA waits and retries instead of failing at once.
@@ -264,7 +282,7 @@ When Mouser or TME rate limit a call, KINA waits and retries instead of failing 
 - Shared cool-down: after a rate limit, other calls to the same distributor wait for the cool-down to end if that fits their deadline. Otherwise they fail at once with `rate_limited`, without calling the distributor.
 - Result: `rate_limit_waited_ms` in each distributor entry tells how long KINA waited. `error: "rate_limited"` means the limit outlasted the deadline. Parts fetched before that (earlier pages, a cached list) are still returned.
 - Ranking runs after fetching (5 s per query, 60 s per batch). The worst case is therefore about 2 minutes plus ranking.
-- Mouser quotas stay at 1 000 calls a day and 30 a minute. The retry helps with the per-minute limit, not with an exhausted daily quota.
+- Mouser quotas stay at 1 000 calls a day and 30 a minute. The retry helps with the per-minute limit, not with an exhausted daily quota. KINA does not enforce a quota; it counts its own requests and shows them as `quota` in `list_distributors` (see `GET /api/v1/distributors`).
 
 Set the read timeout of your HTTP client or proxy above about 2.5 minutes for the search endpoints.
 
@@ -310,7 +328,9 @@ Response: `{"results": [SearchResponse, ...]}` in request order. Queries are fet
 
 ### `GET /api/v1/parts/{distributor}/{partNumber}`
 
-Get one part by distributor part number. The part number is the rest of the path, so TME symbols that contain `/` work unencoded.
+Get one part by distributor part number. The part number is the rest of the path, so TME symbols that contain `/` work unencoded. Percent-encoded segments are decoded: `%25` is `%`, `%5C` a backslash, `%2F` a slash, `%20` a space, and a `+` in a path is a plus sign.
+
+For a part number with `%`, `\`, `/`, `+` or spaces, prefer the query-parameter form below. It is the documented way, because proxies and clients treat encoded characters in paths differently.
 
 | Parameter | Meaning |
 |---|---|
@@ -322,9 +342,18 @@ Get one part by distributor part number. The part number is the rest of the path
 curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/parts/lcsc/C15850
 ```
 
+### `GET /api/v1/parts/{distributor}?part_number=`
+
+The same lookup with the part number as a query parameter (`bypass_cache`, `quantity` and `detail` as above). Same response and errors as the path form. This is the documented form for part numbers with `%`, `\`, `/`, `+` or spaces: percent-encode the value, and write `+` as `%2B` (a `+` in a query string is a space).
+
+```bash
+curl -s -G -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/parts/tme \
+  --data-urlencode part_number=DTMSS-20/0.010/20V
+```
+
 ### `GET /api/v1/parts/lookup?distributor=&part_number=`
 
-The same lookup with the distributor and the part number as query parameters (`bypass_cache`, `quantity` and `detail` as above). Same response and errors as the path form. Use it for TME symbols that contain `/` (such as `DTMSS-20/0.010/20V`): the server rejects an encoded `%2F` in a path with 400, but not in a query parameter.
+The same lookup with the distributor and the part number both as query parameters. It still exists and behaves as the form above.
 
 ```bash
 curl -s -G -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/parts/lookup \
@@ -348,12 +377,16 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/distri
       "distributor": "LCSC", "configured": true, "available": true,
       "detail": "...", "uses_cache": false, "max_results_per_search": 200,
       "jlcpcb": {"available": true, "library": "parts-fts5.db", "downloaded_at": "2026-10-05T08:00:00Z",
-                 "source_date": "...", "part_count": 0, "downloading": false, "last_error": null}
+                 "source_date": "...", "part_count": 0, "downloading": false, "last_error": null,
+                 "field_index": {"enabled": true, "available": true, "version": 1, "rows": 723865,
+                                 "built_at": "2026-10-09T00:47:35Z", "building": false}}
     },
     {"distributor": "TME", "configured": true, "available": true, "detail": "...", "uses_cache": true,
-     "cached_parts": 0, "max_results_per_search": 60},
+     "cached_parts": 0, "max_results_per_search": 60,
+     "quota": {"minute": {"used": 4, "limit": 30}, "day": {"used": 120, "limit": 2000}, "throttled_until": null}},
     {"distributor": "MOUSER", "configured": true, "available": true, "detail": "...", "uses_cache": true,
-     "cached_parts": 0, "max_results_per_search": 50}
+     "cached_parts": 0, "max_results_per_search": 50,
+     "quota": {"minute": {"used": 15, "limit": 30}, "day": {"used": 165, "limit": 1000}, "throttled_until": null}}
   ],
   "cache": {"ttl": "PT72H", "parts": 0, "fresh_parts": 0, "searches": 0, "oldest_fetch": null},
   "ranking": {"mode": "blended", "cross_encoder_enabled": true, "ready": true,
@@ -365,9 +398,27 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/distri
               "tool_calls": {"get_part": 12, "list_distributors": 3, "search_parts": 90, "search_parts_batch": 10},
               "cache_added": {"MOUSER": 900, "TME": 1400}, "rate_limited_calls": {"MOUSER": 2},
               "cross_encoder_executions": 300,
-              "search_queries_by_type": {"capacitor": 140, "connector": 40, "resistor": 95, "unknown": 35}}
+              "search_queries_by_type": {"capacitor": 140, "connector": 40, "resistor": 95, "unknown": 35}},
+  "field_index": {"mode": "off", "rows": 6660, "stale": 0, "version": 1, "reindexing": false,
+                  "incomplete": [], "journal_rows": 214}
 }
 ```
+
+`quota` (Mouser and TME only; omitted for LCSC) is what KINA itself sent to the distributor's API in the last 60 seconds (`minute`) and the last 24 hours (`day`), against the limits `MOUSER_QUOTA_PER_MINUTE`, `MOUSER_QUOTA_PER_DAY`, `TME_QUOTA_PER_MINUTE` and `TME_QUOTA_PER_DAY`. Every HTTP request counts once: searches, part lookups, stock refreshes, the TME token request and each retry. Both windows slide. The counts are in memory only, start at 0 after a restart, and miss other users of the same API key, so the distributor's own count can be higher. `throttled_until` (ISO 8601, null when none) is the end of the rate limit the distributor last answered with. The TME limits are an assumption, as TME publishes none. The same numbers are on the Status tab and in Prometheus.
+
+`field_index` (omitted when it cannot be read) describes the index of the Mouser and TME cache ([Field-based search](#field-based-search)):
+
+| Field | Meaning |
+|---|---|
+| `mode` | `kina.search.field-index.mode`: `off`, `shadow`, `augment` or `on`. |
+| `rows` | Rows of `part_index`. |
+| `stale` | Rows not written by the running extractor, or out of date against their cached part. |
+| `version` | The extractor version that writes rows. |
+| `reindexing` | The background re-index is running. |
+| `incomplete` | The distributors whose cached parts are not all indexed yet (empty when complete). `augment` and `on` use the normal path for them. |
+| `journal_rows` | Rows of the phrase journal (`distributor_phrases`); omitted when it cannot be read. |
+
+`jlcpcb.field_index` (LCSC) describes the typed table of the in-stock JLCPCB rows: `enabled` (`KINA_JLCPCB_FIELD_INDEX_ENABLED`), `available` (the sidecar file `parts-fts5.index.db` is present, current and attached), `version`, `rows` and `built_at` (null unless available) and `building` (the build is running; LCSC uses the text search meanwhile).
 
 The `metrics` object holds usage counters since the first start against this database (they survive restarts):
 
@@ -418,7 +469,7 @@ curl -s -H "Authorization: Bearer $TOKEN" https://kina.example.com/api/v1/metric
 }
 ```
 
-`summary` is the `metrics` object of `GET /api/v1/distributors`. `counters` lists every counter and timer in Prometheus naming, sorted by name and tags (timer sums in seconds). The search counters (`kina_search_queries_total`, `kina_distributor_calls_total`, `kina_parts_fetched_total`, `kina_parts_returned_total`, `kina_cache_search_lookups_total`) carry a `type` tag, the component type of the query. Gauges such as the cache size are only in the Prometheus output. Metric names and tags: [DESIGN.md 3.7](DESIGN.md#37-observability).
+`summary` is the `metrics` object of `GET /api/v1/distributors`. The response also has `distributor_quota`, the quota of Mouser and TME as in `quota` above: `"distributor_quota": {"MOUSER": {"minute": {"used": 15, "limit": 30}, "day": {"used": 165, "limit": 1000}, "throttled_until": null}, "TME": {...}}`. `counters` lists every counter and timer in Prometheus naming, sorted by name and tags (timer sums in seconds). The search counters (`kina_search_queries_total`, `kina_distributor_calls_total`, `kina_parts_fetched_total`, `kina_parts_returned_total`, `kina_cache_search_lookups_total`) carry a `type` tag, the component type of the query. Gauges such as the cache size are only in the Prometheus output. Metric names and tags: [DESIGN.md 3.7](DESIGN.md#37-observability).
 
 ### Errors
 
@@ -554,7 +605,7 @@ The lookup failed: `error` carries the failure code and `reason` is null. On a r
 
 ### `list_distributors`
 
-No parameters. Returns the same payload as `GET /api/v1/distributors`: per-distributor state, cache statistics, ranking status and the usage counters (`metrics`). Does not call the Mouser or TME APIs.
+No parameters. Returns the same payload as `GET /api/v1/distributors`: per-distributor state, the API quota used (`quota`, Mouser and TME), cache statistics, ranking status, the usage counters (`metrics`) and the field index (`field_index`, `jlcpcb.field_index`). Does not call the Mouser or TME APIs.
 
 ### `ping`
 

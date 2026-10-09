@@ -104,6 +104,20 @@ class SwitchVocabulary {
      * The switch type a text names: a switch IC, a switching sensor or a cap first, else the first mechanical type;
      * with {@code anyFamily} (a text of another family) only the first three.
      */
+    /** Every switch type {@link #type} can return: the mechanical types and the parts that are no switch. */
+    static List<String> types() {
+        List<String> out = new java.util.ArrayList<>();
+        TYPES.forEach(t -> out.add(t.getValue()));
+        NOT_MECHANICAL.forEach(t -> out.add(t.getValue()));
+        return out.stream().distinct().toList();
+    }
+
+    /** Every termination class {@link #termination} and the request parser can return. */
+    static List<String> terminations() {
+        return List.of(ParsedQuery.Switch.PCB, "solder lug", "quick connect", "wire leads", "screw",
+                ParsedQuery.Switch.PANEL);
+    }
+
     static String type(String text, boolean anyFamily) {
         if (text == null) {
             return null;

@@ -32,6 +32,15 @@ Spring tests that need a database: `@SpringBootTest` + `@Import(TestcontainersCo
 (`src/test/java/ro/alacrity/kina/TestcontainersConfiguration.java`, `@ServiceConnection` PostgreSQL 17).
 HTTP tests: `@AutoConfigureRestTestClient` + `RestTestClient` (Boot 4 module `spring-boot-resttestclient`).
 
+Field index tests (DESIGN.md 3.8): `FieldQuerySupersetTest` and `CachePreservationMigrationTest` start a PostgreSQL
+container of their own and run Flyway themselves (the superset test caches and indexes about 3 100 parts and checks
+every query in parallel, about 40 s; its per-query report is written to `target/field-superset-report.txt`).
+`IndexVersionTest` fails when the extraction or the index rows change: bump `ParametricExtractor.INDEX_VERSION` and
+set `INDEX_FINGERPRINT` to the hash the failure prints, in the same commit (the re-index job then rebuilds the rows of
+the older version at the next start). `IndexTableDocumentationTest` checks the DESIGN.md 3.8 rule table against the
+`@Indexed` declarations; on a mismatch its message holds the table to paste. The shared test configuration turns the
+re-index at startup off (`kina.search.field-index.reindex-enabled: false`); tests run `reindexStale` themselves.
+
 ## Run locally
 
 ```bash
@@ -112,7 +121,8 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 | `distributor.{mouser,tme,lcsc}` | `MouserClient`, `TmeClient` (+ `TmeTokenManager`), `LcscClient` over the JLCPCB SQLite file (`JlcpcbDatabaseManager` downloads/adopts it) |
 | `search/ce` | `CrossEncoderPartRanker` (the `PartRanker`), `CrossEncoderModel` (download, load, retry), `ModelDownloader`, `ModelLayout`, `BertTokenizer`, `ScoringBackend` / `OnnxScoringBackend` (ONNX Runtime) |
 | `search` | `PartRanker`, `RankingException` (checked, with `Reason`), `QueryParser` (+ `Recognizers`, `ConnectorRecognizer`), `ParametricExtractor`, `DeterministicRanker`, `DistributorPhraser` (connector phrasing per distributor, fallback phrases), `RankingService`, `PartSearchService` (the sequence), `ParallelRetrieval`, `LcscRetriever` and `CachedDistributorRetriever` (cache, phrase fallback), `PageCollector` (paging), `StockRefresher`, `ResponseAssembler`, `CorePhrases`, `PartLookupService`, `DistributorStatusService` |
-| `cache` | `CacheStatus`, `PartCacheRepository`, `SearchCacheRepository` (`CachedSearch`), `CacheMaintenance` |
+| `search.field` | the field index (DESIGN.md 3.8): `FieldQueryBuilder` and `FieldQuery` (groups `H`, `R`, `L1..Ln`, `K` and their relaxation steps), `FieldPredicate`, `IndexColumn`, the renderers `PostgresFieldSql` and `SqliteFieldSql` (`FieldSql`), `PartIndexRepository` (writer, coverage, re-index, query), `PartIndexReindexer`, `FieldSearchShadow`, `SqlitePartIndex`; `search.PartIndexRows` builds a row from a part and `search.FieldVocabulary` exposes the vocabularies |
+| `cache` | `CacheStatus`, `PartCacheRepository` (calls the `CacheWriteListener`s in its write transaction), `SearchCacheRepository` (`CachedSearch`), `CacheMaintenance` |
 | `security` | `SecurityConfig` (dev/prod filter chains, login failure routing), `DevModeAuthenticationFilter`, `BearerTokenAuthenticationFilter` + `BearerAuthenticationEntryPoint` (401 with `resource_metadata`), `AccessTokenService`/`AccessTokenRepository` (static tokens 30 days, OAuth tokens 1 hour; revoking one also revokes its OAuth refresh tokens; `revokeAllForUser`), OIDC login (`OidcLoginConfiguration`, `LazyOidcClientRegistrationRepository`, `OidcUserSynchronizer`, `OidcIdTokenDecoders`, `OidcHttp` timeouts), group authorisation (`OidcAccessPolicy` claim/domain rules, `MembershipVerifier` re-checks, `UpstreamTokenCipher` AES-GCM, `UpstreamTokenCapturingClientRepository`, `RevokedUserSessionFilter`) |
 | `oauth` | OAuth 2.1 authorization server for MCP clients: metadata, `/oauth/register` (+ `RegistrationRateLimiter`), `/oauth/authorize` (consent page, auto-approval of trusted metadata-document clients), `/oauth/token`, `/oauth/revoke`, PKCE; Client ID Metadata Documents (`ClientMetadataDocument` rules, `ClientMetadataDocumentResolver` fetch/trust/cache, `OAuthClientLookup`); `OAuthClientMaintenance` (daily cleanup of unused registered clients) |
 | `mcp` | `KinaMcpTools`: `search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping` |
@@ -206,6 +216,39 @@ scripts/e2e/prod_smoke.sh                           # prod-mode smoke in a throw
 | `forwarded` | with `X-Forwarded-Proto: https` + `X-Forwarded-Host: kina.example.com` every URL in both metadata documents and the `resource_metadata` challenge uses `https://kina.example.com` |
 | `rest` | `GET /api/v1/parts/search`, `POST .../search/batch`, TME phrase fallback (`fallback_query`, informational), `GET /api/v1/parts/TME/<symbol>`, 404/400 problem documents, invalid token -> 401, public health; at LCSC (no quota) a part number in the query (`1N4148W SOD-123`: `parsed.part_numbers`, the part first, `requested_part_found` true; an unknown one: false and a hint naming it) and `excluded_below_spec_detail` (a lifetime request names the parts left out with the failed rating). Every search response is also checked for the response shape: the counts add up, a part with stock 0 only when the query names it and only after every part in stock, `requested_part_found` null exactly when no part number is named, a `hint` whenever it is false |
 | `prod` | (via `prod_smoke.sh`) app starts with `KINA_MODE=prod` and dummy OIDC client credentials; `/mcp` and `/api` without a token are 401 (with `resource_metadata`); `GET /` -> `/oauth2/authorization/oidc` -> 302 to the authorization endpoint discovered from `OIDC_ISSUER_URI` (default `https://accounts.google.com`; override `OIDC_ISSUER_URI` and `EXPECTED_AUTH_HOST` for another provider) |
+
+### Field search validation stack
+
+`scripts/e2e/field-search/` runs a second stack next to a running `kina` project: compose project `kina-fs`, app on
+port 18080, management port 19090, image `kina-fs:latest`, volumes `kina-fs_kina-data` (external, pre-seeded with
+`/data/jlcpcb/parts-fts5.db` and `/data/cross-encoder/`) and `kina-fs_pgdata`. Mouser and TME are "configured but
+offline" (placeholder credentials, base URLs on a closed local port): searches and lookups read the cache and the field
+index, every live call fails at once, no distributor is contacted. The JLCPCB file is never downloaded
+(`KINA_JLCPCB_AUTODOWNLOAD=false`).
+
+```bash
+scripts/e2e/field-search/run.sh build                 # image from this checkout
+scripts/e2e/field-search/run.sh db                    # postgres only, then:
+scripts/e2e/field-search/run.sh restore kina-live-20261009.dump   # from KINA_FS_DUMP_DIR (default /var/tmp/kina-fs)
+scripts/e2e/field-search/run.sh snapshot before.txt   # cache counts and md5 of cached_parts / cached_searches
+scripts/e2e/field-search/run.sh up on                 # kina in mode on (V14, V15, re-index, journal backfill)
+scripts/e2e/field-search/run.sh mode augment          # recreate kina only, in another mode
+scripts/e2e/field-search/run.sh validate lookups --query-form --parts parts.tsv   # path and ?part_number= forms
+scripts/e2e/field-search/run.sh e2e                   # kina_e2e.py against 18080/19090
+scripts/e2e/field-search/run.sh down                  # containers removed, volumes kept
+```
+
+`validate.py` (lookups, recall sample, cached-search replay, LCSC queries, latency) and `explain_misses.py` (repeats
+each recall miss and reruns the field query the server logged, without its limit) are described in their headers.
+`lookups` looks every part up with `GET /api/v1/parts/{d}/{percent-encoded pn}` and, with `--query-form`, also with
+`GET /api/v1/parts/{d}?part_number=`; part numbers with `%`, a backslash or `/` work on both since phase C2
+(`--mcp-fallback`, the `get_part` fallback for HTTP 400, is kept for older images). Run the preservation check on a
+fresh `kina-fs_pgdata` (`docker volume rm kina-fs_pgdata` after `down`, then `db` and `restore`): `restore` refuses a
+database that already holds the cache. The e2e checks of the typed LCSC path accept both answers the declared
+semantics allow (an impossible request: empty, or unverified parts with the "is confirmed" hint; a 6x6 switch: within
+0.5 mm);
+`FieldQuerySupersetTest` takes the stack's cache as an outside pool (`-Dkina.superset.pool=pool.jsonl
+-Dkina.superset.queries=queries.txt`). Results of 2026-10-09: `docs/research/field-search-validation-2026-10-09.md`.
 
 ### Group authorisation against a real Authentik
 

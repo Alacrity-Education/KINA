@@ -74,6 +74,14 @@ kina:
     lifecycle:                   # DESIGN.md 3.4: penalties by the part's lifecycle
       last-time-buy-penalty: 0.1
       supply-constrained-penalty: 0.05
+    field-index:                 # DESIGN.md 3.8: part_index, written with the cache and re-indexed after startup
+      mode: ${KINA_FIELD_INDEX_MODE:off}                 # off | shadow (log and count only) | augment | on
+      min-version: ${KINA_FIELD_INDEX_MIN_VERSION:0}     # rows of an older extractor are kept by every rule but family
+      max-candidates: ${KINA_FIELD_INDEX_MAX_CANDIDATES:100}   # rows one field query returns; also caps the parts ranked per distributor
+      max-live-calls-per-distributor: ${KINA_FIELD_INDEX_MAX_LIVE_CALLS:2}   # on: distributor calls one search may make
+      reindex-batch-size: 500
+      reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}
+      require-stated-constraint: ${KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT:true}   # false: a family-only request reads the index too
   ranking:
     timeout: 5s                  # per query; the cross-encoder needs about 0.1-0.35 s for 40 candidates
     batch-timeout: 60s
@@ -93,10 +101,15 @@ kina:
       download-timeout: 10m
       auto-download: ${KINA_CROSS_ENCODER_AUTO_DOWNLOAD:true}   # false in the Docker image (model bundled, DESIGN.md 11)
   distributors:
-    mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
+    # quota: the API limits the Status tab, list_distributors and kina_distributor_quota_* show as used/limit
+    # (DESIGN.md 3.7). In memory only, both windows slide. Mouser publishes 30 calls per minute and 1000 per day; TME
+    # publishes no limit, its defaults are a conservative assumption.
+    mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1,
+              quota: { per-minute: "${MOUSER_QUOTA_PER_MINUTE:30}", per-day: "${MOUSER_QUOTA_PER_DAY:1000}" } }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
             excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE, NOT_IN_OFFER,
-                                PRODUCT_BLOCKED, INVALID, "BLOCKED_FOR_ZBL_*"] }
+                                PRODUCT_BLOCKED, INVALID, "BLOCKED_FOR_ZBL_*"],
+            quota: { per-minute: "${TME_QUOTA_PER_MINUTE:30}", per-day: "${TME_QUOTA_PER_DAY:2000}" } }
   metrics:
     save-interval: 30s           # counters saved to metrics_counters, database gauges recomputed (DESIGN.md 3.7)
     backfill:                    # moves type="unknown" counts to the types the database shows (DESIGN.md 3.7)
@@ -104,4 +117,5 @@ kina:
       enabled: ${KINA_METRICS_BACKFILL_ENABLED:true}
       batch-size: 2000           # rows re-typed per UPDATE
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
-            auto-download: true }
+            auto-download: true, pool-size: "${KINA_JLCPCB_POOL_SIZE:4}", pool-wait: "${KINA_JLCPCB_POOL_WAIT:10s}",
+            field-index: { enabled: "${KINA_JLCPCB_FIELD_INDEX_ENABLED:false}", threads: "${KINA_JLCPCB_FIELD_INDEX_THREADS:0}" } }   # DESIGN.md 9.3

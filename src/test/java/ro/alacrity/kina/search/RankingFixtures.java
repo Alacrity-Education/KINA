@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.cache.PartCacheRepository;
+import ro.alacrity.kina.cache.PhraseJournalRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorRegistry;
@@ -13,6 +14,7 @@ import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.metrics.KinaMetrics;
+import ro.alacrity.kina.search.field.PartIndexRepository;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -94,11 +96,24 @@ class RankingFixtures {
                 KinaMetrics.NOOP);
     }
 
+    /** The field index and the phrase journal of a test service. */
+    record FieldBeans(PartIndexRepository index, PhraseJournalRepository journal) {
+    }
+
     /** As above, counting into {@code metrics}. */
     static PartSearchService searchService(KinaProperties props, DistributorRegistry registry, QueryParser parser,
                                            ParametricExtractor extractor, RankingService ranking,
                                            PartCacheRepository partCache, SearchCacheRepository searchCache,
                                            Clock clock, KinaMetrics metrics) {
+        return searchService(props, registry, parser, extractor, ranking, partCache, searchCache, clock, metrics,
+                null);
+    }
+
+    /** As above with the field index and the phrase journal ({@code field} null: the cached-search path only). */
+    static PartSearchService searchService(KinaProperties props, DistributorRegistry registry, QueryParser parser,
+                                           ParametricExtractor extractor, RankingService ranking,
+                                           PartCacheRepository partCache, SearchCacheRepository searchCache,
+                                           Clock clock, KinaMetrics metrics, FieldBeans field) {
         PageCollector pages = TestWiring.wire(new PageCollector(), "extractor", extractor, "clock", clock,
                 "metrics", metrics);
         StockRefresher stock = TestWiring.wire(new StockRefresher(), "properties", props, "registry", registry,
@@ -109,7 +124,14 @@ class RankingFixtures {
                 "ranking", ranking, "requested", requested);
         CachedDistributorRetriever cached = TestWiring.wire(new CachedDistributorRetriever(), "properties", props,
                 "pages", pages, "ranking", ranking, "extractor", extractor, "partCache", partCache,
-                "searchCache", searchCache, "clock", clock, "requested", requested);
+                "searchCache", searchCache, "clock", clock, "requested", requested, "metrics", metrics);
+        if (field != null) {
+            FieldFirstSearch fieldFirst = TestWiring.wire(new FieldFirstSearch(), "properties", props,
+                    "pages", pages, "ranking", ranking, "extractor", extractor, "partCache", partCache,
+                    "searchCache", searchCache, "journal", field.journal(), "index", field.index(), "clock", clock,
+                    "metrics", metrics);
+            TestWiring.wire(cached, "fieldFirst", fieldFirst, "index", field.index(), "journal", field.journal());
+        }
         ParallelRetrieval retrieval = TestWiring.wire(new ParallelRetrieval(), "properties", props,
                 "registry", registry, "parser", parser, "lcscRetriever", lcsc, "cachedRetriever", cached);
         ResponseAssembler assembler = TestWiring.wire(new ResponseAssembler(), "properties", props,

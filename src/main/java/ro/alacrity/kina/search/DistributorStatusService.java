@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatistics;
 import ro.alacrity.kina.cache.PartCacheRepository;
+import ro.alacrity.kina.cache.PhraseJournalRepository;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.lcsc.JlcpcbDatabaseManager;
@@ -18,6 +20,8 @@ import ro.alacrity.kina.domain.DistributorStatusResponse.DistributorStatus;
 import ro.alacrity.kina.domain.DistributorStatusResponse.JlcpcbSummary;
 import ro.alacrity.kina.domain.DistributorStatusResponse.RankingSummary;
 import ro.alacrity.kina.search.ce.CrossEncoderModel;
+import ro.alacrity.kina.search.field.FieldIndexStatus;
+import ro.alacrity.kina.search.field.PartIndexReindexer;
 import ro.alacrity.kina.search.ce.ModelDownloader;
 
 import java.nio.file.Path;
@@ -37,6 +41,9 @@ public class DistributorStatusService {
     @Autowired private PartCacheRepository partCache;
     @Autowired private RankingService ranking;
     @Autowired private ObjectProvider<JlcpcbDatabaseManager> jlcpcb;
+    @Autowired private ObjectProvider<PartIndexReindexer> fieldIndex;
+    @Autowired private ObjectProvider<PhraseJournalRepository> journal;
+    @Autowired private ApiQuotaTracker quota;
 
     public DistributorStatusResponse status() {
         CacheStatistics stats = null;
@@ -47,7 +54,9 @@ public class DistributorStatusService {
         }
         List<DistributorStatus> distributors = new ArrayList<>();
         for (Distributor distributor : Distributor.values()) {
-            distributors.add(status(distributor, stats));
+            DistributorStatus entry = status(distributor, stats);
+            distributors.add(quota == null || !ApiQuotaTracker.isTracked(distributor) ? entry
+                    : entry.withQuota(quota.snapshot(distributor)));
         }
         CacheSummary cache = stats == null ? null : new CacheSummary(properties.cache().ttl().toString(),
                 stats.parts(), stats.freshParts(), stats.searches(), stats.oldestFetch());
@@ -67,7 +76,37 @@ public class DistributorStatusService {
                 .weight(r.weight())
                 .timeout(properties.ranking().timeout().toString())
                 .build();
-        return new DistributorStatusResponse(distributors, cache, rankingSummary);
+        return new DistributorStatusResponse(distributors, cache, rankingSummary).withFieldIndex(fieldIndex());
+    }
+
+    /** The field index state (DESIGN.md 3.8), null when it cannot be read. */
+    private DistributorStatusResponse.FieldIndexSummary fieldIndex() {
+        PartIndexReindexer reindexer = fieldIndex == null ? null : fieldIndex.getIfAvailable();
+        if (reindexer == null) {
+            return null;
+        }
+        try {
+            FieldIndexStatus s = reindexer.status();
+            return new DistributorStatusResponse.FieldIndexSummary(s.mode(), s.rows(), s.stale(), s.version(),
+                    s.reindexing(), s.incomplete(), journalRows());
+        } catch (RuntimeException e) {
+            log.warn("Reading the field index state failed: {}", e.toString());
+            return null;
+        }
+    }
+
+    /** The phrase journal's row count, null when it cannot be read. */
+    private Long journalRows() {
+        PhraseJournalRepository repository = journal == null ? null : journal.getIfAvailable();
+        if (repository == null) {
+            return null;
+        }
+        try {
+            return repository.count();
+        } catch (RuntimeException e) {
+            log.warn("Reading the phrase journal size failed: {}", e.toString());
+            return null;
+        }
     }
 
     /**
@@ -104,7 +143,8 @@ public class DistributorStatusService {
         Long cachedParts = usesCache && stats != null ? stats.partsByDistributor().getOrDefault(distributor, 0L) : null;
         return switch (distributor) {
             case MOUSER -> new DistributorStatus(distributor, configured, configured,
-                    configured ? "Mouser Search API (keyword search, in-stock only); daily quota about 1000 calls"
+                    configured ? "Mouser Search API (keyword search, in-stock only); daily quota "
+                            + properties.distributors().mouser().quota().perDay() + " calls"
                             : "not configured: MOUSER_API_KEY is not set",
                     true, cachedParts, properties.distributors().mouser().maxResultsPerSearch(), null);
             case TME -> {
@@ -117,6 +157,11 @@ public class DistributorStatusService {
             }
             case LCSC -> lcsc(configured);
         };
+    }
+
+    private static DistributorStatusResponse.TypedTableSummary fieldIndex(JlcpcbStatus.FieldIndex f) {
+        return f == null ? null : new DistributorStatusResponse.TypedTableSummary(f.enabled(), f.available(),
+                f.version(), f.rows(), f.builtAt(), f.building());
     }
 
     private DistributorStatus lcsc(boolean configured) {
@@ -147,7 +192,7 @@ public class DistributorStatusService {
                     + (s.lastError() == null ? "" : " (last error: " + s.lastError() + ")");
         }
         JlcpcbSummary summary = new JlcpcbSummary(s.available(), s.library(), s.downloadedAt(), s.sourceDate(),
-                s.partCount(), s.downloading(), s.lastError());
+                s.partCount(), s.downloading(), s.lastError(), fieldIndex(s.fieldIndex()));
         return new DistributorStatus(Distributor.LCSC, configured, s.available(), detail, false, null, max, summary);
     }
 }

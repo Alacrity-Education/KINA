@@ -68,6 +68,12 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 | `TME_TOKEN` | empty | TME API v2 token (OAuth2 client credentials). |
 | `TME_APPLICATION_SECRET` | empty | TME API v2 application secret. Both TME values are needed. |
 | `COUNTRY` | `RO` | Country for TME prices and stock (ISO 3166-1 alpha-2). |
+| `MOUSER_QUOTA_PER_MINUTE` | `30` | The Mouser limit per minute that the Status tab, `list_distributors` and `kina_distributor_quota_limit` show as the denominator of `used/limit`. It is not enforced. |
+| `MOUSER_QUOTA_PER_DAY` | `1000` | The Mouser limit per day, shown the same way. |
+| `TME_QUOTA_PER_MINUTE` | `30` | The TME limit per minute. TME publishes no limit, so the default is an assumption: set it to your contract. |
+| `TME_QUOTA_PER_DAY` | `2000` | The TME limit per day, an assumption as well. |
+
+The quota numbers count the HTTP requests KINA sends to each API (retries and the TME token request included) over sliding windows of 60 seconds and 24 hours. They are kept in memory only: a restart resets them to 0, and calls made by others with the same API key are not counted. They are for your information; the operator keeps the limits right. See [Field-based search](#field-based-search-cache-index) for how the field search spends calls.
 
 ### Security
 
@@ -119,6 +125,29 @@ Set variables in `.env` (read by Compose). Everything is optional unless noted.
 |---|---|---|
 | `KINA_JLCPCB_LIBRARY` | `parts-fts5.db` | Which library to download: `parts-fts5.db` (all parts), `current-parts-fts5.db` or `basic-parts-fts5.db`. The upstream project defines what each contains; the two non-default variants are subsets and download faster. |
 | `KINA_JLCPCB_DATA_DIR` | `/data/jlcpcb` in Docker, `./data/jlcpcb` otherwise | Where the SQLite file lives. It is on the `kina-data` volume. |
+| `KINA_JLCPCB_POOL_SIZE` | `4` | Read-only connections to the JLCPCB file. More connections run more LCSC searches at once; on the 24-core test host 4 connections gave 28 text searches per second against 7.8 for one. |
+| `KINA_JLCPCB_POOL_WAIT` | `10s` | The longest a LCSC search waits for a free connection. After that it fails with `unavailable`. |
+| `KINA_JLCPCB_FIELD_INDEX_ENABLED` | `false` | `true`: keep the in-stock rows (about 724 000 of 7.1 million) as a typed table in a sidecar file `parts-fts5.index.db` next to the main file, and answer requests with typed constraints by field. Needs about 402 MB more disk. See [LCSC typed table](#lcsc-typed-table). |
+| `KINA_JLCPCB_FIELD_INDEX_THREADS` | `0` | Threads that build the typed table. `0` means the smaller of 16 and the number of cores. |
+
+### Field-based search (cache index)
+
+The field index (`part_index`) is written with every TME and Mouser cache write and filled from the cache by a background re-index after startup, in every mode. The mode decides whether searches read it. For how it works see the [README](../README.md#field-based-search) and for the rollout [OPERATIONS.md](OPERATIONS.md#field-based-search).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `KINA_FIELD_INDEX_MODE` | `off` | `off`: searches never read the index. `shadow`: the field query runs in the background and only logs and counts. `augment`: its candidates are added to a cached part list, no new call. `on`: field first, then the distributor for what the cache cannot show. |
+| `KINA_FIELD_INDEX_MIN_VERSION` | `0` | Rows written by an older extractor count as unknown in every rule except the family. `0` means the current extractor version. |
+| `KINA_FIELD_INDEX_MAX_CANDIDATES` | `100` | Rows one field query returns per distributor, and the most parts per distributor that the ranking stage checks and ranks. More finds more parts, at about 1.6 ms of ranking per part. |
+| `KINA_FIELD_INDEX_MAX_LIVE_CALLS` | `2` | Mode `on`: the most distributor calls (one per phrase) one search may make per distributor. Each call may read up to `max-pages-per-search` pages. |
+| `KINA_FIELD_INDEX_REINDEX_ENABLED` | `true` | `false`: no background re-index at startup. Cache writes still write index rows, but the index stays incomplete for rows cached before. |
+| `KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT` | `true` | `true`: a request that states nothing but its family (`mosfet`, `LED`) never reads the index (it takes the normal path, reason `generic`). `false`: it reads the first `max-candidates` parts of the family in part-number order. |
+
+`kina.search.field-index.reindex-batch-size` (500, no variable) is the number of cached rows the re-index reads at a time.
+
+### LCSC typed table
+
+With `KINA_JLCPCB_FIELD_INDEX_ENABLED=true` KINA builds a typed table of the in-stock JLCPCB rows in `<data-dir>/parts-fts5.index.db`, next to the main file (which is never written to). On the full file it holds about 724 000 rows, is about 402 MB, and is built in the background in about a minute (52 s to extract and insert, 3 s for indexes, 6 s to warm the page cache, with 16 threads). It is built on the first start when the file is adopted, and before every refresh of the file: the new main file and its sidecar are swapped in together. A sidecar that is missing, from an older extractor, or built from another main file is not used: LCSC answers with the text search as before, and `jlcpcb.field_index.available` is `false` until the build is done. A build that fails is logged and `last_error` says why.
 
 ### Runtime
 
@@ -180,7 +209,12 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 | `kina.jlcpcb.refresh-after` | `5d` | Age at which the JLCPCB database is downloaded again. |
 | `kina.jlcpcb.check-interval` | `1h` | How often KINA checks that age. |
 | `kina.jlcpcb.max-results-per-search` | `200` | Rows read from the JLCPCB database per query. |
-| `kina.jlcpcb.auto-download` | `true` | `false` stops KINA from downloading the database. |
+| `kina.jlcpcb.auto-download` | `true` | `false` stops KINA from downloading the database. With the typed table on, an old file that is kept is still typed. |
+| `kina.jlcpcb.pool-size`, `kina.jlcpcb.pool-wait` | `4`, `10s` | `KINA_JLCPCB_POOL_SIZE`, `KINA_JLCPCB_POOL_WAIT`, see above. |
+| `kina.jlcpcb.field-index.enabled`, `.threads` | `false`, `0` | `KINA_JLCPCB_FIELD_INDEX_ENABLED`, `KINA_JLCPCB_FIELD_INDEX_THREADS`, see above. |
+| `kina.search.field-index.mode`, `.min-version`, `.max-candidates`, `.max-live-calls-per-distributor`, `.reindex-batch-size`, `.reindex-enabled`, `.require-stated-constraint` | `off`, `0`, `100`, `2`, `500`, `true`, `true` | The field index, see [Field-based search](#field-based-search-cache-index). |
+| `kina.distributors.mouser.quota.per-minute`, `.per-day` | `30`, `1000` | `MOUSER_QUOTA_PER_MINUTE`, `MOUSER_QUOTA_PER_DAY`. |
+| `kina.distributors.tme.quota.per-minute`, `.per-day` | `30`, `2000` | `TME_QUOTA_PER_MINUTE`, `TME_QUOTA_PER_DAY` (assumed, TME publishes no limit). |
 
 ## Operations notes
 
@@ -188,7 +222,7 @@ Every `kina.*` key can still be overridden with Spring's relaxed binding, for ex
 - Volumes: `kina-data` (JLCPCB SQLite file only), `pgdata` (PostgreSQL). The ranking model is in the image, under `/opt/kina/cross-encoder`.
 - JLCPCB database: checked every hour, downloaded again when older than 5 days. The old file keeps serving while the new one downloads.
 - TME and Mouser cache: search lists 3 days, a cached search with zero parts 1 hour (`kina.cache.empty-result-ttl`); stock and prices are refreshed after 24 hours and flagged `stale` after 3 days without a refresh; component data is kept (`kina.cache.metadata-retention`, default `forever`). Every 6 hours the purge deletes search lists older than 6 days (2 x TTL) and parts whose metadata retention expired.
-- Rate limits: Mouser allows 1 000 calls per day and 30 per minute. KINA makes one Mouser call per uncached query and does not throttle itself. When a distributor answers with a rate limit, KINA waits and retries (see the next item). Use `bypass_cache` sparingly.
+- Rate limits: Mouser allows 1 000 calls per day and 30 per minute. KINA makes one Mouser call per uncached query and does not throttle itself; it counts its own requests and shows them as `used/limit` (Status tab, `list_distributors`, `kina_distributor_quota_used`). With `KINA_FIELD_INDEX_MODE=on` a search makes at most `KINA_FIELD_INDEX_MAX_LIVE_CALLS` calls per distributor. When a distributor answers with a rate limit, KINA waits and retries (see the next item). Use `bypass_cache` sparingly.
 - Rate-limit handling: HTTP 429, HTTP 502, 503 or 504 with a `Retry-After` header, and Mouser's in-body `TooManyRequests` error trigger a wait. KINA waits for `Retry-After` (at least 1 s) or, without it, 2, 4, 8, 16, 30, 30... seconds with 20 percent jitter, and retries while the next wait fits inside the request deadline (`kina.search.max-request-duration`, 2 minutes). A 503 without `Retry-After` is an outage and fails at once. After a rate limit, all calls to that distributor share a cool-down: they wait for it if that fits their deadline, otherwise they fail at once with `rate_limited`. If the limit outlasts the deadline, the entry reports `error: "rate_limited"` and keeps the parts already fetched. The retry helps with the per-minute limit, not with an exhausted daily quota. Worst case for one request is about 2 minutes plus ranking.
 - Phrase fallback: when the full query returns 0 parts at Mouser or TME, KINA retries once with the parsed core phrase. The distributor entry then has `fallback_query` set. The phrase is stored with the cached search, so a cache hit reports it too.
 - Logs: `docker compose logs -f kina`. Each search logs fetch and rank timings. Tokens and API keys are never logged.
@@ -212,6 +246,12 @@ From `docs/DEVELOPMENT.md`, section "Measured on 2026-10-05" (24-core, 30 GB hos
 | `ranking: "fallback"` | Read `ranking_note`. `cross-encoder model not loaded yet`: the model is still loading or cannot be loaded; check `ranking.last_error` and `ranking.model_dir` in `list_distributors` and the ERROR line in `docker compose logs kina` (a wrong `KINA_CROSS_ENCODER_MODEL_URL`, or `fp32` on an image built with `CROSS_ENCODER_VARIANTS=int8`). KINA checks again every hour. `cross-encoder disabled`: `KINA_CROSS_ENCODER_ENABLED` is `false`. `cross-encoder timeout ...` or `busy ...`: the host is short of CPU; lower the load or check `KINA_CROSS_ENCODER_THREADS`. `cross-encoder failed: ...`: see the log. Search still works. |
 | TME or Mouser `error: "not_configured"` | The credentials are missing in `.env`. Restart with `docker compose up -d`. |
 | Slow search (up to 2 minutes), `rate_limit_waited_ms` above 0 | The distributor rate limited the request and KINA waited. This is normal for Mouser's 30 calls per minute. The log has a `rate limited ... cooling down` line. |
+| Distributor entry has `cache: "stale"` and an `error`, after a search in field mode `on` | The call to the distributor failed. KINA made no more calls for that distributor in this request and answered from the cache index and the request's cached list (possibly expired). The parts are real cached parts; their stock may be marked `stale`. Ask again later, or check the error code (`rate_limited`, `unavailable`, `timeout`). |
+| `field_index.incomplete` lists a distributor, and `on` or `augment` act like `off` for it | The re-index is not done: some cached parts have no current index row. It runs in the background after startup (about 10 s for 6 660 parts) and the list empties. If `reindexing` is `false` and it stays, check that `KINA_FIELD_INDEX_REINDEX_ENABLED` is not `false`, look for a re-index ERROR in `docker compose logs kina`, and restart. Searches keep working on the normal path meanwhile. |
+| `field_index.stale` is above 0 after an upgrade | The extractor version changed. The re-index rewrites those rows; the number falls to 0. |
+| `jlcpcb.field_index.building: true` for a long time, LCSC searches are slow | The typed table is being built (about a minute on the full file, longer on a busy host). LCSC uses the text search meanwhile. A cold page cache makes the first searches slow (up to 3.9 s measured); they get faster as the file is cached. If `available` stays `false` and `building` is `false`, read `jlcpcb.last_error`. |
+| `jlcpcb.field_index.enabled: false` | `KINA_JLCPCB_FIELD_INDEX_ENABLED` is off (the default). Nothing is wrong: LCSC uses the text search. |
+| A lookup of a part number with `%`, `\`, `/`, `+` or spaces fails in a client or proxy | Use `GET /api/v1/parts/{distributor}?part_number=<percent-encoded value>` (`+` as `%2B`). See [API.md](API.md). |
 | Mouser `error: "rate_limited"` | The limit outlasted the 2-minute budget, usually an exhausted daily quota (1 000 calls). Wait, and rely on the cache. |
 | Client or proxy times out on a search | Their read timeout is below about 2.5 minutes. Raise it (see [docs/OPERATIONS.md](OPERATIONS.md)). |
 | 401 on `/api` or `/mcp` in `prod` | Missing, expired or revoked token. The `WWW-Authenticate` header points to the OAuth metadata. |

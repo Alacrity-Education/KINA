@@ -3,6 +3,7 @@ package ro.alacrity.kina.domain;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,12 +15,14 @@ import java.util.List;
  * @param cache        Postgres component cache statistics (Mouser and TME); null when the database cannot be read
  * @param ranking      ranking configuration and cross-encoder health
  * @param metrics      key usage counters (DESIGN.md 3.7); omitted when null
+ * @param fieldIndex   the field index of the cache (DESIGN.md 3.8); omitted when null (not readable)
  */
 public record DistributorStatusResponse(
         @JsonProperty("distributors") List<DistributorStatus> distributors,
         @JsonProperty("cache") CacheSummary cache,
         @JsonProperty("ranking") RankingSummary ranking,
-        @JsonProperty("metrics") @JsonInclude(JsonInclude.Include.NON_NULL) MetricsSummary metrics
+        @JsonProperty("metrics") @JsonInclude(JsonInclude.Include.NON_NULL) MetricsSummary metrics,
+        @JsonProperty("field_index") @JsonInclude(JsonInclude.Include.NON_NULL) FieldIndexSummary fieldIndex
 ) {
 
     public DistributorStatusResponse {
@@ -28,12 +31,40 @@ public record DistributorStatusResponse(
 
     public DistributorStatusResponse(List<DistributorStatus> distributors, CacheSummary cache,
                                      RankingSummary ranking) {
-        this(distributors, cache, ranking, null);
+        this(distributors, cache, ranking, null, null);
     }
 
     /** This response with the usage counters. */
     public DistributorStatusResponse withMetrics(MetricsSummary summary) {
-        return new DistributorStatusResponse(distributors, cache, ranking, summary);
+        return new DistributorStatusResponse(distributors, cache, ranking, summary, fieldIndex);
+    }
+
+    /** This response with the field index state. */
+    public DistributorStatusResponse withFieldIndex(FieldIndexSummary summary) {
+        return new DistributorStatusResponse(distributors, cache, ranking, metrics, summary);
+    }
+
+    /**
+     * The field index of the Mouser and TME cache ({@code part_index}, DESIGN.md 3.8).
+     *
+     * @param mode       {@code off}, {@code shadow}, {@code augment} or {@code on}
+     * @param rows       index rows
+     * @param stale      cached parts without a current index row (0 when the index covers the cache)
+     * @param version    the extractor version rows are written with
+     * @param reindexing the background re-index is running
+     * @param incomplete distributors whose cached parts are not all indexed yet
+     * @param journalRows rows of the phrase journal ({@code distributor_phrases}, DESIGN.md 3.2); null when it cannot
+     *                   be read
+     */
+    public record FieldIndexSummary(
+            @JsonProperty("mode") String mode,
+            @JsonProperty("rows") long rows,
+            @JsonProperty("stale") long stale,
+            @JsonProperty("version") int version,
+            @JsonProperty("reindexing") boolean reindexing,
+            @JsonProperty("incomplete") List<String> incomplete,
+            @JsonProperty("journal_rows") @JsonInclude(JsonInclude.Include.NON_NULL) Long journalRows
+    ) {
     }
 
     /**
@@ -47,6 +78,7 @@ public record DistributorStatusResponse(
      * @param cachedParts         {@code cached_parts} rows for this distributor; null for LCSC or when unknown
      * @param maxResultsPerSearch largest number of in-stock parts fetched for one query
      * @param jlcpcb              JLCPCB database state (LCSC only)
+     * @param quota               API quota usage (Mouser and TME; omitted for LCSC), DESIGN.md 3.7
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record DistributorStatus(
@@ -57,8 +89,21 @@ public record DistributorStatusResponse(
             @JsonProperty("uses_cache") boolean usesCache,
             @JsonProperty("cached_parts") Long cachedParts,
             @JsonProperty("max_results_per_search") int maxResultsPerSearch,
-            @JsonProperty("jlcpcb") JlcpcbSummary jlcpcb
+            @JsonProperty("jlcpcb") JlcpcbSummary jlcpcb,
+            @JsonProperty("quota") ApiQuotaTracker.Snapshot quota
     ) {
+
+        public DistributorStatus(Distributor distributor, boolean configured, boolean available, String detail,
+                                 boolean usesCache, Long cachedParts, int maxResultsPerSearch, JlcpcbSummary jlcpcb) {
+            this(distributor, configured, available, detail, usesCache, cachedParts, maxResultsPerSearch, jlcpcb,
+                    null);
+        }
+
+        /** This entry with the quota usage. */
+        public DistributorStatus withQuota(ApiQuotaTracker.Snapshot snapshot) {
+            return new DistributorStatus(distributor, configured, available, detail, usesCache, cachedParts,
+                    maxResultsPerSearch, jlcpcb, snapshot);
+        }
     }
 
     /** State of the JLCPCB parts database that serves LCSC. */
@@ -69,7 +114,28 @@ public record DistributorStatusResponse(
             @JsonProperty("source_date") String sourceDate,
             @JsonProperty("part_count") Long partCount,
             @JsonProperty("downloading") boolean downloading,
-            @JsonProperty("last_error") String lastError
+            @JsonProperty("last_error") String lastError,
+            @JsonProperty("field_index") TypedTableSummary fieldIndex
+    ) {
+    }
+
+    /**
+     * The typed in-stock table of the JLCPCB data (DESIGN.md 9.3).
+     *
+     * @param enabled   {@code kina.jlcpcb.field-index.enabled}
+     * @param available the table is attached and current, so LCSC searches use the field query
+     * @param version   the extractor version of the table (null when not available)
+     * @param rows      its rows (null when not available)
+     * @param builtAt   when it was built (null when not available)
+     * @param building  a build of the table is running
+     */
+    public record TypedTableSummary(
+            @JsonProperty("enabled") boolean enabled,
+            @JsonProperty("available") boolean available,
+            @JsonProperty("version") Integer version,
+            @JsonProperty("rows") Long rows,
+            @JsonProperty("built_at") Instant builtAt,
+            @JsonProperty("building") boolean building
     ) {
     }
 
