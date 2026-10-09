@@ -58,7 +58,7 @@ interface DistributorRetriever {
         String query = phrase != null ? phrase : parsed.originalText();
         int window = window(properties, distributor, prepared.maxResults());
         int maxPages = maxPages(properties, distributor);
-        return new Plan(query, window, maxPages, Check.of(ranking, parsed));
+        return new Plan(query, window, maxPages, Check.of(ranking, prepared));
     }
 
     static CacheStatus initialStatus(Distributor distributor, boolean bypassCache) {

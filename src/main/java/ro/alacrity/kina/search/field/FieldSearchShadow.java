@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.config.KinaProperties;
-import ro.alacrity.kina.config.KinaProperties.FieldIndexMode;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
@@ -48,22 +47,14 @@ public class FieldSearchShadow {
                          int unindexed) {
     }
 
-    /** True when the shadow comparison runs ({@code mode=shadow}). */
-    public boolean enabled() {
-        return properties.search().fieldIndex().mode() == FieldIndexMode.SHADOW;
-    }
-
     /**
-     * Compares in the background when {@link #enabled()}; never throws, never delays the search.
+     * Compares in the background (the {@code shadow} mode's strategy calls it); never throws, never delays the search.
      *
      * @param returned   the parts the Java path holds for the distributor
      * @param returnable the Java check ({@code PageCollector.Check.returnable} for the request)
      */
     public void observe(Distributor distributor, ParsedQuery parsed, ConstraintPolicy policy, List<Part> returned,
                         Predicate<Part> returnable) {
-        if (!enabled()) {
-            return;
-        }
         List<Part> parts = List.copyOf(returned);
         Thread.ofVirtual().name("field-shadow").start(() -> compare(distributor, parsed, policy, parts, returnable));
     }

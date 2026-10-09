@@ -68,6 +68,7 @@ class FieldFirstSearchTest {
     @Autowired PartIndexRepository index;
     @Autowired JdbcClient jdbc;
     @Autowired JsonMapper jsonMapper;
+    @Autowired List<FieldIndexStrategy> strategies;
 
     private final ParametricExtractor extractor = new ParametricExtractor();
     private final QueryParser parser = new QueryParser();
@@ -610,6 +611,30 @@ class FieldFirstSearchTest {
         DistributorResult on = search(QUERY, 3);
         assertThat(on.cache()).isEqualTo(CacheStatus.STALE);
         assertThat(numbers(on)).containsAll(numbers(off)).contains("A1", "K1");
+    }
+
+    /**
+     * Review B2: the index hits are keys; their parts are loaded, enriched and checked in chunks of
+     * {@code max(2 x max_results, 20)} until enough, so a request answered by the first chunk loads only it (and the
+     * ranker sees only those), while {@code max-candidates} stays the SQL recall limit.
+     */
+    @Test
+    void theIndexCandidatesAreLoadedInChunksUntilEnough() {
+        cache(mlccs("A", 60, "X7R", 25));
+        service("on");
+        DistributorResult small = search(QUERY, 3);
+        assertThat(small.fetched()).as("one chunk of max(2 x 3, 20)").isEqualTo(20);
+        assertThat(small.returned()).isEqualTo(3);
+        DistributorResult larger = search(QUERY, 15);
+        assertThat(larger.fetched()).as("one chunk of 2 x 15").isEqualTo(30);
+        assertThat(mouser.asked).isEmpty();
+    }
+
+    /** One strategy bean per mode (review B3), picked by the retriever. */
+    @Test
+    void everyModeHasOneStrategy() {
+        assertThat(strategies).extracting(FieldIndexStrategy::mode)
+                .containsExactlyInAnyOrder(KinaProperties.FieldIndexMode.values());
     }
 
     @Test

@@ -544,28 +544,31 @@ search(request, distributor D):            # D is Mouser or TME
     counted in kina_field_fallbacks_total{reason}
   steps = [all groups], [without K], [without L1], [without L1, L2] ...    # FieldQuery.steps(); H never dropped,
                                                                            # R (ratings) and S only order
-  phrase of a step = the phrase the cached-search path would send at that ladder step (DistributorPhraser):
-    all groups: the request's phrase; without K: the minimal core when it words the request differently, else the
-    same phrase; without L1..Lk: the ladder step that loosens exactly those kinds (none: no phrase for the step)
+  phrase of a step = DistributorPhraser.phraseFor, the phrase the cached-search path would send at that ladder
+    step: all groups: the request's phrase; without K: the minimal core when it words the request differently, else
+    the same phrase; without L1..Lk: the ladder step that loosens exactly those kinds, else the first that loosens
+    at least them (none: no phrase for the step)
   calls = 0
-  for each step:
-      cands = hits of the step's field query (at most max-candidates; skipped when the step holds nothing the
-              request states and require-stated-constraint is on) + the parts of the request's fresh cached list
-              (cached_searches, what the cached-search path would serve) + the parts this request received live,
-              both when they pass the Java check and the ladder kinds still in the step
+  for each step (FieldRelaxation.relax, the loop LCSC shares):
+      read: the keys of the step's field query (at most max-candidates, the SQL recall limit; skipped when the step
+            is not selective and require-stated-constraint is on); their parts loaded, enriched and checked in
+            chunks of max(2 x max_results, 20) until enough (the first chunk always) + the parts of the request's
+            fresh cached list (cached_searches, what the cached-search path would serve) + the parts this request
+            received live, both when they pass the Java check and the ladder kinds still in the step
       if #(cands that pass the Java check) >= max_results and one of them is confirmed: stop          # enough
       if a call of this request failed: next step                                        # index only, no call
       if the step's phrase was already tried in this request: next step
       if the journal has a fresh row for (D, phrase): count a journal hit, next step                   # asked already
       if calls >= max-live-calls-per-distributor or the deadline is over: stop
       call D with the phrase (page rules, deadline and rate-limit retry of steps 2 and 3.6), calls += 1;
-      upsert the parts (the cache write writes the index), write the journal row
+      upsert the parts (the cache write writes the index), write the journal row (unless a later page failed)
       on a failure: no further call; the request's cached list joins the candidates even when it has expired
-      cands = again; if enough: stop
+      read the step again; if enough: stop
   after a failure, when no step had a candidate that passes the Java check: the expired cached list as the
     cached-search path serves it (cache stale, the error), else the index candidates with the error, else the error
-  answer with every part received live + the cached list + cands, in that order (the ranker checks at most
-    max-candidates of them, excludes what the request refuses and counts it)
+  answer with every part received live + the cached list + the index candidates read, in that order (the ranker
+    checks at most max-candidates of them, excludes what the request refuses and counts it, reusing the checks the
+    flow made: PartChecks)
 ```
 
 *Enough* is at least `max_results` candidates that pass the Java check (`Check.returnable`: not excluded by a
@@ -588,7 +591,9 @@ only loses those parts.
 **The stated-constraint rule** (`kina.search.field-index.require-stated-constraint`, default true). A step is
 *selective* when it holds a free-text word, a part number, or a constraint kind the request names (the family and the
 rules the family implies, such as the LED type of every LED request, do not count; a requested rating counts,
-`mosfet 60V`: it orders the candidates, the parts that meet it first; `FieldFirstSearch.selective`).
+`mosfet 60V`: it orders the candidates, the parts that meet it first). One definition for every path
+(`FieldRelaxation.selective`, `readable`, `statesConstraint`; review B4): the LCSC typed path runs for a request that
+states a constraint (free text alone keeps the FTS5 order) and reads only selective steps, like the field-first flow.
 With the rule on, a request whose first step is not selective (`mosfet`, `LED`) never reads the index: `on` takes the
 cached-search path with reason `generic`, `augment` adds nothing, and a later step that is not selective is not read
 either. The index orders its candidates by key, not by relevance, so for such a request it would return the first
@@ -646,7 +651,7 @@ a day), each with `max-pages-per-search` pages. `kina_field_served_total`, `kina
 `kina_field_journal_hits_total` and `kina_field_fallbacks_total{reason}` (section 3.7) show how often the index
 answers, which steps cost a call and why a search took the old path.
 
-**Augment** (`mode=augment`, `CachedDistributorRetriever.augment`): the algorithm above, unchanged; on a `hit` or
+**Augment** (`mode=augment`, `FieldIndexStrategies.Augment`): the algorithm above, unchanged; on a `hit` or
 `partial` of the cached list the in-stock parts of the field query's first step that the list does not hold and that
 the Java check would return are added to it before the check and the ranking. No distributor call is made, `fetched`
 reports the merged set and `total_results` stays the distributor's figure. An incomplete index, a request that states
@@ -694,7 +699,8 @@ cross-encoder is a second signal in a 50/50 **rank** blend, the deterministic or
    within 5s"`, `"cross-encoder failed: <reason>"`. Fully cached candidate sets are blended even while the model is
    not loaded.
 
-**Before ranking** (`RankingService.rank(query, fetched, budget, RankOptions(quantity, allowBelowSpec))`): parts whose
+**Before ranking** (`RankingService.rank(query, fetched, budget, RankOptions(quantity, allowBelowSpec, checks))`;
+`checks` are the request's `PartChecks`: a part the retrieval already checked is not checked again): parts whose
 known attribute contradicts a hard constraint are removed and counted per distributor (`excluded_by_constraints`, per
 constraint `RankedResults.excludedDetail`, section 3.4 "Hard constraints"); parts with a known rating below the request are removed and counted
 (`excluded_below_spec`, the five closest per distributor in `excluded_below_spec_detail`) unless `allowBelowSpec`
@@ -2301,12 +2307,17 @@ render the same predicates; SQLite stores arrays and `attrs` as JSON text and ma
 the LCSC typed table is phase B).
 
 **Candidate cap** (`kina.search.field-index.max-candidates`, default 100, `KINA_FIELD_INDEX_MAX_CANDIDATES`). It is
-the number of rows one field query returns, and the ranking stage checks and ranks at most that many in-stock parts
-per distributor (`RankingService.capped`, in list order; a requested part listed without stock is always kept; the
-parts after the cap are neither checked nor counted). The field paths list the parts received live and the cached list
-first (`FieldFirstSearch`, `augment`), so a cut only drops index candidates; the cached-search lists hold at most a
-fetch window (50) and are never cut. The trade-off is recall against latency: every candidate is loaded, enriched,
-checked and ranked (about 1.6 ms per part on the validation host). Measured on the production cache (validation
+the SQL recall limit: the number of keys one field query returns, and the ranking stage checks and ranks at most that
+many in-stock parts per distributor (`RankingService.capped`, in list order; a requested part listed without stock is
+always kept; the parts after the cap are neither checked nor counted). The field paths list the parts received live
+and the cached list first (`FieldFirstSearch`, `augment`), so a cut only drops index candidates; the cached-search
+lists hold at most a fetch window (50) and are never cut. **Chunked loading** (v0.16, review B2): the keys are cheap,
+the parts are not (each one is loaded, enriched, checked and ranked, about 1.6 ms per part on the validation host), so
+`FieldFirstSearch` loads, enriches and checks them in chunks of `max(2 x max_results, 20)` in index order
+(`FieldRelaxation.chunk`) until the step has enough, the first chunk always; the ranker sees only the chunks read.
+The checks are made once per request (`PartChecks`, carried by the request and handed to the ranking in
+`RankOptions`): a part the retrieval checked is not checked again by the ranker, for the same part instance and query
+only (a part received again, with fresh stock, is checked again). Measured on the production cache (validation
 2026-10-09, Mouser, cached, median of 20 warm runs, `max_results` 10; `docs/research/field-search-validation-2026-10-09.md`
 section 8): `10uF X7R 0805` 413 ms in `on` with 200 candidates (193 parts) in phase C against 74 ms with the cached
 list (`off`, 49 parts); with the cap at 100, 198 ms in `on` (104 parts), 158 ms in `augment`, 66 ms in `off`;
@@ -2364,7 +2375,9 @@ becomes unreachable while the index is built or rebuilt. `list_distributors` rep
 `field_index: {mode, rows, stale, version, reindexing, incomplete, journal_rows}` (`journal_rows`: the rows of the
 phrase journal `distributor_phrases`, omitted when it cannot be read).
 
-**Modes** (`kina.search.field-index.mode`). `off` (default): no search reads the index (it is still written and
+**Modes** (`kina.search.field-index.mode`). Each mode is one `FieldIndexStrategy` bean (`FieldIndexStrategies.Off`,
+`Shadow`, `Augment`, `On`; review B3), which `CachedDistributorRetriever` picks by the configured mode; the
+cached-search path they share is `CachedSearchPath`. `off` (default): no search reads the index (it is still written and
 re-indexed). `shadow`: after each Mouser or TME retrieval, `FieldSearchShadow` runs the field query in the background
 and compares it with the parts the cached-search path holds: the candidates of the unrelaxed step, their overlap with
 those parts, and the parts the Java check keeps that the most relaxed step would drop (must be 0); logs at DEBUG (WARN
@@ -3222,20 +3235,21 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   - **Status.** `list_distributors` `jlcpcb.field_index`: `{enabled, available, version, rows, built_at, building}`
     (`version`, `rows`, `built_at` null unless available).
 - Field query (`LcscRetriever`, `LcscFieldSearch`, `SqliteFieldSql`): with the typed table attached, a request that
-  states at least one typed constraint (a family, value, package, rating, connector attribute...) runs as a
-  `FieldQuery` (`FieldQueryBuilder`, distributor LCSC; the ratings only order, section 3.8, so the query is the same
-  with and without `allow_below_spec`) instead of the FTS5 search; a free-text-only request (`RP2040`, no constraint)
-  keeps the FTS5 path, whose BM25 order is what it needs.
-  1. **Step 0, confirmed rows.** `SqliteFieldSql.CONFIRMED` renders the confirmed subset of the unrelaxed step: every
+  states a constraint (`FieldRelaxation.statesConstraint`: a value, package, rating, connector attribute... beyond
+  the family) runs as a `FieldQuery` (`FieldQueryBuilder`, distributor LCSC; the ratings only order, section 3.8, so
+  the query is the same with and without `allow_below_spec`) instead of the FTS5 search; a free-text-only request
+  (`RP2040`) and a request of the family alone (`resistor`) keep the FTS5 path, whose BM25 order is what they need.
+  The steps run in the relaxation loop the field-first flow uses (`FieldRelaxation`, review B4).
+  1. **Confirmed rows first.** `SqliteFieldSql.CONFIRMED` renders the stated-only form of a step (section 3.8): every
      value predicate demands a stated, matching value (`capacitance_f BETWEEN ? AND ?` instead of `IS NULL OR ...`),
      and every requested rating is stated (`NOT voltage_v IS NULL`, never compared: a part below spec stays a
      candidate). These are exactly the rows the full statement orders first (every requested attribute stated,
      ratings included; `LcscFieldIndexTest`). SQLite can seek this form (the planner lesson of
      study 12.2: the `IS NULL OR` form is a residual filter that reads every row of the family), so the plan is
      `SEARCH part_index USING INDEX part_index_cap (family=? AND capacitance_f>? AND capacitance_f<?)` (resistors:
-     `_res`; connectors: `_pos`; USB: `_usb`), checked with `EXPLAIN QUERY PLAN` in `LcscFieldIndexTest`. When at least
-     the candidate window of them exist (`max(max_results, search.candidate-window)`, at most `max-results-per-search`),
-     the highest-stock ones are the candidates and `total_results` is their count.
+     `_res`; connectors: `_pos`; USB: `_usb`), checked with `EXPLAIN QUERY PLAN` in `LcscFieldIndexTest` and
+     `PartIndexPlanTest`. A chunk of candidates that lies within the confirmed rows (`LcscFieldSearch.candidates`
+     with its offset; `total_results` is then their count) is read with this form.
   2. **Superset.** Otherwise `SqliteFieldSql.INSTANCE` (a part that does not state an attribute is kept, and a part
      below spec too: ratings are not filtered, section 3.8): the parts that state the most requested attributes
      (ratings included: confirmed first) first, then the highest stock, one pass with
@@ -3245,10 +3259,12 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
      buzzers for `40x40x10 fan 12V`, validation 2026-10-09) and the ranker cannot tell it from the request. Those rows
      are left to the FTS5 search of step 4, which fills the window as it did before the typed table existed.
      `SqliteFieldSql.select` (the superset of section 3.8) still keeps them. It scans the family (about 50 to 110 ms warm on the full file).
-     A step fetches twice the window and keeps, in order, the candidates the Java check returns
-     (`Check.returnable`), at most the window: the SQL ranges are wider than the Java check (a 4.75k row is in the
-     range of a 4.7k request and is left out by the check), and such rows must not take places the FTS search would
-     otherwise fill (validation 2026-10-09: `4.7k 1% 0603 resistor` returned 38 parts where the FTS path returned 44).
+     A step is read in chunks of `max(2 x window, 20)` rows (`FieldRelaxation.chunk` of the window: one statement for
+     the usual window, at most `max-candidates` rows) until the window is full, and keeps, in order, the candidates
+     the Java check returns (`Check.returnable`), at most the window: the SQL ranges are wider than the Java check (a
+     4.75k row is in the range of a 4.7k request and is left out by the check), and such rows must not take places the
+     FTS search would otherwise fill (validation 2026-10-09: `4.7k 1% 0603 resistor` returned 38 parts where the FTS
+     path returned 44).
      A candidate whose known rating is below the request (and `allow_below_spec` is false) takes no place either; it
      is handed to the ranker after the window, which excludes it and counts it in `excluded_below_spec` and
      `excluded_below_spec_detail`, as for the below-spec parts of an FTS window (project decision 2026-10-09). Unlike
@@ -3256,9 +3272,14 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
      place by stock among the rows that state the ratings, as in an FTS window, so the counts tell the caller that
      `allow_below_spec` would find parts (e2e: `electrolytic capacitor 470uF 35V 105°C 5000h THT`). LCSC has no quota
      and the FTS search fills the places they leave.
-  3. **Relaxation.** While the step yields fewer candidates than the window, the next step of `FieldQuery.steps()`
-     (free text first, then the ladder kinds in `@Relax` order) runs the same way; the constraints and keywords a step
-     left out are reported as `constraints_relaxed` and `query_terms_dropped`.
+  3. **Relaxation.** A step that has not *enough* (fewer than `max_results` candidates that pass the Java check, or
+     none confirmed: the rule of the field-first flow, `FieldRelaxation.enough`) is followed by the next step of
+     `FieldQuery.steps()` (free text first, then the ladder kinds in `@Relax` order), read the same way; a step that
+     has enough ends the loop, also when the window is not full (the FTS search fills it). Until v0.15 the loop
+     stopped on the rows the SQL matched (`total >= window`) and fetched twice the window as a patch for the rows the
+     check then refused. The constraints and keywords the step used left out are reported as `constraints_relaxed`
+     and `query_terms_dropped`. The pool wait of a typed query is `kina.jlcpcb.pool-wait`, at most what is left of
+     the deadline.
   4. **Fallback and merge.** When the ladder is exhausted with fewer candidates than the window, or none of the
      candidates meets the request with its ratings verified, today's search (`JlcpcbQuery`, section above) runs and
      fills the rest of the window; the parts are merged (one per LCSC number) and `total_results` is the FTS count then.

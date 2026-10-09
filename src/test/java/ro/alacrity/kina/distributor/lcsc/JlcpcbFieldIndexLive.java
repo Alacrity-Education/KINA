@@ -59,7 +59,7 @@ public final class JlcpcbFieldIndexLive {
             return;
         }
         JlcpcbSqliteSearch search = TestWiring.wire(new JlcpcbSqliteSearch(), "properties", properties);
-        LcscFieldSearch field = TestWiring.wire(new LcscFieldSearch(), "search", search);
+        LcscFieldSearch field = TestWiring.wire(new LcscFieldSearch(), "search", search, "clock", java.time.Clock.systemUTC());
         System.out.println("typed table available: " + field.available() + " " + search.fieldIndex());
         QueryParser parser = new QueryParser();
         for (String text : QUERIES) {
@@ -108,7 +108,7 @@ public final class JlcpcbFieldIndexLive {
                     "kina.jlcpcb.library", main.getFileName().toString(), "kina.jlcpcb.field-index.enabled", "true",
                     "kina.jlcpcb.pool-size", Integer.toString(poolSize), "kina.jlcpcb.pool-wait", "60s");
             JlcpcbSqliteSearch search = TestWiring.wire(new JlcpcbSqliteSearch(), "properties", properties);
-            LcscFieldSearch field = TestWiring.wire(new LcscFieldSearch(), "search", search);
+            LcscFieldSearch field = TestWiring.wire(new LcscFieldSearch(), "search", search, "clock", java.time.Clock.systemUTC());
             QueryParser parser = new QueryParser();
             for (String queryKind : field.available() ? List.of("fts", "typed") : List.of("fts")) {
                 for (String q : queries) {   // warm up

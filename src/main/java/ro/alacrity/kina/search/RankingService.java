@@ -84,16 +84,21 @@ public class RankingService {
     }
 
     /**
-     * How one query is ranked: the order quantity (stock shortfall, MOQ and low-stock penalties) and whether parts whose
+     * How one query is ranked: the order quantity (stock shortfall, MOQ and low-stock penalties), whether parts whose
      * known rating is below the request are returned (flagged, after every part that meets the request, closest first)
-     * instead of excluded.
+     * instead of excluded, and the checks the retrieval already made for the request ({@link PartChecks}: a part is
+     * checked once per request; null: none).
      */
-    public record RankOptions(int quantity, boolean allowBelowSpec) {
+    public record RankOptions(int quantity, boolean allowBelowSpec, PartChecks checks) {
 
         public static final RankOptions DEFAULT = new RankOptions(1, false);
 
         public RankOptions {
             quantity = Math.max(1, quantity);
+        }
+
+        public RankOptions(int quantity, boolean allowBelowSpec) {
+            this(quantity, allowBelowSpec, null);
         }
     }
 
@@ -304,10 +309,15 @@ public class RankingService {
      * meets the request with every rating verified, and relaxes only when nothing meets it at all (DESIGN.md 3.2).
      */
     public Verdict verdict(ParsedQuery query, Part part) {
-        if (safeCheck(query, part).conflict()) {
+        return verdict(query, part, new PartChecks(query));
+    }
+
+    /** {@link #verdict(ParsedQuery, Part)} with the checks of the request, which the ranking reuses. */
+    Verdict verdict(ParsedQuery query, Part part, PartChecks checks) {
+        if (checks.check(query, part, () -> safeCheck(query, part)).conflict()) {
             return Verdict.CONSTRAINT;
         }
-        DeterministicRanker.Assessment a = safeAssess(query, part);
+        DeterministicRanker.Assessment a = checks.assessment(query, part, () -> safeAssess(query, part));
         if (a.isBelowSpec()) {
             return Verdict.BELOW_SPEC;
         }
@@ -346,11 +356,14 @@ public class RankingService {
         int qty = opts.quantity();
         boolean understood = query.understood();
         int cap = properties.search().fieldIndex().maxCandidates();
+        // the checks the retrieval made for this request (none: a memo of this ranking only)
+        PartChecks checks = opts.checks() != null ? opts.checks() : new PartChecks(query);
         try {
             input.forEach((distributor, parts) -> {
                 List<Part> kept = new ArrayList<>();
                 for (Part p : capped(dedupe(parts), cap)) {
-                    ConstraintPolicy.Result check = safeCheck(query, p);
+                    // checked once per request: the retrieval's checks of this part are reused (PartChecks)
+                    ConstraintPolicy.Result check = checks.check(query, p, () -> safeCheck(query, p));
                     List<String> naming = PartNumbers.requestedBy(query, p);
                     // a requested part listed without stock (stock 0) is not part of fetched: never counted
                     boolean listed = p.stock() <= 0;
@@ -364,7 +377,7 @@ public class RankingService {
                                 .add(new ExcludedRequest(n, p, check.reason())));
                         continue;
                     }
-                    DeterministicRanker.Assessment a = safeAssess(query, p);
+                    DeterministicRanker.Assessment a = checks.assessment(query, p, () -> safeAssess(query, p));
                     if (a.isBelowSpec() && !opts.allowBelowSpec()) {
                         if (!listed) {
                             excludedBelowSpec.merge(distributor, 1, Integer::sum);

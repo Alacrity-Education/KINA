@@ -19,7 +19,6 @@ import ro.alacrity.kina.metrics.FieldFallback;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
-import ro.alacrity.kina.search.field.FieldPredicate;
 import ro.alacrity.kina.search.field.FieldQuery;
 import ro.alacrity.kina.search.field.FieldQueryBuilder;
 import ro.alacrity.kina.search.field.PartIndexRepository;
@@ -34,29 +33,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * The field-first search of Mouser and TME ({@code kina.search.field-index.mode=on}, DESIGN.md 3.2 "Field-first flow",
- * study 5.2). Per distributor, from the least to the most relaxed step of the {@link FieldQuery}:
+ * study 5.2). Per distributor, the steps of the {@link FieldQuery} from the least to the most relaxed, in the one
+ * relaxation loop of the field index ({@link FieldRelaxation}):
  *
  * <ol>
- *   <li>run the field query of the step on {@code part_index} (a recall filter: the Java check decides) and add the
- *       parts of the request's fresh cached list (what the cached-search path would serve) and the parts this request
- *       already received live; when at least {@code max_results} of them pass the Java check and
- *       one is confirmed, answer;</li>
- *   <li>else look up the phrase of the step in the journal ({@link PhraseJournalRepository}); a fresh row means the
- *       distributor was already asked: no call;</li>
+ *   <li>read the step: its field query on {@code part_index} (a recall filter: the Java check decides) gives up to
+ *       {@code max-candidates} keys, loaded, enriched and checked in chunks ({@link FieldRelaxation#chunk}) until
+ *       enough; the parts of the request's fresh cached list (what the cached-search path would serve) and the parts
+ *       this request already received live join them; when at least {@code max_results} pass the Java check and one is
+ *       confirmed, answer;</li>
+ *   <li>else look up the phrase of the step ({@link DistributorPhraser#phraseFor}) in the journal
+ *       ({@link PhraseJournalRepository}); a fresh row means the distributor was already asked: relax;</li>
  *   <li>else call the distributor with the phrase (the paging rules, deadline and rate-limit retry of
  *       {@link PageCollector}), write the parts to the cache (which writes the index), record the phrase in the journal
- *       and query again;</li>
- *   <li>else relax one step and repeat. Stops at the first step with enough, at the end of the steps (the result is
- *       what there is) and when a call would exceed {@code max-live-calls-per-distributor}.</li>
+ *       and read the step again;</li>
+ *   <li>stop at the first step with enough, at the end of the steps (the result is what there is) and when a call would
+ *       exceed {@code max-live-calls-per-distributor} or the deadline.</li>
  * </ol>
  *
  * <p>A request the flow cannot answer from the index returns an outcome that sends the caller to the cached-search path
  * ({@link Outcome#legacy}): {@code bypass_cache}, an index that is not complete for the distributor, a request whose
- * first step is only the family (too generic to answer from fields; {@code require-stated-constraint}, on by default),
- * an SQL error or a journal read failure before any call.
+ * first step is not selective (too generic to answer from fields; {@link FieldRelaxation#readable}), an SQL error or a
+ * journal read failure before any call.
  *
  * <p>After a failed call no further call is made: the request's cached list (expired or not) joins the candidates and
  * the remaining steps are read from the index. When no step found a part the Java check returns, the outcome is a
@@ -108,16 +110,12 @@ final class FieldFirstSearch {
         }
     }
 
-    /** One relaxation step with the phrase that goes with it (null: no distributor phrase for the step). */
+    /** One relaxation step with the phrase the ladder declares for it (null: no distributor phrase for the step). */
     private record Rung(FieldQuery.Step step, String phrase, int ladderStep) {
 
         List<String> relaxed() {
             return step.relaxed();
         }
-    }
-
-    /** The parts of a step: the index hits (most relevant first) and the ones received live. */
-    private record Candidates(List<Part> indexed, List<Part> passing) {
     }
 
     /** An SQL failure of the field query. */
@@ -146,7 +144,7 @@ final class FieldFirstSearch {
                     e.toString());
             return Outcome.legacy(FieldFallback.SQL_ERROR);
         }
-        if (!readable(query, query.step(0), parsed)) {
+        if (!FieldRelaxation.readable(config.requireStatedConstraint(), query, query.step(0), parsed)) {
             return Outcome.legacy(FieldFallback.GENERIC);
         }
         Run run = new Run(client, prepared, progress, deadline, query);
@@ -159,45 +157,28 @@ final class FieldFirstSearch {
         }
     }
 
-    /**
-     * True when the index may be read for {@code step}: always when {@code require-stated-constraint} is off, else
-     * only when the step is {@link #selective}.
-     */
-    boolean readable(FieldQuery query, FieldQuery.Step step, ParsedQuery parsed) {
-        return !properties.search().fieldIndex().requireStatedConstraint() || selective(query, step, parsed);
-    }
-
-    /**
-     * True when a step holds a predicate the request states: free text, a part number or a constraint kind it names
-     * (the family and the rules the family implies, such as the LED type of every LED request, do not count). A step
-     * of only those returns every in-stock part of the family, which is no answer to the request. A requested rating
-     * counts too ({@code mosfet 60V}): it never filters, but it orders the candidates, the parts that meet it first.
-     */
-    static boolean selective(FieldQuery query, FieldQuery.Step step, ParsedQuery parsed) {
-        return !query.ratings().isEmpty() || step.predicates().stream().anyMatch(p -> p instanceof FieldPredicate.Word
-                || p instanceof FieldPredicate.Substring || p instanceof FieldPredicate.MpnPrefix
-                || p.kind() != null && p.kind() != ConstraintKind.TYPE && p.kind().wanted(parsed) != null);
-    }
-
-    /** One search of one distributor: the state of the loop. */
-    private final class Run {
+    /** One search of one distributor: the state of the loop and its steps ({@link FieldRelaxation.Steps}). */
+    private final class Run implements FieldRelaxation.Steps {
 
         private final DistributorClient client;
         private final Distributor distributor;
-        private final Prepared prepared;
         private final ParsedQuery parsed;
         private final Progress progress;
         private final DistributorBudget deadline;
         private final FieldQuery query;
         private final boolean allowBelowSpec;
         private final DistributorRetriever.Plan plan;
-        private final List<Rung> rungs;
+        private final Check check;
+        private final Map<Integer, Rung> rungs = new HashMap<>();
         private final String firstKey;
         private final int cap;
+        private final int target;
+        private final int chunk;
+        private final int recall;
+        private final boolean requireStated;
 
-        /** Parts loaded from the cache and enriched, by distributor part number. */
+        /** Parts loaded from the cache and enriched (or received live, the newer copy), by distributor part number. */
         private final Map<String, Part> loaded = new HashMap<>();
-        private final Map<String, RankingService.Verdict> verdicts = new HashMap<>();
         /** Parts received live in this request, by distributor part number. */
         private final Map<String, Part> live = new LinkedHashMap<>();
         /** Parts of the request's fresh cached list ({@code cached_searches}), by distributor part number. */
@@ -207,7 +188,6 @@ final class FieldFirstSearch {
         private final Instant now;
 
         int calls;
-        private boolean calledFirst;
         private boolean calledRelaxed;
         /** A step had a part the Java check returns. */
         private boolean found;
@@ -216,6 +196,7 @@ final class FieldFirstSearch {
         private Integer liveTotal;
         private int liveOutOfStock;
         private Rung served;
+        /** The index candidates of the last step read, loaded and in index order. */
         private List<Part> indexed = List.of();
         private DistributorException failure;
         private Collected lastCollected;
@@ -227,102 +208,36 @@ final class FieldFirstSearch {
             FieldQuery query) {
             this.client = client;
             this.distributor = client.distributor();
-            this.prepared = prepared;
             this.parsed = prepared.parsed();
             this.progress = progress;
             this.deadline = deadline;
             this.query = query;
             this.allowBelowSpec = prepared.request().allowBelowSpec();
             this.plan = DistributorRetriever.plan(properties, ranking, distributor, prepared);
+            this.check = plan.meets();
             this.firstKey = DistributorPhraser.phraseKey(plan.query());
-            this.rungs = rungs();
-            this.cap = Math.max(1, properties.search().fieldIndex().maxLiveCallsPerDistributor());
+            KinaProperties.FieldIndex config = properties.search().fieldIndex();
+            this.cap = Math.max(1, config.maxLiveCallsPerDistributor());
+            this.target = prepared.maxResults();
+            this.chunk = FieldRelaxation.chunk(target);
+            this.recall = config.maxCandidates();
+            this.requireStated = config.requireStatedConstraint();
             this.now = clock.instant();
         }
 
-        /** The steps of the field query with the ladder phrase of each (study 5.2: the phrase of the step). */
-        private List<Rung> rungs() {
-            List<DistributorPhraser.Relaxation> ladder = DistributorPhraser.ladder(distributor, parsed, plan.query(),
-                    ConstraintPolicy.of(ranking));
-            List<Rung> out = new ArrayList<>();
-            for (FieldQuery.Step step : query.steps()) {
-                int at = -1;
-                String phrase = null;
-                if (step.index() == 0) {
-                    phrase = plan.query();
-                } else if (step.relaxed().isEmpty()) {
-                    // the keywords are dropped: the minimal core when it words the request differently
-                    for (int i = 0; i < ladder.size(); i++) {
-                        DistributorPhraser.Relaxation r = ladder.get(i);
-                        if (r.relaxed().isEmpty() && !DistributorPhraser.phraseKey(r.phrase()).equals(firstKey)) {
-                            at = i;
-                            phrase = r.phrase();
-                            break;
-                        }
-                    }
-                    phrase = phrase != null ? phrase : plan.query();
-                } else {
-                    Set<String> wanted = new HashSet<>(step.relaxed());
-                    for (int i = 0; i < ladder.size() && phrase == null; i++) {
-                        if (new HashSet<>(ladder.get(i).relaxed()).equals(wanted)) {
-                            at = i;
-                            phrase = ladder.get(i).phrase();
-                        }
-                    }
-                    for (int i = 0; i < ladder.size() && phrase == null; i++) {
-                        if (ladder.get(i).relaxed().containsAll(wanted)) {
-                            at = i;
-                            phrase = ladder.get(i).phrase();
-                        }
-                    }
-                }
-                out.add(new Rung(step, phrase, phrase == null || at < 0 ? 0 : at + 1));
-            }
-            return out;
+        /** The step with the phrase the ladder declares for it (study 5.2: the phrase of the step). */
+        private Rung rung(FieldQuery.Step step) {
+            return rungs.computeIfAbsent(step.index(), i -> {
+                DistributorPhraser.StepPhrase phrase = DistributorPhraser.phraseFor(distributor, parsed, plan.query(),
+                        ConstraintPolicy.of(ranking), step.dropped().contains(FieldQuery.Role.K.name()),
+                        step.relaxed());
+                return new Rung(step, phrase.phrase(), phrase.ladderStep());
+            });
         }
 
         Outcome execute() {
             loadCachedList();
-            for (Rung rung : rungs) {
-                stepsTried++;
-                progress.fieldSteps = stepsTried;
-                served = rung;
-                Candidates c = candidates(rung);
-                found |= !c.passing().isEmpty();
-                if (enough(c)) {
-                    break;
-                }
-                if (failure != null) {
-                    // the distributor is failing: the relaxed steps are read from the index, never asked
-                    continue;
-                }
-                if (rung.phrase() == null || !asked.add(DistributorPhraser.phraseKey(rung.phrase()))) {
-                    continue;
-                }
-                String key = DistributorPhraser.phraseKey(rung.phrase());
-                Optional<PhraseJournalRepository.Entry> entry = decide(key);
-                if (entry.isPresent() && entry.get().isFresh(now, properties.cache().ttl(),
-                        properties.cache().emptyResultTtl())) {
-                    consulted.put(key, entry.get());
-                    metrics.fieldJournalHit(distributor.name());
-                    continue;
-                }
-                if (calls >= cap || deadline.remainingNanos() <= 0) {
-                    log.info("{} '{}': no further call at step {} ({})", distributor, parsed.normalizedKey(),
-                            rung.step().index(), calls >= cap ? "call cap " + cap : "deadline");
-                    break;
-                }
-                if (!call(rung, key)) {
-                    // no further call; the parts of the expired cached list join the candidates, as the
-                    // cached-search path serves that list when its call fails
-                    loadExpiredList();
-                }
-                Candidates after = candidates(rung);
-                found |= !after.passing().isEmpty();
-                if (enough(after)) {
-                    break;
-                }
-            }
+            FieldRelaxation.relax(query.steps(), this);
             if (failure != null && indexed.isEmpty() && listed.isEmpty() && live.isEmpty()) {
                 return Outcome.failure(failure);
             }
@@ -338,6 +253,125 @@ final class FieldFirstSearch {
                 writeSearchRow();
             }
             return Outcome.answered(fetched);
+        }
+
+        /**
+         * Reads a step: the index hits (keys only, at most {@code max-candidates}), loaded, enriched and checked in
+         * chunks until enough (review B2: the first chunk always, the next ones only while short), then the cached
+         * list and the parts received live.
+         */
+        @Override
+        public boolean read(FieldQuery.Step step) {
+            Rung rung = rung(step);
+            served = rung;
+            stepsTried = Math.max(stepsTried, step.index() + 1);
+            progress.fieldSteps = stepsTried;
+            List<ConstraintKind> ladder = query.groups(FieldQuery.Role.L).stream()
+                    .filter(g -> !step.dropped().contains(g.name())).flatMap(g -> g.kinds().stream()).toList();
+            if (FieldRelaxation.readable(requireStated, query, step, parsed)) {
+                List<PartIndexRepository.Hit> hits;
+                try {
+                    hits = index.query(query, step, recall);
+                } catch (RuntimeException e) {
+                    throw new FieldSqlException(e);
+                }
+                List<Part> read = new ArrayList<>(Math.min(hits.size(), chunk));
+                FieldRelaxation.readChunks((offset, size) -> {
+                    List<PartIndexRepository.Hit> slice = hits.subList(Math.min(offset, hits.size()),
+                            Math.min(offset + size, hits.size()));
+                    return new FieldRelaxation.Chunk(load(slice), offset + size >= hits.size());
+                }, chunk, recall, read::add, () -> enough(passing(read, ladder)));
+                indexed = read;
+            }
+            List<Part> passing = passing(indexed, ladder);
+            found |= !passing.isEmpty();
+            return enough(passing);
+        }
+
+        /**
+         * The step was short: ask the distributor with its phrase unless the journal knows it, it was asked in this
+         * request, a call failed, the call cap or the deadline is reached.
+         */
+        @Override
+        public FieldRelaxation.Next notEnough(FieldQuery.Step step) {
+            Rung rung = rung(step);
+            if (failure != null) {
+                // the distributor is failing: the relaxed steps are read from the index, never asked
+                return FieldRelaxation.Next.RELAX;
+            }
+            if (rung.phrase() == null || !asked.add(DistributorPhraser.phraseKey(rung.phrase()))) {
+                return FieldRelaxation.Next.RELAX;
+            }
+            String key = DistributorPhraser.phraseKey(rung.phrase());
+            Optional<PhraseJournalRepository.Entry> entry = decide(key);
+            if (entry.isPresent() && entry.get().isFresh(now, properties.cache().ttl(),
+                    properties.cache().emptyResultTtl())) {
+                consulted.put(key, entry.get());
+                metrics.fieldJournalHit(distributor.name());
+                return FieldRelaxation.Next.RELAX;
+            }
+            if (calls >= cap || deadline.remainingNanos() <= 0) {
+                log.info("{} '{}': no further call at step {} ({})", distributor, parsed.normalizedKey(),
+                        step.index(), calls >= cap ? "call cap " + cap : "deadline");
+                return FieldRelaxation.Next.STOP;
+            }
+            if (!call(rung, key)) {
+                // no further call; the parts of the expired cached list join the candidates, as the
+                // cached-search path serves that list when its call fails
+                loadExpiredList();
+            }
+            return FieldRelaxation.Next.AGAIN;
+        }
+
+        /**
+         * The candidates that pass the Java check: the index candidates read so far, then the cached list and the parts
+         * received live (these also must not miss a ladder kind the step keeps), each part once.
+         */
+        private List<Part> passing(List<Part> candidates, List<ConstraintKind> ladder) {
+            Set<String> seen = new HashSet<>();
+            List<Part> out = new ArrayList<>();
+            for (Part part : candidates) {
+                if (seen.add(part.distributorPartNumber()) && check.returnable(part, allowBelowSpec)) {
+                    out.add(part);
+                }
+            }
+            for (Map<String, Part> received : List.of(listed, live)) {
+                for (Part part : received.values()) {
+                    if (seen.add(part.distributorPartNumber()) && check.returnable(part, allowBelowSpec)
+                            && meetsLadder(part, ladder)) {
+                        out.add(part);
+                    }
+                }
+            }
+            return out;
+        }
+
+        private boolean enough(List<Part> passing) {
+            Predicate<Part> confirmed = p -> check.confirmed(p, allowBelowSpec);
+            return FieldRelaxation.enough(passing, target, confirmed);
+        }
+
+        /** The parts of {@code hits}, loaded once per request and enriched, in hit order. */
+        private List<Part> load(List<PartIndexRepository.Hit> hits) {
+            List<String> missing = hits.stream().map(PartIndexRepository.Hit::partNumber)
+                    .filter(n -> !loaded.containsKey(n)).toList();
+            if (!missing.isEmpty()) {
+                Map<String, Part> found;
+                try {
+                    found = partCache.findInStock(distributor, missing);
+                } catch (RuntimeException e) {
+                    throw new FieldSqlException(e);
+                }
+                found.forEach((n, p) -> loaded.put(n, extractor.enrich(p)));
+            }
+            List<Part> out = new ArrayList<>(hits.size());
+            for (PartIndexRepository.Hit h : hits) {
+                Part part = loaded.get(h.partNumber());
+                if (part != null) {
+                    out.add(part);
+                }
+            }
+            return out;
         }
 
         /**
@@ -372,7 +406,7 @@ final class FieldFirstSearch {
         private void loadCachedList() {
             Instant freshSince = now.minus(properties.cache().ttl());
             Instant emptyFreshSince = now.minus(properties.cache().emptyResultTtl());
-            loadList("cached", c -> CachedDistributorRetriever.isFresh(c, freshSince, emptyFreshSince));
+            loadList("cached", c -> CachedSearchPath.isFresh(c, freshSince, emptyFreshSince));
         }
 
         /**
@@ -387,7 +421,7 @@ final class FieldFirstSearch {
             loadList("expired", c -> true);
         }
 
-        private void loadList(String what, java.util.function.Predicate<CachedSearch> accept) {
+        private void loadList(String what, Predicate<CachedSearch> accept) {
             try {
                 Optional<CachedSearch> cached = searchCache.find(distributor, parsed.normalizedKey()).filter(accept);
                 if (cached.isEmpty() || cached.get().partNumbers().isEmpty()) {
@@ -416,7 +450,7 @@ final class FieldFirstSearch {
             Collected collected;
             try {
                 collected = pages.collect(client, rung.phrase(), 0, plan.window(), plan.maxPages(), List.of(),
-                        progress, deadline, plan.meets(), parsed.family());
+                        progress, deadline, check, parsed.family());
             } catch (DistributorException e) {
                 log.info("{} search '{}' at step {} failed: {}", distributor, rung.phrase(), rung.step().index(),
                         e.getMessage());
@@ -426,15 +460,15 @@ final class FieldFirstSearch {
             calls++;
             progress.fetchedLive = true;
             metrics.fieldLiveCall(distributor.name(), rung.step().index());
-            if (first) {
-                calledFirst = true;
-            } else {
+            if (!first) {
                 calledRelaxed = true;
             }
             liveTotal = collected.totalResults();
             int outOfStock = progress.outOfStock - outOfStockBefore;
             liveOutOfStock += outOfStock;
             collected.all().forEach(p -> live.put(p.distributorPartNumber(), p));
+            // the live copy (fresh stock) replaces the cached one for the index hits too (review B17)
+            loaded.putAll(live);
             progress.parts = List.copyOf(merged());
             lastCollected = collected;
             lastCalled = rung;
@@ -447,7 +481,8 @@ final class FieldFirstSearch {
             // journaled, so the next request asks it again (DESIGN.md 3.2: a failed call writes nothing)
             if (stored && collected.error() == null) {
                 try {
-                    journal.record(new PhraseJournalRepository.Entry(distributor, key, rung.phrase(), now,
+                    // asked when the call answered, not when the request started (a rate-limit wait may lie between)
+                    journal.record(new PhraseJournalRepository.Entry(distributor, key, rung.phrase(), clock.instant(),
                             collected.totalResults(), collected.nextOffset(), collected.exhausted(), outOfStock,
                             collected.all().isEmpty(), rung.ladderStep(), parsed.normalizedKey()));
                 } catch (RuntimeException e) {
@@ -472,81 +507,6 @@ final class FieldFirstSearch {
             }
         }
 
-        /** The index hits of a step plus the live parts that pass the Java check and the step's ladder kinds. */
-        private Candidates candidates(Rung rung) {
-            if (readable(query, rung.step(), parsed)) {
-                List<PartIndexRepository.Hit> hits;
-                try {
-                    hits = index.query(query, rung.step(), properties.search().fieldIndex().maxCandidates());
-                } catch (RuntimeException e) {
-                    throw new FieldSqlException(e);
-                }
-                load(hits);
-                List<Part> list = new ArrayList<>(hits.size());
-                for (PartIndexRepository.Hit h : hits) {
-                    Part part = loaded.get(h.partNumber());
-                    if (part != null) {
-                        list.add(part);
-                    }
-                }
-                indexed = list;
-            }
-            List<ConstraintKind> ladder = query.groups(FieldQuery.Role.L).stream()
-                    .filter(g -> !rung.step().dropped().contains(g.name())).flatMap(g -> g.kinds().stream()).toList();
-            Set<String> seen = new HashSet<>();
-            List<Part> passing = new ArrayList<>();
-            for (Part part : indexed) {
-                if (seen.add(part.distributorPartNumber()) && returnable(part)) {
-                    passing.add(part);
-                }
-            }
-            for (Map<String, Part> received : List.of(listed, live)) {
-                for (Part part : received.values()) {
-                    if (seen.add(part.distributorPartNumber()) && returnable(part) && meetsLadder(part, ladder)) {
-                        passing.add(part);
-                    }
-                }
-            }
-            return new Candidates(indexed, passing);
-        }
-
-        private void load(List<PartIndexRepository.Hit> hits) {
-            List<String> missing = hits.stream().map(PartIndexRepository.Hit::partNumber)
-                    .filter(n -> !loaded.containsKey(n)).toList();
-            if (missing.isEmpty()) {
-                return;
-            }
-            Map<String, Part> found;
-            try {
-                found = partCache.findInStock(distributor, missing);
-            } catch (RuntimeException e) {
-                throw new FieldSqlException(e);
-            }
-            found.forEach((n, p) -> loaded.put(n, extractor.enrich(p)));
-        }
-
-        /** At least {@code max_results} parts pass the Java check and one of them is confirmed. */
-        private boolean enough(Candidates c) {
-            return c.passing().size() >= prepared.maxResults() && c.passing().stream().anyMatch(this::confirmed);
-        }
-
-        private RankingService.Verdict verdict(Part part) {
-            return verdicts.computeIfAbsent(part.distributorPartNumber(),
-                    n -> Check.verdict(ranking, parsed, part));
-        }
-
-        private boolean returnable(Part part) {
-            RankingService.Verdict v = verdict(part);
-            return v != RankingService.Verdict.CONSTRAINT
-                    && (allowBelowSpec || v != RankingService.Verdict.BELOW_SPEC);
-        }
-
-        /** Meets the request with every requested rating stated (a below-spec part counts when it is allowed). */
-        private boolean confirmed(Part part) {
-            RankingService.Verdict v = verdict(part);
-            return v == RankingService.Verdict.MEETS || allowBelowSpec && v == RankingService.Verdict.BELOW_SPEC;
-        }
-
         /** True when no ladder kind of {@code ladder} is a known mismatch of the part. */
         private boolean meetsLadder(Part part, List<ConstraintKind> ladder) {
             if (ladder.isEmpty()) {
@@ -567,8 +527,8 @@ final class FieldFirstSearch {
         }
 
         /**
-         * Every part received live, the cached list and the index hits of the last step, without duplicates, in that
-         * order: the ranking stage checks at most {@code max-candidates} parts per distributor
+         * Every part received live, the cached list and the index candidates read at the last step, without
+         * duplicates, in that order: the ranking stage checks at most {@code max-candidates} parts per distributor
          * ({@code RankingService.capped}), so a cut only ever drops index candidates.
          */
         private List<Part> merged() {

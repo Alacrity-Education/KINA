@@ -181,7 +181,8 @@ public class PartSearchService {
     }
 
     private static RankingService.RankOptions rankOptions(Prepared prepared) {
-        return new RankingService.RankOptions(prepared.request().quantity(), prepared.request().allowBelowSpec());
+        return new RankingService.RankOptions(prepared.request().quantity(), prepared.request().allowBelowSpec(),
+                prepared.checks());
     }
 
     /** The hard / relaxable constraint table ({@link RankingService#policy()}; the defaults when not available). */

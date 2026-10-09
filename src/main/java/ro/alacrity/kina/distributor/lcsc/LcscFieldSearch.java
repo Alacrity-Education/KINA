@@ -30,7 +30,7 @@ public class LcscFieldSearch {
     private static final SqliteFieldSql CONFIRMED = SqliteFieldSql.CONFIRMED;
 
     @Autowired private JlcpcbSqliteSearch search;
-    private final Clock clock = Clock.systemUTC();
+    @Autowired private Clock clock;
 
     /**
      * @param parts         candidates in order (at most the limit), mapped from the rows of the JLCPCB file
@@ -38,8 +38,9 @@ public class LcscFieldSearch {
      *                      them that state every requested attribute
      * @param confirmedOnly the confirmed rows alone filled the limit, so the rows with unstated attributes were not
      *                      searched (and are not in {@code total})
+     * @param rows          the rows read (a row whose part cannot be mapped is not in {@code parts})
      */
-    public record Candidates(List<Part> parts, int total, boolean confirmedOnly) {
+    public record Candidates(List<Part> parts, int total, boolean confirmedOnly, int rows) {
 
         public Candidates {
             parts = List.copyOf(parts);
@@ -52,30 +53,37 @@ public class LcscFieldSearch {
     }
 
     /**
-     * The candidates of one step of {@code query} (DESIGN.md 9.3): first the rows that state every requested attribute
-     * and match ({@link SqliteFieldSql#CONFIRMED}, an index seek); when they fill {@code limit}, those are the
-     * candidates. Otherwise the superset ({@link SqliteFieldSql#INSTANCE}: also the rows with unstated attributes, a
-     * scan of the family), confirmed first, then the highest stock.
+     * The candidates of one step of {@code query} from {@code offset} (DESIGN.md 9.3): the rows that state every
+     * requested attribute and match ({@link SqliteFieldSql#CONFIRMED}, an index seek) come first in the order of the
+     * superset form, so while the chunk lies within them they are read with that form. Otherwise the superset
+     * ({@link SqliteFieldSql#INSTANCE}: also the rows with unstated attributes, a scan of the family), confirmed first,
+     * then the highest stock.
      *
-     * @param maxWait the longest wait for a free connection
+     * @param maxWait the longest wait for a free connection (null: {@code kina.jlcpcb.pool-wait})
      * @throws SQLException          when the query fails or no connection became free in time
      * @throws IllegalStateException when no typed table is attached
      */
-    public Candidates candidates(FieldQuery query, FieldQuery.Step step, int limit, Duration maxWait)
+    public Candidates candidates(FieldQuery query, FieldQuery.Step step, int offset, int limit, Duration maxWait)
             throws SQLException {
         return search.withConnection(maxWait, c -> {
             if (search.fieldIndex() == null) {
                 throw new IllegalStateException("no typed table attached");
             }
             int confirmed = count(c, CONFIRMED.count(query, step));
-            if (limit > 0 && confirmed >= limit) {
-                return fetch(c, CONFIRMED.candidates(query, step, limit), confirmed, true);
+            if (limit > 0 && confirmed >= offset + limit) {
+                return fetch(c, CONFIRMED.candidates(query, step, offset, limit), confirmed, true);
             }
             if (limit <= 0) {
-                return new Candidates(List.of(), count(c, SQL.count(query, step)), false);
+                return new Candidates(List.of(), count(c, SQL.count(query, step)), false, 0);
             }
-            return fetch(c, SQL.candidates(query, step, limit), -1, false);
+            return fetch(c, SQL.candidates(query, step, offset, limit), -1, false);
         });
+    }
+
+    /** The first {@code limit} candidates of one step (from offset 0). */
+    public Candidates candidates(FieldQuery query, FieldQuery.Step step, int limit, Duration maxWait)
+            throws SQLException {
+        return candidates(query, step, 0, limit, maxWait);
     }
 
     private Candidates fetch(java.sql.Connection c, FieldSql.Statement select, int total, boolean confirmedOnly)
@@ -103,7 +111,7 @@ public class LcscFieldSearch {
                 LcscPartMapper.map(row, now).ifPresent(parts::add);
             }
         }
-        return new Candidates(parts, counted, confirmedOnly);
+        return new Candidates(parts, counted, confirmedOnly, order.size());
     }
 
     private static int count(java.sql.Connection c, FieldSql.Statement count) throws SQLException {

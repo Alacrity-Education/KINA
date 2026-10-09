@@ -53,6 +53,11 @@ public class SqliteFieldSql extends FieldSql {
      * whenever the typed steps yield fewer candidates (DESIGN.md 9.3), exactly as before the typed table existed.
      */
     public Statement candidates(FieldQuery query, FieldQuery.Step step, int limit) {
+        return candidates(query, step, 0, limit);
+    }
+
+    /** {@link #candidates(FieldQuery, FieldQuery.Step, int)} from row {@code offset} of the order (a later chunk). */
+    public Statement candidates(FieldQuery query, FieldQuery.Step step, int offset, int limit) {
         Body body = body(query, step, null);
         // how many of the requested attributes the part states, so a part that states all but one ranks before one
         // that states none (select orders by all-or-nothing)
@@ -61,9 +66,11 @@ public class SqliteFieldSql extends FieldSql {
         List<Object> params = new ArrayList<>(body.params());
         String soft = order(query.soft(), params);
         params.add(limit);
+        params.add(Math.max(0, offset));
         // the window function counts every matching row in the same pass (before ORDER BY and LIMIT)
         return new Statement("SELECT fts_rowid, part_number, " + stated + " AS stated, count(*) OVER () AS total FROM "
-                + knownFamily(body) + " ORDER BY stated DESC, " + soft + "stock DESC, part_number LIMIT ?", params);
+                + knownFamily(body) + " ORDER BY stated DESC, " + soft + "stock DESC, part_number LIMIT ? OFFSET ?",
+                params);
     }
 
     /** {@code SELECT count(*)} of the rows {@link #candidates} selects from. */
