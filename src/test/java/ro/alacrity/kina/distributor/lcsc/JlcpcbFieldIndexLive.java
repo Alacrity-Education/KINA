@@ -49,7 +49,13 @@ public final class JlcpcbFieldIndexLive {
             return;
         }
         if (args[0].equals("bench")) {
-            bench(main);
+            bench(main, 20);
+            return;
+        }
+        if (args[0].equals("smallbench")) {
+            Path small = JlcpcbTestDatabase.create(java.nio.file.Files.createTempDirectory("kina-small").resolve("p.db"),
+                    JlcpcbTestDatabase.withUsb());
+            bench(small, 1000);
             return;
         }
         JlcpcbSqliteSearch search = TestWiring.wire(new JlcpcbSqliteSearch(), "properties", properties);
@@ -94,7 +100,7 @@ public final class JlcpcbFieldIndexLive {
     }
 
     /** 8 threads, 20 searches each over 8 different queries, for several pool sizes (study 9.4: 20/s with one connection). */
-    private static void bench(Path main) throws Exception {
+    private static void bench(Path main, int perThread) throws Exception {
         List<String> queries = List.of("10uF X7R 0805", "4.7k 0603", "female header 1x6", "100nF 0402 capacitor",
                 "10k ohm 1% 0603", "usb type-c connector", "schottky diode SMA 40V 1A", "N-channel MOSFET SOT-23 30V");
         for (int poolSize : new int[] {1, 2, 4, 8}) {
@@ -104,18 +110,18 @@ public final class JlcpcbFieldIndexLive {
             JlcpcbSqliteSearch search = TestWiring.wire(new JlcpcbSqliteSearch(), "properties", properties);
             LcscFieldSearch field = TestWiring.wire(new LcscFieldSearch(), "search", search);
             QueryParser parser = new QueryParser();
-            for (String queryKind : List.of("fts", "typed")) {
+            for (String queryKind : field.available() ? List.of("fts", "typed") : List.of("fts")) {
                 for (String q : queries) {   // warm up
                     run(search, field, parser, queryKind, q);
                 }
-                int runs = 8 * 20;
+                int runs = 8 * perThread;
                 long t0 = System.nanoTime();
                 java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(8);
                 List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
                 for (int t = 0; t < 8; t++) {
                     int offset = t;
                     futures.add(pool.submit(() -> {
-                        for (int i = 0; i < 20; i++) {
+                        for (int i = 0; i < perThread; i++) {
                             run(search, field, parser, queryKind, queries.get((i + offset) % queries.size()));
                         }
                         return null;
