@@ -215,18 +215,24 @@ class LcscFieldIndexTest {
         FieldQuery query = query("10uF X7R 0805 25V");
         LcscFieldSearch.Candidates c = field.candidates(query, query.step(0), 40, WAIT);
         assertThat(c.confirmedOnly()).isTrue();
-        assertThat(c.total()).isEqualTo(300);   // the bulk capacitors, counted exactly
+        // the bulk capacitors and the two sample rows that state a voltage below 25 V (ratings are stated, not compared)
+        assertThat(c.total()).isEqualTo(302);
         assertThat(c.parts()).hasSize(40);
-        assertThat(c.parts()).allMatch(p -> p.distributorPartNumber().startsWith("C7"));
+        assertThat(c.parts()).filteredOn(p -> p.distributorPartNumber().startsWith("C7")).hasSizeGreaterThanOrEqualTo(38);
         List<Integer> stocks = c.parts().stream().map(Part::stock).toList();
         assertThat(stocks).isSortedAccordingTo(java.util.Comparator.reverseOrder());
-        assertThat(stocks.getFirst()).isEqualTo(1299);
+        assertThat(c.parts().stream().filter(p -> p.distributorPartNumber().startsWith("C7")).findFirst().orElseThrow()
+                .stock()).isEqualTo(1299);
 
         // a larger window than the confirmed rows: the rows with unstated attributes complete it
         LcscFieldSearch.Candidates wide = field.candidates(query, query.step(0), 400, WAIT);
         assertThat(wide.confirmedOnly()).isFalse();
         assertThat(wide.parts().size()).isGreaterThan(300);
-        assertThat(numbers(wide).subList(0, 300)).allMatch(n -> n.startsWith("C7"));
+        // the first tier is every row that states all requested attributes, ratings included: the bulk capacitors and
+        // the few sample rows below 25 V (ratings only order; the Java check excludes and counts those), by stock
+        assertThat(numbers(wide).subList(0, 300).stream().filter(n -> n.startsWith("C7")).count())
+                .isGreaterThanOrEqualTo(290);
+        assertThat(numbers(wide).stream().filter(n -> n.startsWith("C7")).count()).isEqualTo(300);
     }
 
     @Test
@@ -258,15 +264,14 @@ class LcscFieldIndexTest {
             for (FieldQuery.Step step : query.steps()) {
                 FieldSql.Statement all = SqliteFieldSql.INSTANCE.candidates(query, step, 100000);
                 FieldSql.Statement confirmed = SqliteFieldSql.CONFIRMED.candidates(query, step, 100000);
-                // "stated" of the superset is the number of stated attributes, "rated" the requested ratings the
-                // part meets: the first tier of the order (all stated, every rating met) is the confirmed rows
+                // "stated" of the superset is the number of stated attributes (ratings included); the full count is
+                // the confirmed rows
                 List<Object[]> rows = run(all);
                 String sql = all.sql();
                 String stated = sql.substring("SELECT fts_rowid, part_number, ".length(), sql.indexOf(" AS stated"));
                 int maxStated = stated.split("\\) \\+ \\(").length;
-                int ratings = query.ratings().size();
                 Set<String> expected = new HashSet<>();
-                rows.stream().filter(r -> ((Number) r[1]).intValue() == maxStated && ((Number) r[2]).intValue() == ratings)
+                rows.stream().filter(r -> ((Number) r[1]).intValue() == maxStated)
                         .forEach(r -> expected.add((String) r[0]));
                 Set<String> actual = new HashSet<>();
                 run(confirmed).forEach(r -> actual.add((String) r[0]));
@@ -287,7 +292,7 @@ class LcscFieldIndexTest {
         });
     }
 
-    /** (part_number, stated, rated) of the rows of a candidates statement. */
+    /** (part_number, stated) of the rows of a candidates statement. */
     private List<Object[]> run(FieldSql.Statement statement) throws Exception {
         return search.withConnection(null, c -> {
             List<Object[]> out = new ArrayList<>();
@@ -295,7 +300,7 @@ class LcscFieldIndexTest {
                 bind(ps, statement.params());
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        out.add(new Object[] {rs.getString(2), rs.getInt(3), rs.getInt(5)});
+                        out.add(new Object[] {rs.getString(2), rs.getInt(3)});
                     }
                 }
             }

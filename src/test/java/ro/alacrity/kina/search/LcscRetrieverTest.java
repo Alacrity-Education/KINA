@@ -97,9 +97,10 @@ class LcscRetrieverTest {
 
         Fetched fetched = retrieve("10uF X7R 0805 25V", 10);
 
-        assertThat(fetched.parts()).hasSize(40);   // the candidate window
-        assertThat(numbers(fetched)).allMatch(n -> n.startsWith("C7"));
-        assertThat(fetched.totalResults()).isEqualTo(100);   // the typed count of the confirmed rows
+        // the candidate window, and the sample rows below 25 V that state every attribute: no place, for the ranker
+        assertThat(numbers(fetched).stream().filter(n -> n.startsWith("C7"))).hasSize(40);
+        assertThat(numbers(fetched).subList(0, 40)).allMatch(n -> n.startsWith("C7"));
+        assertThat(fetched.totalResults()).isEqualTo(102);   // the typed count of the confirmed rows (ratings stated)
         assertThat(fetched.cache()).isEqualTo(CacheStatus.NOT_APPLICABLE);
         assertThat(fetched.constraintsRelaxed()).isEmpty();
         verify(client, never()).search(anyString(), anyInt(), anyInt());

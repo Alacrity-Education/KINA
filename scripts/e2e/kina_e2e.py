@@ -285,10 +285,13 @@ def shape_problems(response: dict) -> list[str]:
                             f"{d.get('excluded_below_spec')} below spec")
         elif any(set(e) != {"part_number", "mpn", "rating", "part_value", "requested"} for e in detail_below):
             problems.append(f"{name}: excluded_below_spec_detail entries {detail_below!r}")
-        # a hint exactly when an understood query found nothing at a distributor that answered, or a part number
-        # the query names is not among the parts in stock
-        wants_hint = (response.get("query_understood") is True and not d.get("parts") and not d.get("error")) \
-            or found is False
+        # a hint exactly when an understood query found nothing at a distributor that answered, when every part it
+        # returned leaves a stated constraint unverified (none confirms the request, DESIGN.md 3.2 "Unconfirmed
+        # parts"), or a part number the query names is not among the parts in stock
+        in_stock = [p for p in d.get("parts", []) if (p.get("stock") or 0) > 0]
+        unconfirmed = bool(in_stock) and d.get("exact_matches") == 0 and all(p.get("unverified") for p in in_stock)
+        wants_hint = (response.get("query_understood") is True and not d.get("error")
+                      and (not d.get("parts") or unconfirmed)) or found is False
         if wants_hint != bool(d.get("hint")):
             problems.append(f"{name}: hint {d.get('hint')!r} for {len(d.get('parts', []))} parts")
     return problems

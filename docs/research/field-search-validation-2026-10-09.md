@@ -1,4 +1,4 @@
-# Field search validation, 2026-10-09 (phase C)
+# Field search validation, 2026-10-09 (phases C and C2)
 
 Validation of the field-based search (study `field-search-2026-10-08.md`, DESIGN.md 3.2 "Field-first flow", 3.8,
 9.3) on a copy of the production cache and the full JLCPCB file, in a separate compose project. Branch
@@ -249,3 +249,120 @@ COLUMNS`), `searches.tsv` the `cached_searches` keys (`distributor|query_key|lis
 - 4 202 of the 6 660 cached parts have no package key in the index (Mouser and TME packages the extractor does not
   read, such as `2917` in a description only); they stay reachable because NULL is kept, but a package request does
   not order them first.
+
+## 8. Phase C2
+
+The open items of section 7, the product decisions taken on them, and a rerun of the validation on the final code
+(same stack, same production dump restored again into a fresh `kina-fs_pgdata`, same offline Mouser and TME).
+
+### 8.1 What changed
+
+| Item | Change |
+|---|---|
+| Merge | `feature/quota-tracking` merged (`--no-ff`, no textual conflict); the `search_parts` description is 2 679 characters (limit 2 700, kept) |
+| Ratings (decision a) | the group `R` leaves the SQL filter on both dialects; it only orders the candidates. PostgreSQL orders by the ratings first (per rating: met 2, not stated 1, below spec 0), then by `confirmed`, so a part below spec takes a place only when the 100 rows leave room. The LCSC order counts the rating columns among the stated ones and then orders by stock, as an FTS window does, and the confirmed-only form puts the ratings in its `WHERE` as stated, never compared. The Java check excludes and counts below-spec parts (`excluded_below_spec`, `_detail`); the LCSC retriever hands them to the ranker without a place in the window. A requested rating makes a request selective (`mosfet 60V` reads the index) |
+| Unverified parts (decision b) | returned as before, flagged; when every returned part leaves a stated constraint unverified, the entry and the response carry `ConstraintPolicy.unconfirmedHint`: `No in-stock 22uF capacitor in package 0201 at LCSC is confirmed: no part returned states its capacitance, voltage, dielectric and package (listed in unverified; check the datasheet); capacitance and package are never relaxed. ...` |
+| Size tolerance (decision c) | unchanged; the e2e check accepts 6x6 within 0.5 mm |
+| REST part path | `%25`, `%5C`, `%2F`, `%20` and `+` work in `GET /api/v1/parts/{d}/{*pn}` (`PartPathFirewall` on that path only, Tomcat `passthrough` for encoded slashes); new `GET /api/v1/parts/{d}?part_number=` |
+| Failed call in `on` | no further call; the request's cached list (expired too) joins the candidates; the relaxed steps are read from the index; nothing found: the expired list as the cached-search path serves it |
+| Candidate cap | `kina.search.field-index.max-candidates` 100 (was 200), `KINA_FIELD_INDEX_MAX_CANDIDATES`; the ranking stage checks and ranks at most that many in-stock parts per distributor; the field paths list live and cached-list parts first |
+| e2e | C accepts an empty list or unverified parts with the "is confirmed" hint; D accepts 6x6 within 0.5 mm; the shape rule expects a hint when every part is unverified. B unchanged and passing |
+
+Full suite: `./mvnw -q verify` green, 1 510 tests (3 skipped), `-Werror` clean. A first try of the ratings order (`confirmed` first with the
+rating columns in it) filled the 100 PostgreSQL rows of `mosfet 55V SOT23` at TME with 83 parts below spec, and
+`mosfet 60V` took the cached-search path (`generic`: the rating was its only stated constraint); both were fixed before
+the numbers below.
+
+### 8.2 Cache preservation
+
+Baseline after the restore: identical to section 2 (MOUSER 3 064 / 3 061 in stock, TME 3 596, `cached_parts` md5
+`2ea4c6bbf7d36f066541e66cb97e59c2`, 221 `cached_searches`, md5 `8d9afeec20ef01178afd030f647eb705`). After startup in
+`on` (V14, V15, re-index 6 660 rows in 8.1 s, journal backfill 214 phrases in 498 ms, started in 2.1 s) and after every
+run below (`on`, `on` with 200 candidates, `augment`, `off`): counts and both md5 values identical; only
+`flyway.max` moved from 13 to 15.
+
+Lookups, `validate.py lookups --query-form` (path form and `?part_number=` form, both must succeed, 16 in parallel):
+**6 657 / 6 657** (MOUSER 3 061, TME 3 596), all through REST, none through MCP (the 77 part numbers with `%` or `\`
+included), 4.0 s, p50 5 ms, p95 9 ms. Stock refreshes fail offline; 3 295 parts come back `stale`.
+
+### 8.3 Recall and replay
+
+Recall (the 238 own-attribute queries of 2b, same seed), mode `on`:
+
+| | Answered without error | Part found | Errors |
+|---|---|---|---|
+| phase C (200 candidates, ratings in SQL) | 227 | 192 (84.6 %) | 11 |
+| C2, 100 candidates | 234 | **201 (85.9 %)** | 4 |
+| C2, 200 candidates | 234 | 198 (84.6 %) | 4 |
+
+The 4 errors: `connector` alone (`generic`, cached-search path, offline) and three TME capacitor queries with a package
+the parser does not read (`D63X54MM`, `2917`, `D19X205MM`): their first step is short, the call fails, and the relaxed
+step now answers from the index (50 parts, cache `stale`, the error) where phase C returned the error. The 33 misses
+are generic queries with more candidates than 50 returned (`fan 12V`, `capacitor 10uF 10%`, `mosfet 30V`): 32 of them
+hold 100 candidates, and the cap at 200 finds 5 of them and loses 8 others (ranking order within the 50).
+
+Replay of the 221 cached query keys:
+
+| Mode | hit | stale | partial | miss | errors | parts returned |
+|---|---|---|---|---|---|---|
+| `off` | 88 | 108 | 4 | 21 | 133 | 5 512 |
+| `augment` | 88 | 108 | 4 | 21 | 133 | 6 906 |
+| `on` | 195 | 22 | 0 | 4 | 26 | 10 527 |
+
+`on` returns every part `off` returns for 145 queries; for the other 76 `on` returns the full 50 (not comparable). No
+query is left where `off` serves an expired list and `on` serves less (phase C: 7). `augment` returns every part of
+`off` on 214 queries.
+
+### 8.4 LCSC on the full file
+
+`validate.py lcsc --max-results 50`, typed path (mode `on`), warm medians:
+
+| Query | returned / fits / total | warm |
+|---|---|---|
+| `10uF X7R 0805 25V` | 17 / 5 / 5 | 229 ms |
+| `4.7k 1% 0603 resistor` | 50 / 50 / 180 | 260 ms |
+| `female header 1x6 right angle` | 50 / 34 / 29 018 | 367 ms |
+| `USB-C receptacle 16 pin SMD USB 2.0` | 50 / 50 / 845 | 229 ms |
+| `Thin film resistor 5.36k 0805 0.1%` | 50 / 5 / 2 294 | 120 ms |
+| `RP2040` | 3 / - / 3 | 10 ms |
+
+Fits are unchanged against phase C. `10uF X7R 0805 25V` returns 17 parts instead of 50: 83 of the 100 candidates are
+below 25 V and are now excluded and counted (`excluded_below_spec` 83) instead of being filtered in SQL, and the FTS
+search found only 5 rows to fill the window; the 33 parts it no longer returns were unverified fillers, not fits.
+`electrolytic capacitor 470uF 35V 105°C 5000h THT` (`max_results` 50): 50 returned, 21 exact, `excluded_below_spec`
+50 with the detail. `22uF X7R 0201 100V`: 50 unverified parts, `exact_matches` 0, `excluded_below_spec` 33, the
+unconfirmed hint; the FTS path returns it empty with the hint (DESIGN 9.3: an improvement of the typed path, by the
+declared semantics).
+
+### 8.5 End-to-end suite and performance
+
+`kina_e2e.py` (88 checks), LCSC typed table on in `on` and `augment`, off in `off`:
+
+| Mode | Passed | Failed |
+|---|---|---|
+| `on` | **88 / 88** | none |
+| `augment` | 87 / 88 | A |
+| `off` | 87 / 88 | A |
+
+A is the credential check of section 4 (TME's list for `10uF X7R 0805` has expired; it passes in `on`). B, C and D
+pass in every mode. `shadow` was not rerun (no behaviour change in C2 besides the shared paths).
+
+Latency, Mouser, cached, `max_results` 10, median of 20 warm runs (`validate.py latency`):
+
+| Query | `off` | `augment` | `on`, 100 candidates | `on`, 200 candidates | phase C `on` (200) |
+|---|---|---|---|---|---|
+| `10uF X7R 0805` | 66 ms (49 parts) | 158 ms (104) | **198 ms (104)** | 399 ms (193) | 413 ms (193) |
+| `100nF X7R 0603 50V MLCC` | 68 ms (50) | 146 ms (87) | 176 ms (88) | 204 ms (88) | 210 ms (87) |
+| `10uH inductor 0805` | 48 ms (50) | 155 ms (132) | 184 ms (132) | 345 ms (213) | 376 ms (213) |
+
+The cap halves `on` on large candidate sets; it is about 3 times `off`, from loading, enriching and ranking 100 parts
+instead of 50. `kina_field_served_total` after the runs: MOUSER 614, TME 478; `kina_field_fallbacks_total{reason=
+generic}` MOUSER 2.
+
+### 8.6 Open items after C2
+
+- Live calls in `on` remain unverified (no credentials on this host).
+- The LCSC typed path returns fewer unverified fillers when most candidates are below spec (`10uF X7R 0805 25V`: 17
+  instead of 50); a third window would find more, at the cost of reading more rows.
+- Generic Mouser and TME queries with more than 100 candidates rank by the index order before the cut (`fan 12V`):
+  the parts the cut drops are never ranked.

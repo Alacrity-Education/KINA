@@ -75,13 +75,19 @@ class FieldQueryBuilderTest {
             String where = sql.substring(sql.indexOf(" WHERE "), sql.indexOf(" ORDER BY "));
             assertThat(where).doesNotContain("voltage_v").doesNotContain("max_temp_c").doesNotContain("lifetime_h");
             String order = sql.substring(sql.indexOf(" ORDER BY "));
-            assertThat(order).contains("CASE WHEN").contains("voltage_v").contains("lifetime_h");
-            // the part that states the ratings counts as confirmed
-            assertThat(sql.substring(0, sql.indexOf(" FROM "))).contains("voltage_v");
+            if (dialect == PostgresFieldSql.INSTANCE) {
+                // met (2) before not stated (1) before below spec (0), ahead of the confirmed flag
+                assertThat(order).contains("THEN 2 WHEN").contains("voltage_v").contains("lifetime_h");
+                assertThat(order.indexOf("voltage_v")).isLessThan(order.indexOf("confirmed DESC"));
+            } else {
+                // LCSC: a part that states the ratings counts as confirmed, below spec or not (FTS-like window)
+                assertThat(sql.substring(0, sql.indexOf(" FROM "))).contains("voltage_v");
+            }
         }
-        // the confirmed-only SQLite form selects the first tier of that order: ratings stated and met
+        // the confirmed-only SQLite form selects the first tier of its order: ratings stated, never compared
         FieldSql.Statement confirmed = SqliteFieldSql.CONFIRMED.count(q, q.step(0));
-        assertThat(confirmed.sql()).contains("voltage_v >= ?").contains("lifetime_h >= ?");
+        assertThat(confirmed.sql()).contains("NOT voltage_v IS NULL").contains("NOT lifetime_h IS NULL")
+                .doesNotContain("voltage_v >=");
         assertThat(SqliteFieldSql.INSTANCE.count(q, q.step(0)).sql()).doesNotContain("voltage_v");
     }
 

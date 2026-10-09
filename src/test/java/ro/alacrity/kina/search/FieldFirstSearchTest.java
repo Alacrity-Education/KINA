@@ -617,6 +617,26 @@ class FieldFirstSearchTest {
     }
 
     @Test
+    void aRequestedRatingMakesARequestSelectiveAndPartsMeetingItComeFirst() {
+        // the rating is in no filter (ratings only order), but it is stated: the index answers, the 60 V parts first
+        List<Part> mosfets = new ArrayList<>();
+        for (int i = 1; i <= 4; i++) {
+            mosfets.add(RankingFixtures.part(Distributor.MOUSER, "Q" + i, "ACME", "MPN-Q" + i,
+                    "N-channel MOSFET 60V 5A SOT-23", "MOSFETs", "SOT-23", 1000, "0.10", Map.of(), Map.of()));
+            mosfets.add(RankingFixtures.part(Distributor.MOUSER, "L" + i, "ACME", "MPN-L" + i,
+                    "N-channel MOSFET 20V 5A SOT-23", "MOSFETs", "SOT-23", 1000, "0.10", Map.of(), Map.of()));
+        }
+        cache(mosfets);
+        service("on", "kina.search.field-index.max-candidates", "4");
+        DistributorResult result = search("mosfet 60V", 3);
+        assertThat(mouser.asked).as("answered from the index").isEmpty();
+        assertThat(result.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(result.fetched()).as("the cap holds the four parts that meet the rating").isEqualTo(4);
+        assertThat(numbers(result)).allMatch(n -> n.startsWith("Q"));
+        verify(metrics, never()).fieldFallback(eq("MOUSER"), eq("generic"));
+    }
+
+    @Test
     void withoutTheStatedConstraintRuleAFamilyOnlyRequestIsAnsweredFromTheIndex() {
         List<Part> mosfets = new ArrayList<>();
         for (int i = 1; i <= 4; i++) {

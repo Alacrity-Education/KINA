@@ -17,8 +17,8 @@ public class SqliteFieldSql extends FieldSql {
     /**
      * The confirmed subset of {@link #INSTANCE}: every value predicate demands a stated, matching value instead of
      * also keeping NULL ({@code col BETWEEN ? AND ?} instead of {@code col IS NULL OR col BETWEEN ? AND ?}), and the
-     * requested ratings are stated and met. These are exactly the rows {@code INSTANCE} orders first (every requested
-     * column stated, every rating met), in a form the indexes can seek (SQLite cannot seek an {@code IS NULL OR}
+     * requested ratings are stated (never compared: a part below spec stays a candidate). These are exactly the rows
+     * {@code INSTANCE} orders first (every requested column stated, ratings included), in a form the indexes can seek (SQLite cannot seek an {@code IS NULL OR}
      * predicate, it reads every row of the family: study 12.2, the planner lesson).
      */
     public static final SqliteFieldSql CONFIRMED = new SqliteFieldSql("part_index", "parts", true);
@@ -96,10 +96,11 @@ public class SqliteFieldSql extends FieldSql {
     }
 
     /**
-     * The candidates of one step for the LCSC retriever: {@code fts_rowid, part_number, stated, total, rated}, the parts
-     * that state most of the requested attributes (ratings included) first, then those that meet most of the requested
-     * ratings ({@link FieldQuery#ratings()}), then those that match most of the soft kinds ({@link FieldQuery#soft()}),
-     * then the highest stock, then the part number; {@code total}
+     * The candidates of one step for the LCSC retriever: {@code fts_rowid, part_number, stated, total}, the parts
+     * that state most of the requested attributes (ratings included) first, then those that match most of the soft
+     * kinds ({@link FieldQuery#soft()}), then the highest stock, then the part number. A part below spec takes its
+     * place in that order, as in an FTS window: the retriever hands it to the ranker without a place in the window,
+     * which excludes and counts it ({@code excluded_below_spec}, as on the FTS path). {@code total}
      * is the number of rows the step matches (a window function, one pass). The rows of the JLCPCB table are read by
      * the FTS rowid.
      *
@@ -116,16 +117,12 @@ public class SqliteFieldSql extends FieldSql {
         // that states none (select orders by all-or-nothing)
         String stated = body.stated().isEmpty() ? "(" + bool(true) + ")"
                 : "(" + String.join(") + (", body.stated()) + ")";
-        // the requested ratings the part states and meets (column rated), in the SELECT list: its parameters come first
-        List<Object> params = new ArrayList<>();
-        String rated = matched(query.ratings(), params);
-        params.addAll(body.params());
+        List<Object> params = new ArrayList<>(body.params());
         String soft = order(query.soft(), params);
         params.add(limit);
         // the window function counts every matching row in the same pass (before ORDER BY and LIMIT)
-        return new Statement("SELECT fts_rowid, part_number, " + stated + " AS stated, count(*) OVER () AS total, "
-                + (rated == null ? "0" : rated) + " AS rated FROM " + knownFamily(body)
-                + " ORDER BY stated DESC, rated DESC, " + soft + "stock DESC, part_number LIMIT ?", params);
+        return new Statement("SELECT fts_rowid, part_number, " + stated + " AS stated, count(*) OVER () AS total FROM "
+                + knownFamily(body) + " ORDER BY stated DESC, " + soft + "stock DESC, part_number LIMIT ?", params);
     }
 
     /** {@code SELECT count(*)} of the rows {@link #candidates} selects from. */
@@ -148,10 +145,16 @@ public class SqliteFieldSql extends FieldSql {
         return table;
     }
 
-    /** The confirmed-only form selects the first tier of the order: the requested ratings stated and met. */
+    /** The confirmed-only form selects the confirmed rows: the requested ratings stated (met or below spec). */
     @Override
     protected boolean ratingsConfirmedInWhere() {
         return confirmedOnly;
+    }
+
+    /** The LCSC candidates order by what the part states, ratings included, then by stock (DESIGN.md 9.3). */
+    @Override
+    protected boolean ratingsStated() {
+        return true;
     }
 
     @Override

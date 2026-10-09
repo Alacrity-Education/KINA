@@ -145,7 +145,7 @@ final class FieldFirstSearch {
                     e.toString());
             return Outcome.legacy("sql_error");
         }
-        if (!readable(query.step(0), parsed)) {
+        if (!readable(query, query.step(0), parsed)) {
             return Outcome.legacy("generic");
         }
         Run run = new Run(client, prepared, progress, deadline, query);
@@ -162,17 +162,18 @@ final class FieldFirstSearch {
      * True when the index may be read for {@code step}: always when {@code require-stated-constraint} is off, else
      * only when the step is {@link #selective}.
      */
-    boolean readable(FieldQuery.Step step, ParsedQuery parsed) {
-        return !properties.search().fieldIndex().requireStatedConstraint() || selective(step, parsed);
+    boolean readable(FieldQuery query, FieldQuery.Step step, ParsedQuery parsed) {
+        return !properties.search().fieldIndex().requireStatedConstraint() || selective(query, step, parsed);
     }
 
     /**
      * True when a step holds a predicate the request states: free text, a part number or a constraint kind it names
      * (the family and the rules the family implies, such as the LED type of every LED request, do not count). A step
-     * of only those returns every in-stock part of the family, which is no answer to the request.
+     * of only those returns every in-stock part of the family, which is no answer to the request. A requested rating
+     * counts too ({@code mosfet 60V}): it never filters, but it orders the candidates, the parts that meet it first.
      */
-    static boolean selective(FieldQuery.Step step, ParsedQuery parsed) {
-        return step.predicates().stream().anyMatch(p -> p instanceof FieldPredicate.Word
+    static boolean selective(FieldQuery query, FieldQuery.Step step, ParsedQuery parsed) {
+        return !query.ratings().isEmpty() || step.predicates().stream().anyMatch(p -> p instanceof FieldPredicate.Word
                 || p instanceof FieldPredicate.Substring || p instanceof FieldPredicate.MpnPrefix
                 || p.kind() != null && p.kind() != ConstraintKind.TYPE && p.kind().wanted(parsed) != null);
     }
@@ -483,7 +484,7 @@ final class FieldFirstSearch {
 
         /** The index hits of a step plus the live parts that pass the Java check and the step's ladder kinds. */
         private Candidates candidates(Rung rung) {
-            if (readable(rung.step(), parsed)) {
+            if (readable(query, rung.step(), parsed)) {
                 List<PartIndexRepository.Hit> hits;
                 try {
                     hits = index.query(query, rung.step(), properties.search().fieldIndex().maxCandidates());

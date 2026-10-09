@@ -583,7 +583,8 @@ only loses those parts.
 
 **The stated-constraint rule** (`kina.search.field-index.require-stated-constraint`, default true). A step is
 *selective* when it holds a free-text word, a part number, or a constraint kind the request names (the family and the
-rules the family implies, such as the LED type of every LED request, do not count; `FieldFirstSearch.selective`).
+rules the family implies, such as the LED type of every LED request, do not count; a requested rating counts,
+`mosfet 60V`: it orders the candidates, the parts that meet it first; `FieldFirstSearch.selective`).
 With the rule on, a request whose first step is not selective (`mosfet`, `LED`) never reads the index: `on` takes the
 cached-search path with reason `generic`, `augment` adds nothing, and a later step that is not selective is not read
 either. The index orders its candidates by key, not by relevance, so for such a request it would return the first
@@ -2233,12 +2234,16 @@ dropped; `R` and `S` are in no step's filter; the last step holds `H` only, the 
 returns, below-spec parts included. Free text is a ranking signal
 (never in the grade): with `K` in the step the superset is required for the parts that state every keyword the way the
 lexical score finds it and carry a requested part number as an MPN prefix. The query returns
-`distributor, part_number, confirmed` ordered by `confirmed` (the part states every column the step compares and every
-requested rating) descending, then by the number of requested ratings the part states and meets (so within a tier a
-part that meets the ratings comes before one below spec: confirmed first), then by the soft kinds, then by key, at most
-`kina.search.field-index.max-candidates` (100) rows. The SQLite confirmed-only form (`SqliteFieldSql.CONFIRMED`,
-section 9.3) puts the ratings in its `WHERE` clause as stated and met: it selects exactly the first tier of that order,
-in a form the indexes can seek. The soft kinds the
+`distributor, part_number, confirmed` ordered by the requested ratings (`FieldSql.rated`: per rating 2 when the part
+states it and meets it, 1 when it does not state it, 0 when it is below spec) descending, then by `confirmed` (the
+part states every column the step compares) descending, then by the soft kinds, then by key (the LCSC dialect
+orders differently, section 9.3), at most
+`kina.search.field-index.max-candidates` (100) rows: confirmed parts first, a part below spec last, so it takes a
+place only when the limit leaves room, and it then reaches the Java check, which excludes and counts it (a first
+order of `confirmed` with the ratings in it filled the 100 rows of `mosfet 55V SOT23` at TME with 83 parts below
+spec, validation C2). The SQLite confirmed-only form (`SqliteFieldSql.CONFIRMED`,
+section 9.3) puts the ratings in its `WHERE` clause as stated only (never compared) and selects the first tier of the
+LCSC order, in a form the indexes can seek. The soft kinds the
 request states (group `S`, `FieldQuery.soft()`: a `SOFT` kind with a rule in the table below, today only `ROWS`) are
 never in a step's filter, so they never exclude a part; a part that states a matching value orders before one that
 does not, so a cut at the limit keeps the better parts (validation 2026-10-09: a `2x3` female header with more stock
@@ -2254,10 +2259,12 @@ parts after the cap are neither checked nor counted). The field paths list the p
 first (`FieldFirstSearch`, `augment`), so a cut only drops index candidates; the cached-search lists hold at most a
 fetch window (50) and are never cut. The trade-off is recall against latency: every candidate is loaded, enriched,
 checked and ranked (about 1.6 ms per part on the validation host). Measured on the production cache (validation
-2026-10-09, `10uF X7R 0805` at Mouser, cached, median): 74 ms with the cached list (`off`, 49 parts), 413 ms in `on`
-with 200 candidates (193 parts); with 100, see the C2 numbers in
-`docs/research/field-search-validation-2026-10-09.md` section 8. No miss of the phase C recall run was cut by
-`max-candidates` at 200; at 100 the ranker still sees at least 50 candidates beyond the cached list.
+2026-10-09, Mouser, cached, median of 20 warm runs, `max_results` 10; `docs/research/field-search-validation-2026-10-09.md`
+section 8): `10uF X7R 0805` 413 ms in `on` with 200 candidates (193 parts) in phase C against 74 ms with the cached
+list (`off`, 49 parts); with the cap at 100, 198 ms in `on` (104 parts), 158 ms in `augment`, 66 ms in `off`;
+`10uH inductor 0805` 376 ms at 200 (213 parts) against 184 ms at 100 (132). Recall is unchanged: of the 238
+own-attribute queries of the validation, 201 found their part at 100 and 198 at 200 (the differences are ranking
+order within the 50 returned).
 
 **Writing and consistency.** `PartCacheRepository.upsertAll` and `upsertListed` compute the index rows before their
 transaction (extraction is the expensive part) and write them in the same transaction as the payloads, under a
@@ -2310,7 +2317,7 @@ of the recorded LED, switch, fan and power-resistor searches (3 130 parts, 911 o
 every query (the 41 evaluation queries, the recordings and extra queries) and every step, that every part the Java check
 keeps with `allow_below_spec` (a superset of what it keeps without; and that misses no ladder kind still in the step,
 and, with free text in the step, states every keyword and a requested part number) is returned, in both dialects, that
-both dialects return the same rows, and that no step holds a rating predicate. The free-text steps (72 of them, 508 expected parts) hold for the substring rule above.
+both dialects return the same rows, and that no step holds a rating predicate. The free-text steps (36 of them, 289 expected parts) hold for the substring rule above.
 
 ## 4. MCP tools
 
@@ -3125,8 +3132,9 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   keeps the FTS5 path, whose BM25 order is what it needs.
   1. **Step 0, confirmed rows.** `SqliteFieldSql.CONFIRMED` renders the confirmed subset of the unrelaxed step: every
      value predicate demands a stated, matching value (`capacitance_f BETWEEN ? AND ?` instead of `IS NULL OR ...`),
-     and every requested rating is stated and met (`voltage_v >= ?`). These are exactly the first tier of the full
-     statement's order (every requested attribute stated, every rating met; `LcscFieldIndexTest`). SQLite can seek this form (the planner lesson of
+     and every requested rating is stated (`NOT voltage_v IS NULL`, never compared: a part below spec stays a
+     candidate). These are exactly the rows the full statement orders first (every requested attribute stated,
+     ratings included; `LcscFieldIndexTest`). SQLite can seek this form (the planner lesson of
      study 12.2: the `IS NULL OR` form is a residual filter that reads every row of the family), so the plan is
      `SEARCH part_index USING INDEX part_index_cap (family=? AND capacitance_f>? AND capacitance_f<?)` (resistors:
      `_res`; connectors: `_pos`; USB: `_usb`), checked with `EXPLAIN QUERY PLAN` in `LcscFieldIndexTest`. When at least
@@ -3134,8 +3142,7 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
      the highest-stock ones are the candidates and `total_results` is their count.
   2. **Superset.** Otherwise `SqliteFieldSql.INSTANCE` (a part that does not state an attribute is kept, and a part
      below spec too: ratings are not filtered, section 3.8): the parts that state the most requested attributes
-     (ratings included) first, then those that meet the most requested ratings (column `rated`), then the highest
-     stock, one pass with
+     (ratings included: confirmed first) first, then the highest stock, one pass with
      `count(*) OVER ()` for `total_results`. When the request names a family, only rows of a known family are
      candidates: a row of unknown family (about 76 000 in-stock rows of the full file: blank descriptions, families
      the parser does not know) would fill the window with whatever states a requested rating (12 V buck converters and
@@ -3148,7 +3155,11 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
      otherwise fill (validation 2026-10-09: `4.7k 1% 0603 resistor` returned 38 parts where the FTS path returned 44).
      A candidate whose known rating is below the request (and `allow_below_spec` is false) takes no place either; it
      is handed to the ranker after the window, which excludes it and counts it in `excluded_below_spec` and
-     `excluded_below_spec_detail`, as for the below-spec parts of an FTS window (project decision 2026-10-09).
+     `excluded_below_spec_detail`, as for the below-spec parts of an FTS window (project decision 2026-10-09). Unlike
+     the PostgreSQL order (section 3.8: below spec last), the LCSC order does not put such parts last: they take their
+     place by stock among the rows that state the ratings, as in an FTS window, so the counts tell the caller that
+     `allow_below_spec` would find parts (e2e: `electrolytic capacitor 470uF 35V 105°C 5000h THT`). LCSC has no quota
+     and the FTS search fills the places they leave.
   3. **Relaxation.** While the step yields fewer candidates than the window, the next step of `FieldQuery.steps()`
      (free text first, then the ladder kinds in `@Relax` order) runs the same way; the constraints and keywords a step
      left out are reported as `constraints_relaxed` and `query_terms_dropped`.
