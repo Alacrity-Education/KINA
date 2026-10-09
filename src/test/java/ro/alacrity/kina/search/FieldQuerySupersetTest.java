@@ -202,66 +202,75 @@ class FieldQuerySupersetTest {
     private record Result(String line, List<String> violations, long gaps) {
     }
 
-    /** One query: both stock modes, every step (with free text too), both dialects. */
+    /**
+     * One query: every step (with free text too), both dialects. Ratings are never filtered in SQL (they only order),
+     * so the SQL is the same with and without {@code allow_below_spec} and must keep every part the Java check keeps
+     * with it (a superset of the parts it keeps without): a part below spec reaches the check, which excludes and
+     * counts it.
+     */
     private static Result check(String text, Set<String> gapParts) {
         ParsedQuery parsed = PARSER.parse(text);
         List<String> violations = new ArrayList<>();
-        String line = null;
-        long gapsReturned = 0;
-        for (boolean allowBelowSpec : List.of(false, true)) {
-            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS, null, allowBelowSpec);
-            Set<String> returnable = new LinkedHashSet<>();
-            ENRICHED.forEach((key, part) -> {
-                if (PageCollector.Check.returnable(ranking, parsed, part, allowBelowSpec)) {
-                    returnable.add(key);
+        FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS, null);
+        for (FieldQuery.Step step : query.steps()) {
+            step.predicates().stream().filter(p -> p.kind() != null && p.kind().isRating()
+                            && p.kind().generalStrategy() == ro.alacrity.kina.domain.RelaxStrategy.BELOW_SPEC)
+                    .forEach(p -> violations.add(text + " step " + step.index() + ": a rating filters ("
+                            + p.kind() + ")"));
+        }
+        Set<String> returnable = new LinkedHashSet<>();
+        int returnableStrict = 0;
+        for (Map.Entry<String, Part> e : ENRICHED.entrySet()) {
+            if (PageCollector.Check.returnable(ranking, parsed, e.getValue(), true)) {
+                returnable.add(e.getKey());
+                if (PageCollector.Check.returnable(ranking, parsed, e.getValue(), false)) {
+                    returnableStrict++;
                 }
-            });
-            Set<String> pgRelaxed = null;
-            Set<String> liteRelaxed = null;
-            for (FieldQuery.Step step : query.steps()) {
-                // with free text in the step, a part must also state every keyword the way the ranker's lexical score
-                // finds it (a substring of its text) and carry a requested part number as an MPN prefix
-                boolean withText = query.group(FieldQuery.Role.K.name()) != null
-                        && !step.dropped().contains(FieldQuery.Role.K.name());
-                List<ConstraintKind> ladder = query.groups(FieldQuery.Role.L).stream()
-                        .filter(g -> !step.dropped().contains(g.name())).flatMap(g -> g.kinds().stream())
-                        .toList();
-                Set<String> expected = new TreeSet<>();
-                for (String key : returnable) {
-                    if (meetsLadder(parsed, ENRICHED.get(key), ladder)
-                            && (!withText || statesText(parsed, ENRICHED.get(key)))) {
-                        expected.add(key);
-                    }
-                }
-                if (withText) {
-                    TEXT_CHECKS.incrementAndGet();
-                    TEXT_EXPECTED.addAndGet(expected.size());
-                }
-                Set<String> pg = postgres(query, step);
-                Set<String> lite = sqlite(query, step);
-                Set<String> missingPg = new TreeSet<>(expected);
-                missingPg.removeAll(pg);
-                Set<String> missingLite = new TreeSet<>(expected);
-                missingLite.removeAll(lite);
-                if (!missingPg.isEmpty() || !missingLite.isEmpty()) {
-                    violations.add(text + " (allow_below_spec " + allowBelowSpec + ", step " + step.index()
-                            + " without " + step.dropped() + "): Postgres misses " + missingPg + ", SQLite misses "
-                            + missingLite);
-                }
-                if (!lite.equals(pg)) {
-                    violations.add(text + " step " + step.index() + ": the dialects differ");
-                }
-                pgRelaxed = pg;
-                liteRelaxed = lite;
-            }
-            if (!allowBelowSpec) {
-                int step0 = postgres(query, query.step(0)).size();
-                gapsReturned = returnable.stream().filter(gapParts::contains).count();
-                line = String.format("%-52s %6d %6d %6d %6d %6d %6d", abbreviate(text), POOL.size(),
-                        returnable.size(), pgRelaxed == null ? -1 : pgRelaxed.size(),
-                        liteRelaxed == null ? -1 : liteRelaxed.size(), step0, gapsReturned);
             }
         }
+        Set<String> pgRelaxed = null;
+        Set<String> liteRelaxed = null;
+        for (FieldQuery.Step step : query.steps()) {
+            // with free text in the step, a part must also state every keyword the way the ranker's lexical score
+            // finds it (a substring of its text) and carry a requested part number as an MPN prefix
+            boolean withText = query.group(FieldQuery.Role.K.name()) != null
+                    && !step.dropped().contains(FieldQuery.Role.K.name());
+            List<ConstraintKind> ladder = query.groups(FieldQuery.Role.L).stream()
+                    .filter(g -> !step.dropped().contains(g.name())).flatMap(g -> g.kinds().stream())
+                    .toList();
+            Set<String> expected = new TreeSet<>();
+            for (String key : returnable) {
+                if (meetsLadder(parsed, ENRICHED.get(key), ladder)
+                        && (!withText || statesText(parsed, ENRICHED.get(key)))) {
+                    expected.add(key);
+                }
+            }
+            if (withText) {
+                TEXT_CHECKS.incrementAndGet();
+                TEXT_EXPECTED.addAndGet(expected.size());
+            }
+            Set<String> pg = postgres(query, step);
+            Set<String> lite = sqlite(query, step);
+            Set<String> missingPg = new TreeSet<>(expected);
+            missingPg.removeAll(pg);
+            Set<String> missingLite = new TreeSet<>(expected);
+            missingLite.removeAll(lite);
+            if (!missingPg.isEmpty() || !missingLite.isEmpty()) {
+                violations.add(text + " (step " + step.index()
+                        + " without " + step.dropped() + "): Postgres misses " + missingPg + ", SQLite misses "
+                        + missingLite);
+            }
+            if (!lite.equals(pg)) {
+                violations.add(text + " step " + step.index() + ": the dialects differ");
+            }
+            pgRelaxed = pg;
+            liteRelaxed = lite;
+        }
+        int step0 = postgres(query, query.step(0)).size();
+        long gapsReturned = returnable.stream().filter(gapParts::contains).count();
+        String line = String.format("%-52s %6d %6d %6d %6d %6d %6d", abbreviate(text), POOL.size(),
+                returnableStrict, pgRelaxed == null ? -1 : pgRelaxed.size(),
+                liteRelaxed == null ? -1 : liteRelaxed.size(), step0, gapsReturned);
         return new Result(line, violations, gapsReturned);
     }
 
@@ -274,7 +283,7 @@ class FieldQuerySupersetTest {
             if (!PageCollector.Check.returnable(ranking, parsed, part, false)) {
                 continue;
             }
-            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS, part.distributor(), false);
+            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS, part.distributor());
             assertThat(postgres(query, query.relaxed())).as(key).contains(key);
             assertThat(sqlite(query, query.relaxed())).as(key).contains(key);
         }

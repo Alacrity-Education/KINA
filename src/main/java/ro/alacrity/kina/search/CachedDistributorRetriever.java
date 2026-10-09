@@ -103,20 +103,25 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         FieldIndexMode mode = properties.search().fieldIndex().mode();
         if (mode == FieldIndexMode.ON && fieldFirst != null) {
             FieldFirstSearch.Outcome outcome = fieldFirst.search(client, prepared, progress, deadline);
-            if (outcome.fetched() != null) {
-                return outcome.fetched();
-            }
             if (outcome.failure() != null) {
-                // nothing in the index answers and the distributor failed: an expired cached list, else the failure
+                // no step of the index found a part to return and the distributor failed: the expired cached list as
+                // the cached-search path serves it, else what the index holds (flagged with the error), else the failure
                 ParsedQuery parsed = prepared.parsed();
                 String query = DistributorRetriever.plan(properties, ranking, distributor, prepared).query();
                 Optional<Fetched> served = readCachedSearch(distributor, parsed.normalizedKey())
                         .filter(c -> !c.partNumbers().isEmpty())
                         .flatMap(c -> servedStale(distributor, parsed, query, c, outcome.failure()));
                 if (served.isPresent()) {
-                    return served.get();
+                    Fetched stale = served.get();
+                    return outcome.fetched() == null ? stale : stale.withFieldSteps(outcome.fetched().fieldSteps());
+                }
+                if (outcome.fetched() != null) {
+                    return outcome.fetched();
                 }
                 throw outcome.failure();
+            }
+            if (outcome.fetched() != null) {
+                return outcome.fetched();
             }
             metrics.fieldFallback(distributor.name(), outcome.legacyReason());
         } else {
@@ -150,8 +155,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
                 return searched;
             }
             KinaProperties.FieldIndex config = properties.search().fieldIndex();
-            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.of(ranking), distributor,
-                    allowBelowSpec).withStaleBelow(config.minVersion());
+            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.of(ranking), distributor)
+                    .withStaleBelow(config.minVersion());
             if (config.requireStatedConstraint() && !FieldFirstSearch.selective(query.step(0), parsed)) {
                 return searched;
             }
@@ -192,7 +197,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         }
         ParsedQuery parsed = prepared.parsed();
         boolean allowBelowSpec = prepared.request().allowBelowSpec();
-        shadow.observe(distributor, parsed, ConstraintPolicy.of(ranking), allowBelowSpec, searched.parts(),
+        shadow.observe(distributor, parsed, ConstraintPolicy.of(ranking), searched.parts(),
                 part -> Check.returnable(ranking, parsed, part, allowBelowSpec));
     }
 

@@ -377,12 +377,17 @@ class FieldFirstSearchTest {
     }
 
     @Test
-    void ratingsAreNeverRelaxedAndAllowBelowSpecDropsThem() {
+    void ratingsAreNeverRelaxedNorFilteredAndBelowSpecIsReportedAsOnTheCachedSearchPath() {
         cache(mlccs("LOW", 4, "X7R", 16));   // 16 V parts for a 25 V request
         service("on");
         DistributorResult strict = search(QUERY, 3);
         assertThat(strict.returned()).as("below spec is never relaxed").isZero();
         assertThat(mouser.asked).as("the distributor was asked").isNotEmpty();
+        // the ratings are not filtered in SQL: the Java check leaves the parts out and counts them
+        assertThat(strict.excludedBelowSpec()).isEqualTo(4);
+        assertThat(strict.excludedBelowSpecDetail()).hasSize(4)
+                .allSatisfy(d -> assertThat(d.rating()).isEqualTo("voltage"));
+        assertThat(strict.hint()).contains("allow_below_spec");
 
         jdbc.sql("DELETE FROM distributor_phrases").update();
         mouser.asked.clear();
@@ -485,6 +490,74 @@ class FieldFirstSearchTest {
         assertThat(result.fetchedLive()).isTrue();
         assertThat(result.liveCalls()).isEqualTo(1);
         assertThat(journal.count()).as("a failed call is not journaled").isZero();
+    }
+
+    @Test
+    void aFailedCallEvaluatesTheRelaxedStepsFromTheIndexWithoutAnotherCall() {
+        // step 0 (X7R) holds one part, the relaxed step (any dielectric) four more: the first call fails
+        cache(mlccs("A", 1, "X7R", 25));
+        cache(mlccs("B", 4, "X5R", 25));
+        mouser.failure = new DistributorException(Distributor.MOUSER, DistributorException.Kind.UNAVAILABLE, "down");
+        service("on");
+        DistributorResult result = search(QUERY, 3);
+        assertThat(mouser.asked).as("no call after the failure").containsExactly(phrases().getFirst());
+        assertThat(result.error()).isEqualTo("unavailable");
+        assertThat(result.cache()).isEqualTo(CacheStatus.STALE);
+        assertThat(result.fieldSteps()).isEqualTo(2);
+        assertThat(result.returned()).isEqualTo(3);
+        assertThat(numbers(result).getFirst()).as("the exact part first").isEqualTo("A1");
+        assertThat(result.constraintsRelaxed()).containsExactly("dielectric");
+        assertThat(journal.count()).isZero();
+    }
+
+    @Test
+    void aFailedCallWithNothingFoundServesTheExpiredListAsTheCachedSearchPathDoes() {
+        // the index holds only parts below spec; the request's list has expired (older than the TTL)
+        cache(mlccs("LOW", 2, "X7R", 16));
+        searchCache.upsert(new CachedSearch(Distributor.MOUSER, parser.parse(QUERY).normalizedKey(), 2,
+                List.of("LOW1", "LOW2"), true, java.time.Instant.now().minus(Duration.ofDays(10)), 50, null, 0,
+                null));
+        mouser.failure = new DistributorException(Distributor.MOUSER, DistributorException.Kind.UNAVAILABLE, "down");
+        service("off");
+        DistributorResult off = search(QUERY, 3);
+        service("on");
+        DistributorResult on = search(QUERY, 3);
+        assertThat(off.cache()).isEqualTo(CacheStatus.STALE);
+        assertThat(on.cache()).isEqualTo(off.cache());
+        assertThat(on.error()).isEqualTo(off.error()).isEqualTo("unavailable");
+        assertThat(on.fetched()).isEqualTo(off.fetched()).isEqualTo(2);
+        assertThat(on.excludedBelowSpec()).isEqualTo(off.excludedBelowSpec()).isEqualTo(2);
+        assertThat(on.returned()).isZero();
+        assertThat(on.fieldSteps()).as("every step was read from the index").isEqualTo(2);
+        assertThat(mouser.asked).as("one call per mode").hasSize(2);
+    }
+
+    @Test
+    void aFailedCallMergesTheExpiredListIntoTheCandidates() {
+        // the expired list holds a part the field query does not select (a keyword match): it is served too
+        Part accessory = RankingFixtures.part(Distributor.MOUSER, "K1", "ACME", "KIT-1",
+                "Evaluation kit for MLCC 0805 X7R 25V", "Development Kits", null, 10, "50.00", Map.of(), Map.of());
+        cache(List.of(accessory));
+        cache(mlccs("A", 1, "X7R", 25));
+        searchCache.upsert(new CachedSearch(Distributor.MOUSER, parser.parse(QUERY).normalizedKey(), 2,
+                List.of("A1", "K1"), true, java.time.Instant.now().minus(Duration.ofDays(10)), 50, null, 0, null));
+        mouser.failure = new DistributorException(Distributor.MOUSER, DistributorException.Kind.UNAVAILABLE, "down");
+        service("off");
+        DistributorResult off = search(QUERY, 3);
+        service("on");
+        DistributorResult on = search(QUERY, 3);
+        assertThat(on.cache()).isEqualTo(CacheStatus.STALE);
+        assertThat(numbers(on)).containsAll(numbers(off)).contains("A1", "K1");
+    }
+
+    @Test
+    void theCandidateCapLimitsTheIndexRows() {
+        cache(mlccs("A", 6, "X7R", 25));
+        service("on", "kina.search.field-index.max-candidates", "4");
+        DistributorResult result = search(QUERY, 3);
+        assertThat(result.fetched()).as("max-candidates rows of the index").isEqualTo(4);
+        assertThat(result.returned()).isEqualTo(3);
+        assertThat(mouser.asked).isEmpty();
     }
 
     @Test

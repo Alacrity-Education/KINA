@@ -24,6 +24,7 @@ import java.sql.Statement;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +47,7 @@ class LcscRetrieverTest {
     JlcpcbSqliteSearch search;
     LcscClient client;
     LcscRetriever retriever;
+    RankingService ranking;
 
     @AfterEach
     void tearDown() {
@@ -67,7 +69,7 @@ class LcscRetrieverTest {
         search = LcscTestSupport.search(main, typed);
         client = spy(TestWiring.lcscClient(search));
         KinaProperties props = TestWiring.properties();
-        RankingService ranking = TestWiring.rankingService(props, TestWiring.deterministicRanker(EXTRACTOR), null,
+        ranking = TestWiring.rankingService(props, TestWiring.deterministicRanker(EXTRACTOR), null,
                 () -> null, TestWiring.scoreCache(props.ranking().scoreCacheTtl()));
         PageCollector pages = TestWiring.wire(new PageCollector(), "extractor", EXTRACTOR, "clock",
                 Clock.systemUTC(), "metrics", KinaMetrics.NOOP);
@@ -176,11 +178,39 @@ class LcscRetrieverTest {
     @Test
     void theTypedStepsOfAFreeTextQueryAreRecognised() {
         var query = ro.alacrity.kina.search.field.FieldQueryBuilder.build(PARSER.parse("RP2040"),
-                ConstraintPolicy.DEFAULTS, Distributor.LCSC, false);
+                ConstraintPolicy.DEFAULTS, Distributor.LCSC);
         assertThat(LcscRetriever.constrains(query)).isFalse();
         var capacitor = ro.alacrity.kina.search.field.FieldQueryBuilder.build(PARSER.parse("10uF X7R 0805"),
-                ConstraintPolicy.DEFAULTS, Distributor.LCSC, false);
+                ConstraintPolicy.DEFAULTS, Distributor.LCSC);
         assertThat(LcscRetriever.constrains(capacitor)).isTrue();
+    }
+
+    @Test
+    void partsBelowSpecAreHandedToTheRankerWithoutAPlaceAndCountedAsOnTheFtsPath() throws Exception {
+        // ratings are not filtered in SQL (DESIGN.md 3.8): 10 V parts for a 25 V request reach the Java check, take no
+        // place in the window and are excluded and counted by the ranker (excluded_below_spec)
+        List<ro.alacrity.kina.distributor.lcsc.JlcpcbRow> rows = new java.util.ArrayList<>(JlcpcbTestDatabase.typed());
+        for (int i = 0; i < 10; i++) {
+            rows.add(JlcpcbTestDatabase.row("C83" + String.format("%04d", i), "Capacitors",
+                    "Multilayer Ceramic Capacitors MLCC - SMD/SMT", "OK-" + i, "0805", "Maker", "Extended",
+                    "10uF 25V X7R ±10%", "1-:0.02", Integer.toString(1000 + i)));
+            rows.add(JlcpcbTestDatabase.row("C84" + String.format("%04d", i), "Capacitors",
+                    "Multilayer Ceramic Capacitors MLCC - SMD/SMT", "LOW-" + i, "0805", "Maker", "Extended",
+                    "10uF 10V X7R ±10%", "1-:0.02", Integer.toString(1_000_000 + i)));
+        }
+        setUp(rows, true);
+
+        Fetched fetched = retrieve("10uF X7R 0805 25V", 10);
+
+        assertThat(numbers(fetched)).as("the compliant parts and the below-spec ones")
+                .contains("C830000", "C830009", "C840000", "C840009");
+        RankingService.RankedResults ranked = ranking.rank(PARSER.parse("10uF X7R 0805 25V"),
+                Map.of(Distributor.LCSC, fetched.parts()), Duration.ZERO);
+        assertThat(ranked.excludedBelowSpecBy(Distributor.LCSC)).isGreaterThanOrEqualTo(10);
+        assertThat(ranked.belowSpecDetailBy(Distributor.LCSC)).isNotEmpty()
+                .allSatisfy(d -> assertThat(d.rating()).isEqualTo("voltage"));
+        assertThat(ranked.byDistributor().get(Distributor.LCSC)).extracting(r -> r.part().distributorPartNumber())
+                .noneMatch(n -> n.startsWith("C84"));
     }
 
     @Test

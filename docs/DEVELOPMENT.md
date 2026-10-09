@@ -233,13 +233,20 @@ scripts/e2e/field-search/run.sh restore kina-live-20261009.dump   # from KINA_FS
 scripts/e2e/field-search/run.sh snapshot before.txt   # cache counts and md5 of cached_parts / cached_searches
 scripts/e2e/field-search/run.sh up on                 # kina in mode on (V14, V15, re-index, journal backfill)
 scripts/e2e/field-search/run.sh mode augment          # recreate kina only, in another mode
-scripts/e2e/field-search/run.sh validate lookups --mcp-fallback --parts parts.tsv
+scripts/e2e/field-search/run.sh validate lookups --query-form --parts parts.tsv   # path and ?part_number= forms
 scripts/e2e/field-search/run.sh e2e                   # kina_e2e.py against 18080/19090
 scripts/e2e/field-search/run.sh down                  # containers removed, volumes kept
 ```
 
 `validate.py` (lookups, recall sample, cached-search replay, LCSC queries, latency) and `explain_misses.py` (repeats
-each recall miss and reruns the field query the server logged, without its limit) are described in their headers;
+each recall miss and reruns the field query the server logged, without its limit) are described in their headers.
+`lookups` looks every part up with `GET /api/v1/parts/{d}/{percent-encoded pn}` and, with `--query-form`, also with
+`GET /api/v1/parts/{d}?part_number=`; part numbers with `%`, a backslash or `/` work on both since phase C2
+(`--mcp-fallback`, the `get_part` fallback for HTTP 400, is kept for older images). Run the preservation check on a
+fresh `kina-fs_pgdata` (`docker volume rm kina-fs_pgdata` after `down`, then `db` and `restore`): `restore` refuses a
+database that already holds the cache. The e2e checks of the typed LCSC path accept both answers the declared
+semantics allow (an impossible request: empty, or unverified parts with the "is confirmed" hint; a 6x6 switch: within
+0.5 mm);
 `FieldQuerySupersetTest` takes the stack's cache as an outside pool (`-Dkina.superset.pool=pool.jsonl
 -Dkina.superset.queries=queries.txt`). Results of 2026-10-09: `docs/research/field-search-validation-2026-10-09.md`.
 

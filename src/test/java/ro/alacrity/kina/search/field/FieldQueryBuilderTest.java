@@ -30,9 +30,8 @@ class FieldQueryBuilderTest {
 
     private final QueryParser parser = new QueryParser();
 
-    private FieldQuery build(String text, boolean allowBelowSpec) {
-        return FieldQueryBuilder.build(parser.parse(text), ConstraintPolicy.DEFAULTS, Distributor.MOUSER,
-                allowBelowSpec);
+    private FieldQuery build(String text) {
+        return FieldQueryBuilder.build(parser.parse(text), ConstraintPolicy.DEFAULTS, Distributor.MOUSER);
     }
 
     private static <T extends FieldPredicate> T predicate(FieldQuery q, String group, ConstraintKind kind,
@@ -43,7 +42,7 @@ class FieldQueryBuilderTest {
 
     @Test
     void anMlccRequest() {
-        FieldQuery q = build("10uF X7R 0805 25V", false);
+        FieldQuery q = build("10uF X7R 0805 25V");
         assertThat(q.groups()).extracting(FieldQuery.Group::name).containsExactly("H", "R", "L1");
         assertThat(predicate(q, "H", ConstraintKind.TYPE, OneOf.class).values()).contains("capacitor");
         Range value = predicate(q, "H", ConstraintKind.VALUE, Range.class);
@@ -59,12 +58,36 @@ class FieldQueryBuilderTest {
         assertThat(q.steps()).hasSize(2);
         assertThat(q.relaxed().relaxed()).containsExactly("dielectric");
 
-        assertThat(build("10uF X7R 0805 25V", true).group("R")).as("ratings only rank").isNull();
+        // ratings never filter (the Java check excludes and counts a part below spec): they only order
+        assertThat(q.ratings()).containsExactly(voltage);
+        assertThat(q.steps()).allSatisfy(step -> assertThat(step.predicates())
+                .noneMatch(p -> p.kind() == ConstraintKind.VOLTAGE_RATING));
+        assertThat(q.relaxed().predicates()).containsExactlyElementsOf(q.group("H").predicates());
+    }
+
+    @Test
+    void ratingsOrderTheCandidatesInBothDialects() {
+        FieldQuery q = build("electrolytic capacitor 470uF 35V 105°C 5000h THT");
+        assertThat(q.group("R").kinds()).contains(ConstraintKind.VOLTAGE_RATING, ConstraintKind.TEMPERATURE,
+                ConstraintKind.LIFETIME);
+        for (FieldSql dialect : List.of(PostgresFieldSql.INSTANCE, SqliteFieldSql.INSTANCE)) {
+            String sql = dialect.select(q, q.step(0), 40).sql();
+            String where = sql.substring(sql.indexOf(" WHERE "), sql.indexOf(" ORDER BY "));
+            assertThat(where).doesNotContain("voltage_v").doesNotContain("max_temp_c").doesNotContain("lifetime_h");
+            String order = sql.substring(sql.indexOf(" ORDER BY "));
+            assertThat(order).contains("CASE WHEN").contains("voltage_v").contains("lifetime_h");
+            // the part that states the ratings counts as confirmed
+            assertThat(sql.substring(0, sql.indexOf(" FROM "))).contains("voltage_v");
+        }
+        // the confirmed-only SQLite form selects the first tier of that order: ratings stated and met
+        FieldSql.Statement confirmed = SqliteFieldSql.CONFIRMED.count(q, q.step(0));
+        assertThat(confirmed.sql()).contains("voltage_v >= ?").contains("lifetime_h >= ?");
+        assertThat(SqliteFieldSql.INSTANCE.count(q, q.step(0)).sql()).doesNotContain("voltage_v");
     }
 
     @Test
     void aThinFilmResistor() {
-        FieldQuery q = build("4.7k 1% 0603 resistor thin film", false);
+        FieldQuery q = build("4.7k 1% 0603 resistor thin film");
         assertThat(predicate(q, "H", ConstraintKind.VALUE, Range.class).column().name()).isEqualTo("resistance_ohm");
         NoneOf technology = predicate(q, "H", ConstraintKind.TECHNOLOGY, NoneOf.class);
         assertThat(technology.values()).contains("thick film").doesNotContain("thin film");
@@ -76,7 +99,7 @@ class FieldQueryBuilderTest {
 
     @Test
     void aUsbReceptacle() {
-        FieldQuery q = build("USB-C receptacle 16 pin SMD USB 2.0", false);
+        FieldQuery q = build("USB-C receptacle 16 pin SMD USB 2.0");
         assertThat(predicate(q, "H", ConstraintKind.USB_TYPE, Equal.class).value()).isEqualTo("Type-C");
         assertThat(predicate(q, "H", ConstraintKind.PIN_CONFIGURATION, Equal.class).value()).isEqualTo(16);
         assertThat(predicate(q, "H", ConstraintKind.USB_STANDARD, AtLeast.class).min()).isEqualTo(1);
@@ -86,7 +109,7 @@ class FieldQueryBuilderTest {
 
     @Test
     void freeTextIsDroppedFirst() {
-        FieldQuery q = build("low-noise op amp for audio, SOIC-8", false);
+        FieldQuery q = build("low-noise op amp for audio, SOIC-8");
         assertThat(q.group("K")).isNotNull();
         assertThat(q.steps().get(1).dropped()).containsExactly("K");
         assertThat(q.group("K").predicates()).allMatch(p -> p.kind() == null);
@@ -101,17 +124,16 @@ class FieldQueryBuilderTest {
                 continue;
             }
             ParsedQuery parsed = parser.parse(mapper.readTree(line).get("query").asString());
-            for (boolean allow : List.of(false, true)) {
-                FieldQuery q = FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS, null, allow)
-                        .withStaleBelow(1);
-                for (FieldQuery.Step step : q.steps()) {
-                    for (FieldSql dialect : List.of(PostgresFieldSql.INSTANCE, SqliteFieldSql.INSTANCE)) {
-                        FieldSql.Statement s = dialect.select(q, step, 40);
-                        assertThat(s.sql()).doesNotContainIgnoringCase("abs(");
-                        long placeholders = s.sql().chars().filter(c -> c == '?').count();
-                        assertThat(s.params()).as(s.sql()).hasSize((int) placeholders);
-                        assertThat(s.sql()).doesNotContain("stock_fetched_at").doesNotContain(" stock ");
-                    }
+            FieldQuery q = FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS, null).withStaleBelow(1);
+            for (FieldQuery.Step step : q.steps()) {
+                List<FieldSql.Statement> statements = List.of(PostgresFieldSql.INSTANCE.select(q, step, 40),
+                        SqliteFieldSql.INSTANCE.select(q, step, 40), SqliteFieldSql.INSTANCE.candidates(q, step, 40),
+                        SqliteFieldSql.CONFIRMED.candidates(q, step, 40), SqliteFieldSql.CONFIRMED.count(q, step));
+                for (FieldSql.Statement s : statements) {
+                    assertThat(s.sql()).doesNotContainIgnoringCase("abs(");
+                    long placeholders = s.sql().chars().filter(c -> c == '?').count();
+                    assertThat(s.params()).as(s.sql()).hasSize((int) placeholders);
+                    assertThat(s.sql()).doesNotContain("stock_fetched_at");
                 }
             }
         }

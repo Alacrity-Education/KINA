@@ -59,22 +59,21 @@ public class FieldSearchShadow {
      * @param returned   the parts the Java path holds for the distributor
      * @param returnable the Java check ({@code PageCollector.Check.returnable} for the request)
      */
-    public void observe(Distributor distributor, ParsedQuery parsed, ConstraintPolicy policy, boolean allowBelowSpec,
-                        List<Part> returned, Predicate<Part> returnable) {
+    public void observe(Distributor distributor, ParsedQuery parsed, ConstraintPolicy policy, List<Part> returned,
+                        Predicate<Part> returnable) {
         if (!enabled()) {
             return;
         }
         List<Part> parts = List.copyOf(returned);
-        Thread.ofVirtual().name("field-shadow").start(() -> compare(distributor, parsed, policy, allowBelowSpec, parts,
-                returnable));
+        Thread.ofVirtual().name("field-shadow").start(() -> compare(distributor, parsed, policy, parts, returnable));
     }
 
     /** One comparison, now (tests and {@link #observe}). Never throws. */
-    public Report compare(Distributor distributor, ParsedQuery parsed, ConstraintPolicy policy, boolean allowBelowSpec,
-                          List<Part> returned, Predicate<Part> returnable) {
+    public Report compare(Distributor distributor, ParsedQuery parsed, ConstraintPolicy policy, List<Part> returned,
+                          Predicate<Part> returnable) {
         Report report;
         try {
-            report = run(distributor, parsed, policy, allowBelowSpec, returned, returnable);
+            report = run(distributor, parsed, policy, returned, returnable);
         } catch (RuntimeException e) {
             log.debug("Shadow field query of {} '{}' failed: {}", distributor, parsed.normalizedKey(), e.toString());
             report = new Report("failed", 0, 0, 0, List.of(), 0);
@@ -89,13 +88,13 @@ public class FieldSearchShadow {
         return report;
     }
 
-    private Report run(Distributor distributor, ParsedQuery parsed, ConstraintPolicy policy, boolean allowBelowSpec,
-                       List<Part> returned, Predicate<Part> returnable) {
+    private Report run(Distributor distributor, ParsedQuery parsed, ConstraintPolicy policy, List<Part> returned,
+                       Predicate<Part> returnable) {
         if (!index.isComplete(distributor)) {
             return new Report("incomplete", 0, 0, 0, List.of(), 0);
         }
         KinaProperties.FieldIndex config = properties.search().fieldIndex();
-        FieldQuery query = FieldQueryBuilder.build(parsed, policy, distributor, allowBelowSpec)
+        FieldQuery query = FieldQueryBuilder.build(parsed, policy, distributor)
                 .withStaleBelow(config.minVersion());
         List<PartIndexRepository.Hit> hits = index.query(query, config.maxCandidates());
         Set<String> candidates = new HashSet<>();

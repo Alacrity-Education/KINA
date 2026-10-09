@@ -735,17 +735,25 @@ def suite_rest(base: str, token: str, rec: Recorder):
               resp.status == 200 and body.get("query_understood") is False and bool(body.get("hint"))
               and all(m is None for m in matches), f"{len(matches)} parts, matches {matches}", resp.millis)
 
-    # hard constraints are never relaxed: an impossible request comes back empty with a hint, never with substitutes
+    # hard constraints are never relaxed: an impossible request never comes back with substitutes. The FTS path
+    # returns it empty; the typed path (kina.jlcpcb.field-index) also returns the parts that do not state the
+    # attributes, each flagged in unverified, none confirmed (DESIGN.md 3.2 "Unconfirmed parts", 9.3). Both carry
+    # a hint naming the hard constraints.
     q = urllib.parse.urlencode({"q": IMPOSSIBLE_QUERY, "max_results": 5, "distributors": "LCSC"})
     resp = api.get("/api/v1/parts/search?" + q, headers=auth)
     body = resp.json() if resp.status == 200 else {}
     lcsc = next(iter(body.get("distributors", [])), {})
-    rec.check(f"rest: '{IMPOSSIBLE_QUERY}' -> empty, exact_matches 0, hint naming the hard constraints",
-              resp.status == 200 and not lcsc.get("parts") and lcsc.get("exact_matches") == 0
-              and "never relaxed" in (lcsc.get("hint") or "") and bool(body.get("hint"))
-              and not shape_problems(body),
-              f"excluded {lcsc.get('excluded_by_constraints')} {lcsc.get('excluded_by_constraints_detail')}, "
-              f"hint {lcsc.get('hint')!r}", resp.millis)
+    hint = lcsc.get("hint") or ""
+    parts = lcsc.get("parts") or []
+    unconfirmed = bool(parts) and all(p.get("unverified") and not p.get("below_spec") for p in parts) \
+        and "is confirmed: no part returned states" in hint
+    rec.check(f"rest: '{IMPOSSIBLE_QUERY}' -> empty or unverified only, exact_matches 0, hint naming the hard "
+              "constraints",
+              resp.status == 200 and (not parts or unconfirmed) and lcsc.get("exact_matches") == 0
+              and "never relaxed" in hint and bool(body.get("hint")) and not shape_problems(body),
+              f"{len(parts)} parts ({'unverified' if parts else 'empty'}), excluded "
+              f"{lcsc.get('excluded_by_constraints')} {lcsc.get('excluded_by_constraints_detail')}, hint {hint!r}",
+              resp.millis)
     for query, wanted in ((CRYSTAL_QUERY, "crystal"), (OSCILLATOR_QUERY, "oscillator")):
         q = urllib.parse.urlencode({"q": query, "max_results": 20, "distributors": "LCSC"})
         resp = api.get("/api/v1/parts/search?" + q, headers=auth)
@@ -903,10 +911,20 @@ def led_and_switch_checks(api: Client, auth: dict, rec: Recorder):
     types = sorted({str(p.get("attributes", {}).get("SwitchType")) for p in parts})
     sizes = sorted({str(p.get("attributes", {}).get("SwitchSize")) for p in parts})
     mountings = sorted({str(p.get("attributes", {}).get("Mounting")) for p in parts})
-    rec.check(f"rest: LCSC '{SWITCH_QUERY}' sends the tactile category, returns 6x6 SMD tactile switches only",
+    # the size is hard within the declared tolerance of 0.5 mm (DESIGN.md 3.4 "Switches"): 6.2x6.2 is a 6x6 switch
+    def size_ok(size):
+        if size == "None":
+            return True
+        try:
+            dims = [float(x) for x in size.lower().replace("mm", "").split("x")[:2]]
+        except ValueError:
+            return False
+        return len(dims) == 2 and all(abs(d - 6) <= 0.5 for d in dims)
+    rec.check(f"rest: LCSC '{SWITCH_QUERY}' sends the tactile category, returns 6x6 (within 0.5 mm) SMD tactile "
+              "switches only",
               resp.status == 200 and (body.get("parsed", {}).get("switch") or {}).get("type") == "tactile"
               and lcsc.get("distributor_query") == '"Tactile Switches" 6x6mm SMD'
-              and parts and set(types) == {"tactile"} and all(s.startswith("6x6") or s == "None" for s in sizes)
+              and parts and set(types) == {"tactile"} and all(size_ok(s) for s in sizes)
               and set(mountings) <= {"SMD", "None"} and not shape_problems(body),
               f"returned {len(parts)} of {lcsc.get('fetched')}, types {types}, sizes {sizes}, mounting {mountings}",
               resp.millis)

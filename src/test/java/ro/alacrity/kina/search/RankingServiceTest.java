@@ -88,6 +88,31 @@ class RankingServiceTest {
     }
 
     @Test
+    void theRankingStageChecksAtMostMaxCandidatesPartsPerDistributorInListOrder() {
+        // DESIGN.md 3.8 "Candidate cap": the parts after the cap are neither checked nor counted
+        Part[] parts = new Part[6];
+        for (int i = 0; i < parts.length; i++) {
+            parts[i] = mlcc(Distributor.MOUSER, "P" + i, "Capacitor: ceramic; 10uF; " + (i < 3 ? 25 : 10)
+                    + "V; X7R; SMD; 0805", 1000, "0.10");
+        }
+        Part listed = mlcc(Distributor.MOUSER, "Z", "Capacitor: ceramic; 10uF; 25V; X7R; SMD; 0805", 0, "0.10");
+        List<Part> all = new ArrayList<>(List.of(parts));
+        all.add(listed);
+        ParsedQuery q = parser.parse("10uF 25V X7R 0805");
+        RankingService.RankedResults capped = service(new FakeRanker(), "kina.ranking.cross-encoder.enabled", "false",
+                "kina.search.field-index.max-candidates", "4")
+                .rank(q, Map.of(Distributor.MOUSER, all), null);
+        assertThat(keys(capped.byDistributor().get(Distributor.MOUSER)))
+                .as("the first four in-stock parts and the part listed without stock")
+                .containsExactlyInAnyOrder("P0", "P1", "P2", "Z");
+        assertThat(capped.excludedBelowSpecBy(Distributor.MOUSER)).as("P3 only; P4 and P5 are past the cap")
+                .isEqualTo(1);
+        assertThat(RankingService.capped(List.of(parts), 100)).hasSize(6);
+        assertThat(RankingService.capped(List.of(parts), 2)).extracting(Part::distributorPartNumber)
+                .containsExactly("P0", "P1");
+    }
+
+    @Test
     void everyRankedPartCarriesItsAbsoluteMatchGrade() {
         Part exact1 = mlcc(Distributor.MOUSER, "A", "Capacitor: ceramic; 10uF; 25V; X7R; SMD; 0805", 5000, "0.10");
         Part exact2 = mlcc(Distributor.MOUSER, "B", "Capacitor: ceramic; 10uF; 25V; X7R; SMD; 0805", 10, "0.20");

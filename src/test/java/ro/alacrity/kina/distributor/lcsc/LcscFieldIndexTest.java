@@ -49,7 +49,7 @@ class LcscFieldIndexTest {
     }
 
     private static FieldQuery query(String text) {
-        return FieldQueryBuilder.build(PARSER.parse(text), ConstraintPolicy.DEFAULTS, Distributor.LCSC, false);
+        return FieldQueryBuilder.build(PARSER.parse(text), ConstraintPolicy.DEFAULTS, Distributor.LCSC);
     }
 
     private Path database(List<JlcpcbRow> rows) throws Exception {
@@ -258,13 +258,16 @@ class LcscFieldIndexTest {
             for (FieldQuery.Step step : query.steps()) {
                 FieldSql.Statement all = SqliteFieldSql.INSTANCE.candidates(query, step, 100000);
                 FieldSql.Statement confirmed = SqliteFieldSql.CONFIRMED.candidates(query, step, 100000);
-                // "stated" of the superset is the number of stated attributes; the full count is the confirmed rows
+                // "stated" of the superset is the number of stated attributes, "rated" the requested ratings the
+                // part meets: the first tier of the order (all stated, every rating met) is the confirmed rows
                 List<Object[]> rows = run(all);
                 String sql = all.sql();
                 String stated = sql.substring("SELECT fts_rowid, part_number, ".length(), sql.indexOf(" AS stated"));
                 int maxStated = stated.split("\\) \\+ \\(").length;
+                int ratings = query.ratings().size();
                 Set<String> expected = new HashSet<>();
-                rows.stream().filter(r -> ((Number) r[1]).intValue() == maxStated).forEach(r -> expected.add((String) r[0]));
+                rows.stream().filter(r -> ((Number) r[1]).intValue() == maxStated && ((Number) r[2]).intValue() == ratings)
+                        .forEach(r -> expected.add((String) r[0]));
                 Set<String> actual = new HashSet<>();
                 run(confirmed).forEach(r -> actual.add((String) r[0]));
                 assertThat(actual).as("%s step %d", text, step.index()).isEqualTo(expected);
@@ -284,7 +287,7 @@ class LcscFieldIndexTest {
         });
     }
 
-    /** (part_number, stated) of the rows of a candidates statement. */
+    /** (part_number, stated, rated) of the rows of a candidates statement. */
     private List<Object[]> run(FieldSql.Statement statement) throws Exception {
         return search.withConnection(null, c -> {
             List<Object[]> out = new ArrayList<>();
@@ -292,7 +295,7 @@ class LcscFieldIndexTest {
                 bind(ps, statement.params());
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        out.add(new Object[] {rs.getString(2), rs.getInt(3)});
+                        out.add(new Object[] {rs.getString(2), rs.getInt(3), rs.getInt(5)});
                     }
                 }
             }

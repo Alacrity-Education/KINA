@@ -16,7 +16,9 @@ import java.lang.annotation.Target;
  * {@link #predicate()}, and the relative {@link #slack()} or absolute {@link #margin()} that makes the SQL looser than
  * the Java tolerance. {@link #javaOnly()} marks a kind whose comparison stays in Java (it never narrows the SQL). A
  * row whose column is NULL (the part does not state the attribute) is always kept ({@link #nullKept()}), because the
- * judge keeps such a part (unverified).
+ * judge keeps such a part (unverified). The rule of a rating whose general strategy is {@code BELOW_SPEC} (group
+ * {@code R} of the field query) never filters: it only orders the candidates, a part that states the rating and meets
+ * it first, so a part below spec reaches the Java check, which excludes and counts it ({@code excluded_below_spec}).
  *
  * <p>On a {@link PartAttribute} constant it declares where the writer stores the attribute's SI value: a typed column
  * ({@code capacitance_f}) or a key of the {@code attrs} JSONB column ({@link #ATTRS} with {@link #keys()}).
@@ -73,7 +75,10 @@ public @interface Indexed {
         NONE,
         /** {@code col BETWEEN x(1 - slack) - margin AND x(1 + slack) + margin}. */
         RANGE,
-        /** A minimum rating: {@code col >= x(1 - slack)}; a part value of 0 or less is no rating (kept). */
+        /**
+         * A minimum: {@code col >= x(1 - slack)}; for a rating a part value of 0 or less is no rating (kept). A
+         * {@code BELOW_SPEC} rating renders it in the order of the candidates only, never in the filter.
+         */
         GTE,
         /** A maximum: {@code col <= x(1 + slack) + margin}. */
         LTE,

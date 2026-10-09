@@ -27,9 +27,12 @@ import java.util.regex.Pattern;
  * {@link SqliteFieldSql}) render the same predicates; only the column access (JSON keys, arrays, lists) and the free
  * text differ. Every value predicate keeps NULL columns and compares the bare column with constants.
  *
- * <p>The statement returns {@code distributor, part_number, confirmed} ordered by {@code confirmed} (every stated
- * column of the step's constraint predicates is stated by the part) descending, then by distributor and part number,
- * so the order is stable.
+ * <p>The statement returns {@code distributor, part_number, confirmed} ordered by {@code confirmed} (the part states every
+ * column of the step's constraint predicates and of the requested ratings) descending, then by the number of requested
+ * ratings the part states and meets ({@link FieldQuery#ratings()}), then by the soft kinds it matches, then by
+ * distributor and part number, so the order is stable. The ratings and the soft kinds only order: they are never in
+ * the {@code WHERE} clause (except in the confirmed-only form of {@link SqliteFieldSql#CONFIRMED}, which selects the
+ * first tier of that order).
  */
 public abstract class FieldSql {
 
@@ -90,24 +93,46 @@ public abstract class FieldSql {
     public Statement select(FieldQuery query, FieldQuery.Step step, int limit, List<String> among) {
         Body body = body(query, step, among);
         List<Object> params = new ArrayList<>(body.params());
-        String soft = soft(query, params);
+        String order = order(query.ratings(), params) + order(query.soft(), params);
         params.add(limit);
         return new Statement("SELECT distributor, part_number, (" + confirmed(body) + ") AS confirmed FROM "
-                + body.from() + " ORDER BY confirmed DESC, " + soft + "distributor, part_number LIMIT ?", params);
+                + body.from() + " ORDER BY confirmed DESC, " + order + "distributor, part_number LIMIT ?", params);
     }
 
     /**
-     * The order term of the soft kinds ({@link FieldQuery#soft()}) followed by {@code ", "}, empty without: how many
-     * of them the part states with a matching value. Its parameters are added to {@code params}.
+     * The order term of order-only predicates (the ratings {@link FieldQuery#ratings()}, the soft kinds
+     * {@link FieldQuery#soft()}) followed by {@code ", "}, empty without: how many of them the part states with a
+     * matching value. Its parameters are added to {@code params}. Each predicate counts as 0 or 1 ({@code CASE}), so
+     * the sum is an integer in both dialects.
      */
-    protected String soft(FieldQuery query, List<Object> params) {
+    protected String order(List<FieldPredicate> predicates, List<Object> params) {
+        String count = matched(predicates, params);
+        return count == null ? "" : count + " DESC, ";
+    }
+
+    /**
+     * How many of {@code predicates} the part states with a matching value, as an integer expression (each
+     * {@code CASE WHEN <stated> AND <predicate> THEN 1 ELSE 0 END}); null without predicates. Its parameters are added
+     * to {@code params}.
+     */
+    protected String matched(List<FieldPredicate> predicates, List<Object> params) {
         List<String> terms = new ArrayList<>();
-        for (FieldPredicate p : query.soft()) {
+        for (FieldPredicate p : predicates) {
             List<String> stated = statedSql(p);
             String match = render(p, params);
-            terms.add("(" + (stated.isEmpty() ? "" : String.join(" AND ", stated) + " AND ") + match + ")");
+            terms.add("CASE WHEN " + (stated.isEmpty() ? "" : String.join(" AND ", stated) + " AND ") + match
+                    + " THEN 1 ELSE 0 END");
         }
-        return terms.isEmpty() ? "" : "(" + String.join(") + (", terms) + ") DESC, ";
+        return terms.isEmpty() ? null : "(" + String.join(" + ", terms) + ")";
+    }
+
+    /**
+     * True when the requested ratings are part of the {@code WHERE} clause, as the confirmed tier of the order
+     * (stated and met): only the confirmed-only form of {@link SqliteFieldSql}. Every other statement keeps a part
+     * below spec, so the Java check can exclude and count it.
+     */
+    protected boolean ratingsConfirmedInWhere() {
+        return false;
     }
 
     /**
@@ -149,6 +174,14 @@ public abstract class FieldSql {
                 if (p.kind() == ConstraintKind.TYPE) {
                     familyStated.addAll(statedSql(p));
                 }
+            }
+        }
+        // the ratings only order (confirmed first): a part that states them counts as confirmed, a part below spec
+        // stays a candidate for the Java check
+        for (FieldPredicate p : query.ratings()) {
+            stated.addAll(statedSql(p));
+            if (ratingsConfirmedInWhere()) {
+                inner.add(render(p, innerParams));
             }
         }
         if (!inner.isEmpty()) {

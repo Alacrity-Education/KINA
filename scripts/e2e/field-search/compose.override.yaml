@@ -16,6 +16,7 @@ services:
       KINA_FIELD_INDEX_MODE: ${KINA_FIELD_INDEX_MODE:-on}
       KINA_JLCPCB_FIELD_INDEX_ENABLED: ${KINA_JLCPCB_FIELD_INDEX_ENABLED:-true}
       KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT: ${KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT:-true}
+      KINA_FIELD_INDEX_MAX_CANDIDATES: ${KINA_FIELD_INDEX_MAX_CANDIDATES:-100}
       # never download the 5 GB JLCPCB file here: the pre-seeded file serves (and is typed) even when it is old
       KINA_JLCPCB_AUTODOWNLOAD: "false"
       MOUSER_API_KEY: ${MOUSER_API_KEY:-offline-placeholder}

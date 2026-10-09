@@ -330,6 +330,15 @@ requested rating meets the request but is not **confirmed** (`Verdict.UNVERIFIED
    capacitor in package 0201 at TME; capacitance and package are never relaxed. No substitutes are returned; try
    another package or value.` The response-level `hint` says the same for every distributor that came back empty (only
    for an understood query; a distributor with an `error` gets no hint).
+   **Unconfirmed parts** (project decision 2026-10-09): when a distributor returns parts but every one of them leaves a
+   stated constraint unverified (`exact_matches` 0 and a non-empty `unverified` list on each in-stock part: blank or
+   unreadable descriptions, a part that does not state the rating), the parts are returned as they are, flagged, and
+   the entry's `hint` (`ConstraintPolicy.unconfirmedHint`, the wording of the hint above) says that none confirms the
+   request and names the constraints they leave unverified, most frequent first: `No in-stock 22uF capacitor in package
+   0201 at LCSC is confirmed: no part returned states its voltage and package (listed in unverified; check the
+   datasheet); capacitance and package are never relaxed. No substitutes are returned; try another package or value.`
+   The response-level `hint` says the same when no distributor came back empty and none has a confirmed part. A part
+   that states a value contradicting a hard constraint is still left out; only parts that do not state it are kept.
    TME's 40-character phrase limit is applied by the client as for any query.
    Every fetched part gets `fetchedAt = now` and is enriched with `ParametricExtractor.enrich` before it is ranked
    (Mouser and LCSC deliver almost no parametric attributes); the cache stores it without the derived attributes
@@ -529,7 +538,8 @@ search(request, distributor D):            # D is Mouser or TME
     the request states nothing but its family ("mosfet": the index would return every MOSFET) and
     require-stated-constraint is on (default); an SQL error or a journal read failure before any call. Each is
     counted in kina_field_fallbacks_total{reason}
-  steps = [all groups], [without K], [without L1], [without L1, L2] ...    # FieldQuery.steps(); H and R never dropped
+  steps = [all groups], [without K], [without L1], [without L1, L2] ...    # FieldQuery.steps(); H never dropped,
+                                                                           # R (ratings) and S only order
   phrase of a step = the phrase the cached-search path would send at that ladder step (DistributorPhraser):
     all groups: the request's phrase; without K: the minimal core when it words the request differently, else the
     same phrase; without L1..Lk: the ladder step that loosens exactly those kinds (none: no phrase for the step)
@@ -540,21 +550,30 @@ search(request, distributor D):            # D is Mouser or TME
               (cached_searches, what the cached-search path would serve) + the parts this request received live,
               both when they pass the Java check and the ladder kinds still in the step
       if #(cands that pass the Java check) >= max_results and one of them is confirmed: stop          # enough
+      if a call of this request failed: next step                                        # index only, no call
       if the step's phrase was already tried in this request: next step
       if the journal has a fresh row for (D, phrase): count a journal hit, next step                   # asked already
       if calls >= max-live-calls-per-distributor or the deadline is over: stop
       call D with the phrase (page rules, deadline and rate-limit retry of steps 2 and 3.6), calls += 1;
-      upsert the parts (the cache write writes the index), write the journal row; on a failure stop
+      upsert the parts (the cache write writes the index), write the journal row
+      on a failure: no further call; the request's cached list joins the candidates even when it has expired
       cands = again; if enough: stop
-  answer with cands + every part received live (the ranker excludes what the request refuses and counts it)
+  after a failure, when no step had a candidate that passes the Java check: the expired cached list as the
+    cached-search path serves it (cache stale, the error), else the index candidates with the error, else the error
+  answer with every part received live + the cached list + cands, in that order (the ranker checks at most
+    max-candidates of them, excludes what the request refuses and counts it)
 ```
 
 *Enough* is at least `max_results` candidates that pass the Java check (`Check.returnable`: not excluded by a
 constraint, not below spec unless `allow_below_spec`) and at least one confirmed (meets the request with every
-requested rating stated; with `allow_below_spec` a below-spec part counts). The ratings (`R`) and the hard constraints
-(`H`) are in every step, so only the relaxable kinds are loosened, in the order of the ladder; `allow_below_spec`
-drops `R` as before. A step holds only the stated constraints, free text and part numbers beyond the stock and the
-family; a step of the family alone is never read (the parts received live stand in for it).
+requested rating stated; with `allow_below_spec` a below-spec part counts). The hard constraints (`H`) are in every
+step, so only the relaxable kinds are loosened, in the order of the ladder. **Ratings are not filtered in SQL**
+(project decision 2026-10-09): the ratings (`R`) are never in a step's filter, they only order the candidates (a part
+that states every requested rating and meets it first, section 3.8), so a part below spec reaches the Java check,
+which excludes it and counts it in `excluded_below_spec` and `excluded_below_spec_detail` exactly as on the
+cached-search path; `allow_below_spec` keeps its meaning there (such parts are returned, flagged `below_spec`, listed
+last) and does not change the SQL. A step holds only the stated constraints, free text and part numbers beyond the
+stock and the family; a step of the family alone is never read (the parts received live stand in for it).
 
 The request's cached list joins the candidates while it is fresh (`kina.cache.ttl`, the empty-list TTL for an empty
 list), so the field path serves at least what the cached-search path serves: the distributor's answer to the request's
@@ -568,7 +587,7 @@ rules the family implies, such as the LED type of every LED request, do not coun
 With the rule on, a request whose first step is not selective (`mosfet`, `LED`) never reads the index: `on` takes the
 cached-search path with reason `generic`, `augment` adds nothing, and a later step that is not selective is not read
 either. The index orders its candidates by key, not by relevance, so for such a request it would return the first
-200 parts of the family in part-number order, while the distributor's own search ranks them. With the rule off, such
+`max-candidates` (100) parts of the family in part-number order, while the distributor's own search ranks them. With the rule off, such
 a request reads the index like any other.
 
 A journal read that fails decides nothing: before any call the flow returns to the cached-search path with reason
@@ -592,9 +611,14 @@ older than `2 x kina.cache.ttl` with the cached searches.
 **Cached searches stay**: a call also writes `cached_searches` for the request's query key as the cached-search path
 does (the list of the last phrase asked, `fallback_query`, `constraints_relaxed`), so the expired-list fallback, the
 requested-part outcomes (`requested_parts`, section "Requested part numbers": a search naming a part number gets a
-row also when it made no call) and a rollback to the other modes find the history. A failed call serves the field
-candidates with cache `stale` and the `error`; without candidates, the expired cached list; without that, the error
-and an empty list as before.
+row also when it made no call) and a rollback to the other modes find the history.
+
+**A failed call** (validation 2026-10-09, phase C2): the flow makes no further call to that distributor in the
+request, adds the request's cached list (expired or not) to the candidates and reads the remaining relaxed steps
+from the index, so a relaxed step the cache can answer still answers (cache `stale`, the `error`, `fallback_query`
+and `constraints_relaxed` of that step). When no step had a part the Java check returns, the expired cached list is
+served as the cached-search path serves it (`stale`, the `error`); without one, the index candidates with the error;
+without those, the error and an empty list as before. `field_steps_tried` counts every step read.
 
 **What the fields mean in this mode** (`DistributorResult`):
 
@@ -603,10 +627,10 @@ and an empty list as before.
 | `cache` | `hit`: answered from the index and the cache, no distributor call (`fetched_live` false); `miss`: the distributor was asked, and only the request's own phrase; `partial`: asked at a relaxed step (at least one call with a relaxed phrase); `stale`: the live call failed and the parts come from the index or an expired list; `bypassed` and `not_applicable` as before |
 | `fetched_live` | true when this search called the distributor (`miss`, `partial`, `bypassed`, and `stale` after a failed call); false when no call was made (`hit`, `not_applicable`, LCSC). Always `live_calls > 0`. Present in every mode |
 | `live_calls` | the distributor search calls this request made for the distributor: one per page, every phrase (relaxed steps and fallback phrases included), failed calls included; 0 when none and always 0 for LCSC. Stock refreshes and the direct part-number lookups are not search calls and are not counted. Present in every mode |
-| `field_steps_tried` | the steps of the field query evaluated before the answer (1: step 0 answered); 0 on the cached-search path and for LCSC |
+| `field_steps_tried` | the steps of the field query evaluated before the answer (1: step 0 answered; after a failed call every step is read); 0 on the cached-search path and for LCSC |
 | `fallback_query` | the phrase of the step that produced the parts when it differs from the request's phrase (null at step 0 and for a step that only drops free text) |
 | `constraints_relaxed` | the kinds the answering step dropped, as before only those the returned parts really miss |
-| `fetched` | the parts the search holds before exclusions: the field candidates plus the parts received live |
+| `fetched` | the parts the search holds before exclusions: the parts received live, the cached list and the field candidates (below-spec parts included: they are excluded and counted by the check) |
 | `total_results` | the distributor's count for the phrase: of the last call made in this request; else the journal's `raw_total` for the phrase of the answering step; else the number of index candidates of that step |
 | `out_of_stock_matches` | of the calls made in this request; else the journal's count for the answering phrase; null when unknown |
 
@@ -2086,8 +2110,8 @@ sums in seconds). `list_distributors` and `GET /api/v1/distributors` carry the s
 
 The field index (`part_index`, migration V14, section 8) splits a request into constraints on typed fields and
 finds the cached Mouser and TME parts that can meet them with one SQL query. It is the foundation of the field-based
-search (research `docs/research/field-search-2026-10-08.md`); this release builds and maintains it and can compare it
-with the cached-search path (`shadow`), but no search answer comes from it yet.
+search (research `docs/research/field-search-2026-10-08.md`): it is always built and maintained, `shadow` compares it
+with the cached-search path, and `augment` and `on` answer from it (section 3.2 "Field-first flow").
 
 **SQL is a recall filter, Java is the judge.** The SQL of a request must keep every part the Java check keeps
 (`PageCollector.Check.returnable`, section 3.2); it may keep more. Every candidate is still enriched, checked and
@@ -2114,7 +2138,10 @@ numeric attribute is stored is declared on the `PartAttribute` constant (`@Index
 **The rules.** Each `ConstraintKind` that can exclude a part (hard for some family, a rating, or on the ladder)
 declares its rule with `@Indexed` next to `@Relax` and `@Match`: the column (empty: the column of the kind's measure,
 `ConstraintKind.indexMeasure`), the predicate, and the relative `slack` or absolute `margin`; or `javaOnly` when the
-comparison stays in Java. Soft kinds and preferences have no rule (they rank, they never exclude).
+comparison stays in Java. Soft kinds and preferences have no rule (they rank, they never exclude). The rule of a
+rating whose general strategy is `BELOW_SPEC` (`VOLTAGE_RATING`, `CURRENT`, `POWER`, `TEMPERATURE`, `LIFETIME`...)
+never filters: it only orders the candidates (group `R` below), so the Java check sees the parts below spec, excludes
+them and counts them.
 `IndexTableDocumentationTest` checks this table against the declarations and that every kind that can exclude a part
 has a rule or is Java only.
 
@@ -2188,23 +2215,30 @@ set (`family = ANY(compatible families)`, `ComponentFamily.compatible`), every o
 comparator refuses (`col <> ALL(refused)`); `ARRAY_ANY` an empty array or one element in the range; `JSONB_CONTAINS` an
 `attrs` key absent or equal (`attrs @> {key: x}`); `PACKAGE` `package_key = key(x) OR NOT package_readable`, a can size
 within the margin, and an LED size never compared with a PLCC package; `ABSENT` the column NULL (a single-element
-request against arrays and networks). Ratings with `allow_below_spec` are left out.
+request against arrays and networks). The predicates of the ratings (`R`) and of the soft kinds (`S`) are rendered in
+the `ORDER BY` only (`CASE WHEN <stated> AND <predicate> THEN 1 ELSE 0 END`, summed), never in the `WHERE` clause.
 
 **The query** (`search.field.FieldQueryBuilder`, `FieldQuery`). From the parsed request and `ConstraintPolicy` the
 builder makes ordered groups: `H` (never relaxed: `distributor`, `in_stock`, and every kind whose strategy for the
-request's family is `NEVER`, including `elements`), `R` (the stated ratings whose general strategy is `BELOW_SPEC`,
-unless `allow_below_spec`), `L1..Ln` (one group per stated ladder kind, in `@Relax(order)`: dielectric, package where
+request's family is `NEVER`, including `elements`), `R` (the stated ratings whose general strategy is `BELOW_SPEC`:
+order only, `FieldQuery.ratings()`, `Role.orderOnly()`; the same with and without `allow_below_spec`), `L1..Ln` (one
+group per stated ladder kind, in `@Relax(order)`: dielectric, package where
 it is not hard, tolerance, orientation, then the fan, LED and switch kinds) and `K` (free text: every keyword must
 match; in PostgreSQL every keyword is a substring, `search_text LIKE '%k%'`, served by the trigram GIN index, the way the
 ranker's lexical score finds a keyword (a substring of the part's text: `0805` is found in `C0805`; a word prefix on
 `search_tsv` would be stricter); in SQLite a keyword of 3 or more letters and digits is an FTS5 `MATCH` on the trigram
 table, which has the same substring semantics; the requested part numbers are MPN prefixes, `mpn LIKE 'p%'`, also
-served by the trigram index). The relaxation drops whole groups: first `K`, then `L1`, then `L1, L2`... `H` and `R` are never dropped;
-the last step holds `H + R` only, the superset of every part the Java check returns. Free text is a ranking signal
+served by the trigram index). The relaxation drops whole groups: first `K`, then `L1`, then `L1, L2`... `H` is never
+dropped; `R` and `S` are in no step's filter; the last step holds `H` only, the superset of every part the Java check
+returns, below-spec parts included. Free text is a ranking signal
 (never in the grade): with `K` in the step the superset is required for the parts that state every keyword the way the
 lexical score finds it and carry a requested part number as an MPN prefix. The query returns
-`distributor, part_number, confirmed` ordered by `confirmed` (the part states every column the step compares) descending,
-then by the soft kinds, then by key, at most `kina.search.field-index.max-candidates` (200) rows. The soft kinds the
+`distributor, part_number, confirmed` ordered by `confirmed` (the part states every column the step compares and every
+requested rating) descending, then by the number of requested ratings the part states and meets (so within a tier a
+part that meets the ratings comes before one below spec: confirmed first), then by the soft kinds, then by key, at most
+`kina.search.field-index.max-candidates` (100) rows. The SQLite confirmed-only form (`SqliteFieldSql.CONFIRMED`,
+section 9.3) puts the ratings in its `WHERE` clause as stated and met: it selects exactly the first tier of that order,
+in a form the indexes can seek. The soft kinds the
 request states (group `S`, `FieldQuery.soft()`: a `SOFT` kind with a rule in the table below, today only `ROWS`) are
 never in a step's filter, so they never exclude a part; a part that states a matching value orders before one that
 does not, so a cut at the limit keeps the better parts (validation 2026-10-09: a `2x3` female header with more stock
@@ -2212,6 +2246,18 @@ came before the `1x6` ones a `1x6` request names). `preferencesNeverReachSqlAndS
 render the same predicates; SQLite stores arrays and `attrs` as JSON text and matches free-text words with FTS5
 `MATCH` on the trigram table of the JLCPCB file joined by `fts_rowid` (`SqlitePartIndex` creates and fills that form;
 the LCSC typed table is phase B).
+
+**Candidate cap** (`kina.search.field-index.max-candidates`, default 100, `KINA_FIELD_INDEX_MAX_CANDIDATES`). It is
+the number of rows one field query returns, and the ranking stage checks and ranks at most that many in-stock parts
+per distributor (`RankingService.capped`, in list order; a requested part listed without stock is always kept; the
+parts after the cap are neither checked nor counted). The field paths list the parts received live and the cached list
+first (`FieldFirstSearch`, `augment`), so a cut only drops index candidates; the cached-search lists hold at most a
+fetch window (50) and are never cut. The trade-off is recall against latency: every candidate is loaded, enriched,
+checked and ranked (about 1.6 ms per part on the validation host). Measured on the production cache (validation
+2026-10-09, `10uF X7R 0805` at Mouser, cached, median): 74 ms with the cached list (`off`, 49 parts), 413 ms in `on`
+with 200 candidates (193 parts); with 100, see the C2 numbers in
+`docs/research/field-search-validation-2026-10-09.md` section 8. No miss of the phase C recall run was cut by
+`max-candidates` at 200; at 100 the ranker still sees at least 50 candidates beyond the cached list.
 
 **Writing and consistency.** `PartCacheRepository.upsertAll` and `upsertListed` compute the index rows before their
 transaction (extraction is the expensive part) and write them in the same transaction as the payloads, under a
@@ -2261,10 +2307,10 @@ lists as before.
 
 **The superset test.** `FieldQuerySupersetTest` caches and indexes every candidate of the evaluation set and the parts
 of the recorded LED, switch, fan and power-resistor searches (3 130 parts, 911 of them read poorly), and checks for
-every query (the 41 evaluation queries, the recordings and extra queries), with and without `allow_below_spec`, and
-every step, that every part the Java check keeps (and that misses no ladder kind still in the step, and, with free text
-in the step, states every keyword and a requested part number) is returned, in both dialects, and that both dialects
-return the same rows. The free-text steps (72 of them, 508 expected parts) hold for the substring rule above.
+every query (the 41 evaluation queries, the recordings and extra queries) and every step, that every part the Java check
+keeps with `allow_below_spec` (a superset of what it keeps without; and that misses no ladder kind still in the step,
+and, with free text in the step, states every keyword and a requested part number) is returned, in both dialects, that
+both dialects return the same rows, and that no step holds a rating predicate. The free-text steps (72 of them, 508 expected parts) hold for the substring rule above.
 
 ## 4. MCP tools
 
@@ -2280,10 +2326,10 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 The descriptions are sent to the model on every connection, so they stay short summaries: `search_parts` about
-2,500 characters (what it does and how to write a query; ratings are minimums, hard constraints are never relaxed,
-packages are imperial; part numbers in the query; how to judge a part by `match`, `mismatches` and `unverified`; the
-per-distributor counts; `quantity`, `detail`, the 2-minute rate-limit wait and the cache), the other tools under
-1,000. `search_parts` and `get_part` end with "Field reference: docs/API.md in the KINA repository": the field
+2,700 characters at most (what it does and how to write a query; ratings are minimums, hard constraints are never
+relaxed, packages are imperial; an empty list or one where every part is unverified comes with a hint; part numbers in
+the query; how to judge a part by `match`, `mismatches` and `unverified`; the per-distributor counts; `quantity`,
+`detail`, the 2-minute rate-limit wait and the cache with `live_calls`), the other tools under 1,000. `search_parts` and `get_part` end with "Field reference: docs/API.md in the KINA repository": the field
 reference, vocabulary, connector details and status values live in `docs/API.md`, not in the descriptions.
 `McpToolsIntegrationTest` and the e2e `mcp` suite check the key phrases and the sizes.
 
@@ -2413,7 +2459,7 @@ Tool parameter names are the Java parameter names (`-parameters`), so the tool m
 |---|---|
 | `GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=` | `SearchResponse`; `quantity` 1..10 000 000 (default 1), `detail` `compact` (default) or `full` |
 | `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case: `queries[{query, max_results, quantity}]`, `distributors`, `bypass_cache`, `detail`), returns `{results: [...]}` |
-| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=` and `GET /api/v1/parts/lookup?distributor=&part_number=&bypass_cache=&quantity=&detail=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded (Tomcat rejects an encoded `%2F` in a path; the query form takes it); an MPN works as for `get_part`; a part listed without stock is returned with `stock` 0 and `availability.status` `out_of_stock`; 404 problem with `reason` `not_found` or `out_of_stock` (identity only: then also `identity`) |
+| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=`, `GET /api/v1/parts/{distributor}?part_number=&bypass_cache=&quantity=&detail=` and `GET /api/v1/parts/lookup?distributor=&part_number=&bypass_cache=&quantity=&detail=` | `PartResponse`; in the path form the part number is the rest of the path, so TME symbols containing `/` work unencoded, and percent-encoded segments are decoded (`%25` for `%`, `%5C` for a backslash, `%2F` for `/`, `%20` for a space; a `+` in a path is a plus sign). The query-parameter form `?part_number=` is the documented way for awkward part numbers (percent-encode the value; `+` as `%2B`, since a `+` in a query string is a space). An MPN works as for `get_part`; a part listed without stock is returned with `stock` 0 and `availability.status` `out_of_stock`; 404 problem with `reason` `not_found` or `out_of_stock` (identity only: then also `identity`) |
 | `GET /api/v1/distributors` | same as `list_distributors` |
 | `GET /api/v1/metrics/summary` | key counters and every persisted counter and timer as JSON, plus `distributor_quota` (the in-memory API quota usage of Mouser and TME, section 3.7) |
 | `GET /actuator/health`, `GET /actuator/info`, `GET /actuator/prometheus` | management port only (`KINA_METRICS_PORT`, 9090), no authentication (section 3.7); not served on the main port |
@@ -2425,6 +2471,15 @@ Distributor names are case-insensitive everywhere (query, path and JSON body). E
 `unavailable`) / 429 / 504 / 502 with an `error` property, anything else 500 without internals.
 `/api/**` and `/mcp/**` require a bearer token
 (section 6), except in development mode where missing credentials fall back to the dev admin.
+
+**Encoded characters in the part path** (phase C2; 77 cached production parts hold `%` or a backslash). Spring
+Security's `StrictHttpFirewall` rejects `%25`, `%5C` and `%2F` and Tomcat rejects an encoded slash or backslash, so
+those part numbers got HTTP 400 before. `PartPathFirewall` (installed with `WebSecurityCustomizer`) accepts the three
+encodings on `GET /api/v1/parts/...` only and stays strict everywhere else (a path that is not normalised after
+decoding, a null byte, a semicolon and non-printable characters are still rejected on every path); the Tomcat
+connector passes `%2F` and `%5C` through undecoded (`encodedSolidusHandling` and `encodedReverseSolidusHandling`
+`passthrough`, `PartPathConnectorCustomizer`), and Spring MVC decodes the path variable. `PartsApiTest` checks `%`,
+`\`, `/`, `+` and spaces in both forms and that `/api/v1/distributors%2Fx` stays 400.
 
 ## 6. Security
 
@@ -3065,18 +3120,22 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
     (`version`, `rows`, `built_at` null unless available).
 - Field query (`LcscRetriever`, `LcscFieldSearch`, `SqliteFieldSql`): with the typed table attached, a request that
   states at least one typed constraint (a family, value, package, rating, connector attribute...) runs as a
-  `FieldQuery` (`FieldQueryBuilder`, distributor LCSC, `allow_below_spec` as requested) instead of the FTS5 search; a
-  free-text-only request (`RP2040`, no constraint) keeps the FTS5 path, whose BM25 order is what it needs.
+  `FieldQuery` (`FieldQueryBuilder`, distributor LCSC; the ratings only order, section 3.8, so the query is the same
+  with and without `allow_below_spec`) instead of the FTS5 search; a free-text-only request (`RP2040`, no constraint)
+  keeps the FTS5 path, whose BM25 order is what it needs.
   1. **Step 0, confirmed rows.** `SqliteFieldSql.CONFIRMED` renders the confirmed subset of the unrelaxed step: every
-     value predicate demands a stated, matching value (`capacitance_f BETWEEN ? AND ?` instead of `IS NULL OR ...`).
-     These are exactly the rows the full statement flags confirmed. SQLite can seek this form (the planner lesson of
+     value predicate demands a stated, matching value (`capacitance_f BETWEEN ? AND ?` instead of `IS NULL OR ...`),
+     and every requested rating is stated and met (`voltage_v >= ?`). These are exactly the first tier of the full
+     statement's order (every requested attribute stated, every rating met; `LcscFieldIndexTest`). SQLite can seek this form (the planner lesson of
      study 12.2: the `IS NULL OR` form is a residual filter that reads every row of the family), so the plan is
      `SEARCH part_index USING INDEX part_index_cap (family=? AND capacitance_f>? AND capacitance_f<?)` (resistors:
      `_res`; connectors: `_pos`; USB: `_usb`), checked with `EXPLAIN QUERY PLAN` in `LcscFieldIndexTest`. When at least
      the candidate window of them exist (`max(max_results, search.candidate-window)`, at most `max-results-per-search`),
      the highest-stock ones are the candidates and `total_results` is their count.
-  2. **Superset.** Otherwise `SqliteFieldSql.INSTANCE` (a part that does not state an attribute is kept, section 3.8):
-     the parts that state the most requested attributes first, then the highest stock, one pass with
+  2. **Superset.** Otherwise `SqliteFieldSql.INSTANCE` (a part that does not state an attribute is kept, and a part
+     below spec too: ratings are not filtered, section 3.8): the parts that state the most requested attributes
+     (ratings included) first, then those that meet the most requested ratings (column `rated`), then the highest
+     stock, one pass with
      `count(*) OVER ()` for `total_results`. When the request names a family, only rows of a known family are
      candidates: a row of unknown family (about 76 000 in-stock rows of the full file: blank descriptions, families
      the parser does not know) would fill the window with whatever states a requested rating (12 V buck converters and
@@ -3087,6 +3146,9 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
      (`Check.returnable`), at most the window: the SQL ranges are wider than the Java check (a 4.75k row is in the
      range of a 4.7k request and is left out by the check), and such rows must not take places the FTS search would
      otherwise fill (validation 2026-10-09: `4.7k 1% 0603 resistor` returned 38 parts where the FTS path returned 44).
+     A candidate whose known rating is below the request (and `allow_below_spec` is false) takes no place either; it
+     is handed to the ranker after the window, which excludes it and counts it in `excluded_below_spec` and
+     `excluded_below_spec_detail`, as for the below-spec parts of an FTS window (project decision 2026-10-09).
   3. **Relaxation.** While the step yields fewer candidates than the window, the next step of `FieldQuery.steps()`
      (free text first, then the ladder kinds in `@Relax` order) runs the same way; the constraints and keywords a step
      left out are reported as `constraints_relaxed` and `query_terms_dropped`.
@@ -3096,6 +3158,15 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
      When the typed table is missing or not current, the request has no typed constraint, or the typed query fails
      (logged), the FTS search serves alone, exactly as with `field-index.enabled=false`. The typed table never reduces
      what a search can return.
+  5. **Answers that differ from the FTS path, by the declared semantics** (validation 2026-10-09, phase C2). An
+     impossible request (`22uF X7R 0201 100V`) comes back empty on the FTS path, whose phrase matches no row; the
+     typed path also finds the rows that do not state the attributes (blank descriptions, an unreadable package such
+     as `SMD,6.1x5.3mm`) and returns them as unverified parts with the hint that none confirms the request (section
+     3.2 "Unconfirmed parts"). This is an improvement of the typed path, not a regression: such a part is kept on
+     every path when it is found, as the superset rule requires, and the hint says that nothing is confirmed. A
+     `tactile switch 6x6 SMD` request may return 6.2 x 6.2 mm and 6.3 x 6 mm switches, which the Java check accepts
+     as 6x6 within the declared tolerance of 0.5 mm (section 3.4 "Switches"); the FTS phrase `6x6mm` never fetched
+     them.
   Measured on the full file (window 40, warm / first run on a cold page cache): `10uF X7R 0805 25V` 53 ms (superset:
   fewer than 40 confirmed parts) / 760 ms, `4.7k 1% 0603` 2.4 ms / 75 ms, `female header 1x6 right angle` 12 ms / 76 ms,
   `USB-C receptacle 16 pin` 2.8 ms / 24 ms; the FTS path for the same queries 32, 33, 72, 23 ms warm and 400 to 1 025 ms
@@ -3254,7 +3325,7 @@ kina:
     field-index:                 # section 3.8; written and re-indexed in every mode
       mode: ${KINA_FIELD_INDEX_MODE:off}           # off | shadow (log and count only) | augment | on (section 3.2)
       min-version: ${KINA_FIELD_INDEX_MIN_VERSION:0}   # older rows count as unknown in every rule but the family
-      max-candidates: 200        # rows one field query returns
+      max-candidates: ${KINA_FIELD_INDEX_MAX_CANDIDATES:100}   # rows one field query returns; parts ranked per distributor (3.8 "Candidate cap")
       max-live-calls-per-distributor: ${KINA_FIELD_INDEX_MAX_LIVE_CALLS:2}   # on: distributor calls one search may make
       reindex-batch-size: 500    # rows the re-index reads and writes at a time
       reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}   # false in src/test/resources/config/application.yml

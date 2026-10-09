@@ -101,7 +101,7 @@ class IndexTableDocumentationTest {
         }
         // a soft kind may declare a rule (ROWS): it only orders the candidates (FieldQuery.soft), never in a step
         FieldQuery query = FieldQueryBuilder.build(new ro.alacrity.kina.search.QueryParser().parse(
-                "female header 1x6 right angle"), ro.alacrity.kina.search.ConstraintPolicy.DEFAULTS, null, false);
+                "female header 1x6 right angle"), ro.alacrity.kina.search.ConstraintPolicy.DEFAULTS, null);
         assertThat(query.groups(FieldQuery.Role.S)).flatExtracting(FieldQuery.Group::kinds)
                 .contains(ConstraintKind.ROWS);
         for (FieldQuery.Step step : query.steps()) {

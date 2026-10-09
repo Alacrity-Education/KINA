@@ -175,7 +175,7 @@ class FieldIndexContinuityTest {
                 IntStream.range(0, 12).mapToObj(i -> "M" + i).toList()).values());
         ParametricExtractor extractor = new ParametricExtractor();
         List<Part> enriched = cached.stream().map(extractor::enrich).toList();
-        return shadow.compare(Distributor.MOUSER, parsed, ranking.policy(), false, enriched,
+        return shadow.compare(Distributor.MOUSER, parsed, ranking.policy(), enriched,
                 p -> PageCollector.Check.returnable(ranking, parsed, p, false));
     }
 }

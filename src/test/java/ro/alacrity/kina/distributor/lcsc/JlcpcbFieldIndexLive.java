@@ -64,7 +64,7 @@ public final class JlcpcbFieldIndexLive {
         QueryParser parser = new QueryParser();
         for (String text : QUERIES) {
             ParsedQuery parsed = parser.parse(text);
-            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS, Distributor.LCSC, false);
+            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS, Distributor.LCSC);
             FieldQuery.Step step = query.step(0);
             List<Long> times = new ArrayList<>();
             int total = 0;
@@ -144,8 +144,7 @@ public final class JlcpcbFieldIndexLive {
         if (kind.equals("fts")) {
             search.search(text, 0, 40);
         } else {
-            FieldQuery query = FieldQueryBuilder.build(parser.parse(text), ConstraintPolicy.DEFAULTS, Distributor.LCSC,
-                    false);
+            FieldQuery query = FieldQueryBuilder.build(parser.parse(text), ConstraintPolicy.DEFAULTS, Distributor.LCSC);
             field.candidates(query, query.step(0), 40, Duration.ofSeconds(60));
         }
     }

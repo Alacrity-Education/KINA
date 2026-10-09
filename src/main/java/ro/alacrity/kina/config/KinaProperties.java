@@ -402,7 +402,8 @@ public record KinaProperties(
      *                        {@code on}: the flows of phase B
      * @param minVersion      rows indexed by an extractor older than this are kept by every rule but the family; 0:
      *                        {@code ParametricExtractor.INDEX_VERSION} while older rows exist
-     * @param maxCandidates   rows one field query returns at most
+     * @param maxCandidates   rows one field query returns at most (default 100), and the most parts per distributor
+     *                        the ranking stage checks and ranks (the parts in front of the list first)
      * @param reindexBatchSize rows the re-index job reads and writes at a time
      * @param reindexEnabled  false: no re-index job at startup (the writer still writes)
      * @param maxLiveCallsPerDistributor distributor calls (one per phrase, paging included) a search of the
@@ -414,18 +415,22 @@ public record KinaProperties(
      *                        returns the first {@code max-candidates} in-stock parts of the family
      */
     public record FieldIndex(@DefaultValue("off") FieldIndexMode mode, @DefaultValue("0") int minVersion,
-                             @DefaultValue("200") int maxCandidates, @DefaultValue("500") int reindexBatchSize,
+                             @DefaultValue("100") int maxCandidates, @DefaultValue("500") int reindexBatchSize,
                              @DefaultValue("true") boolean reindexEnabled,
                              @DefaultValue("2") int maxLiveCallsPerDistributor,
                              @DefaultValue("true") boolean requireStatedConstraint) {
 
-        public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, 200, 500, true, 2, true);
+        /** The default of {@code max-candidates}: 100 (DESIGN.md 3.8 "Candidate cap"). */
+        public static final int DEFAULT_MAX_CANDIDATES = 100;
+
+        public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, DEFAULT_MAX_CANDIDATES, 500,
+                true, 2, true);
 
         @ConstructorBinding
         public FieldIndex {
             mode = mode == null ? FieldIndexMode.OFF : mode;
             minVersion = Math.max(0, minVersion);
-            maxCandidates = maxCandidates <= 0 ? 200 : maxCandidates;
+            maxCandidates = maxCandidates <= 0 ? DEFAULT_MAX_CANDIDATES : maxCandidates;
             reindexBatchSize = reindexBatchSize <= 0 ? 500 : reindexBatchSize;
             maxLiveCallsPerDistributor = maxLiveCallsPerDistributor <= 0 ? 2 : maxLiveCallsPerDistributor;
         }

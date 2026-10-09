@@ -50,11 +50,12 @@ public class FieldQueryBuilder {
     private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}]+");
 
     /**
-     * The field query of {@code query} at {@code distributor} (null: every distributor) under {@code policy}; the
-     * ratings are left out when {@code allowBelowSpec} (they only rank then).
+     * The field query of {@code query} at {@code distributor} (null: every distributor) under {@code policy}. The
+     * stated ratings form the order-only group {@code R}: ratings are never filtered in SQL (a part below spec is
+     * excluded and counted by the Java check, or kept flagged with {@code allow_below_spec}), so the query is the same
+     * with and without {@code allow_below_spec}.
      */
-    public FieldQuery build(ParsedQuery query, ConstraintPolicy policy, Distributor distributor,
-                            boolean allowBelowSpec) {
+    public FieldQuery build(ParsedQuery query, ConstraintPolicy policy, Distributor distributor) {
         ConstraintPolicy p = policy == null ? ConstraintPolicy.DEFAULTS : policy;
         boolean packageHard = p.strategy(query, ConstraintKind.PACKAGE) == RelaxStrategy.NEVER;
         List<Group> groups = new ArrayList<>();
@@ -76,22 +77,21 @@ public class FieldQueryBuilder {
         }
         groups.add(new Group(Role.H, Role.H.name(), hardKinds, hard));
 
-        if (!allowBelowSpec) {
-            List<ConstraintKind> ratingKinds = new ArrayList<>();
-            List<FieldPredicate> ratings = new ArrayList<>();
-            for (ConstraintKind kind : ConstraintKind.scored()) {
-                // the ratings the ranker checks against the request: below spec excludes unless allowed
-                if (kind.isRating() && kind.generalStrategy() == RelaxStrategy.BELOW_SPEC) {
-                    List<FieldPredicate> predicates = predicates(kind, query, packageHard);
-                    if (!predicates.isEmpty()) {
-                        ratingKinds.add(kind);
-                        ratings.addAll(predicates);
-                    }
+        // the ratings the ranker checks against the request: they order the candidates (orderOnly), the Java check
+        // excludes and counts a part below spec, so the response reports it as the cached-search path does
+        List<ConstraintKind> ratingKinds = new ArrayList<>();
+        List<FieldPredicate> ratings = new ArrayList<>();
+        for (ConstraintKind kind : ConstraintKind.scored()) {
+            if (kind.isRating() && kind.generalStrategy() == RelaxStrategy.BELOW_SPEC) {
+                List<FieldPredicate> predicates = predicates(kind, query, packageHard);
+                if (!predicates.isEmpty()) {
+                    ratingKinds.add(kind);
+                    ratings.addAll(predicates);
                 }
             }
-            if (!ratings.isEmpty()) {
-                groups.add(new Group(Role.R, Role.R.name(), ratingKinds, ratings));
-            }
+        }
+        if (!ratings.isEmpty()) {
+            groups.add(new Group(Role.R, Role.R.name(), ratingKinds, ratings));
         }
 
         int rung = 0;

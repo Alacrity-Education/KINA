@@ -589,6 +589,35 @@ class PartSearchServiceTest {
         assertThat(tme.queries).containsExactly(MOSFET_PHRASE);
     }
 
+    @Test
+    void partsThatAllLeaveAConstraintUnverifiedAreReturnedWithAHintThatNoneConfirmsTheRequest() {
+        // DESIGN.md 3.2 "Unconfirmed parts": no part states the voltage; they are kept, flagged, and the hint says so
+        FakeClient tme = new FakeClient(Distributor.TME).records(3, i -> part(Distributor.TME, "T" + i).toBuilder()
+                .description("MLCC 10uF X7R 0805 10%").build());
+        KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false");
+        ParametricExtractor extractor = new ParametricExtractor();
+        RankingService ranking = TestWiring.rankingService(props, TestWiring.deterministicRanker(extractor),
+                mock(PartRanker.class), () -> null, TestWiring.scoreCache(Duration.ofHours(1)));
+        service = RankingFixtures.searchService(props, TestWiring.registry(List.of(tme)), new QueryParser(),
+                extractor, ranking, mock(PartCacheRepository.class), mock(SearchCacheRepository.class), clock);
+
+        SearchResponse response = service.search(new SearchRequest("10uF X7R 0805 25V", 5, Set.of(), false));
+        DistributorResult t = result(response, Distributor.TME);
+
+        assertThat(t.parts()).hasSize(3).allSatisfy(p -> assertThat(p.unverified()).contains("voltage"));
+        assertThat(t.exactMatches()).isZero();
+        assertThat(t.hint()).startsWith("No in-stock 10uF capacitor in package 0805 at TME is confirmed: no part "
+                + "returned states its voltage").contains("check the datasheet").contains("never relaxed");
+        assertThat(response.hint()).isEqualTo(t.hint());
+
+        // one confirmed part: no hint
+        tme.raw.add(part(Distributor.TME, "OK"));
+        DistributorResult confirmed = result(service.search(new SearchRequest("10uF X7R 0805 25V", 5, Set.of(), true)),
+                Distributor.TME);
+        assertThat(confirmed.exactMatches()).isEqualTo(1);
+        assertThat(confirmed.hint()).isNull();
+    }
+
     // ---- relaxation ladder, out-of-stock matches, quantity and detail --------------------------------------------
 
     @Test

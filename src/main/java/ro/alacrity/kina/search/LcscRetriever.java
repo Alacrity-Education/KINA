@@ -56,8 +56,12 @@ final class LcscRetriever implements DistributorRetriever {
      * @param step             the relaxation step used (0: none)
      * @param relaxed          the constraints the step left out
      * @param droppedKeywords  the free-text keywords the step left out
+     * @param belowSpec        the candidates whose known rating is below the request (and below spec is not
+     *                         allowed): they take no place in the window, the ranker excludes and counts them
+     *                         ({@code excluded_below_spec}, as on the FTS path)
      */
-    record Typed(List<Part> parts, int total, int step, List<String> relaxed, List<String> droppedKeywords) {
+    record Typed(List<Part> parts, int total, int step, List<String> relaxed, List<String> droppedKeywords,
+                 List<Part> belowSpec) {
     }
 
     @Override
@@ -86,7 +90,8 @@ final class LcscRetriever implements DistributorRetriever {
         Fetched fetched = collected.toFetched(distributor, CacheStatus.NOT_APPLICABLE)
                 .withOutOfStockMatches(progress.outOfStock);
         if (typed != null) {
-            fetched = fetched.withConstraintsRelaxed(union(typed.relaxed(), fetched.constraintsRelaxed()))
+            fetched = withBelowSpec(fetched, typed.belowSpec())
+                    .withConstraintsRelaxed(union(typed.relaxed(), fetched.constraintsRelaxed()))
                     .withDroppedKeywords(union(typed.droppedKeywords(), fetched.droppedKeywords()));
         }
         // a part number the query names that the search did not bring is looked up directly
@@ -103,7 +108,7 @@ final class LcscRetriever implements DistributorRetriever {
         }
         try {
             FieldQuery query = FieldQueryBuilder.build(prepared.parsed(), ConstraintPolicy.of(ranking),
-                    Distributor.LCSC, prepared.request().allowBelowSpec());
+                    Distributor.LCSC);
             if (!constrains(query)) {
                 return null;   // free text only: BM25 order is what the FTS5 search is for
             }
@@ -128,26 +133,47 @@ final class LcscRetriever implements DistributorRetriever {
                 return null;
             }
             // only the candidates the Java check returns take a place in the window, so the FTS search fills the
-            // places of the others instead of the window ending short
+            // places of the others instead of the window ending short; ratings are not filtered in SQL, so a candidate
+            // below spec is handed to the ranker without a place, which excludes and counts it (DESIGN.md 9.3)
             boolean allowBelowSpec = prepared.request().allowBelowSpec();
             List<Part> parts = new ArrayList<>(window);
+            List<Part> belowSpec = new ArrayList<>();
             for (Part part : best.parts()) {
                 Part enriched = extractor.enrich(part);
-                if (PageCollector.Check.returnable(ranking, prepared.parsed(), enriched, allowBelowSpec)) {
-                    parts.add(enriched);
-                    if (parts.size() >= window) {
-                        break;
-                    }
+                RankingService.Verdict verdict = PageCollector.Check.verdict(ranking, prepared.parsed(), enriched);
+                if (verdict == RankingService.Verdict.CONSTRAINT) {
+                    continue;
+                }
+                if (verdict == RankingService.Verdict.BELOW_SPEC && !allowBelowSpec) {
+                    belowSpec.add(enriched);
+                    continue;
+                }
+                parts.add(enriched);
+                if (parts.size() >= window) {
+                    break;
                 }
             }
             log.debug("LCSC field query '{}': step {} of {}, {} candidates of {}", prepared.parsed().normalizedKey(),
                     used.index(), steps.size() - 1, parts.size(), best.total());
-            return new Typed(parts, best.total(), used.index(), used.relaxed(), keywords(query, used));
+            return new Typed(parts, best.total(), used.index(), used.relaxed(), keywords(query, used),
+                    List.copyOf(belowSpec));
         } catch (java.sql.SQLException | RuntimeException e) {
             log.warn("LCSC field query '{}' failed, using the FTS search: {}", prepared.parsed().normalizedKey(),
                     e.toString());
             return null;
         }
+    }
+
+    /** {@code fetched} with the below-spec candidates of the typed query added after its parts (once per part). */
+    private static Fetched withBelowSpec(Fetched fetched, List<Part> belowSpec) {
+        if (belowSpec.isEmpty()) {
+            return fetched;
+        }
+        Set<String> seen = new java.util.HashSet<>();
+        fetched.parts().forEach(p -> seen.add(p.distributorPartNumber()));
+        List<Part> merged = new ArrayList<>(fetched.parts());
+        belowSpec.stream().filter(p -> seen.add(p.distributorPartNumber())).forEach(merged::add);
+        return merged.size() == fetched.parts().size() ? fetched : fetched.withParts(merged);
     }
 
     /** True when the unrelaxed step states a constraint of the request (not only stock and distributor). */

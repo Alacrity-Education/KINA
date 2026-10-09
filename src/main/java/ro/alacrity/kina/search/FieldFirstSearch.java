@@ -55,8 +55,12 @@ import java.util.Set;
  * <p>A request the flow cannot answer from the index returns an outcome that sends the caller to the cached-search path
  * ({@link Outcome#legacy}): {@code bypass_cache}, an index that is not complete for the distributor, a request whose
  * first step is only the family (too generic to answer from fields; {@code require-stated-constraint}, on by default),
- * an SQL error or a journal read failure before any call. A distributor
- * failure without any candidate is returned as {@link Outcome#failure} (the caller serves an expired list or fails).
+ * an SQL error or a journal read failure before any call.
+ *
+ * <p>After a failed call no further call is made: the request's cached list (expired or not) joins the candidates and
+ * the remaining steps are read from the index. When no step found a part the Java check returns, the outcome is a
+ * {@link Outcome#failure} (the caller serves the expired list as the cached-search path does, else what the index
+ * holds with the error, else fails).
  */
 @Slf4j
 @Component
@@ -93,6 +97,14 @@ final class FieldFirstSearch {
         static Outcome failure(DistributorException failure) {
             return new Outcome(null, null, failure);
         }
+
+        /**
+         * The distributor failed and no step found a part the Java check returns: the caller serves the request's
+         * expired cached list when there is one, else {@code fetched} (what the index holds, flagged with the error).
+         */
+        static Outcome failure(DistributorException failure, Fetched fetched) {
+            return new Outcome(fetched, null, failure);
+        }
     }
 
     /** One relaxation step with the phrase that goes with it (null: no distributor phrase for the step). */
@@ -126,8 +138,8 @@ final class FieldFirstSearch {
             if (!index.isComplete(distributor)) {
                 return Outcome.legacy("incomplete");
             }
-            query = FieldQueryBuilder.build(parsed, ConstraintPolicy.of(ranking), distributor,
-                    prepared.request().allowBelowSpec()).withStaleBelow(config.minVersion());
+            query = FieldQueryBuilder.build(parsed, ConstraintPolicy.of(ranking), distributor)
+                    .withStaleBelow(config.minVersion());
         } catch (RuntimeException e) {
             log.warn("The field query of {} '{}' could not be built: {}", distributor, parsed.normalizedKey(),
                     e.toString());
@@ -195,6 +207,9 @@ final class FieldFirstSearch {
         int calls;
         private boolean calledFirst;
         private boolean calledRelaxed;
+        /** A step had a part the Java check returns. */
+        private boolean found;
+        private boolean expiredLoaded;
         private int stepsTried;
         private Integer liveTotal;
         private int liveOutOfStock;
@@ -271,8 +286,13 @@ final class FieldFirstSearch {
                 progress.fieldSteps = stepsTried;
                 served = rung;
                 Candidates c = candidates(rung);
+                found |= !c.passing().isEmpty();
                 if (enough(c)) {
                     break;
+                }
+                if (failure != null) {
+                    // the distributor is failing: the relaxed steps are read from the index, never asked
+                    continue;
                 }
                 if (rung.phrase() == null || !asked.add(DistributorPhraser.phraseKey(rung.phrase()))) {
                     continue;
@@ -291,14 +311,22 @@ final class FieldFirstSearch {
                     break;
                 }
                 if (!call(rung, key)) {
-                    break;
+                    // no further call; the parts of the expired cached list join the candidates, as the
+                    // cached-search path serves that list when its call fails
+                    loadExpiredList();
                 }
-                if (enough(candidates(rung))) {
+                Candidates after = candidates(rung);
+                found |= !after.passing().isEmpty();
+                if (enough(after)) {
                     break;
                 }
             }
             if (failure != null && indexed.isEmpty() && listed.isEmpty() && live.isEmpty()) {
                 return Outcome.failure(failure);
+            }
+            if (failure != null && !found) {
+                // no step found a part to return: the expired cached list as the cached-search path serves it
+                return Outcome.failure(failure, assemble(failure));
             }
             Fetched fetched = assemble(failure);
             if (failure == null) {
@@ -358,6 +386,34 @@ final class FieldFirstSearch {
                 }
             } catch (RuntimeException e) {
                 log.warn("Reading the cached {} list of '{}' failed: {}", distributor, parsed.normalizedKey(),
+                        e.toString());
+            }
+        }
+
+        /**
+         * After a failed call: the parts of the request's cached list even when it has expired (the list the
+         * cached-search path serves when its call fails), once. A read failure only loses them.
+         */
+        private void loadExpiredList() {
+            if (expiredLoaded) {
+                return;
+            }
+            expiredLoaded = true;
+            try {
+                Optional<CachedSearch> cached = searchCache.find(distributor, parsed.normalizedKey());
+                if (cached.isEmpty() || cached.get().partNumbers().isEmpty()) {
+                    return;
+                }
+                List<String> numbers = cached.get().partNumbers();
+                Map<String, Part> found = partCache.findInStock(distributor, numbers);
+                for (String number : numbers) {
+                    Part part = found.get(number);
+                    if (part != null) {
+                        listed.putIfAbsent(number, loaded.computeIfAbsent(number, n -> extractor.enrich(part)));
+                    }
+                }
+            } catch (RuntimeException e) {
+                log.warn("Reading the expired {} list of '{}' failed: {}", distributor, parsed.normalizedKey(),
                         e.toString());
             }
         }
@@ -519,12 +575,16 @@ final class FieldFirstSearch {
             return true;
         }
 
-        /** The index hits of the last step, the cached list and every part received live, without duplicates. */
+        /**
+         * Every part received live, the cached list and the index hits of the last step, without duplicates, in that
+         * order: the ranking stage checks at most {@code max-candidates} parts per distributor
+         * ({@code RankingService.capped}), so a cut only ever drops index candidates.
+         */
         private List<Part> merged() {
             Map<String, Part> out = new LinkedHashMap<>();
-            indexed.forEach(p -> out.putIfAbsent(p.distributorPartNumber(), p));
-            listed.forEach(out::putIfAbsent);
             live.forEach(out::putIfAbsent);
+            listed.forEach(out::putIfAbsent);
+            indexed.forEach(p -> out.putIfAbsent(p.distributorPartNumber(), p));
             return new ArrayList<>(out.values());
         }
 
