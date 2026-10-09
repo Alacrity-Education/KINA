@@ -256,9 +256,9 @@ final class FieldFirstSearch {
         }
 
         /**
-         * Reads a step: the parts of the cached list and those received live, then, while they are not enough, the
-         * index hits (keys only, at most {@code max-candidates}), loaded, enriched and checked in chunks until enough
-         * (review B2).
+         * Reads a step: the index hits (keys only, at most {@code max-candidates}), loaded, enriched and checked in
+         * chunks (review B2: the first chunk always, so the parts cached under other phrasings are candidates too; the
+         * next ones only while the step, with the cached list and the parts received live, is short).
          */
         @Override
         public boolean read(FieldQuery.Step step) {
@@ -268,8 +268,7 @@ final class FieldFirstSearch {
             progress.fieldSteps = stepsTried;
             List<ConstraintKind> ladder = query.groups(FieldQuery.Role.L).stream()
                     .filter(g -> !step.dropped().contains(g.name())).flatMap(g -> g.kinds().stream()).toList();
-            if (FieldRelaxation.readable(requireStated, query, step, parsed)
-                    && !enough(passing(List.of(), ladder))) {
+            if (FieldRelaxation.readable(requireStated, query, step, parsed)) {
                 List<PartIndexRepository.Hit> hits;
                 try {
                     hits = index.query(query, step, recall);

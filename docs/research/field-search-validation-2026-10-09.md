@@ -473,8 +473,9 @@ built from the branch, a fresh `kina-fs_pgdata`, `kina-live-20261009.dump` resto
   *enough* (`max_results` parts that pass the Java check, one confirmed), no longer, for LCSC, on the rows the SQL
   matched; one definition of a selective step.
 - Chunked candidates: `max-candidates` (100) is the SQL recall limit (keys); the parts are loaded, enriched and checked
-  in chunks of `max(2 x max_results, 20)`, and only while the cached list and the live parts are not enough. A part is
-  checked once per request (`PartChecks`), its features read once; the ranker reuses both.
+  in chunks of `max(2 x max_results, 20)`: the first chunk always (the parts cached under other phrasings stay
+  candidates when the cached list is enough), the next ones only while the cached list, the chunks and the live parts
+  are not enough. A part is checked once per request (`PartChecks`), its features read once; the ranker reuses both.
 - The builder dispatches on the declared `@Indexed` predicate; the columns are declared once; PostgreSQL reads the
   stated-only form first (the partial value indexes; `PartIndexPlanTest`).
 - Modes are strategy beans; the step phrase is `DistributorPhraser.phraseFor`.
@@ -502,13 +503,17 @@ Mouser, cached, `max_results` 10, median of 40 warm runs (`validate.py latency -
 
 | Query | `off` | `on` | ratio | v0.15.1 `off` / `on` |
 |---|---|---|---|---|
-| `10uF X7R 0805` | 50.2 ms (49 parts) | 51.9 ms (49) | 1.03 | 66 / 198 ms |
-| `100nF X7R 0603 50V MLCC` | 50.6 ms (50) | 53.0 ms (50) | 1.05 | 68 / 176 ms |
-| `10uH inductor 0805` | 38.2 ms (50) | 39.8 ms (50) | 1.04 | 48 / 184 ms |
-| `4.7k 1% 0603 resistor` (no cached list; the index answers, one chunk of 20) | (a live call) | 31.6 ms (20) | | |
+| `10uF X7R 0805` | 49.2 ms (49 parts) | 53.0 and 58.3 ms (49) | 1.08 to 1.18 | 66 / 198 ms |
+| `100nF X7R 0603 50V MLCC` | 48.7 ms (50) | 58.3 and 64.1 ms (57) | 1.20 to 1.32 | 68 / 176 ms |
+| `10uH inductor 0805` | 40.9 ms (50) | 42.3 and 48.0 ms (55) | 1.03 to 1.17 | 48 / 184 ms |
+| `4.7k 1% 0603 resistor` (no cached list; the index answers, one chunk of 20) | (a live call) | 27.9 ms (20) | | |
 
-Before the features memo the same build measured `on` 1.16 to 1.60 times `off` (a ladder test re-read the features of
-every listed part); with it, both modes got faster (`off` 78 to 50 ms) and `on` is within 5 % of `off`.
+`on` was measured twice (before and after the `off` run); `fetched` above 50 is the first index chunk adding parts the
+cached list does not hold (7 for the 100nF request, 5 for the inductor). An intermediate build of the branch skipped
+the index when the cached list was enough and measured `on` within 5 % of `off` (52 / 50 ms); it was not kept: the
+index exists to find the parts cached under other phrasings, and the first chunk costs 5 to 15 ms. Before the
+features memo the build measured `on` 1.16 to 1.60 times `off` (a ladder test re-read the features of every listed
+part); with it, both modes got faster (`off` 78 to 49 ms).
 
 ### 10.5 The resistor incident
 

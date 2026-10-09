@@ -103,11 +103,11 @@ class FieldRelaxation {
     /**
      * Reads the candidates of one step in chunks of {@code chunk}, at most {@code limit} rows (the SQL recall limit,
      * {@code kina.search.field-index.max-candidates}), handing each part to {@code offer}, until {@code full} or the
-     * source is exhausted; nothing is read when the step is full already.
+     * source is exhausted. The first chunk is always read.
      */
     static void readChunks(Source source, int chunk, int limit, Consumer<Part> offer, BooleanSupplier full) {
         int offset = 0;
-        while (!full.getAsBoolean()) {
+        do {
             int size = Math.min(chunk, limit - offset);
             if (size <= 0) {
                 return;
@@ -118,7 +118,7 @@ class FieldRelaxation {
                 return;
             }
             offset += size;
-        }
+        } while (!full.getAsBoolean());
     }
 
     /**
