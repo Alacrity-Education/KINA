@@ -174,9 +174,13 @@ class FieldFirstSearchTest {
     }
 
     private DistributorResult search(String query, int max, boolean bypass, boolean belowSpec) {
+        int before = mouser.asked.size();
         SearchResponse response = service.search(new SearchRequest(query, max, Set.of(Distributor.MOUSER), bypass,
                 1, ro.alacrity.kina.domain.ResponseDetail.COMPACT, belowSpec));
-        return PartSearchServiceTest.result(response, Distributor.MOUSER);
+        DistributorResult result = PartSearchServiceTest.result(response, Distributor.MOUSER);
+        // live_calls is exactly the distributor search calls of this request, in every mode, failed calls included
+        assertThat(result.liveCalls()).as("live_calls").isEqualTo(mouser.asked.size() - before);
+        return result;
     }
 
     private DistributorResult search(String query, int max) {
@@ -477,7 +481,9 @@ class FieldFirstSearchTest {
         assertThat(result.error()).isEqualTo("unavailable");
         assertThat(result.cache()).isEqualTo(CacheStatus.STALE);
         assertThat(result.returned()).isEqualTo(2);
-        assertThat(result.fetchedLive()).isFalse();
+        // the call was made (and spent quota) even though it failed
+        assertThat(result.fetchedLive()).isTrue();
+        assertThat(result.liveCalls()).isEqualTo(1);
         assertThat(journal.count()).as("a failed call is not journaled").isZero();
     }
 
@@ -497,7 +503,7 @@ class FieldFirstSearchTest {
         SearchResponse response = service.search(new SearchRequest(QUERY, 3, Set.of(Distributor.MOUSER), false));
         String json = jsonMapper.writeValueAsString(response);
         assertThat(json).contains("\"fetched_live\":false").contains("\"field_steps_tried\":1")
-                .contains("\"cache\":\"hit\"");
+                .contains("\"live_calls\":0").contains("\"cache\":\"hit\"");
     }
 
     @Test
@@ -567,6 +573,32 @@ class FieldFirstSearchTest {
         assertThat(search("mosfet", 10).fetched()).as("the rule on: the list only").isEqualTo(1);
         service("augment", "kina.search.field-index.require-stated-constraint", "false");
         assertThat(search("mosfet", 10).fetched()).as("the rule off: the family from the index").isEqualTo(4);
+        assertThat(mouser.asked).isEmpty();
+    }
+
+    @Test
+    void aFreshCachedListOfTheRequestIsServedNextToTheIndex() {
+        // the distributor answered the request's phrase with a part the field query does not select (no stated
+        // capacitance: a keyword match); the cached-search path serves it from the list, so the field path does too
+        Part accessory = RankingFixtures.part(Distributor.MOUSER, "K1", "ACME", "KIT-1",
+                "Evaluation kit for MLCC 0805 X7R 25V", "Development Kits", null, 10, "50.00", Map.of(), Map.of());
+        cache(List.of(accessory));
+        cache(mlccs("A", 2, "X7R", 25));
+        searchCache.upsert(new CachedSearch(Distributor.MOUSER, parser.parse(QUERY).normalizedKey(), 3,
+                List.of("A1", "K1"), true, java.time.Instant.now(), 50, null, 0, null));
+        DistributorResult off;
+        service("off");
+        off = search(QUERY, 3);
+        assertThat(off.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(numbers(off)).containsExactlyInAnyOrder("A1", "K1");
+        journal.record(new PhraseJournalRepository.Entry(Distributor.MOUSER,
+                DistributorPhraser.phraseKey(phrases().getFirst()), phrases().getFirst(), java.time.Instant.now(), 3,
+                50, true, 0, false, 0, parser.parse(QUERY).normalizedKey()));
+        service("on");
+        DistributorResult on = search(QUERY, 3);
+        assertThat(on.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(numbers(on)).containsAll(numbers(off));
+        assertThat(numbers(on)).contains("A2");   // and the index adds the parts the list does not hold
         assertThat(mouser.asked).isEmpty();
     }
 }

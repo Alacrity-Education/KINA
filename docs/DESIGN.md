@@ -536,8 +536,9 @@ search(request, distributor D):            # D is Mouser or TME
   calls = 0
   for each step:
       cands = hits of the step's field query (at most max-candidates; skipped when the step holds nothing the
-              request states and require-stated-constraint is on) + the parts this request received live that pass
-              the Java check and the ladder kinds still in the step
+              request states and require-stated-constraint is on) + the parts of the request's fresh cached list
+              (cached_searches, what the cached-search path would serve) + the parts this request received live,
+              both when they pass the Java check and the ladder kinds still in the step
       if #(cands that pass the Java check) >= max_results and one of them is confirmed: stop          # enough
       if the step's phrase was already tried in this request: next step
       if the journal has a fresh row for (D, phrase): count a journal hit, next step                   # asked already
@@ -554,6 +555,12 @@ requested rating stated; with `allow_below_spec` a below-spec part counts). The 
 (`H`) are in every step, so only the relaxable kinds are loosened, in the order of the ladder; `allow_below_spec`
 drops `R` as before. A step holds only the stated constraints, free text and part numbers beyond the stock and the
 family; a step of the family alone is never read (the parts received live stand in for it).
+
+The request's cached list joins the candidates while it is fresh (`kina.cache.ttl`, the empty-list TTL for an empty
+list), so the field path serves at least what the cached-search path serves: the distributor's answer to the request's
+phrase can hold parts the field query does not select, such as keyword matches for a part number that is not in the
+cache (`lmg2100r026 gan half-bridge`, validation 2026-10-09). It is one primary-key read per request; a read failure
+only loses those parts.
 
 **The stated-constraint rule** (`kina.search.field-index.require-stated-constraint`, default true). A step is
 *selective* when it holds a free-text word, a part number, or a constraint kind the request names (the family and the
@@ -594,7 +601,8 @@ and an empty list as before.
 | Field | Meaning |
 |---|---|
 | `cache` | `hit`: answered from the index and the cache, no distributor call (`fetched_live` false); `miss`: the distributor was asked, and only the request's own phrase; `partial`: asked at a relaxed step (at least one call with a relaxed phrase); `stale`: the live call failed and the parts come from the index or an expired list; `bypassed` and `not_applicable` as before |
-| `fetched_live` | true when this search called the distributor (`miss`, `partial`, `bypassed`); false for `hit`, `stale`, `not_applicable` and LCSC. Present in every mode |
+| `fetched_live` | true when this search called the distributor (`miss`, `partial`, `bypassed`, and `stale` after a failed call); false when no call was made (`hit`, `not_applicable`, LCSC). Always `live_calls > 0`. Present in every mode |
+| `live_calls` | the distributor search calls this request made for the distributor: one per page, every phrase (relaxed steps and fallback phrases included), failed calls included; 0 when none and always 0 for LCSC. Stock refreshes and the direct part-number lookups are not search calls and are not counted. Present in every mode |
 | `field_steps_tried` | the steps of the field query evaluated before the answer (1: step 0 answered); 0 on the cached-search path and for LCSC |
 | `fallback_query` | the phrase of the step that produced the parts when it differs from the request's phrase (null at step 0 and for a step that only drops free text) |
 | `constraints_relaxed` | the kinds the answering step dropped, as before only those the returned parts really miss |
@@ -2335,8 +2343,11 @@ availability status: it is a `lifecycle` (section 3.4).
 
 `cache` is `hit`, `partial`, `miss`, `bypassed`, `not_applicable` or `stale` (the live search failed, `error` is set,
 and the parts come from the query's expired cached list or the field index, section 3.2 "Cache model" and "Field-first
-flow"). `fetched_live` (boolean: this search called the distributor) and `field_steps_tried` (integer: steps of the
-field query evaluated, 0 on the cached-search path and for LCSC) are in every distributor entry; in the field-first
+flow"). `fetched_live` (boolean: this search called the distributor, also when the call failed), `live_calls`
+(integer: the distributor search calls this request made for the distributor, one per page and phrase, relaxed steps
+and failed calls included, 0 when none and always 0 for LCSC; stock refreshes and direct part-number lookups are not
+counted; `fetched_live` is always `live_calls > 0`) and `field_steps_tried` (integer: steps of the field query
+evaluated, 0 on the cached-search path and for LCSC) are in every distributor entry; in the field-first
 mode `hit` means answered from the cache with no call, `miss` asked the request's own phrase, `partial` a relaxed one.
 `fetched`, `excluded_by_constraints`, `excluded_by_constraints_detail` (per hard constraint, each part under its first
 conflict, `{"capacitance": 12, "package": 3}`; empty object when nothing was excluded), `excluded_below_spec`,

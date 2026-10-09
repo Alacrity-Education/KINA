@@ -49,7 +49,8 @@ class ResponseJsonTest {
                 "\"keywords\":[]", "{\"qty\":1,\"unit_price\":1.40,\"currency\":\"EUR\"}",
                 "\"fallback_query\":null", "\"rate_limit_waited_ms\":0", "\"distributor_query\":null",
                 "\"excluded_by_constraints\":0", "\"out_of_stock_matches\":null",
-                "\"exact_matches\":0", "\"availability\":{\"status\":\"in_stock\"", "\"lifecycle\":\"active\"");
+                "\"exact_matches\":0", "\"availability\":{\"status\":\"in_stock\"", "\"lifecycle\":\"active\"",
+                "\"fetched_live\":false", "\"live_calls\":0", "\"field_steps_tried\":0");
         assertThat(json).doesNotContain("\"qty\":100", "mismatches", "mounting", "\"constraints\"", "packageName", "\"connector\"");
     }
 
@@ -143,6 +144,13 @@ class ResponseJsonTest {
                 .error("rate_limited").rateLimitWaitedMs(84_000).build();
         assertThat(mapper.writeValueAsString(result)).contains("\"error\":\"rate_limited\"",
                 "\"rate_limit_waited_ms\":84000");
+    }
+
+    @Test
+    void distributorResultCarriesTheLiveCalls() {
+        DistributorResult result = DistributorResult.builder().distributor(Distributor.TME).cache(CacheStatus.PARTIAL)
+                .fetchedLive(true).liveCalls(3).build();
+        assertThat(mapper.writeValueAsString(result)).contains("\"fetched_live\":true", "\"live_calls\":3");
     }
 
     @Test

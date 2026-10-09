@@ -110,6 +110,7 @@ final class ResponseAssembler {
                     .requestedPartFound(requestedFound)
                     .excludedBelowSpecDetail(ranked.belowSpecDetailBy(distributor))
                     .fetchedLive(fetchedLive(f))
+                    .liveCalls(liveCalls(f))
                     .fieldSteps(f.fieldSteps() == null ? 0 : f.fieldSteps())
                     .build());
         }
@@ -121,16 +122,25 @@ final class ResponseAssembler {
     }
 
     /**
-     * Whether the search called the distributor: as the retrieval says, else from the cache status ({@code miss},
-     * {@code partial} and {@code bypassed} called it).
+     * Whether the search called the distributor: {@code live_calls > 0} when the calls are counted (always in a
+     * search), else as the retrieval says, else from the cache status ({@code miss}, {@code partial} and
+     * {@code bypassed} called it).
      */
     static boolean fetchedLive(Fetched f) {
+        if (f.liveCalls() != null) {
+            return f.liveCalls() > 0;
+        }
         if (f.fetchedLive() != null) {
             return f.fetchedLive();
         }
         return f.cache() == ro.alacrity.kina.cache.CacheStatus.MISS
                 || f.cache() == ro.alacrity.kina.cache.CacheStatus.PARTIAL
                 || f.cache() == ro.alacrity.kina.cache.CacheStatus.BYPASSED;
+    }
+
+    /** The distributor search calls of the retrieval ({@code live_calls}): 0 when not counted. */
+    static int liveCalls(Fetched f) {
+        return f.liveCalls() == null ? 0 : f.liveCalls();
     }
 
     /**

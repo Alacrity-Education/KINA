@@ -285,7 +285,14 @@ class PartSearchServiceTest {
     }
 
     static DistributorResult result(SearchResponse response, Distributor d) {
-        return response.distributors().stream().filter(r -> r.distributor() == d).findFirst().orElseThrow();
+        DistributorResult result = response.distributors().stream().filter(r -> r.distributor() == d).findFirst()
+                .orElseThrow();
+        // every search result: fetched_live is live_calls > 0, and LCSC (a local database) never calls
+        assertThat(result.fetchedLive()).as("fetched_live == (live_calls > 0)").isEqualTo(result.liveCalls() > 0);
+        if (d == Distributor.LCSC) {
+            assertThat(result.liveCalls()).isZero();
+        }
+        return result;
     }
 
     static String key(Distributor d) {

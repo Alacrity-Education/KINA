@@ -65,6 +65,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * SQLite dialect (an in-memory {@code part_index} built from the same rows). Parts the extractor reads poorly (blank
  * LCSC descriptions, Mouser parts without a package) are part of the pool and must stay reachable. A per-query report is
  * written to {@code target/field-superset-report.txt}.
+ *
+ * <p>Two optional system properties extend the run with outside data, e.g. the cache of a production dump
+ * ({@code scripts/e2e/field-search}, docs/research/field-search-validation-2026-10-09.md):
+ * {@code kina.superset.pool} names a file with one stored part per line ({@code cached_parts.payload}),
+ * {@code kina.superset.queries} a file with one query per line. Without them the test runs on the repository data only.
  */
 class FieldQuerySupersetTest {
 
@@ -394,6 +399,20 @@ class FieldQuerySupersetTest {
             }
         }
         QUERIES.addAll(EXTRA);
+        String pool = System.getProperty("kina.superset.pool");
+        if (pool != null && !pool.isBlank()) {
+            for (String line : Files.readAllLines(Path.of(pool), StandardCharsets.UTF_8)) {
+                if (!line.isBlank()) {
+                    Part part = MAPPER.readValue(line, Part.class);
+                    POOL.putIfAbsent(PartKey.of(part), part);
+                }
+            }
+        }
+        String queries = System.getProperty("kina.superset.queries");
+        if (queries != null && !queries.isBlank()) {
+            Files.readAllLines(Path.of(queries), StandardCharsets.UTF_8).stream().map(String::strip)
+                    .filter(q -> !q.isEmpty() && !QUERIES.contains(q)).forEach(QUERIES::add);
+        }
     }
 
     private static String abbreviate(String s) {

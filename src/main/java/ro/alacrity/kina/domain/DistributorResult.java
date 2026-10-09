@@ -52,9 +52,13 @@ import java.util.Map;
  * @param requestedPartFound null when the query names no part number ({@code parsed.part_numbers}) or the distributor
  *                      failed; true when a returned part is the requested one for every part number (its MPN or
  *                      distributor part number equals it or starts with it); false otherwise, with a {@code hint}
- * @param fetchedLive  true when this search called the distributor for the query (cache {@code miss}, {@code partial} or
- *                      {@code bypassed}); false when the parts came from the cache ({@code hit}, {@code stale}) or the
- *                      distributor is LCSC (its local database is read, nothing is called)
+ * @param fetchedLive  true when this search called the distributor for the query, also when the call failed
+ *                      ({@code error} says why); always {@code liveCalls > 0}; false when the parts came from the
+ *                      cache or the distributor is LCSC (its local database is read, nothing is called)
+ * @param liveCalls    the distributor search calls this request made for this distributor: one per page, every
+ *                      phrase (relaxed steps and fallback phrases included), failed calls included; 0 when none
+ *                      (LCSC always 0). Stock refreshes and the direct part-number lookups are not search calls and
+ *                      are not counted
  * @param fieldSteps   how many steps of the field query (DESIGN.md 3.8) the field-first search evaluated before it
  *                      answered; 0 when the search took the cached-search path
  * @param excludedBelowSpecDetail up to 5 of the {@code excludedBelowSpec} parts, closest to the request first: part
@@ -83,6 +87,7 @@ public record DistributorResult(
         @JsonProperty("requested_part_found") Boolean requestedPartFound,
         @JsonProperty("excluded_below_spec_detail") List<BelowSpecPart> excludedBelowSpecDetail,
         @JsonProperty("fetched_live") boolean fetchedLive,
+        @JsonProperty("live_calls") int liveCalls,
         @JsonProperty("field_steps_tried") int fieldSteps
 ) {
 

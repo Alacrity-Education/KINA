@@ -101,6 +101,7 @@ class ParallelRetrieval {
             String used = fetched.fallbackQuery() != null ? fetched.fallbackQuery()
                     : phrase != null ? phrase : prepared.parsed().originalText();
             results.put(distributor, fetched.withRateLimitWaitedMs(budget.rateLimitWaitedMillis())
+                    .withLiveCalls(p.liveCalls.get())
                     .withDistributorQuery(phrase)
                     .withQueryTermsDropped(queryTermsDropped(prepared.parsed(), used, fetched.droppedKeywords())));
         });

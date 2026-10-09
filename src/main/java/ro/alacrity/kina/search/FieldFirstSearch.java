@@ -40,7 +40,8 @@ import java.util.Set;
  *
  * <ol>
  *   <li>run the field query of the step on {@code part_index} (a recall filter: the Java check decides) and add the
- *       parts this request already received live; when at least {@code max_results} of them pass the Java check and
+ *       parts of the request's fresh cached list (what the cached-search path would serve) and the parts this request
+ *       already received live; when at least {@code max_results} of them pass the Java check and
  *       one is confirmed, answer;</li>
  *   <li>else look up the phrase of the step in the journal ({@link PhraseJournalRepository}); a fresh row means the
  *       distributor was already asked: no call;</li>
@@ -185,6 +186,8 @@ final class FieldFirstSearch {
         private final Map<String, RankingService.Verdict> verdicts = new HashMap<>();
         /** Parts received live in this request, by distributor part number. */
         private final Map<String, Part> live = new LinkedHashMap<>();
+        /** Parts of the request's fresh cached list ({@code cached_searches}), by distributor part number. */
+        private final Map<String, Part> listed = new LinkedHashMap<>();
         private final Set<String> asked = new HashSet<>();
         private final Map<String, PhraseJournalRepository.Entry> consulted = new HashMap<>();
         private final Instant now;
@@ -262,6 +265,7 @@ final class FieldFirstSearch {
         }
 
         Outcome execute() {
+            loadCachedList();
             for (Rung rung : rungs) {
                 stepsTried++;
                 progress.fieldSteps = stepsTried;
@@ -293,7 +297,7 @@ final class FieldFirstSearch {
                     break;
                 }
             }
-            if (failure != null && indexed.isEmpty() && live.isEmpty()) {
+            if (failure != null && indexed.isEmpty() && listed.isEmpty() && live.isEmpty()) {
                 return Outcome.failure(failure);
             }
             Fetched fetched = assemble(failure);
@@ -325,6 +329,36 @@ final class FieldFirstSearch {
             } catch (RuntimeException e) {
                 log.warn("Reading the {} phrase journal failed: {}", distributor, e.toString());
                 return Optional.empty();
+            }
+        }
+
+        /**
+         * The parts of the request's cached list while it is fresh: what the cached-search path would serve for the
+         * request (DESIGN.md 3.2 "Field-first flow"). The distributor's answer to the request's phrase can hold parts
+         * the field query does not select (a keyword match for a part number that is not in the cache, an
+         * accessory), so the field path serves at least what the cached-search path serves. A read failure is
+         * logged and only loses them.
+         */
+        private void loadCachedList() {
+            try {
+                Instant freshSince = now.minus(properties.cache().ttl());
+                Instant emptyFreshSince = now.minus(properties.cache().emptyResultTtl());
+                Optional<CachedSearch> cached = searchCache.find(distributor, parsed.normalizedKey())
+                        .filter(c -> CachedDistributorRetriever.isFresh(c, freshSince, emptyFreshSince));
+                if (cached.isEmpty() || cached.get().partNumbers().isEmpty()) {
+                    return;
+                }
+                List<String> numbers = cached.get().partNumbers();
+                Map<String, Part> found = partCache.findInStock(distributor, numbers);
+                for (String number : numbers) {
+                    Part part = found.get(number);
+                    if (part != null) {
+                        listed.put(number, loaded.computeIfAbsent(number, n -> extractor.enrich(part)));
+                    }
+                }
+            } catch (RuntimeException e) {
+                log.warn("Reading the cached {} list of '{}' failed: {}", distributor, parsed.normalizedKey(),
+                        e.toString());
             }
         }
 
@@ -419,9 +453,11 @@ final class FieldFirstSearch {
                     passing.add(part);
                 }
             }
-            for (Part part : live.values()) {
-                if (seen.add(part.distributorPartNumber()) && returnable(part) && meetsLadder(part, ladder)) {
-                    passing.add(part);
+            for (Map<String, Part> received : List.of(listed, live)) {
+                for (Part part : received.values()) {
+                    if (seen.add(part.distributorPartNumber()) && returnable(part) && meetsLadder(part, ladder)) {
+                        passing.add(part);
+                    }
                 }
             }
             return new Candidates(indexed, passing);
@@ -483,10 +519,11 @@ final class FieldFirstSearch {
             return true;
         }
 
-        /** The index hits of the last step and every part received live, without duplicates. */
+        /** The index hits of the last step, the cached list and every part received live, without duplicates. */
         private List<Part> merged() {
             Map<String, Part> out = new LinkedHashMap<>();
             indexed.forEach(p -> out.putIfAbsent(p.distributorPartNumber(), p));
+            listed.forEach(out::putIfAbsent);
             live.forEach(out::putIfAbsent);
             return new ArrayList<>(out.values());
         }

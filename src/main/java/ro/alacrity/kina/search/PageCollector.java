@@ -136,6 +136,9 @@ final class PageCollector {
             long started = System.nanoTime();
             long waitedBefore = deadline.rateLimitWaitedNanos();
             DistributorSearchPage page;
+            if (client.distributor() != ro.alacrity.kina.domain.Distributor.LCSC) {
+                progress.liveCalls.incrementAndGet();   // counted when made: a failed call spent quota too
+            }
             try {
                 page = client.search(query, next, limit, deadline.deadline());
             } catch (DistributorException e) {
