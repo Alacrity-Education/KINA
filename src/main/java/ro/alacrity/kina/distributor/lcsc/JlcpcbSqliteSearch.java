@@ -24,14 +24,22 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.time.Duration;
 import java.util.stream.Collectors;
 
 /**
  * Read-only access to the downloaded JLCPCB FTS5 database (DESIGN.md 9.3).
  *
- * <p>One SQLite connection guarded by a {@link ReentrantReadWriteLock}: queries take the read lock, swapping the file
- * ({@link #replaceDatabase}) or {@link #reopen() reopening} takes the write lock.
+ * <p>A pool of {@code kina.jlcpcb.pool-size} read-only connections, opened {@code mode=ro&immutable=1} (the file is
+ * never modified while open: a refresh renames a new file into place) and guarded by a {@link ReentrantReadWriteLock}:
+ * a query takes the read lock and borrows a connection (waiting at most {@code kina.jlcpcb.pool-wait}), swapping the
+ * file ({@link #replaceDatabase}) or {@link #reopen() reopening} takes the write lock and closes and reopens every
+ * connection. When the typed-table sidecar is current ({@link FieldIndexFile}) every connection has it attached as
+ * {@code idx}.
  *
  * <p>Query building: terms of 3+ characters go into {@code parts MATCH '"a" AND "b"'}, shorter ones become
  * {@code "Description" LIKE '%tok%' ESCAPE '\'}; value terms ({@code 10k}, {@code 100nF}, {@code 5%}) additionally must
@@ -63,7 +71,7 @@ public class JlcpcbSqliteSearch {
     private static final Pattern RATED_VALUE = Pattern.compile(
             "(?<![\\d.\\p{L}])(\\d+(?:\\.\\d+)?)\\s?([umkM]?)([VAW])(?![a-zA-Z])");
 
-    private static final String COLUMNS = """
+    static final String COLUMNS = """
             "LCSC Part", "First Category", "Second Category", "MFR.Part", "Package", "Solder Joint", \
             "Manufacturer", "Library Type", "Description", "Datasheet", "Price", "Stock\"""";
     private static final String IN_STOCK = "CAST(\"Stock\" AS INTEGER) > 0";
@@ -117,25 +125,45 @@ public class JlcpcbSqliteSearch {
     record Predicate(String where, List<Object> params, boolean hasMatch) {
     }
 
+    @FunctionalInterface
+    public interface SqlFunction<T> {
+        T apply(Connection connection) throws SQLException;
+    }
+
     @Autowired private KinaProperties properties;
     private Path databaseFile;
+    private Path indexFile;
+    private int poolSize;
+    private Duration poolWait;
+    private boolean fieldIndexEnabled;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private Connection connection;   // guarded by lock
+    private BlockingQueue<Connection> idle;                  // null when closed; guarded by lock
+    private final List<Connection> pool = new ArrayList<>(); // every open connection; guarded by lock
+    private volatile FieldIndexFile.Info fieldIndex;         // the attached sidecar, null when none
 
     @PostConstruct
     void init() {
         databaseFile = properties.jlcpcb().databaseFile().toAbsolutePath().normalize();
+        indexFile = FieldIndexFile.sidecar(databaseFile);
+        poolSize = properties.jlcpcb().poolSize();
+        poolWait = properties.jlcpcb().poolWait();
+        fieldIndexEnabled = properties.jlcpcb().fieldIndex().enabled();
     }
 
     public Path databaseFile() {
         return databaseFile;
     }
 
+    /** The sidecar file with the typed table ({@code <library>.index.db}). */
+    public Path indexFile() {
+        return indexFile;
+    }
+
     /** True when a database is open; lazily opens an existing file. */
     public boolean isAvailable() {
         lock.readLock().lock();
         try {
-            if (connection != null) {
+            if (idle != null) {
                 return true;
             }
         } finally {
@@ -146,12 +174,71 @@ public class JlcpcbSqliteSearch {
         }
         lock.writeLock().lock();
         try {
-            if (connection == null) {
+            if (idle == null) {
                 openLocked();
             }
-            return connection != null;
+            return idle != null;
         } finally {
             lock.writeLock().unlock();
+        }
+    }
+
+    /** What the attached typed-table sidecar says; null when none is attached (missing, older or foreign). */
+    FieldIndexFile.Info fieldIndex() {
+        return isAvailable() ? fieldIndex : null;
+    }
+
+    /** True when the typed table is attached on every connection of the pool. */
+    public boolean fieldIndexAvailable() {
+        return fieldIndex() != null;
+    }
+
+    /** Connections idle right now (diagnostics and tests). */
+    int idleConnections() {
+        lock.readLock().lock();
+        try {
+            return idle == null ? 0 : idle.size();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Runs {@code work} on a borrowed connection under the read lock (a swap waits for it), waiting at most
+     * {@code maxWait} (the pool wait when null) for a free connection.
+     *
+     * @throws SQLException          when no connection became free in time or {@code work} fails
+     * @throws IllegalStateException when no database is available
+     */
+    public <T> T withConnection(Duration maxWait, SqlFunction<T> work) throws SQLException {
+        isAvailable();   // lazily opens an existing file
+        lock.readLock().lock();
+        try {
+            Connection c = borrow(maxWait == null ? poolWait : maxWait);
+            try {
+                return work.apply(c);
+            } finally {
+                idle.offer(c);
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /** A connection of the pool; the read lock is held. */
+    private Connection borrow(Duration maxWait) throws SQLException {
+        if (idle == null) {
+            throw new IllegalStateException("JLCPCB database not available: " + databaseFile);
+        }
+        try {
+            Connection c = idle.poll(Math.max(0, maxWait.toNanos()), TimeUnit.NANOSECONDS);
+            if (c == null) {
+                throw new SQLException("no free JLCPCB connection within " + maxWait.toMillis() + " ms");
+            }
+            return c;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new SQLException("interrupted while waiting for a JLCPCB connection", e);
         }
     }
 
@@ -206,10 +293,7 @@ public class JlcpcbSqliteSearch {
         if (parsed.isEmpty()) {
             return Result.empty();
         }
-        isAvailable();   // lazily opens an existing file
-        lock.readLock().lock();
-        try {
-            Connection c = requireConnection();
+        return withConnection(null, c -> {
             Predicate all = predicate(parsed, MatchMode.ALL);
             int total = all == null ? 0 : count(c, all);
             if (total > 0) {
@@ -219,9 +303,7 @@ public class JlcpcbSqliteSearch {
             int outOfStock = all == null ? 0 : countIgnoringStock(c, all);
             Result relaxed = relax(c, query, parsed, offset, limit);
             return relaxed.withOutOfStock(outOfStock);
-        } finally {
-            lock.readLock().unlock();
-        }
+        });
     }
 
     /** RELAXED, then PARAMETRIC and ANY (class comment), after ALL found nothing in stock. */
@@ -379,20 +461,18 @@ public class JlcpcbSqliteSearch {
         // The column MATCH only uses the trigram index to avoid a full scan; the equality decides.
         String sql = "SELECT " + COLUMNS + " FROM parts WHERE "
                 + (useIndex ? "parts MATCH ? AND " : "") + "\"LCSC Part\" = ? LIMIT 1";
-        isAvailable();   // lazily opens an existing file
-        lock.readLock().lock();
-        try (PreparedStatement ps = requireConnection().prepareStatement(sql)) {
-            int i = 1;
-            if (useIndex) {
-                ps.setString(i++, "\"LCSC Part\" : " + quote(number));
+        return withConnection(null, c -> {
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                int i = 1;
+                if (useIndex) {
+                    ps.setString(i++, "\"LCSC Part\" : " + quote(number));
+                }
+                ps.setString(i, number);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? Optional.of(row(rs)) : Optional.empty();
+                }
             }
-            ps.setString(i, number);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? Optional.of(row(rs)) : Optional.empty();
-            }
-        } finally {
-            lock.readLock().unlock();
-        }
+        });
     }
 
     /** Most rows {@link #findByMpn} reads before comparing part numbers. */
@@ -412,24 +492,22 @@ public class JlcpcbSqliteSearch {
         }
         String wanted = normalizePartNumber(mpn);
         String sql = "SELECT " + COLUMNS + " FROM parts WHERE parts MATCH ? LIMIT " + MPN_CANDIDATES;
-        isAvailable();   // lazily opens an existing file
-        lock.readLock().lock();
-        try (PreparedStatement ps = requireConnection().prepareStatement(sql)) {
-            ps.setString(1, expression);
-            List<JlcpcbRow> rows = new ArrayList<>();
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    JlcpcbRow row = row(rs);
-                    if (wanted.equals(normalizePartNumber(row.mfrPart()))) {
-                        rows.add(row);
+        return withConnection(null, c -> {
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setString(1, expression);
+                List<JlcpcbRow> rows = new ArrayList<>();
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        JlcpcbRow row = row(rs);
+                        if (wanted.equals(normalizePartNumber(row.mfrPart()))) {
+                            rows.add(row);
+                        }
                     }
                 }
+                rows.sort(java.util.Comparator.comparingInt(JlcpcbRow::stockQuantity).reversed());
+                return rows;
             }
-            rows.sort(java.util.Comparator.comparingInt(JlcpcbRow::stockQuantity).reversed());
-            return rows;
-        } finally {
-            lock.readLock().unlock();
-        }
+        });
     }
 
     /**
@@ -617,58 +695,96 @@ public class JlcpcbSqliteSearch {
     }
 
     private static JlcpcbRow row(ResultSet rs) throws SQLException {
-        return new JlcpcbRow(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5),
-                rs.getString(6), rs.getString(7), rs.getString(8), rs.getString(9), rs.getString(10),
-                rs.getString(11), rs.getString(12));
+        return row(rs, 0);
     }
 
-    private Connection requireConnection() {
-        if (connection == null) {
-            throw new IllegalStateException("JLCPCB database not available: " + databaseFile);
-        }
-        return connection;
+    /** The row of the {@link #COLUMNS} that start after {@code skip} other columns. */
+    static JlcpcbRow row(ResultSet rs, int skip) throws SQLException {
+        return new JlcpcbRow(rs.getString(skip + 1), rs.getString(skip + 2), rs.getString(skip + 3),
+                rs.getString(skip + 4), rs.getString(skip + 5), rs.getString(skip + 6), rs.getString(skip + 7),
+                rs.getString(skip + 8), rs.getString(skip + 9), rs.getString(skip + 10), rs.getString(skip + 11),
+                rs.getString(skip + 12));
     }
 
     private void openLocked() {
-        if (connection != null || !Files.isRegularFile(databaseFile)) {
+        if (idle != null || !Files.isRegularFile(databaseFile)) {
             return;
         }
         try {
-            connection = openReadOnly(databaseFile);
-            try (PreparedStatement probe = connection.prepareStatement("SELECT \"LCSC Part\" FROM parts LIMIT 1");
+            Connection first = openPooled(databaseFile);
+            pool.add(first);
+            try (PreparedStatement probe = first.prepareStatement("SELECT \"LCSC Part\" FROM parts LIMIT 1");
                     ResultSet rs = probe.executeQuery()) {
                 rs.next();   // fails fast on a file that is not a JLCPCB database
             }
-            registerFunctions(connection);
-            log.info("Opened JLCPCB database {}", databaseFile);
+            registerFunctions(first);
+            FieldIndexFile.Info info = attachIndex(first);
+            for (int i = 1; i < poolSize; i++) {
+                Connection c = openPooled(databaseFile);
+                pool.add(c);
+                registerFunctions(c);
+                if (info != null) {
+                    FieldIndexFile.attach(c, indexFile);
+                }
+            }
+            BlockingQueue<Connection> queue = new ArrayBlockingQueue<>(poolSize);
+            queue.addAll(pool);
+            fieldIndex = info;
+            idle = queue;
+            log.info("Opened JLCPCB database {} with {} connections{}", databaseFile, poolSize,
+                    info == null ? "" : ", typed table of " + info.rows() + " rows (version " + info.version() + ")");
         } catch (SQLException e) {
             log.warn("Cannot open JLCPCB database {}: {}", databaseFile, e.getMessage());
             closeLocked();
         }
     }
 
+    /** Attaches the sidecar to {@code c} when the field index is enabled and the sidecar is current; else null. */
+    private FieldIndexFile.Info attachIndex(Connection c) {
+        if (!fieldIndexEnabled || !Files.isRegularFile(indexFile)) {
+            return null;
+        }
+        try {
+            FieldIndexFile.attach(c, indexFile);
+            Optional<FieldIndexFile.Info> info = FieldIndexFile.inspect(c, FieldIndexFile.fingerprint(databaseFile, c));
+            if (info.isEmpty()) {
+                log.info("Typed table {} does not describe {} (version or source differ): the FTS path serves",
+                        indexFile, databaseFile);
+                FieldIndexFile.detach(c);
+            }
+            return info.orElse(null);
+        } catch (SQLException e) {
+            log.warn("Cannot attach the typed table {}: {}", indexFile, e.getMessage());
+            FieldIndexFile.detach(c);
+            return null;
+        }
+    }
+
     private void closeLocked() {
-        if (connection != null) {
+        idle = null;
+        fieldIndex = null;
+        for (Connection c : pool) {
             try {
-                connection.close();
+                c.close();
             } catch (SQLException e) {
                 log.debug("Closing JLCPCB database failed", e);
             }
-            connection = null;
         }
+        pool.clear();
+    }
+
+    /** One read-only, immutable connection of the pool. */
+    static Connection openPooled(Path file) throws SQLException {
+        SQLiteConfig config = new SQLiteConfig();
+        config.setReadOnly(true);
+        return config.createConnection("jdbc:sqlite:" + FieldIndexFile.immutableUri(file));
     }
 
     /** Opens a SQLite file read-only ({@code mode=ro} and {@link SQLiteConfig#setReadOnly}). */
     static Connection openReadOnly(Path file) throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
         config.setReadOnly(true);
-        return config.createConnection("jdbc:sqlite:file:" + uriPath(file) + "?mode=ro");
-    }
-
-    /** Escapes the characters that are special in SQLite URI filenames. */
-    private static String uriPath(Path file) {
-        return file.toAbsolutePath().toString()
-                .replace("%", "%25").replace(" ", "%20").replace("?", "%3f").replace("#", "%23");
+        return config.createConnection("jdbc:sqlite:file:" + FieldIndexFile.uriPath(file) + "?mode=ro");
     }
 
     /**

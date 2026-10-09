@@ -138,6 +138,11 @@ public class DistributorStatusService {
         };
     }
 
+    private static DistributorStatusResponse.TypedTableSummary fieldIndex(JlcpcbStatus.FieldIndex f) {
+        return f == null ? null : new DistributorStatusResponse.TypedTableSummary(f.enabled(), f.available(),
+                f.version(), f.rows(), f.builtAt(), f.building());
+    }
+
     private DistributorStatus lcsc(boolean configured) {
         JlcpcbDatabaseManager manager = jlcpcb.getIfAvailable();
         JlcpcbStatus s = null;
@@ -166,7 +171,7 @@ public class DistributorStatusService {
                     + (s.lastError() == null ? "" : " (last error: " + s.lastError() + ")");
         }
         JlcpcbSummary summary = new JlcpcbSummary(s.available(), s.library(), s.downloadedAt(), s.sourceDate(),
-                s.partCount(), s.downloading(), s.lastError());
+                s.partCount(), s.downloading(), s.lastError(), fieldIndex(s.fieldIndex()));
         return new DistributorStatus(Distributor.LCSC, configured, s.available(), detail, false, null, max, summary);
     }
 }

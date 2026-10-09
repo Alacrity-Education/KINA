@@ -596,8 +596,9 @@ public record KinaProperties(
     /**
      * {@code kina.jlcpcb.*}.
      *
-     * @param fieldIndex the typed table of the in-stock rows in the JLCPCB file (phase B, DESIGN.md 3.8)
-     * @param poolSize   read-only connections to the JLCPCB file (phase B; today one connection serves every search)
+     * @param fieldIndex the typed table of the in-stock rows, in a sidecar file next to the JLCPCB file (DESIGN.md 9.3)
+     * @param poolSize   read-only connections to the JLCPCB file (default 4)
+     * @param poolWait   the longest a query waits for a free connection (default 10 s)
      */
     public record Jlcpcb(
             @DefaultValue("./data/jlcpcb") Path dataDir,
@@ -608,18 +609,20 @@ public record KinaProperties(
             @DefaultValue("200") int maxResultsPerSearch,
             @DefaultValue("true") boolean autoDownload,
             @DefaultValue JlcpcbFieldIndex fieldIndex,
-            @DefaultValue("4") int poolSize) {
+            @DefaultValue("4") int poolSize,
+            @DefaultValue("10s") Duration poolWait) {
 
         @ConstructorBinding
         public Jlcpcb {
-            fieldIndex = fieldIndex == null ? new JlcpcbFieldIndex(false) : fieldIndex;
+            fieldIndex = fieldIndex == null ? new JlcpcbFieldIndex(false, 0) : fieldIndex;
             poolSize = poolSize <= 0 ? 4 : poolSize;
+            poolWait = poolWait == null || poolWait.isNegative() || poolWait.isZero() ? Duration.ofSeconds(10) : poolWait;
         }
 
         /** Without the phase B settings (their defaults). */
         public Jlcpcb(Path dataDir, String library, String baseUrl, Duration refreshAfter, Duration checkInterval,
                       int maxResultsPerSearch, boolean autoDownload) {
-            this(dataDir, library, baseUrl, refreshAfter, checkInterval, maxResultsPerSearch, autoDownload, null, 4);
+            this(dataDir, library, baseUrl, refreshAfter, checkInterval, maxResultsPerSearch, autoDownload, null, 4, null);
         }
 
         /** {@code <data-dir>/<library>}. */
@@ -631,8 +634,14 @@ public record KinaProperties(
     /**
      * {@code kina.jlcpcb.field-index.*}.
      *
-     * @param enabled build and use the typed table of the in-stock rows (phase B); false by default
+     * @param enabled build and use the typed table of the in-stock rows (phase B, DESIGN.md 9.3); false by default
+     * @param threads threads that extract the rows while the table is built; 0 (default): {@code min(16, cores)}
      */
-    public record JlcpcbFieldIndex(@DefaultValue("false") boolean enabled) {
+    public record JlcpcbFieldIndex(@DefaultValue("false") boolean enabled, @DefaultValue("0") int threads) {
+
+        /** The thread count: {@code threads}, else {@code min(16, cores)}. */
+        public int effectiveThreads() {
+            return threads > 0 ? threads : Math.clamp(Runtime.getRuntime().availableProcessors(), 1, 16);
+        }
     }
 }

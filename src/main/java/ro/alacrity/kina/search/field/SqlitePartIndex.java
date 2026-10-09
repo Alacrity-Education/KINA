@@ -24,32 +24,57 @@ public final class SqlitePartIndex {
     private SqlitePartIndex() {
     }
 
-    /** Creates {@code table} (and its indexes) on {@code connection}. */
+    /** Creates {@code table} and its indexes on {@code connection}. */
     public static void create(Connection connection, String table) throws SQLException {
+        createTable(connection, table);
+        createIndexes(connection, table);
+    }
+
+    /**
+     * Creates {@code table} without its indexes (a bulk load is faster that way). Besides the columns of
+     * {@code part_index} it holds {@code fts_rowid} and {@code stock} (the ships-now stock, to order candidates).
+     */
+    public static void createTable(Connection connection, String table) throws SQLException {
         String t = FieldSql.identifier(table);
         List<String> columns = new ArrayList<>();
         columns.add("fts_rowid INTEGER");
         PartIndexSql.casts().forEach((name, cast) -> columns.add(name + " " + type(cast)));
         columns.add("payload_md5 TEXT");
+        columns.add("stock INTEGER");
         try (Statement s = connection.createStatement()) {
             s.execute("CREATE TABLE " + t + " (" + String.join(", ", columns)
                     + ", PRIMARY KEY (distributor, part_number))");
+        }
+    }
+
+    /** Creates the indexes of {@code table}. */
+    public static void createIndexes(Connection connection, String table) throws SQLException {
+        String t = FieldSql.identifier(table);
+        try (Statement s = connection.createStatement()) {
             s.execute("CREATE INDEX " + t + "_cap ON " + t + " (family, capacitance_f) WHERE capacitance_f IS NOT NULL");
             s.execute("CREATE INDEX " + t + "_res ON " + t + " (family, resistance_ohm) WHERE resistance_ohm IS NOT NULL");
             s.execute("CREATE INDEX " + t + "_ind ON " + t + " (family, inductance_h) WHERE inductance_h IS NOT NULL");
+            s.execute("CREATE INDEX " + t + "_pos ON " + t + " (family, positions) WHERE positions IS NOT NULL");
+            s.execute("CREATE INDEX " + t + "_usb ON " + t + " (family, usb_type) WHERE usb_type IS NOT NULL");
             s.execute("CREATE INDEX " + t + "_pkg ON " + t + " (package_key, family)");
             s.execute("CREATE INDEX " + t + "_fam ON " + t + " (family)");
             s.execute("CREATE INDEX " + t + "_fts ON " + t + " (fts_rowid)");
         }
     }
 
-    /** Inserts {@code rows}; {@code ftsRowids} holds the FTS5 rowid of each row (same order). */
+    /** Inserts {@code rows}; {@code ftsRowids} holds the FTS5 rowid of each row (same order); stock 0. */
     public static void insert(Connection connection, String table, List<PartIndexRow> rows, List<Long> ftsRowids)
             throws SQLException {
+        insert(connection, table, rows, ftsRowids, null);
+    }
+
+    /** Inserts {@code rows} with their FTS5 rowids and ships-now {@code stocks} (same order; null: 0). */
+    public static void insert(Connection connection, String table, List<PartIndexRow> rows, List<Long> ftsRowids,
+                              List<Integer> stocks) throws SQLException {
         Map<String, String> casts = PartIndexSql.casts();
         List<String> names = new ArrayList<>(casts.keySet());
         String sql = "INSERT INTO " + FieldSql.identifier(table) + " (fts_rowid, " + String.join(", ", names)
-                + ", payload_md5) VALUES (?" + ", ?".repeat(names.size()) + ", '')";
+                + ", payload_md5, stock) VALUES (?" + ", ?".repeat(names.size()) + ", '', ?)";
         OffsetDateTime now = OffsetDateTime.now();
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             for (int r = 0; r < rows.size(); r++) {
@@ -59,6 +84,7 @@ public final class SqlitePartIndex {
                 for (String name : names) {
                     ps.setObject(i++, sqlite(values.get(name)));
                 }
+                ps.setObject(i, stocks == null ? 0 : stocks.get(r));
                 ps.addBatch();
             }
             ps.executeBatch();
