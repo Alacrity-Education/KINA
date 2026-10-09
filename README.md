@@ -64,8 +64,8 @@ A request goes through five stages. Only the first and the third are models of t
 
 1. **Parse.** The text becomes a typed request: family, values and ratings, package, mounting, technology, connector attributes, fan, LED and switch attributes, form factor, part numbers. This is vocabulary and pattern work, no model. The response shows the result in `parsed`.
 2. **Retrieve, per distributor in parallel.** Each distributor is asked in its own wording (`distributor_query`).
-   - LCSC is always searched live in the local JLCPCB SQLite database. It never uses the PostgreSQL cache.
-   - TME and Mouser first look up the PostgreSQL cache by an exact key: the normalised query text plus the distributor. A hit serves the cached part list. A miss calls the distributor API, pages until a part meets the hard constraints, climbs the relaxation ladder (dielectric, then package where the family allows it, then tolerance; ratings are never relaxed) when nothing does, and stores the parts and the search list. Rate limits are waited out inside the 2-minute request deadline.
+   - LCSC is always searched live in the local JLCPCB SQLite database. It never uses the PostgreSQL cache. With the optional typed table (`KINA_JLCPCB_FIELD_INDEX_ENABLED=true`) the in-stock rows are also searched by typed fields, see [Field-based search](#field-based-search).
+   - TME and Mouser first look up the PostgreSQL cache by an exact key: the normalised query text plus the distributor. A hit serves the cached part list. A miss calls the distributor API, pages until a part meets the hard constraints, climbs the relaxation ladder (dielectric, then package where the family allows it, then tolerance; ratings are never relaxed) when nothing does, and stores the parts and the search list. Rate limits are waited out inside the 2-minute request deadline. With `KINA_FIELD_INDEX_MODE=on` the cache is searched by field first and the distributor is asked only when the cache cannot answer, see [Field-based search](#field-based-search).
 3. **Rank.** The deterministic ranker scores every candidate, excludes parts that contradict a hard constraint, marks parts below a requested rating and gives each part a `match` grade. The in-process cross-encoder (MiniLM) then re-scores the deterministic top candidates and the two orders are blended half and half by rank. Without the model the deterministic order is returned as the fallback. The model only re-orders what retrieval found; it plays no part in the cache.
 4. **Refresh stock.** Parts about to be returned whose stock and prices are older than 24 hours are refreshed at the distributor in batches. Beyond the 3-day limit a part that could not be refreshed is returned with `stale: true`.
 5. **Assemble.** The top results per distributor, compact or full detail, the three smallest price brackets, `exact_matches`, the exclusion counts, hints and the metrics.
@@ -86,6 +86,9 @@ A request goes through five stages. Only the first and the third are models of t
 - **Stock you can trust.** Low stock (`low_stock`) and large minimum orders rank lower, every part says how old its stock figure is (`stock_as_of`), and cached figures older than a day are refreshed before they are returned.
 - **Better ranking.** A deterministic parametric ranker is blended 50/50 by rank with a MiniLM cross-encoder (`ms-marco-MiniLM-L6-v2`) on ONNX Runtime. NDCG@10 is 0.913 blended against 0.898 deterministic on our labelled queries. If the model cannot score, you get the deterministic order and `ranking: "fallback"`. Search never fails because of the model.
 - **Small answers by default.** `detail: compact` returns identity, stock, prices, availability, links and key attributes. `full` adds photo, category and raw distributor attributes; it is the default for `get_part`.
+- **Field-based cache search.** The TME and Mouser cache is also searched by extracted fields (value, package, dielectric, ratings, connector, fan, LED and switch attributes), so a new request can be answered from parts cached for other searches, without a distributor call. Off by default; `shadow`, `augment` and `on` modes. Details in [Field-based search](#field-based-search).
+- **API quota at a glance.** KINA counts its own requests to Mouser and TME in sliding 60 s and 24 h windows and shows them as `used/limit` on the Status tab, in `list_distributors` and in Prometheus (`kina_distributor_quota_*`).
+- **LCSC typed table (optional).** The in-stock JLCPCB rows can also be kept as a typed table in a sidecar file (about 402 MB, built in the background in about a minute). Requests with typed constraints are then answered by field instead of by text. Off by default.
 - **Fast on the second ask.** TME and Mouser search results are cached in PostgreSQL for 3 days; component data is kept, and stock and prices older than a day are refreshed before they are returned. A cold search takes about 6 s, a cached one about 60 ms, and ranking 40 candidates takes 130 to 300 ms.
 - **Polite to rate limits.** KINA waits and retries on rate limits, inside a 2-minute deadline per request, instead of failing at once.
 - **Access control.** OAuth 2.1 for Claude, OIDC login, group-gated access that is checked again at every refresh and on bearer requests (a removed member is cut off within about an hour), and static tokens for scripts.
@@ -139,7 +142,7 @@ curl -s localhost:8080/actuator/health      # {"status":"UP"}
 curl -s localhost:8080/api/v1/distributors  # same data as the list_distributors tool
 ```
 
-Open http://localhost:8080 for the web UI. It has three tabs: Search runs a part search in the browser (TME and Mouser rows show the distributor's product photo, linked from the distributor and never stored by KINA; LCSC has none), MCP shows how to connect Claude and holds your static tokens, and Status shows the distributors, the ranking model, the cache (also by component type) and the usage counters.
+Open http://localhost:8080 for the web UI. It has three tabs: Search runs a part search in the browser (TME and Mouser rows show the distributor's product photo, linked from the distributor and never stored by KINA; LCSC has none), MCP shows how to connect Claude and holds your static tokens, and Status shows the distributors, the API quota used per distributor, the ranking model, the cache (also by component type) and the usage counters.
 
 Call the `list_distributors` tool and look for LCSC `available: true`, TME and Mouser `configured: true`, and `ranking.ready: true`. The default mode is `dev`: no login, every request runs as a fake admin. Never expose `dev` mode to the internet. For anything public set `KINA_MODE=prod` (see [Security](#security)).
 
@@ -177,6 +180,33 @@ Static tokens are tied to the group too. Set `KINA_TOKENS_UI_ENABLED=false` to s
 ## How it works
 
 The request pipeline is described in [How a search flows](#how-a-search-flows).
+
+### Field-based search
+
+Every part KINA caches for TME and Mouser is also written to a table of typed fields (`part_index`): family, value, package, dielectric, tolerance, ratings, connector, fan, LED and switch attributes. A background re-index fills it from the cache after startup, and every cache write keeps it current. The upgrade only adds tables; cached parts are never changed or dropped. The index is built whatever the mode, and `KINA_FIELD_INDEX_MODE` decides whether searches use it:
+
+| Mode | What a search does |
+|---|---|
+| `off` (default) | Never reads the index. The cached search path described above. |
+| `shadow` | Runs the field query in the background next to the normal path, and only logs and counts (`kina_field_shadow_*`). The answer never changes. |
+| `augment` | Adds the index candidates to a cached part list. No new distributor call. |
+| `on` | Field first: answers from the index when it holds enough parts that meet the request. Otherwise it loosens one feature at a time and asks the distributor with that step's phrase, at most `KINA_FIELD_INDEX_MAX_LIVE_CALLS` (2) calls per distributor. A journal of the phrases already asked (`distributor_phrases`) stops KINA from asking the same phrase twice within the cache TTL. |
+
+How the index is used:
+
+- SQL is a recall filter and the Java check decides. The SQL keeps at least every part the check keeps; the same constraints, hard minimums and exclusion counts apply as before.
+- Ratings are never filtered in SQL. A part below a requested rating is excluded and counted (`excluded_below_spec`) exactly as on the normal path.
+- A part that does not state an attribute is kept and listed in `unverified`. When no returned part confirms the request, the entry says so in a `hint`.
+- KINA falls back to the normal path when the index is not complete for the distributor (still re-indexing), on an SQL error, and for a request that states nothing but its family (`mosfet`, `LED`; `KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT=true`).
+- Each distributor entry reports `live_calls`, `fetched_live` and `field_steps_tried`. In `on`, `cache` is `hit` (no call), `miss`, `partial` (asked at a relaxed step) or `stale` (the call failed and the parts come from the index or an expired list).
+
+Measured on a copy of the production cache (6 660 parts) in the validation of 2026-10-09 ([report](docs/research/field-search-validation-2026-10-09.md)): the cached parts, searches and lookups were byte-identical before and after (md5 of both tables), 6 657 of 6 657 cached in-stock parts were found by lookup, and 85.9 % of 238 searches built from a part's own attributes found that part without a distributor call. A cached Mouser query takes about 66 ms in `off` and 198 ms in `on` (100 candidates). Start with `shadow` or `augment` in production, then `on`: [docs/OPERATIONS.md](docs/OPERATIONS.md#field-based-search).
+
+The LCSC typed table works the same way for the JLCPCB database. With `KINA_JLCPCB_FIELD_INDEX_ENABLED=true`, KINA builds a table of the in-stock rows (about 724 000 of 7.1 million) in a sidecar file `parts-fts5.index.db` next to the main file, about 402 MB, in the background (about a minute on the full file). While it is missing or out of date, LCSC uses the text search as before. A typed request can return unverified parts where the text search found nothing, with the hint that none confirms the request. Warm requests took 120 to 370 ms; the text search is faster for requests that match few rows.
+
+### API quota
+
+KINA counts every HTTP request it sends to the Mouser and TME APIs, retries included, in sliding windows of 60 seconds and 24 hours. The Status tab shows them as `used/limit` per minute and per day, with a note while a rate limit runs; `list_distributors` and `GET /api/v1/metrics/summary` carry the same numbers and Prometheus has `kina_distributor_quota_used`, `kina_distributor_quota_limit` and `kina_distributor_quota_throttled_until_seconds`. The limits are settings: Mouser 30 per minute and 1 000 per day, TME 30 and 2 000. TME publishes no limit, so its defaults are an assumption. The counts live in memory and start at 0 after a restart.
 
 The design is documented in [docs/DESIGN.md](docs/DESIGN.md).
 
