@@ -109,6 +109,22 @@ public class FieldQueryBuilder {
         if (!text.isEmpty()) {
             groups.add(new Group(Role.K, Role.K.name(), List.of(), text));
         }
+
+        // the soft kinds the request states (a connector's rows): only the order of the candidates
+        List<ConstraintKind> softKinds = new ArrayList<>();
+        List<FieldPredicate> soft = new ArrayList<>();
+        for (ConstraintKind kind : ConstraintKind.scored()) {
+            if (!kind.isRating() && p.strategy(query, kind) == RelaxStrategy.SOFT) {
+                List<FieldPredicate> predicates = predicates(kind, query, packageHard);
+                if (!predicates.isEmpty()) {
+                    softKinds.add(kind);
+                    soft.addAll(predicates);
+                }
+            }
+        }
+        if (!soft.isEmpty()) {
+            groups.add(new Group(Role.S, Role.S.name(), softKinds, soft));
+        }
         return new FieldQuery(distributor, groups, 0);
     }
 

@@ -2161,6 +2161,7 @@ has a rule or is Java only.
 | `SWITCH_VOLTAGE` | | | Java only |
 | `IP_RATING` | | | Java only |
 | `LIFE` | `attrs.life` | float8 | GTE, slack 0.000001 |
+| `ROWS` | `rows_count` | int2 | EQUAL |
 
 Predicates: `RANGE` is `col BETWEEN x - |x| slack - margin AND x + |x| slack + margin`; `GTE` a minimum
 `col >= x (1 - slack)`, for a rating also `OR col <= 0` (a part value of 0 or less is never below spec); `LTE` a maximum
@@ -2185,7 +2186,11 @@ the last step holds `H + R` only, the superset of every part the Java check retu
 (never in the grade): with `K` in the step the superset is required for the parts that state every keyword the way the
 lexical score finds it and carry a requested part number as an MPN prefix. The query returns
 `distributor, part_number, confirmed` ordered by `confirmed` (the part states every column the step compares) descending,
-then by key, at most `kina.search.field-index.max-candidates` (200) rows. `PostgresFieldSql` and `SqliteFieldSql`
+then by the soft kinds, then by key, at most `kina.search.field-index.max-candidates` (200) rows. The soft kinds the
+request states (group `S`, `FieldQuery.soft()`: a `SOFT` kind with a rule in the table below, today only `ROWS`) are
+never in a step's filter, so they never exclude a part; a part that states a matching value orders before one that
+does not, so a cut at the limit keeps the better parts (validation 2026-10-09: a `2x3` female header with more stock
+came before the `1x6` ones a `1x6` request names). `preferencesNeverReachSqlAndSoftKindsNeverFilter` checks it. `PostgresFieldSql` and `SqliteFieldSql`
 render the same predicates; SQLite stores arrays and `attrs` as JSON text and matches free-text words with FTS5
 `MATCH` on the trigram table of the JLCPCB file joined by `fts_rowid` (`SqlitePartIndex` creates and fills that form;
 the LCSC typed table is phase B).

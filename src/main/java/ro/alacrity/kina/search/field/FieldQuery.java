@@ -12,12 +12,13 @@ import java.util.List;
  *
  * <p>Groups: {@link Role#H} (never relaxed: the always-on rules, the kinds the request's family makes hard),
  * {@link Role#R} (the stated ratings, unless {@code allow_below_spec}), {@link Role#L} (one group per stated ladder
- * kind, in {@code @Relax} order) and {@link Role#K} (the free-text keywords and requested part numbers, all must
- * match). The relaxation drops whole groups ({@link #steps()}): first {@code K}, then {@code L1}, {@code L1, L2}...;
+ * kind, in {@code @Relax} order), {@link Role#K} (the free-text keywords and requested part numbers, all must
+ * match) and {@link Role#S} (the stated soft kinds, such as a connector's rows: never a filter, they only order the
+ * candidates). The relaxation drops whole groups ({@link #steps()}): first {@code K}, then {@code L1}, {@code L1, L2}...;
  * {@code H} and {@code R} are never dropped.
  *
  * @param distributor the distributor, null for every distributor
- * @param groups      the groups in order {@code H, R, L1..Ln, K}; empty groups are left out (except {@code H})
+ * @param groups      the groups in order {@code H, R, L1..Ln, K, S}; empty groups are left out (except {@code H})
  * @param staleBelow  rows indexed by an extractor older than this ({@code extractor_version < staleBelow}) are kept by
  *                    every predicate but the family and the always-on rules; 0 for none
  */
@@ -36,7 +37,12 @@ public record FieldQuery(Distributor distributor, List<Group> groups, int staleB
         /** One ladder kind: dropped in ladder order. */
         L,
         /** Free text: dropped first. */
-        K
+        K,
+        /**
+         * Soft kinds: never in a step's filter. A part that states a matching value ranks before one that does not
+         * (the order of the candidates, so a {@code max-candidates} cut keeps the better ones).
+         */
+        S
     }
 
     /**
@@ -111,6 +117,11 @@ public record FieldQuery(Distributor distributor, List<Group> groups, int staleB
         return steps.get(Math.clamp(index, 0, steps.size() - 1));
     }
 
+    /** The predicates of the soft kinds ({@link Role#S}): they order the candidates of every step, never filter. */
+    public List<FieldPredicate> soft() {
+        return groups(Role.S).stream().flatMap(g -> g.predicates().stream()).toList();
+    }
+
     /** The most relaxed step: {@code H} and {@code R} only (the superset of every part the Java check returns). */
     public Step relaxed() {
         return steps().getLast();
@@ -118,7 +129,8 @@ public record FieldQuery(Distributor distributor, List<Group> groups, int staleB
 
     private Step step(int index, List<String> dropped, List<String> relaxed) {
         List<FieldPredicate> predicates = new ArrayList<>();
-        groups.stream().filter(g -> !dropped.contains(g.name())).forEach(g -> predicates.addAll(g.predicates()));
+        groups.stream().filter(g -> g.role() != Role.S && !dropped.contains(g.name()))
+                .forEach(g -> predicates.addAll(g.predicates()));
         return new Step(index, dropped, relaxed, predicates);
     }
 }

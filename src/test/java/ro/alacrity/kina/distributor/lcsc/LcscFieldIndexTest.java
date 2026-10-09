@@ -369,4 +369,19 @@ class LcscFieldIndexTest {
         assertThat(numbers(candidates)).containsExactly("C729744");
         assertThat(candidates.total()).isEqualTo(1);
     }
+
+    @Test
+    void partsMatchingASoftKindComeFirst() throws Exception {
+        // rows is soft (never a filter): a 2x3 right-angle female header with more stock used to come before the 1x6
+        // ones the request names (validation 2026-10-09)
+        Path main = database(JlcpcbTestDatabase.typed());
+        LcscTestSupport.buildIndex(main);
+        search = LcscTestSupport.search(main, true);
+        LcscFieldSearch field = LcscTestSupport.fieldSearch(search);
+
+        FieldQuery query = query("female header 1x6 right angle");
+        assertThat(query.soft()).isNotEmpty();
+        List<String> found = numbers(field.candidates(query, query.step(0), 4, WAIT));
+        assertThat(found).hasSize(4).contains("C2897388").doesNotContain("C2897423");
+    }
 }

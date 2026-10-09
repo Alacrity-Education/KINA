@@ -90,9 +90,24 @@ public abstract class FieldSql {
     public Statement select(FieldQuery query, FieldQuery.Step step, int limit, List<String> among) {
         Body body = body(query, step, among);
         List<Object> params = new ArrayList<>(body.params());
+        String soft = soft(query, params);
         params.add(limit);
         return new Statement("SELECT distributor, part_number, (" + confirmed(body) + ") AS confirmed FROM "
-                + body.from() + " ORDER BY confirmed DESC, distributor, part_number LIMIT ?", params);
+                + body.from() + " ORDER BY confirmed DESC, " + soft + "distributor, part_number LIMIT ?", params);
+    }
+
+    /**
+     * The order term of the soft kinds ({@link FieldQuery#soft()}) followed by {@code ", "}, empty without: how many
+     * of them the part states with a matching value. Its parameters are added to {@code params}.
+     */
+    protected String soft(FieldQuery query, List<Object> params) {
+        List<String> terms = new ArrayList<>();
+        for (FieldPredicate p : query.soft()) {
+            List<String> stated = statedSql(p);
+            String match = render(p, params);
+            terms.add("(" + (stated.isEmpty() ? "" : String.join(" AND ", stated) + " AND ") + match + ")");
+        }
+        return terms.isEmpty() ? "" : "(" + String.join(") + (", terms) + ") DESC, ";
     }
 
     /**

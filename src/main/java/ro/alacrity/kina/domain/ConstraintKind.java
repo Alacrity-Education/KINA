@@ -1228,6 +1228,7 @@ public enum ConstraintKind {
     /** Rows of a connector: a different row count costs the weight, the same earns nothing. */
     @Relax(strategy = SOFT)
     @Match(mode = CUSTOM, weight = 0.10, scope = CONNECTOR, order = 2)
+    @Indexed(column = "rows_count", type = INT2, predicate = Indexed.Predicate.EQUAL)
     ROWS("rows", otherWanted(Connector::rows), partConnector(Connector::rows)) {
         @Override
         public Outcome score(MatchContext c, double weight) {

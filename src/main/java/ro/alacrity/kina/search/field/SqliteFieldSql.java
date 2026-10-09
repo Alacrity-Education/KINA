@@ -96,7 +96,8 @@ public class SqliteFieldSql extends FieldSql {
 
     /**
      * The candidates of one step for the LCSC retriever: {@code fts_rowid, part_number, stated, total}, the parts
-     * that state most of the requested attributes first, then the highest stock, then the part number; {@code total}
+     * that state most of the requested attributes first, then those that match most of the soft kinds
+     * ({@link FieldQuery#soft()}), then the highest stock, then the part number; {@code total}
      * is the number of rows the step matches (a window function, one pass). The rows of the JLCPCB table are read by
      * the FTS rowid.
      *
@@ -114,10 +115,11 @@ public class SqliteFieldSql extends FieldSql {
         String stated = body.stated().isEmpty() ? "(" + bool(true) + ")"
                 : "(" + String.join(") + (", body.stated()) + ")";
         List<Object> params = new ArrayList<>(body.params());
+        String soft = soft(query, params);
         params.add(limit);
         // the window function counts every matching row in the same pass (before ORDER BY and LIMIT)
         return new Statement("SELECT fts_rowid, part_number, " + stated + " AS stated, count(*) OVER () AS total FROM "
-                + knownFamily(body) + " ORDER BY stated DESC, stock DESC, part_number LIMIT ?", params);
+                + knownFamily(body) + " ORDER BY stated DESC, " + soft + "stock DESC, part_number LIMIT ?", params);
     }
 
     /** {@code SELECT count(*)} of the rows {@link #candidates} selects from. */
