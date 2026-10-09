@@ -95,10 +95,15 @@ public class SqliteFieldSql extends FieldSql {
     }
 
     /**
-     * The candidates of one step for the LCSC retriever: {@code fts_rowid, part_number, stated, total}, the parts
-     * that state most of the requested attributes first, then the highest stock, then the part number; {@code total}
-     * is the number of rows the step matches (a window function, one pass). The rows of the JLCPCB table are read by
-     * the FTS rowid.
+     * The candidates of one step for the LCSC retriever: {@code fts_rowid, part_number, stated, total}, the parts of
+     * the requested family first, then those that state most of the requested attributes, then the highest stock,
+     * then the part number; {@code total} is the number of rows the step matches (a window function, one pass). The
+     * rows of the JLCPCB table are read by the FTS rowid.
+     *
+     * <p>The family comes first because a row of unknown family (76 000 of the in-stock rows of the full file: blank
+     * descriptions, families the parser does not know) is kept by every step, and one that states a requested rating
+     * (a 12 V buck converter) would otherwise tie with a fan of a blank description and win on stock (validation
+     * 2026-10-09: {@code 40x40x10 fan 12V} returned buck converters and buzzers).
      */
     public Statement candidates(FieldQuery query, FieldQuery.Step step, int limit) {
         Body body = body(query, step, null);
@@ -106,11 +111,12 @@ public class SqliteFieldSql extends FieldSql {
         // that states none (select orders by all-or-nothing)
         String stated = body.stated().isEmpty() ? "(" + bool(true) + ")"
                 : "(" + String.join(") + (", body.stated()) + ")";
+        String family = body.familyStated().isEmpty() ? "" : "(" + String.join(" AND ", body.familyStated()) + ") DESC, ";
         List<Object> params = new ArrayList<>(body.params());
         params.add(limit);
         // the window function counts every matching row in the same pass (before ORDER BY and LIMIT)
         return new Statement("SELECT fts_rowid, part_number, " + stated + " AS stated, count(*) OVER () AS total FROM "
-                + body.from() + " ORDER BY stated DESC, stock DESC, part_number LIMIT ?", params);
+                + body.from() + " ORDER BY " + family + "stated DESC, stock DESC, part_number LIMIT ?", params);
     }
 
     /** {@code SELECT count(*)} of the rows one step matches. */

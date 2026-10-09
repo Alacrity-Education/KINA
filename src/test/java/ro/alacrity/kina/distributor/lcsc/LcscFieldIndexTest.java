@@ -345,4 +345,27 @@ class LcscFieldIndexTest {
             return plan.toString();
         });
     }
+
+    @Test
+    void rowsOfTheRequestedFamilyComeBeforeRowsOfUnknownFamily() throws Exception {
+        // a fan with a blank description (family from its category only) and a well-stocked 12 V part of a family the
+        // parser does not know: both state one requested attribute, the fan must come first (validation 2026-10-09)
+        List<ro.alacrity.kina.distributor.lcsc.JlcpcbRow> rows = new ArrayList<>(JlcpcbTestDatabase.typed());
+        rows.add(JlcpcbTestDatabase.row("C729744", "Industrial control electrical", "Cooling fan", "FAN-BLANK", "-",
+                "Fanmaker", "Extended", "", "1-:2.0", "10"));
+        for (int i = 0; i < 50; i++) {
+            rows.add(JlcpcbTestDatabase.row("C8" + String.format("%05d", i), "Power Management", "Odd Converters",
+                    "ODD-" + i, "SOT-23-6", "Maker", "Extended", "-40℃~+85℃ 12V 150kHz 2A Odd", "1-:0.1",
+                    Integer.toString(100000 + i)));
+        }
+        Path main = database(rows);
+        LcscTestSupport.buildIndex(main);
+        search = LcscTestSupport.search(main, true);
+        LcscFieldSearch field = LcscTestSupport.fieldSearch(search);
+
+        FieldQuery query = query("40x40x10 fan 12V");
+        List<String> found = numbers(field.candidates(query, query.step(0), 40, WAIT));
+        assertThat(found).isNotEmpty();
+        assertThat(found.getFirst()).isEqualTo("C729744");
+    }
 }

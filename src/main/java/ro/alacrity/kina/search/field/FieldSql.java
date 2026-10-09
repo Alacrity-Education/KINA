@@ -97,13 +97,14 @@ public abstract class FieldSql {
 
     /**
      * The parts of a step's statement, for a dialect that selects other columns or orders differently
-     * ({@link SqliteFieldSql#candidates}): the stated conditions (one per requested column, without parameters), the
-     * {@code table [WHERE ...]} clause and its parameters.
+     * ({@link SqliteFieldSql#candidates}): the stated conditions (one per requested column, without parameters), those
+     * of the family ({@code familyStated}, a subset), the {@code table [WHERE ...]} clause and its parameters.
      */
-    protected record Body(List<String> stated, String from, List<Object> params) {
+    protected record Body(List<String> stated, List<String> familyStated, String from, List<Object> params) {
 
         protected Body {
             stated = List.copyOf(stated);
+            familyStated = List.copyOf(familyStated);
             params = List.copyOf(params);
         }
     }
@@ -120,6 +121,7 @@ public abstract class FieldSql {
         List<String> where = new ArrayList<>();
         List<String> inner = new ArrayList<>();
         Set<String> stated = new LinkedHashSet<>();
+        Set<String> familyStated = new LinkedHashSet<>();
         for (FieldPredicate p : step.predicates()) {
             // the family and the always-on rules hold for every row; the others keep rows of an older extractor
             if (p.kind() != null && p.kind() != ConstraintKind.TYPE) {
@@ -129,6 +131,9 @@ public abstract class FieldSql {
             }
             if (p.kind() != null) {
                 stated.addAll(statedSql(p));
+                if (p.kind() == ConstraintKind.TYPE) {
+                    familyStated.addAll(statedSql(p));
+                }
             }
         }
         if (!inner.isEmpty()) {
@@ -144,7 +149,7 @@ public abstract class FieldSql {
         if (among != null) {
             where.add(among.isEmpty() ? bool(false).toString() : in("part_number", among, params));
         }
-        return new Body(List.copyOf(stated),
+        return new Body(List.copyOf(stated), List.copyOf(familyStated),
                 table() + (where.isEmpty() ? "" : " WHERE " + String.join(" AND ", where)), params);
     }
 
