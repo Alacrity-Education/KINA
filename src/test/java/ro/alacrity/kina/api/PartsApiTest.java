@@ -32,6 +32,7 @@ import ro.alacrity.kina.domain.ParsedQueryResponse;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +56,9 @@ class PartsApiTest {
 
     @Autowired
     RestTestClient client;
+
+    @org.springframework.boot.test.web.server.LocalServerPort
+    int port;
 
     @MockitoBean
     PartSearchService searchService;
@@ -303,6 +307,71 @@ class PartsApiTest {
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectHeader().contentTypeCompatibleWith(PROBLEM);
+    }
+
+    /**
+     * Part numbers with characters a path cannot carry plainly (77 cached parts of the production cache hold {@code %}
+     * or a backslash, validation 2026-10-09): percent-encoded in the path, and in the query-parameter form
+     * {@code /api/v1/parts/{distributor}?part_number=}. The request URI is sent exactly as written (no re-encoding).
+     */
+    @Test
+    void awkwardPartNumbersWorkPercentEncodedInThePathAndAsAQueryParameter() {
+        List<String> numbers = List.of("RC0603FR-07100%", "ABC\\1", "DTMSS-20/0.010/20V", "A+B", "LM 317 T",
+                "50% 1/4W\\X+Y");
+        for (String number : numbers) {
+            when(lookupService.lookup(Distributor.TME, number, false, 1, ResponseDetail.FULL))
+                    .thenReturn(PartLookupResponse.found(Distributor.TME, number, CacheStatus.HIT,
+                            PartResponse.from(part())));
+        }
+        List<String> failed = new ArrayList<>();
+        for (String number : numbers) {
+            String encoded = percentEncoded(number);
+            for (String path : List.of("/api/v1/parts/TME/" + encoded, "/api/v1/parts/TME?part_number=" + encoded,
+                    "/api/v1/parts/lookup?distributor=TME&part_number=" + encoded)) {
+                var result = client.get().uri(java.net.URI.create("http://localhost:" + port + path))
+                        .exchange().expectBody(String.class).returnResult();
+                if (result.getStatus().value() != 200
+                        || !String.valueOf(result.getResponseBody()).contains("\"CL21B106KPQNNNE\"")) {
+                    failed.add(path + " -> " + result.getStatus().value());
+                }
+            }
+        }
+        assertThat(failed).isEmpty();
+        // a plus sign in a path is a plus sign; in a query string it is a space, so it is encoded there (%2B)
+        verify(lookupService, org.mockito.Mockito.times(3)).lookup(Distributor.TME, "A+B", false, 1,
+                ResponseDetail.FULL);
+        when(lookupService.lookup(Distributor.TME, "RC0603FR-07100%", true, 5, ResponseDetail.FULL))
+                .thenReturn(PartLookupResponse.notFound(Distributor.TME, "RC0603FR-07100%", CacheStatus.BYPASSED,
+                        null));
+        client.get().uri(java.net.URI.create("http://localhost:" + port + "/api/v1/parts/TME/RC0603FR-07100%25"
+                        + "?bypass_cache=true&quantity=5"))
+                .exchange()
+                .expectStatus().isNotFound();
+        verify(lookupService).lookup(Distributor.TME, "RC0603FR-07100%", true, 5, ResponseDetail.FULL);
+        client.get().uri(java.net.URI.create("http://localhost:" + port + "/api/v1/parts/TME?part_number=%20"))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentTypeCompatibleWith(PROBLEM);
+        // only the part path accepts the encodings: every other path stays strict
+        for (String path : List.of("/api/v1/distributors%2Fx", "/api/v1/distributors%5Cx", "/api/v1/distributors%25")) {
+            client.get().uri(java.net.URI.create("http://localhost:" + port + path))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+        }
+    }
+
+    /** Every character but the unreserved ones percent-encoded (UTF-8), a space as {@code %20}. */
+    private static String percentEncoded(String value) {
+        StringBuilder out = new StringBuilder();
+        for (byte b : value.getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
+            char c = (char) (b & 0xff);
+            if (Character.isLetterOrDigit(c) && c < 128 || "-._~".indexOf(c) >= 0) {
+                out.append(c);
+            } else {
+                out.append('%').append(String.format("%02X", b & 0xff));
+            }
+        }
+        return out.toString();
     }
 
     @Test

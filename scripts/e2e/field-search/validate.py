@@ -88,9 +88,17 @@ def lookups(args) -> int:
         status, body, took = get("/api/v1/parts/%s/%s" % (d, urllib.parse.quote(pn, safe="/")))
         ok = status == 200 and body and body.get("part_number") == pn and (body.get("stock") or 0) > 0
         via = "rest"
+        if args.query_form:
+            # the documented form for awkward part numbers: GET /api/v1/parts/{d}?part_number=<percent-encoded>
+            q_status, q_body, q_took = get("/api/v1/parts/%s?%s" % (d, urllib.parse.urlencode(
+                {"part_number": pn}, quote_via=urllib.parse.quote)))
+            q_ok = q_status == 200 and q_body and q_body.get("part_number") == pn and (q_body.get("stock") or 0) > 0
+            if not q_ok:
+                ok, status, body = False, q_status, q_body
+            took = max(took, q_took)
         if status == 400 and args.mcp_fallback:
-            # the REST path refuses some characters ("%", "\\": the Spring Security firewall); get_part takes it as
-            # a parameter
+            # before C2 the REST path refused some characters ("%", "\\": the Spring Security firewall); get_part
+            # takes it as a parameter
             started = time.monotonic()
             res = mcp_tool("get_part", {"distributor": d, "part_number": pn, "detail": "compact"})
             took = time.monotonic() - started
@@ -407,6 +415,8 @@ def main() -> int:
     s.add_argument("--parts", required=True)
     s.add_argument("--workers", type=int, default=16)
     s.add_argument("--mcp-fallback", action="store_true", help="look up REST-refused part numbers with get_part")
+    s.add_argument("--query-form", action="store_true",
+                   help="also look every part up with GET /api/v1/parts/{d}?part_number= (both forms must succeed)")
     s.add_argument("--out")
     s = sub.add_parser("sample")
     s.add_argument("--rows", required=True)
