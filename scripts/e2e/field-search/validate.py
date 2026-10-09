@@ -3,7 +3,7 @@
 
 Run through run.sh (it passes --base and --metrics):
 
-    run.sh validate lookups  --parts parts.tsv            # GET /api/v1/parts/{d}/{pn} for every row, in parallel
+    run.sh validate lookups  --parts parts.tsv            # look every row up (path form, query form for % and \\)
     run.sh validate sample   --rows rows.tsv --out q.json # build one query per sampled cached part (its own attributes)
     run.sh validate recall   --queries q.json --out r.json  # search each query at its distributor, is the part found?
     run.sh validate replay   --searches s.tsv --out r.json  # search the query of every cached search list
@@ -83,22 +83,27 @@ def result_of(body: dict | None, distributor: str) -> dict | None:
 def lookups(args) -> int:
     rows = [line.rstrip("\n").split("|", 1) for line in open(args.parts) if line.strip()]
 
+    def by_query(d, pn):
+        # the documented form for awkward part numbers: GET /api/v1/parts/{d}?part_number=<percent-encoded>
+        return get("/api/v1/parts/%s?%s" % (d, urllib.parse.urlencode({"part_number": pn},
+                                                                     quote_via=urllib.parse.quote)))
+
     def one(row):
         d, pn = row
-        status, body, took = get("/api/v1/parts/%s/%s" % (d, urllib.parse.quote(pn, safe="/")))
+        # the path form refuses a percent-encoded "%" or backslash (v0.16, review B10): those take the query form
+        awkward = any(c in pn for c in "%\\")
+        status, body, took = by_query(d, pn) if awkward else get(
+            "/api/v1/parts/%s/%s" % (d, urllib.parse.quote(pn, safe="/")))
         ok = status == 200 and body and body.get("part_number") == pn and (body.get("stock") or 0) > 0
-        via = "rest"
-        if args.query_form:
-            # the documented form for awkward part numbers: GET /api/v1/parts/{d}?part_number=<percent-encoded>
-            q_status, q_body, q_took = get("/api/v1/parts/%s?%s" % (d, urllib.parse.urlencode(
-                {"part_number": pn}, quote_via=urllib.parse.quote)))
+        via = "query" if awkward else "rest"
+        if args.query_form and not awkward:
+            q_status, q_body, q_took = by_query(d, pn)
             q_ok = q_status == 200 and q_body and q_body.get("part_number") == pn and (q_body.get("stock") or 0) > 0
             if not q_ok:
                 ok, status, body = False, q_status, q_body
             took = max(took, q_took)
         if status == 400 and args.mcp_fallback:
-            # before C2 the REST path refused some characters ("%", "\\": the Spring Security firewall); get_part
-            # takes it as a parameter
+            # a REST refusal: get_part takes the part number as a parameter
             started = time.monotonic()
             res = mcp_tool("get_part", {"distributor": d, "part_number": pn, "detail": "compact"})
             took = time.monotonic() - started
@@ -123,7 +128,8 @@ def lookups(args) -> int:
         s["stale"] += r["stale"]
     ms = sorted(r["ms"] for r in results)
     summary = {"lookups": len(results), "ok": len(results) - len(failed), "failed": len(failed), "by": by,
-               "via_mcp": sum(1 for r in results if r["via"] == "mcp"), "seconds": round(took, 1), "p50_ms": ms[len(ms) // 2] if ms else None,
+               "via_mcp": sum(1 for r in results if r["via"] == "mcp"),
+               "via_query": sum(1 for r in results if r["via"] == "query"), "seconds": round(took, 1), "p50_ms": ms[len(ms) // 2] if ms else None,
                "p95_ms": ms[int(len(ms) * 0.95)] if ms else None, "failures": failed[:50]}
     print(json.dumps(summary, indent=1))
     if args.out:

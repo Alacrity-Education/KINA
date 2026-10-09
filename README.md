@@ -198,7 +198,7 @@ How the index is used:
 - Ratings are never filtered in SQL. A part below a requested rating is excluded and counted (`excluded_below_spec`) exactly as on the normal path.
 - A part that does not state an attribute is kept and listed in `unverified`. When no returned part confirms the request, the entry says so in a `hint`.
 - KINA falls back to the normal path when the index is not complete for the distributor (still re-indexing), on an SQL error, and for a request that states nothing but its family (`mosfet`, `LED`; `KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT=true`).
-- Each distributor entry reports `live_calls`, `fetched_live` and `field_steps_tried`. In `on`, `cache` is `hit` (no call), `miss`, `partial` (asked at a relaxed step) or `stale` (the call failed and the parts come from the index or an expired list).
+- Each distributor entry reports `live_calls`, `fetched_live` and `field_steps_tried`. In `on`, `cache` is `hit` (no call), `miss`, `partial` (asked at a relaxed step, or a call answered and a later one failed, with the `error`) or `stale` (no call answered and the parts come from the index or an expired list).
 
 Measured on a copy of the production cache (6 660 parts) in the validation of 2026-10-09 ([report](docs/research/field-search-validation-2026-10-09.md)): the cached parts, searches and lookups were byte-identical before and after (md5 of both tables), 6 657 of 6 657 cached in-stock parts were found by lookup, and 85.9 % of 238 searches built from a part's own attributes found that part without a distributor call. A cached Mouser query takes about 66 ms in `off` and 198 ms in `on` (100 candidates). Start with `shadow` or `augment` in production, then `on`: [docs/OPERATIONS.md](docs/OPERATIONS.md#field-based-search).
 

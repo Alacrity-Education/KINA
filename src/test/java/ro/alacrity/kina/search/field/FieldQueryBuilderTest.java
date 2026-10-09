@@ -91,6 +91,30 @@ class FieldQueryBuilderTest {
         assertThat(SqliteFieldSql.INSTANCE.count(q, q.step(0)).sql()).doesNotContain("voltage_v");
     }
 
+    /**
+     * The ranges are relative: the writer's rounding to 9 significant digits widens a bound by a share of the value
+     * ({@code Indexed.ROUNDING_SLACK}), never by an absolute amount that is the whole of a 1 pF value (review A7).
+     */
+    @Test
+    void rangesAreRelativeForPicofaradsAndMegohms() {
+        Range pf = predicate(build("1pF C0G 0402 capacitor"), "H", ConstraintKind.VALUE, Range.class);
+        assertThat(pf.column().name()).isEqualTo("capacitance_f");
+        assertThat(pf.low()).isCloseTo(1e-12 * (1 - 0.015 - 1e-8), within(1e-24)).isGreaterThan(0.98e-12);
+        assertThat(pf.high()).isCloseTo(1e-12 * (1 + 0.015 + 1e-8), within(1e-24)).isLessThan(1.02e-12);
+        Range mohm = predicate(build("10Mohm 1% 0603 resistor"), "H", ConstraintKind.VALUE, Range.class);
+        assertThat(mohm.column().name()).isEqualTo("resistance_ohm");
+        assertThat(mohm.low()).isCloseTo(10e6 * (1 - 0.015 - 1e-8), within(1e-6));
+        assertThat(mohm.high()).isCloseTo(10e6 * (1 + 0.015 + 1e-8), within(1e-6));
+        // a part at the edge of the Java tolerance (1 %) stays inside after the writer's rounding
+        for (Range r : List.of(pf, mohm)) {
+            double center = (r.low() + r.high()) / 2;
+            for (double edge : List.of(center * 0.99, center * 1.01)) {
+                double stored = ro.alacrity.kina.search.FieldVocabulary.round(edge);
+                assertThat(stored).isBetween(r.low(), r.high());
+            }
+        }
+    }
+
     @Test
     void aThinFilmResistor() {
         FieldQuery q = build("4.7k 1% 0603 resistor thin film");

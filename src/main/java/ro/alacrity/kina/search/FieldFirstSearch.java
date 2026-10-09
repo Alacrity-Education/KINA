@@ -15,6 +15,7 @@ import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
+import ro.alacrity.kina.metrics.FieldFallback;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
@@ -84,13 +85,13 @@ final class FieldFirstSearch {
      * What the flow made of a request: an answer, the reason to take the cached-search path, or a distributor failure
      * with nothing to serve.
      */
-    record Outcome(Fetched fetched, String legacyReason, DistributorException failure) {
+    record Outcome(Fetched fetched, FieldFallback legacyReason, DistributorException failure) {
 
         static Outcome answered(Fetched fetched) {
             return new Outcome(fetched, null, null);
         }
 
-        static Outcome legacy(String reason) {
+        static Outcome legacy(FieldFallback reason) {
             return new Outcome(null, reason, null);
         }
 
@@ -130,23 +131,23 @@ final class FieldFirstSearch {
         Distributor distributor = client.distributor();
         ParsedQuery parsed = prepared.parsed();
         if (prepared.request().bypassCache()) {
-            return Outcome.legacy("bypass");
+            return Outcome.legacy(FieldFallback.BYPASS);
         }
         KinaProperties.FieldIndex config = properties.search().fieldIndex();
         FieldQuery query;
         try {
             if (!index.isComplete(distributor)) {
-                return Outcome.legacy("incomplete");
+                return Outcome.legacy(FieldFallback.INCOMPLETE);
             }
             query = FieldQueryBuilder.build(parsed, ConstraintPolicy.of(ranking), distributor)
                     .withStaleBelow(config.minVersion());
         } catch (RuntimeException e) {
             log.warn("The field query of {} '{}' could not be built: {}", distributor, parsed.normalizedKey(),
                     e.toString());
-            return Outcome.legacy("sql_error");
+            return Outcome.legacy(FieldFallback.SQL_ERROR);
         }
         if (!readable(query, query.step(0), parsed)) {
-            return Outcome.legacy("generic");
+            return Outcome.legacy(FieldFallback.GENERIC);
         }
         Run run = new Run(client, prepared, progress, deadline, query);
         try {
@@ -154,7 +155,7 @@ final class FieldFirstSearch {
         } catch (FieldSqlException e) {
             log.warn("The field query of {} '{}' failed: {}", distributor, parsed.normalizedKey(),
                     e.getCause().toString());
-            return run.calls == 0 ? Outcome.legacy("sql_error") : Outcome.answered(run.assemble(null));
+            return run.calls == 0 ? Outcome.legacy(FieldFallback.SQL_ERROR) : Outcome.answered(run.assemble(null));
         }
     }
 
@@ -442,7 +443,9 @@ final class FieldFirstSearch {
                 firstWithPartsRung = rung;
             }
             boolean stored = storeParts(collected);
-            if (stored) {
+            // a failed later page keeps the parts of the earlier pages, but the phrase was not answered: it is not
+            // journaled, so the next request asks it again (DESIGN.md 3.2: a failed call writes nothing)
+            if (stored && collected.error() == null) {
                 try {
                     journal.record(new PhraseJournalRepository.Entry(distributor, key, rung.phrase(), now,
                             collected.totalResults(), collected.nextOffset(), collected.exhausted(), outOfStock,
@@ -588,8 +591,10 @@ final class FieldFirstSearch {
         /** The result of the search so far; {@code error} is the failure to report (null: none). */
         Fetched assemble(DistributorException error) {
             List<Part> parts = merged();
+            // a failure with no call answered: stale; a failure after a call answered (a later page, a relaxed
+            // phrase): partial, with the error (DESIGN.md 3.2)
             CacheStatus status = calls == 0 ? (error != null ? CacheStatus.STALE : CacheStatus.HIT)
-                    : calledRelaxed ? CacheStatus.PARTIAL : CacheStatus.MISS;
+                    : error != null || calledRelaxed ? CacheStatus.PARTIAL : CacheStatus.MISS;
             String key = served == null || served.phrase() == null ? null : DistributorPhraser.phraseKey(served.phrase());
             Integer total = liveTotal;
             Integer outOfStock = calls > 0 ? Integer.valueOf(liveOutOfStock) : null;

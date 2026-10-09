@@ -16,84 +16,24 @@ public class SqliteFieldSql extends FieldSql {
     public static final SqliteFieldSql INSTANCE = new SqliteFieldSql("part_index", "parts", false);
 
     /**
-     * The confirmed subset of {@link #INSTANCE}: every value predicate demands a stated, matching value instead of
-     * also keeping NULL ({@code col BETWEEN ? AND ?} instead of {@code col IS NULL OR col BETWEEN ? AND ?}), and the
-     * requested ratings are stated (never compared: a part below spec stays a candidate). These are exactly the rows
-     * {@code INSTANCE} orders first (every requested column stated, ratings included), in a form the indexes can seek (SQLite cannot seek an {@code IS NULL OR}
-     * predicate, it reads every row of the family: study 12.2, the planner lesson).
+     * The stated-only form of {@link #INSTANCE} ({@link FieldSql#statedOnly()}): exactly the rows {@code INSTANCE}
+     * orders first (every requested column stated, ratings included), in a form the indexes can seek (SQLite cannot
+     * seek an {@code IS NULL OR} predicate, it reads every row of the family: study 12.2, the planner lesson).
      */
     public static final SqliteFieldSql CONFIRMED = new SqliteFieldSql("part_index", "parts", true);
 
     private final String table;
     private final String ftsTable;
-    private final boolean confirmedOnly;
 
     /** A renderer for the typed table {@code table} whose {@code fts_rowid} is the rowid of {@code ftsTable}. */
     public SqliteFieldSql(String table, String ftsTable) {
         this(table, ftsTable, false);
     }
 
-    private SqliteFieldSql(String table, String ftsTable, boolean confirmedOnly) {
+    private SqliteFieldSql(String table, String ftsTable, boolean statedOnly) {
+        super(statedOnly);
         this.table = identifier(table);
         this.ftsTable = identifier(ftsTable);
-        this.confirmedOnly = confirmedOnly;
-    }
-
-    @Override
-    protected String render(FieldPredicate p, List<Object> params) {
-        if (!confirmedOnly) {
-            return super.render(p, params);
-        }
-        return switch (p) {
-            case FieldPredicate.Range r -> {
-                params.add(r.low());
-                params.add(r.high());
-                yield number(r.column()) + " BETWEEN ? AND ?";
-            }
-            case FieldPredicate.AtLeast a -> {
-                params.add(a.min());
-                String col = number(a.column());
-                yield a.rating() ? "(" + col + " >= ? OR " + col + " <= 0)" : col + " >= ?";
-            }
-            case FieldPredicate.AtMost a -> {
-                params.add(a.max());
-                yield number(a.column()) + " <= ?";
-            }
-            case FieldPredicate.Equal e -> {
-                params.add(e.value() instanceof Boolean b ? bool(b) : e.value());
-                yield text(e.column()) + " = ?";
-            }
-            case FieldPredicate.OneOf o -> in(text(o.column()), o.values(), params);
-            case FieldPredicate.NoneOf n -> "(" + text(n.column()) + " IS NOT NULL AND "
-                    + notIn(text(n.column()), n.values(), params) + ")";
-            case FieldPredicate.AnyInRange a -> {
-                params.add(a.low());
-                params.add(a.high());
-                String col = identifier(a.column().name());
-                yield "EXISTS (SELECT 1 FROM json_each(" + col + ") WHERE value BETWEEN ? AND ?)";
-            }
-            case FieldPredicate.PackageIs pk -> {
-                List<String> any = new ArrayList<>();
-                if (pk.key() != null) {
-                    any.add("package_key = ?");
-                    params.add(pk.key());
-                }
-                if (pk.canDiameterMm() != null && pk.canLengthMm() != null) {
-                    any.add("(can_d_mm BETWEEN ? AND ? AND can_l_mm BETWEEN ? AND ?)");
-                    params.add(pk.canDiameterMm() - pk.margin());
-                    params.add(pk.canDiameterMm() + pk.margin());
-                    params.add(pk.canLengthMm() - pk.margin());
-                    params.add(pk.canLengthMm() + pk.margin());
-                }
-                if (pk.neutralClass() != null) {
-                    any.add("package_class = ?");
-                    params.add(pk.neutralClass());
-                }
-                yield any.isEmpty() ? "package_readable = 1"
-                        : "(package_readable = 1 AND (" + String.join(" OR ", any) + "))";
-            }
-            default -> super.render(p, params);
-        };
     }
 
     /**
@@ -146,12 +86,6 @@ public class SqliteFieldSql extends FieldSql {
         return table;
     }
 
-    /** The confirmed-only form selects the confirmed rows: the requested ratings stated (met or below spec). */
-    @Override
-    protected boolean ratingsConfirmedInWhere() {
-        return confirmedOnly;
-    }
-
     /** The LCSC candidates order by what the part states, ratings included, then by stock (DESIGN.md 9.3). */
     @Override
     protected boolean ratingsStated() {
@@ -184,7 +118,7 @@ public class SqliteFieldSql extends FieldSql {
     @Override
     protected String equal(IndexColumn column, Object value, List<Object> params) {
         params.add(value instanceof Boolean b ? bool(b) : value);
-        return "(" + isNull(column) + " OR " + text(column) + " = ?)";
+        return "(" + orUnstated(isNull(column)) + text(column) + " = ?)";
     }
 
     @Override
@@ -192,7 +126,7 @@ public class SqliteFieldSql extends FieldSql {
         params.add(low);
         params.add(high);
         String col = identifier(column.name());
-        return "(json_array_length(" + col + ") = 0 OR EXISTS (SELECT 1 FROM json_each(" + col
+        return "(" + orUnstated("json_array_length(" + col + ") = 0") + "EXISTS (SELECT 1 FROM json_each(" + col
                 + ") WHERE value BETWEEN ? AND ?))";
     }
 

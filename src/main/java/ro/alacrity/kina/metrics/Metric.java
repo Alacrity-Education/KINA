@@ -75,8 +75,8 @@ public enum Metric {
     FIELD_JOURNAL_HITS("kina.field.journal.hits", Type.COUNTER,
             "Steps of the field-first flow whose phrase the journal had already asked (no call)", "distributor"),
     FIELD_FALLBACKS("kina.field.fallbacks", Type.COUNTER,
-            "Searches that took the cached-search path instead of the field-first flow, by reason (mode, bypass, "
-                    + "incomplete, sql_error)", "distributor", "reason"),
+            "Searches that took the cached-search path instead of the field-first flow, by reason",
+            new TagValues("reason", FieldFallback.codes()), "distributor", "reason"),
 
     // ---- timers (count and total time persisted) ------------------------------------------------------------------
     SEARCH_DURATION("kina.search.duration", Type.TIMER, "Time to answer a search request (single or batch)"),
@@ -116,16 +116,41 @@ public enum Metric {
     /** The meter types. */
     public enum Type { COUNTER, TIMER, GAUGE }
 
+    /**
+     * The closed set of values a tag takes ({@link FieldFallback} for the {@code reason} of
+     * {@link #FIELD_FALLBACKS}): listed in the help text and checked against DESIGN.md.
+     */
+    public record TagValues(String tag, List<String> values) {
+
+        public TagValues {
+            values = List.copyOf(values);
+        }
+    }
+
     private final String meterName;
     private final Type type;
     private final String help;
     private final List<String> tags;
+    private final TagValues tagValues;
 
     Metric(String meterName, Type type, String help, String... tags) {
+        this(meterName, type, help, null, tags);
+    }
+
+    Metric(String meterName, Type type, String help, TagValues tagValues, String... tags) {
         this.meterName = meterName;
         this.type = type;
-        this.help = help;
+        this.help = tagValues == null ? help : help + " (" + String.join(", ", tagValues.values()) + ")";
         this.tags = List.of(tags);
+        this.tagValues = tagValues;
+        if (tagValues != null && !this.tags.contains(tagValues.tag())) {
+            throw new IllegalArgumentException(meterName + " has no tag " + tagValues.tag());
+        }
+    }
+
+    /** The declared values of one tag, null when the tag values are open (a distributor, a family). */
+    public TagValues tagValues() {
+        return tagValues;
     }
 
     /** The Micrometer name ({@code kina.searches}), also the {@code name} column of {@code metrics_counters}. */

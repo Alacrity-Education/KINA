@@ -17,6 +17,7 @@ import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
+import ro.alacrity.kina.metrics.FieldFallback;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.field.FieldQuery;
 import ro.alacrity.kina.search.field.FieldQueryBuilder;
@@ -125,7 +126,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
             }
             metrics.fieldFallback(distributor.name(), outcome.legacyReason());
         } else {
-            metrics.fieldFallback(distributor.name(), "mode");
+            metrics.fieldFallback(distributor.name(), FieldFallback.MODE);
         }
         Fetched searched = search(client, prepared, progress, deadline);
         if (mode == FieldIndexMode.AUGMENT) {
@@ -182,7 +183,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         } catch (RuntimeException e) {
             log.warn("Adding field candidates to the {} search '{}' failed: {}", distributor,
                     parsed.normalizedKey(), e.toString());
-            metrics.fieldFallback(distributor.name(), "sql_error");
+            metrics.fieldFallback(distributor.name(), FieldFallback.SQL_ERROR);
             return searched;
         }
     }
@@ -354,8 +355,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
      */
     private void recordPhrase(Distributor distributor, String phrase, int ladderStep, Collected collected,
                               int outOfStock, String queryKey, Instant at) {
-        if (journal == null) {
-            return;
+        if (journal == null || collected.error() != null) {
+            return;   // a failed later page: the phrase was not answered (DESIGN.md 3.2)
         }
         try {
             journal.record(new PhraseJournalRepository.Entry(distributor, DistributorPhraser.phraseKey(phrase), phrase, at,

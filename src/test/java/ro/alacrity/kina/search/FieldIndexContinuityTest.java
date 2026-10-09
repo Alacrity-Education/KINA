@@ -21,6 +21,7 @@ import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartResponse;
 import ro.alacrity.kina.domain.SearchRequest;
+import ro.alacrity.kina.metrics.FieldFallback;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.field.FieldSearchShadow;
 import ro.alacrity.kina.search.field.IndexColumn;
@@ -196,7 +197,7 @@ class FieldIndexContinuityTest {
         assertThat(second.cache()).isEqualTo(CacheStatus.HIT);
         assertThat(mouser.asked).isEmpty();
         org.mockito.Mockito.verify(metrics, org.mockito.Mockito.times(2)).fieldServed("MOUSER");
-        org.mockito.Mockito.verify(metrics, org.mockito.Mockito.never()).fieldFallback("MOUSER", "incomplete");
+        org.mockito.Mockito.verify(metrics, org.mockito.Mockito.never()).fieldFallback("MOUSER", FieldFallback.INCOMPLETE);
     }
 
     @Test

@@ -48,6 +48,23 @@ public abstract class FieldSql {
 
     private static final Pattern IDENTIFIER = Pattern.compile("[a-z][a-z0-9_]*");
 
+    /**
+     * True for the stated-only form: every value predicate demands a stated, matching value instead of also keeping
+     * the rows that do not state it, and the requested ratings are stated (never compared). These are exactly the rows
+     * the superset form orders first (every requested column stated), in a form an index can seek.
+     */
+    private final boolean statedOnly;
+
+    /** The superset form ({@code statedOnly} false) or the stated-only form of a dialect. */
+    protected FieldSql(boolean statedOnly) {
+        this.statedOnly = statedOnly;
+    }
+
+    /** True for the stated-only form ({@link #statedOnly}). */
+    public final boolean statedOnly() {
+        return statedOnly;
+    }
+
     /** The table the statement reads. */
     protected abstract String table();
 
@@ -63,10 +80,12 @@ public abstract class FieldSql {
     /** The SQL of {@code value NOT IN (values)} with its parameters added to {@code params}. */
     protected abstract String notIn(String value, List<String> values, List<Object> params);
 
-    /** An equality on a column or an {@code attrs} key, NULL kept. */
+    /** An equality on a column or an {@code attrs} key, NULL kept unless {@link #statedOnly}. */
     protected abstract String equal(IndexColumn column, Object value, List<Object> params);
 
-    /** {@code array column is empty or has an element in [low, high]}. */
+    /**
+     * The array column has an element in {@code [low, high]}, or (unless {@link #statedOnly}) it is empty.
+     */
     protected abstract String anyInRange(IndexColumn column, double low, double high, List<Object> params);
 
     /** True when the array column holds an element. */
@@ -149,14 +168,6 @@ public abstract class FieldSql {
         return terms.isEmpty() ? null : "(" + String.join(" + ", terms) + ")";
     }
 
-    /**
-     * True when the requested ratings are part of the {@code WHERE} clause as stated ({@code col IS NOT NULL}, never
-     * compared): only the confirmed-only form of {@link SqliteFieldSql}, which selects the first tier of its order.
-     * Every statement keeps a part below spec, so the Java check can exclude and count it.
-     */
-    protected boolean ratingsConfirmedInWhere() {
-        return false;
-    }
 
     /**
      * True when the requested ratings count among the stated columns ({@code confirmed}, SQLite's {@code stated}):
@@ -213,7 +224,7 @@ public abstract class FieldSql {
         for (FieldPredicate p : query.ratings()) {
             if (ratingsStated()) {
                 stated.addAll(statedSql(p));
-                if (ratingsConfirmedInWhere()) {
+                if (statedOnly) {
                     inner.addAll(statedSql(p));
                 }
             }
@@ -246,40 +257,47 @@ public abstract class FieldSql {
             case Range r -> {
                 params.add(r.low());
                 params.add(r.high());
-                yield "(" + isNull(r.column()) + " OR " + number(r.column()) + " BETWEEN ? AND ?)";
+                yield "(" + orUnstated(isNull(r.column())) + number(r.column()) + " BETWEEN ? AND ?)";
             }
             case AtLeast a -> {
                 params.add(a.min());
                 String col = number(a.column());
-                yield "(" + isNull(a.column()) + " OR " + col + " >= ?" + (a.rating() ? " OR " + col + " <= 0" : "")
+                yield "(" + orUnstated(isNull(a.column())) + col + " >= ?" + (a.rating() ? " OR " + col + " <= 0" : "")
                         + ")";
             }
             case AtMost a -> {
                 params.add(a.max());
-                yield "(" + isNull(a.column()) + " OR " + number(a.column()) + " <= ?)";
+                yield "(" + orUnstated(isNull(a.column())) + number(a.column()) + " <= ?)";
             }
             case Equal e -> equal(e.column(), e.value(), params);
-            case OneOf o -> "(" + isNull(o.column()) + " OR " + in(text(o.column()), o.values(), params) + ")";
-            case NoneOf n -> "(" + isNull(n.column()) + " OR " + notIn(text(n.column()), n.values(), params) + ")";
+            case OneOf o -> "(" + orUnstated(isNull(o.column())) + in(text(o.column()), o.values(), params) + ")";
+            // NOT IN is never true for NULL: the stated-only form needs no IS NOT NULL
+            case NoneOf n -> "(" + orUnstated(isNull(n.column())) + notIn(text(n.column()), n.values(), params) + ")";
             case AnyInRange a -> anyInRange(a.column(), a.low(), a.high(), params);
             case PackageIs pk -> {
-                StringBuilder sql = new StringBuilder("(package_readable = ").append(bool(false));
+                List<String> any = new ArrayList<>();
                 if (pk.key() != null) {
-                    sql.append(" OR package_key = ?");
+                    any.add("package_key = ?");
                     params.add(pk.key());
                 }
                 if (pk.canDiameterMm() != null && pk.canLengthMm() != null) {
-                    sql.append(" OR (can_d_mm BETWEEN ? AND ? AND can_l_mm BETWEEN ? AND ?)");
+                    any.add("(can_d_mm BETWEEN ? AND ? AND can_l_mm BETWEEN ? AND ?)");
                     params.add(pk.canDiameterMm() - pk.margin());
                     params.add(pk.canDiameterMm() + pk.margin());
                     params.add(pk.canLengthMm() - pk.margin());
                     params.add(pk.canLengthMm() + pk.margin());
                 }
                 if (pk.neutralClass() != null) {
-                    sql.append(" OR package_class = ?");
+                    any.add("package_class = ?");
                     params.add(pk.neutralClass());
                 }
-                yield sql.append(')').toString();
+                String alternatives = String.join(" OR ", any);
+                if (statedOnly) {
+                    // a readable package that matches (a package KINA cannot read is the unstated branch)
+                    yield any.isEmpty() ? "package_readable = " + bool(true)
+                            : "(package_readable = " + bool(true) + " AND (" + alternatives + "))";
+                }
+                yield "(package_readable = " + bool(false) + (any.isEmpty() ? "" : " OR " + alternatives) + ")";
             }
             case Absent a -> isNull(a.column());
             case Word w -> word(w.token(), params);
@@ -307,6 +325,14 @@ public abstract class FieldSql {
             return List.of(nonEmpty(a.column()));
         }
         return p.stated().stream().map(c -> "NOT " + isNull(c)).toList();
+    }
+
+    /**
+     * The branch of a value predicate that keeps a row which does not state the column: {@code unstated + " OR "} in
+     * the superset form, empty in the stated-only form ({@link #statedOnly}). The one place the two forms differ.
+     */
+    protected final String orUnstated(String unstated) {
+        return statedOnly ? "" : unstated + " OR ";
     }
 
     /** {@code col IS NULL}, or the key absent from {@code attrs}. */

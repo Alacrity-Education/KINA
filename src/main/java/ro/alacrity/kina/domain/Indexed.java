@@ -34,6 +34,16 @@ public @interface Indexed {
     /** The relative slack of a rating's rule: rounding noise only, the Java check compares exactly. */
     double RATING_SLACK = 1e-6;
 
+    /** The significant digits of every {@link ColumnType#FLOAT8} value the writer stores. */
+    int SIGNIFICANT_DIGITS = 9;
+
+    /**
+     * The relative slack every range adds on both bounds for the writer's rounding to {@link #SIGNIFICANT_DIGITS}
+     * digits (a stored value differs from the part's by at most half a unit of the last digit, 5e-9 of the value):
+     * relative, so it widens a 1 pF and a 10 MOhm range alike, never by an absolute amount in the column's unit.
+     */
+    double ROUNDING_SLACK = 1e-8;
+
     /** The column; empty for the column of the kind's measure ({@link PartAttribute} declaration). */
     String column() default "";
 

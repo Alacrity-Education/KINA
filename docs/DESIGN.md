@@ -620,8 +620,10 @@ row also when it made no call) and a rollback to the other modes find the histor
 
 **A failed call** (validation 2026-10-09, phase C2): the flow makes no further call to that distributor in the
 request, adds the request's cached list (expired or not) to the candidates and reads the remaining relaxed steps
-from the index, so a relaxed step the cache can answer still answers (cache `stale`, the `error`, `fallback_query`
-and `constraints_relaxed` of that step). When no step had a part the Java check returns, the expired cached list is
+from the index, so a relaxed step the cache can answer still answers (cache `stale`, or `partial` when a call of the
+request answered before the failure, with the `error`, `fallback_query` and `constraints_relaxed` of that step). A
+later page that fails keeps the parts of the earlier pages (cached), but the phrase is not journaled: it was not
+answered, so the next request asks it again. When no step had a part the Java check returns, the expired cached list is
 served as the cached-search path serves it (`stale`, the `error`); without one, the index candidates with the error;
 without those, the error and an empty list as before. `field_steps_tried` counts every step read.
 
@@ -629,7 +631,7 @@ without those, the error and an empty list as before. `field_steps_tried` counts
 
 | Field | Meaning |
 |---|---|
-| `cache` | `hit`: answered from the index and the cache, no distributor call (`fetched_live` false); `miss`: the distributor was asked, and only the request's own phrase; `partial`: asked at a relaxed step (at least one call with a relaxed phrase); `stale`: the live call failed and the parts come from the index or an expired list; `bypassed` and `not_applicable` as before |
+| `cache` | `hit`: answered from the index and the cache, no distributor call (`fetched_live` false); `miss`: the distributor was asked, and only the request's own phrase; `partial`: asked at a relaxed step (at least one call with a relaxed phrase), or a call failed after a call of the request answered (a later page of the same phrase included), with the `error`; `stale`: a call failed and none answered, the parts come from the index or an expired list, with the `error`; `bypassed` and `not_applicable` as before. The rule (v0.16, docs review C3): any failed call with no successful call is `stale`, a failed call after a successful one is `partial` with `error` |
 | `fetched_live` | true when this search called the distributor (`miss`, `partial`, `bypassed`, and `stale` after a failed call); false when no call was made (`hit`, `not_applicable`, LCSC). Always `live_calls > 0`. Present in every mode |
 | `live_calls` | the distributor search calls this request made for the distributor: one per page, every phrase (relaxed steps and fallback phrases included), failed calls included; 0 when none and always 0 for LCSC. Stock refreshes and the direct part-number lookups are not search calls and are not counted. Present in every mode |
 | `field_steps_tried` | the steps of the field query evaluated before the answer (1: step 0 answered; after a failed call every step is read); 0 on the cached-search path and for LCSC |
@@ -2225,7 +2227,10 @@ has a rule or is Java only.
 | `LIFE` | `attrs.life` | float8 | GTE, slack 0.000001 |
 | `ROWS` | `rows_count` | int2 | EQUAL |
 
-Predicates: `RANGE` is `col BETWEEN x - |x| slack - margin AND x + |x| slack + margin`; `GTE` a minimum
+Predicates: `RANGE` is `col BETWEEN x - |x| (slack + r) - margin AND x + |x| (slack + r) + margin`, where `r` is
+`Indexed.ROUNDING_SLACK` (1e-8, relative: the writer rounds every value to `Indexed.SIGNIFICANT_DIGITS`, 9, so a
+stored value differs from the part's by at most 5e-9 of it; until 0.15 an absolute 1e-12 widened every range, the
+whole of a 1 pF value); `GTE` a minimum
 `col >= x (1 - slack)`, for a rating also `OR col <= 0` (a part value of 0 or less is never below spec); `LTE` a maximum
 `col <= x (1 + slack) + margin`; `EQUAL` an equality (dielectric in lower case); `IN_COMPATIBLE` the family as a closed
 set (`family = ANY(compatible families)`, `ComponentFamily.compatible`), every other kind as the vocabulary values its
@@ -2509,7 +2514,7 @@ Tool parameter names are the Java parameter names (`-parameters`), so the tool m
 |---|---|
 | `GET /api/v1/parts/search?q=&max_results=&distributors=LCSC,TME&bypass_cache=&quantity=&detail=` | `SearchResponse`; `quantity` 1..10 000 000 (default 1), `detail` `compact` (default) or `full` |
 | `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case: `queries[{query, max_results, quantity}]`, `distributors`, `bypass_cache`, `detail`), returns `{results: [...]}` |
-| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=`, `GET /api/v1/parts/{distributor}?part_number=&bypass_cache=&quantity=&detail=` and `GET /api/v1/parts/lookup?distributor=&part_number=&bypass_cache=&quantity=&detail=` | `PartResponse`; in the path form the part number is the rest of the path, so TME symbols containing `/` work unencoded, and percent-encoded segments are decoded (`%25` for `%`, `%5C` for a backslash, `%2F` for `/`, `%20` for a space; a `+` in a path is a plus sign). The query-parameter form `?part_number=` is the documented way for awkward part numbers (percent-encode the value; `+` as `%2B`, since a `+` in a query string is a space). An MPN works as for `get_part`; a part listed without stock is returned with `stock` 0 and `availability.status` `out_of_stock`; 404 problem with `reason` `not_found` or `out_of_stock` (identity only: then also `identity`) |
+| `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=`, `GET /api/v1/parts/{distributor}?part_number=&bypass_cache=&quantity=&detail=` and `GET /api/v1/parts/lookup?distributor=&part_number=&bypass_cache=&quantity=&detail=` | `PartResponse`; in the path form the part number is the rest of the path, so TME symbols containing `/` work unencoded (`%20` is a space, a `+` in a path is a plus sign); a percent-encoded `%` (`%25`), backslash (`%5C`) or slash (`%2F`) in a path is refused with HTTP 400. The query-parameter forms `?part_number=` and `/lookup` are the documented way for such part numbers (percent-encode the value; `+` as `%2B`, since a `+` in a query string is a space). An MPN works as for `get_part`; a part listed without stock is returned with `stock` 0 and `availability.status` `out_of_stock`; 404 problem with `reason` `not_found` or `out_of_stock` (identity only: then also `identity`) |
 | `GET /api/v1/distributors` | same as `list_distributors` |
 | `GET /api/v1/metrics/summary` | key counters and every persisted counter and timer as JSON, plus `distributor_quota` (the in-memory API quota usage of Mouser and TME, section 3.7) |
 | `GET /actuator/health`, `GET /actuator/info`, `GET /actuator/prometheus` | management port only (`KINA_METRICS_PORT`, 9090), no authentication (section 3.7); not served on the main port |
@@ -2522,14 +2527,13 @@ Distributor names are case-insensitive everywhere (query, path and JSON body). E
 `/api/**` and `/mcp/**` require a bearer token
 (section 6), except in development mode where missing credentials fall back to the dev admin.
 
-**Encoded characters in the part path** (phase C2; 77 cached production parts hold `%` or a backslash). Spring
-Security's `StrictHttpFirewall` rejects `%25`, `%5C` and `%2F` and Tomcat rejects an encoded slash or backslash, so
-those part numbers got HTTP 400 before. `PartPathFirewall` (installed with `WebSecurityCustomizer`) accepts the three
-encodings on `GET /api/v1/parts/...` only and stays strict everywhere else (a path that is not normalised after
-decoding, a null byte, a semicolon and non-printable characters are still rejected on every path); the Tomcat
-connector passes `%2F` and `%5C` through undecoded (`encodedSolidusHandling` and `encodedReverseSolidusHandling`
-`passthrough`, `PartPathConnectorCustomizer`), and Spring MVC decodes the path variable. `PartsApiTest` checks `%`,
-`\`, `/`, `+` and spaces in both forms and that `/api/v1/distributors%2Fx` stays 400.
+**Encoded characters in the part path** (77 cached production parts hold `%` or a backslash). The request firewall is
+Spring Security's default `StrictHttpFirewall` on every path and Tomcat keeps its default handling of an encoded slash
+and backslash, so a percent-encoded `%`, `\` or `/` in a path gets HTTP 400. Such part numbers are looked up with the
+query-parameter forms, which carry any value (v0.16, review B10: the 0.15 relaxation of the firewall and the connector
+for `GET /api/v1/parts/**` was removed; the query forms already existed). `PartsApiTest` checks `%`, `\`, `/`, `+` and
+spaces in the query forms, ordinary part numbers (a plain `/` included) in the path form, and that every encoded form in
+a path stays 400.
 
 ## 6. Security
 
@@ -3170,7 +3174,10 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
     the pool. The full file measured (validation 2026-10-09, 16 threads): 723 865 rows extracted and inserted in
     52.5 s (the extraction alone ran at about 33 000 rows/s in the study), indexes and `ANALYZE` 2.9 s, warm-up 5.9 s,
     sidecar 402 MB. A failed build is logged (`last_error`), the new file is installed without a sidecar
-    and the FTS path serves until the next check builds it.
+    and the FTS path serves until the next check builds it. A failed rename of the sidecar after the main file was
+    installed is the sidecar's failure only: the download is recorded (`jlcpcb_database`, the status shows the new
+    file), `last_error` names the typed table, the built sidecar is deleted and the FTS path serves until the next
+    check builds it (v0.16, review B8).
   - **Build, adoption.** A main file without a current sidecar (a pre-seeded volume, an older `INDEX_VERSION`, a new
     extractor, a refresh that was interrupted between the two renames) is detected by `check()`; the sidecar is built in
     the background from the file in use (while the FTS path serves), warmed, and swapped in under the write lock. One
@@ -3180,6 +3187,9 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
     `ParametricExtractor.INDEX_VERSION` and `kina_meta.source` equals the fingerprint of the main file open on the same
     connection. A missing, older or foreign sidecar (a new main file with an old sidecar, which a crash between the two
     renames leaves) means "no typed table": every search takes today's FTS path, and `field_index.available` is false.
+    The sidecar is attached to every connection of the pool or to none: when it cannot be attached to a later
+    connection (it vanished or was replaced after the first one read it), it is detached from all of them and the FTS
+    path serves; the pool itself stays open (v0.16, review B7; `JlcpcbSqlitePoolTest`).
   - **Status.** `list_distributors` `jlcpcb.field_index`: `{enabled, available, version, rows, built_at, building}`
     (`version`, `rows`, `built_at` null unless available).
 - Field query (`LcscRetriever`, `LcscFieldSearch`, `SqliteFieldSql`): with the typed table attached, a request that

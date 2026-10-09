@@ -264,6 +264,12 @@ class FieldQuerySupersetTest {
             if (!lite.equals(pg)) {
                 violations.add(text + " step " + step.index() + ": the dialects differ");
             }
+            // the stated-only form is exactly the first tier of the superset form: the rows that state every
+            // requested column (review A9: one renderer for both forms)
+            Set<String> stated = sqlite(SqliteFieldSql.CONFIRMED, query, step, false);
+            if (!stated.equals(sqlite(SqliteFieldSql.INSTANCE, query, step, true)) || !lite.containsAll(stated)) {
+                violations.add(text + " step " + step.index() + ": the stated-only rows are not the confirmed ones");
+            }
             pgRelaxed = pg;
             liteRelaxed = lite;
         }
@@ -328,11 +334,17 @@ class FieldQuerySupersetTest {
     }
 
     private static Set<String> sqlite(FieldQuery query, FieldQuery.Step step) {
-        FieldSql.Statement statement = SqliteFieldSql.INSTANCE.select(query, step, POOL.size() + 1);
+        return sqlite(SqliteFieldSql.INSTANCE, query, step, false);
+    }
+
+    /** The rows of one step in {@code dialect}; with {@code confirmedOnly} only those its order puts first. */
+    private static Set<String> sqlite(SqliteFieldSql dialect, FieldQuery query, FieldQuery.Step step,
+                                      boolean confirmedOnly) {
+        FieldSql.Statement statement = dialect.select(query, step, POOL.size() + 1);
         Set<String> out = new HashSet<>();
         synchronized (FieldQuerySupersetTest.class) {
             try {
-                read(statement, out);
+                read(statement, out, confirmedOnly);
             } catch (SQLException e) {
                 throw new IllegalStateException(e);
             }
@@ -340,14 +352,17 @@ class FieldQuerySupersetTest {
         return out;
     }
 
-    private static void read(FieldSql.Statement statement, Set<String> out) throws SQLException {
+    private static void read(FieldSql.Statement statement, Set<String> out, boolean confirmedOnly)
+            throws SQLException {
         try (PreparedStatement ps = sqlite.prepareStatement(statement.sql())) {
             for (int i = 0; i < statement.params().size(); i++) {
                 ps.setObject(i + 1, statement.params().get(i));
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    out.add(PartKey.of(Distributor.valueOf(rs.getString(1)), rs.getString(2)));
+                    if (!confirmedOnly || rs.getInt(3) == 1) {
+                        out.add(PartKey.of(Distributor.valueOf(rs.getString(1)), rs.getString(2)));
+                    }
                 }
             }
         }

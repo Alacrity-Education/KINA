@@ -135,6 +135,33 @@ class JlcpcbDatabaseManagerFieldIndexTest {
     }
 
     @Test
+    void aFailedInstallOfTheTableAfterTheNewFileIsInstalledStillRecordsTheDownload() throws Exception {
+        // review B8: the main file is renamed, then installing the sidecar fails
+        Path staged = stage();
+        JlcpcbDownloader.DownloadedDatabase downloaded = new JlcpcbDownloader.DownloadedDatabase(staged,
+                JlcpcbDatabaseValidator.validate(staged));
+        when(downloader.download(anyString(), anyString(), any())).thenReturn(downloaded);
+        doAnswer(inv -> {
+            Files.move(staged, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            return null;
+        }).when(downloader).install(downloaded, file);
+        doAnswer(inv -> {
+            throw new IOException("rename refused");
+        }).when(downloader).installIndex(any(), any());
+
+        manager.runDownload();
+
+        verify(repository).save(any());
+        JlcpcbStatus status = manager.status().orElseThrow();
+        assertThat(status.downloadedAt()).as("current is the new file").isEqualTo(NOW);
+        assertThat(status.lastError()).contains("typed table").contains("rename refused");
+        assertThat(search.isAvailable()).isTrue();
+        assertThat(search.fieldIndexAvailable()).isFalse();
+        assertThat(search.search("10uF X7R 0805", 0, 10).total()).isPositive();
+        assertThat(FieldIndexFile.sidecar(staged)).as("the built sidecar is removed").doesNotExist();
+    }
+
+    @Test
     void adoptingAFileWithoutTheTableBuildsItInTheBackgroundWhileTheFtsPathServes() throws Exception {
         JlcpcbTestDatabase.create(file, JlcpcbTestDatabase.typed());
         CountDownLatch inBuild = new CountDownLatch(1);

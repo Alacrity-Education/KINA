@@ -35,6 +35,30 @@ class MetricDocumentationTest {
         assertThat(documented()).containsExactlyInAnyOrderEntriesOf(declared);
     }
 
+    /**
+     * A tag with a closed set of values ({@link Metric#tagValues()}, such as the {@code reason} of
+     * {@code kina_field_fallbacks_total}): the help text lists every value and the DESIGN.md row names each one.
+     */
+    @Test
+    void theDeclaredTagValuesAreInTheHelpTextAndTheDocumentedRow() throws IOException {
+        List<String> lines = Files.readAllLines(DESIGN, StandardCharsets.UTF_8);
+        for (Metric metric : Metric.values()) {
+            Metric.TagValues values = metric.tagValues();
+            if (values == null) {
+                continue;
+            }
+            String row = lines.stream().filter(l -> l.startsWith("| `" + metric.prometheusName() + "`")).findFirst()
+                    .orElseThrow();
+            String meaning = row.split("\\|", -1)[4];
+            List<String> documented = CODE.matcher(meaning).results().map(r -> r.group(1)).toList();
+            assertThat(documented).as("values of %s in DESIGN.md", metric.prometheusName())
+                    .containsAll(values.values());
+            values.values().forEach(v -> assertThat(metric.help()).as("help of %s", metric).contains(v));
+        }
+        assertThat(Metric.FIELD_FALLBACKS.tagValues().values())
+                .containsExactly("mode", "bypass", "incomplete", "generic", "sql_error");
+    }
+
     @Test
     void aKeyTakesOneValuePerDeclaredTag() {
         assertThat(Metric.DISTRIBUTOR_CALLS.key("MOUSER", "ok", "capacitor"))

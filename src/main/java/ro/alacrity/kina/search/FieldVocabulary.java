@@ -2,6 +2,7 @@ package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ComponentFamily;
+import ro.alacrity.kina.domain.Indexed;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.math.BigDecimal;
@@ -19,7 +20,7 @@ import java.util.Locale;
 public class FieldVocabulary {
 
     /** Significant digits of every SI value the writer stores (absorbs the floating-point noise of the extractor). */
-    public static final int SIGNIFICANT_DIGITS = 9;
+    public static final int SIGNIFICANT_DIGITS = Indexed.SIGNIFICANT_DIGITS;
 
     /** The speed class stored for {@code USB 3.x} without a generation: a request up to Gen 2x2 keeps it. */
     public static final int USB_GENERATION_UNKNOWN_CLASS = 4;

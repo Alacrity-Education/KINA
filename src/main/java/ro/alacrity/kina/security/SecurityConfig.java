@@ -74,16 +74,6 @@ public class SecurityConfig {
     @Autowired private ObjectProvider<OidcUserSynchronizer> oidcUserSynchronizer;
 
     /**
-     * The request firewall: strict, except that the part lookup path accepts a percent-encoded {@code %}, backslash
-     * and slash in the part number ({@link PartPathFirewall}).
-     */
-    @Bean
-    org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer partPathFirewall() {
-        PartPathFirewall firewall = new PartPathFirewall();
-        return web -> web.httpFirewall(firewall);
-    }
-
-    /**
      * Everything served on the management port: health, info and the Prometheus scrape endpoint, unauthenticated.
      * {@link EndpointRequest} matches only requests of the management server when it has its own port.
      */

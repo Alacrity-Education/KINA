@@ -17,7 +17,14 @@ import java.util.Map;
 public class PostgresFieldSql extends FieldSql {
 
     /** The renderer for {@code part_index}. */
-    public static final PostgresFieldSql INSTANCE = new PostgresFieldSql();
+    public static final PostgresFieldSql INSTANCE = new PostgresFieldSql(false);
+
+    /** The stated-only form of {@link #INSTANCE} ({@link FieldSql#statedOnly()}). */
+    public static final PostgresFieldSql STATED = new PostgresFieldSql(true);
+
+    private PostgresFieldSql(boolean statedOnly) {
+        super(statedOnly);
+    }
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
@@ -52,10 +59,10 @@ public class PostgresFieldSql extends FieldSql {
     protected String equal(IndexColumn column, Object value, List<Object> params) {
         if (column.json()) {
             params.add(JSON.writeValueAsString(Map.of(column.key(), value)));
-            return "(" + isNull(column) + " OR attrs @> ?::jsonb)";
+            return "(" + orUnstated(isNull(column)) + "attrs @> ?::jsonb)";
         }
         params.add(value);
-        return "(" + isNull(column) + " OR " + identifier(column.name()) + " = ?)";
+        return "(" + orUnstated(isNull(column)) + identifier(column.name()) + " = ?)";
     }
 
     @Override
@@ -63,7 +70,7 @@ public class PostgresFieldSql extends FieldSql {
         params.add(low);
         params.add(high);
         String col = identifier(column.name());
-        return "(cardinality(" + col + ") = 0 OR EXISTS (SELECT 1 FROM unnest(" + col
+        return "(" + orUnstated("cardinality(" + col + ") = 0") + "EXISTS (SELECT 1 FROM unnest(" + col
                 + ") AS e(v) WHERE e.v BETWEEN ? AND ?))";
     }
 

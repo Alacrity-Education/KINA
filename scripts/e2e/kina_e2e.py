@@ -826,8 +826,13 @@ def suite_rest(base: str, token: str, rec: Recorder):
             {"q": SEARCH_QUERY, "max_results": 1, "distributors": "TME"}), headers=auth).json()
         symbol = search["distributors"][0]["parts"][0]["part_number"]
     resp = api.get("/api/v1/parts/TME/" + symbol, headers=auth)
-    rec.check(f"rest: GET /api/v1/parts/TME/{symbol}", resp.status == 200 and resp.json().get(
-        "part_number") == symbol, f"stock {resp.json().get('stock') if resp.status == 200 else None}", resp.millis)
+    # the query-parameter form, the documented one for part numbers with "%" or "\\" (API.md), answers the same
+    by_query = api.get("/api/v1/parts/TME?" + urllib.parse.urlencode({"part_number": symbol},
+                                                                    quote_via=urllib.parse.quote), headers=auth)
+    rec.check(f"rest: GET /api/v1/parts/TME/{symbol} (path and ?part_number=)", resp.status == 200 and resp.json().get(
+        "part_number") == symbol and by_query.status == 200 and by_query.json().get("part_number") == symbol,
+              f"stock {resp.json().get('stock') if resp.status == 200 else None}, query form {by_query.status}",
+              resp.millis)
 
     resp = api.get("/api/v1/parts/LCSC/C999999999", headers=auth)
     rec.check("rest: unknown part -> 404 problem", resp.status == 404 and "problem+json" in resp.header(

@@ -44,9 +44,6 @@ public class FieldQueryBuilder {
     /** Free-text tokens of at least this many letters and digits are word prefixes; shorter ones are substrings. */
     public static final int WORD_MIN_LENGTH = 3;
 
-    /** Absolute widening of every range, against values that are exactly zero. */
-    private static final double EPSILON = 1e-12;
-
     private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}]+");
 
     /**
@@ -350,12 +347,14 @@ public class FieldQueryBuilder {
         boolean test(String wanted, String actual);
     }
 
-    private static double low(double value, Indexed rule) {
-        return value - Math.abs(value) * rule.slack() - rule.margin() - EPSILON;
+    /** The lower bound of a range: the rule's slack and margin, plus the writer's rounding (relative). */
+    static double low(double value, Indexed rule) {
+        return value - Math.abs(value) * (rule.slack() + Indexed.ROUNDING_SLACK) - rule.margin();
     }
 
-    private static double high(double value, Indexed rule) {
-        return value + Math.abs(value) * rule.slack() + rule.margin() + EPSILON;
+    /** The upper bound of a range: the rule's slack and margin, plus the writer's rounding (relative). */
+    static double high(double value, Indexed rule) {
+        return value + Math.abs(value) * (rule.slack() + Indexed.ROUNDING_SLACK) + rule.margin();
     }
 
     private static Double number(Object value) {
