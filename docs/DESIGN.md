@@ -2947,7 +2947,9 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 
 - Config: `kina.jlcpcb.data-dir` (default `./data/jlcpcb`, in Docker `/data/jlcpcb`), `library` (default `parts-fts5.db`;
   alternatives `current-parts-fts5.db`, `basic-parts-fts5.db`), `base-url=https://bouni.github.io/kicad-jlcpcb-tools/`,
-  `refresh-after=5d`, `check-interval=1h`, `max-results-per-search=200`.
+  `refresh-after=5d`, `check-interval=1h`, `max-results-per-search=200`, `pool-size=4` (read-only connections),
+  `pool-wait=10s` (the longest a query waits for a free connection), `field-index.enabled=false` (the typed table, below)
+  and `field-index.threads=0` (extraction threads, 0 = `min(16, cores)`).
 - Download (same technique as kicad-jlcpcb-tools): read `<base>/chunk_num_fts5.txt` (for `parts-fts5.db`; the sentinel is
   `chunk_num_<name-without-.db>.txt` for the other libraries, e.g. `chunk_num_current_parts_fts5.txt`) -> integer N;
   download `<base>/<library>.zip.001` .. `.NNN` (80 MB chunks, zero-padded to 3 digits) into a temp directory, concatenate
@@ -2962,7 +2964,77 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   `kina`, so a new named volume inherits that; a file copied in as root only needs to be readable if the directory is
   writable). A scheduled task (`check-interval`) re-checks. While no database is available the LCSC client reports
   `UNAVAILABLE` ("JLCPCB database not downloaded yet"); searches on other distributors proceed. Swapping the file takes a
-  write lock; queries take read locks; SQLite is opened read-only (`jdbc:sqlite:<path>?mode=ro`, `open_mode=1`).
+  write lock; queries take read locks.
+- Connection pool (`JlcpcbSqliteSearch`): `pool-size` read-only connections, each opened
+  `jdbc:sqlite:file:<path>?mode=ro&immutable=1` (the file is never modified in place, only replaced by a rename, so
+  SQLite needs no file locking and no change checks) with the `kina_value` and `kina_at_least` functions registered per
+  connection. A query takes the read lock, borrows a connection (a queue; at most `pool-wait`, else the query fails with
+  `UNAVAILABLE`) and returns it. The swap and `reopen` take the write lock, which waits for the running queries, close
+  every connection and open the new set, so a connection never reads a replaced inode. Measured on the full file (7.1 M
+  rows, 24 cores, 8 threads x 20 searches of 8 different queries, FTS path): 1 connection 7.8 searches/s, 2: 15.8,
+  4: 28.1, 8: 53.8; the typed field query: 88, 183, 395 and 750 searches/s.
+- Typed in-stock table (`kina.jlcpcb.field-index.enabled`, field search phase B, DESIGN.md 3.8; study 9.4 and 9.5): the
+  in-stock rows (`CAST("Stock" AS INTEGER) > 0`, about 724 000 of 7.1 M) are also kept as a typed table `part_index`
+  (the SQLite form of the Postgres table of section 8: the same columns, arrays and `attrs` as JSON text, booleans as 0
+  and 1, plus `fts_rowid` (the rowid of the row in the FTS5 table `parts`) and `stock`).
+  - **Sidecar file, not the main file.** The table lives in `<data-dir>/<library without .db>.index.db`
+    (`parts-fts5.index.db`), next to the main file. The main file stays read-only and `immutable`; nothing is ever written
+    to it. Building the table inside a copy of the 5.3 GB file would copy 5.3 GB on every refresh and on every extractor
+    version change. Readers `ATTACH DATABASE 'file:<sidecar>?mode=ro&immutable=1' AS idx` on every pooled connection; the
+    table is read as `part_index` (no other table of that name exists) and joins the FTS5 table by `fts_rowid`.
+  - **Contents.** `part_index` (built by `JlcpcbFieldIndexBuilder`: the in-stock rows are streamed from the main file in
+    batches of 4096, mapped with `LcscPartMapper`, enriched and turned into index rows by `PartIndexRows` on
+    `field-index.threads` threads, inserted in order by a writer thread) with its indexes (`(family, capacitance_f)`,
+    `(family, resistance_ohm)`, `(family, inductance_h)`, `(family, positions)`, `(family, usb_type)` (all partial on
+    the value `IS NOT NULL`), `(package_key, family)`, `(family)`, `(fts_rowid)`), `ANALYZE`, and `kina_meta(key,
+    value)` with `index_version` (`ParametricExtractor.INDEX_VERSION`), `rows`, `built_at` and `source` (the
+    fingerprint of the main file: its size and its `meta` row, part count, date and last update; no scan).
+  - **Build, fresh download.** After download and validation and before the rename, the manager builds the sidecar
+    from the file in `<data-dir>/tmp` as `<data-dir>/tmp/<library without .db>.index.db`, then warms both files (typed
+    counts, the biggest families, a few FTS5 matches: the page cache is warm before the swap, study 12.2), then, under
+    the search write lock, renames the **main file first, then the sidecar** (each one an atomic rename), and reopens
+    the pool. The full file measured: 723 865 rows extracted and inserted in 42 to 57 s (16 threads, the host busy with
+    other work; the extraction alone ran at about 33 000 rows/s in the study), indexes and `ANALYZE` 1.1 to 1.4 s,
+    warm-up 1 s, sidecar 387 MB. A failed build is logged (`last_error`), the new file is installed without a sidecar
+    and the FTS path serves until the next check builds it.
+  - **Build, adoption.** A main file without a current sidecar (a pre-seeded volume, an older `INDEX_VERSION`, a new
+    extractor, a refresh that was interrupted between the two renames) is detected by `check()`; the sidecar is built in
+    the background from the file in use (while the FTS path serves), warmed, and swapped in under the write lock. One
+    build at a time, never next to a download (a download builds its own).
+  - **Version check.** A sidecar is attached only when `kina_meta.index_version` equals the running
+    `ParametricExtractor.INDEX_VERSION` and `kina_meta.source` equals the fingerprint of the main file open on the same
+    connection. A missing, older or foreign sidecar (a new main file with an old sidecar, which a crash between the two
+    renames leaves) means "no typed table": every search takes today's FTS path, and `field_index.available` is false.
+  - **Status.** `list_distributors` `jlcpcb.field_index`: `{enabled, available, version, rows, built_at, building}`
+    (`version`, `rows`, `built_at` null unless available).
+- Field query (`LcscRetriever`, `LcscFieldSearch`, `SqliteFieldSql`): with the typed table attached, a request that
+  states at least one typed constraint (a family, value, package, rating, connector attribute...) runs as a
+  `FieldQuery` (`FieldQueryBuilder`, distributor LCSC, `allow_below_spec` as requested) instead of the FTS5 search; a
+  free-text-only request (`RP2040`, no constraint) keeps the FTS5 path, whose BM25 order is what it needs.
+  1. **Step 0, confirmed rows.** `SqliteFieldSql.CONFIRMED` renders the confirmed subset of the unrelaxed step: every
+     value predicate demands a stated, matching value (`capacitance_f BETWEEN ? AND ?` instead of `IS NULL OR ...`).
+     These are exactly the rows the full statement flags confirmed. SQLite can seek this form (the planner lesson of
+     study 12.2: the `IS NULL OR` form is a residual filter that reads every row of the family), so the plan is
+     `SEARCH part_index USING INDEX part_index_cap (family=? AND capacitance_f>? AND capacitance_f<?)` (resistors:
+     `_res`; connectors: `_pos`; USB: `_usb`), checked with `EXPLAIN QUERY PLAN` in `LcscFieldIndexTest`. When at least
+     the candidate window of them exist (`max(max_results, search.candidate-window)`, at most `max-results-per-search`),
+     the highest-stock ones are the candidates and `total_results` is their count.
+  2. **Superset.** Otherwise `SqliteFieldSql.INSTANCE` (a part that does not state an attribute is kept, section 3.8):
+     the parts that state the most requested attributes first, then the highest stock, one pass with
+     `count(*) OVER ()` for `total_results`. It scans the family (about 50 to 110 ms warm on the full file).
+  3. **Relaxation.** While the step yields fewer candidates than the window, the next step of `FieldQuery.steps()`
+     (free text first, then the ladder kinds in `@Relax` order) runs the same way; the constraints and keywords a step
+     left out are reported as `constraints_relaxed` and `query_terms_dropped`.
+  4. **Fallback and merge.** When the ladder is exhausted with fewer candidates than the window, or none of the
+     candidates meets the request with its ratings verified, today's search (`JlcpcbQuery`, section above) runs and
+     fills the rest of the window; the parts are merged (one per LCSC number) and `total_results` is the FTS count then.
+     When the typed table is missing or not current, the request has no typed constraint, or the typed query fails
+     (logged), the FTS search serves alone, exactly as with `field-index.enabled=false`. The typed table never reduces
+     what a search can return.
+  Measured on the full file (window 40, warm / first run on a cold page cache): `10uF X7R 0805 25V` 53 ms (superset:
+  fewer than 40 confirmed parts) / 760 ms, `4.7k 1% 0603` 2.4 ms / 75 ms, `female header 1x6 right angle` 12 ms / 76 ms,
+  `USB-C receptacle 16 pin` 2.8 ms / 24 ms; the FTS path for the same queries 32, 33, 72, 23 ms warm and 400 to 1 025 ms
+  cold.
 - Schema (SQLite): `parts` is an **FTS5 virtual table with the trigram tokenizer** and columns
   `"LCSC Part", "First Category", "Second Category", "MFR.Part", "Package", "Solder Joint", "Manufacturer", "Library Type",
   "Description", "Datasheet", "Price", "Stock"` (`Solder Joint`, `Datasheet`, `Price`, `Stock` are unindexed). Also tables
@@ -3152,8 +3224,8 @@ kina:
       batch-size: 2000           # rows re-typed per UPDATE
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
             auto-download: true,    # false in src/test/resources/config/application.yml
-            pool-size: "${KINA_JLCPCB_POOL_SIZE:4}",                                     # phase B (section 3.8)
-            field-index: { enabled: "${KINA_JLCPCB_FIELD_INDEX_ENABLED:false}" } }    # phase B (section 3.8)
+            pool-size: "${KINA_JLCPCB_POOL_SIZE:4}", pool-wait: "${KINA_JLCPCB_POOL_WAIT:10s}",   # section 9.3
+            field-index: { enabled: "${KINA_JLCPCB_FIELD_INDEX_ENABLED:false}", threads: "${KINA_JLCPCB_FIELD_INDEX_THREADS:0}" } }   # section 9.3
 ```
 
 Production OIDC is configured only through `kina.security.oidc.*` (read when `kina.security.mode=prod`), not through

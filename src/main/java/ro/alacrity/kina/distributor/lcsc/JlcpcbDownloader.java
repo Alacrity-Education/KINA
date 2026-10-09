@@ -105,20 +105,35 @@ public class JlcpcbDownloader {
 
     /** Atomically renames the downloaded file over {@code target} (same filesystem: both live under the data dir). */
     public void install(DownloadedDatabase downloaded, Path target) throws IOException {
+        move(downloaded.file(), target);
+        log.info("Installed JLCPCB database at {}", target);
+    }
+
+    /**
+     * Atomically renames the typed-table sidecar built for the new file over {@code target}. Done right after
+     * {@link #install} (main file first): a reader that sees the new main file with the old sidecar finds that the
+     * sidecar's recorded source differs and serves the FTS path (DESIGN.md 9.3).
+     */
+    public void installIndex(Path built, Path target) throws IOException {
+        move(built, target);
+        log.info("Installed JLCPCB typed table at {}", target);
+    }
+
+    private static void move(Path from, Path target) throws IOException {
         Files.createDirectories(target.toAbsolutePath().getParent());
         try {
-            Files.move(downloaded.file(), target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(from, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (AtomicMoveNotSupportedException e) {
             log.warn("Atomic move not supported for {}, falling back to a plain replace", target);
-            Files.move(downloaded.file(), target, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(from, target, StandardCopyOption.REPLACE_EXISTING);
         }
-        log.info("Installed JLCPCB database at {}", target);
     }
 
     /** Deletes any leftovers in the temp directory (e.g. after a crash). */
     public void cleanTemp(Path dataDir, String library) {
         Path tmpDir = dataDir.resolve("tmp");
-        for (Path p : new Path[] {tmpDir.resolve(library + ".zip"), tmpDir.resolve(library)}) {
+        for (Path p : new Path[] {tmpDir.resolve(library + ".zip"), tmpDir.resolve(library),
+                FieldIndexFile.sidecar(tmpDir.resolve(library))}) {
             try {
                 Files.deleteIfExists(p);
             } catch (IOException e) {

@@ -96,7 +96,28 @@ public record DistributorStatusResponse(
             @JsonProperty("source_date") String sourceDate,
             @JsonProperty("part_count") Long partCount,
             @JsonProperty("downloading") boolean downloading,
-            @JsonProperty("last_error") String lastError
+            @JsonProperty("last_error") String lastError,
+            @JsonProperty("field_index") TypedTableSummary fieldIndex
+    ) {
+    }
+
+    /**
+     * The typed in-stock table of the JLCPCB data (DESIGN.md 9.3).
+     *
+     * @param enabled   {@code kina.jlcpcb.field-index.enabled}
+     * @param available the table is attached and current, so LCSC searches use the field query
+     * @param version   the extractor version of the table (null when not available)
+     * @param rows      its rows (null when not available)
+     * @param builtAt   when it was built (null when not available)
+     * @param building  a build of the table is running
+     */
+    public record TypedTableSummary(
+            @JsonProperty("enabled") boolean enabled,
+            @JsonProperty("available") boolean available,
+            @JsonProperty("version") Integer version,
+            @JsonProperty("rows") Long rows,
+            @JsonProperty("built_at") Instant builtAt,
+            @JsonProperty("building") boolean building
     ) {
     }
 

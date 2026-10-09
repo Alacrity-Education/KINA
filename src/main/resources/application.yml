@@ -111,5 +111,5 @@ kina:
       enabled: ${KINA_METRICS_BACKFILL_ENABLED:true}
       batch-size: 2000           # rows re-typed per UPDATE
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
-            auto-download: true, pool-size: "${KINA_JLCPCB_POOL_SIZE:4}",
-            field-index: { enabled: "${KINA_JLCPCB_FIELD_INDEX_ENABLED:false}" } }   # phase B (DESIGN.md 3.8)
+            auto-download: true, pool-size: "${KINA_JLCPCB_POOL_SIZE:4}", pool-wait: "${KINA_JLCPCB_POOL_WAIT:10s}",
+            field-index: { enabled: "${KINA_JLCPCB_FIELD_INDEX_ENABLED:false}", threads: "${KINA_JLCPCB_FIELD_INDEX_THREADS:0}" } }   # DESIGN.md 9.3

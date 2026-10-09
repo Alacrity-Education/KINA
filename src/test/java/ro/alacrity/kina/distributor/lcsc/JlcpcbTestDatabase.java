@@ -12,9 +12,9 @@ import java.util.List;
 
 /** Builds tiny JLCPCB-shaped SQLite databases (same FTS5 trigram schema as kicad-jlcpcb-tools) for tests. */
 @UtilityClass
-class JlcpcbTestDatabase {
+public class JlcpcbTestDatabase {
 
-    static final List<JlcpcbRow> SAMPLE = List.of(
+    public static final List<JlcpcbRow> SAMPLE = List.of(
             row("C15850", "Capacitors", "Multilayer Ceramic Capacitors MLCC - SMD/SMT", "CL21A106KAYNNNE", "0805",
                     "Samsung Electro-Mechanics", "Basic", "10uF 25V X5R ±10%", "1-199:0.0123,200-:0.0100", "5000000"),
             row("C15851", "Capacitors", "Multilayer Ceramic Capacitors MLCC - SMD/SMT", "CL21B106KOQNNNE", "0805",
@@ -37,7 +37,7 @@ class JlcpcbTestDatabase {
                     "Raspberry Pi", "Extended", "133MHz 264KB ARM Cortex-M0+ 2x\"dual core\"", "1-9:0.70,10-:0.65", "40000"));
 
     /** Connector rows with the real JLCPCB vocabulary (descriptions and packages copied from the 2026-10 database). */
-    static final List<JlcpcbRow> CONNECTORS = List.of(
+    public static final List<JlcpcbRow> CONNECTORS = List.of(
             row("C2897388", "Connectors", "Female Headers", "PM254-1-06-W-8.5", "Push-Pull,P=2.54mm", "HCTL", "Extended",
                     "-40℃~+105℃ 1 1x6P 2.54mm 3A 6P 8.5mm Copper alloy Right Angle Side Square Hole", "1-:0.05", "26473"),
             row("C5333441", "Connectors", "Female Headers", "A2541HWR-6P", "Push-Pull,P=2.54mm", "CJT", "Extended",
@@ -69,7 +69,7 @@ class JlcpcbTestDatabase {
                             + " 弯插,P=2.54mm", "1-:0.09", "4652"));
 
     /** Real {@code Connectors / USB Connectors} rows of the JLCPCB database (2026-10-05). */
-    static final List<JlcpcbRow> USB = List.of(
+    public static final List<JlcpcbRow> USB = List.of(
             row("C2765186", "Connectors", "USB Connectors", "TYPE-C 16PIN 2MD(073)", "SMD", "SHOU HAN", "Extended",
                     "-25℃~+85℃ 1 10 thousand cycles 16P 3A 5V Black Female Surface Mount, Right Angle Type-C",
                     "1-:0.1", "1013673"),
@@ -95,31 +95,66 @@ class JlcpcbTestDatabase {
                     "Jing Extension of the Electronic Co.", "Extended",
                     "1 1.5A 14.1mm 1500 Cycles 30V 4P Female Type-A USB 2.0 White 插件", "1-:0.05", "39160"));
 
+    /**
+     * Rows for the typed table: capacitors and resistors of several values, packages and ratings, rows with a blank
+     * description (nothing to extract), an out-of-stock row and 3000 more 0805 X7R capacitors (more than the candidate
+     * window).
+     */
+    public static List<JlcpcbRow> typed() {
+        List<JlcpcbRow> rows = new java.util.ArrayList<>(withUsb());
+        rows.add(row("C60001", "Capacitors", "Multilayer Ceramic Capacitors MLCC - SMD/SMT", "BLANK-1", "0805", "Blank",
+                "Extended", "", "1-:0.1", "100"));
+        rows.add(row("C60002", "Resistors", "Chip Resistor - Surface Mount", "BLANK-2", "0603", "Blank", "Extended",
+                " ", "1-:0.1", "250"));
+        rows.add(row("C60003", "Capacitors", "Multilayer Ceramic Capacitors MLCC - SMD/SMT", "CL21A475KAQNNNE", "0805",
+                "Samsung Electro-Mechanics", "Basic", "4.7uF 25V X5R ±10%", "1-:0.03", "70000"));
+        rows.add(row("C60004", "Capacitors", "Multilayer Ceramic Capacitors MLCC - SMD/SMT", "CL21B106KPQNNNE", "0805",
+                "Samsung Electro-Mechanics", "Extended", "10uF 10V X7R ±10%", "1-:0.03", "900"));
+        rows.add(row("C60005", "Resistors", "Chip Resistor - Surface Mount", "0603WAF4701T5E", "0603", "UNI-ROYAL",
+                "Basic", "4.7kΩ 100mW 75V Thick Film Resistor ±1%", "1-:0.001", "300000"));
+        rows.add(row("C60006", "Resistors", "Chip Resistor - Surface Mount", "0603WAF4702T5E", "0603", "UNI-ROYAL",
+                "Basic", "47kΩ 100mW 75V Thick Film Resistor ±1%", "1-:0.001", "310000"));
+        rows.add(row("C60007", "Resistors", "Chip Resistor - Surface Mount", "0805W8F4701T5E", "0805", "UNI-ROYAL",
+                "Basic", "4.7kΩ 125mW 150V Thick Film Resistor ±1%", "1-:0.001", "120000"));
+        return rows;
+    }
+
+    /** {@link #typed()} plus {@code count} 0805 X7R capacitors of 10uF and 25V (stock 1000 + index). */
+    public static List<JlcpcbRow> typedWithMany(int count) {
+        List<JlcpcbRow> rows = typed();
+        for (int i = 0; i < count; i++) {
+            rows.add(row("C7" + String.format("%05d", i), "Capacitors", "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+                    "BULK-" + i, "0805", "Maker" + i % 7, "Extended", "10uF 25V X7R ±10%", "1-:0.02",
+                    Integer.toString(1000 + i)));
+        }
+        return rows;
+    }
+
     /** {@link #SAMPLE} plus {@link #CONNECTORS}. */
-    static List<JlcpcbRow> withConnectors() {
+    public static List<JlcpcbRow> withConnectors() {
         List<JlcpcbRow> rows = new java.util.ArrayList<>(SAMPLE);
         rows.addAll(CONNECTORS);
         return rows;
     }
 
     /** {@link #SAMPLE}, {@link #CONNECTORS} and {@link #USB}. */
-    static List<JlcpcbRow> withUsb() {
+    public static List<JlcpcbRow> withUsb() {
         List<JlcpcbRow> rows = new java.util.ArrayList<>(withConnectors());
         rows.addAll(USB);
         return rows;
     }
 
-    static JlcpcbRow row(String lcsc, String first, String second, String mpn, String pkg, String manufacturer,
+    public static JlcpcbRow row(String lcsc, String first, String second, String mpn, String pkg, String manufacturer,
             String library, String description, String price, String stock) {
         return new JlcpcbRow(lcsc, first, second, mpn, pkg, "2", manufacturer, library, description,
                 "https://www.lcsc.com/datasheet/" + lcsc + ".pdf", price, stock);
     }
 
-    static Path create(Path file) throws SQLException {
+    public static Path create(Path file) throws SQLException {
         return create(file, SAMPLE);
     }
 
-    static Path create(Path file, List<JlcpcbRow> rows) throws SQLException {
+    public static Path create(Path file, List<JlcpcbRow> rows) throws SQLException {
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + file.toAbsolutePath());
                 Statement st = c.createStatement()) {
             st.execute("""
