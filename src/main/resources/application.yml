@@ -74,6 +74,12 @@ kina:
     lifecycle:                   # DESIGN.md 3.4: penalties by the part's lifecycle
       last-time-buy-penalty: 0.1
       supply-constrained-penalty: 0.05
+    field-index:                 # DESIGN.md 3.8: part_index, written with the cache and re-indexed after startup
+      mode: ${KINA_FIELD_INDEX_MODE:off}                 # off | shadow (log and count only) | augment | on (phase B)
+      min-version: ${KINA_FIELD_INDEX_MIN_VERSION:0}     # rows of an older extractor are kept by every rule but family
+      max-candidates: 200
+      reindex-batch-size: 500
+      reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}
   ranking:
     timeout: 5s                  # per query; the cross-encoder needs about 0.1-0.35 s for 40 candidates
     batch-timeout: 60s
@@ -104,4 +110,5 @@ kina:
       enabled: ${KINA_METRICS_BACKFILL_ENABLED:true}
       batch-size: 2000           # rows re-typed per UPDATE
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
-            auto-download: true }
+            auto-download: true, pool-size: "${KINA_JLCPCB_POOL_SIZE:4}",
+            field-index: { enabled: "${KINA_JLCPCB_FIELD_INDEX_ENABLED:false}" } }   # phase B (DESIGN.md 3.8)

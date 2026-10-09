@@ -32,6 +32,15 @@ Spring tests that need a database: `@SpringBootTest` + `@Import(TestcontainersCo
 (`src/test/java/ro/alacrity/kina/TestcontainersConfiguration.java`, `@ServiceConnection` PostgreSQL 17).
 HTTP tests: `@AutoConfigureRestTestClient` + `RestTestClient` (Boot 4 module `spring-boot-resttestclient`).
 
+Field index tests (DESIGN.md 3.8): `FieldQuerySupersetTest` and `CachePreservationMigrationTest` start a PostgreSQL
+container of their own and run Flyway themselves (the superset test caches and indexes about 3 100 parts and checks
+every query in parallel, about 40 s; its per-query report is written to `target/field-superset-report.txt`).
+`IndexVersionTest` fails when the extraction or the index rows change: bump `ParametricExtractor.INDEX_VERSION` and
+set `INDEX_FINGERPRINT` to the hash the failure prints, in the same commit (the re-index job then rebuilds the rows of
+the older version at the next start). `IndexTableDocumentationTest` checks the DESIGN.md 3.8 rule table against the
+`@Indexed` declarations; on a mismatch its message holds the table to paste. The shared test configuration turns the
+re-index at startup off (`kina.search.field-index.reindex-enabled: false`); tests run `reindexStale` themselves.
+
 ## Run locally
 
 ```bash
@@ -112,7 +121,8 @@ Shared types are fixed by `docs/DESIGN.md`; change them only together with that 
 | `distributor.{mouser,tme,lcsc}` | `MouserClient`, `TmeClient` (+ `TmeTokenManager`), `LcscClient` over the JLCPCB SQLite file (`JlcpcbDatabaseManager` downloads/adopts it) |
 | `search/ce` | `CrossEncoderPartRanker` (the `PartRanker`), `CrossEncoderModel` (download, load, retry), `ModelDownloader`, `ModelLayout`, `BertTokenizer`, `ScoringBackend` / `OnnxScoringBackend` (ONNX Runtime) |
 | `search` | `PartRanker`, `RankingException` (checked, with `Reason`), `QueryParser` (+ `Recognizers`, `ConnectorRecognizer`), `ParametricExtractor`, `DeterministicRanker`, `DistributorPhraser` (connector phrasing per distributor, fallback phrases), `RankingService`, `PartSearchService` (the sequence), `ParallelRetrieval`, `LcscRetriever` and `CachedDistributorRetriever` (cache, phrase fallback), `PageCollector` (paging), `StockRefresher`, `ResponseAssembler`, `CorePhrases`, `PartLookupService`, `DistributorStatusService` |
-| `cache` | `CacheStatus`, `PartCacheRepository`, `SearchCacheRepository` (`CachedSearch`), `CacheMaintenance` |
+| `search.field` | the field index (DESIGN.md 3.8): `FieldQueryBuilder` and `FieldQuery` (groups `H`, `R`, `L1..Ln`, `K` and their relaxation steps), `FieldPredicate`, `IndexColumn`, the renderers `PostgresFieldSql` and `SqliteFieldSql` (`FieldSql`), `PartIndexRepository` (writer, coverage, re-index, query), `PartIndexReindexer`, `FieldSearchShadow`, `SqlitePartIndex`; `search.PartIndexRows` builds a row from a part and `search.FieldVocabulary` exposes the vocabularies |
+| `cache` | `CacheStatus`, `PartCacheRepository` (calls the `CacheWriteListener`s in its write transaction), `SearchCacheRepository` (`CachedSearch`), `CacheMaintenance` |
 | `security` | `SecurityConfig` (dev/prod filter chains, login failure routing), `DevModeAuthenticationFilter`, `BearerTokenAuthenticationFilter` + `BearerAuthenticationEntryPoint` (401 with `resource_metadata`), `AccessTokenService`/`AccessTokenRepository` (static tokens 30 days, OAuth tokens 1 hour; revoking one also revokes its OAuth refresh tokens; `revokeAllForUser`), OIDC login (`OidcLoginConfiguration`, `LazyOidcClientRegistrationRepository`, `OidcUserSynchronizer`, `OidcIdTokenDecoders`, `OidcHttp` timeouts), group authorisation (`OidcAccessPolicy` claim/domain rules, `MembershipVerifier` re-checks, `UpstreamTokenCipher` AES-GCM, `UpstreamTokenCapturingClientRepository`, `RevokedUserSessionFilter`) |
 | `oauth` | OAuth 2.1 authorization server for MCP clients: metadata, `/oauth/register` (+ `RegistrationRateLimiter`), `/oauth/authorize` (consent page, auto-approval of trusted metadata-document clients), `/oauth/token`, `/oauth/revoke`, PKCE; Client ID Metadata Documents (`ClientMetadataDocument` rules, `ClientMetadataDocumentResolver` fetch/trust/cache, `OAuthClientLookup`); `OAuthClientMaintenance` (daily cleanup of unused registered clients) |
 | `mcp` | `KinaMcpTools`: `search_parts`, `search_parts_batch`, `get_part`, `list_distributors`, `ping` |

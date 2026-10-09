@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
@@ -76,6 +78,9 @@ public class PartCacheRepository {
     @Autowired private Clock clock;
     @Autowired private KinaProperties properties;
     @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
+    /** The field index writer (DESIGN.md 3.8); none in tests that build the repository by hand. */
+    @Autowired(required = false) private List<CacheWriteListener> listeners = List.of();
+    @Autowired(required = false) private PlatformTransactionManager transactionManager;
 
     /**
      * Inserts or replaces every part fetched in full from the distributor (metadata, stock and prices) using JDBC
@@ -92,6 +97,7 @@ public class PartCacheRepository {
         }
         Instant now = clock.instant();
         List<Object[]> rows = new ArrayList<>(parts.size());
+        List<Part> kept = new ArrayList<>(parts.size());
         Map<Distributor, Set<String>> written = new EnumMap<>(Distributor.class);
         for (Part part : parts) {
             Objects.requireNonNull(part.distributor(), "part.distributor");
@@ -106,12 +112,17 @@ public class PartCacheRepository {
             rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
                     jsonMapper.writeValueAsString(stored), utc(fetchedAt), utc(fetchedAt),
                     KinaMetrics.typeOfPart(stored)});
+            kept.add(part);
             written.computeIfAbsent(part.distributor(), d -> new LinkedHashSet<>()).add(part.distributorPartNumber());
         }
         Map<Distributor, Long> existing = countExisting(written);
-        for (int from = 0; from < rows.size(); from += BATCH_SIZE) {
-            jdbcTemplate.batchUpdate(UPSERT, rows.subList(from, Math.min(rows.size(), from + BATCH_SIZE)));
-        }
+        List<Runnable> work = prepare(kept, true);
+        inTransaction(() -> {
+            for (int from = 0; from < rows.size(); from += BATCH_SIZE) {
+                jdbcTemplate.batchUpdate(UPSERT, rows.subList(from, Math.min(rows.size(), from + BATCH_SIZE)));
+            }
+            work.forEach(Runnable::run);
+        });
         // DESIGN.md 3.7: kina_cache_parts_added_total / kina_cache_parts_refreshed_total
         written.forEach((d, numbers) -> {
             Long before = existing.get(d);
@@ -132,12 +143,14 @@ public class PartCacheRepository {
         }
         Instant now = clock.instant();
         List<Object[]> rows = new ArrayList<>(parts.size());
+        List<Part> kept = new ArrayList<>(parts.size());
         for (Part part : parts) {
             Objects.requireNonNull(part.distributor(), "part.distributor");
             Objects.requireNonNull(part.distributorPartNumber(), "part.distributorPartNumber");
             if (part.stock() > 0) {
                 continue;
             }
+            kept.add(part);
             Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
             Part stored = part.asStored();
             rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
@@ -145,7 +158,11 @@ public class PartCacheRepository {
                     KinaMetrics.typeOfPart(stored)});
         }
         if (!rows.isEmpty()) {
-            jdbcTemplate.batchUpdate(UPSERT_LISTED, rows);
+            List<Runnable> work = prepare(kept, false);
+            inTransaction(() -> {
+                jdbcTemplate.batchUpdate(UPSERT_LISTED, rows);
+                work.forEach(Runnable::run);
+            });
         }
     }
 
@@ -237,10 +254,12 @@ public class PartCacheRepository {
         }
         Instant now = clock.instant();
         List<Object[]> rows = new ArrayList<>(parts.size());
+        Map<Distributor, List<String>> refreshed = new EnumMap<>(Distributor.class);
         for (Part part : parts) {
             if (part.stock() <= 0) {
                 continue;
             }
+            refreshed.computeIfAbsent(part.distributor(), d -> new ArrayList<>()).add(part.distributorPartNumber());
             rows.add(new Object[] {jsonMapper.writeValueAsString(part.asStored()),
                     utc(part.fetchedAt() != null ? part.fetchedAt() : now), part.distributor().name(),
                     part.distributorPartNumber()});
@@ -248,6 +267,7 @@ public class PartCacheRepository {
         for (int from = 0; from < rows.size(); from += BATCH_SIZE) {
             jdbcTemplate.batchUpdate(UPDATE_STOCK, rows.subList(from, Math.min(rows.size(), from + BATCH_SIZE)));
         }
+        refreshed.forEach((d, numbers) -> stockChanged(d, numbers, true));
     }
 
     /**
@@ -259,6 +279,44 @@ public class PartCacheRepository {
                         UPDATE cached_parts SET in_stock = false, stock_fetched_at = ?
                         WHERE distributor = ? AND part_number = ?""")
                 .params(utc(clock.instant()), distributor.name(), partNumber).update();
+        stockChanged(distributor, List.of(partNumber), false);
+    }
+
+    /** The listeners' work for an upsert of {@code parts}; a listener that fails is skipped (logged). */
+    private List<Runnable> prepare(List<Part> parts, boolean inStock) {
+        if (parts.isEmpty() || listeners.isEmpty()) {
+            return List.of();
+        }
+        List<Runnable> work = new ArrayList<>(listeners.size());
+        for (CacheWriteListener listener : listeners) {
+            try {
+                work.add(listener.upserting(List.copyOf(parts), inStock));
+            } catch (RuntimeException e) {
+                log.warn("Preparing the {} work for {} cached parts failed: {}", listener.getClass().getSimpleName(),
+                        parts.size(), e.toString());
+            }
+        }
+        return work;
+    }
+
+    private void stockChanged(Distributor distributor, List<String> partNumbers, boolean inStock) {
+        for (CacheWriteListener listener : listeners) {
+            try {
+                listener.stockChanged(distributor, partNumbers, inStock);
+            } catch (RuntimeException e) {
+                log.warn("{} failed on a stock change of {} {} parts: {}", listener.getClass().getSimpleName(),
+                        partNumbers.size(), distributor, e.toString());
+            }
+        }
+    }
+
+    /** Runs {@code body} in one transaction (DESIGN.md 3.8: the payload and its index row together). */
+    private void inTransaction(Runnable body) {
+        if (transactionManager == null) {
+            body.run();
+            return;
+        }
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> body.run());
     }
 
     /** Cached in-stock parts among {@code partNumbers} whatever the age of their stock, keyed by part number. */

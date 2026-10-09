@@ -14,12 +14,14 @@ import java.util.List;
  * @param cache        Postgres component cache statistics (Mouser and TME); null when the database cannot be read
  * @param ranking      ranking configuration and cross-encoder health
  * @param metrics      key usage counters (DESIGN.md 3.7); omitted when null
+ * @param fieldIndex   the field index of the cache (DESIGN.md 3.8); omitted when null (not readable)
  */
 public record DistributorStatusResponse(
         @JsonProperty("distributors") List<DistributorStatus> distributors,
         @JsonProperty("cache") CacheSummary cache,
         @JsonProperty("ranking") RankingSummary ranking,
-        @JsonProperty("metrics") @JsonInclude(JsonInclude.Include.NON_NULL) MetricsSummary metrics
+        @JsonProperty("metrics") @JsonInclude(JsonInclude.Include.NON_NULL) MetricsSummary metrics,
+        @JsonProperty("field_index") @JsonInclude(JsonInclude.Include.NON_NULL) FieldIndexSummary fieldIndex
 ) {
 
     public DistributorStatusResponse {
@@ -28,12 +30,37 @@ public record DistributorStatusResponse(
 
     public DistributorStatusResponse(List<DistributorStatus> distributors, CacheSummary cache,
                                      RankingSummary ranking) {
-        this(distributors, cache, ranking, null);
+        this(distributors, cache, ranking, null, null);
     }
 
     /** This response with the usage counters. */
     public DistributorStatusResponse withMetrics(MetricsSummary summary) {
-        return new DistributorStatusResponse(distributors, cache, ranking, summary);
+        return new DistributorStatusResponse(distributors, cache, ranking, summary, fieldIndex);
+    }
+
+    /** This response with the field index state. */
+    public DistributorStatusResponse withFieldIndex(FieldIndexSummary summary) {
+        return new DistributorStatusResponse(distributors, cache, ranking, metrics, summary);
+    }
+
+    /**
+     * The field index of the Mouser and TME cache ({@code part_index}, DESIGN.md 3.8).
+     *
+     * @param mode       {@code off}, {@code shadow}, {@code augment} or {@code on}
+     * @param rows       index rows
+     * @param stale      cached parts without a current index row (0 when the index covers the cache)
+     * @param version    the extractor version rows are written with
+     * @param reindexing the background re-index is running
+     * @param incomplete distributors whose cached parts are not all indexed yet
+     */
+    public record FieldIndexSummary(
+            @JsonProperty("mode") String mode,
+            @JsonProperty("rows") long rows,
+            @JsonProperty("stale") long stale,
+            @JsonProperty("version") int version,
+            @JsonProperty("reindexing") boolean reindexing,
+            @JsonProperty("incomplete") List<String> incomplete
+    ) {
     }
 
     /**

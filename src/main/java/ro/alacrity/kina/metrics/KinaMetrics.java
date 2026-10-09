@@ -30,6 +30,10 @@ import static ro.alacrity.kina.metrics.Metric.CROSS_ENCODER_DURATION;
 import static ro.alacrity.kina.metrics.Metric.CROSS_ENCODER_EXECUTIONS;
 import static ro.alacrity.kina.metrics.Metric.DISTRIBUTOR_CALLS;
 import static ro.alacrity.kina.metrics.Metric.DISTRIBUTOR_DURATION;
+import static ro.alacrity.kina.metrics.Metric.FIELD_INDEX_REINDEXED;
+import static ro.alacrity.kina.metrics.Metric.FIELD_SHADOW_CANDIDATES;
+import static ro.alacrity.kina.metrics.Metric.FIELD_SHADOW_DROPPED;
+import static ro.alacrity.kina.metrics.Metric.FIELD_SHADOW_QUERIES;
 import static ro.alacrity.kina.metrics.Metric.JLCPCB_DOWNLOADS;
 import static ro.alacrity.kina.metrics.Metric.LOGINS;
 import static ro.alacrity.kina.metrics.Metric.LOGIN_DENIED;
@@ -309,6 +313,27 @@ public class KinaMetrics implements RateLimitRetry.Listener {
         return new MetricsSummary(store.sum(SEARCHES), store.sum(SEARCH_QUERIES), store.sumBy(TOOL_CALLS, "tool"),
                 store.sumBy(CACHE_PARTS_ADDED, "distributor"), store.sumBy(RATE_LIMITED_RESPONSES, "distributor"),
                 store.sum(CROSS_ENCODER_EXECUTIONS), store.sumBy(SEARCH_QUERIES, "type"));
+    }
+
+    // ---- field index (DESIGN.md 3.8) ------------------------------------------------------------------------------
+
+    /** {@code rows} part_index rows of {@code distributor} written by the re-index job. */
+    public void fieldIndexReindexed(String distributor, long rows) {
+        if (rows > 0) {
+            safely(() -> store.add(FIELD_INDEX_REINDEXED.key(distributor), rows));
+        }
+    }
+
+    /**
+     * One shadow field query: its outcome ({@code ok}, {@code dropped}, {@code incomplete}, {@code failed}), the
+     * candidates of the unrelaxed step and the returnable parts it would have dropped.
+     */
+    public void fieldShadow(String distributor, String outcome, long candidates, long dropped) {
+        safely(() -> {
+            store.increment(FIELD_SHADOW_QUERIES.key(distributor, outcome));
+            store.add(FIELD_SHADOW_CANDIDATES.key(distributor), candidates);
+            store.add(FIELD_SHADOW_DROPPED.key(distributor), dropped);
+        });
     }
 
     private static void safely(Runnable update) {

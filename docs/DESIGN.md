@@ -1866,6 +1866,10 @@ No other value is possible (connector and USB sub-types are not tags), so the ta
 | `kina_metrics_backfill_runs_total` | counter | `outcome` | metrics backfill runs ("Backfill" below): `ok`, `failed` |
 | `kina_metrics_backfill_moved_total` | counter | `name` | counts the backfill moved from `type="unknown"` to a typed series, by counter (`kina.search.queries`, `kina.distributor.calls`, `kina.cache.search.lookups`, `kina.parts.fetched`) |
 | `kina_metrics_backfill_last_run_seconds` | gauge | | end of the last successful backfill run as a Unix time (0 when never) |
+| `kina_field_index_reindexed_total` | counter | `distributor` | `part_index` rows written by the field index re-index job (section 3.8) |
+| `kina_field_shadow_queries_total` | counter | `distributor`, `outcome` | shadow field queries (`kina.search.field-index.mode=shadow`, section 3.8): `ok`, `dropped`, `incomplete` (index not complete for the distributor), `failed` |
+| `kina_field_shadow_candidates_total` | counter | `distributor` | candidates the shadow field queries returned (unrelaxed step) |
+| `kina_field_shadow_dropped_total` | counter | `distributor` | returnable parts the most relaxed shadow field query would have dropped; must stay 0 |
 
 The timers (`kina_search_duration_seconds`, `kina_distributor_duration_seconds`) and `kina_searches_total` (a batch
 mixes types) have no `type` tag. Counts recorded before 0.5 have no type: migration V9 moved them to `type="unknown"`
@@ -1953,6 +1957,176 @@ sums in seconds). `list_distributors` and `GET /api/v1/distributors` carry the s
 {distributor: n}, "cross_encoder_executions", "search_queries_by_type": {type: n}}` (`search_queries_by_type` is
 `kina_search_queries_total` per `type`, sorted). They count since the first start against this database.
 
+### 3.8 Field index
+
+The field index (`part_index`, migration V14, section 8) splits a request into constraints on typed fields and
+finds the cached Mouser and TME parts that can meet them with one SQL query. It is the foundation of the field-based
+search (research `docs/research/field-search-2026-10-08.md`); this release builds and maintains it and can compare it
+with the cached-search path (`shadow`), but no search answer comes from it yet.
+
+**SQL is a recall filter, Java is the judge.** The SQL of a request must keep every part the Java check keeps
+(`PageCollector.Check.returnable`, section 3.2); it may keep more. Every candidate is still enriched, checked and
+ranked as before. So every rule is at most as strict as the Java comparison of its kind: values get a slack on top of
+the Java tolerance, a part that does not state an attribute is always kept (its column is NULL), a package KINA
+cannot read is kept, and a comparator with words of its own (technology, form factor, connector type, LED and switch
+words) is turned into the values it refuses over its vocabulary, so a value KINA does not know is kept. Values are
+compared as bare columns against constants (`BETWEEN`, `>=`, `<=`, `=`), never as an expression over a value column
+(an `abs(col - x)` test cannot use an index: 47 ms against 3.8 ms on 7.1 M rows).
+
+**The rows.** One row per `cached_parts` row, built by `search.PartIndexRows` from the features the Java check reads
+(`ParametricExtractor.features` of the enriched stored part): the family and its parent (`family_path`), polarity,
+subtype, the package as its normalised key (`Recognizers.packageKey`, imperial; never the raw string), whether it is
+readable, LED or PLCC class and can size, mounting (NULL for a hybrid USB part), technology, dielectric (lower
+case), form factor, elements, the SI values of the numeric attributes (rounded to 9 significant digits: the extractor's
+doubles carry floating-point noise), the specification voltages (`voltages_v`: the part's specification voltages, else
+its voltage), the connector and USB fields (`usb_type` as the part states it or as its connector type implies,
+`usb_class` the speed class of its standard with `USB 3.x` without a generation as 4, `pin_configuration` as stated),
+the fan, LED and switch attributes in `attrs` (JSONB; width and length of a frame or body as `*_min`, `*_max`), the
+normalised MPN and `search_text` (the part's normalised text, MPN, manufacturer and distributor part number). Where a
+numeric attribute is stored is declared on the `PartAttribute` constant (`@Indexed(column = "capacitance_f")` or
+`@Indexed(column = "attrs", keys = "airflow")`).
+
+**The rules.** Each `ConstraintKind` that can exclude a part (hard for some family, a rating, or on the ladder)
+declares its rule with `@Indexed` next to `@Relax` and `@Match`: the column (empty: the column of the kind's measure,
+`ConstraintKind.indexMeasure`), the predicate, and the relative `slack` or absolute `margin`; or `javaOnly` when the
+comparison stays in Java. Soft kinds and preferences have no rule (they rank, they never exclude).
+`IndexTableDocumentationTest` checks this table against the declarations and that every kind that can exclude a part
+has a rule or is Java only.
+
+| Kind | Column | Type | Rule (NULL always kept) |
+|---|---|---|---|
+| `TYPE` | `family` | text | IN_COMPATIBLE |
+| `POLARITY` | `polarity` | text | EQUAL |
+| `VALUE` | `capacitance_f`, `resistance_ohm`, `inductance_h`, `impedance_ohm`, `frequency_hz` | float8 | RANGE, slack 0.015 |
+| `EXACT_VOLTAGE` | `voltages_v` | float8_array | ARRAY_ANY, slack 0.025 |
+| `LOAD_CAPACITANCE` | `capacitance_f` | float8 | RANGE, slack 0.015 |
+| `PACKAGE` | `package_key` | text | PACKAGE, margin 0.25 |
+| `MOUNTING` | `mounting` | text | EQUAL |
+| `TECHNOLOGY` | `technology` | text | IN_COMPATIBLE |
+| `FORM_FACTOR` | `form_factor` | text | IN_COMPATIBLE |
+| `ELEMENTS` | `elements` | int2 | ABSENT |
+| `FAN_TYPE` | `attrs.fan_type`, `attrs.fan_supply` | text | JSONB_CONTAINS |
+| `FRAME_SIZE` | `attrs.frame_min`, `attrs.frame_max` | float8 | RANGE, margin 0.55 |
+| `LED_TYPE` | `attrs.led_type` | text | IN_COMPATIBLE |
+| `COLOUR` | `attrs.colour` | text | IN_COMPATIBLE |
+| `WAVELENGTH` | `attrs.wavelength` | float8 | RANGE, margin 10.5 |
+| `SWITCH_TYPE` | `attrs.switch_type` | text | IN_COMPATIBLE |
+| `CONTACTS` | `attrs.contacts`, `attrs.contacts_form` | text | JSONB_CONTAINS |
+| `SWITCH_FUNCTION` | | | Java only |
+| `TERMINATION` | `attrs.termination` | text | IN_COMPATIBLE |
+| `SWITCH_SIZE` | `attrs.size_min`, `attrs.size_max` | float8 | RANGE, margin 0.55 |
+| `HOLE_DIAMETER` | `attrs.hole_diameter` | float8 | RANGE, margin 0.15 |
+| `SWITCH_POSITIONS` | `attrs.switch_positions` | int2 | JSONB_CONTAINS |
+| `ILLUMINATION` | `attrs.illuminated` | bool | JSONB_CONTAINS |
+| `USB_TYPE` | `usb_type` | text | EQUAL |
+| `PIN_CONFIGURATION` | `pin_configuration` | int2 | EQUAL |
+| `USB_STANDARD` | `usb_class` | int2 | GTE |
+| `CONNECTOR_TYPE` | `connector_type` | text | IN_COMPATIBLE |
+| `POSITIONS` | `positions` | int2 | EQUAL |
+| `PITCH` | `pitch_mm` | float8 | RANGE, margin 0.035 |
+| `GENDER` | `gender` | text | EQUAL |
+| `ORIENTATION` | `orientation` | text | EQUAL |
+| `DIELECTRIC` | `dielectric` | text | EQUAL |
+| `TOLERANCE` | `tolerance_pct` | float8 | LTE, margin 0.000001 |
+| `TCR` | | | Java only |
+| `ESR` | | | Java only |
+| `DCR` | | | Java only |
+| `SPEED` | `attrs.speed` | float8 | RANGE, slack 0.16 |
+| `BEARING` | `attrs.bearing` | text | JSONB_CONTAINS |
+| `LENS` | `attrs.lens` | text | JSONB_CONTAINS |
+| `VIEWING_ANGLE` | `attrs.viewing_angle` | float8 | RANGE, margin 15.5 |
+| `COLOUR_TEMPERATURE` | `attrs.colour_temperature` | float8 | RANGE, margin 300.5 |
+| `FORCE` | `attrs.force` | float8 | RANGE, slack 0.21 |
+| `VOLTAGE_RATING` | `voltage_v` | float8 | GTE, slack 0.000001 |
+| `CURRENT` | `current_a` | float8 | GTE, slack 0.000001 |
+| `MAX_CURRENT` | `current_a` | float8 | LTE, slack 0.000001 |
+| `SATURATION_CURRENT` | `isat_a` | float8 | GTE, slack 0.000001 |
+| `POWER` | `power_w` | float8 | GTE, slack 0.000001 |
+| `TEMPERATURE` | `max_temp_c` | float8 | GTE, slack 0.000001 |
+| `LIFETIME` | `lifetime_h` | float8 | GTE, slack 0.000001 |
+| `MAX_DCR` | `dcr_ohm` | float8 | LTE, slack 0.000001 |
+| `AIRFLOW` | `attrs.airflow` | float8 | GTE, slack 0.000001 |
+| `STATIC_PRESSURE` | `attrs.static_pressure` | float8 | GTE, slack 0.000001 |
+| `NOISE` | `noise_dba` | float8 | LTE, slack 0.000001 |
+| `FORWARD_VOLTAGE` | `attrs.forward_voltage` | float8 | LTE, slack 0.000001 |
+| `LUMINOUS_INTENSITY` | `attrs.luminous_intensity` | float8 | GTE, slack 0.000001 |
+| `LUMINOUS_FLUX` | `attrs.luminous_flux` | float8 | GTE, slack 0.000001 |
+| `SWITCH_VOLTAGE` | | | Java only |
+| `IP_RATING` | | | Java only |
+| `LIFE` | `attrs.life` | float8 | GTE, slack 0.000001 |
+
+Predicates: `RANGE` is `col BETWEEN x - |x| slack - margin AND x + |x| slack + margin`; `GTE` a minimum
+`col >= x (1 - slack)`, for a rating also `OR col <= 0` (a part value of 0 or less is never below spec); `LTE` a maximum
+`col <= x (1 + slack) + margin`; `EQUAL` an equality (dielectric in lower case); `IN_COMPATIBLE` the family as a closed
+set (`family = ANY(compatible families)`, `ComponentFamily.compatible`), every other kind as the vocabulary values its
+comparator refuses (`col <> ALL(refused)`); `ARRAY_ANY` an empty array or one element in the range; `JSONB_CONTAINS` an
+`attrs` key absent or equal (`attrs @> {key: x}`); `PACKAGE` `package_key = key(x) OR NOT package_readable`, a can size
+within the margin, and an LED size never compared with a PLCC package; `ABSENT` the column NULL (a single-element
+request against arrays and networks). Ratings with `allow_below_spec` are left out.
+
+**The query** (`search.field.FieldQueryBuilder`, `FieldQuery`). From the parsed request and `ConstraintPolicy` the
+builder makes ordered groups: `H` (never relaxed: `distributor`, `in_stock`, and every kind whose strategy for the
+request's family is `NEVER`, including `elements`), `R` (the stated ratings whose general strategy is `BELOW_SPEC`,
+unless `allow_below_spec`), `L1..Ln` (one group per stated ladder kind, in `@Relax(order)`: dielectric, package where
+it is not hard, tolerance, orientation, then the fan, LED and switch kinds) and `K` (free text: every keyword must
+match; a keyword of 3 or more letters and digits is a word prefix, `search_tsv @@ to_tsquery('simple', 'w:*')`, any
+other a substring, `search_text LIKE`; the requested part numbers are MPN prefixes, `mpn LIKE 'p%'`, served by the
+trigram index). The relaxation drops whole groups: first `K`, then `L1`, then `L1, L2`... `H` and `R` are never dropped;
+the last step holds `H + R` only, the superset of every part the Java check returns. Free text is a ranking signal
+(never in the grade), so no superset is required while `K` is in the step. The query returns
+`distributor, part_number, confirmed` ordered by `confirmed` (the part states every column the step compares) descending,
+then by key, at most `kina.search.field-index.max-candidates` (200) rows. `PostgresFieldSql` and `SqliteFieldSql`
+render the same predicates; SQLite stores arrays and `attrs` as JSON text and matches free-text words with FTS5
+`MATCH` on the trigram table of the JLCPCB file joined by `fts_rowid` (`SqlitePartIndex` creates and fills that form;
+the LCSC typed table is phase B).
+
+**Writing and consistency.** `PartCacheRepository.upsertAll` and `upsertListed` compute the index rows before their
+transaction (extraction is the expensive part) and write them in the same transaction as the payloads, under a
+savepoint: an index failure is logged and never fails the cache write. The row is inserted from the `cached_parts` row
+(`INSERT ... SELECT ... FROM cached_parts`), so the index never holds a part the cache does not, and it records
+`md5(payload::text)` of the payload it was built from; an unchanged row is not rewritten (`IS DISTINCT FROM`). A stock
+refresh copies `in_stock` (`updateStock`, `markSoldOut`); `in_stock` and stock are never indexed, so stock updates stay
+HOT. A row is current when it was written by the running extractor (`extractor_version` =
+`ParametricExtractor.INDEX_VERSION`) from the payload the cache holds now with the same `in_stock`.
+`INDEX_VERSION` is bumped by hand when extraction changes; `IndexVersionTest` hashes the extraction and the index rows of
+the evaluation set and fails when they change without a bump (the expected hash, `INDEX_FINGERPRINT`, sits next to the
+version). `kina.search.field-index.min-version` makes rows of an older extractor count as unknown in every rule but the
+family.
+
+**Re-index and coverage.** `PartIndexReindexer` runs once in the background after `ApplicationReadyEvent`
+(`kina.search.field-index.reindex-enabled`, default true; never blocks startup): it reads `cached_parts` in key order,
+500 rows at a time (`reindex-batch-size`), selects the rows whose index row is missing or not current, in stock or sold
+out, enriches them and writes their rows; a payload that cannot be read gets a placeholder row (no attributes), as the
+cache path never serves it either. It logs one INFO line with the counts and counts `kina_field_index_reindexed_total`.
+`PartIndexRepository.coverage()` compares, per distributor, the `cached_parts` rows with the current index rows; a
+distributor is **complete** when every cached part has one (`isComplete`, recomputed at most every 30 s). Until then
+a caller must not answer from the index for that distributor and keeps the cached-search path, so no cached part
+becomes unreachable while the index is built or rebuilt. `list_distributors` reports
+`field_index: {mode, rows, stale, version, reindexing, incomplete}`.
+
+**Modes** (`kina.search.field-index.mode`). `off` (default): no search reads the index (it is still written and
+re-indexed). `shadow`: after each Mouser or TME retrieval, `FieldSearchShadow` runs the field query in the background
+and compares it with the parts the cached-search path holds: the candidates of the unrelaxed step, their overlap with
+those parts, and the parts the Java check keeps that the most relaxed step would drop (must be 0); logs at DEBUG (WARN
+with the part numbers when a part would be dropped) and counts `kina_field_shadow_queries_total{outcome}` (`ok`,
+`dropped`, `incomplete`, `failed`), `kina_field_shadow_candidates_total` and `kina_field_shadow_dropped_total`. The
+search result never changes. `augment` and `on` are the flows of phase B; until then they behave as `off`.
+
+**Cache preservation.** V14 only creates the `pg_trgm` extension (`CREATE EXTENSION IF NOT EXISTS`), the `part_index`
+table (with a foreign key to `cached_parts` that cascades deletes and key changes to the index rows, so it never
+blocks a write to the cache) and its indexes;
+it never reads, modifies, re-keys or deletes `cached_parts` or `cached_searches` rows. The re-index only reads the
+cache. `CachePreservationMigrationTest` loads rows in the V1 and V13 shapes, migrates to V14, re-indexes, and checks
+that both tables are byte-identical and every row is covered. A part whose index columns are NULL (a blank LCSC
+description, a Mouser part without a package) is kept by every rule and stays reachable through the cached-search
+lists as before.
+
+**The superset test.** `FieldQuerySupersetTest` caches and indexes every candidate of the evaluation set and the parts
+of the recorded LED, switch, fan and power-resistor searches (3 130 parts, 911 of them read poorly), and checks for
+every query (the 41 evaluation queries, the recordings and extra queries), with and without `allow_below_spec`, and
+every step without free text, that every part the Java check keeps (and that misses no ladder kind still in the step)
+is returned, in both dialects, and that both dialects return the same rows.
+
 ## 4. MCP tools
 
 Server name `kina`, version from the build. Tools (JSON Schema generated from the method
@@ -1963,7 +2137,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`), `allow_below_spec` (bool, default false, section 3.4 "Below spec") | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | `{ "results": [SearchResponse...] }` |
 | `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown), or with `error` (and `reason` null) when the lookup failed. `reason` `out_of_stock`: listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, and, when the distributor gives the part's data, `part` with `stock` 0, prices as listed and `availability.status` `out_of_stock` (`found: true`: the part number was requested explicitly, section 2); a Mouser catalogue part without a Mouser part number (`N/A`) has the identity only (`found: false`). The listed part is cached with `in_stock = false` and never served from the cache. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
-| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7). Never calls the Mouser/TME APIs |
+| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7); `field_index{mode, rows, stale, version, reindexing, incomplete}` (section 3.8, omitted when it cannot be read). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 The descriptions are sent to the model on every connection, so they stay short summaries: `search_parts` about
@@ -2320,7 +2494,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V12__cache_type_and_metrics_backfill.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V14__part_index.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -2490,6 +2664,37 @@ CREATE TABLE metrics_backfill (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (name, tags)
 );
+-- V14__part_index.sql (section 3.8): the field index, one row per cached_parts row. The migration only adds the
+-- pg_trgm extension, this table and its indexes; cached_parts and cached_searches are not touched. NULL = the part does
+-- not state the attribute; SI values rounded to 9 significant digits; in_stock is a copy and never indexed.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE TABLE part_index (
+  distributor        TEXT NOT NULL,
+  part_number        TEXT NOT NULL,
+  extractor_version  INTEGER NOT NULL,             -- ParametricExtractor.INDEX_VERSION of the writer
+  indexed_at         TIMESTAMPTZ NOT NULL,
+  payload_md5        TEXT NOT NULL,                -- md5(cached_parts.payload::text) the row was built from
+  in_stock           BOOLEAN NOT NULL,             -- copy of cached_parts.in_stock
+  family TEXT, family_path TEXT[] NOT NULL DEFAULT '{}', policy_family TEXT, subtype TEXT, polarity TEXT,
+  package_key TEXT, package_readable BOOLEAN NOT NULL DEFAULT false, package_class TEXT,
+  can_d_mm DOUBLE PRECISION, can_l_mm DOUBLE PRECISION,
+  mounting TEXT, technology TEXT, dielectric TEXT, form_factor TEXT, elements SMALLINT,
+  capacitance_f, resistance_ohm, inductance_h, impedance_ohm, impedance_test_hz, frequency_hz, voltage_v, current_a,
+  isat_a, dcr_ohm, power_w, max_temp_c, lifetime_h, tolerance_pct, noise_dba   DOUBLE PRECISION,   -- each a column
+  voltages_v DOUBLE PRECISION[] NOT NULL DEFAULT '{}',
+  connector_type TEXT, gender TEXT, positions SMALLINT, rows_count SMALLINT, pitch_mm DOUBLE PRECISION,
+  orientation TEXT, usb_type TEXT, usb_class SMALLINT, pin_configuration SMALLINT,
+  attrs JSONB NOT NULL DEFAULT '{}',               -- fan, LED and switch attributes and SI values
+  mpn TEXT NOT NULL DEFAULT '', search_text TEXT NOT NULL DEFAULT '',
+  search_tsv TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', search_text)) STORED,
+  PRIMARY KEY (distributor, part_number),
+  FOREIGN KEY (distributor, part_number) REFERENCES cached_parts (distributor, part_number)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) WITH (fillfactor = 90);
+-- btrees (distributor, family, <value>) partial on the value IS NOT NULL for capacitance_f, resistance_ohm,
+-- inductance_h, impedance_ohm and frequency_hz; (distributor, package_key, family); (distributor, connector_type,
+-- positions) and (distributor, usb_type, pin_configuration), partial; (distributor, family); (extractor_version);
+-- GIN on search_tsv, on search_text and mpn (gin_trgm_ops) and on attrs (jsonb_path_ops). No index holds in_stock.
 ```
 
 ## 9. Distributor details (verified against the live APIs on 2026-10-05)
@@ -2795,6 +3000,12 @@ kina:
     low-stock-threshold: ${KINA_LOW_STOCK_THRESHOLD:10}   # low_stock: stock below this or below 2 x quantity
     quantity: { stock-shortfall-penalty: 0.3, moq-penalty: 0.3, low-stock-penalty: 0.3 }   # section 3.4 "Quantity"
     lifecycle: { last-time-buy-penalty: 0.1, supply-constrained-penalty: 0.05 }
+    field-index:                 # section 3.8; written and re-indexed in every mode
+      mode: ${KINA_FIELD_INDEX_MODE:off}           # off | shadow (log and count only) | augment | on (phase B)
+      min-version: ${KINA_FIELD_INDEX_MIN_VERSION:0}   # older rows count as unknown in every rule but the family
+      max-candidates: 200        # rows one field query returns
+      reindex-batch-size: 500    # rows the re-index reads and writes at a time
+      reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}   # false in src/test/resources/config/application.yml
   ranking:
     timeout: 5s                  # per query (deterministic + cross-encoder)
     batch-timeout: 60s
@@ -2825,7 +3036,9 @@ kina:
       enabled: ${KINA_METRICS_BACKFILL_ENABLED:true}       # false in src/test/resources/config/application.yml
       batch-size: 2000           # rows re-typed per UPDATE
   jlcpcb: { data-dir: "${KINA_JLCPCB_DATA_DIR:./data/jlcpcb}", library: "${KINA_JLCPCB_LIBRARY:parts-fts5.db}", base-url: https://bouni.github.io/kicad-jlcpcb-tools/, refresh-after: 5d, check-interval: 1h, max-results-per-search: 200,
-            auto-download: true }   # false in src/test/resources/config/application.yml
+            auto-download: true,    # false in src/test/resources/config/application.yml
+            pool-size: "${KINA_JLCPCB_POOL_SIZE:4}",                                     # phase B (section 3.8)
+            field-index: { enabled: "${KINA_JLCPCB_FIELD_INDEX_ENABLED:false}" } }    # phase B (section 3.8)
 ```
 
 Production OIDC is configured only through `kina.security.oidc.*` (read when `kina.security.mode=prod`), not through

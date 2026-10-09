@@ -335,6 +335,7 @@ public record KinaProperties(
      * @param lifecycle          ranking penalties for last-time-buy and supply-constrained parts
      * @param lowStockThreshold  a part with less stock than this (or less than twice the quantity) is
      *                           {@code low_stock} (DESIGN.md 3.4 "Quantity")
+     * @param fieldIndex         the field index of the cache ({@code part_index}, DESIGN.md 3.8)
      */
     public record Search(
             @DefaultValue("40") int candidateWindow,
@@ -346,7 +347,8 @@ public record KinaProperties(
             Map<String, List<String>> hardConstraints,
             @DefaultValue Quantity quantity,
             @DefaultValue Lifecycle lifecycle,
-            @DefaultValue("10") int lowStockThreshold) {
+            @DefaultValue("10") int lowStockThreshold,
+            @DefaultValue FieldIndex fieldIndex) {
 
         public static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
 
@@ -370,14 +372,64 @@ public record KinaProperties(
             quantity = quantity == null ? Quantity.DEFAULTS : quantity;
             lifecycle = lifecycle == null ? Lifecycle.DEFAULTS : lifecycle;
             lowStockThreshold = lowStockThreshold <= 0 ? DEFAULT_LOW_STOCK_THRESHOLD : lowStockThreshold;
+            fieldIndex = fieldIndex == null ? FieldIndex.DEFAULTS : fieldIndex;
+        }
+
+        /** Without the field index settings (its defaults). */
+        public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
+                      Duration maxRequestDuration, List<String> strictConstraints,
+                      Map<String, List<String>> hardConstraints, Quantity quantity, Lifecycle lifecycle,
+                      int lowStockThreshold) {
+            this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration,
+                    strictConstraints, hardConstraints, quantity, lifecycle, lowStockThreshold, null);
         }
 
         /** With the default hard constraints, penalties and low-stock threshold (tests). */
         public Search(int candidateWindow, int defaultMaxResults, int maxMaxResults, Duration distributorTimeout,
                       Duration maxRequestDuration) {
             this(candidateWindow, defaultMaxResults, maxMaxResults, distributorTimeout, maxRequestDuration, null, null,
-                    null, null, DEFAULT_LOW_STOCK_THRESHOLD);
+                    null, null, DEFAULT_LOW_STOCK_THRESHOLD, null);
         }
+    }
+
+    /**
+     * {@code kina.search.field-index.*}: the field index of the Mouser and TME cache ({@code part_index}, DESIGN.md
+     * 3.8). The index is written with every cache write and re-indexed in the background in every mode; the mode only
+     * decides what a search does with it.
+     *
+     * @param mode            {@code off} (default): searches never read it; {@code shadow}: the field query runs next to
+     *                        the cached-search path and only logs and counts (no behaviour change); {@code augment} and
+     *                        {@code on}: the flows of phase B
+     * @param minVersion      rows indexed by an extractor older than this are kept by every rule but the family; 0:
+     *                        {@code ParametricExtractor.INDEX_VERSION} while older rows exist
+     * @param maxCandidates   rows one field query returns at most
+     * @param reindexBatchSize rows the re-index job reads and writes at a time
+     * @param reindexEnabled  false: no re-index job at startup (the writer still writes)
+     */
+    public record FieldIndex(@DefaultValue("off") FieldIndexMode mode, @DefaultValue("0") int minVersion,
+                             @DefaultValue("200") int maxCandidates, @DefaultValue("500") int reindexBatchSize,
+                             @DefaultValue("true") boolean reindexEnabled) {
+
+        public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, 200, 500, true);
+
+        public FieldIndex {
+            mode = mode == null ? FieldIndexMode.OFF : mode;
+            minVersion = Math.max(0, minVersion);
+            maxCandidates = maxCandidates <= 0 ? 200 : maxCandidates;
+            reindexBatchSize = reindexBatchSize <= 0 ? 500 : reindexBatchSize;
+        }
+    }
+
+    /** What a search does with the field index ({@code kina.search.field-index.mode}). */
+    public enum FieldIndexMode {
+        /** Never read by a search. */
+        OFF,
+        /** Read next to the cached-search path, logged and counted only. */
+        SHADOW,
+        /** Field candidates added to a cached list (phase B). */
+        AUGMENT,
+        /** Field-first search with the phrase journal (phase B). */
+        ON
     }
 
     /**
@@ -541,6 +593,12 @@ public record KinaProperties(
         }
     }
 
+    /**
+     * {@code kina.jlcpcb.*}.
+     *
+     * @param fieldIndex the typed table of the in-stock rows in the JLCPCB file (phase B, DESIGN.md 3.8)
+     * @param poolSize   read-only connections to the JLCPCB file (phase B; today one connection serves every search)
+     */
     public record Jlcpcb(
             @DefaultValue("./data/jlcpcb") Path dataDir,
             @DefaultValue("parts-fts5.db") String library,
@@ -548,11 +606,33 @@ public record KinaProperties(
             @DefaultValue("5d") Duration refreshAfter,
             @DefaultValue("1h") Duration checkInterval,
             @DefaultValue("200") int maxResultsPerSearch,
-            @DefaultValue("true") boolean autoDownload) {
+            @DefaultValue("true") boolean autoDownload,
+            @DefaultValue JlcpcbFieldIndex fieldIndex,
+            @DefaultValue("4") int poolSize) {
+
+        @ConstructorBinding
+        public Jlcpcb {
+            fieldIndex = fieldIndex == null ? new JlcpcbFieldIndex(false) : fieldIndex;
+            poolSize = poolSize <= 0 ? 4 : poolSize;
+        }
+
+        /** Without the phase B settings (their defaults). */
+        public Jlcpcb(Path dataDir, String library, String baseUrl, Duration refreshAfter, Duration checkInterval,
+                      int maxResultsPerSearch, boolean autoDownload) {
+            this(dataDir, library, baseUrl, refreshAfter, checkInterval, maxResultsPerSearch, autoDownload, null, 4);
+        }
 
         /** {@code <data-dir>/<library>}. */
         public Path databaseFile() {
             return dataDir.resolve(library);
         }
+    }
+
+    /**
+     * {@code kina.jlcpcb.field-index.*}.
+     *
+     * @param enabled build and use the typed table of the in-stock rows (phase B); false by default
+     */
+    public record JlcpcbFieldIndex(@DefaultValue("false") boolean enabled) {
     }
 }

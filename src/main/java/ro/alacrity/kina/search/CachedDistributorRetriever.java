@@ -15,6 +15,7 @@ import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
+import ro.alacrity.kina.search.field.FieldSearchShadow;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -39,6 +40,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
     @Autowired private SearchCacheRepository searchCache;
     @Autowired private Clock clock;
     @Autowired private RequestedLookup requested;
+    /** The field index shadow (DESIGN.md 3.8); null in tests that build the retriever by hand. */
+    @Autowired(required = false) private FieldSearchShadow shadow;
 
     private record Attempt(Collected collected, String phrase, List<String> relaxed) {
     }
@@ -52,6 +55,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
                             DistributorBudget deadline) {
         // a part number the query names that the search did not bring is looked up directly, once per cached search
         Fetched searched = search(client, prepared, progress, deadline);
+        shadow(client.distributor(), prepared, searched);
         if (!prepared.parsed().namesPartNumber() || searched.error() != null) {
             return searched;
         }
@@ -72,6 +76,20 @@ final class CachedDistributorRetriever implements DistributorRetriever {
             }
         }
         return result.fetched();
+    }
+
+    /**
+     * {@code kina.search.field-index.mode=shadow}: compares the field query with this result in the background (logs
+     * and counters only, DESIGN.md 3.8); the result is never changed.
+     */
+    private void shadow(Distributor distributor, Prepared prepared, Fetched searched) {
+        if (shadow == null || !shadow.enabled() || searched.error() != null) {
+            return;
+        }
+        ParsedQuery parsed = prepared.parsed();
+        boolean allowBelowSpec = prepared.request().allowBelowSpec();
+        shadow.observe(distributor, parsed, ConstraintPolicy.of(ranking), allowBelowSpec, searched.parts(),
+                part -> Check.returnable(ranking, parsed, part, allowBelowSpec));
     }
 
     private Fetched search(DistributorClient client, Prepared prepared, Progress progress,

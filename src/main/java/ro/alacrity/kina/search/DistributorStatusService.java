@@ -18,6 +18,8 @@ import ro.alacrity.kina.domain.DistributorStatusResponse.DistributorStatus;
 import ro.alacrity.kina.domain.DistributorStatusResponse.JlcpcbSummary;
 import ro.alacrity.kina.domain.DistributorStatusResponse.RankingSummary;
 import ro.alacrity.kina.search.ce.CrossEncoderModel;
+import ro.alacrity.kina.search.field.FieldIndexStatus;
+import ro.alacrity.kina.search.field.PartIndexReindexer;
 import ro.alacrity.kina.search.ce.ModelDownloader;
 
 import java.nio.file.Path;
@@ -37,6 +39,7 @@ public class DistributorStatusService {
     @Autowired private PartCacheRepository partCache;
     @Autowired private RankingService ranking;
     @Autowired private ObjectProvider<JlcpcbDatabaseManager> jlcpcb;
+    @Autowired private ObjectProvider<PartIndexReindexer> fieldIndex;
 
     public DistributorStatusResponse status() {
         CacheStatistics stats = null;
@@ -67,7 +70,23 @@ public class DistributorStatusService {
                 .weight(r.weight())
                 .timeout(properties.ranking().timeout().toString())
                 .build();
-        return new DistributorStatusResponse(distributors, cache, rankingSummary);
+        return new DistributorStatusResponse(distributors, cache, rankingSummary).withFieldIndex(fieldIndex());
+    }
+
+    /** The field index state (DESIGN.md 3.8), null when it cannot be read. */
+    private DistributorStatusResponse.FieldIndexSummary fieldIndex() {
+        PartIndexReindexer reindexer = fieldIndex == null ? null : fieldIndex.getIfAvailable();
+        if (reindexer == null) {
+            return null;
+        }
+        try {
+            FieldIndexStatus s = reindexer.status();
+            return new DistributorStatusResponse.FieldIndexSummary(s.mode(), s.rows(), s.stale(), s.version(),
+                    s.reindexing(), s.incomplete());
+        } catch (RuntimeException e) {
+            log.warn("Reading the field index state failed: {}", e.toString());
+            return null;
+        }
     }
 
     /**

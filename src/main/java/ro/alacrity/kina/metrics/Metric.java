@@ -56,6 +56,14 @@ public enum Metric {
             "outcome"),
     METRICS_BACKFILL_MOVED("kina.metrics.backfill.moved", Type.COUNTER,
             "Counts the metrics backfill moved from type=unknown to a typed series, by counter name", "name"),
+    FIELD_INDEX_REINDEXED("kina.field.index.reindexed", Type.COUNTER,
+            "part_index rows written by the field index re-index job", "distributor"),
+    FIELD_SHADOW_QUERIES("kina.field.shadow.queries", Type.COUNTER,
+            "Shadow field queries by outcome (ok, dropped, incomplete, failed)", "distributor", "outcome"),
+    FIELD_SHADOW_CANDIDATES("kina.field.shadow.candidates", Type.COUNTER,
+            "Candidates the shadow field queries returned (unrelaxed step)", "distributor"),
+    FIELD_SHADOW_DROPPED("kina.field.shadow.dropped", Type.COUNTER,
+            "Returnable parts the shadow field query would have dropped (must stay 0)", "distributor"),
 
     // ---- timers (count and total time persisted) ------------------------------------------------------------------
     SEARCH_DURATION("kina.search.duration", Type.TIMER, "Time to answer a search request (single or batch)"),
