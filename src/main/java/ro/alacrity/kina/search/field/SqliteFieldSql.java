@@ -95,15 +95,17 @@ public class SqliteFieldSql extends FieldSql {
     }
 
     /**
-     * The candidates of one step for the LCSC retriever: {@code fts_rowid, part_number, stated, total}, the parts of
-     * the requested family first, then those that state most of the requested attributes, then the highest stock,
-     * then the part number; {@code total} is the number of rows the step matches (a window function, one pass). The
-     * rows of the JLCPCB table are read by the FTS rowid.
+     * The candidates of one step for the LCSC retriever: {@code fts_rowid, part_number, stated, total}, the parts
+     * that state most of the requested attributes first, then the highest stock, then the part number; {@code total}
+     * is the number of rows the step matches (a window function, one pass). The rows of the JLCPCB table are read by
+     * the FTS rowid.
      *
-     * <p>The family comes first because a row of unknown family (76 000 of the in-stock rows of the full file: blank
-     * descriptions, families the parser does not know) is kept by every step, and one that states a requested rating
-     * (a 12 V buck converter) would otherwise tie with a fan of a blank description and win on stock (validation
-     * 2026-10-09: {@code 40x40x10 fan 12V} returned buck converters and buzzers).
+     * <p>When the request names a family, only rows of a known family are candidates. A row of unknown family (about
+     * 76 000 in-stock rows of the full file: blank descriptions, families the parser does not know) is kept by every
+     * step of {@link #select} (the superset invariant), but here it would fill the window with whatever states a
+     * requested rating (a 12 V buck converter for {@code 40x40x10 fan 12V}, validation 2026-10-09) and the ranker
+     * cannot tell it from the request. Those rows are left to the FTS5 search, which fills the rest of the window
+     * whenever the typed steps yield fewer candidates (DESIGN.md 9.3), exactly as before the typed table existed.
      */
     public Statement candidates(FieldQuery query, FieldQuery.Step step, int limit) {
         Body body = body(query, step, null);
@@ -111,18 +113,26 @@ public class SqliteFieldSql extends FieldSql {
         // that states none (select orders by all-or-nothing)
         String stated = body.stated().isEmpty() ? "(" + bool(true) + ")"
                 : "(" + String.join(") + (", body.stated()) + ")";
-        String family = body.familyStated().isEmpty() ? "" : "(" + String.join(" AND ", body.familyStated()) + ") DESC, ";
         List<Object> params = new ArrayList<>(body.params());
         params.add(limit);
         // the window function counts every matching row in the same pass (before ORDER BY and LIMIT)
         return new Statement("SELECT fts_rowid, part_number, " + stated + " AS stated, count(*) OVER () AS total FROM "
-                + body.from() + " ORDER BY " + family + "stated DESC, stock DESC, part_number LIMIT ?", params);
+                + knownFamily(body) + " ORDER BY stated DESC, stock DESC, part_number LIMIT ?", params);
     }
 
-    /** {@code SELECT count(*)} of the rows one step matches. */
+    /** {@code SELECT count(*)} of the rows {@link #candidates} selects from. */
     public Statement count(FieldQuery query, FieldQuery.Step step) {
         Body body = body(query, step, null);
-        return new Statement("SELECT count(*) FROM " + body.from(), body.params());
+        return new Statement("SELECT count(*) FROM " + knownFamily(body), body.params());
+    }
+
+    /** The FROM clause of {@code body} restricted to rows that state the requested family (when one is requested). */
+    private static String knownFamily(Body body) {
+        if (body.familyStated().isEmpty()) {
+            return body.from();
+        }
+        String family = String.join(" AND ", body.familyStated());
+        return body.from() + (body.from().contains(" WHERE ") ? " AND " : " WHERE ") + family;
     }
 
     @Override

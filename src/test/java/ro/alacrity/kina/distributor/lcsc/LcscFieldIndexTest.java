@@ -347,9 +347,10 @@ class LcscFieldIndexTest {
     }
 
     @Test
-    void rowsOfTheRequestedFamilyComeBeforeRowsOfUnknownFamily() throws Exception {
-        // a fan with a blank description (family from its category only) and a well-stocked 12 V part of a family the
-        // parser does not know: both state one requested attribute, the fan must come first (validation 2026-10-09)
+    void rowsOfUnknownFamilyAreLeftToTheFtsSearch() throws Exception {
+        // a fan with a blank description (family from its category only) and well-stocked 12 V parts of a family the
+        // parser does not know: the typed candidates hold the fan only, the unknown rows would flood the window with
+        // parts the ranker cannot tell from the request (validation 2026-10-09)
         List<ro.alacrity.kina.distributor.lcsc.JlcpcbRow> rows = new ArrayList<>(JlcpcbTestDatabase.typed());
         rows.add(JlcpcbTestDatabase.row("C729744", "Industrial control electrical", "Cooling fan", "FAN-BLANK", "-",
                 "Fanmaker", "Extended", "", "1-:2.0", "10"));
@@ -364,8 +365,8 @@ class LcscFieldIndexTest {
         LcscFieldSearch field = LcscTestSupport.fieldSearch(search);
 
         FieldQuery query = query("40x40x10 fan 12V");
-        List<String> found = numbers(field.candidates(query, query.step(0), 40, WAIT));
-        assertThat(found).isNotEmpty();
-        assertThat(found.getFirst()).isEqualTo("C729744");
+        LcscFieldSearch.Candidates candidates = field.candidates(query, query.step(0), 40, WAIT);
+        assertThat(numbers(candidates)).containsExactly("C729744");
+        assertThat(candidates.total()).isEqualTo(1);
     }
 }

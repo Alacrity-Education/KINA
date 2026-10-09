@@ -3047,11 +3047,13 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
      the candidate window of them exist (`max(max_results, search.candidate-window)`, at most `max-results-per-search`),
      the highest-stock ones are the candidates and `total_results` is their count.
   2. **Superset.** Otherwise `SqliteFieldSql.INSTANCE` (a part that does not state an attribute is kept, section 3.8):
-     the parts of the requested family first, then those that state the most requested attributes, then the highest
-     stock, one pass with `count(*) OVER ()` for `total_results`. The family comes first because a row of unknown
-     family (about 76 000 in-stock rows of the full file) is kept by every step, and one that states a requested rating
-     (a 12 V buck converter) would otherwise tie with a fan whose description is blank and win on stock (validation
-     2026-10-09, `40x40x10 fan 12V`). It scans the family (about 50 to 110 ms warm on the full file).
+     the parts that state the most requested attributes first, then the highest stock, one pass with
+     `count(*) OVER ()` for `total_results`. When the request names a family, only rows of a known family are
+     candidates: a row of unknown family (about 76 000 in-stock rows of the full file: blank descriptions, families
+     the parser does not know) would fill the window with whatever states a requested rating (12 V buck converters and
+     buzzers for `40x40x10 fan 12V`, validation 2026-10-09) and the ranker cannot tell it from the request. Those rows
+     are left to the FTS5 search of step 4, which fills the window as it did before the typed table existed.
+     `SqliteFieldSql.select` (the superset of section 3.8) still keeps them. It scans the family (about 50 to 110 ms warm on the full file).
   3. **Relaxation.** While the step yields fewer candidates than the window, the next step of `FieldQuery.steps()`
      (free text first, then the ladder kinds in `@Relax` order) runs the same way; the constraints and keywords a step
      left out are reported as `constraints_relaxed` and `query_terms_dropped`.
