@@ -8,8 +8,11 @@ import java.util.Map;
 /**
  * The PostgreSQL dialect of {@link FieldSql} over {@code part_index} (migration V14, DESIGN.md 3.8 and 8):
  * {@code attrs} keys through {@code ->>} (equality through {@code @>}, served by the {@code jsonb_path_ops} GIN
- * index), value sets as array parameters ({@code = ANY(?)}, {@code <> ALL(?)}), free-text words as
- * {@code search_tsv @@ to_tsquery('simple', 'word:*')}, substrings and MPN prefixes as {@code LIKE} (trigram GIN).
+ * index), value sets as array parameters ({@code = ANY(?)}, {@code <> ALL(?)}), free-text words, substrings and MPN
+ * prefixes as {@code LIKE} on {@code search_text} and {@code mpn} (trigram GIN). A word is a substring, not a
+ * {@code search_tsv} prefix: the Java check finds a keyword as a substring of the part's text
+ * ({@code DeterministicRanker}, the lexical score), and a prefix match would miss a keyword inside a word
+ * ({@code 0805} in {@code C0805}).
  */
 public class PostgresFieldSql extends FieldSql {
 
@@ -71,8 +74,8 @@ public class PostgresFieldSql extends FieldSql {
 
     @Override
     protected String word(String token, List<Object> params) {
-        params.add(token + ":*");
-        return "search_tsv @@ to_tsquery('simple', ?)";
+        params.add("%" + escapeLike(token) + "%");
+        return "search_text LIKE ? ESCAPE '\\'";
     }
 
     @Override

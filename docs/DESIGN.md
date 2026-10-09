@@ -2069,11 +2069,14 @@ builder makes ordered groups: `H` (never relaxed: `distributor`, `in_stock`, and
 request's family is `NEVER`, including `elements`), `R` (the stated ratings whose general strategy is `BELOW_SPEC`,
 unless `allow_below_spec`), `L1..Ln` (one group per stated ladder kind, in `@Relax(order)`: dielectric, package where
 it is not hard, tolerance, orientation, then the fan, LED and switch kinds) and `K` (free text: every keyword must
-match; a keyword of 3 or more letters and digits is a word prefix, `search_tsv @@ to_tsquery('simple', 'w:*')`, any
-other a substring, `search_text LIKE`; the requested part numbers are MPN prefixes, `mpn LIKE 'p%'`, served by the
-trigram index). The relaxation drops whole groups: first `K`, then `L1`, then `L1, L2`... `H` and `R` are never dropped;
+match; in PostgreSQL every keyword is a substring, `search_text LIKE '%k%'`, served by the trigram GIN index, the way the
+ranker's lexical score finds a keyword (a substring of the part's text: `0805` is found in `C0805`; a word prefix on
+`search_tsv` would be stricter); in SQLite a keyword of 3 or more letters and digits is an FTS5 `MATCH` on the trigram
+table, which has the same substring semantics; the requested part numbers are MPN prefixes, `mpn LIKE 'p%'`, also
+served by the trigram index). The relaxation drops whole groups: first `K`, then `L1`, then `L1, L2`... `H` and `R` are never dropped;
 the last step holds `H + R` only, the superset of every part the Java check returns. Free text is a ranking signal
-(never in the grade), so no superset is required while `K` is in the step. The query returns
+(never in the grade): with `K` in the step the superset is required for the parts that state every keyword the way the
+lexical score finds it and carry a requested part number as an MPN prefix. The query returns
 `distributor, part_number, confirmed` ordered by `confirmed` (the part states every column the step compares) descending,
 then by key, at most `kina.search.field-index.max-candidates` (200) rows. `PostgresFieldSql` and `SqliteFieldSql`
 render the same predicates; SQLite stores arrays and `attrs` as JSON text and matches free-text words with FTS5
@@ -2124,8 +2127,9 @@ lists as before.
 **The superset test.** `FieldQuerySupersetTest` caches and indexes every candidate of the evaluation set and the parts
 of the recorded LED, switch, fan and power-resistor searches (3 130 parts, 911 of them read poorly), and checks for
 every query (the 41 evaluation queries, the recordings and extra queries), with and without `allow_below_spec`, and
-every step without free text, that every part the Java check keeps (and that misses no ladder kind still in the step)
-is returned, in both dialects, and that both dialects return the same rows.
+every step, that every part the Java check keeps (and that misses no ladder kind still in the step, and, with free text
+in the step, states every keyword and a requested part number) is returned, in both dialects, and that both dialects
+return the same rows. The free-text steps (72 of them, 508 expected parts) hold for the substring rule above.
 
 ## 4. MCP tools
 

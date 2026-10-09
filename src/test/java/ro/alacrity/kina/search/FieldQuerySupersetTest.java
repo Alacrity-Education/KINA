@@ -60,7 +60,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Every part of a pool (every candidate of {@code docs/research/data/ranking-eval.jsonl}, the parts of the recorded LED,
  * switch, fan and power-resistor searches) is cached and indexed by the real writer and re-index job; then, for every
  * query (the 41 evaluation queries, the queries of the recordings and a list of extra queries) and every relaxation
- * step without free text, every pool part the Java check keeps ({@code PageCollector.Check.returnable}, and no
+ * step, every pool part the Java check keeps ({@code PageCollector.Check.returnable}, and no
  * mismatch on the ladder kinds still in the step) must be returned by the SQL, in the PostgreSQL dialect and in the
  * SQLite dialect (an in-memory {@code part_index} built from the same rows). Parts the extractor reads poorly (blank
  * LCSC descriptions, Mouser parts without a package) are part of the pool and must stay reachable. A per-query report is
@@ -82,7 +82,11 @@ class FieldQuerySupersetTest {
             "electrolytic capacitor 470uF 35V 105°C 5000h THT", "10uH inductor 1210 Isat 2A DCR < 100mOhm",
             "female header 2x10 2.54mm vertical SMD", "Schottky 40V 1A SOD-123", "1k resistor array 0603 4 elements",
             "chassis mount resistor 50W", "tantalum 47uF 10V 1206", "4.7k 1% 0603 resistor thin film",
-            "10uF X7R 0805 25V", "40mm fan 12V", "red LED 0603", "tactile switch 6x6mm SMD");
+            "10uF X7R 0805 25V", "40mm fan 12V", "red LED 0603", "tactile switch 6x6mm SMD",
+            // free text: keywords inside words, short keywords, part numbers
+            "samsung 10uF 0805 25V ceramic capacitor", "yageo 10k 0603 resistor automotive", "murata 100nF X7R 0402 gcm",
+            "wurth ferrite 600 ohm 0603 high current", "GRM21BR71A106KE51L", "ESP32-WROOM-32 wifi module with antenna",
+            "buck converter 3A adjustable", "tdk mlcc 4.7uF 0603 16V");
 
     private static PostgreSQLContainer postgres;
     private static PartIndexRepository index;
@@ -93,6 +97,10 @@ class FieldQuerySupersetTest {
     private static final Map<String, Part> ENRICHED = new LinkedHashMap<>();
     private static final List<String> QUERIES = new ArrayList<>();
     private static RankingService ranking;
+    private static final java.util.concurrent.atomic.AtomicLong TEXT_CHECKS =
+            new java.util.concurrent.atomic.AtomicLong();
+    private static final java.util.concurrent.atomic.AtomicLong TEXT_EXPECTED =
+            new java.util.concurrent.atomic.AtomicLong();
 
     @BeforeAll
     static void build() throws Exception {
@@ -173,19 +181,23 @@ class FieldQuerySupersetTest {
         }
         report.add("gap parts in the pool (blank LCSC description or Mouser without a package): " + gapParts.size()
                 + "; returned by the Java check over all queries: " + gapsReturned);
+        report.add("steps with free text checked: " + TEXT_CHECKS.get() + "; parts expected in them: "
+                + TEXT_EXPECTED.get());
         Path out = Path.of("target/field-superset-report.txt");
         Files.createDirectories(out.getParent());
         Files.write(out, report, StandardCharsets.UTF_8);
         report.forEach(System.out::println);
         assertThat(gapParts).as("the pool holds parts the extractor reads poorly").hasSizeGreaterThan(20);
         assertThat(QUERIES).hasSizeGreaterThanOrEqualTo(41 + EXTRA.size());
+        assertThat(TEXT_CHECKS.get()).as("steps with free text").isGreaterThan(10);
+        assertThat(TEXT_EXPECTED.get()).as("parts the free-text steps must return").isGreaterThan(100);
         assertThat(violations).as("parts the Java check keeps that the field query drops").isEmpty();
     }
 
     private record Result(String line, List<String> violations, long gaps) {
     }
 
-    /** One query: both stock modes, every step without free text, both dialects. */
+    /** One query: both stock modes, every step (with free text too), both dialects. */
     private static Result check(String text, Set<String> gapParts) {
         ParsedQuery parsed = PARSER.parse(text);
         List<String> violations = new ArrayList<>();
@@ -202,18 +214,23 @@ class FieldQuerySupersetTest {
             Set<String> pgRelaxed = null;
             Set<String> liteRelaxed = null;
             for (FieldQuery.Step step : query.steps()) {
-                if (query.group(FieldQuery.Role.K.name()) != null
-                        && !step.dropped().contains(FieldQuery.Role.K.name())) {
-                    continue;   // free text ranks, it never grades: no superset is required with it
-                }
+                // with free text in the step, a part must also state every keyword the way the ranker's lexical score
+                // finds it (a substring of its text) and carry a requested part number as an MPN prefix
+                boolean withText = query.group(FieldQuery.Role.K.name()) != null
+                        && !step.dropped().contains(FieldQuery.Role.K.name());
                 List<ConstraintKind> ladder = query.groups(FieldQuery.Role.L).stream()
                         .filter(g -> !step.dropped().contains(g.name())).flatMap(g -> g.kinds().stream())
                         .toList();
                 Set<String> expected = new TreeSet<>();
                 for (String key : returnable) {
-                    if (meetsLadder(parsed, ENRICHED.get(key), ladder)) {
+                    if (meetsLadder(parsed, ENRICHED.get(key), ladder)
+                            && (!withText || statesText(parsed, ENRICHED.get(key)))) {
                         expected.add(key);
                     }
+                }
+                if (withText) {
+                    TEXT_CHECKS.incrementAndGet();
+                    TEXT_EXPECTED.addAndGet(expected.size());
                 }
                 Set<String> pg = postgres(query, step);
                 Set<String> lite = sqlite(query, step);
@@ -256,6 +273,22 @@ class FieldQuerySupersetTest {
             assertThat(postgres(query, query.relaxed())).as(key).contains(key);
             assertThat(sqlite(query, query.relaxed())).as(key).contains(key);
         }
+    }
+
+    /**
+     * True when the part states every keyword of the request the way the ranker's lexical score finds it
+     * ({@code features.text()} contains it) and, for a request that names part numbers, its MPN starts with one.
+     */
+    private static boolean statesText(ParsedQuery parsed, Part part) {
+        String text = EXTRACTOR.features(part).text();
+        if (!parsed.keywords().stream().allMatch(text::contains)) {
+            return false;
+        }
+        if (parsed.partNumbers().isEmpty()) {
+            return true;
+        }
+        String mpn = FieldVocabulary.normalize(part.manufacturerPartNumber());
+        return parsed.partNumbers().stream().map(FieldVocabulary::normalize).anyMatch(mpn::startsWith);
     }
 
     /** True when no ladder kind of {@code ladder} is a known mismatch of the part. */
