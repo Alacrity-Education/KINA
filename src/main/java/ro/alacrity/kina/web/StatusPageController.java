@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.ModelAndView;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorStatusResponse;
 import ro.alacrity.kina.domain.MetricsSummary;
@@ -40,6 +41,7 @@ public class StatusPageController {
     @Autowired private KinaMetrics metrics;
     @Autowired private MetricsGauges gauges;
     @Autowired private MetricsBackfill backfill;
+    @Autowired private ApiQuotaTracker quota;
     @Value("${spring.ai.mcp.server.version:dev}") private String version;
 
     /** The system card. */
@@ -61,6 +63,10 @@ public class StatusPageController {
 
     /** Users and tokens. */
     public record Users(long known, long revoked, long activeTokens) {
+    }
+
+    /** One row of the API quota table: {@code minute 15/30}, {@code day 165/1000}, the end of a running rate limit. */
+    public record QuotaRow(String distributor, String minute, String day, Instant throttledUntil) {
     }
 
     @GetMapping("/status")
@@ -88,6 +94,9 @@ public class StatusPageController {
                 new CounterGroup("Rate-limited calls", summary.rateLimitedCalls()),
                 new CounterGroup("Backfill runs", backfillStatus.runs()),
                 new CounterGroup("Moved by the backfill", backfillStatus.moved())));
+        view.addObject("quotaRows", quota.snapshot().entrySet().stream()
+                .map(e -> new QuotaRow(e.getKey().name(), e.getValue().minute().text(), e.getValue().day().text(),
+                        e.getValue().throttledUntil())).toList());
         view.addObject("users", new Users(gauges.usersKnown(), gauges.usersRevoked(), gauges.tokensActive()));
         view.addObject("now", Instant.now());
         return view;

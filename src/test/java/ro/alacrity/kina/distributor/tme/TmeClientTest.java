@@ -9,6 +9,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import ro.alacrity.kina.TestWiring;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
@@ -54,6 +55,7 @@ class TmeClientTest {
 
     private MockRestServiceServer server;
     private final FakeTime time = new FakeTime(CLOCK.instant());
+    private ApiQuotaTracker quota;
 
     /**
      * Client with a direct executor so the data/parameters/files calls happen in a deterministic order, and a
@@ -63,7 +65,9 @@ class TmeClientTest {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
         Executor direct = Runnable::run;
-        return TestWiring.wire(new TmeClient(),
+        quota = TestWiring.wire(new ApiQuotaTracker(), "properties", TestWiring.properties("kina.distributors.tme"
+                + ".quota.per-minute", "30"), "clock", time.clock());
+        return TestWiring.wire(new TmeClient(), "quota", quota,
                 "properties", TestWiring.properties(new KinaProperties.Distributors(null, properties)),
                 "restClient", builder.build(), "clock", CLOCK, "executor", direct,
                 "retry", time.retry(Distributor.TME, 0.5));
@@ -543,6 +547,34 @@ class TmeClientTest {
 
         assertThatThrownBy(() -> client.search("10uF", 0, 10))
                 .isInstanceOfSatisfying(DistributorException.class, e -> assertThat(e.kind()).isEqualTo(Kind.TIMEOUT));
+    }
+
+    @Test
+    void theTokenRequestAndEverySearchRequestCountInTheQuota() {
+        TmeClient client = client(TmeTestSupport.properties(60));
+        expectToken(server, "t");
+        server.expect(get("/products/search")).andRespond(withException(new HttpTimeoutException("request timed out")));
+
+        assertThatThrownBy(() -> client.search("10uF", 0, 10)).isInstanceOf(DistributorException.class);
+
+        assertThat(quota.used(Distributor.TME, ApiQuotaTracker.Window.MINUTE)).isEqualTo(2);
+        assertThat(quota.used(Distributor.TME, ApiQuotaTracker.Window.DAY)).isEqualTo(2);
+        assertThat(quota.used(Distributor.MOUSER, ApiQuotaTracker.Window.DAY)).isZero();
+        assertThat(quota.limit(Distributor.TME, ApiQuotaTracker.Window.DAY)).isEqualTo(2000);
+    }
+
+    @Test
+    void aRateLimitedRequestCountsAndMarksTheThrottle() {
+        TmeClient client = client(TmeTestSupport.properties(60));
+        expectToken(server, "t");
+        server.expect(get("/products/search")).andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", "3"));
+
+        assertThatThrownBy(() -> client.search("10uF", 0, 10)).isInstanceOfSatisfying(DistributorException.class,
+                e -> assertThat(e.kind()).isEqualTo(Kind.RATE_LIMITED));
+
+        assertThat(quota.used(Distributor.TME, ApiQuotaTracker.Window.MINUTE)).isEqualTo(2);
+        assertThat(quota.throttledUntil(Distributor.TME)).isEqualTo(CLOCK.instant().plusSeconds(3));
     }
 
     @Test

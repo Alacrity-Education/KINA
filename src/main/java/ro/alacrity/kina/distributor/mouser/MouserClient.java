@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
@@ -36,6 +37,8 @@ public class MouserClient implements DistributorClient {
 
     @Autowired private KinaProperties properties;
     @Autowired private RestClient.Builder restClientBuilder;
+    /** Counts the HTTP requests against the quota (DESIGN.md 3.7); null when built without Spring. */
+    @Autowired private ApiQuotaTracker quota;
     private final MouserPartMapper mapper = new MouserPartMapper();
     private Clock clock = Clock.systemUTC();
     private KinaProperties.Mouser config;
@@ -47,6 +50,9 @@ public class MouserClient implements DistributorClient {
         config = properties.distributors().mouser();
         if (api == null && config.isConfigured()) {
             api = MouserApi.create(restClientBuilder, config.baseUrl(), config.apiKey().strip());
+        }
+        if (api != null && quota != null) {
+            api.quota(quota);
         }
     }
 

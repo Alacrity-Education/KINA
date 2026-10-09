@@ -7,6 +7,7 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
@@ -58,6 +59,8 @@ public class TmeClient implements DistributorClient {
     static final int MAX_PHRASE_LENGTH = 40;
 
     @Autowired private KinaProperties properties;
+    /** Counts the HTTP requests (token requests included) against the quota (DESIGN.md 3.7); null without Spring. */
+    @Autowired private ApiQuotaTracker quota;
     private RestClient restClient = defaultRestClient();
     private Clock clock = Clock.systemUTC();
     private Executor executor = task -> Thread.ofVirtual().name("tme-fetch").start(task);
@@ -69,6 +72,9 @@ public class TmeClient implements DistributorClient {
     @PostConstruct
     void init() {
         config = properties.distributors().tme();
+        if (quota != null) {
+            retry.quota(quota);
+        }
         TmeTokenManager tokens = new TmeTokenManager(restClient, config.baseUrl(),
                 nullToEmpty(config.token()), nullToEmpty(config.secret()), clock, retry);
         api = new TmeApi(restClient, tokens, config.baseUrl(), config.language(), retry);

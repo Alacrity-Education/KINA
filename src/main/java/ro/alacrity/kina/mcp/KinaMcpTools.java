@@ -198,8 +198,9 @@ public class KinaMcpTools {
 
     @McpTool(name = "list_distributors", description = """
             List the distributors KINA can search with their state: configured, available, a detail line (for LCSC \
-            the JLCPCB database date and part count, or the download progress) and cached part counts; also the \
-            cache statistics, the ranking model state and usage counters. Does not call the distributor APIs.""",
+            the JLCPCB database date and part count, or the download progress), cached part counts and, for Mouser \
+            and TME, the API requests used against the per-minute and per-day quota; also the cache statistics, \
+            the ranking model state and usage counters. Does not call the distributor APIs.""",
             annotations = @McpTool.McpAnnotations(title = "List distributors", readOnlyHint = true,
                     destructiveHint = false, idempotentHint = true, openWorldHint = false))
     public DistributorStatusResponse listDistributors() {

@@ -3,6 +3,7 @@ package ro.alacrity.kina.domain;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 
 import java.time.Instant;
 import java.util.List;
@@ -77,6 +78,7 @@ public record DistributorStatusResponse(
      * @param cachedParts         {@code cached_parts} rows for this distributor; null for LCSC or when unknown
      * @param maxResultsPerSearch largest number of in-stock parts fetched for one query
      * @param jlcpcb              JLCPCB database state (LCSC only)
+     * @param quota               API quota usage (Mouser and TME; omitted for LCSC), DESIGN.md 3.7
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record DistributorStatus(
@@ -87,8 +89,21 @@ public record DistributorStatusResponse(
             @JsonProperty("uses_cache") boolean usesCache,
             @JsonProperty("cached_parts") Long cachedParts,
             @JsonProperty("max_results_per_search") int maxResultsPerSearch,
-            @JsonProperty("jlcpcb") JlcpcbSummary jlcpcb
+            @JsonProperty("jlcpcb") JlcpcbSummary jlcpcb,
+            @JsonProperty("quota") ApiQuotaTracker.Snapshot quota
     ) {
+
+        public DistributorStatus(Distributor distributor, boolean configured, boolean available, String detail,
+                                 boolean usesCache, Long cachedParts, int maxResultsPerSearch, JlcpcbSummary jlcpcb) {
+            this(distributor, configured, available, detail, usesCache, cachedParts, maxResultsPerSearch, jlcpcb,
+                    null);
+        }
+
+        /** This entry with the quota usage. */
+        public DistributorStatus withQuota(ApiQuotaTracker.Snapshot snapshot) {
+            return new DistributorStatus(distributor, configured, available, detail, usesCache, cachedParts,
+                    maxResultsPerSearch, jlcpcb, snapshot);
+        }
     }
 
     /** State of the JLCPCB parts database that serves LCSC. */

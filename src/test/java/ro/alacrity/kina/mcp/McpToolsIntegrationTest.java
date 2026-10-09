@@ -291,6 +291,16 @@ class McpToolsIntegrationTest {
         assertThat(list.path("metrics").path("search_queries_by_type").path("capacitor").asLong())
                 .isGreaterThanOrEqualTo(3);
 
+        for (JsonNode d : list.path("distributors")) {
+            if (d.path("distributor").asString().equals("LCSC")) {
+                assertThat(d.has("quota")).isFalse();
+            } else {
+                assertThat(d.path("quota").path("minute").path("limit").asInt()).isEqualTo(30);
+                assertThat(d.path("quota").path("day").path("used").isNumber()).isTrue();
+                assertThat(d.path("quota").has("throttled_until")).isTrue();
+            }
+        }
+
         client.get().uri("/api/v1/distributors").exchange().expectStatus().isOk();
         String summary = client.get().uri("/api/v1/metrics/summary").exchange()
                 .expectStatus().isOk().returnResult(String.class).getResponseBody();
@@ -298,6 +308,10 @@ class McpToolsIntegrationTest {
         assertThat(summaryJson.path("summary").path("searches").asLong()).isGreaterThanOrEqualTo(searches + 3);
         assertThat(summaryJson.path("summary").path("search_queries_by_type").path("unknown").asLong())
                 .isGreaterThanOrEqualTo(1);
+        assertThat(summaryJson.path("distributor_quota").path("MOUSER").path("day").path("limit").asInt())
+                .isEqualTo(1000);
+        assertThat(summaryJson.path("distributor_quota").path("TME").path("day").path("limit").asInt())
+                .isEqualTo(2000);
         List<String> names = new ArrayList<>();
         summaryJson.path("counters").forEach(c -> names.add(c.path("name").asString()));
         assertThat(names).contains("kina_searches_total", "kina_tool_calls_total", "kina_search_duration_seconds_count",

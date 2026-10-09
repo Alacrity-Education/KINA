@@ -5,9 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.domain.MetricsSummary;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,13 +23,17 @@ import java.util.Map;
 public class MetricsController {
 
     @Autowired private KinaMetrics metrics;
+    @Autowired private ApiQuotaTracker quota;
 
     /**
      * @param summary  the key counters (also in {@code list_distributors})
      * @param counters every counter and timer value in Prometheus naming, sorted by name and tags
+     * @param distributorQuota the in-memory API quota usage per distributor (Mouser, TME), keyed by distributor name
      */
     public record SummaryResponse(@JsonProperty("summary") MetricsSummary summary,
-                                  @JsonProperty("counters") List<CounterValue> counters) {
+                                  @JsonProperty("counters") List<CounterValue> counters,
+                                  @JsonProperty("distributor_quota") Map<String, ApiQuotaTracker.Snapshot>
+                                          distributorQuota) {
     }
 
     /**
@@ -53,7 +59,9 @@ public class MetricsController {
                 counters.add(new CounterValue(Metric.prometheusName(name, false), key.tagMap(), value));
             }
         });
-        return new SummaryResponse(metrics.summary(), counters);
+        Map<String, ApiQuotaTracker.Snapshot> usage = new LinkedHashMap<>();
+        quota.snapshot().forEach((d, snapshot) -> usage.put(d.name(), snapshot));
+        return new SummaryResponse(metrics.summary(), counters, usage);
     }
 
     private static String base(String name) {
