@@ -198,7 +198,7 @@ def build_query(row: dict) -> tuple[str, list[str]] | None:
         words.append(si(f("inductance_h"), "H", ("n", "u", "m", "")))
         used.append("inductance")
     elif fam == "ferrite" and f("impedance_ohm"):
-        words.append(("%.3g" % f("impedance_ohm")) + " ohm")
+        words.append(ohms(f("impedance_ohm")) if f("impedance_ohm") >= 1e3 else ("%.3g" % f("impedance_ohm")) + " ohm")
         used.append("impedance")
     elif fam in ("crystal", "oscillator") and f("frequency_hz"):
         words.append(si(f("frequency_hz"), "Hz", ("", "k", "M")))

@@ -217,6 +217,32 @@ scripts/e2e/prod_smoke.sh                           # prod-mode smoke in a throw
 | `rest` | `GET /api/v1/parts/search`, `POST .../search/batch`, TME phrase fallback (`fallback_query`, informational), `GET /api/v1/parts/TME/<symbol>`, 404/400 problem documents, invalid token -> 401, public health; at LCSC (no quota) a part number in the query (`1N4148W SOD-123`: `parsed.part_numbers`, the part first, `requested_part_found` true; an unknown one: false and a hint naming it) and `excluded_below_spec_detail` (a lifetime request names the parts left out with the failed rating). Every search response is also checked for the response shape: the counts add up, a part with stock 0 only when the query names it and only after every part in stock, `requested_part_found` null exactly when no part number is named, a `hint` whenever it is false |
 | `prod` | (via `prod_smoke.sh`) app starts with `KINA_MODE=prod` and dummy OIDC client credentials; `/mcp` and `/api` without a token are 401 (with `resource_metadata`); `GET /` -> `/oauth2/authorization/oidc` -> 302 to the authorization endpoint discovered from `OIDC_ISSUER_URI` (default `https://accounts.google.com`; override `OIDC_ISSUER_URI` and `EXPECTED_AUTH_HOST` for another provider) |
 
+### Field search validation stack
+
+`scripts/e2e/field-search/` runs a second stack next to a running `kina` project: compose project `kina-fs`, app on
+port 18080, management port 19090, image `kina-fs:latest`, volumes `kina-fs_kina-data` (external, pre-seeded with
+`/data/jlcpcb/parts-fts5.db` and `/data/cross-encoder/`) and `kina-fs_pgdata`. Mouser and TME are "configured but
+offline" (placeholder credentials, base URLs on a closed local port): searches and lookups read the cache and the field
+index, every live call fails at once, no distributor is contacted. The JLCPCB file is never downloaded
+(`KINA_JLCPCB_AUTODOWNLOAD=false`).
+
+```bash
+scripts/e2e/field-search/run.sh build                 # image from this checkout
+scripts/e2e/field-search/run.sh db                    # postgres only, then:
+scripts/e2e/field-search/run.sh restore kina-live-20261009.dump   # from KINA_FS_DUMP_DIR (default /var/tmp/kina-fs)
+scripts/e2e/field-search/run.sh snapshot before.txt   # cache counts and md5 of cached_parts / cached_searches
+scripts/e2e/field-search/run.sh up on                 # kina in mode on (V14, V15, re-index, journal backfill)
+scripts/e2e/field-search/run.sh mode augment          # recreate kina only, in another mode
+scripts/e2e/field-search/run.sh validate lookups --mcp-fallback --parts parts.tsv
+scripts/e2e/field-search/run.sh e2e                   # kina_e2e.py against 18080/19090
+scripts/e2e/field-search/run.sh down                  # containers removed, volumes kept
+```
+
+`validate.py` (lookups, recall sample, cached-search replay, LCSC queries, latency) and `explain_misses.py` (repeats
+each recall miss and reruns the field query the server logged, without its limit) are described in their headers;
+`FieldQuerySupersetTest` takes the stack's cache as an outside pool (`-Dkina.superset.pool=pool.jsonl
+-Dkina.superset.queries=queries.txt`). Results of 2026-10-09: `docs/research/field-search-validation-2026-10-09.md`.
+
 ### Group authorisation against a real Authentik
 
 `scripts/e2e/authentik/` runs a disposable Authentik 2026.8.3 (server + worker + PostgreSQL; Authentik no longer needs
