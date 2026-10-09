@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CacheStatus;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
@@ -136,7 +137,7 @@ final class PageCollector {
             long started = System.nanoTime();
             long waitedBefore = deadline.rateLimitWaitedNanos();
             DistributorSearchPage page;
-            if (client.distributor() != ro.alacrity.kina.domain.Distributor.LCSC) {
+            if (ApiQuotaTracker.isTracked(client.distributor())) {
                 progress.liveCalls.incrementAndGet();   // counted when made: a failed call spent quota too
             }
             try {

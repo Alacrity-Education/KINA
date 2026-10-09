@@ -4,6 +4,7 @@ import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.domain.Part;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Progress of one running fetch: shared mutable state, readable when the fetch times out or fails. One instance per
@@ -26,7 +27,7 @@ final class Progress {
      * Distributor search calls this retrieval made (one per page, every phrase, failed calls included; never LCSC,
      * whose database is local): the {@code live_calls} of the result.
      */
-    final java.util.concurrent.atomic.AtomicInteger liveCalls = new java.util.concurrent.atomic.AtomicInteger();
+    final AtomicInteger liveCalls = new AtomicInteger();
     /** Steps of the field query evaluated so far (the field-first flow; 0 otherwise). */
     volatile int fieldSteps;
 
