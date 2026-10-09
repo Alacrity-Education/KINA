@@ -182,4 +182,29 @@ class LcscRetrieverTest {
                 ConstraintPolicy.DEFAULTS, Distributor.LCSC, false);
         assertThat(LcscRetriever.constrains(capacitor)).isTrue();
     }
+
+    @Test
+    void candidatesTheJavaCheckLeavesOutDoNotTakeAPlaceInTheWindow() throws Exception {
+        // the SQL range of 4.7k is wider than the Java check: 4.75k rows are confirmed by SQL and left out by Java; with
+        // the most stock they used to fill the window and end the search short (validation 2026-10-09)
+        List<ro.alacrity.kina.distributor.lcsc.JlcpcbRow> rows = new java.util.ArrayList<>(JlcpcbTestDatabase.typed());
+        for (int i = 0; i < 50; i++) {
+            rows.add(JlcpcbTestDatabase.row("C81" + String.format("%04d", i), "Resistors",
+                    "Chip Resistor - Surface Mount", "R47-" + i, "0603", "Maker", "Extended",
+                    "-55℃~+155℃ 100mW 4.7kΩ 75V Thick Film Resistor ±1% ±100ppm/℃", "1-:0.01",
+                    Integer.toString(1000 + i)));
+        }
+        for (int i = 0; i < 10; i++) {
+            rows.add(JlcpcbTestDatabase.row("C82" + String.format("%04d", i), "Resistors",
+                    "Chip Resistor - Surface Mount", "R475-" + i, "0603", "Maker", "Extended",
+                    "-55℃~+155℃ 100mW 4.75kΩ 75V Thick Film Resistor ±1% ±100ppm/℃", "1-:0.01",
+                    Integer.toString(1_000_000 + i)));
+        }
+        setUp(rows, true);
+
+        Fetched fetched = retrieve("4.7k 1% 0603 resistor", 10);
+
+        assertThat(fetched.parts()).hasSize(40);   // the candidate window, all of them returnable
+        assertThat(numbers(fetched)).noneMatch(n -> n.startsWith("C82"));
+    }
 }

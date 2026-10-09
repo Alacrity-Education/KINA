@@ -3054,6 +3054,10 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
      buzzers for `40x40x10 fan 12V`, validation 2026-10-09) and the ranker cannot tell it from the request. Those rows
      are left to the FTS5 search of step 4, which fills the window as it did before the typed table existed.
      `SqliteFieldSql.select` (the superset of section 3.8) still keeps them. It scans the family (about 50 to 110 ms warm on the full file).
+     A step fetches twice the window and keeps, in order, the candidates the Java check returns
+     (`Check.returnable`), at most the window: the SQL ranges are wider than the Java check (a 4.75k row is in the
+     range of a 4.7k request and is left out by the check), and such rows must not take places the FTS search would
+     otherwise fill (validation 2026-10-09: `4.7k 1% 0603 resistor` returned 38 parts where the FTS path returned 44).
   3. **Relaxation.** While the step yields fewer candidates than the window, the next step of `FieldQuery.steps()`
      (free text first, then the ladder kinds in `@Relax` order) runs the same way; the constraints and keywords a step
      left out are reported as `constraints_relaxed` and `query_terms_dropped`.

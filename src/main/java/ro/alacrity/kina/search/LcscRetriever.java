@@ -116,7 +116,9 @@ final class LcscRetriever implements DistributorRetriever {
                 }
                 Duration wait = Duration.ofNanos(Math.max(1, Math.min(MAX_POOL_WAIT.toNanos(),
                         deadline.remainingNanos())));
-                best = fieldSearch.candidates(query, step, window, wait);
+                // twice the window: the SQL ranges are wider than the Java check (a 4.75k part for 4.7k), so some
+                // candidates are left out below; the window is filled from the rest (validation 2026-10-09)
+                best = fieldSearch.candidates(query, step, window * 2, wait);
                 used = step;
                 if (best.total() >= window) {
                     break;
@@ -125,9 +127,18 @@ final class LcscRetriever implements DistributorRetriever {
             if (best == null) {
                 return null;
             }
-            List<Part> parts = new ArrayList<>(best.parts().size());
+            // only the candidates the Java check returns take a place in the window, so the FTS search fills the
+            // places of the others instead of the window ending short
+            boolean allowBelowSpec = prepared.request().allowBelowSpec();
+            List<Part> parts = new ArrayList<>(window);
             for (Part part : best.parts()) {
-                parts.add(extractor.enrich(part));
+                Part enriched = extractor.enrich(part);
+                if (PageCollector.Check.returnable(ranking, prepared.parsed(), enriched, allowBelowSpec)) {
+                    parts.add(enriched);
+                    if (parts.size() >= window) {
+                        break;
+                    }
+                }
             }
             log.debug("LCSC field query '{}': step {} of {}, {} candidates of {}", prepared.parsed().normalizedKey(),
                     used.index(), steps.size() - 1, parts.size(), best.total());

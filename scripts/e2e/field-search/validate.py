@@ -360,7 +360,8 @@ def lcsc(args) -> int:
         runs = []
         body = None
         for i in range(args.runs):
-            status, body, took = search(q, "LCSC", args.max_results)
+            status, body, took = get("/api/v1/parts/search?" + urllib.parse.urlencode(
+                {"q": q, "distributors": "LCSC", "max_results": args.max_results, "detail": "full"}))
             runs.append(round(took * 1000, 1))
         r = result_of(body, "LCSC") or {}
         parts = r.get("parts", [])
@@ -371,10 +372,13 @@ def lcsc(args) -> int:
                     "below_spec": r.get("excluded_below_spec"), "parsed": (body or {}).get("parsed"),
                     "top": [{"pn": p["part_number"], "mpn": p["mpn"], "match": p["match"], "stock": p["stock"],
                              "desc": (p.get("description") or "")[:90]} for p in parts[:5]],
-                    "all": [p["part_number"] for p in parts], "matches": [p["match"] for p in parts]})
-        print("%-40s first %7.1f ms  warm %7.1f ms  total %s fetched %s returned %s exact %s" % (
+                    "all": [p["part_number"] for p in parts], "matches": [p["match"] for p in parts],
+                    # a confirmed fit: full match, nothing contradicted, nothing unverified
+                    "clean": sum(1 for p in parts if p.get("match") == 1.0 and not p.get("mismatches")
+                                 and not p.get("unverified"))})
+        print("%-40s first %7.1f ms  warm %7.1f ms  total %s fetched %s returned %s exact %s clean %s" % (
             q, out[-1]["first_ms"], out[-1]["warm_ms"] or 0, out[-1]["total"], out[-1]["fetched"],
-            out[-1]["returned"], out[-1]["exact"]))
+            out[-1]["returned"], out[-1]["exact"], out[-1]["clean"]))
     json.dump(out, open(args.out, "w"), indent=1)
     return 0
 
