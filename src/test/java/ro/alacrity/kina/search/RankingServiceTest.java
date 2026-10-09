@@ -421,7 +421,7 @@ class RankingServiceTest {
             assertThat(keys(ranked).subList(3, 5)).as(results.mode().name())
                     .containsExactlyInAnyOrder(te1.distributorPartNumber(), te2.distributorPartNumber());
             assertThat(ranked.subList(0, 3)).allMatch(r -> r.match() != null && r.match() > 0);
-            assertThat(ranked.subList(3, 5)).allMatch(r -> RankingService.confirmsNothing(r.match()));
+            assertThat(ranked.subList(3, 5)).allMatch(r -> r.matchClass() == DeterministicRanker.MatchClass.NONE);
             assertThat(keys(ranked).getFirst()).isEqualTo(exact.distributorPartNumber());
         }
     }

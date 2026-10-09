@@ -30,6 +30,9 @@ public interface MatchContext {
     /** True when a part of form factor {@code actual} satisfies {@code wanted}; null when either is unknown. */
     Boolean compatibleFormFactor(String wanted, String actual);
 
+    /** The mounting ({@code SMD}, {@code THT}) a package implies through its form factor class, null when none. */
+    String mountingOf(String packageName);
+
     /** True when the family has form factor classes (resistors, capacitors, inductors, unknown families). */
     boolean formFactorApplies(String family);
 

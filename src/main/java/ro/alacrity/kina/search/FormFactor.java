@@ -49,6 +49,14 @@ public class FormFactor {
     /** Every class, in documentation order. */
     public static final List<String> CLASSES = List.of(CHIP, THROUGH_HOLE, CHASSIS, POWER_PACKAGE, POWER_SMD);
 
+    /**
+     * The mounting a class implies ({@code Mounting} of the part: {@code SMD} or {@code THT}): a chip or power SMD
+     * package is surface mount, a leaded body through hole; a package screwed to a heatsink (SOT-227, TO-220: through
+     * hole or chassis mount) and a chassis part imply none. A request that names a package of such a class (where the package is hard) refuses a part of the other
+     * mounting ({@code ConstraintKind.MOUNTING}).
+     */
+    public static final Map<String, String> MOUNTING = Map.of(CHIP, "SMD", POWER_SMD, "SMD", THROUGH_HOLE, "THT");
+
     /** Chip codes beyond {@link Recognizers#isChipCode} that name chip resistors (wide-terminal and power chips). */
     private static final Set<String> EXTRA_CHIP_CODES = Set.of("1225", "2728", "4527", "0612", "1218");
 
@@ -100,6 +108,12 @@ public class FormFactor {
             return THROUGH_HOLE;   // LCSC "AXIAL-0.6", "Radial"
         }
         return null;
+    }
+
+    /** The mounting a package implies through its class ({@link #MOUNTING}), null when it implies none. */
+    public static String mountingOf(String packageName) {
+        String formFactor = ofPackage(packageName);
+        return formFactor == null ? null : MOUNTING.get(formFactor);
     }
 
     /** The class the words of a text name ({@code heatsink mount} -&gt; chassis, {@code axial} -&gt; through_hole). */

@@ -707,9 +707,9 @@ constraint `RankedResults.excludedDetail`, section 3.4 "Hard constraints"); part
 (section 3.4 "Below spec"). Every remaining part gets a tier: 0 for a
 **complete** match (no mismatch, nothing unverified), +1 for a part with a mismatch or an unverified constraint
 (including an unstated hard attribute), +4 when its stock is below `quantity`, +8 when it is below spec (only with
-`allowBelowSpec`), +16 (`RankingService.UNCONFIRMED_TIER`, the **match class**) when it confirms none of the stated
-parameters (`match` 0, `RankingService.confirmsNothing`; a null match, a query not understood, is not in this class),
-and -16 (`RankingService.REQUESTED_TIER`) when the query names it by part number (section 3.4
+`allowBelowSpec`), the **match class** (`DeterministicRanker.MatchClass.tier()`): +16 for the partial class, +32 for
+the none class (a query not understood has no classes), and -16 (`RankingService.REQUESTED_TIER`) when the query names
+it by part number (section 3.4
 "Requested part numbers"): the requested part comes first in its distributor whatever its score, and is reported with
 score 1.0; it is still excluded by a hard constraint or a rating below the request like any other part (a rule, not a
 weight). The quantity, MOQ, low-stock and lifecycle penalties and the voltage overshoot (section 3.4) are subtracted
@@ -718,14 +718,26 @@ from the deterministic score and **again from the final score** (blended or not)
 never ranks above a complete match with enough stock, whatever the model says; within the below-spec tier the order
 is the distance from the target (closest first), never the blend. `score` is then made non-increasing down the list.
 
-**Match class** (0.15.1, product decision). A part whose `match` is 0 (no stated parameter confirmed: typically a part
-of unknown family that a keyword search or a NULL-keeping field rule brought in) never ranks above a part with `match`
-greater than 0, stale or not, whatever its stock, its spec or the model's score; a requested part (named by part
-number) keeps its place first. The stale demotion (section 3.2) applies within a match class only. Such parts are
-kept, not dropped, also on the field path when a confirmed part exists: they come last and are flagged (`match` 0,
-`unverified`), a hard constraint already removes every part whose known attribute contradicts the request, and
-dropping them would change `returned` and the paging and relaxation decisions of the field-first flow (which count
-returnable parts) and would hide the only answer when the extractor misses the family of a right part.
+**Match class** (product decision; 0.15.1, refined in 0.16). Every graded part is in one of three classes
+(`Assessment.matchClass()`), ranked in this order before stock, spec and score:
+
+1. **complete**: every stated hard constraint of the request's family (`ConstraintPolicy`: for a resistor the value,
+   package, mounting, technology and type) that the part could confirm is confirmed (none is unverified);
+2. **partial**: a stated hard constraint is unverified (the part does not state it); its `match` counts that
+   constraint against it (section 3.4 "Match grade": the confirmed share, never 1.0);
+3. **none**: the part confirms none of the stated parameters (`match` 0: typically a part of unknown family that a
+   keyword search or a NULL-keeping field rule brought in).
+
+A part of a later class never ranks above one of an earlier class, stale or not, whatever its stock, its spec or the
+model's score; a requested part (named by part number) keeps its place first. The stale demotion (section 3.2) applies
+within a class only (`StockRefresher.demoteStale` groups by class, then below spec). In 0.15.1 the classes were "some
+confirmed" and "none": for `4.7k 1% 0603 resistor` two fresh 10 ohm through-hole resistors whose value the extractor
+did not read (only the family graded, `match` 1.0) still ranked above the stale 4.7k 0603 exact matches (validation
+9.6); now they are partial (and a `Mounting: THT` part contradicts the chip package, section 3.4 "Hard constraints").
+Parts of the none class are kept, not dropped, also on the field path when a confirmed part exists: they come last and
+are flagged (`match` 0, `unverified`), a hard constraint already removes every part whose known attribute contradicts
+the request, and dropping them would change `returned` and the paging and relaxation decisions of the field-first flow
+(which count returnable parts) and would hide the only answer when the extractor misses the family of a right part.
 The match grade, `mismatches`, `unverified` and `below_spec` of every part (section 3.4) come from the same
 assessment; when the query was not understood (`ParsedQuery.understood()` false) every match grade is null.
 
@@ -1445,10 +1457,15 @@ constraint the part does not state at all (primary value, package (or a package 
 crystal's load capacitance, dielectric, technology, each rating, mounting, tolerance, the element count of an array; for connectors positions, gender, orientation, pitch, connector type and
 mounting; for USB requests type, pin configuration, standard, gender, mounting and orientation) is listed by name
 (`current`, `saturation current`, `package`...) and left out of **both** sides of the grade, so `match` reflects only
-verified constraints. `match` 1.0 with a non-empty `unverified` list is therefore **not** a confirmed fit (the third
+verified constraints, except a **hard** constraint of the request's family (since 0.16): an unverified hard constraint
+counts in what the part could earn and earns nothing, so `match` is the confirmed share and never 1.0 while a stated
+hard constraint is unverified (`Assessment.hardUnverified`, the partial match class of section 3.3; the policy is the
+configured one, `DeterministicRanker.assess(query, part, policy)`). `match` 1.0 with a non-empty `unverified` list
+(an unverified rating or relaxable constraint) is therefore still **not** a confirmed fit (the third
 audit saw TME `JRPI0804M-2R2M`, which states no current, score 0.67 for an 8 A request because the unknown rating
 counted as a match). Such a part ranks below every complete part (tier, section 3.3) and is not counted in
-`exact_matches`. A part that states none of the stated constraints has `match` null. Family words stay in the grade
+`exact_matches`. A part that states none of the stated constraints has `match` null when none of them is hard, else
+0 (the none class). Family words stay in the grade
 (an unknown family earns nothing). Free-text keywords never do (since 2026-10-07): they rank (the lexical signal of
 the score) but neither lower `match` nor block an exact match. Before, every chassis query (`heatsink`, `housed`,
 `chassis`, `mount` missing from the part text) reported `exact_matches` 0 on every distributor although parts met 25 W
@@ -1628,7 +1645,11 @@ The checks, in this order (the first conflict names the part's entry in the deta
 - **load capacitance**: a crystal's capacitance within 1 %.
 - **package**: `Recognizers.samePackage`: the same `packageKey` (`SOT-23-3L` == `SOT-23` == `TO-236AB`), can sizes
   within 0.2 mm in diameter and length; a conflict only when the part's package is recognised.
-- **mounting**: SMD vs THT (a hybrid USB part never conflicts). **technology**: `TechnologyVocabulary.compare` = -1.
+- **mounting**: SMD vs THT (a hybrid USB part never conflicts). A request that states no mounting but a hard package
+  whose form factor class implies one (`FormFactor.MOUNTING`: a chip code or a power SMD package is SMD, a leaded
+  body such as `AXIAL-0.6` THT; a package screwed to a heatsink and a chassis part imply none) refuses a part of the
+  other known mounting (0.16: a `Mounting: THT` resistor for a `0603` request); a part that does not state its
+  mounting stays, and the field index rule keeps the same rows (`ConstraintKind.MOUNTING.indexWanted`). **technology**: `TechnologyVocabulary.compare` = -1.
   **elements**: a resistor, capacitor or ferrite request that does not ask for an array (`ParsedQuery.elements` null)
   excludes arrays and networks (the part's `Elements`, see "Arrays" below), e.g. the 4-line bead array
   `BLA31BD121SN4D` for `120 ohm 100MHz 1206 ferrite bead 6A`.

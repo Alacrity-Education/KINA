@@ -235,7 +235,10 @@ public enum ConstraintKind {
 
     /**
      * SMD or THT. A hybrid USB part (SMD signal pins, through-hole shell legs) is unknown for the check. Scored here
-     * for parts; connector and USB requests score it as {@link #CONNECTOR_MOUNTING} and {@link #USB_MOUNTING}.
+     * for parts; connector and USB requests score it as {@link #CONNECTOR_MOUNTING} and {@link #USB_MOUNTING}. A
+     * request that states no mounting but a hard package whose form factor class implies one ({@code 0603}: SMD,
+     * {@code AXIAL-0.6}: THT; {@link MatchContext#mountingOf}) refuses a part of the other known mounting (a
+     * {@code Mounting: THT} resistor for a {@code 0603} request); a part that does not state its mounting stays.
      */
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, allFamilies = true)
@@ -244,15 +247,24 @@ public enum ConstraintKind {
     MOUNTING("mounting", ParsedQuery::mounting, PartFeatures::mounting) {
         @Override
         public Verdict conflict(MatchContext c) {
-            String wanted = c.query().mounting();
+            String stated = c.query().mounting();
+            String wanted = stated != null ? stated : impliedMounting(c);
             if (wanted == null) {
                 return Verdict.MATCH;
             }
             String actual = c.part().mounting();
             if (actual == null || hybrid(c.part())) {
-                return Verdict.UNKNOWN;
+                // an implied mounting only refuses a known other one; it is never a stated constraint to verify
+                return stated != null ? Verdict.UNKNOWN : Verdict.MATCH;
             }
             return wanted.equals(actual) ? Verdict.MATCH : Verdict.CONFLICT;
+        }
+
+        /** The stated mounting, else the one a hard package implies (the field index keeps only those rows too). */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            String stated = c.query().mounting();
+            return columnValues(stated != null ? stated : impliedMounting(c));
         }
 
         @Override
@@ -2137,6 +2149,11 @@ public enum ConstraintKind {
 
     private static boolean hybrid(PartFeatures f) {
         return f.connector() != null && ParsedQuery.HYBRID.equals(f.connector().mountingStyle());
+    }
+
+    /** The mounting a hard package of the request implies ({@link MatchContext#mountingOf}), else null. */
+    private static String impliedMounting(MatchContext c) {
+        return c.isHard(PACKAGE) ? c.mountingOf(c.query().packageName()) : null;
     }
 
     /** A single-element request (resistors, capacitors, ferrite beads) against an array or network. */

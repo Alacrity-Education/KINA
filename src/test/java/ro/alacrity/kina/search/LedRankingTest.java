@@ -137,7 +137,8 @@ class LedRankingTest {
         assertThat(check("RGB LED 5050", p3528).conflicts()).containsExactly("package");
         assertThat(check("white LED 5mm", lamp).conflict()).isFalse();
         assertThat(check("white LED 3mm", lamp).conflicts()).containsExactly("package");
-        assertThat(check("white LED 0603", lamp).conflicts()).containsExactly("package");
+        // a chip package implies surface mount: the THT lamp also contradicts the mounting (v0.16)
+        assertThat(check("white LED 0603", lamp).conflicts()).containsExactly("package", "mounting");
         // TME "Case - mm: 5050" and the package field PLCC6: the size code wins
         Part tme = tmeLed("L1", "LED; SMD; 5050,PLCC6; RGB", "Case - mm", "5050", "LED colour", "RGB");
         assertThat(extractor.extract(tme)).containsEntry("Package", "5050");

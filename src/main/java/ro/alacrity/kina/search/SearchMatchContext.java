@@ -45,6 +45,11 @@ record SearchMatchContext(ParsedQuery query, PartFeatures part, Set<ConstraintKi
     }
 
     @Override
+    public String mountingOf(String packageName) {
+        return FormFactor.mountingOf(packageName);
+    }
+
+    @Override
     public boolean formFactorApplies(String family) {
         return FormFactor.applies(family);
     }

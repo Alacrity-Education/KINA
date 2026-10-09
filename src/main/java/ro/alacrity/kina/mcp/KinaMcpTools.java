@@ -55,9 +55,9 @@ public class KinaMcpTools {
             A part number in the query (parsed.part_numbers) is returned first when it is listed \
             and meets the request; requested_part_found is false otherwise and the hint says why. A requested part \
             listed without stock is still returned, last, with stock 0 and availability.status "out_of_stock".
-            Judge a part by match (0..1 over the typed constraints the part states), mismatches and unverified, not \
-            by score: match 1.0 with a non-empty unverified list is not a confirmed fit (check the datasheet). rank \
-            orders the list.
+            Judge a part by match (0..1, the confirmed share of the typed constraints; an unstated hard one counts \
+            against it), mismatches and unverified, not by score: a non-empty unverified list is not a confirmed fit. \
+            rank orders the list.
             Per distributor read fetched, excluded_by_constraints(_detail), excluded_below_spec(_detail), \
             exact_matches, cache, error (only that distributor failed) and hint. query_understood=false means keyword \
             matching only (match is null): rephrase, or use get_part for a part number.

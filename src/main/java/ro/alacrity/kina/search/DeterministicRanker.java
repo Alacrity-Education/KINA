@@ -74,10 +74,12 @@ public class DeterministicRanker {
      * @param overshoot         the rating overshoot penalty already taken from {@code score}
      *                          ({@link ro.alacrity.kina.domain.Overshoot}); the ranking takes it from the final score
      *                          again
+     * @param hardUnverified    a stated hard constraint (for the request's family) is among {@code unverified}: the
+     *                          part is in the partial match class (DESIGN.md 3.3)
      */
     public record Assessment(double score, Double match, List<String> mismatches, List<String> unverified,
                              List<String> belowSpec, double belowSpecDistance, List<Shortfall> shortfalls,
-                             double overshoot) {
+                             double overshoot, boolean hardUnverified) {
 
         public Assessment {
             mismatches = mismatches == null ? List.of() : List.copyOf(mismatches);
@@ -88,7 +90,7 @@ public class DeterministicRanker {
 
         public Assessment(double score, Double match, List<String> mismatches, List<String> unverified,
                           List<String> belowSpec, double belowSpecDistance) {
-            this(score, match, mismatches, unverified, belowSpec, belowSpecDistance, List.of(), 0);
+            this(score, match, mismatches, unverified, belowSpec, belowSpecDistance, List.of(), 0, false);
         }
 
         public Assessment(double score, double match, List<String> mismatches) {
@@ -107,6 +109,34 @@ public class DeterministicRanker {
         /** Every stated constraint is verified and met: no mismatch and nothing unverified. */
         public boolean complete() {
             return mismatches.isEmpty() && unverified.isEmpty();
+        }
+
+        /**
+         * The match class (DESIGN.md 3.3): {@code NONE} when the part confirms none of the stated parameters
+         * ({@code match} 0), {@code PARTIAL} when a stated hard constraint is unverified, else {@code COMPLETE} (a null
+         * match, nothing graded, included).
+         */
+        public MatchClass matchClass() {
+            if (match != null && match <= 0.0) {
+                return MatchClass.NONE;
+            }
+            return hardUnverified ? MatchClass.PARTIAL : MatchClass.COMPLETE;
+        }
+    }
+
+    /**
+     * The match class of a part (DESIGN.md 3.3), in rank order: every stated hard constraint confirmed, a stated hard
+     * constraint unverified, nothing stated confirmed. The order of the classes comes before stock, spec and score, and
+     * the stale demotion moves a part within its class only.
+     */
+    public enum MatchClass {
+        COMPLETE,
+        PARTIAL,
+        NONE;
+
+        /** The tier offset of the class in the ranking (16 apart: the other tier offsets sum to less). */
+        public int tier() {
+            return 16 * ordinal();
         }
     }
 
@@ -178,9 +208,17 @@ public class DeterministicRanker {
         return score(query, part, extractor.features(part));
     }
 
-    /** Score and match grade of {@code part} for {@code query}. */
+    /** Score and match grade of {@code part} for {@code query} under the default constraint policy. */
     public Assessment assess(ParsedQuery query, Part part) {
-        return assess(query, part, extractor.features(part));
+        return assess(query, part, ConstraintPolicy.DEFAULTS);
+    }
+
+    /**
+     * Score and match grade of {@code part} for {@code query}; {@code policy} names the hard constraints of the
+     * request, whose being unverified counts against the grade and puts the part in the partial match class.
+     */
+    public Assessment assess(ParsedQuery query, Part part, ConstraintPolicy policy) {
+        return assess(query, part, extractor.features(part), policy);
     }
 
     double score(ParsedQuery query, Part part, ParametricExtractor.Features f) {
@@ -188,6 +226,10 @@ public class DeterministicRanker {
     }
 
     Assessment assess(ParsedQuery query, Part part, ParametricExtractor.Features f) {
+        return assess(query, part, f, ConstraintPolicy.DEFAULTS);
+    }
+
+    Assessment assess(ParsedQuery query, Part part, ParametricExtractor.Features f, ConstraintPolicy policy) {
         SearchMatchContext context = new SearchMatchContext(query, f);
         Match.Scope scope = Match.Scope.of(query);
         PolicyFamily family = PolicyFamily.of(query);
@@ -195,6 +237,7 @@ public class DeterministicRanker {
         double possible = 0;
         double preference = 0;   // score-only adjustments, not part of the match grade
         List<String> unverified = new ArrayList<>();
+        boolean hardUnverified = false;
         List<String> belowSpec = new ArrayList<>();
         List<Shortfall> shortfalls = new ArrayList<>();
         double belowSpecDistance = 0;
@@ -243,7 +286,17 @@ public class DeterministicRanker {
             ConstraintKind.Outcome o = kind.score(context, match.weight());
             switch (o.state()) {
                 case NOT_STATED -> { }
-                case UNKNOWN -> unverified.add(kind.reported(query));
+                case UNKNOWN -> {
+                    unverified.add(kind.reported(query));
+                    // a stated hard constraint the part does not state is not confirmed: it counts against the grade
+                    // (the confirmed share), so the grade is never 1.0 while it is unverified (DESIGN.md 3.3)
+                    if (policy.isHard(query, kind)) {
+                        hardUnverified = true;
+                        if (match.inGrade()) {
+                            possible += match.weight();
+                        }
+                    }
+                }
                 case COUNTED, UNCOUNTED -> {
                     double points = cost(kind, family, o.points());
                     if (!match.inGrade()) {
@@ -269,7 +322,7 @@ public class DeterministicRanker {
         }
         double base = Math.clamp(score + preference + tieBreak(part), 0.0, 1.0);
         return new Assessment(Math.max(0.0, base - overshoot), match, mismatches(query, f), unverified, belowSpec,
-                belowSpecDistance, shortfalls, overshoot);
+                belowSpecDistance, shortfalls, overshoot, hardUnverified);
     }
 
     /** How many members of each {@link Match#group()} the request states. */
