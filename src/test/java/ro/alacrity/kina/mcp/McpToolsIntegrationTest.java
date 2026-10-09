@@ -244,6 +244,9 @@ class McpToolsIntegrationTest {
         assertThat(list.path("ranking").path("ready").asBoolean()).isFalse();
         assertThat(list.path("ranking").path("mode").asString()).isEqualTo("fallback");
         assertThat(list.path("ranking").path("cross_encoder_enabled").asBoolean()).isTrue();
+        // the field index state with the size of the phrase journal (DESIGN.md 3.8)
+        assertThat(list.path("field_index").path("mode").asString()).isEqualTo("off");
+        assertThat(list.path("field_index").path("journal_rows").isNumber()).isTrue();
     }
 
     @Test

@@ -88,6 +88,33 @@ public abstract class FieldSql {
      * most {@code limit} rows.
      */
     public Statement select(FieldQuery query, FieldQuery.Step step, int limit, List<String> among) {
+        Body body = body(query, step, among);
+        List<Object> params = new ArrayList<>(body.params());
+        params.add(limit);
+        return new Statement("SELECT distributor, part_number, (" + confirmed(body) + ") AS confirmed FROM "
+                + body.from() + " ORDER BY confirmed DESC, distributor, part_number LIMIT ?", params);
+    }
+
+    /**
+     * The parts of a step's statement, for a dialect that selects other columns or orders differently
+     * ({@link SqliteFieldSql#candidates}): the stated conditions (one per requested column, without parameters), the
+     * {@code table [WHERE ...]} clause and its parameters.
+     */
+    protected record Body(List<String> stated, String from, List<Object> params) {
+
+        protected Body {
+            stated = List.copyOf(stated);
+            params = List.copyOf(params);
+        }
+    }
+
+    /** True when the part states every requested column: the conjunction of the body's stated conditions. */
+    protected String confirmed(Body body) {
+        return body.stated().isEmpty() ? bool(true).toString() : String.join(" AND ", body.stated());
+    }
+
+    /** The parts of one step's statement restricted to {@code among} (null: every part). */
+    protected Body body(FieldQuery query, FieldQuery.Step step, List<String> among) {
         List<Object> params = new ArrayList<>();
         List<Object> innerParams = new ArrayList<>();
         List<String> where = new ArrayList<>();
@@ -117,12 +144,8 @@ public abstract class FieldSql {
         if (among != null) {
             where.add(among.isEmpty() ? bool(false).toString() : in("part_number", among, params));
         }
-        String confirmed = stated.isEmpty() ? bool(true).toString() : String.join(" AND ", stated);
-        String sql = "SELECT distributor, part_number, (" + confirmed + ") AS confirmed FROM " + table()
-                + (where.isEmpty() ? "" : " WHERE " + String.join(" AND ", where))
-                + " ORDER BY confirmed DESC, distributor, part_number LIMIT ?";
-        params.add(limit);
-        return new Statement(sql, params);
+        return new Body(List.copyOf(stated),
+                table() + (where.isEmpty() ? "" : " WHERE " + String.join(" AND ", where)), params);
     }
 
     /** One predicate. */

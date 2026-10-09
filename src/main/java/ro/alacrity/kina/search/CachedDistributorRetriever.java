@@ -152,7 +152,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
             KinaProperties.FieldIndex config = properties.search().fieldIndex();
             FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.of(ranking), distributor,
                     allowBelowSpec).withStaleBelow(config.minVersion());
-            if (!FieldFirstSearch.selective(query.step(0), parsed)) {
+            if (config.requireStatedConstraint() && !FieldFirstSearch.selective(query.step(0), parsed)) {
                 return searched;
             }
             Set<String> held = searched.parts().stream().map(Part::distributorPartNumber)

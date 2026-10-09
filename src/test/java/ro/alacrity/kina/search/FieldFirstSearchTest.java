@@ -509,4 +509,64 @@ class FieldFirstSearchTest {
         assertThat(searchCache.find(Distributor.MOUSER, parser.parse("MPN-A1").normalizedKey())).isPresent();
         verify(metrics, never()).fieldFallback(eq("MOUSER"), eq("sql_error"));
     }
+
+    @Test
+    void aJournalReadFailureTakesTheCachedSearchPathInsteadOfSpendingACall() {
+        // step 0 is short (2 of 3), so the flow would look up the journal before calling: the read fails
+        cache(mlccs("A", 2, "X7R", 25));
+        mouser.answer(phrases().getFirst(), mlccs("N", 5, "X7R", 25));
+        PhraseJournalRepository broken = mock(PhraseJournalRepository.class);
+        when(broken.find(any(), any()))
+                .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("down"));
+        if (service != null) {
+            service.shutdown();
+        }
+        KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false",
+                "kina.search.field-index.mode", "on");
+        RankingService ranking = TestWiring.rankingService(props, TestWiring.deterministicRanker(extractor),
+                mock(PartRanker.class), () -> null, TestWiring.scoreCache(Duration.ofHours(1)));
+        service = RankingFixtures.searchService(props, TestWiring.registry(List.<DistributorClient>of(mouser)), parser,
+                extractor, ranking, partCache, searchCache, Clock.systemUTC(), metrics,
+                new RankingFixtures.FieldBeans(index, broken));
+        DistributorResult result = search(QUERY, 3);
+        verify(metrics).fieldFallback("MOUSER", "sql_error");
+        verify(metrics, never()).fieldLiveCall(any(), anyInt());
+        // the cached-search path asks once, as it always did for a query it has no list of
+        assertThat(mouser.asked).containsExactly(phrases().getFirst());
+        assertThat(result.cache()).isEqualTo(CacheStatus.MISS);
+        assertThat(result.returned()).isEqualTo(3);
+    }
+
+    @Test
+    void withoutTheStatedConstraintRuleAFamilyOnlyRequestIsAnsweredFromTheIndex() {
+        List<Part> mosfets = new ArrayList<>();
+        for (int i = 1; i <= 4; i++) {
+            mosfets.add(RankingFixtures.part(Distributor.MOUSER, "Q" + i, "ACME", "MPN-Q" + i,
+                    "N-channel MOSFET 30V 5A SOT-23", "MOSFETs", "SOT-23", 1000, "0.10", Map.of(), Map.of()));
+        }
+        cache(mosfets);
+        service("on", "kina.search.field-index.require-stated-constraint", "false");
+        DistributorResult result = search("mosfet", 3);
+        assertThat(result.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(mouser.asked).as("answered from the index").isEmpty();
+        assertThat(result.returned()).isEqualTo(3);
+        verify(metrics, never()).fieldFallback(eq("MOUSER"), eq("generic"));
+    }
+
+    @Test
+    void augmentReadsAFamilyOnlyRequestOnlyWithoutTheStatedConstraintRule() {
+        List<Part> mosfets = new ArrayList<>();
+        for (int i = 1; i <= 4; i++) {
+            mosfets.add(RankingFixtures.part(Distributor.MOUSER, "Q" + i, "ACME", "MPN-Q" + i,
+                    "N-channel MOSFET 30V 5A SOT-23", "MOSFETs", "SOT-23", 1000, "0.10", Map.of(), Map.of()));
+        }
+        cache(mosfets);
+        searchCache.upsert(new CachedSearch(Distributor.MOUSER, parser.parse("mosfet").normalizedKey(), 40,
+                List.of("Q1"), true, java.time.Instant.now(), 50, null, 0, null));
+        service("augment");
+        assertThat(search("mosfet", 10).fetched()).as("the rule on: the list only").isEqualTo(1);
+        service("augment", "kina.search.field-index.require-stated-constraint", "false");
+        assertThat(search("mosfet", 10).fetched()).as("the rule off: the family from the index").isEqualTo(4);
+        assertThat(mouser.asked).isEmpty();
+    }
 }

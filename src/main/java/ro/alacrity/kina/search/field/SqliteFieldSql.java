@@ -94,45 +94,29 @@ public class SqliteFieldSql extends FieldSql {
         };
     }
 
-    private static final String SELECT_PREFIX = "SELECT distributor, part_number, (";
-    private static final String FROM = " AS confirmed FROM ";
-    private static final String ORDER = " ORDER BY confirmed DESC, distributor, part_number LIMIT ?";
-
     /**
      * The candidates of one step for the LCSC retriever: {@code fts_rowid, part_number, stated, total}, the parts
-     * that state most of the requested attributes first, then the highest stock, then the part number; {@code total} is the number of rows the step matches (a
-     * window function, one pass). The rows of the JLCPCB table are read by the FTS rowid.
+     * that state most of the requested attributes first, then the highest stock, then the part number; {@code total}
+     * is the number of rows the step matches (a window function, one pass). The rows of the JLCPCB table are read by
+     * the FTS rowid.
      */
     public Statement candidates(FieldQuery query, FieldQuery.Step step, int limit) {
-        Statement base = select(query, step, limit);
-        String sql = base.sql();
-        if (!sql.startsWith(SELECT_PREFIX) || !sql.endsWith(ORDER)) {
-            throw new IllegalStateException("unexpected field statement: " + sql);
-        }
-        String body = sql.substring(SELECT_PREFIX.length(), sql.length() - ORDER.length());
-        int from = body.indexOf(FROM);
-        // "(a AND b AND c)" becomes "(a) + (b) + (c)": how many of the requested attributes the part states, so a
-        // part that states all but one ranks before one that states none (the base orders by all-or-nothing)
-        String confirmed = body.substring(0, from);
-        confirmed = confirmed.substring(0, confirmed.length() - 1);   // the closing parenthesis of "(... )"
-        String stated = "(" + String.join(") + (", confirmed.split(" AND ")) + ")";
+        Body body = body(query, step, null);
+        // how many of the requested attributes the part states, so a part that states all but one ranks before one
+        // that states none (select orders by all-or-nothing)
+        String stated = body.stated().isEmpty() ? "(" + bool(true) + ")"
+                : "(" + String.join(") + (", body.stated()) + ")";
+        List<Object> params = new ArrayList<>(body.params());
+        params.add(limit);
         // the window function counts every matching row in the same pass (before ORDER BY and LIMIT)
-        sql = "SELECT fts_rowid, part_number, " + stated + " AS stated, count(*) OVER () AS total FROM "
-                + body.substring(from + FROM.length())
-                + " ORDER BY stated DESC, stock DESC, part_number LIMIT ?";
-        return new Statement(sql, base.params());
+        return new Statement("SELECT fts_rowid, part_number, " + stated + " AS stated, count(*) OVER () AS total FROM "
+                + body.from() + " ORDER BY stated DESC, stock DESC, part_number LIMIT ?", params);
     }
 
     /** {@code SELECT count(*)} of the rows one step matches. */
     public Statement count(FieldQuery query, FieldQuery.Step step) {
-        Statement base = select(query, step, 1);
-        String sql = base.sql();
-        int from = sql.indexOf(FROM);
-        if (from < 0 || !sql.endsWith(ORDER)) {
-            throw new IllegalStateException("unexpected field statement: " + sql);
-        }
-        String rest = sql.substring(from + FROM.length(), sql.length() - ORDER.length());
-        return new Statement("SELECT count(*) FROM " + rest, base.params().subList(0, base.params().size() - 1));
+        Body body = body(query, step, null);
+        return new Statement("SELECT count(*) FROM " + body.from(), body.params());
     }
 
     @Override

@@ -91,6 +91,8 @@ public class JlcpcbDatabaseManager {
                     startDownload();
                 } else {
                     log.info("JLCPCB database needs a download but kina.jlcpcb.auto-download is false");
+                    // the existing file keeps serving, so it gets its typed table (no-op when the file is missing)
+                    startIndexBuild();
                 }
             } else {
                 startIndexBuild();

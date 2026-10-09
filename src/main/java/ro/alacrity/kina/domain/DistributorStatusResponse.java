@@ -52,6 +52,8 @@ public record DistributorStatusResponse(
      * @param version    the extractor version rows are written with
      * @param reindexing the background re-index is running
      * @param incomplete distributors whose cached parts are not all indexed yet
+     * @param journalRows rows of the phrase journal ({@code distributor_phrases}, DESIGN.md 3.2); null when it cannot
+     *                   be read
      */
     public record FieldIndexSummary(
             @JsonProperty("mode") String mode,
@@ -59,7 +61,8 @@ public record DistributorStatusResponse(
             @JsonProperty("stale") long stale,
             @JsonProperty("version") int version,
             @JsonProperty("reindexing") boolean reindexing,
-            @JsonProperty("incomplete") List<String> incomplete
+            @JsonProperty("incomplete") List<String> incomplete,
+            @JsonProperty("journal_rows") @JsonInclude(JsonInclude.Include.NON_NULL) Long journalRows
     ) {
     }
 

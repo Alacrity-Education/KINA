@@ -217,4 +217,28 @@ class JlcpcbDatabaseManagerFieldIndexTest {
             plain.close();
         }
     }
+
+    @Test
+    void anOldFileWithoutAutoDownloadStillGetsItsTable() throws Exception {
+        // auto-download off and a file older than refresh-after: no download, the file keeps serving and is typed
+        JlcpcbTestDatabase.create(file, JlcpcbTestDatabase.typed());
+        Path absolute = file.toAbsolutePath();
+        KinaProperties noDownload = TestWiring.properties("kina.jlcpcb.data-dir", absolute.getParent().toString(),
+                "kina.jlcpcb.library", absolute.getFileName().toString(), "kina.jlcpcb.auto-download", "false",
+                "kina.jlcpcb.field-index.enabled", "true", "kina.jlcpcb.field-index.threads", "2");
+        JlcpcbDatabaseManager offline = TestWiring.wire(new JlcpcbDatabaseManager(), "properties", noDownload,
+                "downloader", downloader, "repository", repository, "search", search, "indexBuilder", builder,
+                "clock", Clock.fixed(NOW, ZoneOffset.UTC));
+        doAnswer(inv -> {
+            Files.move(inv.getArgument(0), inv.getArgument(1), StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING);
+            return null;
+        }).when(downloader).installIndex(any(), any());
+        Files.setLastModifiedTime(file, java.nio.file.attribute.FileTime.from(NOW.minus(Duration.ofDays(30))));
+
+        offline.check();
+
+        await().atMost(Duration.ofSeconds(30)).until(search::fieldIndexAvailable);
+        verify(downloader, never()).download(anyString(), anyString(), any());
+    }
 }

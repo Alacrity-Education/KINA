@@ -526,8 +526,9 @@ are returned and both rankers still order them.
 ```
 search(request, distributor D):            # D is Mouser or TME
   fallback to the cached-search path (steps 1 to 4 above) when: bypass_cache; the index is not complete for D;
-    the request states nothing but its family ("mosfet": the index would return every MOSFET); an SQL error before
-    any call. Each is counted in kina_field_fallbacks_total{reason}
+    the request states nothing but its family ("mosfet": the index would return every MOSFET) and
+    require-stated-constraint is on (default); an SQL error or a journal read failure before any call. Each is
+    counted in kina_field_fallbacks_total{reason}
   steps = [all groups], [without K], [without L1], [without L1, L2] ...    # FieldQuery.steps(); H and R never dropped
   phrase of a step = the phrase the cached-search path would send at that ladder step (DistributorPhraser):
     all groups: the request's phrase; without K: the minimal core when it words the request differently, else the
@@ -535,8 +536,8 @@ search(request, distributor D):            # D is Mouser or TME
   calls = 0
   for each step:
       cands = hits of the step's field query (at most max-candidates; skipped when the step holds nothing the
-              request states) + the parts this request received live that pass the Java check and the ladder kinds
-              still in the step
+              request states and require-stated-constraint is on) + the parts this request received live that pass
+              the Java check and the ladder kinds still in the step
       if #(cands that pass the Java check) >= max_results and one of them is confirmed: stop          # enough
       if the step's phrase was already tried in this request: next step
       if the journal has a fresh row for (D, phrase): count a journal hit, next step                   # asked already
@@ -553,6 +554,19 @@ requested rating stated; with `allow_below_spec` a below-spec part counts). The 
 (`H`) are in every step, so only the relaxable kinds are loosened, in the order of the ladder; `allow_below_spec`
 drops `R` as before. A step holds only the stated constraints, free text and part numbers beyond the stock and the
 family; a step of the family alone is never read (the parts received live stand in for it).
+
+**The stated-constraint rule** (`kina.search.field-index.require-stated-constraint`, default true). A step is
+*selective* when it holds a free-text word, a part number, or a constraint kind the request names (the family and the
+rules the family implies, such as the LED type of every LED request, do not count; `FieldFirstSearch.selective`).
+With the rule on, a request whose first step is not selective (`mosfet`, `LED`) never reads the index: `on` takes the
+cached-search path with reason `generic`, `augment` adds nothing, and a later step that is not selective is not read
+either. The index orders its candidates by key, not by relevance, so for such a request it would return the first
+200 parts of the family in part-number order, while the distributor's own search ranks them. With the rule off, such
+a request reads the index like any other.
+
+A journal read that fails decides nothing: before any call the flow returns to the cached-search path with reason
+`sql_error` (the same as an SQL error of the field query), after a call it answers with what it has. It never spends a
+distributor call because the journal could not be read. A failed journal write is logged and the answer is kept.
 
 **The phrase journal** (V15 `distributor_phrases`, `PhraseJournalRepository`): one row per distributor and phrase key
 (the phrase's normalised words in sorted order, so `10uF X7R 0805` and `0805 X7R 10uF` are one phrase) with the phrase
@@ -1954,7 +1968,7 @@ No other value is possible (connector and USB sub-types are not tags), so the ta
 | `kina_field_served_total` | counter | `distributor` | searches answered from the field index with no distributor call (`cache: "hit"`, `kina.search.field-index.mode=on`, section 3.2 "Field-first flow") |
 | `kina_field_live_calls_total` | counter | `distributor`, `step` | distributor calls of the field-first flow by relaxation step (`0`: the request's phrase, `n`: the n-th relaxed step of the field query) |
 | `kina_field_journal_hits_total` | counter | `distributor` | steps whose phrase the journal had already asked within its freshness, so no call was made |
-| `kina_field_fallbacks_total` | counter | `distributor`, `reason` | searches that took the cached-search path: `mode` (not `on`), `bypass` (`bypass_cache`), `incomplete` (index not complete for the distributor), `sql_error` |
+| `kina_field_fallbacks_total` | counter | `distributor`, `reason` | searches that took the cached-search path: `mode` (not `on`), `bypass` (`bypass_cache`), `incomplete` (index not complete for the distributor), `generic` (the request states nothing but its family, section 3.2 "The stated-constraint rule"), `sql_error` (the field query or the journal could not be read; also an `augment` failure) |
 
 The timers (`kina_search_duration_seconds`, `kina_distributor_duration_seconds`) and `kina_searches_total` (a batch
 mixes types) have no `type` tag. Counts recorded before 0.5 have no type: migration V9 moved them to `type="unknown"`
@@ -2190,7 +2204,8 @@ cache path never serves it either. It logs one INFO line with the counts and cou
 distributor is **complete** when every cached part has one (`isComplete`, recomputed at most every 30 s). Until then
 a caller must not answer from the index for that distributor and keeps the cached-search path, so no cached part
 becomes unreachable while the index is built or rebuilt. `list_distributors` reports
-`field_index: {mode, rows, stale, version, reindexing, incomplete}`.
+`field_index: {mode, rows, stale, version, reindexing, incomplete, journal_rows}` (`journal_rows`: the rows of the
+phrase journal `distributor_phrases`, omitted when it cannot be read).
 
 **Modes** (`kina.search.field-index.mode`). `off` (default): no search reads the index (it is still written and
 re-indexed). `shadow`: after each Mouser or TME retrieval, `FieldSearchShadow` runs the field query in the background
@@ -2230,7 +2245,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`), `allow_below_spec` (bool, default false, section 3.4 "Below spec") | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | `{ "results": [SearchResponse...] }` |
 | `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown), or with `error` (and `reason` null) when the lookup failed. `reason` `out_of_stock`: listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, and, when the distributor gives the part's data, `part` with `stock` 0, prices as listed and `availability.status` `out_of_stock` (`found: true`: the part number was requested explicitly, section 2); a Mouser catalogue part without a Mouser part number (`N/A`) has the identity only (`found: false`). The listed part is cached with `in_stock = false` and never served from the cache. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
-| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{...}` (LCSC); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7); `field_index{mode, rows, stale, version, reindexing, incomplete}` (section 3.8, omitted when it cannot be read). Never calls the Mouser/TME APIs |
+| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{..., field_index{enabled, available, version, rows, built_at, building}}` (LCSC, section 9.3); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7); `field_index{mode, rows, stale, version, reindexing, incomplete, journal_rows}` (section 3.8, omitted when it cannot be read). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 The descriptions are sent to the model on every connection, so they stay short summaries: `search_parts` about
@@ -3000,7 +3015,8 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
   - **Build, adoption.** A main file without a current sidecar (a pre-seeded volume, an older `INDEX_VERSION`, a new
     extractor, a refresh that was interrupted between the two renames) is detected by `check()`; the sidecar is built in
     the background from the file in use (while the FTS path serves), warmed, and swapped in under the write lock. One
-    build at a time, never next to a download (a download builds its own).
+    build at a time, never next to a download (a download builds its own). With `kina.jlcpcb.auto-download=false` a
+    file older than `refresh-after` is not replaced but keeps serving, so it is typed the same way.
   - **Version check.** A sidecar is attached only when `kina_meta.index_version` equals the running
     `ParametricExtractor.INDEX_VERSION` and `kina_meta.source` equals the fingerprint of the main file open on the same
     connection. A missing, older or foreign sidecar (a new main file with an old sidecar, which a crash between the two
@@ -3193,6 +3209,7 @@ kina:
       max-live-calls-per-distributor: ${KINA_FIELD_INDEX_MAX_LIVE_CALLS:2}   # on: distributor calls one search may make
       reindex-batch-size: 500    # rows the re-index reads and writes at a time
       reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}   # false in src/test/resources/config/application.yml
+      require-stated-constraint: ${KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT:true}   # section 3.2 "The stated-constraint rule"
   ranking:
     timeout: 5s                  # per query (deterministic + cross-encoder)
     batch-timeout: 60s

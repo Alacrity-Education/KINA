@@ -407,13 +407,19 @@ public record KinaProperties(
      * @param reindexEnabled  false: no re-index job at startup (the writer still writes)
      * @param maxLiveCallsPerDistributor distributor calls (one per phrase, paging included) a search of the
      *                        {@code on} mode may make at most per distributor (Mouser's quota is 1 000 calls a day)
+     * @param requireStatedConstraint true (default): a request whose field query holds nothing the request states
+     *                        (no free text, no part number, no constraint beyond the family: {@code mosfet}) never
+     *                        reads the index ({@code augment} adds nothing, {@code on} takes the cached-search path
+     *                        with reason {@code generic}); false: such a request reads the index too, which then
+     *                        returns the first {@code max-candidates} in-stock parts of the family
      */
     public record FieldIndex(@DefaultValue("off") FieldIndexMode mode, @DefaultValue("0") int minVersion,
                              @DefaultValue("200") int maxCandidates, @DefaultValue("500") int reindexBatchSize,
                              @DefaultValue("true") boolean reindexEnabled,
-                             @DefaultValue("2") int maxLiveCallsPerDistributor) {
+                             @DefaultValue("2") int maxLiveCallsPerDistributor,
+                             @DefaultValue("true") boolean requireStatedConstraint) {
 
-        public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, 200, 500, true, 2);
+        public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, 200, 500, true, 2, true);
 
         @ConstructorBinding
         public FieldIndex {
@@ -427,7 +433,13 @@ public record KinaProperties(
         /** Without the live-call cap (its default). */
         public FieldIndex(FieldIndexMode mode, int minVersion, int maxCandidates, int reindexBatchSize,
                           boolean reindexEnabled) {
-            this(mode, minVersion, maxCandidates, reindexBatchSize, reindexEnabled, 2);
+            this(mode, minVersion, maxCandidates, reindexBatchSize, reindexEnabled, 2, true);
+        }
+
+        /** With the live-call cap and the stated-constraint rule at its default. */
+        public FieldIndex(FieldIndexMode mode, int minVersion, int maxCandidates, int reindexBatchSize,
+                          boolean reindexEnabled, int maxLiveCallsPerDistributor) {
+            this(mode, minVersion, maxCandidates, reindexBatchSize, reindexEnabled, maxLiveCallsPerDistributor, true);
         }
     }
 

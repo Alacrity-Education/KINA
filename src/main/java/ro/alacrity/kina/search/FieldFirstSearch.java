@@ -53,7 +53,8 @@ import java.util.Set;
  *
  * <p>A request the flow cannot answer from the index returns an outcome that sends the caller to the cached-search path
  * ({@link Outcome#legacy}): {@code bypass_cache}, an index that is not complete for the distributor, a request whose
- * first step is only the family (too generic to answer from fields), an SQL error before any call. A distributor
+ * first step is only the family (too generic to answer from fields; {@code require-stated-constraint}, on by default),
+ * an SQL error or a journal read failure before any call. A distributor
  * failure without any candidate is returned as {@link Outcome#failure} (the caller serves an expired list or fails).
  */
 @Slf4j
@@ -131,7 +132,7 @@ final class FieldFirstSearch {
                     e.toString());
             return Outcome.legacy("sql_error");
         }
-        if (!selective(query.step(0), parsed)) {
+        if (!readable(query.step(0), parsed)) {
             return Outcome.legacy("generic");
         }
         Run run = new Run(client, prepared, progress, deadline, query);
@@ -142,6 +143,14 @@ final class FieldFirstSearch {
                     e.getCause().toString());
             return run.calls == 0 ? Outcome.legacy("sql_error") : Outcome.answered(run.assemble(null));
         }
+    }
+
+    /**
+     * True when the index may be read for {@code step}: always when {@code require-stated-constraint} is off, else
+     * only when the step is {@link #selective}.
+     */
+    boolean readable(FieldQuery.Step step, ParsedQuery parsed) {
+        return !properties.search().fieldIndex().requireStatedConstraint() || selective(step, parsed);
     }
 
     /**
@@ -265,7 +274,7 @@ final class FieldFirstSearch {
                     continue;
                 }
                 String key = DistributorPhraser.phraseKey(rung.phrase());
-                Optional<PhraseJournalRepository.Entry> entry = lookup(key);
+                Optional<PhraseJournalRepository.Entry> entry = decide(key);
                 if (entry.isPresent() && entry.get().isFresh(now, properties.cache().ttl(),
                         properties.cache().emptyResultTtl())) {
                     consulted.put(key, entry.get());
@@ -297,6 +306,19 @@ final class FieldFirstSearch {
             return Outcome.answered(fetched);
         }
 
+        /**
+         * The journal row that decides whether the phrase is asked. A read failure is an SQL failure of the flow
+         * (before any call: the cached-search path, reason {@code sql_error}), never a reason to spend a call.
+         */
+        private Optional<PhraseJournalRepository.Entry> decide(String key) {
+            try {
+                return journal.find(distributor, key);
+            } catch (RuntimeException e) {
+                throw new FieldSqlException(e);
+            }
+        }
+
+        /** The journal row for reporting the distributor's figures; a read failure only loses them. */
         private Optional<PhraseJournalRepository.Entry> lookup(String key) {
             try {
                 return journal.find(distributor, key);
@@ -371,7 +393,7 @@ final class FieldFirstSearch {
 
         /** The index hits of a step plus the live parts that pass the Java check and the step's ladder kinds. */
         private Candidates candidates(Rung rung) {
-            if (selective(rung.step(), parsed)) {
+            if (readable(rung.step(), parsed)) {
                 List<PartIndexRepository.Hit> hits;
                 try {
                     hits = index.query(query, rung.step(), properties.search().fieldIndex().maxCandidates());

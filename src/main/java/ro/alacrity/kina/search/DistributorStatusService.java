@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ro.alacrity.kina.cache.CacheStatistics;
 import ro.alacrity.kina.cache.PartCacheRepository;
+import ro.alacrity.kina.cache.PhraseJournalRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorRegistry;
@@ -40,6 +41,7 @@ public class DistributorStatusService {
     @Autowired private RankingService ranking;
     @Autowired private ObjectProvider<JlcpcbDatabaseManager> jlcpcb;
     @Autowired private ObjectProvider<PartIndexReindexer> fieldIndex;
+    @Autowired private ObjectProvider<PhraseJournalRepository> journal;
 
     public DistributorStatusResponse status() {
         CacheStatistics stats = null;
@@ -82,9 +84,23 @@ public class DistributorStatusService {
         try {
             FieldIndexStatus s = reindexer.status();
             return new DistributorStatusResponse.FieldIndexSummary(s.mode(), s.rows(), s.stale(), s.version(),
-                    s.reindexing(), s.incomplete());
+                    s.reindexing(), s.incomplete(), journalRows());
         } catch (RuntimeException e) {
             log.warn("Reading the field index state failed: {}", e.toString());
+            return null;
+        }
+    }
+
+    /** The phrase journal's row count, null when it cannot be read. */
+    private Long journalRows() {
+        PhraseJournalRepository repository = journal == null ? null : journal.getIfAvailable();
+        if (repository == null) {
+            return null;
+        }
+        try {
+            return repository.count();
+        } catch (RuntimeException e) {
+            log.warn("Reading the phrase journal size failed: {}", e.toString());
             return null;
         }
     }
