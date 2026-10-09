@@ -327,10 +327,10 @@ public class RankingService {
 
     /** {@link #verdict(ParsedQuery, Part)} with the checks of the request, which the ranking reuses. */
     Verdict verdict(ParsedQuery query, Part part, PartChecks checks) {
-        if (checks.check(query, part, () -> safeCheck(query, part)).conflict()) {
+        if (checks.check(query, part, () -> safeCheck(query, part, checks)).conflict()) {
             return Verdict.CONSTRAINT;
         }
-        DeterministicRanker.Assessment a = checks.assessment(query, part, () -> safeAssess(query, part));
+        DeterministicRanker.Assessment a = checks.assessment(query, part, () -> safeAssess(query, part, checks));
         if (a.isBelowSpec()) {
             return Verdict.BELOW_SPEC;
         }
@@ -376,7 +376,7 @@ public class RankingService {
                 List<Part> kept = new ArrayList<>();
                 for (Part p : capped(dedupe(parts), cap)) {
                     // checked once per request: the retrieval's checks of this part are reused (PartChecks)
-                    ConstraintPolicy.Result check = checks.check(query, p, () -> safeCheck(query, p));
+                    ConstraintPolicy.Result check = checks.check(query, p, () -> safeCheck(query, p, checks));
                     List<String> naming = PartNumbers.requestedBy(query, p);
                     // a requested part listed without stock (stock 0) is not part of fetched: never counted
                     boolean listed = p.stock() <= 0;
@@ -390,7 +390,7 @@ public class RankingService {
                                 .add(new ExcludedRequest(n, p, check.reason())));
                         continue;
                     }
-                    DeterministicRanker.Assessment a = checks.assessment(query, p, () -> safeAssess(query, p));
+                    DeterministicRanker.Assessment a = checks.assessment(query, p, () -> safeAssess(query, p, checks));
                     if (a.isBelowSpec() && !opts.allowBelowSpec()) {
                         if (!listed) {
                             excludedBelowSpec.merge(distributor, 1, Integer::sum);
@@ -772,18 +772,19 @@ public class RankingService {
                 .orElse(null);
     }
 
-    private ConstraintPolicy.Result safeCheck(ParsedQuery query, Part part) {
+    private ConstraintPolicy.Result safeCheck(ParsedQuery query, Part part, PartChecks checks) {
         try {
-            return deterministic.check(query, part, policy);
+            return policy.check(query, checks.features(part, () -> deterministic.features(part)));
         } catch (RuntimeException e) {
             log.warn("constraint check failed for {}", PartKey.of(part), e);
             return new ConstraintPolicy.Result(List.of(), false);
         }
     }
 
-    private DeterministicRanker.Assessment safeAssess(ParsedQuery query, Part part) {
+    private DeterministicRanker.Assessment safeAssess(ParsedQuery query, Part part, PartChecks checks) {
         try {
-            return deterministic.assess(query, part, policy);
+            return deterministic.assess(query, part, checks.features(part, () -> deterministic.features(part)),
+                    policy);
         } catch (RuntimeException e) {
             log.warn("deterministic scoring failed for {}", PartKey.of(part), e);
             return new DeterministicRanker.Assessment(0.0, 0.0);

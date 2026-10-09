@@ -28,8 +28,17 @@ public final class PartChecks {
     private record Entry<T>(Part part, T value) {
     }
 
+    private final Map<String, Entry<ParametricExtractor.Features>> features = new ConcurrentHashMap<>();
     private final Map<String, Entry<ConstraintPolicy.Result>> checks = new ConcurrentHashMap<>();
     private final Map<String, Entry<DeterministicRanker.Assessment>> assessments = new ConcurrentHashMap<>();
+
+    /**
+     * The features of {@code part} ({@code ParametricExtractor.features}), read once per part instance: the check, the
+     * assessment and the field index's ladder test all read them.
+     */
+    ParametricExtractor.Features features(Part part, Supplier<ParametricExtractor.Features> compute) {
+        return get(features, query, part, compute);
+    }
 
     /**
      * The hard-constraint check of {@code part} for {@code query}, computed by {@code compute} unless this part was

@@ -1,4 +1,4 @@
-# Field search validation, 2026-10-09 (phases C, C2 and C3)
+# Field search validation, 2026-10-09 (phases C, C2, C3 and the v0.16 lean-up)
 
 Validation of the field-based search (study `field-search-2026-10-08.md`, DESIGN.md 3.2 "Field-first flow", 3.8,
 9.3) on a copy of the production cache and the full JLCPCB file, in a separate compose project. Branch
@@ -460,3 +460,69 @@ values identical; only `flyway.max` moved from 13 to 16. The reproduction runs c
   `Mounting: THT` of these parts does not contradict the `0603` of the request either (no hard conflict).
 - Live calls in `on` against the real Mouser and TME remain unverified on this host (the fake Mouser covers the stock
   refresh only).
+
+## 10. v0.16 lean-up
+
+Branch `feature/lean-up-v0.16`: the three reviews of 2026-10-09 (`docs/review/`) merged, their complex and correctness
+findings resolved, the match classes refined (DESIGN.md 3.3). Same stack and data as section 9: image `kina-fs:latest`
+built from the branch, a fresh `kina-fs_pgdata`, `kina-live-20261009.dump` restored, Mouser and TME offline.
+
+### 10.1 What changed for the field index
+
+- One relaxation loop for Mouser, TME and LCSC (`FieldRelaxation`): a step is read in chunks and the loop stops on
+  *enough* (`max_results` parts that pass the Java check, one confirmed), no longer, for LCSC, on the rows the SQL
+  matched; one definition of a selective step.
+- Chunked candidates: `max-candidates` (100) is the SQL recall limit (keys); the parts are loaded, enriched and checked
+  in chunks of `max(2 x max_results, 20)`, and only while the cached list and the live parts are not enough. A part is
+  checked once per request (`PartChecks`), its features read once; the ranker reuses both.
+- The builder dispatches on the declared `@Indexed` predicate; the columns are declared once; PostgreSQL reads the
+  stated-only form first (the partial value indexes; `PartIndexPlanTest`).
+- Modes are strategy beans; the step phrase is `DistributorPhraser.phraseFor`.
+- Match classes complete, partial, none; a chip package implies SMD (a `Mounting: THT` part contradicts `0603`).
+
+### 10.2 Cache preservation
+
+Baseline after the restore as in section 9.4 (MOUSER 3 064 / 3 061 in stock, TME 3 596, `cached_parts` md5
+`2ea4c6bbf7d36f066541e66cb97e59c2`, 221 `cached_searches`, md5 `8d9afeec20ef01178afd030f647eb705`, `flyway.max` 13).
+After startup in `on` (V14 to V16, re-index of 6 660 rows and 6 660 hashes in 7.8 s, journal backfill of 214 phrases in
+525 ms, `field_index.incomplete: []`, `stale: 0`), after the e2e runs in `on` and `off` and the measurements below:
+counts and both md5 values identical; only `flyway.max` moved to 16.
+
+### 10.3 Lookups and the end-to-end suite
+
+- `validate lookups` for every cached in-stock part: **6 657 / 6 657**, p50 5 ms, p95 8 ms. The 77 part numbers with
+  `%` or a backslash use the query-parameter form (`GET /api/v1/parts/{d}?part_number=`), the path form the others; none
+  needed `get_part` (review B10: the path no longer accepts `%25`, `%5C` and `%2F`).
+- `kina_e2e.py` (88 checks): `on` **88 / 88** (on two builds of the branch); `off` 87 / 88, the known check A of
+  section 8.5 (TME's list for `10uF X7R 0805` has expired and cannot be refreshed offline; it passes in `on`).
+
+### 10.4 Latency (B2)
+
+Mouser, cached, `max_results` 10, median of 40 warm runs (`validate.py latency --runs 41`), same host:
+
+| Query | `off` | `on` | ratio | v0.15.1 `off` / `on` |
+|---|---|---|---|---|
+| `10uF X7R 0805` | 50.2 ms (49 parts) | 51.9 ms (49) | 1.03 | 66 / 198 ms |
+| `100nF X7R 0603 50V MLCC` | 50.6 ms (50) | 53.0 ms (50) | 1.05 | 68 / 176 ms |
+| `10uH inductor 0805` | 38.2 ms (50) | 39.8 ms (50) | 1.04 | 48 / 184 ms |
+| `4.7k 1% 0603 resistor` (no cached list; the index answers, one chunk of 20) | (a live call) | 31.6 ms (20) | | |
+
+Before the features memo the same build measured `on` 1.16 to 1.60 times `off` (a ladder test re-read the features of
+every listed part); with it, both modes got faster (`off` 78 to 50 ms) and `on` is within 5 % of `off`.
+
+### 10.5 The resistor incident
+
+`4.7k 1% 0603 resistor` at Mouser in `on`, `max_results` 50: `hit`, 50 returned, 23 exact matches; ranks 1 to 24 are
+complete matches (the first five `603-RC0603FR-074K7L`, `-104K7L`, `-7W4K7L`, `791-RMC1/16K4701FTP`, `-134K7L`, all
+`stale: true`), rank 25 the one partial part (`603-RT0603FRD074K7L`, resistance unverified, `match` 0.45), ranks 26 to
+50 the parts that confirm nothing (`match` 0: GaN evaluation boards, isolators). The two fresh 10 ohm through-hole
+resistors (`603-MF0204FTE52-10R`, `603-FKN1WSJB-52-10R`, `Mounting: THT` in the index) are no longer returned: the
+`0603` implies SMD, and the field rule keeps only `mounting IS NULL OR mounting = 'SMD'`. `AuditRoundThreeTest`
+reproduces it with a third part whose mounting is unknown (partial class, `match` below 1.0).
+
+### 10.6 Not rerun
+
+The recall, replay and LCSC comparisons of sections 2 and 8 were not rerun (no change to the extraction or to the SQL
+predicates besides the implied mounting); `FieldQuerySupersetTest` on the repository pool passes with the new rules,
+the stated-only checks and the first-rows check. Live calls against the real Mouser and TME remain unverified on this
+host.

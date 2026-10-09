@@ -256,9 +256,9 @@ final class FieldFirstSearch {
         }
 
         /**
-         * Reads a step: the index hits (keys only, at most {@code max-candidates}), loaded, enriched and checked in
-         * chunks until enough (review B2: the first chunk always, the next ones only while short), then the cached
-         * list and the parts received live.
+         * Reads a step: the parts of the cached list and those received live, then, while they are not enough, the
+         * index hits (keys only, at most {@code max-candidates}), loaded, enriched and checked in chunks until enough
+         * (review B2).
          */
         @Override
         public boolean read(FieldQuery.Step step) {
@@ -268,7 +268,8 @@ final class FieldFirstSearch {
             progress.fieldSteps = stepsTried;
             List<ConstraintKind> ladder = query.groups(FieldQuery.Role.L).stream()
                     .filter(g -> !step.dropped().contains(g.name())).flatMap(g -> g.kinds().stream()).toList();
-            if (FieldRelaxation.readable(requireStated, query, step, parsed)) {
+            if (FieldRelaxation.readable(requireStated, query, step, parsed)
+                    && !enough(passing(List.of(), ladder))) {
                 List<PartIndexRepository.Hit> hits;
                 try {
                     hits = index.query(query, step, recall);
@@ -513,7 +514,8 @@ final class FieldFirstSearch {
                 return true;
             }
             try {
-                SearchMatchContext context = new SearchMatchContext(parsed, extractor.features(part));
+                SearchMatchContext context = new SearchMatchContext(parsed,
+                        check.checks().features(part, () -> extractor.features(part)));
                 for (ConstraintKind kind : ladder) {
                     Double grade = kind.compare(context);
                     if (grade != null && grade < 0) {

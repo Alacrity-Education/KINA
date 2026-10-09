@@ -550,11 +550,12 @@ search(request, distributor D):            # D is Mouser or TME
     at least them (none: no phrase for the step)
   calls = 0
   for each step (FieldRelaxation.relax, the loop LCSC shares):
-      read: the keys of the step's field query (at most max-candidates, the SQL recall limit; skipped when the step
-            is not selective and require-stated-constraint is on); their parts loaded, enriched and checked in
-            chunks of max(2 x max_results, 20) until enough (the first chunk always) + the parts of the request's
-            fresh cached list (cached_searches, what the cached-search path would serve) + the parts this request
-            received live, both when they pass the Java check and the ladder kinds still in the step
+      read: the parts of the request's fresh cached list (cached_searches, what the cached-search path would
+            serve) and the parts this request received live, both when they pass the Java check and the ladder kinds
+            still in the step; while they are not enough, the keys of the step's field query (at most
+            max-candidates, the SQL recall limit; skipped when the step is not selective and
+            require-stated-constraint is on), their parts loaded, enriched and checked in chunks of
+            max(2 x max_results, 20) until enough
       if #(cands that pass the Java check) >= max_results and one of them is confirmed: stop          # enough
       if a call of this request failed: next step                                        # index only, no call
       if the step's phrase was already tried in this request: next step
@@ -2335,16 +2336,17 @@ and the cached list first (`FieldFirstSearch`, `augment`), so a cut only drops i
 lists hold at most a fetch window (50) and are never cut. **Chunked loading** (v0.16, review B2): the keys are cheap,
 the parts are not (each one is loaded, enriched, checked and ranked, about 1.6 ms per part on the validation host), so
 `FieldFirstSearch` loads, enriches and checks them in chunks of `max(2 x max_results, 20)` in index order
-(`FieldRelaxation.chunk`) until the step has enough, the first chunk always; the ranker sees only the chunks read.
+(`FieldRelaxation.chunk`) until the step has enough; when the cached list and the parts received live are enough
+already, the index is not read at all (a cached request then costs about what the cached-search path costs); the
+ranker sees only the chunks read.
 The checks are made once per request (`PartChecks`, carried by the request and handed to the ranking in
 `RankOptions`): a part the retrieval checked is not checked again by the ranker, for the same part instance and query
-only (a part received again, with fresh stock, is checked again). Measured on the production cache (validation
-2026-10-09, Mouser, cached, median of 20 warm runs, `max_results` 10; `docs/research/field-search-validation-2026-10-09.md`
-section 8): `10uF X7R 0805` 413 ms in `on` with 200 candidates (193 parts) in phase C against 74 ms with the cached
-list (`off`, 49 parts); with the cap at 100, 198 ms in `on` (104 parts), 158 ms in `augment`, 66 ms in `off`;
-`10uH inductor 0805` 376 ms at 200 (213 parts) against 184 ms at 100 (132). Recall is unchanged: of the 238
-own-attribute queries of the validation, 201 found their part at 100 and 198 at 200 (the differences are ranking
-order within the 50 returned).
+only (a part received again, with fresh stock, is checked again); the features of a part are read once per request
+for the check, the assessment and the ladder test alike. Measured on the production cache (validation 2026-10-09,
+Mouser, cached, median of 40 warm runs, `max_results` 10; `docs/research/field-search-validation-2026-10-09.md`
+section 10): `10uF X7R 0805` 52 ms in `on` against 50 ms in `off`, `100nF X7R 0603 50V MLCC` 53 against 51 ms,
+`10uH inductor 0805` 40 against 38 ms (v0.15.1: 198 against 66 ms, 3 times); a request without a cached list that
+the index answers (`4.7k 1% 0603 resistor`, one chunk of 20) 32 ms.
 
 **Writing and consistency.** Every write of a payload goes through one method of `PartCacheRepository` (`upsertAll`,
 `upsertListed` and `updateStock`, the stock refresh and the part-number lookup): it computes the index rows before its
@@ -3474,7 +3476,7 @@ kina:
     field-index:                 # section 3.8; written and re-indexed in every mode
       mode: ${KINA_FIELD_INDEX_MODE:off}           # off | shadow (log and count only) | augment | on (section 3.2)
       min-version: ${KINA_FIELD_INDEX_MIN_VERSION:0}   # older rows count as unknown in every rule but the family
-      max-candidates: ${KINA_FIELD_INDEX_MAX_CANDIDATES:100}   # rows one field query returns; parts ranked per distributor (3.8 "Candidate cap")
+      max-candidates: ${KINA_FIELD_INDEX_MAX_CANDIDATES:100}   # SQL recall limit (keys); parts ranked per distributor (3.8 "Candidate cap")
       max-live-calls-per-distributor: ${KINA_FIELD_INDEX_MAX_LIVE_CALLS:2}   # on: distributor calls one search may make
       reindex-batch-size: 500    # rows the re-index reads and writes at a time
       reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}   # false in src/test/resources/config/application.yml

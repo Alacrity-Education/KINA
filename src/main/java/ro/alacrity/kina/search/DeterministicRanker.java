@@ -182,6 +182,11 @@ public class DeterministicRanker {
         return r.conflict() ? ConstraintCheck.CONFLICT : r.unknown() ? ConstraintCheck.UNKNOWN : ConstraintCheck.MATCH;
     }
 
+    /** The features of {@code part} the check and the assessment read. */
+    ParametricExtractor.Features features(Part part) {
+        return extractor.features(part);
+    }
+
     /** The hard-constraint check of {@code part} under {@code policy}, with the constraints it contradicts. */
     public ConstraintPolicy.Result check(ParsedQuery query, Part part, ConstraintPolicy policy) {
         return policy.check(query, extractor.features(part));
