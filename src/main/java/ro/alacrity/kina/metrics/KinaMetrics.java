@@ -30,7 +30,11 @@ import static ro.alacrity.kina.metrics.Metric.CROSS_ENCODER_DURATION;
 import static ro.alacrity.kina.metrics.Metric.CROSS_ENCODER_EXECUTIONS;
 import static ro.alacrity.kina.metrics.Metric.DISTRIBUTOR_CALLS;
 import static ro.alacrity.kina.metrics.Metric.DISTRIBUTOR_DURATION;
+import static ro.alacrity.kina.metrics.Metric.FIELD_FALLBACKS;
 import static ro.alacrity.kina.metrics.Metric.FIELD_INDEX_REINDEXED;
+import static ro.alacrity.kina.metrics.Metric.FIELD_JOURNAL_HITS;
+import static ro.alacrity.kina.metrics.Metric.FIELD_LIVE_CALLS;
+import static ro.alacrity.kina.metrics.Metric.FIELD_SERVED;
 import static ro.alacrity.kina.metrics.Metric.FIELD_SHADOW_CANDIDATES;
 import static ro.alacrity.kina.metrics.Metric.FIELD_SHADOW_DROPPED;
 import static ro.alacrity.kina.metrics.Metric.FIELD_SHADOW_QUERIES;
@@ -334,6 +338,26 @@ public class KinaMetrics implements RateLimitRetry.Listener {
             store.add(FIELD_SHADOW_CANDIDATES.key(distributor), candidates);
             store.add(FIELD_SHADOW_DROPPED.key(distributor), dropped);
         });
+    }
+
+    /** A search answered from the field index with no distributor call. */
+    public void fieldServed(String distributor) {
+        safely(() -> store.increment(FIELD_SERVED.key(distributor)));
+    }
+
+    /** A distributor call of the field-first flow at relaxation step {@code step}. */
+    public void fieldLiveCall(String distributor, int step) {
+        safely(() -> store.increment(FIELD_LIVE_CALLS.key(distributor, Integer.toString(step))));
+    }
+
+    /** A step of the field-first flow that the journal let skip its distributor call. */
+    public void fieldJournalHit(String distributor) {
+        safely(() -> store.increment(FIELD_JOURNAL_HITS.key(distributor)));
+    }
+
+    /** A search that took the cached-search path: {@code mode}, {@code bypass}, {@code incomplete}, {@code sql_error}. */
+    public void fieldFallback(String distributor, String reason) {
+        safely(() -> store.increment(FIELD_FALLBACKS.key(distributor, reason)));
     }
 
     private static void safely(Runnable update) {

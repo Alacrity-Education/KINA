@@ -6,8 +6,10 @@ import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CacheStatus;
 import ro.alacrity.kina.cache.CachedSearch;
 import ro.alacrity.kina.cache.PartCacheRepository;
+import ro.alacrity.kina.cache.PhraseJournalRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.config.KinaProperties.FieldIndexMode;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.domain.Distributor;
@@ -15,7 +17,11 @@ import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.search.PageCollector.Check;
 import ro.alacrity.kina.search.PageCollector.Collected;
+import ro.alacrity.kina.metrics.KinaMetrics;
+import ro.alacrity.kina.search.field.FieldQuery;
+import ro.alacrity.kina.search.field.FieldQueryBuilder;
 import ro.alacrity.kina.search.field.FieldSearchShadow;
+import ro.alacrity.kina.search.field.PartIndexRepository;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -23,6 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Mouser and TME retrieval (DESIGN.md 3.2): the Postgres cache, the live search, the relaxation ladder and the
@@ -42,6 +50,13 @@ final class CachedDistributorRetriever implements DistributorRetriever {
     @Autowired private RequestedLookup requested;
     /** The field index shadow (DESIGN.md 3.8); null in tests that build the retriever by hand. */
     @Autowired(required = false) private FieldSearchShadow shadow;
+    /** The field-first flow of {@code mode=on} (DESIGN.md 3.2); null in tests that build the retriever by hand. */
+    @Autowired(required = false) private FieldFirstSearch fieldFirst;
+    /** The field index, read by {@code mode=augment}; null in tests that build the retriever by hand. */
+    @Autowired(required = false) private PartIndexRepository index;
+    /** The phrase journal (V15); written by every search, null in tests that build the retriever by hand. */
+    @Autowired(required = false) private PhraseJournalRepository journal;
+    @Autowired private KinaMetrics metrics = KinaMetrics.NOOP;
 
     private record Attempt(Collected collected, String phrase, List<String> relaxed) {
     }
@@ -54,8 +69,7 @@ final class CachedDistributorRetriever implements DistributorRetriever {
     public Fetched retrieve(DistributorClient client, Prepared prepared, Progress progress,
                             DistributorBudget deadline) {
         // a part number the query names that the search did not bring is looked up directly, once per cached search
-        Fetched searched = search(client, prepared, progress, deadline);
-        shadow(client.distributor(), prepared, searched);
+        Fetched searched = searchByMode(client, prepared, progress, deadline);
         if (!prepared.parsed().namesPartNumber() || searched.error() != null) {
             return searched;
         }
@@ -76,6 +90,96 @@ final class CachedDistributorRetriever implements DistributorRetriever {
             }
         }
         return result.fetched();
+    }
+
+    /**
+     * The search of one distributor under {@code kina.search.field-index.mode} (DESIGN.md 3.8): {@code on} answers
+     * from the field index when it can ({@link FieldFirstSearch}), every other case and mode takes the cached-search
+     * path; {@code augment} then adds the field candidates to a cached list, {@code shadow} compares.
+     */
+    private Fetched searchByMode(DistributorClient client, Prepared prepared, Progress progress,
+                                 DistributorBudget deadline) {
+        Distributor distributor = client.distributor();
+        FieldIndexMode mode = properties.search().fieldIndex().mode();
+        if (mode == FieldIndexMode.ON && fieldFirst != null) {
+            FieldFirstSearch.Outcome outcome = fieldFirst.search(client, prepared, progress, deadline);
+            if (outcome.fetched() != null) {
+                return outcome.fetched();
+            }
+            if (outcome.failure() != null) {
+                // nothing in the index answers and the distributor failed: an expired cached list, else the failure
+                ParsedQuery parsed = prepared.parsed();
+                String query = DistributorRetriever.plan(properties, ranking, distributor, prepared).query();
+                Optional<Fetched> served = readCachedSearch(distributor, parsed.normalizedKey())
+                        .filter(c -> !c.partNumbers().isEmpty())
+                        .flatMap(c -> servedStale(distributor, parsed, query, c, outcome.failure()));
+                if (served.isPresent()) {
+                    return served.get();
+                }
+                throw outcome.failure();
+            }
+            metrics.fieldFallback(distributor.name(), outcome.legacyReason());
+        } else {
+            metrics.fieldFallback(distributor.name(), "mode");
+        }
+        Fetched searched = search(client, prepared, progress, deadline);
+        if (mode == FieldIndexMode.AUGMENT) {
+            searched = augment(distributor, prepared, searched);
+        }
+        shadow(distributor, prepared, searched);
+        return searched;
+    }
+
+    /**
+     * {@code kina.search.field-index.mode=augment} (DESIGN.md 3.8): on a cached list ({@code HIT} or {@code PARTIAL}),
+     * the in-stock parts of the field query's first step that the list does not hold are added to it, before the check
+     * and the ranking, so the cache is searched by field and not only by the lists of earlier queries. Only parts the
+     * Java check would return are added; no distributor call is made; {@code total_results} stays the distributor's
+     * figure and {@code fetched} reports the merged set. An incomplete index, a generic request or an SQL error adds
+     * nothing.
+     */
+    private Fetched augment(Distributor distributor, Prepared prepared, Fetched searched) {
+        if (index == null || searched.error() != null
+                || searched.cache() != CacheStatus.HIT && searched.cache() != CacheStatus.PARTIAL) {
+            return searched;
+        }
+        ParsedQuery parsed = prepared.parsed();
+        boolean allowBelowSpec = prepared.request().allowBelowSpec();
+        try {
+            if (!index.isComplete(distributor)) {
+                return searched;
+            }
+            KinaProperties.FieldIndex config = properties.search().fieldIndex();
+            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.of(ranking), distributor,
+                    allowBelowSpec).withStaleBelow(config.minVersion());
+            if (!FieldFirstSearch.selective(query.step(0), parsed)) {
+                return searched;
+            }
+            Set<String> held = searched.parts().stream().map(Part::distributorPartNumber)
+                    .collect(Collectors.toSet());
+            List<String> missing = index.query(query, config.maxCandidates()).stream()
+                    .map(PartIndexRepository.Hit::partNumber).filter(n -> !held.contains(n)).toList();
+            if (missing.isEmpty()) {
+                return searched;
+            }
+            Map<String, Part> found = partCache.findInStock(distributor, missing);
+            List<Part> merged = new ArrayList<>(searched.parts());
+            for (String number : missing) {
+                Part part = found.get(number);
+                if (part != null) {
+                    Part enriched = extractor.enrich(part);
+                    if (Check.returnable(ranking, parsed, enriched, allowBelowSpec)) {
+                        merged.add(enriched);
+                    }
+                }
+            }
+            return merged.size() == searched.parts().size() ? searched : searched.withParts(merged);
+        } catch (RuntimeException e) {
+            log.warn("Adding field candidates to the {} search '{}' failed: {}", distributor,
+                    parsed.normalizedKey(), e.toString());
+            metrics.fieldFallback(distributor.name(), "sql_error");
+            return searched;
+        }
     }
 
     /**
@@ -142,9 +246,11 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         }
         CacheStatus status = prepared.request().bypassCache() ? CacheStatus.BYPASSED : CacheStatus.MISS;
         Collected collected;
+        int outOfStockBefore = progress.outOfStock;
         try {
             collected = pages.collect(client, query, 0, window, maxPages, List.of(), progress, deadline, meets,
                     parsed.family());
+            recordPhrase(distributor, query, 0, collected, progress.outOfStock - outOfStockBefore, queryKey, now);
         } catch (DistributorException e) {
             Optional<Fetched> served = expired.flatMap(search -> servedStale(distributor, parsed, query, search, e));
             if (served.isPresent()) {
@@ -156,8 +262,10 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         List<String> relaxed = List.of();
         Attempt firstWithParts = collected.all().isEmpty() ? null : new Attempt(collected, null, List.of());
         // relaxation ladder (DESIGN.md 3.2): until a phrase finds a part that meets the request
+        int ladderStep = 0;
         for (DistributorPhraser.Relaxation step
                 : DistributorPhraser.ladder(distributor, parsed, query, ConstraintPolicy.of(ranking))) {
+            ladderStep++;
             if (collected.meeting() > 0 || collected.error() != null || deadline.remainingNanos() <= 0) {
                 break;
             }
@@ -167,9 +275,12 @@ final class CachedDistributorRetriever implements DistributorRetriever {
             progress.fallbackQuery = step.phrase();
             progress.constraintsRelaxed = step.relaxed();
             Collected previous = collected;
+            outOfStockBefore = progress.outOfStock;
             try {
                 collected = pages.collect(client, step.phrase(), 0, window, maxPages, List.of(), progress, deadline,
                         meets, parsed.family());
+                recordPhrase(distributor, step.phrase(), ladderStep, collected,
+                        progress.outOfStock - outOfStockBefore, queryKey, now);
             } catch (DistributorException e) {
                 // an earlier phrase did answer: report the failure, cache nothing
                 log.info("{} relaxed search '{}' failed: {}", distributor, step.phrase(), e.getMessage());
@@ -217,6 +328,8 @@ final class CachedDistributorRetriever implements DistributorRetriever {
         try {
             collected = pages.collect(client, fallbackQuery != null ? fallbackQuery : query, offset, window, maxPages,
                     cachedParts, progress, deadline, meets, prepared.parsed().family());
+            recordPhrase(distributor, fallbackQuery != null ? fallbackQuery : query, fallbackQuery != null ? 1 : 0,
+                    collected, progress.outOfStock, search.queryKey(), clock.instant());
         } catch (DistributorException e) {
             // serve what the cache holds, flagged with the error
             log.info("{} could not extend cached search '{}': {}", distributor, search.queryKey(), e.getMessage());
@@ -228,6 +341,24 @@ final class CachedDistributorRetriever implements DistributorRetriever {
                 relaxed, search.requestedParts());
         return collected.toFetched(distributor, CacheStatus.PARTIAL, fallbackQuery)
                 .withOutOfStockMatches(progress.outOfStock).withConstraintsRelaxed(relaxed);
+    }
+
+    /**
+     * Records a phrase the distributor answered in the phrase journal (V15), whatever the mode: the journal is warm
+     * when {@code kina.search.field-index.mode=on} starts. Never fails the search.
+     */
+    private void recordPhrase(Distributor distributor, String phrase, int ladderStep, Collected collected,
+                              int outOfStock, String queryKey, Instant at) {
+        if (journal == null) {
+            return;
+        }
+        try {
+            journal.record(new PhraseJournalRepository.Entry(distributor, DistributorPhraser.phraseKey(phrase), phrase, at,
+                    collected.totalResults(), collected.nextOffset(), collected.exhausted(), outOfStock,
+                    collected.all().isEmpty(), ladderStep, queryKey));
+        } catch (RuntimeException e) {
+            log.warn("Recording {} phrase '{}' in the journal failed: {}", distributor, phrase, e.toString());
+        }
     }
 
     /**

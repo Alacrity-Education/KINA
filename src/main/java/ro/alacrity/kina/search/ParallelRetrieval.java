@@ -84,7 +84,8 @@ class ParallelRetrieval {
                                 ? " (+ " + budget.rateLimitWaitedMillis() + " ms rate-limit wait)" : "");
                 fetched = new Fetched(distributor, p.parts, p.totalResults, p.cache,
                         DistributorException.Kind.TIMEOUT.code(), p.fallbackQuery).withOutOfStockMatches(p.outOfStock)
-                        .withConstraintsRelaxed(p.constraintsRelaxed);
+                        .withConstraintsRelaxed(p.constraintsRelaxed).withFetchedLive(p.fetchedLive)
+                        .withFieldSteps(p.fieldSteps);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 future.cancel(true);
@@ -93,7 +94,8 @@ class ParallelRetrieval {
                 Throwable cause = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
                 fetched = new Fetched(distributor, p.parts, p.totalResults, p.cache,
                         errorCode(distributor, cause), p.fallbackQuery).withOutOfStockMatches(p.outOfStock)
-                        .withConstraintsRelaxed(p.constraintsRelaxed);
+                        .withConstraintsRelaxed(p.constraintsRelaxed).withFetchedLive(p.fetchedLive)
+                        .withFieldSteps(p.fieldSteps);
             }
             String phrase = DistributorPhraser.phrase(distributor, prepared.parsed());
             String used = fetched.fallbackQuery() != null ? fetched.fallbackQuery()

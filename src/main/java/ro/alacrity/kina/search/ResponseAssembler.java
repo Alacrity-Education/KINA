@@ -109,6 +109,8 @@ final class ResponseAssembler {
                     .hint(hint)
                     .requestedPartFound(requestedFound)
                     .excludedBelowSpecDetail(ranked.belowSpecDetailBy(distributor))
+                    .fetchedLive(fetchedLive(f))
+                    .fieldSteps(f.fieldSteps() == null ? 0 : f.fieldSteps())
                     .build());
         }
         String hint = !understood ? SearchResponse.NOT_UNDERSTOOD_HINT
@@ -116,6 +118,19 @@ final class ResponseAssembler {
                 : policy.hint(parsed, empty, emptyExcluded, emptyBelowSpec, request.allowBelowSpec());
         return new SearchResponse(parsed.originalText(), ParsedQueryResponse.from(parsed), ranked.mode(), note,
                 results, understood, hint, SearchResponse.currenciesOf(results));
+    }
+
+    /**
+     * Whether the search called the distributor: as the retrieval says, else from the cache status ({@code miss},
+     * {@code partial} and {@code bypassed} called it).
+     */
+    static boolean fetchedLive(Fetched f) {
+        if (f.fetchedLive() != null) {
+            return f.fetchedLive();
+        }
+        return f.cache() == ro.alacrity.kina.cache.CacheStatus.MISS
+                || f.cache() == ro.alacrity.kina.cache.CacheStatus.PARTIAL
+                || f.cache() == ro.alacrity.kina.cache.CacheStatus.BYPASSED;
     }
 
     /**

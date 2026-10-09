@@ -20,6 +20,10 @@ final class Progress {
     volatile List<String> constraintsRelaxed = List.of();
     /** Matches without ships-now stock seen on the pages read so far (every phrase of the ladder). */
     volatile int outOfStock;
+    /** True once a distributor call of this retrieval has answered. */
+    volatile boolean fetchedLive;
+    /** Steps of the field query evaluated so far (the field-first flow; 0 otherwise). */
+    volatile int fieldSteps;
 
     Progress(CacheStatus cache) {
         this.cache = cache;

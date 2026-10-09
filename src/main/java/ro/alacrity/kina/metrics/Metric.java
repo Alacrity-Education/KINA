@@ -64,6 +64,16 @@ public enum Metric {
             "Candidates the shadow field queries returned (unrelaxed step)", "distributor"),
     FIELD_SHADOW_DROPPED("kina.field.shadow.dropped", Type.COUNTER,
             "Returnable parts the shadow field query would have dropped (must stay 0)", "distributor"),
+    FIELD_SERVED("kina.field.served", Type.COUNTER,
+            "Searches answered from the field index without a distributor call (cache hit)", "distributor"),
+    FIELD_LIVE_CALLS("kina.field.live.calls", Type.COUNTER,
+            "Distributor calls of the field-first flow by relaxation step (0: the request's phrase)",
+            "distributor", "step"),
+    FIELD_JOURNAL_HITS("kina.field.journal.hits", Type.COUNTER,
+            "Steps of the field-first flow whose phrase the journal had already asked (no call)", "distributor"),
+    FIELD_FALLBACKS("kina.field.fallbacks", Type.COUNTER,
+            "Searches that took the cached-search path instead of the field-first flow, by reason (mode, bypass, "
+                    + "incomplete, sql_error)", "distributor", "reason"),
 
     // ---- timers (count and total time persisted) ------------------------------------------------------------------
     SEARCH_DURATION("kina.search.duration", Type.TIMER, "Time to answer a search request (single or batch)"),

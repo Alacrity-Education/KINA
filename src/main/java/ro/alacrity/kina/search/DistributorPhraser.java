@@ -224,6 +224,15 @@ public class DistributorPhraser {
         return List.copyOf(out);
     }
 
+    /**
+     * The key of a phrase in the phrase journal ({@code distributor_phrases.phrase_key}, DESIGN.md 3.2): its normalised
+     * words in sorted order, so two phrases with the same words in any order are one phrase (the ladder already skips a
+     * step that rewords an earlier one).
+     */
+    public static String phraseKey(String phrase) {
+        return words(phrase);
+    }
+
     /** The normalised words of a phrase in sorted order: two phrases with the same words in any order are equal. */
     private static String words(String phrase) {
         if (phrase == null) {

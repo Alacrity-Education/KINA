@@ -405,18 +405,29 @@ public record KinaProperties(
      * @param maxCandidates   rows one field query returns at most
      * @param reindexBatchSize rows the re-index job reads and writes at a time
      * @param reindexEnabled  false: no re-index job at startup (the writer still writes)
+     * @param maxLiveCallsPerDistributor distributor calls (one per phrase, paging included) a search of the
+     *                        {@code on} mode may make at most per distributor (Mouser's quota is 1 000 calls a day)
      */
     public record FieldIndex(@DefaultValue("off") FieldIndexMode mode, @DefaultValue("0") int minVersion,
                              @DefaultValue("200") int maxCandidates, @DefaultValue("500") int reindexBatchSize,
-                             @DefaultValue("true") boolean reindexEnabled) {
+                             @DefaultValue("true") boolean reindexEnabled,
+                             @DefaultValue("2") int maxLiveCallsPerDistributor) {
 
-        public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, 200, 500, true);
+        public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, 200, 500, true, 2);
 
+        @ConstructorBinding
         public FieldIndex {
             mode = mode == null ? FieldIndexMode.OFF : mode;
             minVersion = Math.max(0, minVersion);
             maxCandidates = maxCandidates <= 0 ? 200 : maxCandidates;
             reindexBatchSize = reindexBatchSize <= 0 ? 500 : reindexBatchSize;
+            maxLiveCallsPerDistributor = maxLiveCallsPerDistributor <= 0 ? 2 : maxLiveCallsPerDistributor;
+        }
+
+        /** Without the live-call cap (its default). */
+        public FieldIndex(FieldIndexMode mode, int minVersion, int maxCandidates, int reindexBatchSize,
+                          boolean reindexEnabled) {
+            this(mode, minVersion, maxCandidates, reindexBatchSize, reindexEnabled, 2);
         }
     }
 
@@ -426,9 +437,9 @@ public record KinaProperties(
         OFF,
         /** Read next to the cached-search path, logged and counted only. */
         SHADOW,
-        /** Field candidates added to a cached list (phase B). */
+        /** The field query's candidates are added to a cached list (no new distributor calls). */
         AUGMENT,
-        /** Field-first search with the phrase journal (phase B). */
+        /** Field-first search with the phrase journal (DESIGN.md 3.2 "Field-first flow"). */
         ON
     }
 

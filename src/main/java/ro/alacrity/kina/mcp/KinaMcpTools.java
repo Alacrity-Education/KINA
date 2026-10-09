@@ -63,7 +63,8 @@ public class KinaMcpTools {
             matching only (match is null): rephrase, or use get_part for a part number.
             For BOM work pass quantity (pieces to order): parts that cannot supply it rank last and each part gets \
             the order price. detail="full" adds score and the raw distributor attributes. Under rate limits KINA \
-            waits, so a call can take up to 2 minutes (rate_limit_waited_ms). Results are cached for 3 days.
+            waits, so a call can take up to 2 minutes (rate_limit_waited_ms). Results are cached for 3 days (cache hit: no \
+            call, see fetched_live).
             Field reference: docs/API.md in the KINA repository.""";
 
     static final String BATCH_DESCRIPTION = """

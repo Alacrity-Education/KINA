@@ -11,8 +11,10 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import ro.alacrity.kina.TestWiring;
+import ro.alacrity.kina.cache.PhraseJournalRepository;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.search.ParametricExtractor;
+import ro.alacrity.kina.search.QueryParser;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -20,13 +22,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The cache survives V14 and the field index backfill (DESIGN.md 3.8 "Cache preservation"): a database migrated to
+ * The cache survives V14, V15 (the phrase journal) and the backfills (DESIGN.md 3.8 "Cache preservation"): a database migrated to
  * V1 gets cached rows in the old shape (derived attributes in the payload, an unreadable payload), is migrated to V13
  * and gets rows in the V13 shape (sold-out rows, untyped rows, Mouser parts without a package); then V14 runs. Every
  * {@code cached_parts} and {@code cached_searches} row must be byte-identical before and after V14 and after the
@@ -102,6 +106,32 @@ class CachePreservationMigrationTest {
 
         assertThat(snapshot("cached_parts")).as("cached_parts after the backfill").isEqualTo(parts);
         assertThat(snapshot("cached_searches")).as("cached_searches after the backfill").isEqualTo(searches);
+
+        // V15 only adds the phrase journal; the journal backfill only reads cached_searches
+        flyway("15").migrate();
+        assertThat(jdbc.sql("SELECT max(version::int) FROM flyway_schema_history WHERE success")
+                .query(Integer.class).single()).isEqualTo(15);
+        assertThat(snapshot("cached_parts")).as("cached_parts after V15").isEqualTo(parts);
+        assertThat(snapshot("cached_searches")).as("cached_searches after V15").isEqualTo(searches);
+        assertThat(jdbc.sql("SELECT count(*) FROM distributor_phrases").query(Long.class).single()).isZero();
+
+        PhraseJournalRepository journal = TestWiring.wire(new PhraseJournalRepository(), "jdbc", jdbc);
+        PhraseJournalBackfill backfill = TestWiring.wire(new PhraseJournalBackfill(),
+                "properties", TestWiring.properties(), "jdbc", jdbc, "journal", journal, "parser", new QueryParser(),
+                "clock", Clock.fixed(Instant.parse("2026-10-07T00:00:00Z"), ZoneOffset.UTC));
+        // only the search younger than 2 x kina.cache.ttl is history worth keeping (the other would be purged)
+        assertThat(backfill.run()).isEqualTo(2);
+        assertThat(backfill.run()).as("a second run adds nothing").isZero();
+        PhraseJournalRepository.Entry fallback = journal.find(Distributor.MOUSER, "100nf").orElseThrow();
+        assertThat(fallback.rawTotal()).isEqualTo(120);
+        assertThat(fallback.nextOffset()).isEqualTo(50);
+        assertThat(fallback.outOfStock()).isEqualTo(2);
+        assertThat(fallback.askedAt()).isEqualTo(Instant.parse("2026-10-06T08:00:00Z"));
+        assertThat(fallback.ladderStep()).isGreaterThanOrEqualTo(1);
+        assertThat(jdbc.sql("SELECT count(*) FROM distributor_phrases WHERE distributor = 'TME'")
+                .query(Long.class).single()).isZero();
+        assertThat(snapshot("cached_parts")).as("cached_parts after the journal backfill").isEqualTo(parts);
+        assertThat(snapshot("cached_searches")).as("cached_searches after the journal backfill").isEqualTo(searches);
     }
 
     private static PartIndexRepository repository() {

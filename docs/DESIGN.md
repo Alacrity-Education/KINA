@@ -206,7 +206,7 @@ component is kept, what it says about stock and price expires.
   served until a live fetch finds it in stock again (the stock rule: a part without ships-now stock is never returned).
   LCSC parts are never stale (the local JLCPCB database is the cache).
 - **Expired list as a last resort**: when the live search of a query fails (first page, any `DistributorException`)
-  and the query has an expired, non-empty cached list, its parts that are still cached in stock are served with cache
+  and the query has an expired, non-empty cached list (in the field-first flow: when the index has no candidate either), its parts that are still cached in stock are served with cache
   status **`stale`** and the distributor's `error`; their stock is refreshed or marked stale like any cached part. A
   failing distributor without an expired list still reports an empty list with its `error`.
 - **Purge** (`CacheMaintenance`, every 6 hours): search lists older than `2 x kina.cache.ttl`, and the parts of a
@@ -517,6 +517,87 @@ switches only as a bare number, so it stays unverified.
 Each distributor entry reports the phrase as `distributor_query` (null when the user's text was sent verbatim);
 `fallback_query` is the relaxed phrase that produced the parts after the first one found nothing that meets the
 request.
+
+**Field-first flow** (`kina.search.field-index.mode=on`, `FieldFirstSearch`; the other modes keep the algorithm above).
+Mouser and TME are answered from the field index (section 3.8) and the distributor is asked only for what the cache
+cannot show. The field query is a recall filter: `PageCollector.Check` and `ConstraintPolicy` still decide which parts
+are returned and both rankers still order them.
+
+```
+search(request, distributor D):            # D is Mouser or TME
+  fallback to the cached-search path (steps 1 to 4 above) when: bypass_cache; the index is not complete for D;
+    the request states nothing but its family ("mosfet": the index would return every MOSFET); an SQL error before
+    any call. Each is counted in kina_field_fallbacks_total{reason}
+  steps = [all groups], [without K], [without L1], [without L1, L2] ...    # FieldQuery.steps(); H and R never dropped
+  phrase of a step = the phrase the cached-search path would send at that ladder step (DistributorPhraser):
+    all groups: the request's phrase; without K: the minimal core when it words the request differently, else the
+    same phrase; without L1..Lk: the ladder step that loosens exactly those kinds (none: no phrase for the step)
+  calls = 0
+  for each step:
+      cands = hits of the step's field query (at most max-candidates; skipped when the step holds nothing the
+              request states) + the parts this request received live that pass the Java check and the ladder kinds
+              still in the step
+      if #(cands that pass the Java check) >= max_results and one of them is confirmed: stop          # enough
+      if the step's phrase was already tried in this request: next step
+      if the journal has a fresh row for (D, phrase): count a journal hit, next step                   # asked already
+      if calls >= max-live-calls-per-distributor or the deadline is over: stop
+      call D with the phrase (page rules, deadline and rate-limit retry of steps 2 and 3.6), calls += 1;
+      upsert the parts (the cache write writes the index), write the journal row; on a failure stop
+      cands = again; if enough: stop
+  answer with cands + every part received live (the ranker excludes what the request refuses and counts it)
+```
+
+*Enough* is at least `max_results` candidates that pass the Java check (`Check.returnable`: not excluded by a
+constraint, not below spec unless `allow_below_spec`) and at least one confirmed (meets the request with every
+requested rating stated; with `allow_below_spec` a below-spec part counts). The ratings (`R`) and the hard constraints
+(`H`) are in every step, so only the relaxable kinds are loosened, in the order of the ladder; `allow_below_spec`
+drops `R` as before. A step holds only the stated constraints, free text and part numbers beyond the stock and the
+family; a step of the family alone is never read (the parts received live stand in for it).
+
+**The phrase journal** (V15 `distributor_phrases`, `PhraseJournalRepository`): one row per distributor and phrase key
+(the phrase's normalised words in sorted order, so `10uF X7R 0805` and `0805 X7R 10uF` are one phrase) with the phrase
+as sent, `asked_at`, `raw_total` (the distributor's count for the phrase), `next_offset`, `exhausted`, `out_of_stock`,
+`empty` (no in-stock part came back), `ladder_step` (0 for the request's phrase, n for the n-th relaxation phrase) and
+the `query_key` that asked it. A row is fresh for `kina.cache.ttl` (an empty answer for `empty-result-ttl`, whichever is
+shorter); a fresh row means the distributor is not asked that phrase again, whatever the ratings of the request
+(ratings are never in a phrase). It is written after every successful call with the parts in the cache, also by the
+cached-search path in every mode (so it is warm when the mode changes) and by a `bypass_cache` request; a failed call
+writes nothing. `PhraseJournalBackfill` fills it once in the background at startup in `on` mode from the
+`cached_searches` younger than `2 x kina.cache.ttl` (a list without a `fallback_query` asked the phrase its query was
+sent as, with the row's counts; one with a `fallback_query` also asked every ladder phrase before it, whose counts are
+unknown); it only adds rows (`ON CONFLICT DO NOTHING`) and only reads `cached_searches`. `CacheMaintenance` purges rows
+older than `2 x kina.cache.ttl` with the cached searches.
+
+**Cached searches stay**: a call also writes `cached_searches` for the request's query key as the cached-search path
+does (the list of the last phrase asked, `fallback_query`, `constraints_relaxed`), so the expired-list fallback, the
+requested-part outcomes (`requested_parts`, section "Requested part numbers": a search naming a part number gets a
+row also when it made no call) and a rollback to the other modes find the history. A failed call serves the field
+candidates with cache `stale` and the `error`; without candidates, the expired cached list; without that, the error
+and an empty list as before.
+
+**What the fields mean in this mode** (`DistributorResult`):
+
+| Field | Meaning |
+|---|---|
+| `cache` | `hit`: answered from the index and the cache, no distributor call (`fetched_live` false); `miss`: the distributor was asked, and only the request's own phrase; `partial`: asked at a relaxed step (at least one call with a relaxed phrase); `stale`: the live call failed and the parts come from the index or an expired list; `bypassed` and `not_applicable` as before |
+| `fetched_live` | true when this search called the distributor (`miss`, `partial`, `bypassed`); false for `hit`, `stale`, `not_applicable` and LCSC. Present in every mode |
+| `field_steps_tried` | the steps of the field query evaluated before the answer (1: step 0 answered); 0 on the cached-search path and for LCSC |
+| `fallback_query` | the phrase of the step that produced the parts when it differs from the request's phrase (null at step 0 and for a step that only drops free text) |
+| `constraints_relaxed` | the kinds the answering step dropped, as before only those the returned parts really miss |
+| `fetched` | the parts the search holds before exclusions: the field candidates plus the parts received live |
+| `total_results` | the distributor's count for the phrase: of the last call made in this request; else the journal's `raw_total` for the phrase of the answering step; else the number of index candidates of that step |
+| `out_of_stock_matches` | of the calls made in this request; else the journal's count for the answering phrase; null when unknown |
+
+Quota: a search makes at most `max-live-calls-per-distributor` calls per distributor (default 2; Mouser allows 1 000
+a day), each with `max-pages-per-search` pages. `kina_field_served_total`, `kina_field_live_calls_total{step}`,
+`kina_field_journal_hits_total` and `kina_field_fallbacks_total{reason}` (section 3.7) show how often the index
+answers, which steps cost a call and why a search took the old path.
+
+**Augment** (`mode=augment`, `CachedDistributorRetriever.augment`): the algorithm above, unchanged; on a `hit` or
+`partial` of the cached list the in-stock parts of the field query's first step that the list does not hold and that
+the Java check would return are added to it before the check and the ranking. No distributor call is made, `fetched`
+reports the merged set and `total_results` stays the distributor's figure. An incomplete index, a request that states
+only its family or an SQL error adds nothing.
 
 ### 3.3 Ranking
 
@@ -1870,6 +1951,10 @@ No other value is possible (connector and USB sub-types are not tags), so the ta
 | `kina_field_shadow_queries_total` | counter | `distributor`, `outcome` | shadow field queries (`kina.search.field-index.mode=shadow`, section 3.8): `ok`, `dropped`, `incomplete` (index not complete for the distributor), `failed` |
 | `kina_field_shadow_candidates_total` | counter | `distributor` | candidates the shadow field queries returned (unrelaxed step) |
 | `kina_field_shadow_dropped_total` | counter | `distributor` | returnable parts the most relaxed shadow field query would have dropped; must stay 0 |
+| `kina_field_served_total` | counter | `distributor` | searches answered from the field index with no distributor call (`cache: "hit"`, `kina.search.field-index.mode=on`, section 3.2 "Field-first flow") |
+| `kina_field_live_calls_total` | counter | `distributor`, `step` | distributor calls of the field-first flow by relaxation step (`0`: the request's phrase, `n`: the n-th relaxed step of the field query) |
+| `kina_field_journal_hits_total` | counter | `distributor` | steps whose phrase the journal had already asked within its freshness, so no call was made |
+| `kina_field_fallbacks_total` | counter | `distributor`, `reason` | searches that took the cached-search path: `mode` (not `on`), `bypass` (`bypass_cache`), `incomplete` (index not complete for the distributor), `sql_error` |
 
 The timers (`kina_search_duration_seconds`, `kina_distributor_duration_seconds`) and `kina_searches_total` (a batch
 mixes types) have no `type` tag. Counts recorded before 0.5 have no type: migration V9 moved them to `type="unknown"`
@@ -2113,9 +2198,13 @@ and compares it with the parts the cached-search path holds: the candidates of t
 those parts, and the parts the Java check keeps that the most relaxed step would drop (must be 0); logs at DEBUG (WARN
 with the part numbers when a part would be dropped) and counts `kina_field_shadow_queries_total{outcome}` (`ok`,
 `dropped`, `incomplete`, `failed`), `kina_field_shadow_candidates_total` and `kina_field_shadow_dropped_total`. The
-search result never changes. `augment` and `on` are the flows of phase B; until then they behave as `off`.
+search result never changes. `augment` adds the field candidates to a cached list and `on` is the field-first flow with
+the phrase journal (section 3.2 "Field-first flow"); both fall back to the cached-search path whenever the index is
+not complete for the distributor (`isComplete`), on any SQL error and for a request the index cannot answer.
 
-**Cache preservation.** V14 only creates the `pg_trgm` extension (`CREATE EXTENSION IF NOT EXISTS`), the `part_index`
+**Cache preservation.** V15 only creates the `distributor_phrases` table and its index (the journal, section 3.2): no
+`cached_parts` or `cached_searches` row is read, changed or deleted by it or by the journal backfill, and the
+cached-search path keeps writing `cached_searches` in every mode. V14 only creates the `pg_trgm` extension (`CREATE EXTENSION IF NOT EXISTS`), the `part_index`
 table (with a foreign key to `cached_parts` that cascades deletes and key changes to the index rows, so it never
 blocks a write to the cache) and its indexes;
 it never reads, modifies, re-keys or deletes `cached_parts` or `cached_searches` rows. The re-index only reads the
@@ -2230,7 +2319,10 @@ lifecycle and reel option, the JLCPCB library type Basic/Preferred/Extended). `s
 availability status: it is a `lifecycle` (section 3.4).
 
 `cache` is `hit`, `partial`, `miss`, `bypassed`, `not_applicable` or `stale` (the live search failed, `error` is set,
-and the parts come from the query's expired cached list, section 3.2 "Cache model").
+and the parts come from the query's expired cached list or the field index, section 3.2 "Cache model" and "Field-first
+flow"). `fetched_live` (boolean: this search called the distributor) and `field_steps_tried` (integer: steps of the
+field query evaluated, 0 on the cached-search path and for LCSC) are in every distributor entry; in the field-first
+mode `hit` means answered from the cache with no call, `miss` asked the request's own phrase, `partial` a relaxed one.
 `fetched`, `excluded_by_constraints`, `excluded_by_constraints_detail` (per hard constraint, each part under its first
 conflict, `{"capacitance": 12, "package": 3}`; empty object when nothing was excluded), `excluded_below_spec`,
 `excluded_below_spec_detail` (up to 5 of the `excluded_below_spec` parts, closest to the request first, each
@@ -2498,7 +2590,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V14__part_index.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V15__phrase_journal.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -2699,6 +2791,24 @@ CREATE TABLE part_index (
 -- inductance_h, impedance_ohm and frequency_hz; (distributor, package_key, family); (distributor, connector_type,
 -- positions) and (distributor, usb_type, pin_configuration), partial; (distributor, family); (extractor_version);
 -- GIN on search_tsv, on search_text and mpn (gin_trgm_ops) and on attrs (jsonb_path_ops). No index holds in_stock.
+-- V15__phrase_journal.sql (section 3.2 "Field-first flow"): the phrases a distributor was already asked. The migration
+-- only adds this table; cached_parts and cached_searches are not touched. Filled by the searches and, once at startup
+-- in the on mode, from the cached_searches younger than 2 x kina.cache.ttl; purged after 2 x kina.cache.ttl.
+CREATE TABLE distributor_phrases (
+  distributor   TEXT        NOT NULL,                 -- MOUSER | TME
+  phrase_key    TEXT        NOT NULL,                 -- the phrase's normalised words in sorted order
+  phrase        TEXT        NOT NULL,                 -- the phrase as sent
+  asked_at      TIMESTAMPTZ NOT NULL,
+  raw_total     INTEGER,                              -- the distributor's result count for the phrase; NULL: unknown
+  next_offset   INTEGER,                              -- raw record offset where the next page starts; NULL: unknown
+  exhausted     BOOLEAN     NOT NULL DEFAULT FALSE,   -- the distributor had no more records
+  out_of_stock  INTEGER,                              -- records matched without ships-now stock; NULL: unknown
+  empty         BOOLEAN     NOT NULL DEFAULT FALSE,   -- no in-stock part came back (fresh for empty-result-ttl only)
+  ladder_step   INTEGER     NOT NULL DEFAULT 0,       -- 0: the phrase of the request, n: the n-th relaxation phrase
+  query_key     TEXT,                                 -- the query that asked it (informational)
+  PRIMARY KEY (distributor, phrase_key)
+);
+CREATE INDEX distributor_phrases_asked_idx ON distributor_phrases (asked_at);
 ```
 
 ## 9. Distributor details (verified against the live APIs on 2026-10-05)
@@ -3005,9 +3115,10 @@ kina:
     quantity: { stock-shortfall-penalty: 0.3, moq-penalty: 0.3, low-stock-penalty: 0.3 }   # section 3.4 "Quantity"
     lifecycle: { last-time-buy-penalty: 0.1, supply-constrained-penalty: 0.05 }
     field-index:                 # section 3.8; written and re-indexed in every mode
-      mode: ${KINA_FIELD_INDEX_MODE:off}           # off | shadow (log and count only) | augment | on (phase B)
+      mode: ${KINA_FIELD_INDEX_MODE:off}           # off | shadow (log and count only) | augment | on (section 3.2)
       min-version: ${KINA_FIELD_INDEX_MIN_VERSION:0}   # older rows count as unknown in every rule but the family
       max-candidates: 200        # rows one field query returns
+      max-live-calls-per-distributor: ${KINA_FIELD_INDEX_MAX_LIVE_CALLS:2}   # on: distributor calls one search may make
       reindex-batch-size: 500    # rows the re-index reads and writes at a time
       reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}   # false in src/test/resources/config/application.yml
   ranking:

@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Periodic purge of the Postgres cache (DESIGN.md 3.2 "Cache model"): search lists older than {@code 2 x kina.cache.ttl}
- * and the parts of a distributor whose {@code kina.cache.metadata-retention} is finite and expired (by
+ * Periodic purge of the Postgres cache (DESIGN.md 3.2 "Cache model"): search lists and journal phrases older than
+ * {@code 2 x kina.cache.ttl} and the parts of a distributor whose {@code kina.cache.metadata-retention} is finite and expired (by
  * {@code metadata_fetched_at}). With the default retention {@code forever} parts are never purged.
  */
 @Component
@@ -29,6 +29,8 @@ public class CacheMaintenance {
 
     @Autowired private PartCacheRepository parts;
     @Autowired private SearchCacheRepository searches;
+    /** The phrase journal (V15); null in tests that build the job by hand. */
+    @Autowired(required = false) private PhraseJournalRepository phrases;
     @Autowired private Clock clock;
     @Autowired private KinaProperties properties;
     private final Map<Distributor, Duration> metadataRetention = new EnumMap<>(Distributor.class);
@@ -43,7 +45,11 @@ public class CacheMaintenance {
     }
 
     /** Rows deleted by one {@link #purge()} run. */
-    public record PurgeResult(int parts, int searches) {
+    public record PurgeResult(int parts, int searches, int phrases) {
+
+        public PurgeResult(int parts, int searches) {
+            this(parts, searches, 0);
+        }
     }
 
     /** Every 6 hours; the first run is delayed so startup (and tests) are not raced. */
@@ -67,10 +73,13 @@ public class CacheMaintenance {
         for (Map.Entry<Distributor, Duration> e : metadataRetention.entrySet()) {
             deletedParts += parts.deleteMetadataOlderThan(e.getKey(), now.minus(e.getValue()));
         }
-        PurgeResult result = new PurgeResult(deletedParts, searches.deleteOlderThan(searchCutoff));
-        log.info("Cache purge: {} cached_parts rows (metadata retention {}) and {} cached_searches rows (fetched "
-                + "before {}) deleted", result.parts(), metadataRetention.isEmpty() ? "forever" : metadataRetention,
-                result.searches(), searchCutoff);
+        int deletedSearches = searches.deleteOlderThan(searchCutoff);
+        int deletedPhrases = phrases == null ? 0 : phrases.deleteOlderThan(searchCutoff);
+        PurgeResult result = new PurgeResult(deletedParts, deletedSearches, deletedPhrases);
+        log.info("Cache purge: {} cached_parts rows (metadata retention {}), {} cached_searches rows and {} "
+                + "distributor_phrases rows (fetched or asked before {}) deleted", result.parts(),
+                metadataRetention.isEmpty() ? "forever" : metadataRetention, result.searches(), result.phrases(),
+                searchCutoff);
         return result;
     }
 }

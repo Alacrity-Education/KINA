@@ -75,9 +75,10 @@ kina:
       last-time-buy-penalty: 0.1
       supply-constrained-penalty: 0.05
     field-index:                 # DESIGN.md 3.8: part_index, written with the cache and re-indexed after startup
-      mode: ${KINA_FIELD_INDEX_MODE:off}                 # off | shadow (log and count only) | augment | on (phase B)
+      mode: ${KINA_FIELD_INDEX_MODE:off}                 # off | shadow (log and count only) | augment | on
       min-version: ${KINA_FIELD_INDEX_MIN_VERSION:0}     # rows of an older extractor are kept by every rule but family
       max-candidates: 200
+      max-live-calls-per-distributor: ${KINA_FIELD_INDEX_MAX_LIVE_CALLS:2}   # on: distributor calls one search may make
       reindex-batch-size: 500
       reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}
   ranking:
