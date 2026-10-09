@@ -261,9 +261,9 @@ final class FieldFirstSearch {
                     }
                     phrase = phrase != null ? phrase : plan.query();
                 } else {
-                    Set<String> wanted = new java.util.HashSet<>(step.relaxed());
+                    Set<String> wanted = new HashSet<>(step.relaxed());
                     for (int i = 0; i < ladder.size() && phrase == null; i++) {
-                        if (new java.util.HashSet<>(ladder.get(i).relaxed()).equals(wanted)) {
+                        if (new HashSet<>(ladder.get(i).relaxed()).equals(wanted)) {
                             at = i;
                             phrase = ladder.get(i).phrase();
                         }
@@ -369,26 +369,9 @@ final class FieldFirstSearch {
          * logged and only loses them.
          */
         private void loadCachedList() {
-            try {
-                Instant freshSince = now.minus(properties.cache().ttl());
-                Instant emptyFreshSince = now.minus(properties.cache().emptyResultTtl());
-                Optional<CachedSearch> cached = searchCache.find(distributor, parsed.normalizedKey())
-                        .filter(c -> CachedDistributorRetriever.isFresh(c, freshSince, emptyFreshSince));
-                if (cached.isEmpty() || cached.get().partNumbers().isEmpty()) {
-                    return;
-                }
-                List<String> numbers = cached.get().partNumbers();
-                Map<String, Part> found = partCache.findInStock(distributor, numbers);
-                for (String number : numbers) {
-                    Part part = found.get(number);
-                    if (part != null) {
-                        listed.put(number, loaded.computeIfAbsent(number, n -> extractor.enrich(part)));
-                    }
-                }
-            } catch (RuntimeException e) {
-                log.warn("Reading the cached {} list of '{}' failed: {}", distributor, parsed.normalizedKey(),
-                        e.toString());
-            }
+            Instant freshSince = now.minus(properties.cache().ttl());
+            Instant emptyFreshSince = now.minus(properties.cache().emptyResultTtl());
+            loadList("cached", c -> CachedDistributorRetriever.isFresh(c, freshSince, emptyFreshSince));
         }
 
         /**
@@ -400,8 +383,12 @@ final class FieldFirstSearch {
                 return;
             }
             expiredLoaded = true;
+            loadList("expired", c -> true);
+        }
+
+        private void loadList(String what, java.util.function.Predicate<CachedSearch> accept) {
             try {
-                Optional<CachedSearch> cached = searchCache.find(distributor, parsed.normalizedKey());
+                Optional<CachedSearch> cached = searchCache.find(distributor, parsed.normalizedKey()).filter(accept);
                 if (cached.isEmpty() || cached.get().partNumbers().isEmpty()) {
                     return;
                 }
@@ -414,7 +401,7 @@ final class FieldFirstSearch {
                     }
                 }
             } catch (RuntimeException e) {
-                log.warn("Reading the expired {} list of '{}' failed: {}", distributor, parsed.normalizedKey(),
+                log.warn("Reading the {} {} list of '{}' failed: {}", what, distributor, parsed.normalizedKey(),
                         e.toString());
             }
         }
