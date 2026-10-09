@@ -8,6 +8,7 @@ import ro.alacrity.kina.cache.CacheStatistics;
 import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.cache.PhraseJournalRepository;
 import ro.alacrity.kina.config.KinaProperties;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorRegistry;
 import ro.alacrity.kina.distributor.lcsc.JlcpcbDatabaseManager;
@@ -42,6 +43,7 @@ public class DistributorStatusService {
     @Autowired private ObjectProvider<JlcpcbDatabaseManager> jlcpcb;
     @Autowired private ObjectProvider<PartIndexReindexer> fieldIndex;
     @Autowired private ObjectProvider<PhraseJournalRepository> journal;
+    @Autowired private ApiQuotaTracker quota;
 
     public DistributorStatusResponse status() {
         CacheStatistics stats = null;
@@ -52,7 +54,9 @@ public class DistributorStatusService {
         }
         List<DistributorStatus> distributors = new ArrayList<>();
         for (Distributor distributor : Distributor.values()) {
-            distributors.add(status(distributor, stats));
+            DistributorStatus entry = status(distributor, stats);
+            distributors.add(quota == null || !ApiQuotaTracker.isTracked(distributor) ? entry
+                    : entry.withQuota(quota.snapshot(distributor)));
         }
         CacheSummary cache = stats == null ? null : new CacheSummary(properties.cache().ttl().toString(),
                 stats.parts(), stats.freshParts(), stats.searches(), stats.oldestFetch());
@@ -139,7 +143,8 @@ public class DistributorStatusService {
         Long cachedParts = usesCache && stats != null ? stats.partsByDistributor().getOrDefault(distributor, 0L) : null;
         return switch (distributor) {
             case MOUSER -> new DistributorStatus(distributor, configured, configured,
-                    configured ? "Mouser Search API (keyword search, in-stock only); daily quota about 1000 calls"
+                    configured ? "Mouser Search API (keyword search, in-stock only); daily quota "
+                            + properties.distributors().mouser().quota().perDay() + " calls"
                             : "not configured: MOUSER_API_KEY is not set",
                     true, cachedParts, properties.distributors().mouser().maxResultsPerSearch(), null);
             case TME -> {

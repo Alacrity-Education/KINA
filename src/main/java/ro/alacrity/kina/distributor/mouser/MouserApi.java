@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.Deadline;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorException.Kind;
@@ -72,6 +73,12 @@ public class MouserApi {
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(READ_TIMEOUT);
         return new MouserApi(builder.clone().requestFactory(requestFactory), baseUrl, apiKey);
+    }
+
+    /** Counts every HTTP request (retries and timeouts included) in {@code tracker}; returns this. */
+    MouserApi quota(ApiQuotaTracker tracker) {
+        retry.quota(tracker);
+        return this;
     }
 
     /** {@code POST /search/keyword}; rate limits fail fast. */

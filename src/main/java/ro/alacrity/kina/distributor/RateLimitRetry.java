@@ -120,6 +120,8 @@ public final class RateLimitRetry {
     private final Sleeper sleeper;
     private final DoubleSupplier random;
     private final DistributorCooldown cooldown;
+    /** Counts every attempt and remembers rate limits (DESIGN.md 3.7); null in tests that do not look at the quota. */
+    private volatile ApiQuotaTracker quota;
 
     public RateLimitRetry(Distributor distributor) {
         this(distributor, Clock.systemUTC(), d -> Thread.sleep(d), () -> ThreadLocalRandom.current().nextDouble());
@@ -140,6 +142,12 @@ public final class RateLimitRetry {
 
     public Distributor distributor() {
         return distributor;
+    }
+
+    /** Counts every attempt of this policy (one HTTP request each) in {@code tracker}; returns this. */
+    public RateLimitRetry quota(ApiQuotaTracker tracker) {
+        this.quota = tracker;
+        return this;
     }
 
     public DistributorCooldown cooldown() {
@@ -171,6 +179,10 @@ public final class RateLimitRetry {
             waitedNanos += awaitCooldown(budget, waitedNanos);
             long generation = cooldown.generation();
             RateLimitedResponse signal;
+            ApiQuotaTracker tracker = quota;
+            if (tracker != null) {
+                tracker.record(distributor);
+            }
             try {
                 T result = attempt.get();
                 cooldown.clearAfterSuccess(generation);
@@ -185,6 +197,9 @@ public final class RateLimitRetry {
             long waitNanos = wait.toNanos();
             String reason = signal.getMessage() + (retryAfter != null ? ", Retry-After " + seconds(waitNanos) + " s" : "");
             cooldown.record(now, now + waitNanos, reason);
+            if (tracker != null) {
+                tracker.throttle(distributor, wait);
+            }
             if (!budget.fits(waitNanos)) {
                 throw new DistributorException(distributor, Kind.RATE_LIMITED, "rate limited by "
                         + displayName(distributor) + " (" + signal.getMessage() + "); waited " + seconds(waitedNanos)

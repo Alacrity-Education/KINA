@@ -563,11 +563,42 @@ public record KinaProperties(
     public record Distributors(@DefaultValue Mouser mouser, @DefaultValue Tme tme) {
     }
 
+    /**
+     * {@code kina.distributors.<name>.quota}: the API limits the quota tracker shows as {@code used/limit}
+     * (DESIGN.md 3.7, 9.1, 9.2). Both windows slide. Unset or non-positive values take the distributor's default.
+     *
+     * @param perMinute requests per 60 seconds (Mouser 30; TME assumed 30, it publishes no limit)
+     * @param perDay    requests per 24 hours (Mouser 1000; TME assumed 2000)
+     */
+    public record Quota(Integer perMinute, Integer perDay) {
+
+        public static final Quota MOUSER_DEFAULT = new Quota(30, 1000);
+        public static final Quota TME_DEFAULT = new Quota(30, 2000);
+
+        static Quota orDefault(Quota quota, Quota defaults) {
+            if (quota == null) {
+                return defaults;
+            }
+            return new Quota(quota.perMinute == null || quota.perMinute <= 0 ? defaults.perMinute : quota.perMinute,
+                    quota.perDay == null || quota.perDay <= 0 ? defaults.perDay : quota.perDay);
+        }
+    }
+
     public record Mouser(
             String apiKey,
             @DefaultValue("https://api.mouser.com/api/v1") String baseUrl,
             @DefaultValue("50") int maxResultsPerSearch,
-            @DefaultValue("1") int maxPagesPerSearch) {
+            @DefaultValue("1") int maxPagesPerSearch,
+            @DefaultValue Quota quota) {
+
+        @ConstructorBinding
+        public Mouser {
+            quota = Quota.orDefault(quota, Quota.MOUSER_DEFAULT);
+        }
+
+        public Mouser(String apiKey, String baseUrl, int maxResultsPerSearch, int maxPagesPerSearch) {
+            this(apiKey, baseUrl, maxResultsPerSearch, maxPagesPerSearch, null);
+        }
 
         public boolean isConfigured() {
             return apiKey != null && !apiKey.isBlank();
@@ -591,15 +622,24 @@ public record KinaProperties(
             @DefaultValue("3") int maxPagesPerSearch,
             @DefaultValue({"CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE", "NOT_IN_OFFER",
                     "PRODUCT_BLOCKED", "INVALID", "BLOCKED_FOR_ZBL_*"})
-            List<String> excludedStatuses) {
+            List<String> excludedStatuses,
+            @DefaultValue Quota quota) {
 
         /** {@code product_status} values that mean the part does not ship now; such parts are dropped. */
         public static final List<String> DEFAULT_EXCLUDED_STATUSES =
                 List.of("CANNOT_BE_ORDERED", "ONLY_FOR_SPECIAL_ORDER", "EXTERNAL_WAREHOUSE", "NOT_IN_OFFER",
                         "PRODUCT_BLOCKED", "INVALID", "BLOCKED_FOR_ZBL_*");
 
+        @ConstructorBinding
         public Tme {
             excludedStatuses = excludedStatuses == null ? DEFAULT_EXCLUDED_STATUSES : List.copyOf(excludedStatuses);
+            quota = Quota.orDefault(quota, Quota.TME_DEFAULT);
+        }
+
+        public Tme(String token, String secret, String country, String currency, String language, String baseUrl,
+                   int maxResultsPerSearch, int maxPagesPerSearch, List<String> excludedStatuses) {
+            this(token, secret, country, currency, language, baseUrl, maxResultsPerSearch, maxPagesPerSearch,
+                    excludedStatuses, null);
         }
 
         public boolean isConfigured() {

@@ -100,7 +100,15 @@ public enum Metric {
     JLCPCB_DATABASE_AGE("kina.jlcpcb.database.age", Type.GAUGE,
             "Age of the JLCPCB database download (0 when unknown)"),
     METRICS_BACKFILL_LAST_RUN("kina.metrics.backfill.last.run", Type.GAUGE,
-            "End of the last successful metrics backfill run, Unix epoch (0 when never)");
+            "End of the last successful metrics backfill run, Unix epoch (0 when never)"),
+    DISTRIBUTOR_QUOTA_USED("kina.distributor.quota.used", Type.GAUGE,
+            "API requests KINA sent to the distributor in the sliding window (in memory, not persisted)",
+            "distributor", "window"),
+    DISTRIBUTOR_QUOTA_LIMIT("kina.distributor.quota.limit", Type.GAUGE,
+            "Configured API request limit of the window (kina.distributors.*.quota)", "distributor", "window"),
+    DISTRIBUTOR_QUOTA_THROTTLED_UNTIL("kina.distributor.quota.throttled.until", Type.GAUGE,
+            "End of the rate limit the distributor last answered with, Unix epoch (0 when not throttled)",
+            "distributor");
 
     /** The meter types. */
     public enum Type { COUNTER, TIMER, GAUGE }
@@ -156,7 +164,8 @@ public enum Metric {
 
     /** The base unit of a gauge ({@code seconds} for the JLCPCB age and the last backfill run), else null. */
     public String baseUnit() {
-        return this == JLCPCB_DATABASE_AGE || this == METRICS_BACKFILL_LAST_RUN ? "seconds" : null;
+        return this == JLCPCB_DATABASE_AGE || this == METRICS_BACKFILL_LAST_RUN
+                || this == DISTRIBUTOR_QUOTA_THROTTLED_UNTIL ? "seconds" : null;
     }
 
     /**

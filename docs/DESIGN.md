@@ -1969,6 +1969,9 @@ No other value is possible (connector and USB sub-types are not tags), so the ta
 | `kina_metrics_backfill_runs_total` | counter | `outcome` | metrics backfill runs ("Backfill" below): `ok`, `failed` |
 | `kina_metrics_backfill_moved_total` | counter | `name` | counts the backfill moved from `type="unknown"` to a typed series, by counter (`kina.search.queries`, `kina.distributor.calls`, `kina.cache.search.lookups`, `kina.parts.fetched`) |
 | `kina_metrics_backfill_last_run_seconds` | gauge | | end of the last successful backfill run as a Unix time (0 when never) |
+| `kina_distributor_quota_used` | gauge | `distributor`, `window` | API requests KINA sent to Mouser or TME in the sliding `window` (`minute`: 60 s, `day`: 24 h); in memory, not persisted ("API quota" below) |
+| `kina_distributor_quota_limit` | gauge | `distributor`, `window` | the limit of that window (`kina.distributors.<name>.quota`); its own series, so `used / limit` is a ratio in PromQL |
+| `kina_distributor_quota_throttled_until_seconds` | gauge | `distributor` | end of the rate limit the distributor last answered with, Unix time (0 when none is running) |
 | `kina_field_index_reindexed_total` | counter | `distributor` | `part_index` rows written by the field index re-index job (section 3.8) |
 | `kina_field_shadow_queries_total` | counter | `distributor`, `outcome` | shadow field queries (`kina.search.field-index.mode=shadow`, section 3.8): `ok`, `dropped`, `incomplete` (index not complete for the distributor), `failed` |
 | `kina_field_shadow_candidates_total` | counter | `distributor` | candidates the shadow field queries returned (unrelaxed step) |
@@ -1990,6 +1993,21 @@ carry the `type` column of the rows (section 8; NULL counts as `unknown`), so ev
 `sum by (distributor) (kina_cache_parts)`. The `unknown` series of each distributor always exists; a type that is no
 longer in the table stays at 0. `kina_cache_parts_fresh`, `_stale` and `_stale_stock` keep the `distributor` tag
 only.
+
+**API quota.** `ApiQuotaTracker` counts the HTTP requests KINA sends to the Mouser and TME APIs, per distributor in
+two sliding windows (60 s and 24 h). Every request is one call: keyword and part-number searches, the TME
+`/products/*` calls and the TME `/auth/token` request alike, each retry after a rate limit again, a request that
+timed out too. `RateLimitRetry` records every attempt before the response is read (one counting point for both
+clients). LCSC reads a local database and has no quota. The numbers are in memory only: they are not in the
+`MetricsStore`, not saved to `metrics_counters` and not restored, so a restart starts at 0 and KINA can under-count
+what the distributor sees (other users of the same API key, calls before the restart). The windows slide, which is
+conservative against fixed-window limits whose reset time KINA does not know: a sliding count is never lower than the
+count of a fixed window that ends now. Memory is bounded: a distributor keeps at most its daily limit plus 100 (or
+10 %) timestamps, older ones are dropped. When a distributor answers with a rate limit (HTTP 429, `TooManyRequests`),
+the end of the wait (`Retry-After`, else the backoff of section 3.6) is kept as `throttled_until` and exported until
+it passes. The three gauges are computed on every scrape. The maxima are separate series, and the Status tab joins
+them as `used/limit` (`minute 15/30`, `day 165/1000`); `list_distributors` (section 4) and
+`/api/v1/metrics/summary` (`distributor_quota`) carry the same numbers.
 
 **Persistence.** Counters and timers live in memory (`MetricsStore`: one `AtomicLong` per name and canonical tag
 string, exported as Micrometer `FunctionCounter`s and `FunctionTimer`s). `MetricsPersistence` saves every value that
@@ -2258,7 +2276,7 @@ parameters; descriptions are read by the LLM, keep them precise):
 | `search_parts` | `query` (string, required), `max_results` (int 1..50, default 10, per distributor), `distributors` (array of `LCSC\|TME\|MOUSER`, default all configured), `bypass_cache` (bool, default false: skip cache lookup, still refresh the cache), `quantity` (pieces to order, default 1, section 3.4), `detail` (`compact` default, `full`), `allow_below_spec` (bool, default false, section 3.4 "Below spec") | `SearchResponse` |
 | `search_parts_batch` | `queries` (array of `{query, max_results, quantity}`, 1..20), `distributors`, `bypass_cache`, `detail`, `allow_below_spec` | `{ "results": [SearchResponse...] }` |
 | `get_part` | `distributor` (case-insensitive), `part_number` (distributor part number, or the MPN; spaces are tried as hyphens, then removed: `HCMA0703 2R2 R` -> `HCMA0703-2R2-R`, `HCMA07032R2R`; characters a distributor refuses are dropped, and a TME `E_INPUT_PARAMS_VALIDATION_ERROR` on `symbols[]`/`mpns[]` is `not_found`), `bypass_cache`, `quantity`, `detail` (`full` default: every attribute; `compact`) | `PartLookupResponse` `{found, distributor, part_number, cache, error, reason, identity, part}`; `found: false` instead of a tool error with `reason` `not_found` (unknown), or with `error` (and `reason` null) when the lookup failed. `reason` `out_of_stock`: listed without ships-now stock; `identity` `{part_number, manufacturer, mpn, description}`, and, when the distributor gives the part's data, `part` with `stock` 0, prices as listed and `availability.status` `out_of_stock` (`found: true`: the part number was requested explicitly, section 2); a Mouser catalogue part without a Mouser part number (`N/A`) has the identity only (`found: false`). The listed part is cached with `in_stock = false` and never served from the cache. Lookup per distributor: Mouser one `Exact` part-number search, matched by Mouser number then MPN after normalisation (upper case, letters and digits only; Mouser itself answers `ERA6AEB5361V` with `667-ERA-6AEB5361V`); TME `/products?symbols[]=`, on a miss once more with `mpns[]` (as written and normalised; TME matches `manufacturer_symbols` exactly); LCSC `"LCSC Part"`, on a miss the `"MFR.Part"` trigram index with 3-character chunks of the normalised MPN at the three phases, compared after normalisation (most stock first) |
-| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{..., field_index{enabled, available, version, rows, built_at, building}}` (LCSC, section 9.3); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7); `field_index{mode, rows, stale, version, reindexing, incomplete, journal_rows}` (section 3.8, omitted when it cannot be read). Never calls the Mouser/TME APIs |
+| `list_distributors` | none | `DistributorStatusResponse`: per distributor `configured`, `available`, `detail` (LCSC: JLCPCB file, part count, source date, download state), `uses_cache`, `cached_parts`, `max_results_per_search`, `jlcpcb{..., field_index{enabled, available, version, rows, built_at, building}}` (LCSC, section 9.3); `quota{minute{used, limit}, day{used, limit}, throttled_until}` (Mouser and TME only, omitted for LCSC; section 3.7 "API quota"; `throttled_until` is null when no rate limit is running); `cache{ttl, parts, fresh_parts, searches, oldest_fetch}`; `ranking{mode, cross_encoder_enabled, ready, model, model_variant, model_revision, model_dir, threads, avg_latency_ms, last_error, max_candidates, weight, timeout}`; `metrics{searches, search_queries, tool_calls, cache_added, rate_limited_calls, cross_encoder_executions, search_queries_by_type}` (section 3.7); `field_index{mode, rows, stale, version, reindexing, incomplete, journal_rows}` (section 3.8, omitted when it cannot be read). Never calls the Mouser/TME APIs |
 | `ping` | none | `{"status":"ok","version":"<build version>"}` (wiring/health check, already implemented) |
 
 The descriptions are sent to the model on every connection, so they stay short summaries: `search_parts` about
@@ -2397,7 +2415,7 @@ Tool parameter names are the Java parameter names (`-parameters`), so the tool m
 | `POST /api/v1/parts/search/batch` | body `BatchSearchRequest` (snake_case: `queries[{query, max_results, quantity}]`, `distributors`, `bypass_cache`, `detail`), returns `{results: [...]}` |
 | `GET /api/v1/parts/{distributor}/{*partNumber}?bypass_cache=&quantity=&detail=` and `GET /api/v1/parts/lookup?distributor=&part_number=&bypass_cache=&quantity=&detail=` | `PartResponse`; the part number is the rest of the path, so TME symbols containing `/` work unencoded (Tomcat rejects an encoded `%2F` in a path; the query form takes it); an MPN works as for `get_part`; a part listed without stock is returned with `stock` 0 and `availability.status` `out_of_stock`; 404 problem with `reason` `not_found` or `out_of_stock` (identity only: then also `identity`) |
 | `GET /api/v1/distributors` | same as `list_distributors` |
-| `GET /api/v1/metrics/summary` | key counters and every persisted counter and timer as JSON (section 3.7) |
+| `GET /api/v1/metrics/summary` | key counters and every persisted counter and timer as JSON, plus `distributor_quota` (the in-memory API quota usage of Mouser and TME, section 3.7) |
 | `GET /actuator/health`, `GET /actuator/info`, `GET /actuator/prometheus` | management port only (`KINA_METRICS_PORT`, 9090), no authentication (section 3.7); not served on the main port |
 
 Distributor names are case-insensitive everywhere (query, path and JSON body). Errors use RFC 9457
@@ -2847,7 +2865,9 @@ CREATE INDEX distributor_phrases_asked_idx ON distributor_phrases (asked_at);
 ### 9.1 Mouser (`distributor/mouser`)
 
 - Config: `kina.distributors.mouser.api-key` (`MOUSER_API_KEY`), `base-url=https://api.mouser.com/api/v1`,
-  `max-results-per-search=50`, `max-pages-per-search=1` (daily quota is 1 000 calls, 30/min).
+  `max-results-per-search=50`, `max-pages-per-search=1` (daily quota is 1 000 calls, 30/min). `quota.per-minute=30` (`MOUSER_QUOTA_PER_MINUTE`) and
+  `quota.per-day=1000` (`MOUSER_QUOTA_PER_DAY`) are what the quota gauges and the Status tab measure against
+  (section 3.7, "API quota"; sliding windows).
 - Keyword search: `POST {base}/search/keyword?apiKey=...` JSON
   `{"SearchByKeywordRequest":{"keyword":q,"records":n (<=50),"startingRecord":offset + 1,"searchOptions":"InStock","searchWithYourSignUpLanguage":"false"}}`
   (`startingRecord` is **1-based**, verified live: 1 returns results #1.., 3 returns #3..).
@@ -2907,6 +2927,10 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
 
 - Config: `kina.distributors.tme.token` (`TME_TOKEN`), `secret` (`TME_APPLICATION_SECRET`), `country` (`COUNTRY`, default `RO`),
   `currency` (default `EUR`), `language` (default `en`), `base-url=https://api.tme.eu`, `max-results-per-search=60`, `max-pages-per-search=3`.
+- Quota: TME publishes no request limit. `quota.per-minute=30` (`TME_QUOTA_PER_MINUTE`) and `quota.per-day=2000`
+  (`TME_QUOTA_PER_DAY`) are a conservative assumption; set them to the limits of your contract. They only feed the
+  quota display (section 3.7, "API quota"; sliding windows); KINA does not refuse calls at the limit, it keeps
+  waiting on real 429 answers (section 3.6).
 - Token: `POST {base}/auth/token`, header `Authorization: Basic base64(token:secret)`, body `grant_type=client_credentials`
   -> `{"access_token","token_type":"Bearer","expires_in":300,"refresh_token"}`. `TmeTokenManager` caches the token and
   requests a new one when fewer than 30 s remain (ignore the refresh token; client credentials are cheap).
@@ -3254,10 +3278,12 @@ kina:
       download-timeout: 10m
       auto-download: ${KINA_CROSS_ENCODER_AUTO_DOWNLOAD:true}   # false in the image and in src/test/resources/config/application.yml
   distributors:
-    mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
+    mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1,
+              quota: { per-minute: "${MOUSER_QUOTA_PER_MINUTE:30}", per-day: "${MOUSER_QUOTA_PER_DAY:1000}" } }  # section 3.7 "API quota"
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
               excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE, NOT_IN_OFFER, PRODUCT_BLOCKED,
-                                  INVALID, "BLOCKED_FOR_ZBL_*"] }
+                                  INVALID, "BLOCKED_FOR_ZBL_*"],
+              quota: { per-minute: "${TME_QUOTA_PER_MINUTE:30}", per-day: "${TME_QUOTA_PER_DAY:2000}" } }  # assumed, TME publishes no limit
   metrics:
     save-interval: 30s           # section 3.7: counters saved to metrics_counters, database gauges recomputed
     backfill:                    # section 3.7 "Backfill"

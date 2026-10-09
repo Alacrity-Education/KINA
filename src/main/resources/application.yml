@@ -101,10 +101,15 @@ kina:
       download-timeout: 10m
       auto-download: ${KINA_CROSS_ENCODER_AUTO_DOWNLOAD:true}   # false in the Docker image (model bundled, DESIGN.md 11)
   distributors:
-    mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1 }
+    # quota: the API limits the Status tab, list_distributors and kina_distributor_quota_* show as used/limit
+    # (DESIGN.md 3.7). In memory only, both windows slide. Mouser publishes 30 calls per minute and 1000 per day; TME
+    # publishes no limit, its defaults are a conservative assumption.
+    mouser: { api-key: "${MOUSER_API_KEY:}", base-url: https://api.mouser.com/api/v1, max-results-per-search: 50, max-pages-per-search: 1,
+              quota: { per-minute: "${MOUSER_QUOTA_PER_MINUTE:30}", per-day: "${MOUSER_QUOTA_PER_DAY:1000}" } }
     tme:    { token: "${TME_TOKEN:}", secret: "${TME_APPLICATION_SECRET:}", country: "${COUNTRY:RO}", currency: EUR, language: en, base-url: https://api.tme.eu, max-results-per-search: 60, max-pages-per-search: 3,
             excluded-statuses: [CANNOT_BE_ORDERED, ONLY_FOR_SPECIAL_ORDER, EXTERNAL_WAREHOUSE, NOT_IN_OFFER,
-                                PRODUCT_BLOCKED, INVALID, "BLOCKED_FOR_ZBL_*"] }
+                                PRODUCT_BLOCKED, INVALID, "BLOCKED_FOR_ZBL_*"],
+            quota: { per-minute: "${TME_QUOTA_PER_MINUTE:30}", per-day: "${TME_QUOTA_PER_DAY:2000}" } }
   metrics:
     save-interval: 30s           # counters saved to metrics_counters, database gauges recomputed (DESIGN.md 3.7)
     backfill:                    # moves type="unknown" counts to the types the database shows (DESIGN.md 3.7)
