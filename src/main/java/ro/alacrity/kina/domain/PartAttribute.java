@@ -112,7 +112,7 @@ public enum PartAttribute {
     @Unit(base = "ohm", prefixes = {"m", "", "k", "M", "G"})
     @Source(names = "impedance", families = ComponentFamily.FERRITE, logic = ImpedanceAtFrequency.class)
     @Source(precedence = 9, logic = Described.class)
-    @Indexed(column = "impedance_ohm", type = FLOAT8)
+    @Indexed(column = "impedance_ohm", type = FLOAT8, condition = "impedance_test_hz")
     IMPEDANCE(ParsedQuery.IMPEDANCE, "Impedance"),
 
     @Unit(symbols = "hz", base = "Hz", prefixes = {"", "k", "M", "G"})
@@ -911,8 +911,10 @@ public enum PartAttribute {
                 Unit unit = field.getAnnotation(Unit.class);
                 Indexed indexed = field.getAnnotation(Indexed.class);
                 if (indexed != null) {
-                    if (a.kind == null || indexed.predicate() != Indexed.Predicate.NONE || indexed.javaOnly()) {
-                        throw new IllegalStateException(a + ": @Indexed on an attribute declares a column of a value");
+                    if (a.kind == null || indexed.predicate() != Indexed.Predicate.NONE || indexed.javaOnly()
+                            || !indexed.condition().isEmpty() && Indexed.ATTRS.equals(indexed.column())) {
+                        throw new IllegalStateException(a + ": @Indexed on an attribute declares a column of a value"
+                                + " (and a typed column of its condition)");
                     }
                     INDEXED.put(a, indexed);
                 }

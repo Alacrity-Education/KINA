@@ -54,11 +54,19 @@ public class RankingService {
      * known rating is below the request (only returned with {@link RankOptions#allowBelowSpec()}).
      */
     public record RankedPart(Part part, double score, Double match, List<String> mismatches, List<String> unverified,
-                             boolean belowSpec) {
+                             boolean belowSpec, DeterministicRanker.MatchClass matchClass) {
 
         public RankedPart {
             mismatches = mismatches == null ? List.of() : List.copyOf(mismatches);
             unverified = unverified == null ? List.of() : List.copyOf(unverified);
+            // without a class: the one the grade alone gives (match 0: none)
+            matchClass = matchClass != null ? matchClass : match != null && match <= 0.0
+                    ? DeterministicRanker.MatchClass.NONE : DeterministicRanker.MatchClass.COMPLETE;
+        }
+
+        public RankedPart(Part part, double score, Double match, List<String> mismatches, List<String> unverified,
+                          boolean belowSpec) {
+            this(part, score, match, mismatches, unverified, belowSpec, null);
         }
 
         public RankedPart(Part part, double score, Double match, List<String> mismatches) {
@@ -79,21 +87,31 @@ public class RankingService {
         }
 
         RankedPart withScore(double newScore) {
-            return new RankedPart(part, newScore, match, mismatches, unverified, belowSpec);
+            return new RankedPart(part, newScore, match, mismatches, unverified, belowSpec, matchClass);
+        }
+
+        /** The same ranking of another copy of the part (fresh stock and prices). */
+        RankedPart withPart(Part newPart) {
+            return new RankedPart(newPart, score, match, mismatches, unverified, belowSpec, matchClass);
         }
     }
 
     /**
-     * How one query is ranked: the order quantity (stock shortfall, MOQ and low-stock penalties) and whether parts whose
+     * How one query is ranked: the order quantity (stock shortfall, MOQ and low-stock penalties), whether parts whose
      * known rating is below the request are returned (flagged, after every part that meets the request, closest first)
-     * instead of excluded.
+     * instead of excluded, and the checks the retrieval already made for the request ({@link PartChecks}: a part is
+     * checked once per request; null: none).
      */
-    public record RankOptions(int quantity, boolean allowBelowSpec) {
+    public record RankOptions(int quantity, boolean allowBelowSpec, PartChecks checks) {
 
         public static final RankOptions DEFAULT = new RankOptions(1, false);
 
         public RankOptions {
             quantity = Math.max(1, quantity);
+        }
+
+        public RankOptions(int quantity, boolean allowBelowSpec) {
+            this(quantity, allowBelowSpec, null);
         }
     }
 
@@ -304,10 +322,15 @@ public class RankingService {
      * meets the request with every rating verified, and relaxes only when nothing meets it at all (DESIGN.md 3.2).
      */
     public Verdict verdict(ParsedQuery query, Part part) {
-        if (safeCheck(query, part).conflict()) {
+        return verdict(query, part, new PartChecks(query));
+    }
+
+    /** {@link #verdict(ParsedQuery, Part)} with the checks of the request, which the ranking reuses. */
+    Verdict verdict(ParsedQuery query, Part part, PartChecks checks) {
+        if (checks.check(query, part, () -> safeCheck(query, part, checks)).conflict()) {
             return Verdict.CONSTRAINT;
         }
-        DeterministicRanker.Assessment a = safeAssess(query, part);
+        DeterministicRanker.Assessment a = checks.assessment(query, part, () -> safeAssess(query, part, checks));
         if (a.isBelowSpec()) {
             return Verdict.BELOW_SPEC;
         }
@@ -346,11 +369,14 @@ public class RankingService {
         int qty = opts.quantity();
         boolean understood = query.understood();
         int cap = properties.search().fieldIndex().maxCandidates();
+        // the checks the retrieval made for this request (none: a memo of this ranking only)
+        PartChecks checks = opts.checks() != null ? opts.checks() : new PartChecks(query);
         try {
             input.forEach((distributor, parts) -> {
                 List<Part> kept = new ArrayList<>();
                 for (Part p : capped(dedupe(parts), cap)) {
-                    ConstraintPolicy.Result check = safeCheck(query, p);
+                    // checked once per request: the retrieval's checks of this part are reused (PartChecks)
+                    ConstraintPolicy.Result check = checks.check(query, p, () -> safeCheck(query, p, checks));
                     List<String> naming = PartNumbers.requestedBy(query, p);
                     // a requested part listed without stock (stock 0) is not part of fetched: never counted
                     boolean listed = p.stock() <= 0;
@@ -364,7 +390,7 @@ public class RankingService {
                                 .add(new ExcludedRequest(n, p, check.reason())));
                         continue;
                     }
-                    DeterministicRanker.Assessment a = safeAssess(query, p);
+                    DeterministicRanker.Assessment a = checks.assessment(query, p, () -> safeAssess(query, p, checks));
                     if (a.isBelowSpec() && !opts.allowBelowSpec()) {
                         if (!listed) {
                             excludedBelowSpec.merge(distributor, 1, Integer::sum);
@@ -385,10 +411,10 @@ public class RankingService {
                     distances.put(key, a.isBelowSpec() ? a.belowSpecDistance() : 0.0);
                     // the part the query names by part number comes first (DESIGN.md 3.3, "requested part first"); one
                     // listed without stock comes after every part in stock
-                    // a part that confirms none of the stated parameters (match 0) never ranks above one that confirms
-                    // some, whatever its stock, spec or score (DESIGN.md 3.3 "Match class")
-                    int matchClass = naming.isEmpty() && understood && confirmsNothing(a.match())
-                            ? UNCONFIRMED_TIER : 0;
+                    // the match class comes first: every stated hard constraint confirmed, then a stated hard
+                    // constraint unverified, then nothing stated confirmed (match 0), whatever the stock, spec or
+                    // score (DESIGN.md 3.3 "Match class"); a requested part keeps its place
+                    int matchClass = naming.isEmpty() && understood ? a.matchClass().tier() : 0;
                     tiers.put(key, listed ? LISTED_TIER : (naming.isEmpty() ? 0 : REQUESTED_TIER) + matchClass
                             + (a.isBelowSpec() ? 8 : 0) + (p.stock() < qty ? 4 : 0) + (a.complete() ? 0 : 1));
                 }
@@ -633,7 +659,8 @@ public class RankingService {
                         return r;
                     }
                     return new RankedPart(r.part(), r.score(), understood ? a.match() : null, a.mismatches(),
-                            a.unverified(), a.isBelowSpec());
+                            a.unverified(), a.isBelowSpec(),
+                            understood ? a.matchClass() : DeterministicRanker.MatchClass.COMPLETE);
                 })
                 .toList()));
         return results.withParts(out);
@@ -687,23 +714,10 @@ public class RankingService {
     /** Tier offset of a part the query names by part number: before every other part of its distributor. */
     static final int REQUESTED_TIER = -16;
     /**
-     * Tier offset of a part that confirms none of the stated parameters ({@code match} 0, {@link #confirmsNothing}):
-     * after every part that confirms some (below spec and stock shortfall included), before a listed part.
-     */
-    static final int UNCONFIRMED_TIER = 16;
-
-    /**
-     * The match class (DESIGN.md 3.3): true when the part confirms none of the stated parameters ({@code match} 0); a
-     * null match (not graded) is not in this class.
-     */
-    static boolean confirmsNothing(Double match) {
-        return match != null && match <= 0.0;
-    }
-    /**
      * Tier of a requested part listed without stock (stock 0, DESIGN.md 2): after every part in stock, below spec
      * included.
      */
-    static final int LISTED_TIER = 32;
+    static final int LISTED_TIER = 64;
 
     /** A part left out below spec, with its assessment (for {@code excluded_below_spec_detail}). */
     private record BelowSpecCandidate(Part part, DeterministicRanker.Assessment assessment) {
@@ -738,7 +752,7 @@ public class RankingService {
 
     /**
      * Tier asc (0 = complete match; +1 a mismatch or an unverified constraint; +4 stock below the quantity; +8 below
-     * spec; +16 nothing stated confirmed), distance from the target asc (below-spec parts only), primary score desc, deterministic score desc, stock
+     * spec; +16 the partial match class, +32 nothing stated confirmed), distance from the target asc (below-spec parts only), primary score desc, deterministic score desc, stock
      * desc, unit price (smallest price break) asc.
      */
     private static Comparator<Part> byScore(Map<String, Integer> tiers, Map<String, Double> distances,
@@ -758,18 +772,19 @@ public class RankingService {
                 .orElse(null);
     }
 
-    private ConstraintPolicy.Result safeCheck(ParsedQuery query, Part part) {
+    private ConstraintPolicy.Result safeCheck(ParsedQuery query, Part part, PartChecks checks) {
         try {
-            return deterministic.check(query, part, policy);
+            return policy.check(query, checks.features(part, () -> deterministic.features(part)));
         } catch (RuntimeException e) {
             log.warn("constraint check failed for {}", PartKey.of(part), e);
             return new ConstraintPolicy.Result(List.of(), false);
         }
     }
 
-    private DeterministicRanker.Assessment safeAssess(ParsedQuery query, Part part) {
+    private DeterministicRanker.Assessment safeAssess(ParsedQuery query, Part part, PartChecks checks) {
         try {
-            return deterministic.assess(query, part);
+            return deterministic.assess(query, part, checks.features(part, () -> deterministic.features(part)),
+                    policy);
         } catch (RuntimeException e) {
             log.warn("deterministic scoring failed for {}", PartKey.of(part), e);
             return new DeterministicRanker.Assessment(0.0, 0.0);

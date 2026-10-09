@@ -223,4 +223,31 @@ class JlcpcbSqlitePoolTest {
         assertThat(after).doesNotContainAnyElementsOf(before);
         assertThat(search.search("10uF X7R 0805", 0, 5).total()).isEqualTo(1);   // kina_value is registered again
     }
+
+    @Test
+    void aSidecarThatFailsToAttachOnALaterConnectionLeavesTheFtsPoolOpen() throws Exception {
+        Path file = JlcpcbTestDatabase.create(dir.resolve("parts-fts5.db"));
+        LcscTestSupport.buildIndex(file);
+        search = LcscTestSupport.search(file, 3, true, Duration.ofSeconds(5));
+        assertThat(search.fieldIndexAvailable()).as("the sidecar is current").isTrue();
+        // the sidecar vanishes after the first connection attached it (review B7)
+        AtomicInteger attaches = new AtomicInteger();
+        ro.alacrity.kina.TestWiring.wire(search, "attacher", (JlcpcbSqliteSearch.Attacher) (c, sidecar) -> {
+            if (attaches.incrementAndGet() > 1) {
+                throw new SQLException("unable to open database file");
+            }
+            FieldIndexFile.attach(c, sidecar);
+        });
+        search.reopen();
+        assertThat(attaches).hasValue(2);
+        assertThat(search.isAvailable()).as("the pool stays open").isTrue();
+        assertThat(search.idleConnections()).isEqualTo(3);
+        assertThat(search.fieldIndexAvailable()).as("no connection serves the typed table").isFalse();
+        assertThat(search.search("10uF X7R 0805", 0, 5).total()).as("the FTS path serves").isEqualTo(1);
+        for (int i = 0; i < 3; i++) {
+            assertThatThrownBy(() -> search.withConnection(null, c -> c.createStatement()
+                    .executeQuery("SELECT count(*) FROM " + FieldIndexFile.SCHEMA + "." + FieldIndexFile.TABLE)))
+                    .as("detached from every connection").isInstanceOf(SQLException.class);
+        }
+    }
 }

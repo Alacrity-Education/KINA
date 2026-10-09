@@ -225,6 +225,52 @@ public class DistributorPhraser {
     }
 
     /**
+     * The phrase a step of the field query asks the distributor with (DESIGN.md 3.2 "Field-first flow", study 5.2), as
+     * the ladder declares it ({@link #ladder}): {@code phrase} null when the ladder has no phrase for the step, and
+     * {@code ladderStep} the position of the phrase in the ladder (1 for its first step, 0 for the request's phrase).
+     */
+    public record StepPhrase(String phrase, int ladderStep) {
+    }
+
+    /**
+     * The phrase of one step of the field query at {@code distributor}: the request's phrase {@code sent} for the
+     * unrelaxed step; for a step that only drops the free text, the minimal core when it words the request differently
+     * (the first rewording step of the ladder whose words are not {@code sent}'s), else {@code sent}; for a step that
+     * loosens {@code relaxed} (constraint labels), the ladder step that loosens exactly those, else the first that
+     * loosens at least those, else none. The same ladder the cached-search path walks, so both paths ask the same
+     * phrases (and share the journal).
+     */
+    public static StepPhrase phraseFor(Distributor distributor, ParsedQuery query, String sent, ConstraintPolicy policy,
+                                       boolean keywordsDropped, List<String> relaxed) {
+        if (!keywordsDropped && relaxed.isEmpty()) {
+            return new StepPhrase(sent, 0);
+        }
+        List<Relaxation> ladder = ladder(distributor, query, sent, policy);
+        if (relaxed.isEmpty()) {
+            String sentKey = phraseKey(sent);
+            for (int i = 0; i < ladder.size(); i++) {
+                Relaxation r = ladder.get(i);
+                if (r.relaxed().isEmpty() && !phraseKey(r.phrase()).equals(sentKey)) {
+                    return new StepPhrase(r.phrase(), i + 1);
+                }
+            }
+            return new StepPhrase(sent, 0);
+        }
+        Set<String> wanted = Set.copyOf(relaxed);
+        for (int i = 0; i < ladder.size(); i++) {
+            if (Set.copyOf(ladder.get(i).relaxed()).equals(wanted)) {
+                return new StepPhrase(ladder.get(i).phrase(), i + 1);
+            }
+        }
+        for (int i = 0; i < ladder.size(); i++) {
+            if (ladder.get(i).relaxed().containsAll(wanted)) {
+                return new StepPhrase(ladder.get(i).phrase(), i + 1);
+            }
+        }
+        return new StepPhrase(null, 0);
+    }
+
+    /**
      * The key of a phrase in the phrase journal ({@code distributor_phrases.phrase_key}, DESIGN.md 3.2): its normalised
      * words in sorted order, so two phrases with the same words in any order are one phrase (the ladder already skips a
      * step that rewords an earlier one).

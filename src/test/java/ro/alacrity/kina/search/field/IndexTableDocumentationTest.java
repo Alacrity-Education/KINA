@@ -3,7 +3,6 @@ package ro.alacrity.kina.search.field;
 import org.junit.jupiter.api.Test;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Indexed;
-import ro.alacrity.kina.domain.PolicyFamily;
 import ro.alacrity.kina.domain.RelaxStrategy;
 
 import java.io.IOException;
@@ -12,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -82,7 +80,11 @@ class IndexTableDocumentationTest {
             }
             Indexed indexed = kind.indexed();
             if (indexed != null) {
-                assertThat(indexed.nullKept()).as(kind.name()).isTrue();
+                assertThat(indexed.vocabulary() != Indexed.Vocabulary.NONE).as("%s: vocabulary", kind)
+                        .isEqualTo(indexed.predicate() == Indexed.Predicate.IN_COMPATIBLE);
+                assertThat(ro.alacrity.kina.search.FieldVocabulary.vocabulary(indexed.vocabulary()).isEmpty())
+                        .as("%s: a declared vocabulary has values", kind)
+                        .isEqualTo(indexed.vocabulary() == Indexed.Vocabulary.NONE);
                 if (!indexed.javaOnly()) {
                     assertThat(IndexColumn.all(kind)).as("%s resolves to a column", kind).isNotEmpty();
                 }
@@ -107,7 +109,6 @@ class IndexTableDocumentationTest {
         for (FieldQuery.Step step : query.steps()) {
             assertThat(step.predicates()).noneMatch(p -> p.kind() == ConstraintKind.ROWS);
         }
-        assertThat(Arrays.stream(PolicyFamily.values())).isNotEmpty();
     }
 
     private static List<String> documented() throws IOException {

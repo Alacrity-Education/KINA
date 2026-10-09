@@ -49,6 +49,6 @@ public final class LcscTestSupport {
 
     /** The field query of LCSC on {@code search}. */
     public static LcscFieldSearch fieldSearch(JlcpcbSqliteSearch search) {
-        return TestWiring.wire(new LcscFieldSearch(), "search", search);
+        return TestWiring.wire(new LcscFieldSearch(), "search", search, "clock", java.time.Clock.systemUTC());
     }
 }

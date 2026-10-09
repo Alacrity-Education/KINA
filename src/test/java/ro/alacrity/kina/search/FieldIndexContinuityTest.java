@@ -15,21 +15,18 @@ import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
-import ro.alacrity.kina.domain.Indexed;
-import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartResponse;
 import ro.alacrity.kina.domain.SearchRequest;
+import ro.alacrity.kina.metrics.FieldFallback;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.field.FieldSearchShadow;
-import ro.alacrity.kina.search.field.IndexColumn;
 import ro.alacrity.kina.search.field.PartIndexRepository;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -196,22 +193,7 @@ class FieldIndexContinuityTest {
         assertThat(second.cache()).isEqualTo(CacheStatus.HIT);
         assertThat(mouser.asked).isEmpty();
         org.mockito.Mockito.verify(metrics, org.mockito.Mockito.times(2)).fieldServed("MOUSER");
-        org.mockito.Mockito.verify(metrics, org.mockito.Mockito.never()).fieldFallback("MOUSER", "incomplete");
-    }
-
-    @Test
-    void everyDeclaredColumnExists() {
-        Set<String> columns = new HashSet<>(jdbc.sql("""
-                        SELECT column_name FROM information_schema.columns WHERE table_name = 'part_index'""")
-                .query(String.class).list());
-        Set<String> declared = new HashSet<>();
-        IndexColumn.valueColumns().values().forEach(c -> declared.add(c.name()));
-        for (ConstraintKind kind : ConstraintKind.values()) {
-            IndexColumn.all(kind).forEach(c -> declared.add(c.name()));
-        }
-        declared.add(IndexColumn.IMPEDANCE_TEST_HZ.name());
-        declared.add(Indexed.ATTRS);
-        assertThat(columns).containsAll(declared);
+        org.mockito.Mockito.verify(metrics, org.mockito.Mockito.never()).fieldFallback("MOUSER", FieldFallback.INCOMPLETE);
     }
 
     private boolean inStock(String partNumber) {

@@ -311,11 +311,14 @@ class PartsApiTest {
 
     /**
      * Part numbers with characters a path cannot carry plainly (77 cached parts of the production cache hold {@code %}
-     * or a backslash, validation 2026-10-09): percent-encoded in the path, and in the query-parameter form
-     * {@code /api/v1/parts/{distributor}?part_number=}. The request URI is sent exactly as written (no re-encoding).
+     * or a backslash, validation 2026-10-09) are looked up with the query-parameter forms
+     * {@code /api/v1/parts/{distributor}?part_number=} and {@code /api/v1/parts/lookup}, the documented way (DESIGN.md
+     * 5). The path form serves ordinary part numbers, a plain slash included; the request firewall stays strict on
+     * every path, so a percent-encoded {@code %}, slash or backslash in a path is refused (review B10). The request URI
+     * is sent exactly as written (no re-encoding).
      */
     @Test
-    void awkwardPartNumbersWorkPercentEncodedInThePathAndAsAQueryParameter() {
+    void awkwardPartNumbersWorkAsAQueryParameterAndThePathStaysStrict() {
         List<String> numbers = List.of("RC0603FR-07100%", "ABC\\1", "DTMSS-20/0.010/20V", "A+B", "LM 317 T",
                 "50% 1/4W\\X+Y");
         for (String number : numbers) {
@@ -326,7 +329,7 @@ class PartsApiTest {
         List<String> failed = new ArrayList<>();
         for (String number : numbers) {
             String encoded = percentEncoded(number);
-            for (String path : List.of("/api/v1/parts/TME/" + encoded, "/api/v1/parts/TME?part_number=" + encoded,
+            for (String path : List.of("/api/v1/parts/TME?part_number=" + encoded,
                     "/api/v1/parts/lookup?distributor=TME&part_number=" + encoded)) {
                 var result = client.get().uri(java.net.URI.create("http://localhost:" + port + path))
                         .exchange().expectBody(String.class).returnResult();
@@ -337,23 +340,25 @@ class PartsApiTest {
             }
         }
         assertThat(failed).isEmpty();
-        // a plus sign in a path is a plus sign; in a query string it is a space, so it is encoded there (%2B)
+        // in a query string a plus sign is a space, so it is encoded there (%2B)
+        verify(lookupService, org.mockito.Mockito.times(2)).lookup(Distributor.TME, "A+B", false, 1,
+                ResponseDetail.FULL);
+        // the path form: ordinary part numbers, a plain slash and a plus sign as they are
+        for (String path : List.of("/api/v1/parts/TME/DTMSS-20/0.010/20V", "/api/v1/parts/TME/A+B")) {
+            client.get().uri(java.net.URI.create("http://localhost:" + port + path))
+                    .exchange()
+                    .expectStatus().isOk();
+        }
         verify(lookupService, org.mockito.Mockito.times(3)).lookup(Distributor.TME, "A+B", false, 1,
                 ResponseDetail.FULL);
-        when(lookupService.lookup(Distributor.TME, "RC0603FR-07100%", true, 5, ResponseDetail.FULL))
-                .thenReturn(PartLookupResponse.notFound(Distributor.TME, "RC0603FR-07100%", CacheStatus.BYPASSED,
-                        null));
-        client.get().uri(java.net.URI.create("http://localhost:" + port + "/api/v1/parts/TME/RC0603FR-07100%25"
-                        + "?bypass_cache=true&quantity=5"))
-                .exchange()
-                .expectStatus().isNotFound();
-        verify(lookupService).lookup(Distributor.TME, "RC0603FR-07100%", true, 5, ResponseDetail.FULL);
         client.get().uri(java.net.URI.create("http://localhost:" + port + "/api/v1/parts/TME?part_number=%20"))
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectHeader().contentTypeCompatibleWith(PROBLEM);
-        // only the part path accepts the encodings: every other path stays strict
-        for (String path : List.of("/api/v1/distributors%2Fx", "/api/v1/distributors%5Cx", "/api/v1/distributors%25")) {
+        // no path accepts the encodings, the part path included
+        for (String path : List.of("/api/v1/parts/TME/RC0603FR-07100%25", "/api/v1/parts/TME/ABC%5C1",
+                "/api/v1/parts/TME/DTMSS-20%2F0.010%2F20V", "/api/v1/distributors%2Fx", "/api/v1/distributors%5Cx",
+                "/api/v1/distributors%25")) {
             client.get().uri(java.net.URI.create("http://localhost:" + port + path))
                     .exchange()
                     .expectStatus().isBadRequest();

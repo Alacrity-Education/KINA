@@ -12,10 +12,13 @@ import java.util.Map;
  * {@code search.PartIndexRows}; every SI value is rounded to 9 significant digits, the package is its normalised key
  * (never the raw string), and an attribute the part does not state is null (or absent from {@code attrs}).
  *
- * @param values the typed value columns ({@link IndexColumn#valueColumns()} and {@code impedance_test_hz}) by column
- *               name; a column the part does not state is missing
- * @param voltages the voltages the exact-voltage rule compares: the part's specification voltages, else its voltage,
- *                 else empty
+ * <p>Each typed column the model declares ({@link IndexColumn#declared()}) is the component of its name in camel
+ * case ({@code package_key}: {@link #packageKey()}), or a value column in {@link #values()} ({@code PartIndexSql}).
+ *
+ * @param values the typed value columns ({@link IndexColumn#valueColumns()} and their condition columns, such as
+ *               {@code impedance_test_hz}) by column name; a column the part does not state is missing
+ * @param voltagesV the voltages the exact-voltage rule compares ({@code voltages_v}): the part's specification
+ *                  voltages, else its voltage, else empty
  * @param attrs  the long tail ({@code attrs} JSONB): fan, LED and switch attributes and their SI values, by key
  * @param metadataMd5 {@code cache.PartMetadataHash} of the part the row was built from (null: not current)
  */
@@ -41,7 +44,7 @@ public record PartIndexRow(
         String formFactor,
         Integer elements,
         Map<String, Double> values,
-        List<Double> voltages,
+        List<Double> voltagesV,
         String connectorType,
         String gender,
         Integer positions,
@@ -60,9 +63,10 @@ public record PartIndexRow(
     public PartIndexRow {
         familyPath = familyPath == null ? List.of() : List.copyOf(familyPath);
         values = values == null ? Map.of() : Map.copyOf(values);
-        voltages = voltages == null ? List.of() : List.copyOf(voltages);
+        voltagesV = voltagesV == null ? List.of() : List.copyOf(voltagesV);
         attrs = attrs == null ? Map.of() : Map.copyOf(attrs);
         searchText = searchText == null ? "" : searchText;
+        mpn = mpn == null ? "" : mpn;
     }
 
     /** This row with another stock flag. */

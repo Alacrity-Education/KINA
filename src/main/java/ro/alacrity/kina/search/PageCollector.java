@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.alacrity.kina.cache.CacheStatus;
+import ro.alacrity.kina.distributor.ApiQuotaTracker;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
@@ -51,34 +52,53 @@ final class PageCollector {
     }
 
     /**
-     * Which collected parts meet the request ({@link #meets}) and which of those have every requested rating
-     * verified ({@link #confirmed}).
+     * The Java check of one request (DESIGN.md 3.2): which parts meet it ({@link #meets}), which of those have every
+     * requested rating verified ({@link #confirmed}), and which are returned ({@link #returnable}). Every verdict is
+     * made once per part instance and request ({@link PartChecks}), and the ranking reuses it.
      */
-    record Check(java.util.function.Predicate<Part> meets, java.util.function.Predicate<Part> confirmed) {
+    record Check(RankingService ranking, ParsedQuery parsed, PartChecks checks) {
 
+        static Check of(RankingService ranking, Prepared prepared) {
+            return new Check(ranking, prepared.parsed(), prepared.checks());
+        }
+
+        /** A check of its own (tests, and callers without a request). */
         static Check of(RankingService ranking, ParsedQuery parsed) {
-            return new Check(p -> meets(ranking, parsed, p), p -> confirmed(ranking, parsed, p));
+            return new Check(ranking, parsed, new PartChecks(parsed));
         }
 
         /**
          * True when the part meets the request (DESIGN.md 3.2): no known attribute contradicts a strict constraint
          * and no known rating is below the request. Paging and the relaxation ladder go on until a part meets it.
          */
-        static boolean meets(RankingService ranking, ParsedQuery parsed, Part part) {
-            RankingService.Verdict v = verdict(ranking, parsed, part);
+        boolean meets(Part part) {
+            RankingService.Verdict v = verdict(part);
             return v == RankingService.Verdict.MEETS || v == RankingService.Verdict.UNVERIFIED_RATING;
         }
 
-        /**
-         * True when the part meets the request with every requested rating stated: paging stops only for such parts.
-         */
-        static boolean confirmed(RankingService ranking, ParsedQuery parsed, Part part) {
-            return verdict(ranking, parsed, part) == RankingService.Verdict.MEETS;
+        /** True when the part meets the request with every requested rating stated: paging stops only for such parts. */
+        boolean confirmed(Part part) {
+            return verdict(part) == RankingService.Verdict.MEETS;
         }
 
-        static RankingService.Verdict verdict(RankingService ranking, ParsedQuery parsed, Part part) {
+        /** True when the part would be returned: it meets the request, or it is only below spec and that is allowed. */
+        boolean returnable(Part part, boolean allowBelowSpec) {
+            RankingService.Verdict v = verdict(part);
+            return v != RankingService.Verdict.CONSTRAINT && (allowBelowSpec || v != RankingService.Verdict.BELOW_SPEC);
+        }
+
+        /**
+         * True when the part counts as confirmed for the field index's enough rule: it meets the request with every
+         * rating stated, or, with {@code allowBelowSpec}, it is only below spec.
+         */
+        boolean confirmed(Part part, boolean allowBelowSpec) {
+            RankingService.Verdict v = verdict(part);
+            return v == RankingService.Verdict.MEETS || allowBelowSpec && v == RankingService.Verdict.BELOW_SPEC;
+        }
+
+        RankingService.Verdict verdict(Part part) {
             try {
-                RankingService.Verdict v = ranking.verdict(parsed, part);
+                RankingService.Verdict v = ranking.verdict(parsed, part, checks);
                 return v == null ? RankingService.Verdict.MEETS : v;
             } catch (RuntimeException e) {
                 log.warn("checking {} against '{}' failed", part.key(), parsed.normalizedKey(), e);
@@ -86,10 +106,12 @@ final class PageCollector {
             }
         }
 
-        /** True when the part would be returned: it meets the request, or it is only below spec and that is allowed. */
+        static boolean meets(RankingService ranking, ParsedQuery parsed, Part part) {
+            return of(ranking, parsed).meets(part);
+        }
+
         static boolean returnable(RankingService ranking, ParsedQuery parsed, Part part, boolean allowBelowSpec) {
-            RankingService.Verdict v = verdict(ranking, parsed, part);
-            return v != RankingService.Verdict.CONSTRAINT && (allowBelowSpec || v != RankingService.Verdict.BELOW_SPEC);
+            return of(ranking, parsed).returnable(part, allowBelowSpec);
         }
     }
 
@@ -117,8 +139,8 @@ final class PageCollector {
         List<Part> fetched = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         existing.forEach(p -> seen.add(p.distributorPartNumber()));
-        int meeting = (int) existing.stream().filter(meets.meets()).count();
-        int confirmed = (int) existing.stream().filter(meets.confirmed()).count();
+        int meeting = (int) existing.stream().filter(meets::meets).count();
+        int confirmed = (int) existing.stream().filter(meets::confirmed).count();
         Integer total = progress.totalResults;
         boolean hasMore = true;
         int next = Math.max(0, offset);
@@ -136,7 +158,7 @@ final class PageCollector {
             long started = System.nanoTime();
             long waitedBefore = deadline.rateLimitWaitedNanos();
             DistributorSearchPage page;
-            if (client.distributor() != ro.alacrity.kina.domain.Distributor.LCSC) {
+            if (ApiQuotaTracker.isTracked(client.distributor())) {
                 progress.liveCalls.incrementAndGet();   // counted when made: a failed call spent quota too
             }
             try {
@@ -174,9 +196,9 @@ final class PageCollector {
                         part.fetchedAt() == null ? part.toBuilder().fetchedAt(now).build() : part);
                 all.add(enriched);
                 fetched.add(enriched);
-                if (meets.meets().test(enriched)) {
+                if (meets.meets(enriched)) {
                     meeting++;
-                    if (meets.confirmed().test(enriched)) {
+                    if (meets.confirmed(enriched)) {
                         confirmed++;
                     }
                 }

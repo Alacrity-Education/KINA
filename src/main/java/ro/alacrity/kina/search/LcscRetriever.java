@@ -16,8 +16,10 @@ import ro.alacrity.kina.search.field.FieldPredicate;
 import ro.alacrity.kina.search.field.FieldQuery;
 import ro.alacrity.kina.search.field.FieldQueryBuilder;
 
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,33 +27,32 @@ import java.util.Set;
 /**
  * LCSC retrieval: the JLCPCB SQLite database is the cache, so a search is live queries on it (DESIGN.md 9.3).
  *
- * <p>With {@code kina.jlcpcb.field-index.enabled} and a current typed table the request first runs as a field query on
- * it ({@link LcscFieldSearch}): the unrelaxed step, then one relaxation step at a time while fewer candidates than
- * the window come back. The candidates (confirmed first, then the highest stock) are the parts the Java check and the
- * ranker then see. When the ladder is exhausted with fewer candidates than the window, or none of them meets the
- * request with its ratings verified, today's FTS5 search ({@code LcscClient.search}) fills the rest of the window and
- * its parts are merged in (deduplicated by LCSC number). Without a current table, with a free-text-only request or
- * when the typed query fails, the FTS5 search serves alone, exactly as before the table existed.
+ * <p>With {@code kina.jlcpcb.field-index.enabled} and a current typed table, a request that states a constraint
+ * ({@link FieldRelaxation#statesConstraint}) first runs as a field query on it ({@link LcscFieldSearch}) in the one
+ * relaxation loop of the field index ({@link FieldRelaxation}): each step's candidates (confirmed first, then the
+ * highest stock) are read in chunks and checked until the window is full, and the loop relaxes only while the step
+ * has not enough (at least {@code max_results} that pass the Java check, one confirmed). The candidates that pass
+ * are the parts the ranker sees; when they are fewer than the window, or none meets the request with its ratings
+ * verified, today's FTS5 search ({@code LcscClient.search}) fills the rest of the window and its parts are merged in
+ * (deduplicated by LCSC number). Without a current table, with a request that states no constraint (free text alone:
+ * the FTS5 order is what it needs) or when the typed query fails, the FTS5 search serves alone, exactly as before the
+ * table existed.
  */
 @Slf4j
 @Component
 final class LcscRetriever implements DistributorRetriever {
-
-    /** The longest the field query waits for a free connection of the pool. */
-    private static final Duration MAX_POOL_WAIT = Duration.ofSeconds(10);
 
     @Autowired private KinaProperties properties;
     @Autowired private PageCollector pages;
     @Autowired private RankingService ranking;
     @Autowired private RequestedLookup requested;
     @Autowired private ParametricExtractor extractor;
-    /** Null in tests that build the retriever without the typed table. */
-    @Autowired(required = false) private LcscFieldSearch fieldSearch;
+    @Autowired private LcscFieldSearch fieldSearch;
 
     /**
      * What the typed query found.
      *
-     * @param parts            the candidates of the step used, enriched, in order
+     * @param parts            the candidates of the step used that pass the Java check, enriched, in order
      * @param total            rows that step matches
      * @param step             the relaxation step used (0: none)
      * @param relaxed          the constraints the step left out
@@ -75,7 +76,7 @@ final class LcscRetriever implements DistributorRetriever {
         int maxPages = plan.maxPages();
         Check meets = plan.meets();
 
-        Typed typed = typed(prepared, window, deadline);
+        Typed typed = typed(prepared, window, deadline, meets);
         List<Part> existing = List.of();
         if (typed != null) {
             existing = typed.parts();
@@ -98,69 +99,126 @@ final class LcscRetriever implements DistributorRetriever {
         return requested.complete(client, prepared, fetched, deadline);
     }
 
+    /** One read of the typed table that failed (an SQL error or no free connection). */
+    private static final class TypedQueryException extends RuntimeException {
+        TypedQueryException(SQLException cause) {
+            super(cause);
+        }
+    }
+
     /**
-     * The field query on the typed table: null when it is not used (disabled, no current table, no typed constraint in
-     * the request) or failed. Relaxes one step at a time while the candidates are fewer than {@code window}.
+     * The field query on the typed table: null when it is not used (disabled, no current table, no stated constraint
+     * in the request, no step the index may read) or failed.
      */
-    private Typed typed(Prepared prepared, int window, DistributorBudget deadline) {
-        if (fieldSearch == null || !fieldSearch.available()) {
+    private Typed typed(Prepared prepared, int window, DistributorBudget deadline, Check check) {
+        if (!fieldSearch.available()) {
             return null;
         }
+        ParsedQuery parsed = prepared.parsed();
         try {
-            FieldQuery query = FieldQueryBuilder.build(prepared.parsed(), ConstraintPolicy.of(ranking),
-                    Distributor.LCSC);
-            if (!constrains(query)) {
+            FieldQuery query = FieldQueryBuilder.build(parsed, ConstraintPolicy.of(ranking), Distributor.LCSC);
+            if (!FieldRelaxation.statesConstraint(query, query.step(0), parsed)) {
                 return null;   // free text only: BM25 order is what the FTS5 search is for
             }
-            List<FieldQuery.Step> steps = query.steps();
-            LcscFieldSearch.Candidates best = null;
-            FieldQuery.Step used = null;
-            for (FieldQuery.Step step : steps) {
-                if (best != null && deadline.remainingNanos() <= 0) {
-                    break;
-                }
-                Duration wait = Duration.ofNanos(Math.max(1, Math.min(MAX_POOL_WAIT.toNanos(),
-                        deadline.remainingNanos())));
-                // twice the window: the SQL ranges are wider than the Java check (a 4.75k part for 4.7k), so some
-                // candidates are left out below; the window is filled from the rest (validation 2026-10-09)
-                best = fieldSearch.candidates(query, step, window * 2, wait);
-                used = step;
-                if (best.total() >= window) {
-                    break;
-                }
-            }
-            if (best == null) {
+            Steps steps = new Steps(query, prepared, window, deadline, check);
+            FieldRelaxation.Result result = FieldRelaxation.relax(query.steps(), steps);
+            if (steps.used == null) {
                 return null;
             }
-            // only the candidates the Java check returns take a place in the window, so the FTS search fills the
-            // places of the others instead of the window ending short; ratings are not filtered in SQL, so a candidate
-            // below spec is handed to the ranker without a place, which excludes and counts it (DESIGN.md 9.3)
-            boolean allowBelowSpec = prepared.request().allowBelowSpec();
-            List<Part> parts = new ArrayList<>(window);
-            List<Part> belowSpec = new ArrayList<>();
-            for (Part part : best.parts()) {
-                Part enriched = extractor.enrich(part);
-                RankingService.Verdict verdict = PageCollector.Check.verdict(ranking, prepared.parsed(), enriched);
-                if (verdict == RankingService.Verdict.CONSTRAINT) {
-                    continue;
-                }
-                if (verdict == RankingService.Verdict.BELOW_SPEC && !allowBelowSpec) {
-                    belowSpec.add(enriched);
-                    continue;
-                }
-                parts.add(enriched);
-                if (parts.size() >= window) {
-                    break;
-                }
-            }
-            log.debug("LCSC field query '{}': step {} of {}, {} candidates of {}", prepared.parsed().normalizedKey(),
-                    used.index(), steps.size() - 1, parts.size(), best.total());
-            return new Typed(parts, best.total(), used.index(), used.relaxed(), keywords(query, used),
-                    List.copyOf(belowSpec));
-        } catch (java.sql.SQLException | RuntimeException e) {
-            log.warn("LCSC field query '{}' failed, using the FTS search: {}", prepared.parsed().normalizedKey(),
-                    e.toString());
+            log.debug("LCSC field query '{}': step {} of {} ({}), {} candidates of {}", parsed.normalizedKey(),
+                    steps.used.index(), query.steps().size() - 1, result.enough() ? "enough" : "short",
+                    steps.parts.size(), steps.total);
+            return new Typed(List.copyOf(steps.parts), steps.total, steps.used.index(), steps.used.relaxed(),
+                    keywords(query, steps.used), List.copyOf(steps.belowSpec));
+        } catch (RuntimeException e) {
+            log.warn("LCSC field query '{}' failed, using the FTS search: {}", parsed.normalizedKey(),
+                    e instanceof TypedQueryException ? e.getCause().toString() : e.toString());
             return null;
+        }
+    }
+
+    /**
+     * The steps of the LCSC field query in the relaxation loop: a step's candidates are read in chunks until the window
+     * is full ({@link FieldRelaxation#chunk} of the window, at most {@code max-candidates} rows); only the candidates
+     * the Java check returns take a place, so the FTS search fills the places of the others instead of the window
+     * ending short. Ratings are not filtered in SQL: a candidate below spec is handed to the ranker without a place,
+     * which excludes and counts it (DESIGN.md 9.3).
+     */
+    private final class Steps implements FieldRelaxation.Steps {
+
+        private final FieldQuery query;
+        private final ParsedQuery parsed;
+        private final int window;
+        private final int target;
+        private final DistributorBudget deadline;
+        private final Check check;
+        private final boolean allowBelowSpec;
+        private final boolean requireStated;
+        private final int recall;
+        private List<Part> parts = new ArrayList<>();
+        private List<Part> belowSpec = new ArrayList<>();
+        private int total;
+        private FieldQuery.Step used;
+
+        Steps(FieldQuery query, Prepared prepared, int window, DistributorBudget deadline, Check check) {
+            this.query = query;
+            this.parsed = prepared.parsed();
+            this.window = window;
+            this.target = prepared.maxResults();
+            this.deadline = deadline;
+            this.check = check;
+            this.allowBelowSpec = prepared.request().allowBelowSpec();
+            KinaProperties.FieldIndex config = properties.search().fieldIndex();
+            this.requireStated = config.requireStatedConstraint();
+            this.recall = config.maxCandidates();
+        }
+
+        @Override
+        public boolean read(FieldQuery.Step step) {
+            if (!FieldRelaxation.readable(requireStated, query, step, parsed)) {
+                return false;
+            }
+            List<Part> stepParts = new ArrayList<>(window);
+            List<Part> stepBelow = new ArrayList<>();
+            int[] stepTotal = {0};
+            FieldRelaxation.readChunks((offset, size) -> {
+                LcscFieldSearch.Candidates candidates;
+                try {
+                    candidates = fieldSearch.candidates(query, step, offset, size, poolWait());
+                } catch (SQLException e) {
+                    throw new TypedQueryException(e);
+                }
+                if (offset == 0) {
+                    stepTotal[0] = candidates.total();
+                }
+                return new FieldRelaxation.Chunk(candidates.parts(), candidates.rows() < size);
+            }, FieldRelaxation.chunk(window), recall, part -> {
+                if (stepParts.size() >= window) {
+                    return;
+                }
+                Part enriched = extractor.enrich(part);
+                if (check.returnable(enriched, allowBelowSpec)) {
+                    stepParts.add(enriched);
+                } else if (check.returnable(enriched, true)) {
+                    stepBelow.add(enriched);
+                }
+            }, () -> stepParts.size() >= window);
+            parts = stepParts;
+            belowSpec = stepBelow;
+            total = stepTotal[0];
+            used = step;
+            return FieldRelaxation.enough(parts, target, p -> check.confirmed(p, allowBelowSpec));
+        }
+
+        @Override
+        public FieldRelaxation.Next notEnough(FieldQuery.Step step) {
+            return deadline.remainingNanos() <= 0 ? FieldRelaxation.Next.STOP : FieldRelaxation.Next.RELAX;
+        }
+
+        /** The configured {@code kina.jlcpcb.pool-wait}, at most what is left of the deadline (review B12). */
+        private Duration poolWait() {
+            return Duration.ofNanos(Math.max(1, Math.min(properties.jlcpcb().poolWait().toNanos(),
+                    deadline.remainingNanos())));
         }
     }
 
@@ -169,16 +227,11 @@ final class LcscRetriever implements DistributorRetriever {
         if (belowSpec.isEmpty()) {
             return fetched;
         }
-        Set<String> seen = new java.util.HashSet<>();
+        Set<String> seen = new HashSet<>();
         fetched.parts().forEach(p -> seen.add(p.distributorPartNumber()));
         List<Part> merged = new ArrayList<>(fetched.parts());
         belowSpec.stream().filter(p -> seen.add(p.distributorPartNumber())).forEach(merged::add);
         return merged.size() == fetched.parts().size() ? fetched : fetched.withParts(merged);
-    }
-
-    /** True when the unrelaxed step states a constraint of the request (not only stock and distributor). */
-    static boolean constrains(FieldQuery query) {
-        return query.step(0).predicates().stream().anyMatch(p -> p.kind() != null);
     }
 
     /** The free-text words of the group {@code K} when {@code step} left it out. */

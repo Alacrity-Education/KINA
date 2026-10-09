@@ -72,9 +72,8 @@ public class PartsController {
     /**
      * {@code GET /api/v1/parts/{distributor}/{partNumber}?bypass_cache=&quantity=&detail=} ({@code detail} defaults to
      * {@code full}: every attribute of the one part). The part number is the rest of the path, so TME symbols
-     * containing {@code /} work unencoded; percent-encoded segments are decoded ({@code %25}, {@code %5C},
-     * {@code %2F}, {@code %20}: {@link ro.alacrity.kina.security.PartPathFirewall} and the Tomcat connector accept
-     * them on this path).
+     * containing {@code /} work unencoded. The request firewall and Tomcat stay strict: a percent-encoded {@code %},
+     * slash or backslash is refused (HTTP 400); such part numbers use {@link #getPartByParameter} (DESIGN.md 5).
      */
     @GetMapping("/{distributor}/{*partNumber}")
     public PartResponse getPart(@PathVariable("distributor") String distributor,
@@ -108,8 +107,8 @@ public class PartsController {
 
     /**
      * {@code GET /api/v1/parts/lookup?distributor=&part_number=&bypass_cache=&quantity=&detail=}: the same lookup as
-     * {@link #getPart} with the part number in a query parameter, so a TME symbol containing {@code /} also works
-     * encoded ({@code %2F}), which Tomcat rejects in a path.
+     * {@link #getPart} with the part number in a query parameter, so any part number works percent-encoded
+     * ({@code %25}, {@code %2F}, {@code %5C}), which the path refuses.
      */
     @GetMapping("/lookup")
     public PartResponse lookupPart(@RequestParam("distributor") String distributor,

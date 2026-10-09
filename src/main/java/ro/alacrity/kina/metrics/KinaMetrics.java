@@ -363,9 +363,9 @@ public class KinaMetrics implements RateLimitRetry.Listener {
         safely(() -> store.increment(FIELD_JOURNAL_HITS.key(distributor)));
     }
 
-    /** A search that took the cached-search path: {@code mode}, {@code bypass}, {@code incomplete}, {@code sql_error}. */
-    public void fieldFallback(String distributor, String reason) {
-        safely(() -> store.increment(FIELD_FALLBACKS.key(distributor, reason)));
+    /** A search that took the cached-search path, and why ({@link FieldFallback}). */
+    public void fieldFallback(String distributor, FieldFallback reason) {
+        safely(() -> store.increment(FIELD_FALLBACKS.key(distributor, reason.code())));
     }
 
     private static void safely(Runnable update) {

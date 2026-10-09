@@ -1,10 +1,11 @@
 package ro.alacrity.kina.search.field;
 
 import lombok.experimental.UtilityClass;
-import ro.alacrity.kina.domain.ComponentFamily;
 import ro.alacrity.kina.domain.ConstraintKind;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Indexed;
+import ro.alacrity.kina.domain.MatchContext;
+import ro.alacrity.kina.domain.MatchMode;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.RelaxStrategy;
 import ro.alacrity.kina.search.ConstraintPolicy;
@@ -22,6 +23,7 @@ import ro.alacrity.kina.search.field.FieldQuery.Group;
 import ro.alacrity.kina.search.field.FieldQuery.Role;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -34,18 +36,18 @@ import java.util.regex.Pattern;
  * {@link ConstraintPolicy#strategy}. Every predicate is at most as strict as the Java check of its kind
  * ({@code PageCollector.Check}): a looser SQL filter costs a wasted candidate, a stricter one loses a part.
  *
- * <p>The kinds with a comparator of their own (the family, technology, form factor, connector type, LED and switch
- * words) are turned into the values the comparator accepts or refuses, computed with the same comparator over the
- * vocabulary ({@link FieldVocabulary}); a value outside the vocabulary is always kept.
+ * <p>Every kind is turned into predicates by its declared {@link Indexed#predicate()} alone, with the request's value
+ * of each column from {@link ConstraintKind#indexWanted}: no kind has a rule of its own here. An
+ * {@link Indexed.Predicate#IN_COMPATIBLE} rule (the family, technology, form factor, connector type, LED and switch
+ * words) runs the kind's own comparator ({@link ConstraintKind#refuses}) over its declared
+ * {@link Indexed#vocabulary()}: a closed vocabulary becomes the values it accepts, an open one the values it refuses,
+ * so a value outside the vocabulary is always kept.
  */
 @UtilityClass
 public class FieldQueryBuilder {
 
     /** Free-text tokens of at least this many letters and digits are word prefixes; shorter ones are substrings. */
     public static final int WORD_MIN_LENGTH = 3;
-
-    /** Absolute widening of every range, against values that are exactly zero. */
-    private static final double EPSILON = 1e-12;
 
     private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}]+");
 
@@ -57,7 +59,10 @@ public class FieldQueryBuilder {
      */
     public FieldQuery build(ParsedQuery query, ConstraintPolicy policy, Distributor distributor) {
         ConstraintPolicy p = policy == null ? ConstraintPolicy.DEFAULTS : policy;
-        boolean packageHard = p.strategy(query, ConstraintKind.PACKAGE) == RelaxStrategy.NEVER;
+        Set<ConstraintKind> hardSet = EnumSet.noneOf(ConstraintKind.class);
+        ConstraintKind.policyKinds().stream().filter(k -> p.strategy(query, k) == RelaxStrategy.NEVER)
+                .forEach(hardSet::add);
+        MatchContext context = FieldVocabulary.requestContext(query, hardSet);
         List<Group> groups = new ArrayList<>();
 
         List<ConstraintKind> hardKinds = new ArrayList<>();
@@ -68,7 +73,7 @@ public class FieldQueryBuilder {
         hard.add(new FieldPredicate.InStock());
         for (ConstraintKind kind : ConstraintKind.policyKinds()) {
             if (p.strategy(query, kind) == RelaxStrategy.NEVER) {
-                List<FieldPredicate> predicates = predicates(kind, query, packageHard);
+                List<FieldPredicate> predicates = predicates(kind, context);
                 if (!predicates.isEmpty()) {
                     hardKinds.add(kind);
                     hard.addAll(predicates);
@@ -83,7 +88,7 @@ public class FieldQueryBuilder {
         List<FieldPredicate> ratings = new ArrayList<>();
         for (ConstraintKind kind : ConstraintKind.scored()) {
             if (kind.isRating() && kind.generalStrategy() == RelaxStrategy.BELOW_SPEC) {
-                List<FieldPredicate> predicates = predicates(kind, query, packageHard);
+                List<FieldPredicate> predicates = predicates(kind, context);
                 if (!predicates.isEmpty()) {
                     ratingKinds.add(kind);
                     ratings.addAll(predicates);
@@ -97,7 +102,7 @@ public class FieldQueryBuilder {
         int rung = 0;
         for (ConstraintKind kind : ConstraintKind.ladder()) {
             if (p.strategy(query, kind) == RelaxStrategy.LADDER) {
-                List<FieldPredicate> predicates = predicates(kind, query, packageHard);
+                List<FieldPredicate> predicates = predicates(kind, context);
                 if (!predicates.isEmpty()) {
                     rung++;
                     groups.add(new Group(Role.L, Role.L.name() + rung, List.of(kind), predicates));
@@ -115,7 +120,7 @@ public class FieldQueryBuilder {
         List<FieldPredicate> soft = new ArrayList<>();
         for (ConstraintKind kind : ConstraintKind.scored()) {
             if (!kind.isRating() && p.strategy(query, kind) == RelaxStrategy.SOFT) {
-                List<FieldPredicate> predicates = predicates(kind, query, packageHard);
+                List<FieldPredicate> predicates = predicates(kind, context);
                 if (!predicates.isEmpty()) {
                     softKinds.add(kind);
                     soft.addAll(predicates);
@@ -149,213 +154,116 @@ public class FieldQueryBuilder {
     }
 
     /**
-     * The predicates of one kind for a request: empty when the request does not state it, the kind is Java only, or
-     * its comparator refuses nothing KINA can name.
+     * The predicates of one kind for the request of {@code context}: empty when the request does not state it, the kind
+     * is Java only, or its comparator refuses nothing KINA can name. Dispatches on the declared predicate only.
      */
-    public List<FieldPredicate> predicates(ConstraintKind kind, ParsedQuery q, boolean packageHard) {
+    public List<FieldPredicate> predicates(ConstraintKind kind, MatchContext context) {
         Indexed rule = kind.indexed();
         if (rule == null || rule.javaOnly()) {
             return List.of();
         }
-        List<IndexColumn> columns = IndexColumn.of(kind, q);
-        if (columns.isEmpty()) {
+        List<IndexColumn> columns = IndexColumn.of(kind, context.query());
+        List<Object> wanted = columns.isEmpty() ? List.of() : kind.indexWanted(context);
+        if (wanted.isEmpty()) {
             return List.of();
         }
+        List<FieldPredicate> out = new ArrayList<>();
         IndexColumn column = columns.getFirst();
-        ParsedQuery.Connector connector = q.connector();
-        return switch (kind) {
-            case TYPE -> family(kind, column, q.family());
-            case EXACT_VOLTAGE -> {
-                Double v = number(kind.wanted(q));
-                yield v == null ? List.of() : List.of(new AnyInRange(kind, column, low(v, rule), high(v, rule)));
-            }
-            case PACKAGE -> packageIs(kind, rule, q.packageName());
-            case ELEMENTS -> q.elements() == null && ComponentFamily.has(q.family(), ComponentFamily.Trait.ARRAYS)
-                    ? List.of(new Absent(kind, column)) : List.of();
-            case FORM_FACTOR -> refused(kind, column, FieldVocabulary.requestedFormFactor(q, packageHard),
-                    FieldVocabulary.formFactors(),
-                    (w, v) -> FieldVocabulary.compatibleFormFactor(w, v) == Boolean.FALSE);
-            case TECHNOLOGY -> refused(kind, column, q.technology(), FieldVocabulary.technologies(),
-                    (w, v) -> FieldVocabulary.compareTechnology(w, v) < 0);
-            case CONNECTOR_TYPE -> refused(kind, column, (String) kind.wanted(q), FieldVocabulary.CONNECTOR_TYPES,
-                    (w, v) -> FieldVocabulary.connectorTypesMatch(w, v) == Boolean.FALSE);
-            case USB_TYPE -> {
-                if (connector == null || !connector.isUsb()) {
-                    yield List.of();
-                }
-                String type = connector.usbType() != null ? connector.usbType()
-                        : FieldVocabulary.usbTypeOf(connector.type());
-                yield type == null ? List.of() : List.of(new Equal(kind, column, type));
-            }
-            case PIN_CONFIGURATION -> {
-                if (connector == null || !connector.isUsb() || connector.pinConfigurationImplied()) {
-                    yield List.of();
-                }
-                String type = connector.usbType() != null ? connector.usbType()
-                        : FieldVocabulary.usbTypeOf(connector.type());
-                Integer pins = connector.pinConfiguration() != null ? connector.pinConfiguration()
-                        : FieldVocabulary.usbConfiguration(type, connector.positions());
-                pins = pins != null ? pins : connector.positions();
-                yield pins == null ? List.of() : List.of(new Equal(kind, column, pins));
-            }
-            case USB_STANDARD -> {
-                Integer wanted = FieldVocabulary.requestedUsbClass((String) kind.wanted(q));
-                yield wanted == null ? List.of() : List.of(new AtLeast(kind, column, wanted, false));
-            }
-            case FAN_TYPE -> {
-                ParsedQuery.Fan fan = (ParsedQuery.Fan) kind.wanted(q);
-                List<FieldPredicate> out = new ArrayList<>();
-                if (fan != null && fan.type() != null) {
-                    out.add(new Equal(kind, columns.get(0), fan.type()));
-                }
-                if (fan != null && fan.supply() != null) {
-                    out.add(new Equal(kind, columns.get(1), fan.supply()));
-                }
-                yield out;
-            }
-            case FRAME_SIZE -> {
-                ParsedQuery.Frame frame = (ParsedQuery.Frame) kind.wanted(q);
-                yield frame == null ? List.of() : sortedSize(kind, rule, columns, frame.width(), frame.length());
-            }
-            case SWITCH_SIZE -> {
-                ParsedQuery.BodySize size = (ParsedQuery.BodySize) kind.wanted(q);
-                yield size == null ? List.of() : sortedSize(kind, rule, columns, size.width(), size.length());
-            }
-            case LED_TYPE -> {
-                List<String> vocabulary = new ArrayList<>(FieldVocabulary.ledTypes());
-                vocabulary.add(ParsedQuery.Led.INDICATOR);
-                vocabulary.add(ParsedQuery.Led.HIGH_POWER);
-                yield refused(kind, column, (String) kind.wanted(q), vocabulary,
-                        (w, v) -> ParsedQuery.Led.typeGrade(w, v) < 0);
-            }
-            case COLOUR -> refused(kind, column, (String) kind.wanted(q), FieldVocabulary.ledColours(), (w, v) -> {
-                Double g = ParsedQuery.Led.colourGrade(w, v);
-                return g != null && g < 0;
-            });
-            case SWITCH_TYPE -> refused(kind, column, (String) kind.wanted(q), FieldVocabulary.switchTypes(),
-                    (w, v) -> ParsedQuery.Switch.typeGrade(w, v) < 0);
-            case TERMINATION -> refused(kind, column, (String) kind.wanted(q), FieldVocabulary.terminations(),
-                    (w, v) -> {
-                        Double g = ParsedQuery.Switch.terminationGrade(w, v);
-                        return g != null && g < 0;
-                    });
-            case CONTACTS -> {
-                ParsedQuery.Contacts contacts = (ParsedQuery.Contacts) kind.wanted(q);
-                if (contacts == null) {
-                    yield List.of();
-                }
-                List<FieldPredicate> out = new ArrayList<>();
-                out.add(new Equal(kind, columns.get(0),
-                        new ParsedQuery.Contacts(contacts.poles(), contacts.throwsCount(), null).display()));
-                if (contacts.form() != null) {
-                    out.add(new Equal(kind, columns.get(1), contacts.form()));
-                }
-                yield out;
-            }
-            case DIELECTRIC -> {
-                Object wanted = kind.wanted(q);
-                yield wanted == null ? List.of()
-                        : List.of(new Equal(kind, column, ((String) wanted).toLowerCase(Locale.ROOT)));
-            }
-            case VALUE -> {
-                ParsedQuery.Constraint wanted = (ParsedQuery.Constraint) kind.wanted(q);
-                if (wanted == null) {
-                    yield List.of();
-                }
-                List<FieldPredicate> out = new ArrayList<>();
-                out.add(new Range(kind, column, low(wanted.value(), rule), high(wanted.value(), rule)));
-                if (ParsedQuery.IMPEDANCE.equals(kind.indexMeasure(q)) && wanted.condition() != null) {
-                    out.add(new Range(kind, IndexColumn.IMPEDANCE_TEST_HZ, low(wanted.condition(), rule),
-                            high(wanted.condition(), rule)));
-                }
-                yield out;
-            }
-            default -> generic(kind, rule, column, kind.wanted(q));
-        };
-    }
-
-    /** The rule of a kind whose comparison is its {@link ro.alacrity.kina.domain.Match} mode on one value. */
-    private static List<FieldPredicate> generic(ConstraintKind kind, Indexed rule, IndexColumn column,
-                                                Object wanted) {
-        if (wanted == null) {
-            return List.of();
-        }
-        return switch (rule.predicate()) {
+        Object first = wanted.getFirst();
+        switch (rule.predicate()) {
             case RANGE -> {
-                Double v = number(wanted);
-                yield v == null ? List.of() : List.of(new Range(kind, column, low(v, rule), high(v, rule)));
+                for (int i = 0; i < Math.min(columns.size(), wanted.size()); i++) {
+                    Double v = number(wanted.get(i));
+                    if (v != null) {
+                        out.add(new Range(kind, columns.get(i), low(v, rule), high(v, rule)));
+                    }
+                }
+            }
+            case ARRAY_ANY -> {
+                Double v = number(first);
+                if (v != null) {
+                    out.add(new AnyInRange(kind, column, low(v, rule), high(v, rule)));
+                }
             }
             case GTE -> {
-                Double v = number(wanted);
-                // a request of 0 or less is no rating: the Java check never puts a part below it
-                yield v == null || v <= 0 ? List.of()
-                        : List.of(new AtLeast(kind, column, v * (1 - rule.slack()) - rule.margin(), true));
+                // a request of 0 or less states no minimum: the Java check never puts a part below it
+                Double v = number(first);
+                if (v != null && v > 0) {
+                    out.add(new AtLeast(kind, column, v * (1 - rule.slack()) - rule.margin(), kind.isRating()));
+                }
             }
             case LTE -> {
-                Double v = number(wanted);
-                yield v == null || v <= 0 ? List.of()
-                        : List.of(new AtMost(kind, column, v * (1 + rule.slack()) + rule.margin()));
+                Double v = number(first);
+                if (v != null && v > 0) {
+                    out.add(new AtMost(kind, column, v * (1 + rule.slack()) + rule.margin()));
+                }
             }
-            case EQUAL, JSONB_CONTAINS -> wanted instanceof String || wanted instanceof Integer
-                    || wanted instanceof Boolean ? List.of(new Equal(kind, column, wanted)) : List.of();
-            default -> throw new IllegalStateException(kind + ": " + rule.predicate() + " needs a rule of its own");
-        };
+            case EQUAL, JSONB_CONTAINS -> {
+                boolean ignoreCase = kind.match() != null && kind.match().mode() == MatchMode.EQUAL_IGNORE_CASE;
+                for (int i = 0; i < Math.min(columns.size(), wanted.size()); i++) {
+                    Object v = wanted.get(i);
+                    if (v instanceof String text) {
+                        out.add(new Equal(kind, columns.get(i), ignoreCase ? text.toLowerCase(Locale.ROOT) : text));
+                    } else if (v instanceof Integer || v instanceof Boolean) {
+                        out.add(new Equal(kind, columns.get(i), v));
+                    }
+                }
+            }
+            case IN_COMPATIBLE -> {
+                if (first instanceof String w) {
+                    out.addAll(compatible(kind, rule.vocabulary(), column, w, context));
+                }
+            }
+            case PACKAGE -> {
+                if (first instanceof String w && !w.isBlank()) {
+                    out.add(packageIs(kind, rule, w));
+                }
+            }
+            case ABSENT -> out.add(new Absent(kind, column));
+            case NONE -> throw new IllegalStateException(kind + ": @Indexed without a predicate");
+        }
+        return out;
     }
 
-    /** The families a request of {@code wanted} accepts ({@link ComponentFamily#compatible}), as a closed set. */
-    private static List<FieldPredicate> family(ConstraintKind kind, IndexColumn column, String wanted) {
-        if (wanted == null) {
-            return List.of();
+    /**
+     * The values of {@code vocabulary} the kind's comparator ({@link ConstraintKind#refuses}) accepts for
+     * {@code wanted} (a closed vocabulary: {@code col = ANY(wanted and accepted)}), or refuses (an open one:
+     * {@code col <> ALL(refused)}; none when it refuses nothing).
+     */
+    private static List<FieldPredicate> compatible(ConstraintKind kind, Indexed.Vocabulary vocabulary,
+                                                   IndexColumn column, String wanted, MatchContext context) {
+        List<String> values = context.vocabulary(vocabulary).stream().distinct().toList();
+        if (vocabulary.closed()) {
+            Set<String> accepted = new LinkedHashSet<>();
+            accepted.add(wanted);
+            values.stream().filter(v -> !kind.refuses(context, wanted, v)).forEach(accepted::add);
+            return List.of(new OneOf(kind, column, List.copyOf(accepted)));
         }
-        Set<String> accepted = new LinkedHashSet<>();
-        accepted.add(wanted);
-        FieldVocabulary.families().stream().filter(f -> ComponentFamily.compatible(wanted, f)).forEach(accepted::add);
-        return List.of(new OneOf(kind, column, List.copyOf(accepted)));
+        List<String> refused = values.stream().filter(v -> kind.refuses(context, wanted, v)).toList();
+        return refused.isEmpty() ? List.of() : List.of(new NoneOf(kind, column, refused));
     }
 
-    private static List<FieldPredicate> packageIs(ConstraintKind kind, Indexed rule, String wanted) {
-        if (wanted == null || wanted.isBlank()) {
-            return List.of();
-        }
+    /**
+     * The package rule: the package key, or a can size within the declared margin (at least the can tolerance of
+     * the Java check, {@code PackageIs}), or the class an LED size is never compared with.
+     */
+    private static FieldPredicate packageIs(ConstraintKind kind, Indexed rule, String wanted) {
         double[] can = FieldVocabulary.can(wanted);
         String wantedClass = FieldVocabulary.packageClass(wanted);
         String neutral = FieldVocabulary.LED_PACKAGE.equals(wantedClass) ? FieldVocabulary.PLCC_PACKAGE
                 : FieldVocabulary.PLCC_PACKAGE.equals(wantedClass) ? FieldVocabulary.LED_PACKAGE : null;
-        return List.of(new PackageIs(kind, FieldVocabulary.packageKey(wanted), can == null ? null : can[0],
-                can == null ? null : can[1], Math.max(rule.margin(), FieldVocabulary.canTolerance()), neutral));
+        return new PackageIs(kind, FieldVocabulary.packageKey(wanted), can == null ? null : can[0],
+                can == null ? null : can[1], rule.margin(), neutral);
     }
 
-    /** Width and length in either order: the sorted pair, each within the margin. */
-    private static List<FieldPredicate> sortedSize(ConstraintKind kind, Indexed rule, List<IndexColumn> columns,
-                                                   double width, double length) {
-        double min = Math.min(width, length);
-        double max = Math.max(width, length);
-        return List.of(new Range(kind, columns.get(0), min - rule.margin(), min + rule.margin()),
-                new Range(kind, columns.get(1), max - rule.margin(), max + rule.margin()));
+    /** The lower bound of a range: the rule's slack and margin, plus the writer's rounding (relative). */
+    static double low(double value, Indexed rule) {
+        return value - Math.abs(value) * (rule.slack() + Indexed.ROUNDING_SLACK) - rule.margin();
     }
 
-    /** The vocabulary values the comparator refuses for {@code wanted} ({@code refuses}); none when nothing. */
-    private static List<FieldPredicate> refused(ConstraintKind kind, IndexColumn column, String wanted,
-                                                List<String> vocabulary, Refuses refuses) {
-        if (wanted == null) {
-            return List.of();
-        }
-        List<String> out = vocabulary.stream().distinct().filter(v -> refuses.test(wanted, v)).toList();
-        return out.isEmpty() ? List.of() : List.of(new NoneOf(kind, column, out));
-    }
-
-    /** True when a part of value {@code actual} contradicts a request for {@code wanted}. */
-    @FunctionalInterface
-    private interface Refuses {
-        boolean test(String wanted, String actual);
-    }
-
-    private static double low(double value, Indexed rule) {
-        return value - Math.abs(value) * rule.slack() - rule.margin() - EPSILON;
-    }
-
-    private static double high(double value, Indexed rule) {
-        return value + Math.abs(value) * rule.slack() + rule.margin() + EPSILON;
+    /** The upper bound of a range: the rule's slack and margin, plus the writer's rounding (relative). */
+    static double high(double value, Indexed rule) {
+        return value + Math.abs(value) * (rule.slack() + Indexed.ROUNDING_SLACK) + rule.margin();
     }
 
     private static Double number(Object value) {

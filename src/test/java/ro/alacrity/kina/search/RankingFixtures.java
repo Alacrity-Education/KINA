@@ -1,6 +1,7 @@
 package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
+import org.mockito.Mockito;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
@@ -10,15 +11,18 @@ import ro.alacrity.kina.cache.PhraseJournalRepository;
 import ro.alacrity.kina.cache.SearchCacheRepository;
 import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorRegistry;
+import ro.alacrity.kina.distributor.lcsc.LcscFieldSearch;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PriceBreak;
 import ro.alacrity.kina.metrics.KinaMetrics;
+import ro.alacrity.kina.search.field.FieldSearchShadow;
 import ro.alacrity.kina.search.field.PartIndexRepository;
 
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,18 +124,35 @@ class RankingFixtures {
                 "partCache", partCache, "clock", clock, "metrics", metrics);
         RequestedLookup requested = TestWiring.wire(new RequestedLookup(), "extractor", extractor,
                 "partCache", partCache, "clock", clock);
+        // without the typed table of LCSC (available() is false)
         LcscRetriever lcsc = TestWiring.wire(new LcscRetriever(), "properties", props, "pages", pages,
-                "ranking", ranking, "requested", requested);
-        CachedDistributorRetriever cached = TestWiring.wire(new CachedDistributorRetriever(), "properties", props,
-                "pages", pages, "ranking", ranking, "extractor", extractor, "partCache", partCache,
-                "searchCache", searchCache, "clock", clock, "requested", requested, "metrics", metrics);
+                "ranking", ranking, "requested", requested, "extractor", extractor,
+                "fieldSearch", Mockito.mock(LcscFieldSearch.class));
+        PhraseJournalRepository journal = field != null ? field.journal()
+                : Mockito.mock(PhraseJournalRepository.class);
+        CachedSearchPath path = TestWiring.wire(new CachedSearchPath(), "properties", props, "pages", pages,
+                "ranking", ranking, "extractor", extractor, "partCache", partCache, "searchCache", searchCache,
+                "journal", journal, "clock", clock);
+        // the strategy of every mode (the field modes only with the field index)
+        List<FieldIndexStrategy> strategies = new ArrayList<>();
+        strategies.add(TestWiring.wire(new FieldIndexStrategies.Off(), "cached", path, "metrics", metrics));
         if (field != null) {
             FieldFirstSearch fieldFirst = TestWiring.wire(new FieldFirstSearch(), "properties", props,
                     "pages", pages, "ranking", ranking, "extractor", extractor, "partCache", partCache,
-                    "searchCache", searchCache, "journal", field.journal(), "index", field.index(), "clock", clock,
+                    "searchCache", searchCache, "journal", journal, "index", field.index(), "clock", clock,
                     "metrics", metrics);
-            TestWiring.wire(cached, "fieldFirst", fieldFirst, "index", field.index(), "journal", field.journal());
+            strategies.add(TestWiring.wire(new FieldIndexStrategies.On(), "properties", props,
+                    "fieldFirst", fieldFirst, "cached", path, "ranking", ranking, "metrics", metrics));
+            strategies.add(TestWiring.wire(new FieldIndexStrategies.Augment(), "properties", props, "cached", path,
+                    "ranking", ranking, "extractor", extractor, "partCache", partCache, "index", field.index(),
+                    "metrics", metrics));
+            FieldSearchShadow shadow = TestWiring.wire(new FieldSearchShadow(), "properties", props,
+                    "index", field.index(), "metrics", metrics);
+            strategies.add(TestWiring.wire(new FieldIndexStrategies.Shadow(), "cached", path, "shadow", shadow,
+                    "ranking", ranking, "metrics", metrics));
         }
+        CachedDistributorRetriever cached = TestWiring.wire(new CachedDistributorRetriever(), "properties", props,
+                "searchCache", searchCache, "requested", requested, "cached", path, "strategies", strategies);
         ParallelRetrieval retrieval = TestWiring.wire(new ParallelRetrieval(), "properties", props,
                 "registry", registry, "parser", parser, "lcscRetriever", lcsc, "cachedRetriever", cached);
         ResponseAssembler assembler = TestWiring.wire(new ResponseAssembler(), "properties", props,

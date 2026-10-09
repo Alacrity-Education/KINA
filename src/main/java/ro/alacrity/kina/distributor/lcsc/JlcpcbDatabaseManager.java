@@ -253,7 +253,7 @@ public class JlcpcbDatabaseManager {
             search.replaceDatabase(() -> {
                 downloader.install(downloaded, target);
                 if (builtIndex != null) {
-                    downloader.installIndex(builtIndex, search.indexFile());
+                    installIndex(builtIndex);
                 }
             });
             JlcpcbDatabaseInfo info = new JlcpcbDatabaseInfo(config.library(), target.toString(), clock.instant(),
@@ -273,6 +273,21 @@ public class JlcpcbDatabaseManager {
             metrics.jlcpcbDownload("failed");
             log.warn("JLCPCB database download failed: {}", e.toString());
             downloader.cleanTemp(config.dataDir(), config.library());
+        }
+    }
+
+    /**
+     * Installs the sidecar built next to a new file once the file itself is installed. A failure is the typed table's
+     * failure only ({@code indexFailure}): the new file is in use, so the download still succeeds and is recorded,
+     * and the FTS path serves until the next check builds the table (review B8).
+     */
+    private void installIndex(Path built) {
+        try {
+            downloader.installIndex(built, search.indexFile());
+        } catch (IOException | RuntimeException e) {
+            indexFailure = "typed table: " + e.getMessage();
+            log.warn("Installing the typed table of the new file failed, the FTS path serves: {}", e.toString());
+            deleteQuietly(built);
         }
     }
 

@@ -140,6 +140,14 @@ public class JlcpcbSqliteSearch {
     private BlockingQueue<Connection> idle;                  // null when closed; guarded by lock
     private final List<Connection> pool = new ArrayList<>(); // every open connection; guarded by lock
     private volatile FieldIndexFile.Info fieldIndex;         // the attached sidecar, null when none
+    /** How the sidecar is attached to a connection ({@link FieldIndexFile#attach}; tests make it fail). */
+    private Attacher attacher = FieldIndexFile::attach;
+
+    /** Attaches the sidecar file to a connection. */
+    @FunctionalInterface
+    interface Attacher {
+        void attach(Connection connection, Path sidecar) throws SQLException;
+    }
 
     @PostConstruct
     void init() {
@@ -723,8 +731,10 @@ public class JlcpcbSqliteSearch {
                 Connection c = openPooled(databaseFile);
                 pool.add(c);
                 registerFunctions(c);
-                if (info != null) {
-                    FieldIndexFile.attach(c, indexFile);
+                if (info != null && !attachTo(c)) {
+                    // the typed table is on every connection or on none: the FTS path serves until the next check
+                    pool.forEach(FieldIndexFile::detach);
+                    info = null;
                 }
             }
             BlockingQueue<Connection> queue = new ArrayBlockingQueue<>(poolSize);
@@ -745,7 +755,7 @@ public class JlcpcbSqliteSearch {
             return null;
         }
         try {
-            FieldIndexFile.attach(c, indexFile);
+            attacher.attach(c, indexFile);
             Optional<FieldIndexFile.Info> info = FieldIndexFile.inspect(c, FieldIndexFile.fingerprint(databaseFile, c));
             if (info.isEmpty()) {
                 log.info("Typed table {} does not describe {} (version or source differ): the FTS path serves",
@@ -757,6 +767,21 @@ public class JlcpcbSqliteSearch {
             log.warn("Cannot attach the typed table {}: {}", indexFile, e.getMessage());
             FieldIndexFile.detach(c);
             return null;
+        }
+    }
+
+    /**
+     * Attaches the sidecar to another connection of the pool; false (logged) when it fails, for instance because the
+     * sidecar vanished or was replaced after the first connection read it. A failure never closes the pool.
+     */
+    private boolean attachTo(Connection c) {
+        try {
+            attacher.attach(c, indexFile);
+            return true;
+        } catch (SQLException e) {
+            log.warn("Cannot attach the typed table {} to every connection, the FTS path serves: {}", indexFile,
+                    e.getMessage());
+            return false;
         }
     }
 

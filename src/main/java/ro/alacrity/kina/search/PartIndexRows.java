@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ComponentFamily;
 import ro.alacrity.kina.domain.ParsedQuery;
 import ro.alacrity.kina.domain.Part;
+import ro.alacrity.kina.domain.PartAttribute;
 import ro.alacrity.kina.domain.PartFeatures;
 import ro.alacrity.kina.search.field.IndexColumn;
 import ro.alacrity.kina.search.field.PartIndexRow;
@@ -47,8 +48,9 @@ public class PartIndexRows {
             PartFeatures.Measure m = f.measure(kind);
             if (m != null && Double.isFinite(m.value())) {
                 values.put(column.name(), FieldVocabulary.round(m.value()));
-                if (ParsedQuery.IMPEDANCE.equals(kind) && m.condition() != null) {
-                    values.put(IndexColumn.IMPEDANCE_TEST_HZ.name(), FieldVocabulary.round(m.condition()));
+                IndexColumn condition = IndexColumn.condition(PartAttribute.indexedOf(kind));
+                if (condition != null && m.condition() != null) {
+                    values.put(condition.name(), FieldVocabulary.round(m.condition()));
                 }
             }
         });
@@ -100,7 +102,7 @@ public class PartIndexRows {
                 .formFactor(f.formFactor())
                 .elements(f.elements())
                 .values(values)
-                .voltages(voltages)
+                .voltagesV(voltages)
                 .connectorType(c == null ? null : c.type())
                 .gender(c == null ? null : c.gender())
                 .positions(c == null ? null : c.positions())

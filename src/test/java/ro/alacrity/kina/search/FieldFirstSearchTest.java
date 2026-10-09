@@ -18,12 +18,14 @@ import ro.alacrity.kina.config.KinaProperties;
 import ro.alacrity.kina.distributor.DistributorClient;
 import ro.alacrity.kina.distributor.DistributorException;
 import ro.alacrity.kina.distributor.DistributorSearchPage;
+import ro.alacrity.kina.distributor.RateLimitRetry;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.domain.DistributorResult;
 import ro.alacrity.kina.domain.Part;
 import ro.alacrity.kina.domain.PartResponse;
 import ro.alacrity.kina.domain.SearchRequest;
 import ro.alacrity.kina.domain.SearchResponse;
+import ro.alacrity.kina.metrics.FieldFallback;
 import ro.alacrity.kina.metrics.KinaMetrics;
 import ro.alacrity.kina.search.field.FieldQuery;
 import ro.alacrity.kina.search.field.PartIndexRepository;
@@ -66,6 +68,7 @@ class FieldFirstSearchTest {
     @Autowired PartIndexRepository index;
     @Autowired JdbcClient jdbc;
     @Autowired JsonMapper jsonMapper;
+    @Autowired List<FieldIndexStrategy> strategies;
 
     private final ParametricExtractor extractor = new ParametricExtractor();
     private final QueryParser parser = new QueryParser();
@@ -81,6 +84,16 @@ class FieldFirstSearchTest {
         final Map<String, ro.alacrity.kina.distributor.StockUpdate> stock = new HashMap<>();
         final List<String> refreshed = new CopyOnWriteArrayList<>();
         RuntimeException failure;
+        /** Parts per page ({@link #maxPageSize()}). */
+        int pageSize = 50;
+        /** A page from this offset on fails ({@code unavailable}); -1: none. */
+        int failFromOffset = -1;
+        /** How long every page takes. */
+        Duration delay = Duration.ZERO;
+        /** The rate-limit policy pages go through (null: none, as {@link #search(String, int, int)}). */
+        RateLimitRetry retry;
+        /** The {@code Retry-After} values of the next rate-limited answers, one per attempt. */
+        final java.util.Deque<String> rateLimits = new java.util.concurrent.ConcurrentLinkedDeque<>();
 
         @Override
         public Map<String, ro.alacrity.kina.distributor.StockUpdate> refreshStock(List<String> partNumbers,
@@ -112,14 +125,46 @@ class FieldFirstSearchTest {
 
         @Override
         public int maxPageSize() {
-            return 50;
+            return pageSize;
         }
 
         @Override
         public DistributorSearchPage search(String query, int offset, int limit) {
             asked.add(query);
+            return page(query, offset, limit);
+        }
+
+        /** A page through the rate-limit policy when there is one: one entry of {@link #asked} per page request. */
+        @Override
+        public DistributorSearchPage search(String query, int offset, int limit,
+                                           ro.alacrity.kina.distributor.Deadline deadline) {
+            if (retry == null) {
+                return search(query, offset, limit);
+            }
+            asked.add(query);
+            return retry.call(deadline, () -> {
+                String retryAfter = rateLimits.poll();
+                if (retryAfter != null) {
+                    throw new RateLimitRetry.RateLimitedResponse("HTTP 429", retryAfter);
+                }
+                return page(query, offset, limit);
+            });
+        }
+
+        private DistributorSearchPage page(String query, int offset, int limit) {
+            if (!delay.isZero()) {
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
             if (failure != null) {
                 throw failure;
+            }
+            if (failFromOffset >= 0 && offset >= failFromOffset) {
+                throw new DistributorException(Distributor.MOUSER, DistributorException.Kind.UNAVAILABLE,
+                        "page at " + offset + " failed");
             }
             List<Part> all = answers.getOrDefault(QueryParser.normalizeKey(query), List.of());
             int to = Math.min(all.size(), offset + limit);
@@ -430,7 +475,7 @@ class FieldFirstSearchTest {
         assertThat(index.indexed(Distributor.MOUSER, List.of("N1", "N5"))).hasSize(2);
         assertThat(journal.find(Distributor.MOUSER, DistributorPhraser.phraseKey(phrases().getFirst())).orElseThrow()
                 .askedAt()).as("the journal row was rewritten").isAfter(java.time.Instant.now().minusSeconds(30));
-        verify(metrics).fieldFallback("MOUSER", "bypass");
+        verify(metrics).fieldFallback("MOUSER", FieldFallback.BYPASS);
     }
 
     @Test
@@ -446,7 +491,7 @@ class FieldFirstSearchTest {
         assertThat(result.fetched()).as("the list of the call only").isEqualTo(5);
         assertThat(result.fieldSteps()).isZero();
         assertThat(mouser.asked).containsExactly(phrases().getFirst());
-        verify(metrics).fieldFallback("MOUSER", "incomplete");
+        verify(metrics).fieldFallback("MOUSER", FieldFallback.INCOMPLETE);
         verify(metrics, never()).fieldServed(any());
     }
 
@@ -464,7 +509,7 @@ class FieldFirstSearchTest {
         assertThat(result.cache()).isEqualTo(CacheStatus.MISS);
         assertThat(result.returned()).isEqualTo(3);
         assertThat(mouser.asked).containsExactly(phrases().getFirst());
-        verify(metrics).fieldFallback("MOUSER", "sql_error");
+        verify(metrics).fieldFallback("MOUSER", FieldFallback.SQL_ERROR);
     }
 
     @Test
@@ -475,7 +520,7 @@ class FieldFirstSearchTest {
         DistributorResult result = search(QUERY, 3);
         assertThat(result.cache()).isEqualTo(CacheStatus.MISS);
         assertThat(result.fieldSteps()).isZero();
-        verify(metrics).fieldFallback("MOUSER", "mode");
+        verify(metrics).fieldFallback("MOUSER", FieldFallback.MODE);
         // the other modes record the phrase too: the journal is warm when the mode changes to on
         assertThat(journal.find(Distributor.MOUSER, DistributorPhraser.phraseKey(phrases().getFirst()))).isPresent();
     }
@@ -492,7 +537,7 @@ class FieldFirstSearchTest {
         assertThat(result.cache()).isEqualTo(CacheStatus.MISS);
         assertThat(mouser.asked).containsExactly("mosfet");
         assertThat(result.fieldSteps()).isZero();
-        verify(metrics).fieldFallback("MOUSER", "generic");
+        verify(metrics).fieldFallback("MOUSER", FieldFallback.GENERIC);
     }
 
     @Test
@@ -568,6 +613,30 @@ class FieldFirstSearchTest {
         assertThat(numbers(on)).containsAll(numbers(off)).contains("A1", "K1");
     }
 
+    /**
+     * Review B2: the index hits are keys; their parts are loaded, enriched and checked in chunks of
+     * {@code max(2 x max_results, 20)} until enough, so a request answered by the first chunk loads only it (and the
+     * ranker sees only those), while {@code max-candidates} stays the SQL recall limit.
+     */
+    @Test
+    void theIndexCandidatesAreLoadedInChunksUntilEnough() {
+        cache(mlccs("A", 60, "X7R", 25));
+        service("on");
+        DistributorResult small = search(QUERY, 3);
+        assertThat(small.fetched()).as("one chunk of max(2 x 3, 20)").isEqualTo(20);
+        assertThat(small.returned()).isEqualTo(3);
+        DistributorResult larger = search(QUERY, 15);
+        assertThat(larger.fetched()).as("one chunk of 2 x 15").isEqualTo(30);
+        assertThat(mouser.asked).isEmpty();
+    }
+
+    /** One strategy bean per mode (review B3), picked by the retriever. */
+    @Test
+    void everyModeHasOneStrategy() {
+        assertThat(strategies).extracting(FieldIndexStrategy::mode)
+                .containsExactlyInAnyOrder(KinaProperties.FieldIndexMode.values());
+    }
+
     @Test
     void theCandidateCapLimitsTheIndexRows() {
         cache(mlccs("A", 6, "X7R", 25));
@@ -604,7 +673,7 @@ class FieldFirstSearchTest {
         DistributorResult result = search("MPN-A1", 3);
         assertThat(numbers(result)).contains("A1");
         assertThat(searchCache.find(Distributor.MOUSER, parser.parse("MPN-A1").normalizedKey())).isPresent();
-        verify(metrics, never()).fieldFallback(eq("MOUSER"), eq("sql_error"));
+        verify(metrics, never()).fieldFallback(eq("MOUSER"), eq(FieldFallback.SQL_ERROR));
     }
 
     @Test
@@ -626,7 +695,7 @@ class FieldFirstSearchTest {
                 extractor, ranking, partCache, searchCache, Clock.systemUTC(), metrics,
                 new RankingFixtures.FieldBeans(index, broken));
         DistributorResult result = search(QUERY, 3);
-        verify(metrics).fieldFallback("MOUSER", "sql_error");
+        verify(metrics).fieldFallback("MOUSER", FieldFallback.SQL_ERROR);
         verify(metrics, never()).fieldLiveCall(any(), anyInt());
         // the cached-search path asks once, as it always did for a query it has no list of
         assertThat(mouser.asked).containsExactly(phrases().getFirst());
@@ -651,7 +720,7 @@ class FieldFirstSearchTest {
         assertThat(result.cache()).isEqualTo(CacheStatus.HIT);
         assertThat(result.fetched()).as("the cap holds the four parts that meet the rating").isEqualTo(4);
         assertThat(numbers(result)).allMatch(n -> n.startsWith("Q"));
-        verify(metrics, never()).fieldFallback(eq("MOUSER"), eq("generic"));
+        verify(metrics, never()).fieldFallback(eq("MOUSER"), eq(FieldFallback.GENERIC));
     }
 
     @Test
@@ -667,7 +736,7 @@ class FieldFirstSearchTest {
         assertThat(result.cache()).isEqualTo(CacheStatus.HIT);
         assertThat(mouser.asked).as("answered from the index").isEmpty();
         assertThat(result.returned()).isEqualTo(3);
-        verify(metrics, never()).fieldFallback(eq("MOUSER"), eq("generic"));
+        verify(metrics, never()).fieldFallback(eq("MOUSER"), eq(FieldFallback.GENERIC));
     }
 
     @Test
@@ -711,5 +780,91 @@ class FieldFirstSearchTest {
         assertThat(numbers(on)).containsAll(numbers(off));
         assertThat(numbers(on)).contains("A2");   // and the index adds the parts the list does not hold
         assertThat(mouser.asked).isEmpty();
+    }
+
+    // ---------------------------------------------------------------- paging, failures, deadline, rate limits (B18)
+
+    @Test
+    void aLaterPageThatFailsKeepsTheEarlierPagesButJournalsNothing() {
+        // review B1: page 1 answers, page 2 fails; the parts of page 1 are cached and served, the phrase is not
+        // journaled (it was not answered), so the next request asks it again
+        mouser.pageSize = 5;
+        mouser.failFromOffset = 5;
+        mouser.answer(phrases().getFirst(), mlccs("N", 8, "X7R", 25));
+        service("on", "kina.distributors.mouser.max-pages-per-search", "2");
+        DistributorResult result = search(QUERY, 3);
+        assertThat(mouser.asked).containsExactly(phrases().getFirst(), phrases().getFirst());
+        assertThat(result.liveCalls()).isEqualTo(2);
+        assertThat(result.error()).isEqualTo("unavailable");
+        // a call answered (page 1), then a call failed: partial with the error (C3)
+        assertThat(result.cache()).isEqualTo(CacheStatus.PARTIAL);
+        assertThat(result.returned()).isEqualTo(3);
+        assertThat(partCache.findInStock(Distributor.MOUSER, List.of("N1", "N2", "N3", "N4", "N5"))).hasSize(5);
+        assertThat(journal.count()).as("a failed later page journals nothing").isZero();
+
+        mouser.failFromOffset = -1;
+        search(QUERY, 10);
+        assertThat(mouser.asked).as("the phrase is asked again").hasSizeGreaterThan(2);
+    }
+
+    @Test
+    void aRateLimitThatFitsTheDeadlineIsWaitedOutInsideTheFlow() {
+        List<Duration> slept = new CopyOnWriteArrayList<>();
+        mouser.retry = new RateLimitRetry(Distributor.MOUSER, Clock.systemUTC(), slept::add, () -> 0.5);
+        mouser.rateLimits.add("2");
+        mouser.answer(phrases().getFirst(), mlccs("N", 5, "X7R", 25));
+        service("on");
+        DistributorResult result = search(QUERY, 3);
+        // the Retry-After, then what is left of the shared cool-down (the fake sleeper does not move the clock)
+        assertThat(slept).first().isEqualTo(Duration.ofSeconds(2));
+        assertThat(result.rateLimitWaitedMs()).isGreaterThanOrEqualTo(2000);
+        assertThat(result.error()).isNull();
+        assertThat(result.cache()).isEqualTo(CacheStatus.MISS);
+        assertThat(result.returned()).isEqualTo(3);
+        assertThat(journal.find(Distributor.MOUSER, DistributorPhraser.phraseKey(phrases().getFirst()))).isPresent();
+    }
+
+    @Test
+    void aRateLimitBeyondTheDeadlineFailsTheCallAndTheIndexAnswersStale() {
+        cache(mlccs("A", 2, "X7R", 25));
+        List<Duration> slept = new CopyOnWriteArrayList<>();
+        mouser.retry = new RateLimitRetry(Distributor.MOUSER, Clock.systemUTC(), slept::add, () -> 0.5);
+        mouser.rateLimits.add("3600");
+        mouser.answer(phrases().getFirst(), mlccs("N", 5, "X7R", 25));
+        service("on");
+        DistributorResult result = search(QUERY, 3);
+        assertThat(slept).as("a wait past the request deadline is never slept").isEmpty();
+        assertThat(result.error()).isEqualTo("rate_limited");
+        assertThat(result.cache()).as("no call answered").isEqualTo(CacheStatus.STALE);
+        assertThat(numbers(result)).containsExactlyInAnyOrder("A1", "A2");
+        assertThat(mouser.asked).as("no further call after the failure").hasSize(1);
+        assertThat(journal.count()).isZero();
+    }
+
+    @Test
+    void theRequestDeadlineStopsFurtherCalls() {
+        // step 0 is short (one part): the relaxed phrase would be asked, but the first call used up the time
+        mouser.delay = Duration.ofMillis(200);
+        mouser.answer(phrases().getFirst(), mlccs("A", 1, "X7R", 25));
+        mouser.answer(noDielectricPhrase(), mlccs("B", 4, "X5R", 25));
+        service("on", "kina.search.distributor-timeout", "100ms");
+        DistributorResult result = search(QUERY, 3);
+        assertThat(mouser.asked).as("no call once the deadline is over").containsExactly(phrases().getFirst());
+        assertThat(result.error()).isNull();
+        assertThat(result.returned()).isEqualTo(1);
+    }
+
+    @Test
+    void theCallCapCountsPhrasesNotPages() {
+        mouser.pageSize = 2;
+        mouser.answer(phrases().getFirst(), mlccs("A", 3, "X7R", 25));
+        mouser.answer(noDielectricPhrase(), mlccs("B", 4, "X5R", 25));
+        service("on", "kina.distributors.mouser.max-pages-per-search", "2",
+                "kina.search.field-index.max-live-calls-per-distributor", "1");
+        DistributorResult result = search(QUERY, 10);
+        assertThat(mouser.asked).as("one phrase, two pages").containsExactly(phrases().getFirst(),
+                phrases().getFirst());
+        assertThat(result.liveCalls()).isEqualTo(2);
+        assertThat(result.returned()).isEqualTo(3);
     }
 }

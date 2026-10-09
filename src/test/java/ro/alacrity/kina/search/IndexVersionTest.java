@@ -105,7 +105,7 @@ class IndexVersionTest {
         out.put("formFactor", row.formFactor());
         out.put("elements", row.elements());
         out.put("values", new TreeMap<>(row.values()));
-        out.put("voltages", row.voltages());
+        out.put("voltages", row.voltagesV());
         out.put("connector", List.of(String.valueOf(row.connectorType()), String.valueOf(row.gender()),
                 String.valueOf(row.positions()), String.valueOf(row.rowsCount()), String.valueOf(row.pitchMm()),
                 String.valueOf(row.orientation()), String.valueOf(row.usbType()), String.valueOf(row.usbClass()),

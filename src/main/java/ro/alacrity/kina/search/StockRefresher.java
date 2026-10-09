@@ -101,8 +101,7 @@ final class StockRefresher {
                                 .prices(update.prices().isEmpty() ? r.part().prices() : update.prices())
                                 .fetchedAt(now).build();
                         stillListed.add(p);
-                        next.add(new RankedPart(p, r.score(), r.match(), r.mismatches(), r.unverified(),
-                                r.belowSpec()));
+                        next.add(r.withPart(p));
                     } else if (update.stock() <= 0) {
                         soldOut.add(r.part().distributorPartNumber());
                     } else {
@@ -110,8 +109,7 @@ final class StockRefresher {
                                 .prices(update.prices().isEmpty() ? r.part().prices() : update.prices())
                                 .fetchedAt(now).build();
                         refreshed.add(p);
-                        next.add(new RankedPart(p, r.score(), r.match(), r.mismatches(), r.unverified(),
-                                r.belowSpec()));
+                        next.add(r.withPart(p));
                     }
                 }
                 kept = next;
@@ -145,10 +143,10 @@ final class StockRefresher {
      * Moves the parts whose stock and prices are stale ({@link #isStale}) below the fresh ones of their group: each
      * stale part's score is lowered by {@code kina.cache.stale-rank-penalty} (reported at least 0) and it is placed
      * before the first part of a later group, or the first fresh part of its own group that scores lower; stale parts
-     * keep their relative order. The groups, in order: the match class first (a part that confirms some stated
-     * parameter, then one that confirms none: {@code match} 0, DESIGN.md 3.3), then meeting the request before below
-     * spec. A stale part is never moved below a part of a later group, so a fresh part that confirms nothing never
-     * passes a stale exact match. With the default penalty of 1.0 every stale part ends up after every fresh part of
+     * keep their relative order. The groups, in order: the match class first (every stated hard constraint confirmed,
+     * a stated hard constraint unverified, nothing stated confirmed: DESIGN.md 3.3), then meeting the request before
+     * below spec. A stale part is never moved below a part of a later group, so a fresh part with an unverified hard
+     * constraint never passes a stale exact match. With the default penalty of 1.0 every stale part ends up after every fresh part of
      * its group. Returns {@code list} itself when nothing is stale.
      */
     List<RankedPart> demoteStale(List<RankedPart> list, Instant now) {
@@ -189,11 +187,11 @@ final class StockRefresher {
     }
 
     /**
-     * The group of a ranked part for {@link #demoteStale}: the match class (0 confirms some stated parameter or is not
-     * graded, 2 confirms none), plus 1 below spec.
+     * The group of a ranked part for {@link #demoteStale}: its match class (complete, partial, none: DESIGN.md 3.3),
+     * then below spec within the class.
      */
     private static int group(RankedPart r) {
-        return (RankingService.confirmsNothing(r.match()) ? 2 : 0) + (r.belowSpec() ? 1 : 0);
+        return 2 * r.matchClass().ordinal() + (r.belowSpec() ? 1 : 0);
     }
 
     private void writeBack(Distributor distributor, List<Part> refreshed, List<String> soldOut) {

@@ -273,8 +273,10 @@ class TechnologyAndPrecisionTest {
         DeterministicRanker.Assessment c = ranker.assess(q, unknown);
         assertThat(a.match()).isEqualTo(1.0);
         assertThat(b.match()).isLessThan(c.match());
-        // the unknown technology is unverified: left out of match, listed, and the part is not complete
-        assertThat(c.match()).isEqualTo(1.0);
+        // the unknown technology is unverified: listed, the part is not complete and, the technology being hard for
+        // resistors, it counts against the grade (the confirmed share, v0.16): never 1.0, the partial class
+        assertThat(c.match()).isLessThan(1.0).isGreaterThan(0.5);
+        assertThat(c.matchClass()).isEqualTo(DeterministicRanker.MatchClass.PARTIAL);
         assertThat(c.unverified()).containsExactly("technology");
         assertThat(a.complete()).isTrue();
         assertThat(c.complete()).isFalse();

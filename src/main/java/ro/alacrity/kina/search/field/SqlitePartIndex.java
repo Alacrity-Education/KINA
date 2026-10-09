@@ -38,7 +38,7 @@ public final class SqlitePartIndex {
         String t = FieldSql.identifier(table);
         List<String> columns = new ArrayList<>();
         columns.add("fts_rowid INTEGER");
-        PartIndexSql.casts().forEach((name, cast) -> columns.add(name + " " + type(cast)));
+        PartIndexSql.types().forEach((name, type) -> columns.add(name + " " + type.sqlite()));
         columns.add("payload_md5 TEXT");
         columns.add("stock INTEGER");
         try (Statement s = connection.createStatement()) {
@@ -71,8 +71,7 @@ public final class SqlitePartIndex {
     /** Inserts {@code rows} with their FTS5 rowids and ships-now {@code stocks} (same order; null: 0). */
     public static void insert(Connection connection, String table, List<PartIndexRow> rows, List<Long> ftsRowids,
                               List<Integer> stocks) throws SQLException {
-        Map<String, String> casts = PartIndexSql.casts();
-        List<String> names = new ArrayList<>(casts.keySet());
+        List<String> names = new ArrayList<>(PartIndexSql.types().keySet());
         String sql = "INSERT INTO " + FieldSql.identifier(table) + " (fts_rowid, " + String.join(", ", names)
                 + ", payload_md5, stock) VALUES (?" + ", ?".repeat(names.size()) + ", '', ?)";
         OffsetDateTime now = OffsetDateTime.now();
@@ -102,13 +101,5 @@ public final class SqlitePartIndex {
             return t.toString();
         }
         return value;
-    }
-
-    private static String type(String cast) {
-        return switch (cast) {
-            case "float8" -> "REAL";
-            case "int", "smallint", "boolean" -> "INTEGER";
-            default -> "TEXT";
-        };
     }
 }

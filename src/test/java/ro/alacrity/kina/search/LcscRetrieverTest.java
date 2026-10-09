@@ -178,12 +178,14 @@ class LcscRetrieverTest {
 
     @Test
     void theTypedStepsOfAFreeTextQueryAreRecognised() {
-        var query = ro.alacrity.kina.search.field.FieldQueryBuilder.build(PARSER.parse("RP2040"),
-                ConstraintPolicy.DEFAULTS, Distributor.LCSC);
-        assertThat(LcscRetriever.constrains(query)).isFalse();
-        var capacitor = ro.alacrity.kina.search.field.FieldQueryBuilder.build(PARSER.parse("10uF X7R 0805"),
-                ConstraintPolicy.DEFAULTS, Distributor.LCSC);
-        assertThat(LcscRetriever.constrains(capacitor)).isTrue();
+        // one definition with the Mouser and TME flow (review B4): a stated constraint, not free text, not the family
+        for (String text : List.of("RP2040", "resistor", "10uF X7R 0805", "mosfet 60V")) {
+            var parsed = PARSER.parse(text);
+            var query = ro.alacrity.kina.search.field.FieldQueryBuilder.build(parsed, ConstraintPolicy.DEFAULTS,
+                    Distributor.LCSC);
+            assertThat(FieldRelaxation.statesConstraint(query, query.step(0), parsed)).as(text)
+                    .isEqualTo(text.contains("0805") || text.contains("60V"));
+        }
     }
 
     @Test

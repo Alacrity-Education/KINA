@@ -162,6 +162,11 @@ public final class ConstraintPolicy {
         return hard.getOrDefault(policyFamily(query), hard.get(DEFAULT));
     }
 
+    /** True when {@code kind} is hard for the request's family (its strategy is {@code NEVER}). */
+    public boolean isHard(ParsedQuery query, ConstraintKind kind) {
+        return hardKinds(query).contains(kind);
+    }
+
     /** The hard constraints of the request's family, by name. */
     public Set<String> hardFor(ParsedQuery query) {
         return names(hardKinds(query));

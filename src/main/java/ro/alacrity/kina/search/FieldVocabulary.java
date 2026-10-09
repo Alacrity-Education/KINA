@@ -2,12 +2,16 @@ package ro.alacrity.kina.search;
 
 import lombok.experimental.UtilityClass;
 import ro.alacrity.kina.domain.ComponentFamily;
+import ro.alacrity.kina.domain.ConstraintKind;
+import ro.alacrity.kina.domain.Indexed;
+import ro.alacrity.kina.domain.MatchContext;
 import ro.alacrity.kina.domain.ParsedQuery;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * The component vocabularies the field index ({@code search.field}, DESIGN.md 3.8) needs on both sides: the writer
@@ -19,7 +23,7 @@ import java.util.Locale;
 public class FieldVocabulary {
 
     /** Significant digits of every SI value the writer stores (absorbs the floating-point noise of the extractor). */
-    public static final int SIGNIFICANT_DIGITS = 9;
+    public static final int SIGNIFICANT_DIGITS = Indexed.SIGNIFICANT_DIGITS;
 
     /** The speed class stored for {@code USB 3.x} without a generation: a request up to Gen 2x2 keeps it. */
     public static final int USB_GENERATION_UNKNOWN_CLASS = 4;
@@ -172,5 +176,31 @@ public class FieldVocabulary {
     /** Every switch termination class. */
     public static List<String> terminations() {
         return SwitchVocabulary.terminations();
+    }
+
+    // ---------------------------------------------------------------- the declared vocabularies
+
+    /** The values of a vocabulary an {@code IN_COMPATIBLE} rule compares ({@link Indexed#vocabulary()}). */
+    public static List<String> vocabulary(Indexed.Vocabulary vocabulary) {
+        return switch (vocabulary) {
+            case NONE -> List.of();
+            case FAMILY -> families();
+            case TECHNOLOGY -> technologies();
+            case FORM_FACTOR -> formFactors();
+            case CONNECTOR_TYPE -> CONNECTOR_TYPES;
+            case LED_TYPE -> java.util.stream.Stream.concat(ledTypes().stream(),
+                    java.util.stream.Stream.of(ParsedQuery.Led.INDICATOR, ParsedQuery.Led.HIGH_POWER)).toList();
+            case COLOUR -> ledColours();
+            case SWITCH_TYPE -> switchTypes();
+            case TERMINATION -> terminations();
+        };
+    }
+
+    /**
+     * A {@link MatchContext} of a request without a part, for the comparators of the field index rules; {@code hard}
+     * are the kinds the request's family makes hard.
+     */
+    public static MatchContext requestContext(ParsedQuery query, Set<ConstraintKind> hard) {
+        return new SearchMatchContext(query, null, hard);
     }
 }

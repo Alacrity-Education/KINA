@@ -964,6 +964,56 @@ class AuditRoundThreeTest {
         assertThat(m.parts()).extracting(PartResponse::match).containsExactly(1.0, 1.0, 0.0, 0.0);
     }
 
+    /**
+     * The v0.15.1 open item (validation 9.6), refined in v0.16 (DESIGN.md 3.3 "Match class"): for
+     * {@code 4.7k 1% 0603 resistor} two fresh 10 ohm through-hole resistors whose value the extractor did not read
+     * (only the family was graded: match 1.0) ranked above the stale 4.7k 0603 exact matches. A {@code Mounting: THT}
+     * part now contradicts the chip package of the request (a 0603 is surface mount), and a part whose hard
+     * constraints (value, package) are unverified is in the partial class, after every complete match, stale or not,
+     * with a match below 1.0.
+     */
+    @Test
+    void freshPartsWithUnverifiedHardConstraintsNeverOutrankStaleCompleteMatches() {
+        String query = "4.7k 1% 0603 resistor";
+        String key = QueryParser.normalizeKey(query);
+        Instant fourDays = NOW.minus(Duration.ofDays(4));
+        Instant fresh = NOW.minus(Duration.ofHours(1));
+        List<String> numbers = List.of("603-MF0204FTE52-10R", "603-FKN1WSJB-52-10R", "603-MFR-25FTE52-10R",
+                "603-RC0603FR-074K7L", "603-RC0603FR-104K7L");
+        for (String n : numbers) {
+            Part p;
+            if (n.contains("4K7")) {
+                p = part(Distributor.MOUSER, n, "Thick Film Resistors - SMD 4.7K OHM 1% 1/10W 0603",
+                        "Thick Film Resistors - SMD", 5000, Map.of("Resistance", "4.7K Ohms", "Tolerance", "1 %"),
+                        Map.of(), fourDays);
+            } else if (n.contains("MFR-25")) {
+                // nothing says how it is mounted: the value and the package stay unverified (the partial class)
+                p = part(Distributor.MOUSER, n, "Resistor 1/4W 1%", "Resistors", 9000, Map.of(), Map.of(), fresh);
+            } else {
+                p = part(Distributor.MOUSER, n, "Metal Film Resistors - Through Hole 1/4W 1%",
+                        "Metal Film Resistors - Through Hole", 9000, Map.of(), Map.of(), fresh);
+            }
+            cachedParts.put(p.key(), p);
+        }
+        cachedSearches.put(Distributor.MOUSER + "|" + key, new CachedSearch(Distributor.MOUSER, key, 5, numbers,
+                true, fresh, 5, null, 0, List.of()));
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        mouser.refreshFailure = new ro.alacrity.kina.distributor.DistributorException(Distributor.MOUSER,
+                ro.alacrity.kina.distributor.DistributorException.Kind.UNAVAILABLE, "down");
+        service(List.of(mouser));
+
+        DistributorResult m = result(service.search(request(query, 5, false, Distributor.MOUSER)),
+                Distributor.MOUSER);
+
+        assertThat(m.parts()).extracting(PartResponse::partNumber).containsExactly("603-RC0603FR-074K7L",
+                "603-RC0603FR-104K7L", "603-MFR-25FTE52-10R");
+        assertThat(m.parts()).extracting(PartResponse::stale).containsExactly(true, true, null);
+        assertThat(m.parts().get(0).match()).isEqualTo(1.0);
+        assertThat(m.parts().get(2).match()).isLessThan(1.0);
+        assertThat(m.parts().get(2).unverified()).contains("resistance", "package");
+        assertThat(m.excludedByConstraintsDetail()).containsEntry("mounting", 2);
+    }
+
     @Test
     void staleRankPenaltyIsConfigurable() {
         Instant fourDays = NOW.minus(Duration.ofDays(4));

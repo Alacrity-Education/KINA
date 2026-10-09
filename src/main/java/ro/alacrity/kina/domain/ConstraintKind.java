@@ -1,6 +1,7 @@
 package ro.alacrity.kina.domain;
 
 import ro.alacrity.kina.domain.ComponentFamily.Trait;
+import ro.alacrity.kina.domain.Indexed.Vocabulary;
 import ro.alacrity.kina.domain.ParsedQuery.Connector;
 
 import java.lang.reflect.Field;
@@ -88,7 +89,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, allFamilies = true)
     @Match(mode = CUSTOM, weight = 0.05, order = 28, report = 17)
-    @Indexed(column = "family", type = TEXT, predicate = IN_COMPATIBLE)
+    @Indexed(column = "family", type = TEXT, predicate = IN_COMPATIBLE, vocabulary = Vocabulary.FAMILY)
     TYPE("type", ParsedQuery::family, PartFeatures::family) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -111,6 +112,12 @@ public enum ConstraintKind {
             ParsedQuery q = c.query();
             return q.family() != null && familyGrade(c) < 0
                     ? "family: " + c.part().family() + " instead of " + q.family() : null;
+        }
+
+        /** A family other than the requested one and the families it accepts ({@link ComponentFamily#compatible}). */
+        @Override
+        public boolean refuses(MatchContext c, Object wanted, String value) {
+            return !value.equals(wanted) && !ComponentFamily.compatible((String) wanted, value);
         }
     },
 
@@ -228,7 +235,10 @@ public enum ConstraintKind {
 
     /**
      * SMD or THT. A hybrid USB part (SMD signal pins, through-hole shell legs) is unknown for the check. Scored here
-     * for parts; connector and USB requests score it as {@link #CONNECTOR_MOUNTING} and {@link #USB_MOUNTING}.
+     * for parts; connector and USB requests score it as {@link #CONNECTOR_MOUNTING} and {@link #USB_MOUNTING}. A
+     * request that states no mounting but a hard package whose form factor class implies one ({@code 0603}: SMD,
+     * {@code AXIAL-0.6}: THT; {@link MatchContext#mountingOf}) refuses a part of the other known mounting (a
+     * {@code Mounting: THT} resistor for a {@code 0603} request); a part that does not state its mounting stays.
      */
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, allFamilies = true)
@@ -237,15 +247,24 @@ public enum ConstraintKind {
     MOUNTING("mounting", ParsedQuery::mounting, PartFeatures::mounting) {
         @Override
         public Verdict conflict(MatchContext c) {
-            String wanted = c.query().mounting();
+            String stated = c.query().mounting();
+            String wanted = stated != null ? stated : impliedMounting(c);
             if (wanted == null) {
                 return Verdict.MATCH;
             }
             String actual = c.part().mounting();
             if (actual == null || hybrid(c.part())) {
-                return Verdict.UNKNOWN;
+                // an implied mounting only refuses a known other one; it is never a stated constraint to verify
+                return stated != null ? Verdict.UNKNOWN : Verdict.MATCH;
             }
             return wanted.equals(actual) ? Verdict.MATCH : Verdict.CONFLICT;
+        }
+
+        /** The stated mounting, else the one a hard package implies (the field index keeps only those rows too). */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            String stated = c.query().mounting();
+            return columnValues(stated != null ? stated : impliedMounting(c));
         }
 
         @Override
@@ -265,7 +284,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, INDUCTOR, TRANSISTOR, DEFAULT})
     @Match(mode = COMPATIBLE, weight = 0.15, order = 15, report = 6)
-    @Indexed(column = "technology", type = TEXT, predicate = IN_COMPATIBLE)
+    @Indexed(column = "technology", type = TEXT, predicate = IN_COMPATIBLE, vocabulary = Vocabulary.TECHNOLOGY)
     TECHNOLOGY("technology", ParsedQuery::technology, PartFeatures::technology) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -290,7 +309,7 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = {RESISTOR, CAPACITOR, INDUCTOR, DEFAULT})
     @Match(mode = CUSTOM, weight = 0.10, order = 24, report = 16)
-    @Indexed(column = "form_factor", type = TEXT, predicate = IN_COMPATIBLE)
+    @Indexed(column = "form_factor", type = TEXT, predicate = IN_COMPATIBLE, vocabulary = Vocabulary.FORM_FACTOR)
     FORM_FACTOR("form factor", ParsedQuery::formFactor, PartFeatures::formFactor) {
         @Override
         public Outcome score(MatchContext c, double weight) {
@@ -319,6 +338,17 @@ public enum ConstraintKind {
             return c.compatibleFormFactor(wanted, actual) == Boolean.FALSE
                     ? label() + ": " + c.formFactorLabel(actual) + " instead of " + c.formFactorLabel(wanted) : null;
         }
+
+        /** The class the check compares: the package's class where the package is hard, else the words'. */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            return columnValues(c.requestedFormFactor(c.query(), c.isHard(PACKAGE)));
+        }
+
+        @Override
+        public boolean refuses(MatchContext c, Object wanted, String value) {
+            return c.compatibleFormFactor((String) wanted, value) == Boolean.FALSE;
+        }
     },
 
     /**
@@ -346,6 +376,14 @@ public enum ConstraintKind {
         @Override
         public Verdict conflict(MatchContext c) {
             return singleWantedArrayFound(c) ? Verdict.CONFLICT : Verdict.MATCH;
+        }
+
+        /** A single-element request of a family with arrays: its rule (no element count) applies. */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            ParsedQuery q = c.query();
+            return q.elements() == null && ComponentFamily.has(q.family(), Trait.ARRAYS) ? columnValues(SINGLE)
+                    : List.of();
         }
 
         @Override
@@ -401,6 +439,13 @@ public enum ConstraintKind {
         public String describes(ParsedQuery q) {
             return wanted(q) == null ? null : fanTypeWords(q.fan());
         }
+
+        /** The type and the supply, one per key. */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            ParsedQuery.Fan fan = (ParsedQuery.Fan) wanted(c.query());
+            return fan == null ? List.of() : columnValues(fan.type(), fan.supply());
+        }
     },
 
     /**
@@ -429,6 +474,13 @@ public enum ConstraintKind {
         public String describes(ParsedQuery q) {
             return q.fan() == null || q.fan().frame() == null ? null : q.fan().frame().display();
         }
+
+        /** Width and length in either order: the smaller and the larger, one per key. */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            ParsedQuery.Frame frame = (ParsedQuery.Frame) wanted(c.query());
+            return frame == null ? List.of() : sorted(frame.width(), frame.length());
+        }
     },
 
     /**
@@ -439,7 +491,8 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = LED)
     @Match(mode = CUSTOM, weight = 0.10, order = 38, report = 30)
-    @Indexed(column = Indexed.ATTRS, keys = "led_type", type = TEXT, predicate = IN_COMPATIBLE)
+    @Indexed(column = Indexed.ATTRS, keys = "led_type", type = TEXT, predicate = IN_COMPATIBLE,
+            vocabulary = Vocabulary.LED_TYPE)
     LED_TYPE("led type", q -> q.led() == null ? null : q.led().requestedType(),
             f -> f.led() == null ? null : f.led().type()) {
         @Override
@@ -466,7 +519,8 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = LED)
     @Match(mode = CUSTOM, weight = 0.20, order = 39, report = 31)
-    @Indexed(column = Indexed.ATTRS, keys = "colour", type = TEXT, predicate = IN_COMPATIBLE)
+    @Indexed(column = Indexed.ATTRS, keys = "colour", type = TEXT, predicate = IN_COMPATIBLE,
+            vocabulary = Vocabulary.COLOUR)
     COLOUR("colour", q -> q.led() == null ? null : q.led().colour(), f -> f.led() == null ? null : f.led().colour()) {
         @Override
         Double grade(MatchContext c, Object wanted, Object actual) {
@@ -499,7 +553,8 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.15, order = 48, report = 40)
-    @Indexed(column = Indexed.ATTRS, keys = "switch_type", type = TEXT, predicate = IN_COMPATIBLE)
+    @Indexed(column = Indexed.ATTRS, keys = "switch_type", type = TEXT, predicate = IN_COMPATIBLE,
+            vocabulary = Vocabulary.SWITCH_TYPE)
     SWITCH_TYPE("switch type", q -> q.sw() == null ? null : q.sw().requestedType(),
             f -> f.sw() == null ? null : f.sw().type()) {
         @Override
@@ -541,6 +596,14 @@ public enum ConstraintKind {
         public String describes(ParsedQuery q) {
             return wanted(q) == null ? null : q.sw().contacts().display();
         }
+
+        /** The poles and throws ({@code SPDT}), then the form ({@code NO}), one per key. */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            ParsedQuery.Contacts k = (ParsedQuery.Contacts) wanted(c.query());
+            return k == null ? List.of()
+                    : columnValues(new ParsedQuery.Contacts(k.poles(), k.throwsCount(), null).display(), k.form());
+        }
     },
 
     /** Momentary or latching, or the positions ({@code ON-OFF-ON}, {@code (ON)-OFF-(ON)}) when both state them. */
@@ -568,7 +631,8 @@ public enum ConstraintKind {
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = SWITCH)
     @Match(mode = CUSTOM, weight = 0.10, order = 51, report = 43)
-    @Indexed(column = Indexed.ATTRS, keys = "termination", type = TEXT, predicate = IN_COMPATIBLE)
+    @Indexed(column = Indexed.ATTRS, keys = "termination", type = TEXT, predicate = IN_COMPATIBLE,
+            vocabulary = Vocabulary.TERMINATION)
     TERMINATION("termination", q -> q.sw() == null ? null : q.sw().termination(),
             f -> f.sw() == null ? null : f.sw().termination()) {
         @Override
@@ -608,6 +672,13 @@ public enum ConstraintKind {
         @Override
         public String describes(ParsedQuery q) {
             return wanted(q) == null ? null : q.sw().size().display();
+        }
+
+        /** Width and length in either order: the smaller and the larger, one per key. */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            ParsedQuery.BodySize size = (ParsedQuery.BodySize) wanted(c.query());
+            return size == null ? List.of() : sorted(size.width(), size.length());
         }
     },
 
@@ -712,6 +783,12 @@ public enum ConstraintKind {
             return actualType != null && !wanted.equals(actualType) || otherConnector(actual)
                     ? Verdict.CONFLICT : Verdict.MATCH;
         }
+
+        /** As stated, else as the connector type implies it. */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            return columnValues(wantedUsbType(c));
+        }
     },
 
     /**
@@ -756,6 +833,14 @@ public enum ConstraintKind {
             return wantedPins != null && actualPins != null && !wantedPins.equals(actualPins)
                     ? Verdict.CONFLICT : Verdict.MATCH;
         }
+
+        /** The canonical configuration, unless the request only implies it (then it is never hard). */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            Connector wanted = usb(c.query());
+            return wanted == null || wanted.pinConfigurationImplied() ? List.of()
+                    : columnValues(wantedPins(c, wanted));
+        }
     },
 
     /**
@@ -797,13 +882,21 @@ public enum ConstraintKind {
             Double cmp = c.compareUsbStandards(wanted, actual.usbStandard());
             return powerOnly(actual) || cmp != null && cmp <= 0 ? Verdict.CONFLICT : Verdict.MATCH;
         }
+
+        /** The speed class the request needs at least ({@code usb_class}). */
+        @Override
+        public List<Object> indexWanted(MatchContext c) {
+            String wanted = (String) wanted(c.query());
+            return wanted == null ? List.of() : columnValues(c.requestedUsbClass(wanted));
+        }
     },
 
     /** The connector type (pin header, terminal block...); a generic type is scored but not counted. */
     @Relax(strategy = SOFT)
     @Relax(strategy = NEVER, families = PolicyFamily.CONNECTOR)
     @Match(mode = CUSTOM, weight = 0.10, scope = CONNECTOR, order = 7)
-    @Indexed(column = "connector_type", type = TEXT, predicate = IN_COMPATIBLE)
+    @Indexed(column = "connector_type", type = TEXT, predicate = IN_COMPATIBLE,
+            vocabulary = Vocabulary.CONNECTOR_TYPE)
     CONNECTOR_TYPE("connector type", otherWanted(Connector::type), f -> null) {
         @Override
         public boolean namedInHint(ParsedQuery q) {
@@ -836,6 +929,11 @@ public enum ConstraintKind {
             return wanted != null && actual != null
                     && c.connectorTypesMatch(wanted.type(), actual.type()) == Boolean.FALSE
                     ? Verdict.CONFLICT : Verdict.MATCH;
+        }
+
+        @Override
+        public boolean refuses(MatchContext c, Object wanted, String value) {
+            return c.connectorTypesMatch((String) wanted, value) == Boolean.FALSE;
         }
     },
 
@@ -1008,13 +1106,13 @@ public enum ConstraintKind {
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 16, report = 7)
     @Overshoot(ratio = 2.0)
     @Overshoot(ratio = 3.0, families = CAPACITOR)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     VOLTAGE_RATING("voltage", ParsedQuery.VOLTAGE),
 
     /** A minimum (rated) current (every family but fuses). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 17, report = 8)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     CURRENT("current", ParsedQuery.CURRENT),
 
     /** The current of a fuse, within 2 %. */
@@ -1025,73 +1123,73 @@ public enum ConstraintKind {
     /** The current a fan draws: a maximum (a fan drawing more than requested is below spec). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 17, report = 8)
-    @Indexed(predicate = LTE, slack = 1e-6)
+    @Indexed(predicate = LTE, slack = Indexed.RATING_SLACK)
     MAX_CURRENT("current", ParsedQuery.CURRENT, ComponentFamily.FAN),
 
     /** A minimum saturation current (I_sat) of an inductor. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 18, report = 9)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     SATURATION_CURRENT("saturation current", ParsedQuery.SATURATION_CURRENT),
 
     /** A minimum power rating. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 19, report = 10)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     POWER("power", ParsedQuery.POWER),
 
     /** A minimum maximum operating temperature. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 20, report = 11)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     TEMPERATURE("temperature", ParsedQuery.TEMPERATURE),
 
     /** A minimum rated lifetime. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 21, report = 12)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     LIFETIME("lifetime", ParsedQuery.LIFETIME),
 
     /** A maximum DC resistance of an inductor or ferrite bead. */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 22, report = 13)
-    @Indexed(predicate = LTE, slack = 1e-6)
+    @Indexed(predicate = LTE, slack = Indexed.RATING_SLACK)
     MAX_DCR("dcr", ParsedQuery.DCR),
 
     /** A minimum airflow of a fan (m³/h; CFM, m³/min and l/min are converted). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 34, report = 27)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     AIRFLOW("airflow", ParsedQuery.AIRFLOW),
 
     /** A minimum static pressure of a fan (Pa; mmH2O and inH2O are converted). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 35, report = 28)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     STATIC_PRESSURE("static pressure", ParsedQuery.STATIC_PRESSURE),
 
     /** A maximum noise of a fan (dBA). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 36, report = 29)
-    @Indexed(predicate = LTE, slack = 1e-6)
+    @Indexed(predicate = LTE, slack = Indexed.RATING_SLACK)
     NOISE("noise", ParsedQuery.NOISE),
 
     /** The forward voltage of an LED: a request value is a maximum (an LED that needs more is below spec). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_MOST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 44, report = 36)
-    @Indexed(predicate = LTE, slack = 1e-6)
+    @Indexed(predicate = LTE, slack = Indexed.RATING_SLACK)
     FORWARD_VOLTAGE("forward voltage", ParsedQuery.FORWARD_VOLTAGE),
 
     /** A minimum luminous intensity of an LED (mcd, cd). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 45, report = 37)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     LUMINOUS_INTENSITY("luminous intensity", ParsedQuery.LUMINOUS_INTENSITY),
 
     /** A minimum luminous flux of an LED (lm). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 46, report = 38)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     LUMINOUS_FLUX("luminous flux", ParsedQuery.LUMINOUS_FLUX),
 
     /**
@@ -1157,7 +1255,7 @@ public enum ConstraintKind {
     /** A minimum mechanical life of a switch (cycles). */
     @Relax(strategy = BELOW_SPEC)
     @Match(mode = AT_LEAST, tolerance = 1e-9, weight = 0.10, group = Match.RATING, order = 59, report = 51)
-    @Indexed(predicate = GTE, slack = 1e-6)
+    @Indexed(predicate = GTE, slack = Indexed.RATING_SLACK)
     LIFE("life", ParsedQuery.LIFE),
 
     // ---------------------------------------------------------------- preferences and connector-only signals
@@ -1470,9 +1568,15 @@ public enum ConstraintKind {
         if (match != null && match.mode() == FEATURE && isPolicyKind()) {
             throw new IllegalStateException(this + ": a FEATURE kind never excludes a part");
         }
-        if (indexed != null && (!indexed.nullKept()
-                || indexed.javaOnly() == (indexed.predicate() != Indexed.Predicate.NONE))) {
-            throw new IllegalStateException(this + ": @Indexed keeps NULL columns and is either a predicate or Java only");
+        if (indexed != null && indexed.javaOnly() == (indexed.predicate() != Indexed.Predicate.NONE)) {
+            throw new IllegalStateException(this + ": @Indexed is either a predicate or Java only");
+        }
+        if (indexed != null && (indexed.predicate() == Indexed.Predicate.IN_COMPATIBLE)
+                != (indexed.vocabulary() != Vocabulary.NONE)) {
+            throw new IllegalStateException(this + ": an IN_COMPATIBLE rule, and only one, declares its vocabulary");
+        }
+        if (indexed != null && !indexed.condition().isEmpty()) {
+            throw new IllegalStateException(this + ": a condition column is declared on the PartAttribute");
         }
         if (!overshoot.isEmpty() && (match == null || match.mode() != AT_LEAST
                 || overshoot.stream().filter(o -> o.families().length == 0).count() != 1)) {
@@ -1678,6 +1782,45 @@ public enum ConstraintKind {
         Object w = wanted(c.query());
         Object a = actual(c.query(), c.part());
         return w == null || a == null ? null : grade(c, w, a);
+    }
+
+    /**
+     * The request's value of each column of the field index rule ({@link Indexed}, DESIGN.md 3.8), in the order of the
+     * rule's columns and in the column's form: by default the stated value, and for a measure its value and its
+     * condition (the test frequency of an impedance, read by the measure's {@link Indexed#condition()} column); a
+     * null entry states nothing for that column. Empty when the request does not state the kind. Kinds whose column
+     * holds another form of the value (the smaller and larger side of a body, a USB speed class, a canonical pin
+     * configuration) override it.
+     */
+    public List<Object> indexWanted(MatchContext c) {
+        Object w = wanted(c.query());
+        if (w instanceof ParsedQuery.Constraint constraint) {
+            return columnValues(constraint.value(), constraint.condition());
+        }
+        return columnValues(w);
+    }
+
+    /**
+     * True when a part stating {@code value} (a value of the rule's {@link Indexed#vocabulary()}) contradicts a request
+     * for {@code wanted}: the kind's own comparison ({@link #grade}) is negative. The field index turns it into the
+     * values an {@link Indexed.Predicate#IN_COMPATIBLE} rule refuses (or, for a closed vocabulary, accepts).
+     */
+    public boolean refuses(MatchContext c, Object wanted, String value) {
+        Double g = grade(c, wanted, value);
+        return g != null && g < 0;
+    }
+
+    /** The value of a single-element request in the rule of {@link #ELEMENTS} (the column must be NULL). */
+    static final String SINGLE = "single";
+
+    /** {@code values} as a list that may hold nulls; empty when every value is null. */
+    private static List<Object> columnValues(Object... values) {
+        return Arrays.stream(values).allMatch(java.util.Objects::isNull) ? List.of() : Arrays.asList(values);
+    }
+
+    /** The smaller and the larger of two sides. */
+    private static List<Object> sorted(double a, double b) {
+        return List.of(Math.min(a, b), Math.max(a, b));
     }
 
     /** The comparison of two known values by {@link Match#mode()}; {@link MatchMode#CUSTOM} kinds override it. */
@@ -2006,6 +2149,11 @@ public enum ConstraintKind {
 
     private static boolean hybrid(PartFeatures f) {
         return f.connector() != null && ParsedQuery.HYBRID.equals(f.connector().mountingStyle());
+    }
+
+    /** The mounting a hard package of the request implies ({@link MatchContext#mountingOf}), else null. */
+    private static String impliedMounting(MatchContext c) {
+        return c.isHard(PACKAGE) ? c.mountingOf(c.query().packageName()) : null;
     }
 
     /** A single-element request (resistors, capacitors, ferrite beads) against an array or network. */
