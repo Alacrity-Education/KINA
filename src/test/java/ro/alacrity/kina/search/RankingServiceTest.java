@@ -385,4 +385,44 @@ class RankingServiceTest {
         assertThat(broken.status().ready()).isFalse();
         assertThat(broken.status().lastError()).isEqualTo("status unavailable");
     }
+
+    /**
+     * The match class (DESIGN.md 3.3, v0.15.1): a part that confirms nothing stated ({@code match} 0: the TE part
+     * numbers of the {@code 4.7k 1% 0603 resistor} incident) ranks after every part that confirms something, whatever
+     * the model says, with a stock shortfall or a mismatch on the other side, in every ordering.
+     */
+    @Test
+    void aPartThatConfirmsNothingNeverRanksAboveOneThatConfirmsSomething() {
+        Part exact = RankingFixtures.part(Distributor.MOUSER, "603-RC0603FR-074K7L", "YAGEO", "RC0603FR-074K7L",
+                "Thick Film Resistors - SMD 4.7K OHM 1% 1/10W 0603", "Thick Film Resistors - SMD", "0603", 5000, "0.01",
+                Map.of("Resistance", "4.7K Ohms", "Tolerance", "1 %"), Map.of());
+        Part shortfall = RankingFixtures.part(Distributor.MOUSER, "603-RC0603FR-134K7L", "YAGEO", "RC0603FR-134K7L",
+                "Thick Film Resistors - SMD 4.7K OHM 1% 1/10W 0603", "Thick Film Resistors - SMD", "0603", 3, "0.01",
+                Map.of("Resistance", "4.7K Ohms", "Tolerance", "1 %"), Map.of());
+        Part partial = RankingFixtures.part(Distributor.MOUSER, "603-RC0603JR-074K7L", "YAGEO", "RC0603JR-074K7L",
+                "Thick Film Resistors - SMD 4.7K OHM 5% 1/10W 0603", "Thick Film Resistors - SMD", "0603", 5000, "0.01",
+                Map.of("Resistance", "4.7K Ohms", "Tolerance", "5 %"), Map.of());
+        Part te1 = RankingFixtures.part(Distributor.MOUSER, "571-1-2199298-2", "TE Connectivity", "1-2199298-2",
+                "TE Connectivity 1-2199298-2", null, null, 9000, "1.00", Map.of(), Map.of());
+        Part te2 = RankingFixtures.part(Distributor.MOUSER, "571-2-1445057-2", "TE Connectivity", "2-1445057-2",
+                "TE Connectivity 2-1445057-2", null, null, 9000, "1.00", Map.of(), Map.of());
+        FakeRanker ranker = new FakeRanker();
+        ranker.scores.put(te1.key(), 9.0);
+        ranker.scores.put(te2.key(), 8.0);
+        ParsedQuery q = parser.parse("4.7k 1% 0603 resistor");
+
+        for (RankingService.RankedResults results : List.of(
+                service(ranker).rank(q, fetched(Distributor.MOUSER, te1, te2, partial, shortfall, exact), null,
+                        new RankingService.RankOptions(10, false)),
+                service(ranker, "kina.ranking.cross-encoder.enabled", "false")
+                        .rank(q, fetched(Distributor.MOUSER, te1, te2, partial, shortfall, exact), null,
+                                new RankingService.RankOptions(10, false)))) {
+            List<RankingService.RankedPart> ranked = results.byDistributor().get(Distributor.MOUSER);
+            assertThat(keys(ranked).subList(3, 5)).as(results.mode().name())
+                    .containsExactlyInAnyOrder(te1.distributorPartNumber(), te2.distributorPartNumber());
+            assertThat(ranked.subList(0, 3)).allMatch(r -> r.match() != null && r.match() > 0);
+            assertThat(ranked.subList(3, 5)).allMatch(r -> RankingService.confirmsNothing(r.match()));
+            assertThat(keys(ranked).getFirst()).isEqualTo(exact.distributorPartNumber());
+        }
+    }
 }

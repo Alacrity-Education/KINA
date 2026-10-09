@@ -32,6 +32,7 @@ import static ro.alacrity.kina.metrics.Metric.DISTRIBUTOR_CALLS;
 import static ro.alacrity.kina.metrics.Metric.DISTRIBUTOR_DURATION;
 import static ro.alacrity.kina.metrics.Metric.FIELD_FALLBACKS;
 import static ro.alacrity.kina.metrics.Metric.FIELD_INDEX_REINDEXED;
+import static ro.alacrity.kina.metrics.Metric.FIELD_INDEX_SWEEP_REPAIRED;
 import static ro.alacrity.kina.metrics.Metric.FIELD_JOURNAL_HITS;
 import static ro.alacrity.kina.metrics.Metric.FIELD_LIVE_CALLS;
 import static ro.alacrity.kina.metrics.Metric.FIELD_SERVED;
@@ -325,6 +326,13 @@ public class KinaMetrics implements RateLimitRetry.Listener {
     public void fieldIndexReindexed(String distributor, long rows) {
         if (rows > 0) {
             safely(() -> store.add(FIELD_INDEX_REINDEXED.key(distributor), rows));
+        }
+    }
+
+    /** {@code rows} index rows the periodic re-index sweep found not current and rewrote (DESIGN.md 3.8). */
+    public void fieldIndexSweepRepaired(String distributor, long rows) {
+        if (rows > 0) {
+            safely(() -> store.add(FIELD_INDEX_SWEEP_REPAIRED.key(distributor), rows));
         }
     }
 

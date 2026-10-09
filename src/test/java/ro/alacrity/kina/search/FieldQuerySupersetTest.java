@@ -123,12 +123,13 @@ class FieldQuerySupersetTest {
         JdbcClient jdbc = JdbcClient.create(ds);
         OffsetDateTime now = Instant.parse("2026-10-08T00:00:00Z").atOffset(ZoneOffset.UTC);
         for (Part part : POOL.values()) {
+            String json = MAPPER.writeValueAsString(part.asStored());
             jdbc.sql("""
                             INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at,
-                                                      metadata_fetched_at, in_stock, type)
-                            VALUES (?, ?, ?::jsonb, ?, ?, true, 'unknown')""")
-                    .params(part.distributor().name(), part.distributorPartNumber(),
-                            MAPPER.writeValueAsString(part.asStored()), now, now)
+                                                      metadata_fetched_at, in_stock, type, metadata_md5)
+                            VALUES (?, ?, ?::jsonb, ?, ?, true, 'unknown', ?)""")
+                    .params(part.distributor().name(), part.distributorPartNumber(), json, now, now,
+                            ro.alacrity.kina.cache.PartMetadataHash.ofPayload(json))
                     .update();
         }
         index = TestWiring.wire(new PartIndexRepository(), "jdbc", jdbc, "jdbcTemplate", new JdbcTemplate(ds),

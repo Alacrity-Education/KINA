@@ -77,7 +77,23 @@ class FieldFirstSearchTest {
     static final class PhraseClient implements DistributorClient {
         final Map<String, List<Part>> answers = new HashMap<>();
         final List<String> asked = new CopyOnWriteArrayList<>();
+        /** The answer of {@link #refreshStock} by part number (missing: unknown). */
+        final Map<String, ro.alacrity.kina.distributor.StockUpdate> stock = new HashMap<>();
+        final List<String> refreshed = new CopyOnWriteArrayList<>();
         RuntimeException failure;
+
+        @Override
+        public Map<String, ro.alacrity.kina.distributor.StockUpdate> refreshStock(List<String> partNumbers,
+                ro.alacrity.kina.distributor.Deadline deadline) {
+            refreshed.addAll(partNumbers);
+            Map<String, ro.alacrity.kina.distributor.StockUpdate> out = new HashMap<>();
+            partNumbers.forEach(n -> {
+                if (stock.containsKey(n)) {
+                    out.put(n, stock.get(n));
+                }
+            });
+            return out;
+        }
 
         PhraseClient answer(String phrase, List<Part> parts) {
             answers.put(QueryParser.normalizeKey(phrase), parts);
@@ -120,6 +136,7 @@ class FieldFirstSearchTest {
     @BeforeEach
     void clean() {
         jdbc.sql("DELETE FROM cached_parts").update();
+        index.forgetCoverage();
         jdbc.sql("DELETE FROM cached_searches").update();
         jdbc.sql("DELETE FROM distributor_phrases").update();
         mouser = new PhraseClient();
@@ -420,6 +437,7 @@ class FieldFirstSearchTest {
     void anIncompleteIndexTakesTheCachedSearchPath() {
         cache(mlccs("A", 5, "X7R", 25));
         jdbc.sql("DELETE FROM part_index").update();
+        index.forgetCoverage();
         assertThat(index.isComplete(Distributor.MOUSER)).isFalse();
         mouser.answer(phrases().getFirst(), mlccs("N", 5, "X7R", 25));
         service("on");

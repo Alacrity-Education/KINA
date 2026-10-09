@@ -11,6 +11,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import ro.alacrity.kina.TestWiring;
+import ro.alacrity.kina.cache.PartCacheRepository;
 import ro.alacrity.kina.cache.PhraseJournalRepository;
 import ro.alacrity.kina.domain.Distributor;
 import ro.alacrity.kina.search.ParametricExtractor;
@@ -81,12 +82,28 @@ class CachePreservationMigrationTest {
         assertThat(snapshot("cached_searches")).as("cached_searches after V14").isEqualTo(searches);
         assertThat(jdbc.sql("SELECT count(*) FROM part_index").query(Long.class).single()).isZero();
 
+        // V15 only adds the phrase journal; V16 only adds the metadata hash columns (NULL) and two covering indexes
+        flyway("16").migrate();
+        assertThat(jdbc.sql("SELECT max(version::int) FROM flyway_schema_history WHERE success")
+                .query(Integer.class).single()).isEqualTo(16);
+        assertThat(snapshot("cached_parts")).as("cached_parts after V16").isEqualTo(parts);
+        assertThat(snapshot("cached_searches")).as("cached_searches after V16").isEqualTo(searches);
+        assertThat(jdbc.sql("SELECT count(*) FROM cached_parts WHERE metadata_md5 IS NOT NULL").query(Long.class)
+                .single()).isZero();
+
         PartIndexRepository index = repository();
+        PartCacheRepository cache = TestWiring.wire(new PartCacheRepository(), "jdbc", jdbc,
+                "jdbcTemplate", new JdbcTemplate(dataSource), "jsonMapper", JsonMapper.builder().build(),
+                "clock", Clock.systemUTC());
         Map<Distributor, PartIndexRepository.Coverage> before = index.coverage();
         assertThat(before.values()).allMatch(c -> !c.complete());
         assertThat(index.isComplete(Distributor.TME)).isFalse();
         assertThat(index.isComplete(Distributor.MOUSER)).isFalse();
 
+        // the startup job: the cache's metadata hashes first (only that column), then the index rows
+        assertThat(cache.backfillMetadataHashes(7)).isEqualTo(29);
+        assertThat(cache.backfillMetadataHashes(7)).as("a second run fills nothing").isZero();
+        assertThat(index.backfillMetadataHashes()).as("no index rows yet").isZero();
         PartIndexRepository.ReindexReport report = index.reindexStale(ParametricExtractor.INDEX_VERSION, 7);
         assertThat(report.total()).isEqualTo(29);
         assertThat(report.unreadable()).isEqualTo(1);
@@ -107,12 +124,29 @@ class CachePreservationMigrationTest {
         assertThat(snapshot("cached_parts")).as("cached_parts after the backfill").isEqualTo(parts);
         assertThat(snapshot("cached_searches")).as("cached_searches after the backfill").isEqualTo(searches);
 
-        // V15 only adds the phrase journal; the journal backfill only reads cached_searches
-        flyway("15").migrate();
-        assertThat(jdbc.sql("SELECT max(version::int) FROM flyway_schema_history WHERE success")
-                .query(Integer.class).single()).isEqualTo(15);
-        assertThat(snapshot("cached_parts")).as("cached_parts after V15").isEqualTo(parts);
-        assertThat(snapshot("cached_searches")).as("cached_searches after V15").isEqualTo(searches);
+        // an index written before V16 (no hashes) whose stock refresh rewrote one payload (the v0.15.0 defect): the
+        // rows built from the payload the cache holds get the hash without extraction, only the other is re-indexed
+        jdbc.sql("UPDATE part_index SET metadata_md5 = NULL").update();
+        jdbc.sql("UPDATE cached_parts SET metadata_md5 = NULL").update();
+        String refreshed = jdbc.sql("""
+                        SELECT part_number FROM cached_parts
+                        WHERE distributor = 'MOUSER' AND in_stock AND payload ->> 'stock' IS NOT NULL
+                        ORDER BY part_number LIMIT 1""")
+                .query(String.class).single();
+        jdbc.sql("""
+                        UPDATE cached_parts SET payload = jsonb_set(payload, '{stock}', '4321')
+                        WHERE distributor = 'MOUSER' AND part_number = ?""").param(refreshed).update();
+        List<String> refreshedParts = snapshot("cached_parts");
+        index.forgetCoverage();
+        assertThat(index.isComplete(Distributor.MOUSER)).isFalse();
+        assertThat(cache.backfillMetadataHashes(7)).isEqualTo(29);
+        assertThat(index.backfillMetadataHashes()).isEqualTo(28);
+        PartIndexRepository.ReindexReport repaired = index.reindexStale(ParametricExtractor.INDEX_VERSION, 7);
+        assertThat(repaired.total()).as("only the row built from an older payload").isEqualTo(1);
+        assertThat(index.coverage().values()).allMatch(PartIndexRepository.Coverage::complete);
+        assertThat(snapshot("cached_parts")).as("only the hash column was written").isEqualTo(refreshedParts);
+
+        // the journal backfill only reads cached_searches
         assertThat(jdbc.sql("SELECT count(*) FROM distributor_phrases").query(Long.class).single()).isZero();
 
         PhraseJournalRepository journal = TestWiring.wire(new PhraseJournalRepository(), "jdbc", jdbc);
@@ -130,7 +164,7 @@ class CachePreservationMigrationTest {
         assertThat(fallback.ladderStep()).isGreaterThanOrEqualTo(1);
         assertThat(jdbc.sql("SELECT count(*) FROM distributor_phrases WHERE distributor = 'TME'")
                 .query(Long.class).single()).isZero();
-        assertThat(snapshot("cached_parts")).as("cached_parts after the journal backfill").isEqualTo(parts);
+        assertThat(snapshot("cached_parts")).as("cached_parts after the journal backfill").isEqualTo(refreshedParts);
         assertThat(snapshot("cached_searches")).as("cached_searches after the journal backfill").isEqualTo(searches);
     }
 
@@ -148,10 +182,13 @@ class CachePreservationMigrationTest {
         }
     }
 
-    /** Every row of {@code table} as its JSON text, in key order. */
+    /**
+     * Every row of {@code table} as its JSON text, in key order, without the column V16 adds (it starts NULL and the
+     * startup job fills it: every other column must stay byte-identical).
+     */
     private static List<String> snapshot(String table) {
         String key = table.equals("cached_parts") ? "distributor, part_number" : "distributor, query_key";
-        return jdbc.sql("SELECT row_to_json(t)::text FROM " + table + " t ORDER BY " + key).query(String.class)
-                .list();
+        return jdbc.sql("SELECT (to_jsonb(t) - 'metadata_md5')::text FROM " + table + " t ORDER BY " + key)
+                .query(String.class).list();
     }
 }

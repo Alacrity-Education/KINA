@@ -199,9 +199,13 @@ component is kept, what it says about stock and price expires.
   most `kina.cache.ttl` (3 days) old; beyond that it is returned with **`stale: true`** (covers stock and prices),
   `availability.status: "stale"` with a note (`Stock and price were last confirmed on 2026-10-01 (4 days ago) and could
   not be refreshed; check them at the distributor before ordering. Last known stock: 500.`), and it ranks below the
-  fresh parts (`StockRefresher.demoteStale`: its score is lowered by `kina.cache.stale-rank-penalty`, default 1.0,
-  reported at least 0, and it is placed before the first fresh part of its group, meeting the request or below spec,
-  that scores lower; with 1.0 every stale part ends up after every fresh part of its group). A stale part that a
+  fresh parts of its group (`StockRefresher.demoteStale`: its score is lowered by `kina.cache.stale-rank-penalty`,
+  default 1.0, reported at least 0, and it is placed before the first fresh part of its group that scores lower, or
+  before the first part of a later group; with 1.0 every stale part ends up after every fresh part of its group). The
+  groups, in order, are the match class first (parts that confirm some stated parameter, then parts that confirm none,
+  `match` 0; section 3.3 "Match class"), then meeting the request before below spec: a stale part is demoted only
+  within its match class, so a fresh part that confirms nothing never passes a stale exact match (0.15.0 put two fresh
+  TE connectors, `match` 0, above stale 4.7k 0603 resistors, `match` 1.0, for `4.7k 1% 0603 resistor`). A stale part that a
   refresh shows as sold out is dropped from the results; its row keeps the metadata with `in_stock = false` and is not
   served until a live fetch finds it in stock again (the stock rule: a part without ships-now stock is never returned).
   LCSC parts are never stale (the local JLCPCB database is the cache).
@@ -695,7 +699,9 @@ constraint `RankedResults.excludedDetail`, section 3.4 "Hard constraints"); part
 (section 3.4 "Below spec"). Every remaining part gets a tier: 0 for a
 **complete** match (no mismatch, nothing unverified), +1 for a part with a mismatch or an unverified constraint
 (including an unstated hard attribute), +4 when its stock is below `quantity`, +8 when it is below spec (only with
-`allowBelowSpec`), and -16 (`RankingService.REQUESTED_TIER`) when the query names it by part number (section 3.4
+`allowBelowSpec`), +16 (`RankingService.UNCONFIRMED_TIER`, the **match class**) when it confirms none of the stated
+parameters (`match` 0, `RankingService.confirmsNothing`; a null match, a query not understood, is not in this class),
+and -16 (`RankingService.REQUESTED_TIER`) when the query names it by part number (section 3.4
 "Requested part numbers"): the requested part comes first in its distributor whatever its score, and is reported with
 score 1.0; it is still excluded by a hard constraint or a rating below the request like any other part (a rule, not a
 weight). The quantity, MOQ, low-stock and lifecycle penalties and the voltage overshoot (section 3.4) are subtracted
@@ -703,6 +709,15 @@ from the deterministic score and **again from the final score** (blended or not)
 (deterministic, blended, fallback) sorts by tier first, so a part with an unverified constraint or too little stock
 never ranks above a complete match with enough stock, whatever the model says; within the below-spec tier the order
 is the distance from the target (closest first), never the blend. `score` is then made non-increasing down the list.
+
+**Match class** (0.15.1, product decision). A part whose `match` is 0 (no stated parameter confirmed: typically a part
+of unknown family that a keyword search or a NULL-keeping field rule brought in) never ranks above a part with `match`
+greater than 0, stale or not, whatever its stock, its spec or the model's score; a requested part (named by part
+number) keeps its place first. The stale demotion (section 3.2) applies within a match class only. Such parts are
+kept, not dropped, also on the field path when a confirmed part exists: they come last and are flagged (`match` 0,
+`unverified`), a hard constraint already removes every part whose known attribute contradicts the request, and
+dropping them would change `returned` and the paging and relaxation decisions of the field-first flow (which count
+returnable parts) and would hide the only answer when the extractor misses the family of a right part.
 The match grade, `mismatches`, `unverified` and `below_spec` of every part (section 3.4) come from the same
 assessment; when the query was not understood (`ParsedQuery.understood()` false) every match grade is null.
 
@@ -1998,6 +2013,7 @@ No other value is possible (connector and USB sub-types are not tags), so the ta
 | `kina_distributor_quota_limit` | gauge | `distributor`, `window` | the limit of that window (`kina.distributors.<name>.quota`); its own series, so `used / limit` is a ratio in PromQL |
 | `kina_distributor_quota_throttled_until_seconds` | gauge | `distributor` | end of the rate limit the distributor last answered with, Unix time (0 when none is running) |
 | `kina_field_index_reindexed_total` | counter | `distributor` | `part_index` rows written by the field index re-index job (section 3.8) |
+| `kina_field_index_sweep_repaired_total` | counter | `distributor` | `part_index` rows the periodic re-index sweep found not current and rewrote (section 3.8); every cache write keeps its rows current, so it should stay 0 |
 | `kina_field_shadow_queries_total` | counter | `distributor`, `outcome` | shadow field queries (`kina.search.field-index.mode=shadow`, section 3.8): `ok`, `dropped`, `incomplete` (index not complete for the distributor), `failed` |
 | `kina_field_shadow_candidates_total` | counter | `distributor` | candidates the shadow field queries returned (unrelaxed step) |
 | `kina_field_shadow_dropped_total` | counter | `distributor` | returnable parts the most relaxed shadow field query would have dropped; must stay 0 |
@@ -2266,26 +2282,51 @@ list (`off`, 49 parts); with the cap at 100, 198 ms in `on` (104 parts), 158 ms 
 own-attribute queries of the validation, 201 found their part at 100 and 198 at 200 (the differences are ranking
 order within the 50 returned).
 
-**Writing and consistency.** `PartCacheRepository.upsertAll` and `upsertListed` compute the index rows before their
-transaction (extraction is the expensive part) and write them in the same transaction as the payloads, under a
-savepoint: an index failure is logged and never fails the cache write. The row is inserted from the `cached_parts` row
-(`INSERT ... SELECT ... FROM cached_parts`), so the index never holds a part the cache does not, and it records
-`md5(payload::text)` of the payload it was built from; an unchanged row is not rewritten (`IS DISTINCT FROM`). A stock
-refresh copies `in_stock` (`updateStock`, `markSoldOut`); `in_stock` and stock are never indexed, so stock updates stay
-HOT. A row is current when it was written by the running extractor (`extractor_version` =
-`ParametricExtractor.INDEX_VERSION`) from the payload the cache holds now with the same `in_stock`.
+**Writing and consistency.** Every write of a payload goes through one method of `PartCacheRepository` (`upsertAll`,
+`upsertListed` and `updateStock`, the stock refresh and the part-number lookup): it computes the index rows before its
+transaction (extraction is the expensive part) and writes them in the same transaction as the payloads, under a
+savepoint: an index failure is logged and never fails the cache write. `markSoldOut` copies `in_stock = false` to the
+index row in its transaction (also under a savepoint); a purge deletes the index rows by the foreign key cascade.
+The row is inserted from the `cached_parts` row (`INSERT ... SELECT ... FROM cached_parts`), so the index never holds
+a part the cache does not; an unchanged row is not rewritten (`IS DISTINCT FROM`, which ignores `indexed_at` and
+`payload_md5`).
+
+**When a row is current** (since 0.15.1, migration V16). Both tables carry `metadata_md5`, the hash of the stored
+metadata (`cache.PartMetadataHash`: the payload keys `distributor`, `distributorPartNumber`, `manufacturer`,
+`manufacturerPartNumber`, `description`, `category`, `packageName`, `attributes` and `extra`, with object keys sorted
+and numbers in one form; never stock, prices, minimum order, URLs or `fetchedAt`). The writer of `cached_parts` stores
+the hash of the payload it writes; the index row stores the hash of the part it was built from (computed from that
+part, never from the cache row at insert time, so a payload written between the build and the write leaves the row
+visibly stale). A row is current when it was written by the running extractor (`extractor_version` >=
+`ParametricExtractor.INDEX_VERSION`), its `metadata_md5` equals the cache row's, and its `in_stock` equals the cache
+row's. A stock refresh rewrites stock, prices and `fetchedAt` only: the hash does not change, so the row stays current
+and is not rewritten (only a changed `in_stock`); new metadata from a part-number lookup re-indexes the part in the
+same write. `payload_md5` (V14) is kept, informational only: the md5 of the payload when the row last changed. In
+0.15.0 a row was current only for `md5(payload::text)`: every stock refresh made its rows stale, `isComplete` turned
+false and every `on` search took the cached-search path (`kina_field_fallbacks_total{reason="incomplete"}`) until a
+restart.
 `INDEX_VERSION` is bumped by hand when extraction changes; `IndexVersionTest` hashes the extraction and the index rows of
 the evaluation set and fails when they change without a bump (the expected hash, `INDEX_FINGERPRINT`, sits next to the
 version). `kina.search.field-index.min-version` makes rows of an older extractor count as unknown in every rule but the
 family.
 
 **Re-index and coverage.** `PartIndexReindexer` runs once in the background after `ApplicationReadyEvent`
-(`kina.search.field-index.reindex-enabled`, default true; never blocks startup): it reads `cached_parts` in key order,
-500 rows at a time (`reindex-batch-size`), selects the rows whose index row is missing or not current, in stock or sold
-out, enriches them and writes their rows; a payload that cannot be read gets a placeholder row (no attributes), as the
-cache path never serves it either. It logs one INFO line with the counts and counts `kina_field_index_reindexed_total`.
-`PartIndexRepository.coverage()` compares, per distributor, the `cached_parts` rows with the current index rows; a
-distributor is **complete** when every cached part has one (`isComplete`, recomputed at most every 30 s). Until then
+(`kina.search.field-index.reindex-enabled`, default true; never blocks startup) and then as a **sweep** every
+`kina.search.field-index.reindex-interval` (default `1h`, `KINA_FIELD_INDEX_REINDEX_INTERVAL`; one run at a time). A
+run first fills the metadata hashes of rows written before V16: `PartCacheRepository.backfillMetadataHashes` hashes
+each payload whose `metadata_md5` is NULL (500 rows at a time, only that column, and only while the payload is the one
+hashed), then `PartIndexRepository.backfillMetadataHashes` copies the cache's hash to every index row without one that
+was built from the payload the cache holds now (`payload_md5 = md5(payload::text)`): no extraction. Then it reads
+`cached_parts` in key order, 500 rows at a time (`reindex-batch-size`), selects the rows whose index row is missing or
+not current, in stock or sold out, enriches them and writes their rows; a payload that cannot be read gets a
+placeholder row (no attributes), as the cache path never serves it either. It logs one INFO line with the counts and
+counts `kina_field_index_reindexed_total`; the rows a sweep rewrites also count
+`kina_field_index_sweep_repaired_total`, which should stay 0 (every cache write keeps its rows current; a non-zero
+value names a write path that does not). `PartIndexRepository.coverage()` compares, per distributor, the
+`cached_parts` rows with the current index rows, from the stored hashes, versions and stock flags only (the covering
+indexes `cached_parts_index_state_idx` and `part_index_state_idx` of V16; no payload is read); a distributor is
+**complete** when every cached part has one (`isComplete`, recomputed at most every 30 s; a cache write does not drop
+the snapshot, as the rows it writes are current by construction; the re-index does). Until then
 a caller must not answer from the index for that distributor and keeps the cached-search path, so no cached part
 becomes unreachable while the index is built or rebuilt. `list_distributors` reports
 `field_index: {mode, rows, stale, version, reindexing, incomplete, journal_rows}` (`journal_rows`: the rows of the
@@ -2301,7 +2342,9 @@ search result never changes. `augment` adds the field candidates to a cached lis
 the phrase journal (section 3.2 "Field-first flow"); both fall back to the cached-search path whenever the index is
 not complete for the distributor (`isComplete`), on any SQL error and for a request the index cannot answer.
 
-**Cache preservation.** V15 only creates the `distributor_phrases` table and its index (the journal, section 3.2): no
+**Cache preservation.** V16 only adds the nullable `metadata_md5` columns and two covering indexes; the job after
+startup writes only `cached_parts.metadata_md5` (every other column stays byte-identical, checked by
+`CachePreservationMigrationTest` without that column). V15 only creates the `distributor_phrases` table and its index (the journal, section 3.2): no
 `cached_parts` or `cached_searches` row is read, changed or deleted by it or by the journal backfill, and the
 cached-search path keeps writing `cached_searches` in every mode. V14 only creates the `pg_trgm` extension (`CREATE EXTENSION IF NOT EXISTS`), the `part_index`
 table (with a foreign key to `cached_parts` that cascades deletes and key changes to the index rows, so it never
@@ -2701,7 +2744,7 @@ MCP authorization 2025-11-25 and draft-ietf-oauth-client-id-metadata-document: a
   Their codes and refresh tokens go with them (`ON DELETE CASCADE`). Claude registers a new client on every fresh
   connection when it uses dynamic registration, so without this the table only grows.
 
-## 8. Database schema (Flyway `V1__init.sql` to `V15__phrase_journal.sql`)
+## 8. Database schema (Flyway `V1__init.sql` to `V16__metadata_hash.sql`)
 
 ```sql
 CREATE TABLE users (
@@ -2880,7 +2923,7 @@ CREATE TABLE part_index (
   part_number        TEXT NOT NULL,
   extractor_version  INTEGER NOT NULL,             -- ParametricExtractor.INDEX_VERSION of the writer
   indexed_at         TIMESTAMPTZ NOT NULL,
-  payload_md5        TEXT NOT NULL,                -- md5(cached_parts.payload::text) the row was built from
+  payload_md5        TEXT NOT NULL,                -- md5(cached_parts.payload::text); informational since V16
   in_stock           BOOLEAN NOT NULL,             -- copy of cached_parts.in_stock
   family TEXT, family_path TEXT[] NOT NULL DEFAULT '{}', policy_family TEXT, subtype TEXT, polarity TEXT,
   package_key TEXT, package_readable BOOLEAN NOT NULL DEFAULT false, package_class TEXT,
@@ -2920,7 +2963,21 @@ CREATE TABLE distributor_phrases (
   PRIMARY KEY (distributor, phrase_key)
 );
 CREATE INDEX distributor_phrases_asked_idx ON distributor_phrases (asked_at);
+-- V16__metadata_hash.sql (section 3.8 "When a row is current", 0.15.1): the metadata hash on both sides. The migration
+-- only adds two nullable columns and two covering indexes; no row of cached_parts or cached_searches is read, changed
+-- or deleted by it. The new columns start NULL (not current); the job after startup fills cached_parts.metadata_md5
+-- from each payload (only that column), copies it to the index rows built from the same payload and re-indexes the rest.
+ALTER TABLE cached_parts ADD COLUMN metadata_md5 TEXT;   -- PartMetadataHash of the payload; NULL until backfilled
+ALTER TABLE part_index   ADD COLUMN metadata_md5 TEXT;   -- PartMetadataHash of the part the row was built from
+CREATE INDEX cached_parts_index_state_idx ON cached_parts (distributor, part_number) INCLUDE (in_stock, metadata_md5);
+CREATE INDEX part_index_state_idx ON part_index (distributor, part_number)
+  INCLUDE (extractor_version, in_stock, metadata_md5);
 ```
+
+`part_index.payload_md5` is informational since V16 (the md5 of the payload when the row last changed). The covering
+indexes let the coverage check (`isComplete`) compare hashes without reading a payload; `in_stock` and `metadata_md5`
+are now in an index of `cached_parts`, so an update that changes one of them (a sold-out mark, new metadata) is not a
+HOT update; a stock refresh changes neither and stays HOT.
 
 ## 9. Distributor details (verified against the live APIs on 2026-10-05)
 
@@ -3340,6 +3397,7 @@ kina:
       max-live-calls-per-distributor: ${KINA_FIELD_INDEX_MAX_LIVE_CALLS:2}   # on: distributor calls one search may make
       reindex-batch-size: 500    # rows the re-index reads and writes at a time
       reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}   # false in src/test/resources/config/application.yml
+      reindex-interval: ${KINA_FIELD_INDEX_REINDEX_INTERVAL:1h}   # the sweep of rows not current (3.8 "Re-index and coverage")
       require-stated-constraint: ${KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT:true}   # section 3.2 "The stated-constraint rule"
   ranking:
     timeout: 5s                  # per query (deterministic + cross-encoder)

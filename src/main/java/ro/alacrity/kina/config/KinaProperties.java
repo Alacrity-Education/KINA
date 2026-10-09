@@ -413,18 +413,25 @@ public record KinaProperties(
      *                        reads the index ({@code augment} adds nothing, {@code on} takes the cached-search path
      *                        with reason {@code generic}); false: such a request reads the index too, which then
      *                        returns the first {@code max-candidates} in-stock parts of the family
+     * @param reindexInterval how often the re-index sweep runs after the startup run (default 1 hour; read by the
+     *                        {@code @Scheduled} method through the same property): it re-indexes the rows that are not
+     *                        current, which every cache write should have kept current (a safety net)
      */
     public record FieldIndex(@DefaultValue("off") FieldIndexMode mode, @DefaultValue("0") int minVersion,
                              @DefaultValue("100") int maxCandidates, @DefaultValue("500") int reindexBatchSize,
                              @DefaultValue("true") boolean reindexEnabled,
                              @DefaultValue("2") int maxLiveCallsPerDistributor,
-                             @DefaultValue("true") boolean requireStatedConstraint) {
+                             @DefaultValue("true") boolean requireStatedConstraint,
+                             @DefaultValue("1h") Duration reindexInterval) {
 
         /** The default of {@code max-candidates}: 100 (DESIGN.md 3.8 "Candidate cap"). */
         public static final int DEFAULT_MAX_CANDIDATES = 100;
 
+        /** The default of {@code reindex-interval}: 1 hour. */
+        public static final Duration DEFAULT_REINDEX_INTERVAL = Duration.ofHours(1);
+
         public static final FieldIndex DEFAULTS = new FieldIndex(FieldIndexMode.OFF, 0, DEFAULT_MAX_CANDIDATES, 500,
-                true, 2, true);
+                true, 2, true, DEFAULT_REINDEX_INTERVAL);
 
         @ConstructorBinding
         public FieldIndex {
@@ -433,6 +440,15 @@ public record KinaProperties(
             maxCandidates = maxCandidates <= 0 ? DEFAULT_MAX_CANDIDATES : maxCandidates;
             reindexBatchSize = reindexBatchSize <= 0 ? 500 : reindexBatchSize;
             maxLiveCallsPerDistributor = maxLiveCallsPerDistributor <= 0 ? 2 : maxLiveCallsPerDistributor;
+            reindexInterval = reindexInterval == null || reindexInterval.isNegative() || reindexInterval.isZero()
+                    ? DEFAULT_REINDEX_INTERVAL : reindexInterval;
+        }
+
+        /** With the re-index interval at its default. */
+        public FieldIndex(FieldIndexMode mode, int minVersion, int maxCandidates, int reindexBatchSize,
+                          boolean reindexEnabled, int maxLiveCallsPerDistributor, boolean requireStatedConstraint) {
+            this(mode, minVersion, maxCandidates, reindexBatchSize, reindexEnabled, maxLiveCallsPerDistributor,
+                    requireStatedConstraint, DEFAULT_REINDEX_INTERVAL);
         }
 
         /** Without the live-call cap (its default). */

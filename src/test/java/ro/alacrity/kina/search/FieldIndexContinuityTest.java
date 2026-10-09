@@ -52,6 +52,7 @@ class FieldIndexContinuityTest {
     @Autowired PartCacheRepository partCache;
     @Autowired SearchCacheRepository searchCache;
     @Autowired PartIndexRepository index;
+    @Autowired ro.alacrity.kina.cache.PhraseJournalRepository journal;
     @Autowired JdbcClient jdbc;
 
     private PartSearchService service;
@@ -61,6 +62,8 @@ class FieldIndexContinuityTest {
     void clean() {
         jdbc.sql("DELETE FROM cached_parts").update();
         jdbc.sql("DELETE FROM cached_searches").update();
+        jdbc.sql("DELETE FROM distributor_phrases").update();
+        index.forgetCoverage();
     }
 
     @AfterEach
@@ -143,6 +146,57 @@ class FieldIndexContinuityTest {
         // a listed part (stock 0) is indexed sold out
         partCache.upsertListed(List.of(part.toBuilder().distributorPartNumber("S2").stock(0).build()));
         assertThat(inStock("S2")).isFalse();
+    }
+
+    /**
+     * The v0.15.0 defect: a search served from the index refreshes the stock of its parts, which rewrites their
+     * payloads (stock, prices, fetchedAt). The index rows must stay current, so the next search is served from the
+     * index again (no {@code incomplete} fallback), also once the coverage snapshot has expired.
+     */
+    @Test
+    void aStockRefreshAfterAnIndexAnswerKeepsTheNextSearchOnTheIndex() {
+        String query = "10uF X7R 0805 25V";
+        java.time.Instant twoDaysAgo = java.time.Instant.now().minus(Duration.ofDays(2));
+        List<Part> parts = IntStream.rangeClosed(1, 5).mapToObj(i -> RankingFixtures.part(Distributor.MOUSER,
+                "R" + i, "YAGEO", "MPN-R" + i, "MLCC 10uF 25V X7R 0805 10%", "Ceramic Capacitors", "0805", 1000,
+                "0.10", java.util.Map.of(), java.util.Map.of()).toBuilder().fetchedAt(twoDaysAgo).build()).toList();
+        partCache.upsertAll(parts);
+        assertThat(index.coverage().get(Distributor.MOUSER).complete()).isTrue();
+
+        FieldFirstSearchTest.PhraseClient mouser = new FieldFirstSearchTest.PhraseClient();
+        parts.forEach(p -> mouser.stock.put(p.distributorPartNumber(), new ro.alacrity.kina.distributor.StockUpdate(
+                777, List.of(new ro.alacrity.kina.domain.PriceBreak(1, new java.math.BigDecimal("0.08"), "EUR")))));
+        KinaMetrics metrics = mock(KinaMetrics.class);
+        KinaProperties props = RankingFixtures.properties("kina.ranking.cross-encoder.enabled", "false",
+                "kina.search.field-index.mode", "on");
+        RankingService rankingOn = TestWiring.rankingService(props, TestWiring.deterministicRanker(
+                        new ParametricExtractor()), mock(PartRanker.class), () -> null,
+                TestWiring.scoreCache(Duration.ofHours(1)));
+        service = RankingFixtures.searchService(props, TestWiring.registry(List.of(mouser)), new QueryParser(),
+                new ParametricExtractor(), rankingOn, partCache, searchCache, Clock.systemUTC(), metrics,
+                new RankingFixtures.FieldBeans(index, journal));
+
+        DistributorResult first = PartSearchServiceTest.result(service.search(new SearchRequest(query, 3,
+                Set.of(Distributor.MOUSER), false)), Distributor.MOUSER);
+        assertThat(first.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(mouser.asked).as("answered from the index").isEmpty();
+        assertThat(mouser.refreshed).as("the stock of the returned parts was refreshed").hasSize(3);
+        // the refresh rewrote the payloads: new stock, prices and fetchedAt
+        assertThat(jdbc.sql("""
+                        SELECT count(*) FROM cached_parts
+                        WHERE distributor = 'MOUSER' AND (payload ->> 'stock')::int = 777""")
+                .query(Long.class).single()).isEqualTo(3);
+
+        // the rows stay current: no stale row, also when the coverage is computed again
+        index.forgetCoverage();
+        assertThat(index.coverage().get(Distributor.MOUSER).stale()).isZero();
+        assertThat(index.isComplete(Distributor.MOUSER)).isTrue();
+        DistributorResult second = PartSearchServiceTest.result(service.search(new SearchRequest(query, 3,
+                Set.of(Distributor.MOUSER), false)), Distributor.MOUSER);
+        assertThat(second.cache()).isEqualTo(CacheStatus.HIT);
+        assertThat(mouser.asked).isEmpty();
+        org.mockito.Mockito.verify(metrics, org.mockito.Mockito.times(2)).fieldServed("MOUSER");
+        org.mockito.Mockito.verify(metrics, org.mockito.Mockito.never()).fieldFallback("MOUSER", "incomplete");
     }
 
     @Test

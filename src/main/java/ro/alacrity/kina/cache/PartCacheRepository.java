@@ -49,25 +49,25 @@ public class PartCacheRepository {
 
     private static final String UPSERT = """
             INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at, metadata_fetched_at, in_stock,
-                                      type)
-            VALUES (?, ?, ?::jsonb, ?, ?, true, ?)
+                                      type, metadata_md5)
+            VALUES (?, ?, ?::jsonb, ?, ?, true, ?, ?)
             ON CONFLICT (distributor, part_number)
             DO UPDATE SET payload = EXCLUDED.payload, stock_fetched_at = EXCLUDED.stock_fetched_at,
               metadata_fetched_at = GREATEST(cached_parts.metadata_fetched_at, EXCLUDED.metadata_fetched_at),
-              in_stock = true, type = EXCLUDED.type""";
+              in_stock = true, type = EXCLUDED.type, metadata_md5 = EXCLUDED.metadata_md5""";
 
     /** A part listed without ships-now stock: metadata kept, never served ({@code in_stock = false}). */
     private static final String UPSERT_LISTED = """
             INSERT INTO cached_parts (distributor, part_number, payload, stock_fetched_at, metadata_fetched_at, in_stock,
-                                      type)
-            VALUES (?, ?, ?::jsonb, ?, ?, false, ?)
+                                      type, metadata_md5)
+            VALUES (?, ?, ?::jsonb, ?, ?, false, ?, ?)
             ON CONFLICT (distributor, part_number)
             DO UPDATE SET payload = EXCLUDED.payload, stock_fetched_at = EXCLUDED.stock_fetched_at,
               metadata_fetched_at = GREATEST(cached_parts.metadata_fetched_at, EXCLUDED.metadata_fetched_at),
-              in_stock = false, type = EXCLUDED.type""";
+              in_stock = false, type = EXCLUDED.type, metadata_md5 = EXCLUDED.metadata_md5""";
 
     private static final String UPDATE_STOCK = """
-            UPDATE cached_parts SET payload = ?::jsonb, stock_fetched_at = ?, in_stock = true
+            UPDATE cached_parts SET payload = ?::jsonb, stock_fetched_at = ?, in_stock = true, metadata_md5 = ?
             WHERE distributor = ? AND part_number = ?""";
 
     private static final int BATCH_SIZE = 500;
@@ -107,22 +107,12 @@ public class PartCacheRepository {
                 log.warn("Not caching {}:{} without ships-now stock", part.distributor(), part.distributorPartNumber());
                 continue;
             }
-            Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
-            Part stored = part.asStored();
-            rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
-                    jsonMapper.writeValueAsString(stored), utc(fetchedAt), utc(fetchedAt),
-                    KinaMetrics.typeOfPart(stored)});
+            rows.add(row(part, now));
             kept.add(part);
             written.computeIfAbsent(part.distributor(), d -> new LinkedHashSet<>()).add(part.distributorPartNumber());
         }
         Map<Distributor, Long> existing = countExisting(written);
-        List<Runnable> work = prepare(kept, true);
-        inTransaction(() -> {
-            for (int from = 0; from < rows.size(); from += BATCH_SIZE) {
-                jdbcTemplate.batchUpdate(UPSERT, rows.subList(from, Math.min(rows.size(), from + BATCH_SIZE)));
-            }
-            work.forEach(Runnable::run);
-        });
+        write(UPSERT, rows, kept, true);
         // DESIGN.md 3.7: kina_cache_parts_added_total / kina_cache_parts_refreshed_total
         written.forEach((d, numbers) -> {
             Long before = existing.get(d);
@@ -151,19 +141,18 @@ public class PartCacheRepository {
                 continue;
             }
             kept.add(part);
-            Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
-            Part stored = part.asStored();
-            rows.add(new Object[] {part.distributor().name(), part.distributorPartNumber(),
-                    jsonMapper.writeValueAsString(stored), utc(fetchedAt), utc(fetchedAt),
-                    KinaMetrics.typeOfPart(stored)});
+            rows.add(row(part, now));
         }
-        if (!rows.isEmpty()) {
-            List<Runnable> work = prepare(kept, false);
-            inTransaction(() -> {
-                jdbcTemplate.batchUpdate(UPSERT_LISTED, rows);
-                work.forEach(Runnable::run);
-            });
-        }
+        write(UPSERT_LISTED, rows, kept, false);
+    }
+
+    /** The parameters of {@link #UPSERT} and {@link #UPSERT_LISTED}: the stored part, its type and metadata hash. */
+    private Object[] row(Part part, Instant now) {
+        Instant fetchedAt = part.fetchedAt() != null ? part.fetchedAt() : now;
+        Part stored = part.asStored();
+        String json = jsonMapper.writeValueAsString(stored);
+        return new Object[] {part.distributor().name(), part.distributorPartNumber(), json, utc(fetchedAt),
+                utc(fetchedAt), KinaMetrics.typeOfPart(stored), PartMetadataHash.ofPayload(json)};
     }
 
     /**
@@ -245,8 +234,11 @@ public class PartCacheRepository {
     }
 
     /**
-     * Writes refreshed stock and prices (a {@code DistributorClient.refreshStock} result): the payload and
-     * {@code stock_fetched_at} change, {@code metadata_fetched_at} does not. Rows that do not exist are not created.
+     * Writes refreshed stock and prices (a {@code DistributorClient.refreshStock} result, or a part-number lookup): the
+     * payload, its metadata hash and {@code stock_fetched_at} change, {@code metadata_fetched_at} does not. Rows that do
+     * not exist are not created. The index rows are written in the same transaction ({@link CacheWriteListener}): a
+     * refresh that changes only stock and prices leaves them current (the metadata hash is unchanged, so nothing is
+     * rewritten but a changed {@code in_stock}); new metadata from a lookup re-indexes the part.
      */
     public void updateStock(Collection<Part> parts) {
         if (parts == null || parts.isEmpty()) {
@@ -254,32 +246,101 @@ public class PartCacheRepository {
         }
         Instant now = clock.instant();
         List<Object[]> rows = new ArrayList<>(parts.size());
-        Map<Distributor, List<String>> refreshed = new EnumMap<>(Distributor.class);
+        List<Part> kept = new ArrayList<>(parts.size());
         for (Part part : parts) {
             if (part.stock() <= 0) {
                 continue;
             }
-            refreshed.computeIfAbsent(part.distributor(), d -> new ArrayList<>()).add(part.distributorPartNumber());
-            rows.add(new Object[] {jsonMapper.writeValueAsString(part.asStored()),
-                    utc(part.fetchedAt() != null ? part.fetchedAt() : now), part.distributor().name(),
-                    part.distributorPartNumber()});
+            kept.add(part);
+            String json = jsonMapper.writeValueAsString(part.asStored());
+            rows.add(new Object[] {json, utc(part.fetchedAt() != null ? part.fetchedAt() : now),
+                    PartMetadataHash.ofPayload(json), part.distributor().name(), part.distributorPartNumber()});
         }
-        for (int from = 0; from < rows.size(); from += BATCH_SIZE) {
-            jdbcTemplate.batchUpdate(UPDATE_STOCK, rows.subList(from, Math.min(rows.size(), from + BATCH_SIZE)));
-        }
-        refreshed.forEach((d, numbers) -> stockChanged(d, numbers, true));
+        write(UPDATE_STOCK, rows, kept, true);
     }
 
     /**
      * A stock refresh found the part sold out: the row keeps its metadata but is no longer served
-     * ({@code in_stock = false}, {@code stock_fetched_at = now}) until a live fetch finds it in stock again.
+     * ({@code in_stock = false}, {@code stock_fetched_at = now}) until a live fetch finds it in stock again. The index
+     * row's stock flag follows in the same transaction.
      */
     public void markSoldOut(Distributor distributor, String partNumber) {
-        jdbc.sql("""
-                        UPDATE cached_parts SET in_stock = false, stock_fetched_at = ?
-                        WHERE distributor = ? AND part_number = ?""")
-                .params(utc(clock.instant()), distributor.name(), partNumber).update();
-        stockChanged(distributor, List.of(partNumber), false);
+        inTransaction(() -> {
+            jdbc.sql("""
+                            UPDATE cached_parts SET in_stock = false, stock_fetched_at = ?
+                            WHERE distributor = ? AND part_number = ?""")
+                    .params(utc(clock.instant()), distributor.name(), partNumber).update();
+            stockChanged(distributor, List.of(partNumber), false);
+        });
+    }
+
+    /**
+     * Fills {@code metadata_md5} of the rows written before V16 (NULL) from their payloads, {@code batchSize} rows at a
+     * time in key order. Only that column is written, and only while the payload is the one hashed (a row written
+     * meanwhile got its hash from its writer). Returns the number of rows filled.
+     */
+    public long backfillMetadataHashes(int batchSize) {
+        int size = Math.max(1, batchSize);
+        long filled = 0;
+        String lastDistributor = "";
+        String lastPartNumber = "";
+        while (true) {
+            List<String[]> batch = new ArrayList<>(size);
+            jdbc.sql("""
+                            SELECT distributor, part_number, payload::text AS payload, md5(payload::text) AS m
+                            FROM cached_parts
+                            WHERE (distributor, part_number) > (?, ?) AND metadata_md5 IS NULL
+                            ORDER BY distributor, part_number LIMIT ?""")
+                    .params(lastDistributor, lastPartNumber, size)
+                    .query(rs -> {
+                        batch.add(new String[] {rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)});
+                    });
+            if (batch.isEmpty()) {
+                return filled;
+            }
+            String[] distributors = new String[batch.size()];
+            String[] partNumbers = new String[batch.size()];
+            String[] hashes = new String[batch.size()];
+            String[] payloads = new String[batch.size()];
+            for (int i = 0; i < batch.size(); i++) {
+                String[] row = batch.get(i);
+                distributors[i] = row[0];
+                partNumbers[i] = row[1];
+                hashes[i] = PartMetadataHash.ofPayload(row[2]);
+                payloads[i] = row[3];
+            }
+            filled += jdbc.sql("""
+                            UPDATE cached_parts c SET metadata_md5 = u.h
+                            FROM unnest(?::text[], ?::text[], ?::text[], ?::text[]) AS u(d, p, h, m)
+                            WHERE c.distributor = u.d AND c.part_number = u.p AND c.metadata_md5 IS NULL
+                              AND md5(c.payload::text) = u.m""")
+                    .params(distributors, partNumbers, hashes, payloads)
+                    .update();
+            String[] last = batch.getLast();
+            lastDistributor = last[0];
+            lastPartNumber = last[1];
+            if (batch.size() < size) {
+                return filled;
+            }
+        }
+    }
+
+    /**
+     * The one write path of payloads: {@code sql} for every row in batches and, in the same transaction, the
+     * listeners' work for {@code parts} ({@code in_stock = inStock}), prepared before the transaction (extraction
+     * runs outside it).
+     */
+    private void write(String sql, List<Object[]> rows, List<Part> parts, boolean inStock) {
+        if (rows.isEmpty()) {
+            return;
+        }
+        List<Runnable> work = prepare(parts, inStock);
+        inTransaction(() -> {
+            for (int from = 0; from < rows.size(); from += BATCH_SIZE) {
+                jdbcTemplate.batchUpdate(sql, rows.subList(from, Math.min(rows.size(), from + BATCH_SIZE)));
+            }
+            work.forEach(Runnable::run);
+        });
     }
 
     /** The listeners' work for an upsert of {@code parts}; a listener that fails is skipped (logged). */

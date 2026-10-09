@@ -1,4 +1,4 @@
-# Field search validation, 2026-10-09 (phases C and C2)
+# Field search validation, 2026-10-09 (phases C, C2 and C3)
 
 Validation of the field-based search (study `field-search-2026-10-08.md`, DESIGN.md 3.2 "Field-first flow", 3.8,
 9.3) on a copy of the production cache and the full JLCPCB file, in a separate compose project. Branch
@@ -366,3 +366,97 @@ generic}` MOUSER 2.
   instead of 50); a third window would find more, at the cost of reading more rows.
 - Generic Mouser and TME queries with more than 100 candidates rank by the index order before the cut (`fan 12V`):
   the parts the cut drops are never ranked.
+
+## 9. Phase C3 (v0.15.1)
+
+Two defects found right after the v0.15.0 deploy on eros, fixed on `hotfix/v0.15.1` (DESIGN.md 3.2, 3.3, 3.8, 8).
+
+### 9.1 Root causes, confirmed in code
+
+- **The field index switched itself off.** A row was current only while `part_index.payload_md5` equalled
+  `md5(cached_parts.payload::text)`. `PartCacheRepository.updateStock` (the stock refresh, and the refresh of a
+  part-number lookup) rewrote the payload (stock, prices, `fetchedAt`) and told the listener only to copy `in_stock`
+  (`markStock`, which changes nothing for a part still in stock). So every refreshed row became stale,
+  `isComplete(MOUSER)` turned false once the 30 s coverage snapshot expired, and the re-index ran only at startup.
+  `markSoldOut` and `updateStock` also wrote the index outside the payload's transaction (review A, finding 16).
+- **Fresh unrelated parts above stale exact matches.** `StockRefresher.demoteStale` grouped parts by below spec only:
+  a stale part went after every fresh part that met the request, and a part that confirms nothing (`match` 0, family
+  unknown) counts as meeting it (nothing contradicts). For `4.7k 1% 0603 resistor` two fresh TE part numbers ended up
+  above the stale 4.7k 0603 resistors.
+
+### 9.2 Fixes
+
+- V16 (add-only): `metadata_md5` on `cached_parts` and `part_index`, and two covering indexes. The hash
+  (`cache.PartMetadataHash`) covers identity, description, category, package, attributes and extra, with object keys
+  sorted and numbers in one form; never stock, prices or timestamps. The cache writer stores the hash of the payload
+  it writes; the index row stores the hash of the part it was built from (review A, finding 3). A row is current when
+  version, `metadata_md5` and `in_stock` match.
+- One write path: `upsertAll`, `upsertListed` and `updateStock` go through `PartCacheRepository.write`, which runs the
+  index work in the same transaction; `markSoldOut` copies `in_stock` in its transaction; both under a savepoint.
+- `isComplete` reads the stored hashes only (no payload, no md5; in the test the plan is an index-only scan of
+  `cached_parts_index_state_idx`), keeps its 30 s snapshot and is no longer reset by a single cache write (review A,
+  finding 2).
+- The startup job first hashes every payload (`cached_parts.metadata_md5`, only that column), copies the hash to the
+  index rows built from the same payload, then re-indexes the rest. The same job runs every
+  `kina.search.field-index.reindex-interval` (1 h) as a sweep; `kina_field_index_sweep_repaired_total` counts what a
+  sweep had to fix.
+- Match class: a part with `match` 0 gets tier +16 in `RankingService` (after every part that confirms something,
+  before a listed part; a requested part keeps its place), and `demoteStale` groups by match class first, then below
+  spec. Parts with `match` 0 are kept, last (DESIGN.md 3.3 "Match class" gives the reasons).
+
+### 9.3 The kina-fs reproduction
+
+Fresh `kina-fs_pgdata`, `kina-live-20261009.dump` restored, mode `on`. Mouser pointed at a fake API in the `kina-fs`
+network (part-number search: every requested part in stock, 777 pieces; keyword search: nothing), so the stock
+refresh really writes the payloads; TME offline as before. The script: search `10uF X7R 0805` (5 results), set
+`stock_fetched_at` and the payload's `fetchedAt` of the next 5 results to 2 days ago (and their `payload_md5` to the
+new payload, as if indexed then), search again, wait 31 s (the snapshot TTL), search again.
+
+| | v0.15.0 (image `v0.15`) | v0.15.1 |
+|---|---|---|
+| search 1 | `hit`, from the index, 5 refreshed | `hit`, from the index, 5 refreshed |
+| rows stale after it (old rule / new rule) | 5 | 5 / **0** |
+| search 2 | `hit`, from the index (snapshot still valid) | `hit`, from the index |
+| rows stale after it | 10 | 10 / **0** |
+| search 3, after 31 s | `field_steps_tried` 0: cached-search path | `hit`, from the index |
+| `kina_field_fallbacks_total{reason="incomplete"}` | 0 -> **1** | **0**, unchanged |
+| `kina_field_served_total{distributor="MOUSER"}` | 3, then stops | 4 (one per search, the script's extra search included) |
+
+The eros upgrade path, on the same stack: v0.15.0 ran the script (15 stale rows, one `incomplete` fallback), then the
+image was switched to v0.15.1 and only `kina` was recreated. V16 applied in 22 ms; the startup job filled 6 660 cache
+hashes and copied 6 645 to the index rows (no extraction), re-indexed the 15 stale rows (48 ms for the re-index
+step), and the index was complete about 2.5 s after the start. Every row current afterwards; the script again found
+0 stale rows under the new rule and no new `incomplete` fallback (the counter stayed at the 1 of v0.15.0).
+
+### 9.4 Cache preservation
+
+Baseline after the restore: as in section 8.2 (MOUSER 3 064 / 3 061 in stock, TME 3 596, `cached_parts` md5
+`2ea4c6bbf7d36f066541e66cb97e59c2`, 221 `cached_searches`, md5 `8d9afeec20ef01178afd030f647eb705`). The snapshot of
+`run.sh` now hashes the V13 to V15 columns of `cached_parts` (V16 adds `metadata_md5`), which gives the same md5 as
+before on the restored dump. After startup (V14 to V16, 6 660 hashes, then the re-index of 6 660 rows in 8.1 s, journal
+backfill 214 phrases), after the upgrade from v0.15.0 (V16 only) and after the e2e suite: counts and both md5
+values identical; only `flyway.max` moved from 13 to 16. The reproduction runs change `cached_parts` on purpose
+(refreshed stock and prices).
+
+### 9.5 Tests and e2e
+
+- `./mvnw -q verify`: 1 524 tests, 0 failures, 3 skipped (1 510 at the base). New: `PartIndexRepositoryTest` (hash
+  rule, stock-only payload change keeps a row current and a description or attribute change does not, the
+  repository's own stock refresh, the race of finding 3, the snapshot and the plan of finding 2, the periodic sweep),
+  `StockRefresherTest` (the incident and the match classes), `FieldIndexContinuityTest` (search from the index, stock
+  refresh, next search from the index, no `incomplete`), `RankingServiceTest` and `AuditRoundThreeTest` (the incident
+  end to end), and the V16 path of `CachePreservationMigrationTest`. `ConstraintGoldenTest` unchanged (it holds the
+  assessments, which the fix does not touch).
+- `kina_e2e.py` in mode `on`, distributors offline as in phase C2: **88 / 88**. No `kina_field_fallbacks_total`, no
+  sweep repair.
+
+### 9.6 Open items after C3
+
+- On the restored cache, `4.7k 1% 0603 resistor` at Mouser now ranks the stale 4.7k 0603 resistors above every part
+  that confirms nothing, but two fresh through-hole resistors (`603-MF0204FTE52-10R`, `603-FKN1WSJB-52-10R`: 10 ohm,
+  `match` 1.0 because only the family is graded, resistance, package and tolerance unverified) still rank 1 and 2
+  above them. They are in the confirmed class under the product rule; demoting stale parts only within the tier
+  (complete matches before parts with an unverified constraint) would fix it and is a product decision. The
+  `Mounting: THT` of these parts does not contradict the `0603` of the request either (no hard conflict).
+- Live calls in `on` against the real Mouser and TME remain unverified on this host (the fake Mouser covers the stock
+  refresh only).
