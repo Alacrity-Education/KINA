@@ -3110,9 +3110,9 @@ The account's token only works with **API v2** (OAuth2 client credentials); the 
     from the file in `<data-dir>/tmp` as `<data-dir>/tmp/<library without .db>.index.db`, then warms both files (typed
     counts, the biggest families, a few FTS5 matches: the page cache is warm before the swap, study 12.2), then, under
     the search write lock, renames the **main file first, then the sidecar** (each one an atomic rename), and reopens
-    the pool. The full file measured: 723 865 rows extracted and inserted in 42 to 57 s (16 threads, the host busy with
-    other work; the extraction alone ran at about 33 000 rows/s in the study), indexes and `ANALYZE` 1.1 to 1.4 s,
-    warm-up 1 s, sidecar 387 MB. A failed build is logged (`last_error`), the new file is installed without a sidecar
+    the pool. The full file measured (validation 2026-10-09, 16 threads): 723 865 rows extracted and inserted in
+    52.5 s (the extraction alone ran at about 33 000 rows/s in the study), indexes and `ANALYZE` 2.9 s, warm-up 5.9 s,
+    sidecar 402 MB. A failed build is logged (`last_error`), the new file is installed without a sidecar
     and the FTS path serves until the next check builds it.
   - **Build, adoption.** A main file without a current sidecar (a pre-seeded volume, an older `INDEX_VERSION`, a new
     extractor, a refresh that was interrupted between the two renames) is detected by `check()`; the sidecar is built in
