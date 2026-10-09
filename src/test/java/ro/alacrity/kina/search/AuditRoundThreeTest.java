@@ -927,6 +927,43 @@ class AuditRoundThreeTest {
         assertThat(stale.rank()).isEqualTo(3);
     }
 
+    /**
+     * The v0.15.0 incident (DESIGN.md 3.3 "Match class"): for {@code 4.7k 1% 0603 resistor} two TE part numbers that
+     * confirm nothing (match 0, family unknown, fresh stock) ranked 1 and 2 above 4.7k 0603 resistors (match 1.0) whose
+     * stock was stale. The stale demotion applies within the match class only.
+     */
+    @Test
+    void freshPartsThatConfirmNothingNeverOutrankStaleExactMatches() {
+        String query = "4.7k 1% 0603 resistor";
+        String key = QueryParser.normalizeKey(query);
+        Instant fourDays = NOW.minus(Duration.ofDays(4));
+        Instant fresh = NOW.minus(Duration.ofHours(1));
+        List<String> numbers = List.of("571-1-2199298-2", "571-2-1445057-2", "603-RC0603FR-074K7L",
+                "603-RC0603FR-104K7L");
+        for (String n : numbers) {
+            Part p = n.startsWith("571") ? part(Distributor.MOUSER, n, "TE Connectivity " + n.substring(4), null, 9000,
+                    Map.of(), Map.of(), fresh)
+                    : part(Distributor.MOUSER, n, "Thick Film Resistors - SMD 4.7K OHM 1% 1/10W 0603",
+                    "Thick Film Resistors - SMD", 5000, Map.of("Resistance", "4.7K Ohms", "Tolerance", "1 %"), Map.of(),
+                    fourDays);
+            cachedParts.put(p.key(), p);
+        }
+        cachedSearches.put(Distributor.MOUSER + "|" + key, new CachedSearch(Distributor.MOUSER, key, 4, numbers,
+                true, fresh, 4, null, 0, List.of()));
+        PhraseClient mouser = new PhraseClient(Distributor.MOUSER);
+        mouser.refreshFailure = new ro.alacrity.kina.distributor.DistributorException(Distributor.MOUSER,
+                ro.alacrity.kina.distributor.DistributorException.Kind.UNAVAILABLE, "down");
+        service(List.of(mouser));
+
+        DistributorResult m = result(service.search(request(query, 4, false, Distributor.MOUSER)),
+                Distributor.MOUSER);
+
+        assertThat(m.parts()).extracting(PartResponse::partNumber).containsExactly("603-RC0603FR-074K7L",
+                "603-RC0603FR-104K7L", "571-1-2199298-2", "571-2-1445057-2");
+        assertThat(m.parts()).extracting(PartResponse::stale).containsExactly(true, true, null, null);
+        assertThat(m.parts()).extracting(PartResponse::match).containsExactly(1.0, 1.0, 0.0, 0.0);
+    }
+
     @Test
     void staleRankPenaltyIsConfigurable() {
         Instant fourDays = NOW.minus(Duration.ofDays(4));

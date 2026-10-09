@@ -385,7 +385,11 @@ public class RankingService {
                     distances.put(key, a.isBelowSpec() ? a.belowSpecDistance() : 0.0);
                     // the part the query names by part number comes first (DESIGN.md 3.3, "requested part first"); one
                     // listed without stock comes after every part in stock
-                    tiers.put(key, listed ? LISTED_TIER : (naming.isEmpty() ? 0 : REQUESTED_TIER)
+                    // a part that confirms none of the stated parameters (match 0) never ranks above one that confirms
+                    // some, whatever its stock, spec or score (DESIGN.md 3.3 "Match class")
+                    int matchClass = naming.isEmpty() && understood && confirmsNothing(a.match())
+                            ? UNCONFIRMED_TIER : 0;
+                    tiers.put(key, listed ? LISTED_TIER : (naming.isEmpty() ? 0 : REQUESTED_TIER) + matchClass
                             + (a.isBelowSpec() ? 8 : 0) + (p.stock() < qty ? 4 : 0) + (a.complete() ? 0 : 1));
                 }
                 kept.sort(byScore(tiers, distances, det, det));
@@ -683,6 +687,19 @@ public class RankingService {
     /** Tier offset of a part the query names by part number: before every other part of its distributor. */
     static final int REQUESTED_TIER = -16;
     /**
+     * Tier offset of a part that confirms none of the stated parameters ({@code match} 0, {@link #confirmsNothing}):
+     * after every part that confirms some (below spec and stock shortfall included), before a listed part.
+     */
+    static final int UNCONFIRMED_TIER = 16;
+
+    /**
+     * The match class (DESIGN.md 3.3): true when the part confirms none of the stated parameters ({@code match} 0); a
+     * null match (not graded) is not in this class.
+     */
+    static boolean confirmsNothing(Double match) {
+        return match != null && match <= 0.0;
+    }
+    /**
      * Tier of a requested part listed without stock (stock 0, DESIGN.md 2): after every part in stock, below spec
      * included.
      */
@@ -721,7 +738,7 @@ public class RankingService {
 
     /**
      * Tier asc (0 = complete match; +1 a mismatch or an unverified constraint; +4 stock below the quantity; +8 below
-     * spec), distance from the target asc (below-spec parts only), primary score desc, deterministic score desc, stock
+     * spec; +16 nothing stated confirmed), distance from the target asc (below-spec parts only), primary score desc, deterministic score desc, stock
      * desc, unit price (smallest price break) asc.
      */
     private static Comparator<Part> byScore(Map<String, Integer> tiers, Map<String, Double> distances,

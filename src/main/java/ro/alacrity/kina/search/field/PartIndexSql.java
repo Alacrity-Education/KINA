@@ -13,9 +13,10 @@ import java.util.stream.Collectors;
 /**
  * The write statement of {@code part_index} and its parameters. The columns are listed once ({@link #COLUMNS}); the
  * value columns come from the {@code PartAttribute} declarations ({@link IndexColumn#valueColumns()}). The row is
- * inserted from the {@code cached_parts} row of the part, so the index never holds a part the cache does not and the
- * payload's md5 is the one the cache holds now; every parameter carries its SQL type (the statement is an
- * {@code INSERT ... SELECT}).
+ * inserted from the {@code cached_parts} row of the part, so the index never holds a part the cache does not. Its
+ * {@code metadata_md5} is a parameter: the hash of the part the row was built from (never computed from the cache row
+ * at insert time, so a payload written meanwhile leaves the row visibly stale). Every parameter carries its SQL type
+ * (the statement is an {@code INSERT ... SELECT}).
  */
 final class PartIndexSql {
 
@@ -38,14 +39,17 @@ final class PartIndexSql {
 
     static {
         COLUMNS = COLS.stream().map(Col::name).toList();
+        // the metadata hash makes a row current (DESIGN.md 3.8); payload_md5 is informational since V16: a row whose
+        // only difference is the payload's stock, prices or timestamps is not rewritten
         List<String> compared = new ArrayList<>(COLUMNS);
         compared.remove("indexed_at");
-        compared.add("payload_md5");
+        compared.add("metadata_md5");
         COMPARED = List.copyOf(compared);
         List<String> insert = new ArrayList<>(COLUMNS);
+        insert.add("metadata_md5");
         insert.add("payload_md5");
         String select = COLS.stream().map(c -> "?::" + c.cast()).collect(Collectors.joining(", "))
-                + ", md5(c.payload::text)";
+                + ", ?::text, md5(c.payload::text)";
         String update = insert.stream().filter(c -> !c.equals("distributor") && !c.equals("part_number"))
                 .map(c -> c + " = EXCLUDED." + c).collect(Collectors.joining(", "));
         String distinct = "(" + COMPARED.stream().map(c -> "part_index." + c).collect(Collectors.joining(", "))
@@ -63,6 +67,7 @@ final class PartIndexSql {
         for (Col c : COLS) {
             out.add(c.value().apply(ctx));
         }
+        out.add(row.metadataMd5());
         out.add(row.distributor().name());
         out.add(row.partNumber());
         return out.toArray();

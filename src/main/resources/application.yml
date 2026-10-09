@@ -81,6 +81,7 @@ kina:
       max-live-calls-per-distributor: ${KINA_FIELD_INDEX_MAX_LIVE_CALLS:2}   # on: distributor calls one search may make
       reindex-batch-size: 500
       reindex-enabled: ${KINA_FIELD_INDEX_REINDEX_ENABLED:true}
+      reindex-interval: ${KINA_FIELD_INDEX_REINDEX_INTERVAL:1h}   # the sweep that re-indexes rows not current (safety net)
       require-stated-constraint: ${KINA_FIELD_INDEX_REQUIRE_STATED_CONSTRAINT:true}   # false: a family-only request reads the index too
   ranking:
     timeout: 5s                  # per query; the cross-encoder needs about 0.1-0.35 s for 40 candidates

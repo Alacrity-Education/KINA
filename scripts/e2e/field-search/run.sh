@@ -79,8 +79,10 @@ case "$cmd" in
 SELECT 'cached_parts.' || distributor || '.total', count(*) FROM cached_parts GROUP BY distributor;
 SELECT 'cached_parts.' || distributor || '.in_stock', count(*) FROM cached_parts WHERE in_stock GROUP BY distributor;
 SELECT 'cached_searches.total', count(*) FROM cached_searches;
+-- the columns of V13 to V15 (V16 adds metadata_md5, which the startup job fills): the md5 is comparable across V16
 SELECT 'cached_parts.md5', md5(coalesce(string_agg(row_to_json(t)::text, E'\n' ORDER BY distributor, part_number), ''))
-  FROM cached_parts t;
+  FROM (SELECT distributor, part_number, payload, stock_fetched_at, metadata_fetched_at, in_stock, type
+        FROM cached_parts) t;
 SELECT 'cached_searches.md5', md5(coalesce(string_agg(row_to_json(t)::text, E'\n' ORDER BY distributor, query_key), ''))
   FROM cached_searches t;
 SELECT 'flyway.max', max(version::int) FROM flyway_schema_history WHERE success;

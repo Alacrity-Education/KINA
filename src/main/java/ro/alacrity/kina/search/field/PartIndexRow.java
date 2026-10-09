@@ -17,6 +17,7 @@ import java.util.Map;
  * @param voltages the voltages the exact-voltage rule compares: the part's specification voltages, else its voltage,
  *                 else empty
  * @param attrs  the long tail ({@code attrs} JSONB): fan, LED and switch attributes and their SI values, by key
+ * @param metadataMd5 {@code cache.PartMetadataHash} of the part the row was built from (null: not current)
  */
 @Builder(toBuilder = true)
 public record PartIndexRow(
@@ -52,7 +53,8 @@ public record PartIndexRow(
         Integer pinConfiguration,
         Map<String, Object> attrs,
         String mpn,
-        String searchText
+        String searchText,
+        String metadataMd5
 ) {
 
     public PartIndexRow {
