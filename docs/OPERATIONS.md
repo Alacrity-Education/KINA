@@ -57,7 +57,7 @@ Enabling `OIDC_REQUIRED_GROUPS` on a deployment that already has users: each use
 
 ## Authentik setup
 
-KINA is the OAuth 2.1 server that Claude talks to. It delegates the login to your OIDC provider and then requires membership of the configured groups. Authentik is the worked example here; the same steps map to any OIDC provider that puts the groups in a claim. This guide uses `https://<authentik>` for Authentik and `https://<kina>` for KINA.
+KINA is the OAuth 2.1 server that Claude talks to. It delegates the login to your OIDC provider and then requires membership of the configured groups. The flow itself, with the scopes it needs and the re-check rules, is explained for implementers in [MCP-AUTH-GUIDE.md](MCP-AUTH-GUIDE.md). Authentik is the worked example here; the same steps map to any OIDC provider that puts the groups in a claim. This guide uses `https://<authentik>` for Authentik and `https://<kina>` for KINA.
 
 ### In Authentik
 
