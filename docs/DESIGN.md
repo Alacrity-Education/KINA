@@ -2613,7 +2613,11 @@ Presented bearer tokens are still validated. No login page.
 registration id `oidc`, provider configured only by `OIDC_ISSUER_URI`, `OIDC_CLIENT_ID`,
 `OIDC_CLIENT_SECRET` (lazy discovery via `/.well-known/openid-configuration`). Scopes: `openid profile email`, plus
 `kina.security.oidc.extra-scopes`, plus `offline_access` when membership re-checks are enabled (required groups and an
-encryption key, section 7.1) and the provider lists it in `scopes_supported`. No provider-specific code. Every call to
+encryption key, section 7.1) and the provider lists it in `scopes_supported`. A successful discovery is kept for the
+life of the process, except while `offline_access` is wanted and the provider does not list it: then discovery runs
+again at the first login after 10 minutes (`LazyOidcClientRegistrationRepository.REDISCOVER_AFTER`; a failed
+re-discovery keeps the current registration), so the scope added at the provider later takes effect without a
+restart. No provider-specific code. Every call to
 the provider made by KINA's code (code exchange, userinfo, JWKS, re-checks) has a 5 s connect and read timeout
 (`OidcHttp`); ID tokens are verified with the provider's JWKS and the asymmetric algorithms it advertises
 (`OidcIdTokenDecoders`, RS256 when it advertises none).
