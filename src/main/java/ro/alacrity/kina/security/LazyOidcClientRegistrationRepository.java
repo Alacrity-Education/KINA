@@ -24,7 +24,11 @@ import java.util.function.Function;
  * discovery ({@code <issuer>/.well-known/openid-configuration}). Discovery is <b>lazy</b>: it runs on the first login
  * attempt, not at startup, so KINA starts (and serves bearer-authenticated API/MCP traffic) while the provider is
  * unreachable. A failed discovery is logged and retried on a later login attempt (at most every 10 seconds); during
- * that time the login request fails with an error instead of hanging. No provider-specific code.
+ * that time the login request fails with an error instead of hanging. A successful discovery is kept for the life of
+ * the process, except while membership re-checks need {@code offline_access} and the provider does not list it yet:
+ * then discovery runs again at the first login attempt after {@link #REDISCOVER_AFTER}, so a scope added at the
+ * provider later takes effect without a restart (a failed re-discovery keeps the current registration). No
+ * provider-specific code.
  */
 @Slf4j
 @Component("clientRegistrationRepository")
@@ -33,6 +37,7 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
 
     public static final String REGISTRATION_ID = "oidc";
     static final Duration RETRY_AFTER = Duration.ofSeconds(10);
+    static final Duration REDISCOVER_AFTER = Duration.ofMinutes(10);
     static final String OFFLINE_ACCESS = "offline_access";
 
     @Autowired private KinaProperties properties;
@@ -41,6 +46,8 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
     private Clock clock = Clock.systemUTC();
     private KinaProperties.Oidc oidc;
     private volatile ClientRegistration registration;
+    /** The registration lacks {@code offline_access} although re-checks want it: discovery runs again later. */
+    private volatile boolean rediscover;
     private Instant nextAttempt = Instant.MIN;
     private volatile boolean discoveryAttempted;
 
@@ -68,8 +75,9 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
             } else {
                 log.warn("Group re-checks need a refresh token from the OIDC provider, but its discovery document does "
                         + "not list offline_access in scopes_supported; if no refresh token is issued, users must sign "
-                        + "in again every {} (kina.security.oidc.relogin-interval-without-recheck)",
-                        oidc.reloginIntervalWithoutRecheck());
+                        + "in again every {} (kina.security.oidc.relogin-interval-without-recheck). Add the scope at "
+                        + "the provider: discovery runs again at the first login after {}",
+                        oidc.reloginIntervalWithoutRecheck(), REDISCOVER_AFTER);
             }
         }
         return scopes;
@@ -86,16 +94,17 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
             return null;
         }
         ClientRegistration current = registration;
-        if (current != null) {
+        if (current != null && !rediscover) {
             return current;
         }
         synchronized (this) {
-            if (registration != null) {
-                return registration;
+            current = registration;
+            if (current != null && !rediscover) {
+                return current;
             }
             Instant now = clock.instant();
             if (now.isBefore(nextAttempt)) {
-                return null;
+                return current;
             }
             discoveryAttempted = true;
             try {
@@ -109,13 +118,17 @@ public class LazyOidcClientRegistrationRepository implements ClientRegistrationR
                         .build();
                 Set<String> scopes = scopes(discovered);
                 registration = ClientRegistration.withClientRegistration(discovered).scope(scopes).build();
-                log.info("OIDC discovery succeeded for issuer {}; requesting scopes {}", oidc.issuerUri(), scopes);
+                rediscover = membership.storesUpstreamTokens() && !scopes.contains(OFFLINE_ACCESS);
+                nextAttempt = now.plus(REDISCOVER_AFTER);
+                log.info("OIDC discovery succeeded for issuer {}; requesting scopes {}{}", oidc.issuerUri(), scopes,
+                        rediscover ? " (discovery runs again at the first login after " + REDISCOVER_AFTER + ")" : "");
                 return registration;
             } catch (RuntimeException e) {
-                nextAttempt = now.plus(RETRY_AFTER);
-                log.warn("OIDC discovery for issuer {} failed (will retry on a later login): {}", oidc.issuerUri(),
+                nextAttempt = now.plus(current == null ? RETRY_AFTER : REDISCOVER_AFTER);
+                log.warn("OIDC discovery for issuer {} failed ({}): {}", oidc.issuerUri(),
+                        current == null ? "will retry on a later login" : "keeping the current registration",
                         e.getMessage());
-                return null;
+                return current;
             }
         }
     }
