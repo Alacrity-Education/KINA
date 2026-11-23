@@ -2,6 +2,11 @@
 
 An MCP server and REST API that lets Claude find electronic components that are in stock at LCSC, TME and Mouser.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/kina-smd-dark.png">
+  <img alt="Hand-drawn sketch of SMD parts: 0805 capacitor, SOT-23-6, 0603 resistor, SOIC-8, electrolytic capacitor and SOD-123 diode" src="docs/images/kina-smd-light.png">
+</picture>
+
 ![last commit](https://img.shields.io/github/last-commit/Alacrity-Education/KINA?style=flat-square) ![last release](https://img.shields.io/github/v/release/Alacrity-Education/KINA?style=flat-square) ![language](https://img.shields.io/github/languages/top/Alacrity-Education/KINA?style=flat-square) ![license](https://img.shields.io/github/license/Alacrity-Education/KINA?style=flat-square) ![status](https://img.shields.io/badge/status-working-green?style=flat-square) ![repo size](https://img.shields.io/github/repo-size/Alacrity-Education/KINA?style=flat-square)
 
 ## Introduction
